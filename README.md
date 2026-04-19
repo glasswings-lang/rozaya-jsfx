@@ -11,14 +11,12 @@ A collection of audio synthesis and effect plugins for [REAPER](https://www.reap
 - `Binaural Polyrhythm Oscillator` — up to 8 voices with tremolo and pan modulation
 
 **Effects**
-- `Resonant Lowpass Filter with Shaped LFO Sweep` — resonant lowpass with shaped LFO sweep
-- `Resonant Sweeping Filter with Shaped LFO and Pan Modes` — advanced sweep filter with stereo phase and pan modes
-- `Resonant Filter with Segmented LFO and Pan Modes` — four-segment LFO-driven lowpass filter
+- `Resonant Sweeping Filter with Shaped LFO and Pan Modes` — resonant lowpass sweep with LFO start phase, stereo phase control, and pan modes
+- `Sweep Dwell Filter` — lowpass sweep driven by independent hold and transition times, with stereo phase and pan modes
 - `Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation` — amplitude modulation with shaped envelope and pan system
 
 **Utilities**
 - `Rhythm Track` — synthesized metronome with swing and pan distribution
-- `Risset Rhythm Generator` — auditory illusion of perpetual rhythmic acceleration
 - `Shepard Scale Generator` — infinite ascending/descending pitch illusion, step sequencer
 - `Shepard Tone Generator` — continuous Shepard-Risset glissando
 

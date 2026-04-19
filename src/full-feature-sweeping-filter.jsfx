@@ -8,25 +8,26 @@ slider1:500<20,20000,1>Frequency Low Hz
 slider2:5000<20,20000,1>Frequency High Hz
 slider3:2<0.001,1000,0.001>Rate Value
 slider4:0<0,2,1{Hz,Seconds,BPM}>Rate Mode
-slider5:50<0,100,0.1>On Duration % of Cycle
-slider6:100<0,100,0.1>Depth %
-slider7:0<0,100,0.1>Attack %
-slider8:0<0,100,0.1>Release %
-slider9:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
-slider10:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
-slider11:0.7<0,1,0.01>Resonance
-slider12:0<-180,180,0.1>R Channel Phase Offset degrees
-slider13:0<0,1,1{Independent L+R,Offset from L}>Phase Mode
-slider14:1<0,1,0.01>Wet/Dry Mix
+slider5:0<-180,180,0.1>LFO Start Phase (degrees)
+slider6:50<0,100,0.1>On Duration % of Cycle
+slider7:100<0,100,0.1>Depth %
+slider8:0<0,100,0.1>Attack %
+slider9:0<0,100,0.1>Release %
+slider10:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
+slider11:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
+slider12:0.7<0,1,0.01>Resonance
+slider13:0<-180,180,0.1>R Channel Phase Offset degrees
+slider14:0<0,1,1{Independent L+R,Offset from L}>Phase Mode
+slider15:1<0,1,0.01>Wet/Dry Mix
 // ===== PAN BLOCK SLIDERS START =====
-slider15:0<0,1,1{Off,On}>Pan Enabled
-slider16:0<0,12,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep}>Pan Mode
-slider17:1<0,1,0.01>Pan Spread (0=mono, 1=full)
-slider18:5<0,100,0.1>Pan Glide ms (0=instant)
-slider19:8<2,32,1>Cycle Steps (per-cycle modes)
-slider20:2<0.001,1000,0.001>Pan Sweep Rate
-slider21:0<0,2,1{Hz,Seconds,BPM}>Pan Sweep Rate Unit
-slider22:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
+slider16:0<0,1,1{Off,On}>Pan Enabled
+slider17:0<0,12,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep}>Pan Mode
+slider18:1<0,1,0.01>Pan Spread (0=mono, 1=full)
+slider19:5<0,100,0.1>Pan Glide ms (0=instant)
+slider20:8<2,32,1>Cycle Steps (per-cycle modes)
+slider21:2<0.001,1000,0.001>Pan Sweep Rate
+slider22:0<0,2,1{Hz,Seconds,BPM}>Pan Sweep Rate Unit
+slider23:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 // ===== PAN BLOCK SLIDERS END =====
 
 in_pin:left input
@@ -39,6 +40,7 @@ phase_l = 0;
 phase_r = 0;
 n3 = n4 = rn3 = rn4 = 0;
 cut_smooth_l = cut_smooth_r = 0.1;
+last_start_phase = -999;
 
 // ===== PAN BLOCK INIT START =====
 pan_l           = 0;
@@ -100,31 +102,18 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
   steps   = max(ceil((n_steps - 1) / 2.0), 1);
 
   pan_mode == 0 ? (
-    // Mono
     pos = 0;
-
   ) : pan_mode == 1 ? (
-    // Alternating L/R
     pos = (idx % 2 == 0) ? -1 : 1;
-
   ) : pan_mode == 2 ? (
-    // Alternating Flipped R/L
     pos = (idx % 2 == 0) ? 1 : -1;
-
   ) : pan_mode == 3 ? (
-    // Distributed L->R
     n_steps > 1 ? (pos = (idx % n_steps) / (n_steps - 1.0) * 2.0 - 1.0) : (pos = 0);
-
   ) : pan_mode == 4 ? (
-    // Distributed Flipped R->L
     n_steps > 1 ? (pos = 1.0 - (idx % n_steps) / (n_steps - 1.0) * 2.0) : (pos = 0);
-
   ) : pan_mode == 5 ? (
-    // Distributed Ping-pong - pan_cycle_dir in sample block handles reversal
     n_steps > 1 ? (pos = idx / (n_steps - 1.0) * 2.0 - 1.0) : (pos = 0);
-
   ) : pan_mode == 6 ? (
-    // Converging one-shot
     idx = idx % n_steps;
     idx == 0 ? (
       pos = -1.0;
@@ -134,9 +123,7 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
                             : -(1.0 - (step - 1.0) / steps);
       pos = max(-1.0, min(1.0, pos));
     );
-
   ) : pan_mode == 7 ? (
-    // Converging ping-pong - handled via pan_cycle_dir in sample block
     idx = idx % n_steps;
     idx == 0 ? (
       pos = -1.0;
@@ -146,9 +133,7 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
                             : -(1.0 - (step - 1.0) / steps);
       pos = max(-1.0, min(1.0, pos));
     );
-
   ) : pan_mode == 8 ? (
-    // Diverging one-shot
     idx = idx % n_steps;
     idx == 0 ? (
       pos = 0.0;
@@ -158,9 +143,7 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
                             :  (step / steps);
       pos = max(-1.0, min(1.0, pos));
     );
-
   ) : pan_mode == 9 ? (
-    // Diverging ping-pong - handled via pan_cycle_dir in sample block
     idx = idx % n_steps;
     idx == 0 ? (
       pos = 0.0;
@@ -170,7 +153,6 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
                             :  (step / steps);
       pos = max(-1.0, min(1.0, pos));
     );
-
   ) : (
     pos = 0;
   );
@@ -186,34 +168,41 @@ freq_lo      = min(slider1, slider2);
 freq_hi      = max(slider1, slider2);
 rate_val     = slider3;
 rate_mode    = slider4;
-dur_pct      = slider5;
-depth_pct    = slider6 * 0.01;
-att_pct      = slider7;
-rel_pct      = slider8;
-att_shape    = slider9;
-rel_shape    = slider10;
-resonance    = slider11;
-phase_offset = slider12 / 360;
-wet          = slider14;
+dur_pct      = slider6;
+depth_pct    = slider7 * 0.01;
+att_pct      = slider8;
+rel_pct      = slider9;
+att_shape    = slider10;
+rel_shape    = slider11;
+resonance    = slider12;
+phase_offset = slider13 / 360;
+wet          = slider15;
 dry          = 1 - wet;
 
-// ===== PAN BLOCK SLIDER READ START =====
-pan_enabled     = slider15;
-pan_mode        = slider16;
-pan_spread      = slider17;
-pan_glide_ms    = slider18;
-pan_cycle_steps = slider19;
-pan_sweep_val   = slider20;
-pan_sweep_mode  = slider21;
-pan_sweep_ratio = slider22;
+slider5 != last_start_phase ? (
+  phase_l = slider5 / 360.0;
+  phase_l < 0 ? phase_l += 1;
+  phase_r = phase_l;
+  last_start_phase = slider5;
+);
 
-slider_show(slider16, pan_enabled);
+// ===== PAN BLOCK SLIDER READ START =====
+pan_enabled     = slider16;
+pan_mode        = slider17;
+pan_spread      = slider18;
+pan_glide_ms    = slider19;
+pan_cycle_steps = slider20;
+pan_sweep_val   = slider21;
+pan_sweep_mode  = slider22;
+pan_sweep_ratio = slider23;
+
 slider_show(slider17, pan_enabled);
 slider_show(slider18, pan_enabled);
-slider_show(slider19, pan_enabled && pan_mode >= 1 && pan_mode <= 9);
-slider_show(slider20, pan_enabled && (pan_mode == 10 || pan_mode == 11));
+slider_show(slider19, pan_enabled);
+slider_show(slider20, pan_enabled && pan_mode >= 1 && pan_mode <= 9);
 slider_show(slider21, pan_enabled && (pan_mode == 10 || pan_mode == 11));
-slider_show(slider22, pan_enabled && pan_mode == 12);
+slider_show(slider22, pan_enabled && (pan_mode == 10 || pan_mode == 11));
+slider_show(slider23, pan_enabled && pan_mode == 12);
 // ===== PAN BLOCK SLIDER READ END =====
 
 
@@ -223,26 +212,26 @@ freq_lo      = min(slider1, slider2);
 freq_hi      = max(slider1, slider2);
 rate_val     = slider3;
 rate_mode    = slider4;
-dur_pct      = slider5;
-depth_pct    = slider6 * 0.01;
-att_pct      = slider7;
-rel_pct      = slider8;
-att_shape    = slider9;
-rel_shape    = slider10;
-resonance    = slider11;
-phase_offset = slider12 / 360;
-wet          = slider14;
+dur_pct      = slider6;
+depth_pct    = slider7 * 0.01;
+att_pct      = slider8;
+rel_pct      = slider9;
+att_shape    = slider10;
+rel_shape    = slider11;
+resonance    = slider12;
+phase_offset = slider13 / 360;
+wet          = slider15;
 dry          = 1 - wet;
 
 // ===== PAN BLOCK SAMPLE READ START =====
-pan_enabled     = slider15;
-pan_mode        = slider16;
-pan_spread      = slider17;
-pan_glide_ms    = slider18;
-pan_cycle_steps = slider19;
-pan_sweep_val   = slider20;
-pan_sweep_mode  = slider21;
-pan_sweep_ratio = slider22;
+pan_enabled     = slider16;
+pan_mode        = slider17;
+pan_spread      = slider18;
+pan_glide_ms    = slider19;
+pan_cycle_steps = slider20;
+pan_sweep_val   = slider21;
+pan_sweep_mode  = slider22;
+pan_sweep_ratio = slider23;
 // ===== PAN BLOCK SAMPLE READ END =====
 
 rate_mode == 0 ? (freq = rate_val) :
@@ -257,7 +246,7 @@ rel_secs = (rel_pct / 100.0) * period;
 phase_l += freq / srate;
 phase_l >= 1 ? phase_l -= 1;
 
-slider13 == 0 ? (
+slider14 == 0 ? (
   phase_r += freq / srate;
   phase_r >= 1 ? phase_r -= 1;
 ) : (

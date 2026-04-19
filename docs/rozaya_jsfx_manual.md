@@ -16,9 +16,8 @@
 - [Polyrhythm Phase](#polyrhythm-phase)
 
 **Effects**
-- [Enhanced Sweep Filter](#enhanced-sweep-filter)
-- [Full Feature Sweeping Filter](#full-feature-sweeping-filter)
-- [Segmented Sweeping Filter](#segmented-sweeping-filter)
+- [Resonant Sweeping Filter](#full-feature-sweeping-filter)
+- [Sweep Dwell Filter](#sweep-dwell-filter)
 - [Full Feature Tremolo](#full-feature-tremolo)
 
 **Utilities**
@@ -37,7 +36,7 @@ All plugins in this suite were designed by Rozaya. Code was written by Claude (A
 Several plugins in this suite were developed with reference to existing implementations in common DAW tools. In all cases, the code was written independently â€” no source code was copied or derived from any external implementation. The conceptual influence is acknowledged here:
 
 - **Rhythm Track** â€” rhythmic metronome generation concepts drawn from existing DAW metronome implementations.
-- **Enhanced Sweep Filter**, **Full Feature Sweeping Filter**, and **Segmented Sweeping Filter** â€” filter sweep concepts informed by resonant lowpass filter implementations found in standard DAW effect libraries.
+- **Resonant Sweeping Filter** and **Sweep Dwell Filter** â€” filter sweep concepts informed by resonant lowpass filter implementations found in standard DAW effect libraries.
 - **Full Feature Tremolo** â€” tremolo concepts informed by existing DAW tremolo implementations, substantially expanded with shaped envelopes, stereo phase control, and pan modulation.
 
 The **Heartbeat Generator**, **Womb Sound Generator**, **Breath Generator**, and **Polyrhythm Phase** plugins are original concepts with no direct external inspiration for their architecture or feature sets.
@@ -604,97 +603,6 @@ The per-voice rate offset in Increment mode. Each successive voice's pan rate is
 
 ---
 
-# Enhanced Sweep Filter
-
-**Designed by Rozaya â€” Developed with Claude (Anthropic)**
-
----
-
-## Overview
-
-Enhanced Sweep Filter is a resonant lowpass filter with a shaped LFO controlling the cutoff frequency. Rather than a standard sine or triangle LFO, the sweep uses a hold-high waveform with cosine-faded edges â€” the filter spends most of each cycle at the high cutoff frequency, then drops to the low cutoff with a smooth transition shaped by configurable fade proportions. This produces a different character than a continuously oscillating sweep: the filter opens, holds open, then closes, with the hold time determined by the relationship between the fade percentages and the cycle length.
-
-The plugin processes incoming audio â€” it is not a synthesizer and requires an audio signal to act on.
-
----
-
-## Signal Architecture
-
-The LFO phase advances each sample. Each cycle, the phase moves through three zones: a fade-in region (cutoff rising from low to high), a hold-high region (cutoff at maximum), and a fade-out region (cutoff falling from high to low). The remainder of the cycle is the hold-low region (cutoff at minimum). Both fade transitions use a cosine curve for smooth, non-linear movement.
-
-The resulting cutoff value is mapped linearly between the Low and High frequency bounds and fed into a two-pole resonant lowpass filter (the Cockos state-variable topology) applied identically to both channels. The filter coefficient uses a linear frequency-to-coefficient mapping (`freq * 2 / srate`), so the displayed Hz values correspond directly to standard filter behavior.
-
----
-
-## Parameters
-
-### Filter
-
-**Frequency Low (Hz)** `20-20000 Hz, default 200`
-The cutoff frequency when the LFO is at its minimum â€” the resting state of the filter between sweeps. This is the floor of the sweep range. If set higher than Frequency High, the two values are automatically swapped.
-
-**Frequency High (Hz)** `20-20000 Hz, default 2000`
-The cutoff frequency when the LFO is at its peak â€” the open state of the filter during the hold-high region. This is the ceiling of the sweep range.
-
-**Resonance** `0.0-0.95, default 0.8`
-Resonance of the lowpass filter. Higher values add a pronounced peak at the cutoff frequency, emphasizing the frequency at which the filter is operating at any given moment. At high values the sweep becomes more tonally distinct and whistling. Values approaching 0.95 can produce self-oscillation on some material â€” use deliberately.
-
----
-
-### LFO
-
-**Rate Mode** `BPM / Hz / Seconds`
-Sets how the Rate Value is interpreted.
-
-- **BPM** â€” cycles per minute. At 60 BPM, one full sweep cycle takes one second.
-- **Hz** â€” cycles per second. At 1 Hz, one full sweep cycle takes one second.
-- **Seconds** â€” period of one full cycle in seconds. At 1.0, one full sweep cycle takes one second.
-
-All three modes produce the same range of speeds; the choice is a matter of what unit is most natural for the context.
-
-**Rate Value** `1-300 (BPM), 1-300 (Hz), 0.001-1000 (Seconds), default 60`
-The sweep rate in the units set by Rate Mode. The range shown in REAPER reflects the current mode.
-
-**LFO Start Phase (degrees)** `-180â€“+180 degrees, default 0`
-Sets the initial phase position of the LFO when the plugin is first loaded or when this slider is moved. At 0Â°, the LFO starts at the beginning of the fade-in region (filter closed, about to open). At 180Â°, it starts mid-cycle. This is a set-once control â€” adjusting it repositions the LFO immediately, after which it runs freely from that point. Useful for aligning the sweep to a specific position relative to other material.
-
----
-
-### Sweep Shape
-
-**Fade In %** `0-100%, default 10`
-Percentage of the cycle duration spent in the fade-in transition, where the filter cutoff rises from Low to High using a cosine curve. At 10%, the filter opens over the first tenth of each cycle. At 50% combined with a 50% Fade Out, the hold-high and hold-low regions disappear entirely and the sweep becomes a continuous cosine oscillation between the two frequencies.
-
-**Fade Out %** `0-100%, default 10`
-Percentage of the cycle duration spent in the fade-out transition, where the filter cutoff falls from High to Low. If Fade In % + Fade Out % exceeds 100%, both are proportionally scaled down so their sum equals 100%, eliminating both hold regions.
-
----
-
-## LFO Shape Reference
-
-The relationship between Fade In, Fade Out, and the hold regions determines the overall sweep character:
-
-- **Low fade values (5-15%)** â€” the filter snaps open quickly, holds open for most of the cycle, then snaps closed. Produces a rhythmic, pulsing open-filter effect.
-- **Equal moderate values (25-35%)** â€” roughly equal time opening, open, closing, closed. A balanced sweep.
-- **High fade values (45-50% each)** â€” the hold regions shrink or disappear. At 50%/50% the waveform becomes a pure cosine oscillation with no hold time at either extreme.
-- **Asymmetric values** â€” e.g., fast fade-in (5%) and slow fade-out (40%) â€” the filter snaps open and closes slowly, or vice versa.
-
----
-
-## Usage Notes
-
-- **The filter is identical on both channels.** There is no stereo width or per-channel variation â€” L and R receive the same cutoff value at every sample. For stereo width in the sweep, layer two instances with offset start phases or slightly different rates.
-- **Resonance near maximum can cause clipping** on loud or transient-heavy input material. Lower the resonance or reduce input level if clipping occurs.
-- **The LFO Start Phase slider repositions the LFO on any change.** It is not a phase offset that applies at cycle boundaries â€” moving it mid-playback will cause an immediate phase jump. Set it before playback or use it as a one-time alignment tool.
-
----
-
-*Enhanced Sweep Filter is part of the Rozaya JSFX plugin suite.*
-*Designed by Rozaya â€” Developed with Claude (Anthropic)*
-
-
----
-
 # Full Feature Sweeping Filter
 
 **Designed by Rozaya â€” Developed with Claude (Anthropic)**
@@ -747,6 +655,9 @@ How Rate Value is interpreted.
 - **Hz** â€” cycles per second.
 - **Seconds** â€” period of one full cycle.
 - **BPM** â€” cycles per minute.
+
+**LFO Start Phase (degrees)** `-180 to +180, default 0`
+Sets the initial phase position of the LFO when the plugin is first loaded or when this slider is moved. At 0, the LFO starts at the beginning of the cycle. This is a set-once control â€” adjusting it repositions both channel phases immediately, after which they run freely from that point. Useful for aligning the filter sweep to a specific position relative to other material or other instances of this plugin.
 
 ---
 
@@ -882,7 +793,7 @@ Speed of pan sweep relative to filter LFO rate, for Linked Sweep only.
 
 ---
 
-# Segmented Sweeping Filter
+# Sweep Dwell Filter
 
 **Designed by Rozaya â€” Developed with Claude (Anthropic)**
 
@@ -890,7 +801,7 @@ Speed of pan sweep relative to filter LFO rate, for Linked Sweep only.
 
 ## Overview
 
-Segmented Sweeping Filter is a resonant lowpass filter driven by a four-segment LFO: a high-dwell period, a shaped fade down to the low frequency, a low-dwell period, and a shaped fade back up. Unlike a rate-based LFO, the cycle duration is determined entirely by the four segment times â€” each segment has its own duration in seconds, and the total cycle length is their sum. The fade transitions have independently selectable curve shapes. A wet/dry mix and an optional pan modulation system complete the feature set.
+Sweep Dwell Filter is a resonant lowpass filter driven by an LFO with four time-based phases: hold at high frequency, sweep down to low, hold at low frequency, and sweep back up. Unlike a rate-based LFO, the cycle duration is determined entirely by the four phase times â€” each phase has its own duration in seconds, and the total cycle length is their sum. The fade transitions have independently selectable curve shapes. A wet/dry mix and an optional pan modulation system complete the feature set.
 
 The plugin processes incoming stereo audio.
 
@@ -898,7 +809,7 @@ The plugin processes incoming stereo audio.
 
 ## Signal Architecture
 
-The LFO phase advances continuously. At any point in the phase, the plugin calculates where in the four-segment sequence it is and outputs a value between 0 (low cutoff) and 1 (high cutoff) accordingly. The fade transitions use configurable curve shapes. The LFO output is mapped linearly to the frequency range, smoothed with a 3 ms lag, and fed into a two-pole resonant lowpass filter per channel. The wet output is blended with the dry signal.
+The LFO phase advances continuously. At any point in the phase, the plugin calculates the current position within the hold-high, sweep-down, hold-low, and sweep-up sequence, and outputs a value between 0 (low cutoff) and 1 (high cutoff) accordingly. The fade transitions use configurable curve shapes. The LFO output is mapped linearly to the frequency range, smoothed with a 3 ms lag, and fed into a two-pole resonant lowpass filter per channel. The wet output is blended with the dry signal.
 
 Left and right channels have independent LFO phases. In **Independent L+R** mode both advance at the same rate, staying in sync. In **Offset from L** mode the right channel phase is continuously derived from the left plus the stereo offset, keeping a stable phase relationship.
 
@@ -922,9 +833,9 @@ Blend between the filtered signal and the unprocessed input. At 1.0 the output i
 
 ---
 
-### LFO Segments
+### Dwell and Transition Times
 
-The LFO cycle consists of four segments in sequence: high dwell â†’ fade down â†’ low dwell â†’ fade up â†’ repeat. The total cycle length is the sum of all four segment durations.
+The LFO cycle consists of four phases in sequence: hold high â†’ sweep down â†’ hold low â†’ sweep up â†’ repeat. The total cycle length is the sum of all four phase durations.
 
 **High Dwell sec** `0.001-60 sec, default 4`
 Duration of the segment where the filter holds at the high cutoff frequency.
@@ -1030,14 +941,14 @@ Pan sweep speed relative to filter cycle, for Linked Sweep only.
 
 ## Usage Notes
 
-- **Cycle length is the sum of all four segment durations.** Unlike rate-based LFOs there is no single BPM or Hz value â€” the tempo of the sweep is a consequence of the four segment times combined.
-- **Adjusting any segment duration takes effect immediately.** The LFO phase is a running 0-1 counter; changing segment durations changes how that phase maps to filter positions without resetting the phase. This means a duration change mid-cycle may cause a jump to a different point in the sweep.
+- **Cycle length is the sum of all four phase durations.** Unlike rate-based LFOs there is no single BPM or Hz value â€” the tempo of the sweep is a consequence of the four phase times combined.
+- **Adjusting any phase duration takes effect immediately.** The LFO phase is a running 0-1 counter; changing phase durations changes how that counter maps to filter positions without resetting it. This means a duration change mid-cycle may cause a jump to a different point in the sweep.
 - **The frequency mapping is linear.** Displayed Hz values correspond directly to filter behavior â€” the same linear mapping used in the other filter plugins in this suite.
 - **Phase Offset only takes effect in Offset from L mode.** In Independent L+R mode the offset slider has no audible effect.
 
 ---
 
-*Segmented Sweeping Filter is part of the Rozaya JSFX plugin suite.*
+*Sweep Dwell Filter is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya â€” Developed with Claude (Anthropic)*
 
 
