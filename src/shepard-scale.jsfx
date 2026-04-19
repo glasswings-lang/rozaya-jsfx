@@ -1,0 +1,352 @@
+desc: Shepard Scale Generator
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// A Shepard scale sequencer. Steps through up to 12 chromatic notes (C-B).
+// Each note triggers a stack of octave-spaced oscillators. The pitch window
+// is exactly as wide as the Octave Count — so each layer is always exactly
+// one octave apart and the bell shaping is always consistent. Together this
+// creates the Shepard scale illusion — each note sounds higher than the last,
+// but after 12 steps you're back where you started.
+//
+// SKIP vs REST:
+//   Skip — inactive notes are skipped; sequence jumps to next active note.
+//   Rest — inactive notes hold silence for their full beat duration.
+//
+// ENVELOPE:
+//   Attack and Release shape each note's volume over its beat. The envelope
+//   runs continuously from the beat phase — no abrupt resets, no clicks.
+//
+// CONTROLS:
+//   BPM            — Tempo.
+//   Direction      — Ascending (C to B) or descending (B to C).
+//   Inactive Notes — Skip or Rest behavior.
+//   Attack %       — Fraction of beat spent fading in.
+//   Release %      — Fraction of beat spent fading out.
+//   Note Length %  — How much of each beat the note occupies before silence.
+//   Octave Count   — How many octave layers stack per note (2-12), and how
+//                    wide the pitch window is. These are the same thing.
+//   Center Octave  — Which octave sits at the middle of the stack.
+//   Waveform       — Sine is cleanest for the illusion.
+//   Binaural Beat  — Right channel Hz offset.
+//   Tuning Ref     — A4 reference frequency.
+//
+// PER NOTE (C through B):
+//   Active  — Always visible. Gain and Pan hide when off.
+//   Gain dB — Volume of this note.
+//   Pan     — Stereo position.
+
+// ===== GLOBAL CONTROLS =====
+slider1:120<10,300,0.1>BPM
+slider2:0<0,1,1{Asc,Desc}>Direction
+slider3:0<0,1,1{Skip,Rest}>Inactive Notes
+slider4:10<0,100,0.1>Attack %
+slider5:10<0,100,0.1>Release %
+slider6:100<1,100,0.1>Note Length %
+slider7:8<2,12,1>Octave Count
+slider8:4<0,8,1>Center Octave
+slider9:0<0,5,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS}>Waveform
+slider10:0<0,100,0.1>Binaural Beat Hz
+slider11:440<400,480,0.1>Tuning Reference Hz
+
+// ===== NOTES — C through B (3 sliders each: Active, Gain dB, Pan) =====
+slider12:1<0,1,1{Off,On}>C Active
+slider13:0<-60,6,0.1>C Gain dB
+slider14:0<-100,100,0.1>C Pan
+
+slider15:1<0,1,1{Off,On}>C# Active
+slider16:0<-60,6,0.1>C# Gain dB
+slider17:0<-100,100,0.1>C# Pan
+
+slider18:1<0,1,1{Off,On}>D Active
+slider19:0<-60,6,0.1>D Gain dB
+slider20:0<-100,100,0.1>D Pan
+
+slider21:1<0,1,1{Off,On}>D# Active
+slider22:0<-60,6,0.1>D# Gain dB
+slider23:0<-100,100,0.1>D# Pan
+
+slider24:1<0,1,1{Off,On}>E Active
+slider25:0<-60,6,0.1>E Gain dB
+slider26:0<-100,100,0.1>E Pan
+
+slider27:1<0,1,1{Off,On}>F Active
+slider28:0<-60,6,0.1>F Gain dB
+slider29:0<-100,100,0.1>F Pan
+
+slider30:1<0,1,1{Off,On}>F# Active
+slider31:0<-60,6,0.1>F# Gain dB
+slider32:0<-100,100,0.1>F# Pan
+
+slider33:1<0,1,1{Off,On}>G Active
+slider34:0<-60,6,0.1>G Gain dB
+slider35:0<-100,100,0.1>G Pan
+
+slider36:1<0,1,1{Off,On}>G# Active
+slider37:0<-60,6,0.1>G# Gain dB
+slider38:0<-100,100,0.1>G# Pan
+
+slider39:1<0,1,1{Off,On}>A Active
+slider40:0<-60,6,0.1>A Gain dB
+slider41:0<-100,100,0.1>A Pan
+
+slider42:1<0,1,1{Off,On}>A# Active
+slider43:0<-60,6,0.1>A# Gain dB
+slider44:0<-100,100,0.1>A# Pan
+
+slider45:1<0,1,1{Off,On}>B Active
+slider46:0<-60,6,0.1>B Gain dB
+slider47:0<-100,100,0.1>B Pan
+
+
+@init
+PHI = 1.6180339887;
+NUM_OSC = 12; // max octave layers per note
+
+// Memory: note 0-11, osc 0-11 → index = note * NUM_OSC + osc (max 144 slots)
+osc_freq    = 0;   // 0-143:   fixed frequency per oscillator
+osc_phase_l = 144; // 144-287: oscillator phase left
+osc_phase_r = 288; // 288-431: oscillator phase right
+osc_gain    = 432; // 432-575: smoothed gain per oscillator
+
+// Per-note (12 slots each)
+n_active    = 576; // 576-587
+n_gain_lin  = 588; // 588-599
+n_pan       = 600; // 600-611
+n_root      = 612; // 612-623: root Hz for each note
+n_env       = 624; // 624-635: per-note envelope gain (smoothed)
+
+// Sequencer state
+seq_pos   = 0;   // current note index 0-11
+seq_phase = 0.0; // position in current beat 0-1
+
+smooth_gain = 0; // set in @slider
+needs_init   = 1;
+last_num_osc = 0;
+last_center  = -1;
+last_tuning  = -1;
+
+i = 0;
+loop(12, n_env[i] = 0; i += 1;);
+
+i = 0;
+loop(144,
+  osc_freq[i]    = 1; // 1Hz placeholder — avoids log(0)
+  osc_phase_l[i] = 0;
+  osc_phase_r[i] = 0;
+  osc_gain[i]    = 0;
+  i += 1;
+);
+
+function note_to_hz(semitone, oct, tref) (
+  // semitone 0=C ... 11=B, oct=octave number, tref=A4 Hz
+  tref * pow(2, (oct * 12 + semitone - 57) / 12.0)
+);
+
+function wave_sample(ph) (
+  waveform == 0 ? sin(ph * 2 * $pi) :
+  waveform == 1 ? (ph < 0.25 ? ph*4 : ph < 0.75 ? 2-ph*4 : ph*4-4) :
+  waveform == 2 ? (ps = ph+0.5; ps-=floor(ps); ps*2-1) :
+  waveform == 3 ? (
+    pg = ph<(1/PHI) ? ph*PHI*0.5 : 0.5+(ph-1/PHI)/(1-1/PHI)*0.5;
+    sin(pg*2*$pi)
+  ) :
+  waveform == 4 ? (
+    pg = (sin((ph-0.25)*2*$pi)+1)*0.5;
+    pg = pg<(1/PHI) ? pg*PHI*0.5 : 0.5+(pg-1/PHI)/(1-1/PHI)*0.5;
+    sin(pg*2*$pi)
+  ) : (
+    pg = ph+(1/PHI)*sin(ph*2*$pi)/(2*$pi); pg-=floor(pg); sin(pg*2*$pi)
+  )
+);
+
+// Bell gain: cosine rolloff centered on center_freq.
+// half_width_oct is half the total window width in octaves (== num_osc / 2).
+function bell_gain(f, f_center, half_width_oct) (
+  dist = (log(f) - log(f_center)) / log(2);
+  abs(dist) >= half_width_oct ? 0 :
+  0.5 + 0.5 * cos(dist / half_width_oct * $pi)
+);
+
+// Beat envelope: cosine attack/release over beat phase 0-1
+function beat_env(ph, att, rel) (
+  att + rel > 1.0 ? (t = att+rel; att/=t; rel/=t;);
+  ph < att ? (att > 0 ? 0.5 - 0.5*cos(ph/att*$pi) : 1) :
+  ph > (1-rel) ? (rel > 0 ? 0.5 - 0.5*cos((1-ph)/rel*$pi) : 0) :
+  1
+);
+
+// Initialize oscillator frequencies for all 12 notes.
+// Window is exactly num_osc octaves wide centered on center_freq.
+// Each note gets num_osc oscillators at exact octave steps, starting from
+// the octave of the root nearest to center_freq.
+function init_oscs() (
+  n = 0;
+  loop(12,
+    root = n_root[n];
+    // Find octave of root nearest to center_freq
+    center_oct_offset = floor(log(center_freq / root) / log(2) + 0.5);
+    root_near_center  = root * pow(2, center_oct_offset);
+
+    // Place oscillators at exact octave steps above root_near_center,
+    // wrapping back down when they exceed the window top.
+    // Window == num_osc octaves wide, so wrap is always exact.
+    o = 0;
+    loop(NUM_OSC,
+      oi = n * NUM_OSC + o;
+      o < num_osc ? (
+        f = root_near_center * pow(2, o);
+        f > pitch_hi ? f *= pitch_lo / pitch_hi;
+      ) : (
+        f = root_near_center; // park extra slots — osc_gain stays 0
+      );
+      osc_freq[oi]    = f;
+      osc_phase_l[oi] = 0;
+      osc_phase_r[oi] = 0;
+      osc_gain[oi]    = 0;
+      o += 1;
+    );
+    n += 1;
+  );
+);
+
+
+@slider
+
+bpm           = slider1;
+direction     = slider2;
+skip_mode     = slider3;
+attack_frac   = slider4 / 100.0;
+release_frac  = slider5 / 100.0;
+note_len_frac = slider6 / 100.0;
+num_osc       = max(2, min(12, floor(slider7 + 0.5)));
+center_oct    = floor(slider8 + 0.5);
+waveform      = slider9;
+binaural_hz   = slider10;
+tuning_ref    = slider11;
+
+// Pitch window: exactly num_osc octaves wide, centered on C in center_oct.
+// Using C as anchor so the octave grid aligns with the chromatic root grid (C-B).
+// Window width == num_osc means spacing is always exactly 1 octave.
+center_freq = tuning_ref * pow(2, (center_oct * 12 - 57) / 12.0); // C4=261.63 at oct=4
+half_width  = num_osc * 0.5;
+pitch_lo    = center_freq * pow(2, -half_width);
+pitch_hi    = center_freq * pow(2,  half_width);
+
+beat_hz = bpm / 60.0;
+
+// Smooth constant for osc gain changes (~5ms)
+smooth_gain = exp(-1 / (srate * 0.005));
+
+// Read per-note sliders
+n = 0;
+loop(12,
+  base = 12 + n * 3;
+  n_active[n]   = slider(base);
+  n_gain_lin[n] = pow(10, slider(base + 1) / 20.0);
+  n_pan[n]      = slider(base + 2);
+  // Roots at octave 4 — bell centers on center_oct via center_freq
+  n_root[n]     = note_to_hz(n, 4, tuning_ref);
+  // Show gain and pan only when active
+  slider_show(base + 1, n_active[n]);
+  slider_show(base + 2, n_active[n]);
+  n += 1;
+);
+
+// Reinit when oscillator layout needs to change
+(num_osc != last_num_osc || center_oct != last_center || tuning_ref != last_tuning) ? (
+  needs_init   = 1;
+  last_num_osc = num_osc;
+  last_center  = center_oct;
+  last_tuning  = tuning_ref;
+);
+
+
+@sample
+
+needs_init ? (
+  init_oscs();
+  needs_init = 0;
+);
+
+// Advance beat phase
+seq_phase += beat_hz / srate;
+
+// On beat boundary: advance sequencer to next note
+seq_phase >= 1.0 ? (
+  seq_phase -= 1.0;
+
+  direction == 0 ? (
+    next = (seq_pos + 1) % 12;
+    skip_mode == 0 ? (
+      tries = 0;
+      loop(12,
+        tries < 12 && !n_active[next] ? (next = (next+1)%12; tries+=1;);
+      );
+    );
+  ) : (
+    next = (seq_pos + 11) % 12;
+    skip_mode == 0 ? (
+      tries = 0;
+      loop(12,
+        tries < 12 && !n_active[next] ? (next = (next+11)%12; tries+=1;);
+      );
+    );
+  );
+  seq_pos = next;
+);
+
+cur = seq_pos;
+out_l = 0;
+out_r = 0;
+
+n = 0;
+loop(12,
+  // Envelope target: current active note gets beat shape, all others decay to 0
+  n == cur && n_active[cur] ? (
+    seq_phase < note_len_frac ? (
+      env_target = beat_env(seq_phase / note_len_frac, attack_frac, release_frac);
+    ) : (
+      env_target = 0;
+    );
+  ) : (
+    env_target = 0;
+  );
+
+  // Smooth envelope — no resets, no clicks
+  n_env[n] = n_env[n] * smooth_gain + env_target * (1 - smooth_gain);
+
+  n_env[n] > 0.0001 ? (
+    pan_val   = n_pan[n] / 100.0;
+    pan_l_amt = cos((pan_val + 1) * 0.25 * $pi);
+    pan_r_amt = sin((pan_val + 1) * 0.25 * $pi);
+
+    o = 0;
+    loop(num_osc,
+      oi = n * NUM_OSC + o;
+
+      bg = bell_gain(osc_freq[oi], center_freq, half_width);
+      target_gain = bg * n_gain_lin[n] * n_env[n];
+      osc_gain[oi] = osc_gain[oi] * smooth_gain + target_gain * (1 - smooth_gain);
+
+      osc_phase_l[oi] += osc_freq[oi] / srate;
+      osc_phase_l[oi] >= 1 ? osc_phase_l[oi] -= 1;
+      osc_phase_r[oi] += (osc_freq[oi] + binaural_hz) / srate;
+      osc_phase_r[oi] >= 1 ? osc_phase_r[oi] -= 1;
+
+      out_l += wave_sample(osc_phase_l[oi]) * osc_gain[oi] * pan_l_amt;
+      out_r += wave_sample(osc_phase_r[oi]) * osc_gain[oi] * pan_r_amt;
+
+      o += 1;
+    );
+  );
+
+  n += 1;
+);
+
+// Normalize by oscillator count. Gain smoothing handles crossfade level.
+norm = 1.0 / max(num_osc, 1);
+spl0 = out_l * norm;
+spl1 = out_r * norm;

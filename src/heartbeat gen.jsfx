@@ -1,0 +1,252 @@
+desc: Heartbeat Generator
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+
+slider1:70<20,200,1>BPM
+slider2:120<50,400,1>Systole ms (S1->S2 gap)
+slider3:1.0<0.0,1.0,0.01>S1 Volume
+slider4:0.7<0.0,1.0,0.01>S2 Volume
+slider5:0.3<0.0,1.0,0.01>Brightness
+slider6:60<10,200,1>S1 Decay ms
+slider7:25<5,100,1>S2 Decay ms
+slider8:45<20,120,1>S1 Frequency Hz
+slider9:120<60,300,1>S2 Frequency Hz
+slider10:3.0<-15.0,15.0,0.1>Stereo Width ms (neg = heart right)
+slider11:6.0<1.0,30.0,0.1>Breath Cycle Seconds
+slider12:0.08<0.0,0.25,0.01>Breath HRV Depth
+slider13:0.02<0.0,0.08,0.005>Random HRV Depth
+
+@init
+srate_inv = 1.0 / srate;
+two_pi = 2.0 * $pi;
+
+s1_freq = 45.0;
+s2_freq = 120.0;
+s1_phase_osc_near = 0; s1_phase_osc_far = 0;
+s2_phase_osc_near = 0; s2_phase_osc_far = 0;
+
+cycle_len_base = floor(srate * 60.0 / 70.0);
+cycle_len = cycle_len_base;
+systole_samples = floor(srate * 120.0 * 0.001);
+s1_vol = 1.0;
+s2_vol = 0.7;
+s1_decay = exp(-srate_inv / 0.060);
+s2_decay = exp(-srate_inv / 0.025);
+s1_attack_rate = exp(-srate_inv / 0.008);
+s2_attack_rate = exp(-srate_inv / 0.004);
+
+delay_buf_size = 4096;
+memset(0, 0, delay_buf_size);
+delay_write = 0;
+delay_samples = floor(srate * 0.003);
+delay_sign = 1;
+
+phase = 0;
+s1_active = 1; s2_active = 0;
+s1_env = 1.0; s2_env = 0;
+s1_attack_phase = 0; s2_attack_phase = 0;
+
+breath_phase = 0.0;
+breath_rate = two_pi / (6.0 * srate);
+breath_depth = 0.08;
+
+rand_hrv = 0.0;
+rand_hrv_target = 0.0;
+rand_hrv_depth = 0.02;
+rand_hrv_step = 0;
+rand_hrv_step_len = floor(srate * 5.0);
+rand_hrv_slew = exp(-srate_inv / 3.0);
+hrv_seed = 99999;
+
+s1_res_f_near = min(2.0 * sin($pi * 50.0 * srate_inv), 0.98);
+s1_res_q_near = 2.8;
+s1_res_low_near = 0; s1_res_band_near = 0;
+s2_res_f_near = min(2.0 * sin($pi * 138.0 * srate_inv), 0.98);
+s2_res_q_near = 2.0;
+s2_res_low_near = 0; s2_res_band_near = 0;
+lp_f_near = min(2.0 * sin($pi * 200.0 * srate_inv), 0.98);
+lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
+
+s1_res_f_far = min(2.0 * sin($pi * 58.0 * srate_inv), 0.98);
+s1_res_q_far = 2.2;
+s1_res_low_far = 0; s1_res_band_far = 0;
+s2_res_f_far = min(2.0 * sin($pi * 150.0 * srate_inv), 0.98);
+s2_res_q_far = 1.6;
+s2_res_low_far = 0; s2_res_band_far = 0;
+lp_f_far = min(2.0 * sin($pi * 175.0 * srate_inv), 0.98);
+lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
+
+lp_q = 0.5;
+
+noise_seed = 12345;
+noise_seed2 = 67890;
+
+@slider
+cycle_len_base = floor(srate * 60.0 / slider1);
+systole_samples = floor(srate * slider2 * 0.001);
+s1_vol = slider3;
+s2_vol = slider4;
+s1_freq = slider8;
+s2_freq = slider9;
+
+breath_rate = two_pi / (slider11 * srate);
+breath_depth = slider12;
+rand_hrv_depth = slider13;
+
+s1_center_near = slider8 * 1.1;
+s2_center_near = slider9 * 1.15;
+s1_center_far = slider8 * 1.28;
+s2_center_far = slider9 * 1.25;
+lp_cutoff_near = 200.0 + slider5 * 250.0;
+lp_cutoff_far = 175.0 + slider5 * 220.0;
+
+s1_res_f_near = min(2.0 * sin($pi * s1_center_near * srate_inv), 0.98);
+s2_res_f_near = min(2.0 * sin($pi * s2_center_near * srate_inv), 0.98);
+lp_f_near = min(2.0 * sin($pi * lp_cutoff_near * srate_inv), 0.98);
+s1_res_f_far = min(2.0 * sin($pi * s1_center_far * srate_inv), 0.98);
+s2_res_f_far = min(2.0 * sin($pi * s2_center_far * srate_inv), 0.98);
+lp_f_far = min(2.0 * sin($pi * lp_cutoff_far * srate_inv), 0.98);
+
+s1_decay = exp(-srate_inv / (slider6 * 0.001));
+s2_decay = exp(-srate_inv / (slider7 * 0.001));
+
+delay_samples = floor(srate * abs(slider10) * 0.001);
+delay_samples = min(delay_samples, delay_buf_size - 1);
+new_sign = slider10 >= 0 ? 1 : -1;
+new_sign != delay_sign ? (
+  s1_res_low_near = 0; s1_res_band_near = 0;
+  s2_res_low_near = 0; s2_res_band_near = 0;
+  lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
+  s1_res_low_far = 0; s1_res_band_far = 0;
+  s2_res_low_far = 0; s2_res_band_far = 0;
+  lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
+  memset(0, 0, delay_buf_size);
+);
+delay_sign = new_sign;
+
+@sample
+
+breath_phase += breath_rate;
+breath_phase > two_pi ? breath_phase -= two_pi;
+breath_mod = sin(breath_phase) * breath_depth;
+
+rand_hrv_step += 1;
+rand_hrv_step >= rand_hrv_step_len ? (
+  rand_hrv_step = 0;
+  hrv_seed = (hrv_seed * 1664525 + 1013904223) & 0xFFFFFFFF;
+  rand_hrv_target = ((hrv_seed - 0x80000000) * (1.0 / 2147483648.0)) * rand_hrv_depth;
+);
+rand_hrv += (rand_hrv_target - rand_hrv) * (1.0 - rand_hrv_slew);
+
+cycle_len = floor(cycle_len_base * (1.0 - breath_mod + rand_hrv));
+cycle_len = max(cycle_len, floor(srate * 60.0 / 200.0));
+
+phase += 1;
+phase >= cycle_len ? (
+  phase = 0;
+  s1_active = 1;
+  s1_env = 0.0;
+  s1_attack_phase = 1;
+);
+
+phase == systole_samples ? (
+  s2_active = 1;
+  s2_env = 0.0;
+  s2_attack_phase = 1;
+);
+
+noise_seed = (noise_seed * 1664525 + 1013904223) & 0xFFFFFFFF;
+n = (noise_seed - 0x80000000) * (1.0 / 2147483648.0);
+noise_seed2 = (noise_seed2 * 22695477 + 1) & 0xFFFFFFFF;
+n2 = (noise_seed2 - 0x80000000) * (1.0 / 2147483648.0);
+
+s1_active ? (
+  s1_attack_phase ? (
+    s1_env += (1.0 - s1_env) * (1.0 - s1_attack_rate);
+    s1_env >= 0.98 ? s1_attack_phase = 0;
+  ) : (
+    s1_env *= s1_decay;
+    s1_env < 0.0001 ? s1_active = 0;
+  );
+) : 0;
+
+s2_active ? (
+  s2_attack_phase ? (
+    s2_env += (1.0 - s2_env) * (1.0 - s2_attack_rate);
+    s2_env >= 0.98 ? s2_attack_phase = 0;
+  ) : (
+    s2_env *= s2_decay;
+    s2_env < 0.0001 ? s2_active = 0;
+  );
+) : 0;
+
+s1_phase_osc_near += two_pi * s1_freq * srate_inv;
+s1_phase_osc_near > two_pi ? s1_phase_osc_near -= two_pi;
+s2_phase_osc_near += two_pi * s2_freq * srate_inv;
+s2_phase_osc_near > two_pi ? s2_phase_osc_near -= two_pi;
+s1_phase_osc_far += two_pi * (s1_freq * 1.003) * srate_inv;
+s1_phase_osc_far > two_pi ? s1_phase_osc_far -= two_pi;
+s2_phase_osc_far += two_pi * (s2_freq * 0.997) * srate_inv;
+s2_phase_osc_far > two_pi ? s2_phase_osc_far -= two_pi;
+
+s1_active ? (
+  s1_res_low_near += s1_res_f_near * s1_res_band_near;
+  s1_res_high_near = (sin(s1_phase_osc_near)*0.8 + n*0.2) - s1_res_low_near - s1_res_q_near * s1_res_band_near;
+  s1_res_band_near += s1_res_f_near * s1_res_high_near;
+  s1_out_near = s1_res_band_near * s1_env * s1_env * 2.0 * s1_vol;
+) : s1_out_near = 0;
+
+s2_active ? (
+  s2_res_low_near += s2_res_f_near * s2_res_band_near;
+  s2_res_high_near = (sin(s2_phase_osc_near)*0.5 + n*0.5) - s2_res_low_near - s2_res_q_near * s2_res_band_near;
+  s2_res_band_near += s2_res_f_near * s2_res_high_near;
+  s2_out_near = s2_res_band_near * s2_env * s2_env * s2_vol;
+) : s2_out_near = 0;
+
+raw_near = s1_out_near + s2_out_near;
+lp_low_near += lp_f_near * lp_band_near;
+lp_high_near = raw_near - lp_low_near - lp_q * lp_band_near;
+lp_band_near += lp_f_near * lp_high_near;
+lp_low2_near += lp_f_near * lp_band2_near;
+lp_high2_near = lp_low_near - lp_low2_near - lp_q * lp_band2_near;
+lp_band2_near += lp_f_near * lp_high2_near;
+heart_near = lp_low2_near * 1.5;
+
+s1_active ? (
+  s1_res_low_far += s1_res_f_far * s1_res_band_far;
+  s1_res_high_far = (sin(s1_phase_osc_far)*0.8 + n2*0.2) - s1_res_low_far - s1_res_q_far * s1_res_band_far;
+  s1_res_band_far += s1_res_f_far * s1_res_high_far;
+  s1_out_far = s1_res_band_far * s1_env * s1_env * 2.0 * s1_vol;
+) : s1_out_far = 0;
+
+s2_active ? (
+  s2_res_low_far += s2_res_f_far * s2_res_band_far;
+  s2_res_high_far = (sin(s2_phase_osc_far)*0.5 + n2*0.5) - s2_res_low_far - s2_res_q_far * s2_res_band_far;
+  s2_res_band_far += s2_res_f_far * s2_res_high_far;
+  s2_out_far = s2_res_band_far * s2_env * s2_env * s2_vol;
+) : s2_out_far = 0;
+
+raw_far = s1_out_far + s2_out_far;
+lp_low_far += lp_f_far * lp_band_far;
+lp_high_far = raw_far - lp_low_far - lp_q * lp_band_far;
+lp_band_far += lp_f_far * lp_high_far;
+lp_low2_far += lp_f_far * lp_band2_far;
+lp_high2_far = lp_low_far - lp_low2_far - lp_q * lp_band2_far;
+lp_band2_far += lp_f_far * lp_high2_far;
+heart_far_now = lp_low2_far * 1.5;
+
+delay_write_pos = delay_write & (delay_buf_size - 1);
+delay_read_pos = (delay_write - delay_samples) & (delay_buf_size - 1);
+delay_write_pos[0] = heart_far_now;
+heart_far = delay_read_pos[0];
+delay_write = (delay_write + 1) & (delay_buf_size - 1);
+
+delay_sign == 1 ? (
+  spl0 = heart_near;
+  spl1 = heart_far;
+) : (
+  spl0 = heart_far;
+  spl1 = heart_near;
+);

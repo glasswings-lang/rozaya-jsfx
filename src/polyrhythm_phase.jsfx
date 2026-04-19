@@ -1,0 +1,403 @@
+desc: Binaural Polyrhythm Oscillator with Tremolo and Pan Modulation
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+
+// ===== GLOBAL CONTROLS =====
+slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
+slider2:0<0,2,1{BPM,Seconds,Hz}>Rate Mode
+slider3:60<0.001,1000,0.001>Rate Value (Drift only)
+slider4:4<0,100,0.1>Binaural Beat Hz (L/R offset)
+slider5:100<0,100,0.1>On Duration % of Cycle
+slider6:0<0,100,0.1>Attack % of Cycle
+slider7:100<0,100,0.1>Release % of Cycle
+slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
+slider9:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
+slider10:-6<-60,0,0.1>Depth dB
+slider11:440<400,480,0.1>Tuning Reference Hz
+
+// ===== BASE PITCH =====
+slider12:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Base Note
+slider13:4<0,8,1>Center Octave
+
+// ===== WAVEFORM =====
+slider14:0<0,5,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS}>Waveform
+
+// ===== PAN =====
+slider15:0<0,1,1{Off,On}>Pan Enabled
+slider16:0<0,1,1{Tremolo,Increment}>Pan Mode
+slider17:100<0,100,0.1>Pan Spread %
+slider18:60<0.001,1000,0.001>Pan Base Rate
+slider19:0<-1000,1000,0.001>Pan Increment per Voice
+
+// ===== VOICE 1 =====
+// Note: Active toggles bypass oscillator computation entirely.
+// On modern hardware this makes no audible difference; on older machines,
+// disabling unused voices reduces CPU load. Gain at -60 dB is effectively
+// silent but still costs CPU. Use Active=Off to fully cut a voice.
+//
+// Phase Offset unit follows Rate Mode: BPM = beats, Seconds = seconds, Hz = cycles.
+// Values wrap freely — there is no clamping. Voice 1 default is 0 (no offset).
+slider20:-6<-60,6,0.1>V1 Gain dB
+slider21:0<-1000,1000,1>V1 Semitones
+slider22:0<-1000,1000,0.001>V1 Drift / Rate
+slider23:0<-1000,1000,0.001>V1 Phase Offset
+slider24:1<0,1,1{Off,On}>V1 Active (Off = no CPU cost)
+
+// ===== VOICE 2 =====
+slider25:-60<-60,6,0.1>V2 Gain dB
+slider26:0<-1000,1000,1>V2 Semitones
+slider27:0<-1000,1000,0.001>V2 Drift / Rate
+slider28:0<-1000,1000,0.001>V2 Phase Offset
+slider29:1<0,1,1{Off,On}>V2 Active (Off = no CPU cost)
+
+// ===== VOICE 3 =====
+slider30:-60<-60,6,0.1>V3 Gain dB
+slider31:0<-1000,1000,1>V3 Semitones
+slider32:0<-1000,1000,0.001>V3 Drift / Rate
+slider33:0<-1000,1000,0.001>V3 Phase Offset
+slider34:0<0,1,1{Off,On}>V3 Active (Off = no CPU cost)
+
+// ===== VOICE 4 =====
+slider35:-60<-60,6,0.1>V4 Gain dB
+slider36:0<-1000,1000,1>V4 Semitones
+slider37:0<-1000,1000,0.001>V4 Drift / Rate
+slider38:0<-1000,1000,0.001>V4 Phase Offset
+slider39:0<0,1,1{Off,On}>V4 Active (Off = no CPU cost)
+
+// ===== VOICE 5 =====
+slider40:-60<-60,6,0.1>V5 Gain dB
+slider41:0<-1000,1000,1>V5 Semitones
+slider42:0<-1000,1000,0.001>V5 Drift / Rate
+slider43:0<-1000,1000,0.001>V5 Phase Offset
+slider44:0<0,1,1{Off,On}>V5 Active (Off = no CPU cost)
+
+// ===== VOICE 6 =====
+slider45:-60<-60,6,0.1>V6 Gain dB
+slider46:0<-1000,1000,1>V6 Semitones
+slider47:0<-1000,1000,0.001>V6 Drift / Rate
+slider48:0<-1000,1000,0.001>V6 Phase Offset
+slider49:0<0,1,1{Off,On}>V6 Active (Off = no CPU cost)
+
+// ===== VOICE 7 =====
+slider50:-60<-60,6,0.1>V7 Gain dB
+slider51:0<-1000,1000,1>V7 Semitones
+slider52:0<-1000,1000,0.001>V7 Drift / Rate
+slider53:0<-1000,1000,0.001>V7 Phase Offset
+slider54:0<0,1,1{Off,On}>V7 Active (Off = no CPU cost)
+
+// ===== VOICE 8 =====
+slider55:-60<-60,6,0.1>V8 Gain dB
+slider56:0<-1000,1000,1>V8 Semitones
+slider57:0<-1000,1000,0.001>V8 Drift / Rate
+slider58:0<-1000,1000,0.001>V8 Phase Offset
+slider59:0<0,1,1{Off,On}>V8 Active (Off = no CPU cost)
+
+
+@init
+PHI = 1.6180339887;
+
+// Memory layout — 16 slots each
+osc_phase_l  = 0;
+osc_phase_r  = 16;
+trem_phase   = 32;
+gain_l       = 48;
+gain_r       = 64;
+v_freq_l     = 80;
+v_freq_r     = 96;
+v_trem_freq  = 112;
+v_active     = 128;
+v_semitones  = 144;
+v_dr         = 160;  // Drift (Drift mode) or Rate (Independent mode)
+pan_phase    = 176;
+pan_smooth   = 192;
+v_pan_freq   = 208;
+v_gain       = 224;
+v_phase_off      = 240;  // Phase offset, stored as raw slider value (unit = Rate Mode unit)
+v_phase_off_last = 256;  // Last known offset per voice — used to detect live changes
+
+i = 0;
+loop(8,
+  osc_phase_l[i] = 0;
+  osc_phase_r[i] = 0;
+  trem_phase[i]  = 0;
+  gain_l[i]      = 1;
+  gain_r[i]      = 1;
+  pan_smooth[i]  = 0;
+  v_gain[i]      = 1;
+  v_phase_off[i]      = 0;
+  v_phase_off_last[i] = 0;
+  i += 1;
+);
+
+smooth = exp(-1 / (srate * 0.003));
+last_play_state = 0;
+
+function semitones_to_hz(base_note, center_octave, semitones) (
+  tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
+);
+
+function apply_curve(t, shape) (
+  shape == 0 ? t :
+  shape == 1 ? (0.5 - 0.5 * cos(t * $pi)) :
+  shape == 2 ? (log(1 + 9*t) / log(10)) :
+               ((pow(10, t) - 1) / 9)
+);
+
+function calc_lfo(ph, on_frac, att_frac, rel_frac, att_shape, rel_shape)
+local(aw, rw, hold_w, re_start, t, result, total) (
+  aw = att_frac;
+  rw = rel_frac;
+  aw + rw > on_frac ? (
+    total = aw + rw;
+    aw = aw / total * on_frac;
+    rw = rw / total * on_frac;
+  );
+  hold_w   = on_frac - aw - rw;
+  re_start = aw + hold_w;
+  ph < aw ? (
+    aw > 0.0001 ? (
+      t = ph / aw;
+      result = apply_curve(t, att_shape);
+    ) : (result = 1);
+  ) :
+  ph < re_start ? (
+    result = 1;
+  ) :
+  ph < on_frac ? (
+    rw > 0.0001 ? (
+      t = 1 - (ph - re_start) / rw;
+      result = apply_curve(t, rel_shape);
+    ) : (result = 0);
+  ) : (
+    result = 0;
+  );
+  result
+);
+
+function rate_to_hz(raw_rate, rmode) (
+  rmode == 0 ? max(raw_rate, 0.001) / 60 :
+  rmode == 1 ? 1 / max(raw_rate, 0.001) :
+               max(raw_rate, 0.001)
+);
+
+@slider
+
+trem_mode     = slider1;
+rate_mode     = slider2;
+rate_val      = slider3;
+bin_beat_hz   = slider4;
+on_dur_pct    = slider5;
+att_pct       = slider6;
+rel_pct       = slider7;
+att_shape     = slider8;
+rel_shape     = slider9;
+depth_db      = slider10;
+tuning_ref    = slider11;
+base_note     = slider12;
+center_octave = slider13;
+waveform      = slider14;
+pan_enabled   = slider15;
+pan_mode      = slider16;
+pan_spread    = slider17 / 100.0;
+pan_base_rate = slider18;
+pan_increment = slider19;
+
+v_gain[0] = slider20; v_semitones[0] = slider21; v_dr[0] = slider22; v_phase_off[0] = slider23; v_active[0] = slider24;
+v_gain[1] = slider25; v_semitones[1] = slider26; v_dr[1] = slider27; v_phase_off[1] = slider28; v_active[1] = slider29;
+v_gain[2] = slider30; v_semitones[2] = slider31; v_dr[2] = slider32; v_phase_off[2] = slider33; v_active[2] = slider34;
+v_gain[3] = slider35; v_semitones[3] = slider36; v_dr[3] = slider37; v_phase_off[3] = slider38; v_active[3] = slider39;
+v_gain[4] = slider40; v_semitones[4] = slider41; v_dr[4] = slider42; v_phase_off[4] = slider43; v_active[4] = slider44;
+v_gain[5] = slider45; v_semitones[5] = slider46; v_dr[5] = slider47; v_phase_off[5] = slider48; v_active[5] = slider49;
+v_gain[6] = slider50; v_semitones[6] = slider51; v_dr[6] = slider52; v_phase_off[6] = slider53; v_active[6] = slider54;
+v_gain[7] = slider55; v_semitones[7] = slider56; v_dr[7] = slider57; v_phase_off[7] = slider58; v_active[7] = slider59;
+
+// Rate Value only shown in Drift mode; Rate Mode always visible
+slider_show(slider3, trem_mode == 0);
+
+// Show/hide pan controls
+slider_show(slider16, pan_enabled);
+slider_show(slider17, pan_enabled);
+slider_show(slider18, pan_enabled && pan_mode == 1);
+slider_show(slider19, pan_enabled && pan_mode == 1);
+
+amount = pow(2, depth_db / 6);
+sc     = 0.5 * amount;
+amount = 1 - amount;
+
+i = 0;
+loop(8,
+  hz = semitones_to_hz(base_note, center_octave, v_semitones[i]);
+  v_freq_l[i] = hz;
+  v_freq_r[i] = hz + bin_beat_hz;
+
+  trem_mode == 0 ? (
+    // Drift mode: global rate + per-voice drift offset
+    v_trem_freq[i] = rate_to_hz(rate_val + v_dr[i], rate_mode);
+  ) : (
+    // Independent mode: per-voice rate in whatever unit Rate Mode specifies
+    v_trem_freq[i] = rate_to_hz(v_dr[i], rate_mode);
+  );
+
+  // Convert per-voice gain dB to linear scalar
+  v_gain[i] = pow(10, v_gain[i] / 20.0);
+
+  i += 1;
+);
+
+// Pan frequencies — Increment mode always uses Pan Base Rate as foundation
+i = 0;
+loop(8,
+  pan_mode == 0 ? (
+    // Tremolo mode: pan at each voice's own tremolo rate
+    v_pan_freq[i] = v_trem_freq[i];
+  ) : (
+    // Increment mode: Pan Base Rate + increment * voice index
+    pan_rate_i = pan_base_rate + pan_increment * i;
+    v_pan_freq[i] = rate_to_hz(pan_rate_i, rate_mode);
+  );
+  i += 1;
+);
+
+on_frac  = on_dur_pct / 100.0;
+att_frac = att_pct    / 100.0;
+rel_frac = rel_pct    / 100.0;
+
+@sample
+
+// Live phase offset update — fires when an offset slider is moved during playback
+i = 0;
+loop(8,
+  v_phase_off[i] != v_phase_off_last[i] ? (
+    // Offset means "when does this voice become audible" — so we set the phase
+    // such that the on-window leading edge lands at offset seconds/beats/cycles.
+    // Subtracting from 1 means: the phase clock is that far *before* phase zero,
+    // so it arrives at the on-window start exactly at the requested offset time.
+    frac = v_phase_off[i] * v_trem_freq[i];
+    frac = frac - floor(frac);
+    trem_phase[i] = frac > 0 ? 1.0 - frac : 0;
+    v_phase_off_last[i] = v_phase_off[i];
+  );
+  i += 1;
+);
+
+play_state > 0 && last_play_state == 0 ? (
+  i = 0;
+  loop(8,
+    // Offset is in Rate Mode units (seconds/beats/cycles) and means
+    // "this voice becomes audible at this time." We set the phase clock
+    // so it arrives at phase 0 (on-window start) exactly at that time.
+    // Offset=0 → phase 0 → fires immediately. Offset=8s on a 16s cycle
+    // → phase 0.5 → 8 seconds of silence, then fires. frac>0 guard
+    // ensures offset=0 stays cleanly at 0 rather than wrapping to 1.
+    frac = v_phase_off[i] * v_trem_freq[i];
+    frac = frac - floor(frac);
+    trem_phase[i]  = frac > 0 ? 1.0 - frac : 0;
+    osc_phase_l[i] = 0;
+    osc_phase_r[i] = 0;
+    gain_l[i]      = 1;
+    gain_r[i]      = 1;
+    pan_smooth[i]  = 0;
+    i += 1;
+  );
+);
+last_play_state = play_state;
+
+out_l = 0;
+out_r = 0;
+active_count = 0;
+
+i = 0;
+loop(8,
+  v_active[i] ? (
+    active_count += 1;
+
+    trem_phase[i] += v_trem_freq[i] / srate;
+    trem_phase[i] >= 1 ? trem_phase[i] -= 1;
+
+    lfo_val     = calc_lfo(trem_phase[i], on_frac, att_frac, rel_frac, att_shape, rel_shape);
+    target_gain = lfo_val * sc + amount;
+    gain_l[i]   = gain_l[i] * smooth + target_gain * (1 - smooth);
+    gain_r[i]   = gain_r[i] * smooth + target_gain * (1 - smooth);
+
+    osc_phase_l[i] += v_freq_l[i] / srate;
+    osc_phase_l[i] >= 1 ? osc_phase_l[i] -= 1;
+    osc_phase_r[i] += v_freq_r[i] / srate;
+    osc_phase_r[i] >= 1 ? osc_phase_r[i] -= 1;
+
+    waveform == 0 ? (
+      osc_l = sin(osc_phase_l[i] * 2 * $pi) * gain_l[i] * v_gain[i];
+      osc_r = sin(osc_phase_r[i] * 2 * $pi) * gain_r[i] * v_gain[i];
+    ) : waveform == 1 ? (
+      ph_l = osc_phase_l[i];
+      ph_r = osc_phase_r[i];
+      osc_l = (ph_l < 0.25 ? ph_l * 4 :
+               ph_l < 0.75 ? 2 - ph_l * 4 :
+                             ph_l * 4 - 4) * gain_l[i] * v_gain[i];
+      osc_r = (ph_r < 0.25 ? ph_r * 4 :
+               ph_r < 0.75 ? 2 - ph_r * 4 :
+                             ph_r * 4 - 4) * gain_r[i] * v_gain[i];
+    ) : waveform == 2 ? (
+      ph_l = osc_phase_l[i] + 0.5;
+      ph_l = ph_l - floor(ph_l);
+      ph_r = osc_phase_r[i] + 0.5;
+      ph_r = ph_r - floor(ph_r);
+      osc_l = (ph_l * 2 - 1) * gain_l[i] * v_gain[i];
+      osc_r = (ph_r * 2 - 1) * gain_r[i] * v_gain[i];
+    ) : waveform == 3 ? (
+      ph_l = osc_phase_l[i];
+      ph_r = osc_phase_r[i];
+      ph_l = ph_l < (1/PHI) ? ph_l * PHI * 0.5 : 0.5 + (ph_l - 1/PHI) / (1 - 1/PHI) * 0.5;
+      ph_r = ph_r < (1/PHI) ? ph_r * PHI * 0.5 : 0.5 + (ph_r - 1/PHI) / (1 - 1/PHI) * 0.5;
+      osc_l = sin(ph_l * 2 * $pi) * gain_l[i] * v_gain[i];
+      osc_r = sin(ph_r * 2 * $pi) * gain_r[i] * v_gain[i];
+    ) : waveform == 4 ? (
+      ph_l = osc_phase_l[i];
+      ph_r = osc_phase_r[i];
+      ph_l = (sin((ph_l - 0.25) * 2 * $pi) + 1) * 0.5;
+      ph_r = (sin((ph_r - 0.25) * 2 * $pi) + 1) * 0.5;
+      ph_l = ph_l < (1/PHI) ? ph_l * PHI * 0.5 : 0.5 + (ph_l - 1/PHI) / (1 - 1/PHI) * 0.5;
+      ph_r = ph_r < (1/PHI) ? ph_r * PHI * 0.5 : 0.5 + (ph_r - 1/PHI) / (1 - 1/PHI) * 0.5;
+      osc_l = sin(ph_l * 2 * $pi) * gain_l[i] * v_gain[i];
+      osc_r = sin(ph_r * 2 * $pi) * gain_r[i] * v_gain[i];
+    ) : (
+      ph_l = osc_phase_l[i];
+      ph_r = osc_phase_r[i];
+      ph_l = ph_l + (1/PHI) * sin(ph_l * 2 * $pi) / (2 * $pi);
+      ph_r = ph_r + (1/PHI) * sin(ph_r * 2 * $pi) / (2 * $pi);
+      ph_l = ph_l - floor(ph_l);
+      ph_r = ph_r - floor(ph_r);
+      osc_l = sin(ph_l * 2 * $pi) * gain_l[i] * v_gain[i];
+      osc_r = sin(ph_r * 2 * $pi) * gain_r[i] * v_gain[i];
+    );
+
+    pan_enabled ? (
+      pan_phase[i] += v_pan_freq[i] / srate;
+      pan_phase[i] >= 1 ? pan_phase[i] -= 1;
+
+      raw_pan = sin(pan_phase[i] * 2 * $pi) * pan_spread;
+
+      pan_smooth_coeff = exp(-1 / (srate * 0.010));
+      pan_smooth[i] = pan_smooth[i] * pan_smooth_coeff + raw_pan * (1 - pan_smooth_coeff);
+
+      mono_i  = (osc_l + osc_r) * 0.5;
+      pan_pos = (pan_smooth[i] + 1.0) * 0.5;
+      out_l  += mono_i * cos(pan_pos * $pi * 0.5);
+      out_r  += mono_i * sin(pan_pos * $pi * 0.5);
+    ) : (
+      out_l += osc_l;
+      out_r += osc_r;
+    );
+  );
+  i += 1;
+);
+
+active_count > 0 ? (
+  norm = 1.0 / active_count;
+  spl0 = out_l * norm;
+  spl1 = out_r * norm;
+) : (
+  spl0 = 0;
+  spl1 = 0;
+);

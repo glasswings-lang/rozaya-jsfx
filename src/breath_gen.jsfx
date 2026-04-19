@@ -1,0 +1,185 @@
+desc: Breath Generator
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+
+slider1:4.0<0.5,20.0,0.1>Inhale Duration (sec)
+slider2:0.3<0.0,5.0,0.1>Top Pause (sec)
+slider3:4.0<0.5,20.0,0.1>Exhale Duration (sec)
+slider4:0.3<0.0,5.0,0.1>Bottom Pause (sec)
+slider5:300<50,2000,1>Inhale Frequency Hz
+slider6:180<50,2000,1>Exhale Frequency Hz
+slider7:0.3<0.0,1.0,0.01>Inhale Fade In
+slider8:0.2<0.0,1.0,0.01>Inhale Fade Out
+slider9:0.2<0.0,1.0,0.01>Exhale Fade In
+slider10:0.3<0.0,1.0,0.01>Exhale Fade Out
+slider11:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade Mode
+slider12:0.5<0.0,1.0,0.01>Stereo Width
+slider13:0<0,1,1{Normal,Flipped}>Stereo Flip
+
+@init
+srate_inv = 1.0 / srate;
+two_pi = 2.0 * $pi;
+
+// State machine
+// 0 = inhale, 1 = top pause, 2 = exhale, 3 = bottom pause
+breath_state = 0;
+state_phase = 0.0; // 0..1 through current state
+
+// Durations in samples
+inhale_len  = floor(srate * 4.0);
+top_len     = floor(srate * 0.3);
+exhale_len  = floor(srate * 4.0);
+bot_len     = floor(srate * 0.3);
+state_len   = inhale_len;
+state_pos   = 0;
+
+// Filter state - two channels, each with inhale and exhale filter
+// L channel
+in_lp_l = 0; in_bp_l = 0;
+ex_lp_l = 0; ex_bp_l = 0;
+// R channel - slightly different to decorrelate
+in_lp_r = 0; in_bp_r = 0;
+ex_lp_r = 0; ex_bp_r = 0;
+
+
+
+// Filter coefficients - initialized to defaults
+in_f  = min(2.0 * sin($pi * 300.0 * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * 285.0 * srate_inv), 0.98);
+ex_f  = min(2.0 * sin($pi * 180.0 * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * 168.0 * srate_inv), 0.98);
+lp_q  = 0.6;
+
+fade_in_in   = 0.3;
+fade_in_out  = 0.2;
+fade_ex_in   = 0.2;
+fade_ex_out  = 0.3;
+fade_mode    = 2;
+stereo_width = 0.5;
+
+noise_seed  = 12345;
+noise_seed2 = 67890;
+
+function apply_fade(pos, fade_in, fade_out, mode) local(raw, t) (
+  // pos = 0..1 through the sound
+  // fade_in and fade_out are fractions of total duration
+  raw = 1.0;
+
+  // Fade in region
+  pos < fade_in ? (
+    t = pos / fade_in; // 0..1 within fade
+    mode == 1 ? raw = t;                                    // Linear
+    mode == 2 ? raw = 0.5 - 0.5 * cos(t * $pi);           // Cosine
+    mode == 3 ? raw = t * t;                               // Exponential in
+    mode == 4 ? raw = sin(t * $pi * 0.5);                  // Natural (sine curve)
+  ) :
+
+  // Fade out region
+  pos > (1.0 - fade_out) ? (
+    t = (pos - (1.0 - fade_out)) / fade_out; // 0..1 within fade
+    mode == 1 ? raw = 1.0 - t;
+    mode == 2 ? raw = 0.5 + 0.5 * cos(t * $pi);
+    mode == 3 ? raw = (1.0 - t) * (1.0 - t);
+    mode == 4 ? raw = cos(t * $pi * 0.5);
+  );
+
+  raw;
+);
+
+@slider
+inhale_len = max(floor(srate * slider1), 1);
+top_len    = max(floor(srate * slider2), 1);
+exhale_len = max(floor(srate * slider3), 1);
+bot_len    = max(floor(srate * slider4), 1);
+
+// Clamp state_pos if durations shrank
+breath_state == 0 ? state_len = inhale_len;
+breath_state == 1 ? state_len = top_len;
+breath_state == 2 ? state_len = exhale_len;
+breath_state == 3 ? state_len = bot_len;
+state_pos = min(state_pos, state_len - 1);
+
+// Width spreads L and R filter frequencies apart from center
+in_f   = min(2.0 * sin($pi * (slider5 * (1.0 + slider12 * 0.15)) * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * (slider5 * (1.0 - slider12 * 0.15)) * srate_inv), 0.98);
+ex_f   = min(2.0 * sin($pi * (slider6 * (1.0 + slider12 * 0.12)) * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * (slider6 * (1.0 - slider12 * 0.12)) * srate_inv), 0.98);
+
+fade_in_in  = slider7;
+fade_in_out = slider8;
+fade_ex_in  = slider9;
+fade_ex_out = slider10;
+fade_mode   = slider11;
+stereo_width = slider12;
+
+@sample
+// Advance state machine
+state_pos += 1;
+state_pos >= state_len ? (
+  state_pos = 0;
+  breath_state = (breath_state + 1) % 4;
+  breath_state == 0 ? state_len = inhale_len;
+  breath_state == 1 ? state_len = top_len;
+  breath_state == 2 ? state_len = exhale_len;
+  breath_state == 3 ? state_len = bot_len;
+);
+
+// Position within current state as 0..1
+state_phase = state_pos / max(state_len - 1, 1);
+
+// Independent noise per channel - naturally decorrelated stereo
+noise_seed = (noise_seed * 1664525 + 1013904223) & 0xFFFFFFFF;
+nl = (noise_seed - 0x80000000) * (1.0 / 2147483648.0);
+noise_seed2 = (noise_seed2 * 22695477 + 1) & 0xFFFFFFFF;
+nr = (noise_seed2 - 0x80000000) * (1.0 / 2147483648.0);
+
+// Silence during pauses
+(breath_state == 1 || breath_state == 3) ? (
+  spl0 = 0;
+  spl1 = 0;
+) : (
+
+  breath_state == 0 ? (
+    // Inhale
+    env = apply_fade(state_phase, fade_in_in, fade_in_out, fade_mode);
+
+    // L
+    in_lp_l += in_f * in_bp_l;
+    in_hp_l = nl - in_lp_l - lp_q * in_bp_l;
+    in_bp_l += in_f * in_hp_l;
+
+    // R - different f coefficient for width
+    in_lp_r += in_f_r * in_bp_r;
+    in_hp_r = nr - in_lp_r - lp_q * in_bp_r;
+    in_bp_r += in_f_r * in_hp_r;
+
+    slider13 == 0 ? (
+      spl0 = in_lp_l * env * 1.5;
+      spl1 = in_lp_r * env * 1.5;
+    ) : (
+      spl0 = in_lp_r * env * 1.5;
+      spl1 = in_lp_l * env * 1.5;
+    );
+  ) : (
+    // Exhale
+    env = apply_fade(state_phase, fade_ex_in, fade_ex_out, fade_mode);
+
+    ex_lp_l += ex_f * ex_bp_l;
+    ex_hp_l = nl - ex_lp_l - lp_q * ex_bp_l;
+    ex_bp_l += ex_f * ex_hp_l;
+
+    ex_lp_r += ex_f_r * ex_bp_r;
+    ex_hp_r = nr - ex_lp_r - lp_q * ex_bp_r;
+    ex_bp_r += ex_f_r * ex_hp_r;
+
+    slider13 == 0 ? (
+      spl0 = ex_lp_l * env * 1.5;
+      spl1 = ex_lp_r * env * 1.5;
+    ) : (
+      spl0 = ex_lp_r * env * 1.5;
+      spl1 = ex_lp_l * env * 1.5;
+    );
+  );
+);

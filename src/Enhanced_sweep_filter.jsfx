@@ -1,0 +1,100 @@
+desc: Resonant Lowpass Filter with Shaped LFO Sweep
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+
+slider1:200<20,20000,1>Frequency Low (Hz)
+slider2:2000<20,20000,1>Frequency High (Hz)
+slider3:0.8<0.0,0.95,0.01>Resonance
+slider4:0<0,2,1{BPM,Hz,Seconds}>Rate Mode
+slider5:60<1,300,0.1>Rate Value
+slider6:0<-180,180,1>LFO Start Phase (degrees)
+slider7:10<0,100,1>Fade In %
+slider8:10<0,100,1>Fade Out %
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+srate_inv = 1.0 / srate;
+two_pi = 2.0 * $pi;
+israte2 = 2.0 / srate;
+
+lfo_phase = (slider6 + 180.0) / 360.0;
+lfo_rate = srate_inv;
+last_phase_slider = slider6;
+
+n3_l = 0; n4_l = 0;
+n3_r = 0; n4_r = 0;
+
+res = 0.8;
+f_low = 200.0;
+f_high = 2000.0;
+fade_in = 0.1;
+fade_out = 0.1;
+
+@slider
+f_low  = min(slider1, slider2);
+f_high = max(slider1, slider2);
+res    = slider3;
+fade_in  = max(slider7 / 100.0, 0.0001);
+fade_out = max(slider8 / 100.0, 0.0001);
+
+// Clamp so fade_in + fade_out never exceeds 1.0
+fade_in + fade_out > 1.0 ? (
+  total = fade_in + fade_out;
+  fade_in  = fade_in  / total;
+  fade_out = fade_out / total;
+);
+
+slider4 == 0 ? (
+  lfo_rate = (slider5 / 60.0) * srate_inv;  // BPM
+) : slider4 == 1 ? (
+  lfo_rate = slider5 * srate_inv;            // Hz
+) : (
+  lfo_rate = 1.0 / (slider5 * srate);       // Seconds
+);
+
+slider6 != last_phase_slider ? (
+  lfo_phase = (slider6 + 180.0) / 360.0;
+  last_phase_slider = slider6;
+);
+
+@sample
+lfo_phase += lfo_rate;
+lfo_phase >= 1.0 ? lfo_phase -= 1.0;
+
+// LFO value: square with cosine fade in and fade out
+// fade_in zone: 0 -> peak
+// hold high zone: peak -> start of fade out
+// fade_out zone: falling back to 0
+// hold low zone: remainder of cycle
+lfo_phase < fade_in ? (
+  // Fade in - cosine curve from 0 to 1
+  t = lfo_phase / fade_in;
+  lfo_val = 0.5 - 0.5 * cos(t * $pi);
+) : lfo_phase < (1.0 - fade_out) ? (
+  // Hold high
+  lfo_val = 1.0;
+) : (
+  // Fade out - cosine curve from 1 to 0
+  t = (lfo_phase - (1.0 - fade_out)) / fade_out;
+  lfo_val = 0.5 + 0.5 * cos(t * $pi);
+);
+
+// Map to frequency range
+cut_hz = f_low + (f_high - f_low) * lfo_val;
+cut = cut_hz * israte2;
+fb = res + res / (1.0 - cut);
+
+n3_l = n3_l + cut * (spl0 - n3_l + fb * (n3_l - n4_l));
+n4_l = n4_l + cut * (n3_l - n4_l);
+
+n3_r = n3_r + cut * (spl1 - n3_r + fb * (n3_r - n4_r));
+n4_r = n4_r + cut * (n3_r - n4_r);
+
+spl0 = n4_l;
+spl1 = n4_r;

@@ -1,0 +1,187 @@
+desc: Risset Rhythm Generator
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// A Risset eternal accelerando generator — an auditory illusion of rhythm that
+// perpetually accelerates without ever actually getting faster.
+//
+// HOW IT WORKS:
+// Eight streams all play the same repeating beat pattern. Each stream continuously
+// accelerates through a tempo range (from Center BPM / 2 up to Center BPM * 2),
+// then wraps back to the bottom and starts over — exactly like a Shepard oscillator
+// wrapping from high frequency to low. The streams are evenly staggered so one is
+// always near the center tempo (loudest) while others fade in at the bottom or out
+// at the top. Your brain locks onto whichever stream is dominant and perceives
+// continuous acceleration because there is always something speeding up.
+//
+// The "pattern" is a single beat — a filtered noise burst — repeating at whatever
+// tempo the stream is currently running. As a stream accelerates, its beat comes
+// faster and faster until it wraps. The bell curve ensures the wrap is inaudible.
+//
+// CONTROLS:
+//   Center BPM    — The perceived tempo. Illusion always sounds like it's
+//                   accelerating toward roughly this speed.
+//   Sweep Time    — How many seconds each stream takes to sweep from slow to fast
+//                   before wrapping. Shorter = faster apparent acceleration rate.
+//   Fade %        — How much of the sweep is spent crossfading in/out.
+//                   Higher = smoother illusion.
+//   Hit Length ms — Duration of each noise burst.
+//   Filter Freq   — Lowpass cutoff. Lower = thumpier, higher = clickier.
+//   Filter Res    — Resonance. Adds body.
+//   Gain dB       — Output level.
+
+slider1:120<10,400,0.1>Center BPM
+slider2:8<1,60,0.1>Sweep Time Seconds
+slider3:50<1,99,0.1>Fade %
+slider4:40<5,200,0.1>Hit Length ms
+slider5:600<20,8000,1>Filter Freq Hz
+slider6:0.5<0.1,4,0.01>Filter Res
+slider7:0<-60,6,0.1>Gain dB
+
+
+@init
+NUM_STREAMS = 8;
+
+// Per-stream state
+s_sweep    = 0;  // 0-7:  sweep position 0-1 (drives tempo and gain)
+s_beat     = 8;  // 8-15: beat phase 0-1 within current tempo
+s_env      = 16; // 16-23: hit envelope phase (0=off, >0=active)
+s_active   = 24; // 24-31: 1 if hit currently sounding
+s_gain     = 32; // 32-39: smoothed output gain
+
+// Biquad filter state per stream, left and right
+f_z1_l     = 40; // 40-47
+f_z2_l     = 48; // 48-55
+f_z1_r     = 56; // 56-63
+f_z2_r     = 64; // 64-71
+
+smooth = exp(-1 / (srate * 0.005));
+
+i = 0;
+loop(NUM_STREAMS,
+  // Stagger sweep positions evenly so streams are always spread across the cycle
+  s_sweep[i]  = i / NUM_STREAMS;
+  s_beat[i]   = 0;
+  s_env[i]    = 0;
+  s_active[i] = 0;
+  s_gain[i]   = 0;
+  f_z1_l[i]   = 0;
+  f_z2_l[i]   = 0;
+  f_z1_r[i]   = 0;
+  f_z2_r[i]   = 0;
+  i += 1;
+);
+
+// Bell gain: cosine shape, same as Shepard plugins.
+// pos is 0-1 position in sweep; fade_frac is fraction spent crossfading each edge.
+function bell_gain(pos, fade_frac) (
+  pos <= 0 || pos >= 1 ? 0 :
+  pos < fade_frac ? (0.5 - 0.5 * cos(pos / fade_frac * $pi)) :
+  pos > (1 - fade_frac) ? (0.5 - 0.5 * cos((1 - pos) / fade_frac * $pi)) :
+  1
+);
+
+// Hit envelope: exponential decay over 0-1
+function hit_env(ph) (
+  ph <= 0 || ph >= 1 ? 0 : exp(-ph * 6)
+);
+
+
+@slider
+
+center_bpm  = slider1;
+sweep_secs  = slider2;
+fade_frac   = slider3 / 100.0;
+hit_ms      = slider4;
+filt_freq   = slider5;
+filt_res    = slider6;
+gain_lin    = pow(10, slider7 / 20.0);
+
+hit_samples = hit_ms * srate / 1000.0;
+hit_rate    = 1.0 / max(hit_samples, 1);
+
+// Sweep advance rate: sweep position goes 0->1 over sweep_secs seconds
+sweep_rate = 1.0 / (sweep_secs * srate);
+
+// Tempo range: center_bpm / 2 at sweep pos 0, center_bpm * 2 at sweep pos 1.
+// Each stream's current BPM = center_bpm * 2^(sweep_pos * 2 - 1)
+// So at pos=0: center/2, pos=0.5: center, pos=1: center*2
+// The streams span one octave of tempo total — tight enough to fuse perceptually.
+// bpm_at_pos(p) = center_bpm * pow(2, p * 2 - 1)  — computed inline in @sample
+
+// Biquad lowpass coefficients
+w0     = 2 * $pi * filt_freq / srate;
+cosw0  = cos(w0);
+sinw0  = sin(w0);
+alpha  = sinw0 / (2 * filt_res);
+b0f    = (1 - cosw0) / 2;
+b1f    = (1 - cosw0);
+b2f    = (1 - cosw0) / 2;
+a0f    = 1 + alpha;
+a1f    = -2 * cosw0;
+a2f    = 1 - alpha;
+flt_b0 = b0f / a0f;
+flt_b1 = b1f / a0f;
+flt_b2 = b2f / a0f;
+flt_a1 = a1f / a0f;
+flt_a2 = a2f / a0f;
+
+
+@sample
+
+out_l = 0;
+out_r = 0;
+
+i = 0;
+loop(NUM_STREAMS,
+  // Advance sweep position
+  s_sweep[i] += sweep_rate;
+  s_sweep[i] >= 1.0 ? s_sweep[i] -= 1.0;
+
+  // Current BPM for this stream from sweep position
+  cur_bpm = center_bpm * pow(2, s_sweep[i] * 2 - 1);
+
+  // Advance beat phase at current BPM
+  s_beat[i] += cur_bpm / (srate * 60.0);
+  s_beat[i] >= 1.0 ? (
+    s_beat[i] -= 1.0;
+    // Trigger hit
+    s_env[i]    = hit_rate; // start envelope at first sample
+    s_active[i] = 1;
+  );
+
+  // Bell gain from sweep position
+  bg = bell_gain(s_sweep[i], fade_frac) * gain_lin;
+  s_gain[i] = s_gain[i] * smooth + bg * (1 - smooth);
+
+  s_active[i] ? (
+    // White noise
+    noise_l = rand(2) - 1;
+    noise_r = rand(2) - 1;
+
+    // Biquad lowpass — direct form II transposed — left
+    yn_l       = flt_b0 * noise_l + f_z1_l[i];
+    f_z1_l[i]  = flt_b1 * noise_l - flt_a1 * yn_l + f_z2_l[i];
+    f_z2_l[i]  = flt_b2 * noise_l - flt_a2 * yn_l;
+
+    // Right
+    yn_r       = flt_b0 * noise_r + f_z1_r[i];
+    f_z1_r[i]  = flt_b1 * noise_r - flt_a1 * yn_r + f_z2_r[i];
+    f_z2_r[i]  = flt_b2 * noise_r - flt_a2 * yn_r;
+
+    env_amp = hit_env(s_env[i]);
+    s_env[i] += hit_rate;
+    s_env[i] >= 1.0 ? (s_env[i] = 0; s_active[i] = 0;);
+
+    out_l += yn_l * env_amp * s_gain[i];
+    out_r += yn_r * env_amp * s_gain[i];
+  );
+
+  i += 1;
+);
+
+// Normalize by stream count
+spl0 = out_l / NUM_STREAMS;
+spl1 = out_r / NUM_STREAMS;

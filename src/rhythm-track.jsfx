@@ -1,0 +1,241 @@
+desc: Rhythm Track
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+
+slider1:120<30,300,1>Tempo (BPM)
+slider2:4<1,20,1>Beats per bar
+slider3:0<-1,1,0.01>Swing amount
+slider4:880<20,2000,1>Strong beat frequency (Hz)
+slider5:440<20,2000,1>Weak beat frequency (Hz)
+slider6:1.5<0.5,8,0.1>Tone resonance (Q)
+slider7:0.75<0,1,0.01>Strong beat volume
+slider8:0.5<0,1,0.01>Weak beat volume
+slider9:0.04<0.001,1,0.001>Strong beat decay (seconds)
+slider10:0.02<0.001,1,0.001>Weak beat decay (seconds)
+slider11:1<0,1,0.01>Pan spread (0=mono, 1=full L/R)
+slider12:0<0,5,1{Mono,Accent L / Weak R,Alternating,Distributed,Converging,Diverging}>Pan mode
+slider13:0<0,1,1{Normal,Flipped}>Pan direction
+
+@init
+
+tick_buf_len = 65536;
+
+strong_buf    = 0;
+weak_buf      = strong_buf + tick_buf_len;
+noise_scratch = weak_buf   + tick_buf_len;
+
+strong_len = 0;
+weak_len   = 0;
+
+tick_playing = 0;
+tick_pos     = 0;
+tick_src     = 0;
+tick_len     = 0;
+tick_pan     = 0;
+
+beat_phase       = 0;
+beat_index       = 0;
+samples_per_beat = (60.0 / 120.0) * srate;
+
+noise_len = 300;
+nx = 1;
+i = 0;
+loop(noise_len,
+  nx = (479 * nx) % 997;
+  noise_scratch[i] = (nx / 500.0) - 1.0;
+  i += 1;
+);
+
+
+function render_tick(buf, hz, gain, decay_sec, tone_q)
+local(i, len, env, raw, lp_out, peak_val, norm,
+      lp_w0, lp_alpha, lp_cos, lp_b0, lp_b1, lp_b2, lp_a1, lp_a2,
+      lp_x1, lp_x2, lp_y1, lp_y2,
+      hp_w0, hp_alpha, hp_cos, hp_b0, hp_b1, hp_b2, hp_a1, hp_a2,
+      hpx1, hpx2, hpy1, hpy2,
+      hp2x1, hp2x2, hp2y1, hp2y2,
+      hp3x1, hp3x2, hp3y1, hp3y2,
+      hp4x1, hp4x2, hp4y1, hp4y2,
+      hp_out) (
+
+  // Dynamic length: 5 time constants captures tail to ~1% of peak
+  len = min(ceil(decay_sec * srate * 5) + noise_len, tick_buf_len - 1);
+
+  // Resonant lowpass at 2*hz, Q controlled by slider
+  lp_w0    = 2.0 * $pi * min(srate * 0.45, 2.0 * hz) / srate;
+  lp_alpha = sin(lp_w0) / (2.0 * tone_q);
+  lp_cos   = cos(lp_w0);
+  lp_b0    = (1 - lp_cos) / 2 / (1 + lp_alpha);
+  lp_b1    = (1 - lp_cos)     / (1 + lp_alpha);
+  lp_b2    = lp_b0;
+  lp_a1    = -2 * lp_cos      / (1 + lp_alpha);
+  lp_a2    = (1 - lp_alpha)   / (1 + lp_alpha);
+
+  // 4-stage biquad highpass at hz (approximates 8-pole slope)
+  hp_w0    = 2.0 * $pi * hz / srate;
+  hp_alpha = sin(hp_w0) / (2.0 * 0.707);
+  hp_cos   = cos(hp_w0);
+  hp_b0    =  (1 + hp_cos) / 2 / (1 + hp_alpha);
+  hp_b1    = -(1 + hp_cos)     / (1 + hp_alpha);
+  hp_b2    =  hp_b0;
+  hp_a1    = -2 * hp_cos       / (1 + hp_alpha);
+  hp_a2    =  (1 - hp_alpha)   / (1 + hp_alpha);
+
+  lp_x1 = 0; lp_x2 = 0; lp_y1 = 0; lp_y2 = 0;
+  hpx1 = 0; hpx2 = 0; hpy1 = 0; hpy2 = 0;
+  hp2x1 = 0; hp2x2 = 0; hp2y1 = 0; hp2y2 = 0;
+  hp3x1 = 0; hp3x2 = 0; hp3y1 = 0; hp3y2 = 0;
+  hp4x1 = 0; hp4x2 = 0; hp4y1 = 0; hp4y2 = 0;
+
+  peak_val = 0.0001;
+  i = 0;
+  loop(len,
+    // Envelope: short attack ramp, then exponential decay
+    // Use noise_scratch for the first noise_len samples, silence after
+    raw = (i < noise_len) ? noise_scratch[i] : 0;
+    env = (i < 5) ? (i / 5.0) : exp(-i / (decay_sec * srate));
+    raw = raw * env;
+
+    // Resonant lowpass
+    lp_out = lp_b0*raw + lp_b1*lp_x1 + lp_b2*lp_x2 - lp_a1*lp_y1 - lp_a2*lp_y2;
+    lp_x2 = lp_x1; lp_x1 = raw;
+    lp_y2 = lp_y1; lp_y1 = lp_out;
+
+    // 4-stage highpass - each stage input is previous stage output
+    hp_out = hp_b0*lp_out + hp_b1*hpx1 + hp_b2*hpx2 - hp_a1*hpy1 - hp_a2*hpy2;
+    hpx2 = hpx1; hpx1 = lp_out; hpy2 = hpy1; hpy1 = hp_out;
+
+    hp_out = hp_b0*hpy1 + hp_b1*hp2x1 + hp_b2*hp2x2 - hp_a1*hp2y1 - hp_a2*hp2y2;
+    hp2x2 = hp2x1; hp2x1 = hpy1; hp2y2 = hp2y1; hp2y1 = hp_out;
+
+    hp_out = hp_b0*hp2y1 + hp_b1*hp3x1 + hp_b2*hp3x2 - hp_a1*hp3y1 - hp_a2*hp3y2;
+    hp3x2 = hp3x1; hp3x1 = hp2y1; hp3y2 = hp3y1; hp3y1 = hp_out;
+
+    hp_out = hp_b0*hp3y1 + hp_b1*hp4x1 + hp_b2*hp4x2 - hp_a1*hp4y1 - hp_a2*hp4y2;
+    hp4x2 = hp4x1; hp4x1 = hp3y1; hp4y2 = hp4y1; hp4y1 = hp_out;
+
+    buf[i] = hp_out;
+    abs(hp_out) > peak_val ? peak_val = abs(hp_out);
+    i += 1;
+  );
+
+  norm = gain / peak_val;
+  i = 0;
+  loop(len,
+    buf[i] = buf[i] * norm;
+    i += 1;
+  );
+
+  len
+);
+
+
+function beat_pan(idx) local(n, non_accent, steps, step, pos, flip) (
+  n          = max(timesig, 1);
+  non_accent = n - 1;
+  steps      = ceil(non_accent / 2.0); // number of distinct distances from anchor
+  flip       = pan_flip ? -1.0 : 1.0;
+
+  pan_mode == 0 ? (
+    // Mono
+    pos = 0;
+
+  ) : pan_mode == 1 ? (
+    // Accent L / Weak R
+    pos = (idx == 0) ? -1 : 1;
+
+  ) : pan_mode == 2 ? (
+    // Alternating L/R/L/R
+    pos = (idx % 2 == 0) ? -1 : 1;
+
+  ) : pan_mode == 3 ? (
+    // Distributed: evenly spaced left to right
+    n > 1 ? (pos = (idx / (n - 1.0)) * 2.0 - 1.0) : (pos = 0);
+
+  ) : pan_mode == 4 ? (
+    // Converging: accent hard left, pairs walk inward toward center
+    // beat 0 = -1, beat 1 = hard right, beat 2 = hard left - 1 step...
+    idx == 0 ? (
+      pos = -1.0;
+    ) : (
+      step = ceil((idx + 1) / 2); // 1,2,2,3,3,4... for idx 1,2,3,4,5,6
+      pos = (idx % 2 == 1) ? (1.0 - (step - 1.0) / steps)
+                            : -(1.0 - (step - 1.0) / steps);
+      pos = max(-1.0, min(1.0, pos));
+    );
+
+  ) : (
+    // Diverging: accent center, pairs walk outward symmetrically
+    // beat 0 = 0, beat 1 = slight left, beat 2 = slight right...
+    idx == 0 ? (
+      pos = 0.0;
+    ) : (
+      step = floor((idx + 1) / 2); // 1,1,2,2,3,3...
+      pos = (idx % 2 == 1) ? -(step / steps)
+                            :  (step / steps);
+      pos = max(-1.0, min(1.0, pos));
+    );
+  );
+
+  pos * pan_spread * flip
+);
+
+
+@slider
+
+tempo        = slider1;
+timesig      = slider2;
+swing        = slider3;
+strong_hz    = slider4;
+weak_hz      = slider5;
+tone_q       = slider6;
+strong_gain  = slider7;
+weak_gain    = slider8;
+strong_decay = slider9;
+weak_decay   = slider10;
+pan_spread   = slider11;
+pan_mode     = slider12;
+pan_flip     = slider13;
+
+samples_per_beat = (60.0 / tempo) * srate;
+
+strong_len = render_tick(strong_buf, strong_hz, strong_gain, strong_decay, tone_q);
+weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_q);
+
+i = 0;
+loop(timesig,
+  swing_offset[i] = swing * (1.0 / 3.0) * ((i + 1) % 2);
+  i += 1;
+);
+
+
+@sample
+
+beat_phase += 1.0 / samples_per_beat;
+
+beat_phase >= 1.0 ? (
+  beat_phase -= 1.0;
+
+  is_accent = (beat_index == 0) ? 1 : 0;
+  tick_src  = is_accent ? strong_buf : weak_buf;
+  tick_len  = is_accent ? strong_len : weak_len;
+  tick_pan  = beat_pan(beat_index);
+  tick_pos  = 0;
+  tick_playing = 1;
+
+  beat_index  = (beat_index + 1) % timesig;
+  beat_phase -= swing_offset[beat_index];
+);
+
+out = 0;
+tick_playing ? (
+  out = tick_src[tick_pos];
+  tick_pos += 1;
+  tick_pos >= tick_len ? tick_playing = 0;
+);
+
+pan_pos = (tick_pan + 1.0) * 0.5;
+spl0 = out * cos(pan_pos * $pi * 0.5);
+spl1 = out * sin(pan_pos * $pi * 0.5);

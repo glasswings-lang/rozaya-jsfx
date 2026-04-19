@@ -1,0 +1,483 @@
+desc: Womb Sound Generator
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+
+// --- GLOBAL ---
+slider1:70<20,200,1>BPM
+slider2:0<0,1,1{Normal,Flipped}>Master Stereo Flip
+
+// --- HEARTBEAT ---
+slider3:1.0<0.0,1.0,0.01>HB Master Volume
+slider4:0<0,1,1{Off,Solo}>Heartbeat Solo
+slider5:120<50,400,1>Systole ms (S1->S2 gap)
+slider6:1.0<0.0,1.0,0.01>S1 Volume
+slider7:0.7<0.0,1.0,0.01>S2 Volume
+slider8:0.3<0.0,1.0,0.01>Brightness
+slider9:60<10,200,1>S1 Decay ms
+slider10:25<5,100,1>S2 Decay ms
+slider11:45<20,120,1>S1 Frequency Hz
+slider12:120<60,300,1>S2 Frequency Hz
+slider13:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
+
+// --- BREATH ---
+slider14:0.8<0.0,1.0,0.01>Breath Volume
+slider15:0<0,1,1{Off,Solo}>Breath Solo
+slider16:4.0<0.5,20.0,0.1>Inhale Duration sec
+slider17:0.3<0.0,5.0,0.1>Top Pause sec
+slider18:4.0<0.5,20.0,0.1>Exhale Duration sec
+slider19:0.3<0.0,5.0,0.1>Bottom Pause sec
+slider20:300<50,2000,1>Inhale Frequency Hz
+slider21:180<50,2000,1>Exhale Frequency Hz
+slider22:150<20,800,1>Breath High-pass Hz
+slider23:0.3<0.0,1.0,0.01>Inhale Fade In
+slider24:0.2<0.0,1.0,0.01>Inhale Fade Out
+slider25:0.2<0.0,1.0,0.01>Exhale Fade In
+slider26:0.3<0.0,1.0,0.01>Exhale Fade Out
+slider27:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade Mode
+slider28:0.5<0.0,1.0,0.01>Breath Stereo Width
+
+// --- BLOODFLOW ---
+slider29:0.5<0.0,1.0,0.01>Bloodflow Volume
+slider30:0<0,1,1{Off,Solo}>Bloodflow Solo
+slider31:150<20,2000,1>Bloodflow Low Frequency Hz
+slider32:600<20,4000,1>Bloodflow High Frequency Hz
+slider33:0.2<0.0,0.95,0.01>Bloodflow Resonance
+slider34:0.15<0.0,1.0,0.01>Bloodflow Fade In
+slider35:0.15<0.0,1.0,0.01>Bloodflow Fade Out
+slider36:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
+
+// --- HRV ---
+slider37:0.08<0.0,0.25,0.01>Breath HRV Depth
+slider38:0.02<0.0,0.08,0.005>Random HRV Depth
+
+// --- BREATH POST FILTER ---
+slider39:600<50,4000,1>Breath Post-filter Hz
+slider40:1.5<0.5,8.0,0.1>Breath Post-filter Q
+
+@init
+srate_inv = 1.0 / srate;
+two_pi = 2.0 * $pi;
+israte2 = 2.0 / srate;
+
+// --- HEARTBEAT INIT ---
+s1_freq = 45.0; s2_freq = 120.0;
+s1_phase_osc_near = 0; s1_phase_osc_far = 0;
+s2_phase_osc_near = 0; s2_phase_osc_far = 0;
+
+cycle_len_base = floor(srate * 60.0 / 70.0);
+cycle_len = cycle_len_base;
+systole_samples = floor(srate * 120.0 * 0.001);
+s1_vol = 1.0;
+s2_vol = 0.7;
+s1_decay = exp(-srate_inv / 0.060);
+s2_decay = exp(-srate_inv / 0.025);
+s1_attack_rate = exp(-srate_inv / 0.008);
+s2_attack_rate = exp(-srate_inv / 0.004);
+
+hb_delay_buf_size = 4096;
+memset(0, 0, hb_delay_buf_size);
+hb_delay_write = 0;
+hb_delay_samples = floor(srate * 0.003);
+hb_delay_sign = 1;
+
+hb_phase = 0;
+s1_active = 1; s2_active = 0;
+s1_env = 1.0; s2_env = 0;
+s1_attack_phase = 0; s2_attack_phase = 0;
+
+s1_res_f_near = min(2.0 * sin($pi * 50.0 * srate_inv), 0.98);
+s1_res_q_near = 2.8; s1_res_low_near = 0; s1_res_band_near = 0;
+s2_res_f_near = min(2.0 * sin($pi * 138.0 * srate_inv), 0.98);
+s2_res_q_near = 2.0; s2_res_low_near = 0; s2_res_band_near = 0;
+lp_f_near = min(2.0 * sin($pi * 200.0 * srate_inv), 0.98);
+lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
+
+s1_res_f_far = min(2.0 * sin($pi * 58.0 * srate_inv), 0.98);
+s1_res_q_far = 2.2; s1_res_low_far = 0; s1_res_band_far = 0;
+s2_res_f_far = min(2.0 * sin($pi * 150.0 * srate_inv), 0.98);
+s2_res_q_far = 1.6; s2_res_low_far = 0; s2_res_band_far = 0;
+lp_f_far = min(2.0 * sin($pi * 175.0 * srate_inv), 0.98);
+lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
+lp_q = 0.5;
+
+// --- BREATH INIT ---
+breath_state = 0;
+breath_state_pos = 0;
+breath_state_len = floor(srate * 4.0);
+
+in_lp_l = 0; in_bp_l = 0; in_lp_r = 0; in_bp_r = 0;
+ex_lp_l = 0; ex_bp_l = 0; ex_lp_r = 0; ex_bp_r = 0;
+hp_lp_l = 0; hp_lp_r = 0;
+
+bpf_low_l = 0; bpf_band_l = 0;
+bpf_low_r = 0; bpf_band_r = 0;
+bpf_f = min(2.0 * sin($pi * 600.0 * srate_inv), 0.98);
+bpf_q = 0.5;
+
+in_f_l = min(2.0 * sin($pi * 300.0 * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * 285.0 * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * 180.0 * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * 168.0 * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * 150.0 * srate_inv), 0.98);
+breath_lp_q = 0.6;
+
+inhale_len = floor(srate * 4.0);
+top_len    = floor(srate * 0.3);
+exhale_len = floor(srate * 4.0);
+bot_len    = floor(srate * 0.3);
+
+// --- BLOODFLOW INIT ---
+bf_n3_l = 0; bf_n4_l = 0;
+bf_n3_r = 0; bf_n4_r = 0;
+bf_low_hz = 150.0;
+bf_high_hz = 600.0;
+bf_res = 0.2;
+bf_fade_in = 0.15;
+bf_fade_out = 0.15;
+bf_stereo_width = 0.5;
+
+// --- HRV INIT ---
+breath_depth = 0.08;
+rand_hrv = 0.0; rand_hrv_target = 0.0; rand_hrv_depth = 0.02;
+rand_hrv_step = 0; rand_hrv_step_len = floor(srate * 5.0);
+rand_hrv_slew = exp(-srate_inv / 3.0);
+hrv_seed = 99999;
+
+// --- NOISE SEEDS ---
+ns1 = 12345; ns2 = 67890; ns3 = 54321;
+ns4 = 11111; ns5 = 22222; ns6 = 33333;
+
+function apply_fade(pos, fade_in, fade_out, mode) local(raw, t) (
+  raw = 1.0;
+  pos < fade_in ? (
+    t = pos / fade_in;
+    mode == 1 ? raw = t :
+    mode == 2 ? raw = 0.5 - 0.5 * cos(t * $pi) :
+    mode == 3 ? raw = t * t :
+    raw = sin(t * $pi * 0.5);
+  ) : pos > (1.0 - fade_out) ? (
+    t = (pos - (1.0 - fade_out)) / fade_out;
+    mode == 1 ? raw = 1.0 - t :
+    mode == 2 ? raw = 0.5 + 0.5 * cos(t * $pi) :
+    mode == 3 ? raw = (1.0 - t) * (1.0 - t) :
+    raw = cos(t * $pi * 0.5);
+  );
+  raw;
+);
+
+@slider
+// Heartbeat
+cycle_len_base = floor(srate * 60.0 / slider1);
+systole_samples = floor(srate * slider5 * 0.001);
+s1_vol = slider6;
+s2_vol = slider7;
+s1_freq = slider11; s2_freq = slider12;
+
+s1_center_near = slider11 * 1.1; s2_center_near = slider12 * 1.15;
+s1_center_far  = slider11 * 1.28; s2_center_far = slider12 * 1.25;
+lp_cutoff_near = 200.0 + slider8 * 250.0;
+lp_cutoff_far  = 175.0 + slider8 * 220.0;
+
+s1_res_f_near = min(2.0 * sin($pi * s1_center_near * srate_inv), 0.98);
+s2_res_f_near = min(2.0 * sin($pi * s2_center_near * srate_inv), 0.98);
+lp_f_near = min(2.0 * sin($pi * lp_cutoff_near * srate_inv), 0.98);
+s1_res_f_far = min(2.0 * sin($pi * s1_center_far * srate_inv), 0.98);
+s2_res_f_far = min(2.0 * sin($pi * s2_center_far * srate_inv), 0.98);
+lp_f_far = min(2.0 * sin($pi * lp_cutoff_far * srate_inv), 0.98);
+
+s1_decay = exp(-srate_inv / (slider9 * 0.001));
+s2_decay = exp(-srate_inv / (slider10 * 0.001));
+
+hb_delay_samples = floor(srate * abs(slider13) * 0.001);
+hb_delay_samples = min(hb_delay_samples, hb_delay_buf_size - 1);
+new_hb_sign = slider13 >= 0 ? 1 : -1;
+new_hb_sign != hb_delay_sign ? (
+  s1_res_low_near = 0; s1_res_band_near = 0;
+  s2_res_low_near = 0; s2_res_band_near = 0;
+  lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
+  s1_res_low_far = 0; s1_res_band_far = 0;
+  s2_res_low_far = 0; s2_res_band_far = 0;
+  lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
+  memset(0, 0, hb_delay_buf_size);
+);
+hb_delay_sign = new_hb_sign;
+
+// Breath
+inhale_len = max(floor(srate * slider16), 1);
+top_len    = max(floor(srate * slider17), 1);
+exhale_len = max(floor(srate * slider18), 1);
+bot_len    = max(floor(srate * slider19), 1);
+
+breath_state == 0 ? breath_state_len = inhale_len;
+breath_state == 1 ? breath_state_len = top_len;
+breath_state == 2 ? breath_state_len = exhale_len;
+breath_state == 3 ? breath_state_len = bot_len;
+breath_state_pos = min(breath_state_pos, breath_state_len - 1);
+
+in_f_l = min(2.0 * sin($pi * (slider20 * (1.0 + slider28 * 0.15)) * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * (slider20 * (1.0 - slider28 * 0.15)) * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * (slider21 * (1.0 + slider28 * 0.12)) * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * (slider21 * (1.0 - slider28 * 0.12)) * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * slider22 * srate_inv), 0.98);
+
+// Bloodflow
+bf_low_hz  = min(slider31, slider32);
+bf_high_hz = max(slider31, slider32);
+bf_res     = slider33;
+bf_stereo_width = slider36;
+
+bf_fade_in  = max(slider34, 0.0001);
+bf_fade_out = max(slider35, 0.0001);
+bf_fade_in + bf_fade_out > 1.0 ? (
+  bf_fade_in  = slider34 / (slider34 + slider35);
+  bf_fade_out = slider35 / (slider34 + slider35);
+);
+
+// HRV
+breath_depth   = slider37;
+rand_hrv_depth = slider38;
+
+// Breath post-filter
+bpf_f = min(2.0 * sin($pi * slider39 * srate_inv), 0.98);
+bpf_q = 1.0 / slider40;
+
+@sample
+
+// --- NOISE ---
+ns1 = (ns1 * 1664525 + 1013904223) & 0xFFFFFFFF;
+n1 = (ns1 - 0x80000000) * (1.0 / 2147483648.0);
+ns2 = (ns2 * 22695477 + 1) & 0xFFFFFFFF;
+n2 = (ns2 - 0x80000000) * (1.0 / 2147483648.0);
+ns3 = (ns3 * 1664525 + 1013904223) & 0xFFFFFFFF;
+n3 = (ns3 - 0x80000000) * (1.0 / 2147483648.0);
+ns4 = (ns4 * 22695477 + 1) & 0xFFFFFFFF;
+n4 = (ns4 - 0x80000000) * (1.0 / 2147483648.0);
+ns5 = (ns5 * 1664525 + 1013904223) & 0xFFFFFFFF;
+n5 = (ns5 - 0x80000000) * (1.0 / 2147483648.0);
+ns6 = (ns6 * 22695477 + 1) & 0xFFFFFFFF;
+n6 = (ns6 - 0x80000000) * (1.0 / 2147483648.0);
+
+// --- HRV ---
+breath_state == 0 ? breath_mod = breath_phase_pos * breath_depth :
+breath_state == 1 ? breath_mod = breath_depth :
+breath_state == 2 ? breath_mod = (1.0 - breath_phase_pos) * breath_depth :
+breath_mod = 0;
+
+rand_hrv_step += 1;
+rand_hrv_step >= rand_hrv_step_len ? (
+  rand_hrv_step = 0;
+  hrv_seed = (hrv_seed * 1664525 + 1013904223) & 0xFFFFFFFF;
+  rand_hrv_target = ((hrv_seed - 0x80000000) * (1.0 / 2147483648.0)) * rand_hrv_depth;
+);
+rand_hrv += (rand_hrv_target - rand_hrv) * (1.0 - rand_hrv_slew);
+cycle_len = floor(cycle_len_base * (1.0 - breath_mod + rand_hrv));
+cycle_len = max(cycle_len, floor(srate * 60.0 / 200.0));
+
+// --- HEARTBEAT ---
+hb_phase += 1;
+hb_phase >= cycle_len ? (
+  hb_phase = 0;
+  s1_active = 1; s1_env = 0.0; s1_attack_phase = 1;
+);
+hb_phase == systole_samples ? (
+  s2_active = 1; s2_env = 0.0; s2_attack_phase = 1;
+);
+
+s1_active ? (
+  s1_attack_phase ? (
+    s1_env += (1.0 - s1_env) * (1.0 - s1_attack_rate);
+    s1_env >= 0.98 ? s1_attack_phase = 0;
+  ) : (
+    s1_env *= s1_decay;
+    s1_env < 0.0001 ? s1_active = 0;
+  );
+) : 0;
+
+s2_active ? (
+  s2_attack_phase ? (
+    s2_env += (1.0 - s2_env) * (1.0 - s2_attack_rate);
+    s2_env >= 0.98 ? s2_attack_phase = 0;
+  ) : (
+    s2_env *= s2_decay;
+    s2_env < 0.0001 ? s2_active = 0;
+  );
+) : 0;
+
+s1_phase_osc_near += two_pi * s1_freq * srate_inv;
+s1_phase_osc_near > two_pi ? s1_phase_osc_near -= two_pi;
+s2_phase_osc_near += two_pi * s2_freq * srate_inv;
+s2_phase_osc_near > two_pi ? s2_phase_osc_near -= two_pi;
+s1_phase_osc_far += two_pi * (s1_freq * 1.003) * srate_inv;
+s1_phase_osc_far > two_pi ? s1_phase_osc_far -= two_pi;
+s2_phase_osc_far += two_pi * (s2_freq * 0.997) * srate_inv;
+s2_phase_osc_far > two_pi ? s2_phase_osc_far -= two_pi;
+
+s1_active ? (
+  s1_res_low_near += s1_res_f_near * s1_res_band_near;
+  s1_res_high_near = (sin(s1_phase_osc_near)*0.8 + n1*0.2) - s1_res_low_near - s1_res_q_near * s1_res_band_near;
+  s1_res_band_near += s1_res_f_near * s1_res_high_near;
+  s1_out_near = s1_res_band_near * s1_env * s1_env * 2.0 * s1_vol;
+) : s1_out_near = 0;
+s2_active ? (
+  s2_res_low_near += s2_res_f_near * s2_res_band_near;
+  s2_res_high_near = (sin(s2_phase_osc_near)*0.5 + n1*0.5) - s2_res_low_near - s2_res_q_near * s2_res_band_near;
+  s2_res_band_near += s2_res_f_near * s2_res_high_near;
+  s2_out_near = s2_res_band_near * s2_env * s2_env * s2_vol;
+) : s2_out_near = 0;
+
+raw_near = s1_out_near + s2_out_near;
+lp_low_near += lp_f_near * lp_band_near;
+lp_high_near = raw_near - lp_low_near - lp_q * lp_band_near;
+lp_band_near += lp_f_near * lp_high_near;
+lp_low2_near += lp_f_near * lp_band2_near;
+lp_high2_near = lp_low_near - lp_low2_near - lp_q * lp_band2_near;
+lp_band2_near += lp_f_near * lp_high2_near;
+heart_near = lp_low2_near * 1.5;
+
+s1_active ? (
+  s1_res_low_far += s1_res_f_far * s1_res_band_far;
+  s1_res_high_far = (sin(s1_phase_osc_far)*0.8 + n2*0.2) - s1_res_low_far - s1_res_q_far * s1_res_band_far;
+  s1_res_band_far += s1_res_f_far * s1_res_high_far;
+  s1_out_far = s1_res_band_far * s1_env * s1_env * 2.0 * s1_vol;
+) : s1_out_far = 0;
+s2_active ? (
+  s2_res_low_far += s2_res_f_far * s2_res_band_far;
+  s2_res_high_far = (sin(s2_phase_osc_far)*0.5 + n2*0.5) - s2_res_low_far - s2_res_q_far * s2_res_band_far;
+  s2_res_band_far += s2_res_f_far * s2_res_high_far;
+  s2_out_far = s2_res_band_far * s2_env * s2_env * s2_vol;
+) : s2_out_far = 0;
+
+raw_far = s1_out_far + s2_out_far;
+lp_low_far += lp_f_far * lp_band_far;
+lp_high_far = raw_far - lp_low_far - lp_q * lp_band_far;
+lp_band_far += lp_f_far * lp_high_far;
+lp_low2_far += lp_f_far * lp_band2_far;
+lp_high2_far = lp_low_far - lp_low2_far - lp_q * lp_band2_far;
+lp_band2_far += lp_f_far * lp_high2_far;
+heart_far_now = lp_low2_far * 1.5;
+
+hb_dw = hb_delay_write & (hb_delay_buf_size - 1);
+hb_dr = (hb_delay_write - hb_delay_samples) & (hb_delay_buf_size - 1);
+hb_dw[0] = heart_far_now;
+heart_far = hb_dr[0];
+hb_delay_write = (hb_delay_write + 1) & (hb_delay_buf_size - 1);
+
+hb_delay_sign == 1 ? (
+  hb_l = heart_near; hb_r = heart_far;
+) : (
+  hb_l = heart_far; hb_r = heart_near;
+);
+hb_l *= slider3; hb_r *= slider3;
+
+// --- BREATH ---
+breath_state_pos += 1;
+breath_state_pos >= breath_state_len ? (
+  breath_state_pos = 0;
+  breath_state = (breath_state + 1) % 4;
+  breath_state == 0 ? breath_state_len = inhale_len;
+  breath_state == 1 ? breath_state_len = top_len;
+  breath_state == 2 ? breath_state_len = exhale_len;
+  breath_state == 3 ? breath_state_len = bot_len;
+);
+
+breath_phase_pos = breath_state_pos / max(breath_state_len - 1, 1);
+
+(breath_state == 1 || breath_state == 3) ? (
+  br_l = 0; br_r = 0;
+) : (
+  breath_state == 0 ? (
+    br_env = apply_fade(breath_phase_pos, slider23, slider24, slider27);
+    hp_lp_l += hp_f * (n3 - hp_lp_l);
+    br_hp_l = n3 - hp_lp_l;
+    in_lp_l += in_f_l * in_bp_l;
+    in_hp2_l = br_hp_l - in_lp_l - breath_lp_q * in_bp_l;
+    in_bp_l += in_f_l * in_hp2_l;
+    hp_lp_r += hp_f * (n4 - hp_lp_r);
+    br_hp_r = n4 - hp_lp_r;
+    in_lp_r += in_f_r * in_bp_r;
+    in_hp2_r = br_hp_r - in_lp_r - breath_lp_q * in_bp_r;
+    in_bp_r += in_f_r * in_hp2_r;
+    br_l = in_lp_l * br_env * 1.5;
+    br_r = in_lp_r * br_env * 1.5;
+  ) : (
+    br_env = apply_fade(breath_phase_pos, slider25, slider26, slider27);
+    hp_lp_l += hp_f * (n3 - hp_lp_l);
+    br_hp_l = n3 - hp_lp_l;
+    ex_lp_l += ex_f_l * ex_bp_l;
+    ex_hp2_l = br_hp_l - ex_lp_l - breath_lp_q * ex_bp_l;
+    ex_bp_l += ex_f_l * ex_hp2_l;
+    hp_lp_r += hp_f * (n4 - hp_lp_r);
+    br_hp_r = n4 - hp_lp_r;
+    ex_lp_r += ex_f_r * ex_bp_r;
+    ex_hp2_r = br_hp_r - ex_lp_r - breath_lp_q * ex_bp_r;
+    ex_bp_r += ex_f_r * ex_hp2_r;
+    br_l = ex_lp_l * br_env * 1.5;
+    br_r = ex_lp_r * br_env * 1.5;
+  );
+);
+br_l *= slider14; br_r *= slider14;
+
+// Breath post-filter
+bpf_low_l += bpf_f * bpf_band_l;
+bpf_high_l = br_l - bpf_low_l - bpf_q * bpf_band_l;
+bpf_band_l += bpf_f * bpf_high_l;
+br_l = bpf_low_l;
+
+bpf_low_r += bpf_f * bpf_band_r;
+bpf_high_r = br_r - bpf_low_r - bpf_q * bpf_band_r;
+bpf_band_r += bpf_f * bpf_high_r;
+br_r = bpf_low_r;
+
+// --- BLOODFLOW ---
+// LFO phase locked directly to heartbeat cycle - 0..1 through the cycle
+bf_cycle_pos = hb_phase / max(cycle_len, 1);
+
+// Sweep filter envelope: fade in, hold high, fade out, hold low
+bf_cycle_pos < bf_fade_in ? (
+  bf_t = bf_cycle_pos / bf_fade_in;
+  bf_lfo = 0.5 - 0.5 * cos(bf_t * $pi);
+) : bf_cycle_pos < (1.0 - bf_fade_out) ? (
+  bf_lfo = 1.0;
+) : (
+  bf_t = (bf_cycle_pos - (1.0 - bf_fade_out)) / bf_fade_out;
+  bf_lfo = 0.5 + 0.5 * cos(bf_t * $pi);
+);
+
+// Map lfo to frequency - low at rest, high at peak
+bf_cut_hz = bf_low_hz + (bf_high_hz - bf_low_hz) * bf_lfo;
+bf_cut_l = (bf_cut_hz * (1.0 + bf_stereo_width * 0.08)) * israte2;
+bf_cut_r = (bf_cut_hz * (1.0 - bf_stereo_width * 0.08)) * israte2;
+
+// Cockos resonant lowpass - straight white noise in
+bf_fb_l = bf_res + bf_res / (1.0 - bf_cut_l);
+bf_n3_l = bf_n3_l + bf_cut_l * (n5 - bf_n3_l + bf_fb_l * (bf_n3_l - bf_n4_l));
+bf_n4_l = bf_n4_l + bf_cut_l * (bf_n3_l - bf_n4_l);
+
+bf_fb_r = bf_res + bf_res / (1.0 - bf_cut_r);
+bf_n3_r = bf_n3_r + bf_cut_r * (n6 - bf_n3_r + bf_fb_r * (bf_n3_r - bf_n4_r));
+bf_n4_r = bf_n4_r + bf_cut_r * (bf_n3_r - bf_n4_r);
+
+bf_l = bf_n4_l * slider29 * 4.0;
+bf_r = bf_n4_r * slider29 * 4.0;
+
+// --- SOLO LOGIC ---
+any_solo = (slider4 > 0) || (slider15 > 0) || (slider30 > 0);
+any_solo ? (
+  hb_l = slider4  > 0 ? hb_l : 0;
+  hb_r = slider4  > 0 ? hb_r : 0;
+  br_l = slider15 > 0 ? br_l : 0;
+  br_r = slider15 > 0 ? br_r : 0;
+  bf_l = slider30 > 0 ? bf_l : 0;
+  bf_r = slider30 > 0 ? bf_r : 0;
+) : 0;
+
+out_l = hb_l + br_l + bf_l;
+out_r = hb_r + br_r + bf_r;
+
+slider2 == 0 ? (
+  spl0 = out_l; spl1 = out_r;
+) : (
+  spl0 = out_r; spl1 = out_l;
+);

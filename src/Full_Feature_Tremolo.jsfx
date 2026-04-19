@@ -1,0 +1,306 @@
+desc: Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+
+slider1:2<0.001,1000,0.001>Rate Value
+slider2:0<0,2,1{Hz,Seconds,BPM}>Rate Mode
+slider3:50<0,100,0.1>On Duration % of Cycle
+slider4:-6<-60,0,0.1>Depth dB
+slider5:0<0,100,0.1>Attack %
+slider6:0<0,100,0.1>Release %
+slider7:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
+slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
+slider9:0<-180,180,0.1>Stereo Phase Offset degrees
+slider10:0<0,1,1{Independent L+R,Offset from L}>Phase Mode
+// ===== PAN BLOCK SLIDERS START =====
+slider11:0<0,1,1{Off,On}>Pan Enabled
+slider12:0<0,11,1{Mono,Alternating,Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep}>Pan Mode
+slider13:1<0,1,0.01>Pan Spread (0=mono, 1=full)
+slider14:5<0,100,0.1>Pan Glide ms (0=instant)
+slider15:8<2,32,1>Cycle Steps (per-cycle modes)
+slider16:2<0.001,1000,0.001>Pan Sweep Rate
+slider17:0<0,2,1{Hz,Seconds,BPM}>Pan Sweep Rate Unit
+slider18:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
+// ===== PAN BLOCK SLIDERS END =====
+
+@init
+phase_l = 0;
+phase_r = 0;
+gain_l  = 1;
+gain_r  = 1;
+
+// ===== PAN BLOCK INIT START =====
+pan_l           = 0;
+pan_l_smooth    = 0;
+pan_cycle_index = 0;
+pan_cycle_dir   = 1;
+last_phase_l    = 0;
+pan_phase       = 0;
+// ===== PAN BLOCK INIT END =====
+
+
+function apply_curve(t, shape) (
+  shape == 0 ? t :
+  shape == 1 ? (0.5 - 0.5 * cos(t * $pi)) :
+  shape == 2 ? (log(1 + 9*t) / log(10)) :
+               ((10^t - 1) / 9)
+);
+
+function calc_lfo(ph, on_secs, att_secs, rel_secs, period, att_shape, rel_shape)
+local(on_frac, aw, rw, hold_w, re_start, t, result, total) (
+  on_secs = min(on_secs, period);
+  on_frac = on_secs / period;
+
+  aw = att_secs / period;
+  rw = rel_secs / period;
+
+  // Scale attack+release down if they exceed on-time
+  aw + rw > on_frac ? (
+    total = aw + rw;
+    aw = aw / total * on_frac;
+    rw = rw / total * on_frac;
+  );
+
+  hold_w   = on_frac - aw - rw;  // hold-high portion (may be zero)
+  re_start = aw + hold_w;        // phase point where release begins
+
+  ph < aw ? (
+    // Attack: ramp up from 0 to 1
+    aw > 0.0001 ? (
+      t = ph / aw;
+      result = apply_curve(t, att_shape);
+    ) : (result = 1);
+  ) :
+  ph < re_start ? (
+    // Hold high
+    result = 1;
+  ) :
+  ph < on_frac ? (
+    // Release: ramp down from 1 to 0
+    rw > 0.0001 ? (
+      t = 1 - (ph - re_start) / rw;
+      result = apply_curve(t, rel_shape);
+    ) : (result = 0);
+  ) : (
+    // Hold low (off-time)
+    result = 0;
+  );
+  result
+);
+
+// ===== PAN BLOCK FUNCTIONS START =====
+function percycle_pan(idx, n_steps) local(steps, step, pos) (
+  n_steps = max(n_steps, 1);
+  steps   = max(ceil((n_steps - 1) / 2.0), 1);
+
+  pan_mode == 0 ? (
+    pos = 0;
+  ) : pan_mode == 1 ? (
+    pos = (idx % 2 == 0) ? -1 : 1;
+  ) : pan_mode == 2 ? (
+    n_steps > 1 ? (pos = (idx % n_steps) / (n_steps - 1.0) * 2.0 - 1.0) : (pos = 0);
+  ) : pan_mode == 3 ? (
+    n_steps > 1 ? (pos = 1.0 - (idx % n_steps) / (n_steps - 1.0) * 2.0) : (pos = 0);
+  ) : pan_mode == 4 ? (
+    n_steps > 1 ? (pos = idx / (n_steps - 1.0) * 2.0 - 1.0) : (pos = 0);
+  ) : pan_mode == 5 ? (
+    idx = idx % n_steps;
+    idx == 0 ? (
+      pos = -1.0;
+    ) : (
+      step = ceil((idx + 1) / 2);
+      pos = (idx % 2 == 1) ?  (1.0 - (step - 1.0) / steps)
+                            : -(1.0 - (step - 1.0) / steps);
+      pos = max(-1.0, min(1.0, pos));
+    );
+  ) : pan_mode == 6 ? (
+    idx = idx % n_steps;
+    idx == 0 ? (
+      pos = -1.0;
+    ) : (
+      step = ceil((idx + 1) / 2);
+      pos = (idx % 2 == 1) ?  (1.0 - (step - 1.0) / steps)
+                            : -(1.0 - (step - 1.0) / steps);
+      pos = max(-1.0, min(1.0, pos));
+    );
+  ) : pan_mode == 7 ? (
+    idx = idx % n_steps;
+    idx == 0 ? (
+      pos = 0.0;
+    ) : (
+      step = floor((idx + 1) / 2);
+      pos = (idx % 2 == 1) ? -(step / steps)
+                            :  (step / steps);
+      pos = max(-1.0, min(1.0, pos));
+    );
+  ) : pan_mode == 8 ? (
+    idx = idx % n_steps;
+    idx == 0 ? (
+      pos = 0.0;
+    ) : (
+      step = floor((idx + 1) / 2);
+      pos = (idx % 2 == 1) ? -(step / steps)
+                            :  (step / steps);
+      pos = max(-1.0, min(1.0, pos));
+    );
+  ) : (
+    pos = 0;
+  );
+
+  pos * pan_spread
+);
+// ===== PAN BLOCK FUNCTIONS END =====
+
+
+@slider
+
+rate_val     = slider1;
+rate_mode    = slider2;
+dur_pct      = slider3;
+depth        = slider4;
+att_pct      = slider5;
+rel_pct      = slider6;
+att_shape    = slider7;
+rel_shape    = slider8;
+phase_offset = slider9 / 360;
+
+amount = 2 ^ (depth / 6);
+sc     = 0.5 * amount;
+amount = 1 - amount;
+
+// ===== PAN BLOCK SLIDER READ START =====
+pan_enabled     = slider11;
+pan_mode        = slider12;
+pan_spread      = slider13;
+pan_glide_ms    = slider14;
+pan_cycle_steps = slider15;
+pan_sweep_val   = slider16;
+pan_sweep_mode  = slider17;
+pan_sweep_ratio = slider18;
+
+slider_show(slider12, pan_enabled);
+slider_show(slider13, pan_enabled);
+slider_show(slider14, pan_enabled);
+slider_show(slider15, pan_enabled && pan_mode >= 1 && pan_mode <= 8);
+slider_show(slider16, pan_enabled && (pan_mode == 9 || pan_mode == 10));
+slider_show(slider17, pan_enabled && (pan_mode == 9 || pan_mode == 10));
+slider_show(slider18, pan_enabled && pan_mode == 11);
+// ===== PAN BLOCK SLIDER READ END =====
+
+
+@sample
+
+rate_val     = slider1;
+rate_mode    = slider2;
+dur_pct      = slider3;
+depth        = slider4;
+att_pct      = slider5;
+rel_pct      = slider6;
+att_shape    = slider7;
+rel_shape    = slider8;
+phase_offset = slider9 / 360;
+
+// ===== PAN BLOCK SAMPLE READ START =====
+pan_enabled     = slider11;
+pan_mode        = slider12;
+pan_spread      = slider13;
+pan_glide_ms    = slider14;
+pan_cycle_steps = slider15;
+pan_sweep_val   = slider16;
+pan_sweep_mode  = slider17;
+pan_sweep_ratio = slider18;
+// ===== PAN BLOCK SAMPLE READ END =====
+
+amount = 2 ^ (depth / 6);
+sc     = 0.5 * amount;
+amount = 1 - amount;
+
+rate_mode == 0 ? (freq = rate_val) :
+rate_mode == 1 ? (freq = 1 / max(rate_val, 0.001)) :
+                 (freq = rate_val / 60);
+
+period   = 1 / max(freq, 0.00001);
+on_secs  = (dur_pct / 100.0) * period;
+att_secs = (att_pct / 100.0) * period;
+rel_secs = (rel_pct / 100.0) * period;
+
+phase_l += freq / srate;
+phase_l >= 1 ? phase_l -= 1;
+
+slider10 == 0 ? (
+  phase_r += freq / srate;
+  phase_r >= 1 ? phase_r -= 1;
+) : (
+  phase_r = phase_l + phase_offset;
+  phase_r >= 1 ? phase_r -= 1;
+  phase_r < 0  ? phase_r += 1;
+);
+
+lfo_l = calc_lfo(phase_l, on_secs, att_secs, rel_secs, period, att_shape, rel_shape);
+lfo_r = calc_lfo(phase_r, on_secs, att_secs, rel_secs, period, att_shape, rel_shape);
+
+smooth = exp(-1 / (srate * 0.003));
+gain_l = gain_l * smooth + (lfo_l * sc + amount) * (1 - smooth);
+gain_r = gain_r * smooth + (lfo_r * sc + amount) * (1 - smooth);
+
+spl0 *= gain_l;
+spl1 *= gain_r;
+
+// ===== PAN BLOCK SAMPLE LOGIC START =====
+pan_enabled ? (
+  cycle_fired  = (phase_l < last_phase_l);
+  last_phase_l = phase_l;
+
+  pan_mode <= 8 ? (
+    cycle_fired ? (
+      pan_mode == 4 || pan_mode == 6 || pan_mode == 8 ? (
+        pan_cycle_index += pan_cycle_dir;
+        (pan_cycle_index >= pan_cycle_steps - 1 || pan_cycle_index <= 0) ?
+          pan_cycle_dir = -pan_cycle_dir;
+      ) : (
+        pan_cycle_index = (pan_cycle_index + 1) % pan_cycle_steps;
+      );
+    );
+    cur_pan = percycle_pan(pan_cycle_index, pan_cycle_steps);
+    pan_l = cur_pan;
+
+  ) : pan_mode == 9 ? (
+    // Pan Sweep
+    pan_sweep_mode == 0 ? (pan_freq = pan_sweep_val) :
+    pan_sweep_mode == 1 ? (pan_freq = 1 / max(pan_sweep_val, 0.001)) :
+                          (pan_freq = pan_sweep_val / 60);
+    pan_phase += pan_freq / srate;
+    pan_phase >= 1 ? pan_phase -= 1;
+    cur_pan = (pan_phase * 2.0 - 1.0) * pan_spread;
+    pan_l = cur_pan;
+
+  ) : pan_mode == 10 ? (
+    // Pan Sweep Flipped
+    pan_sweep_mode == 0 ? (pan_freq = pan_sweep_val) :
+    pan_sweep_mode == 1 ? (pan_freq = 1 / max(pan_sweep_val, 0.001)) :
+                          (pan_freq = pan_sweep_val / 60);
+    pan_phase += pan_freq / srate;
+    pan_phase >= 1 ? pan_phase -= 1;
+    cur_pan = (1.0 - pan_phase * 2.0) * pan_spread;
+    pan_l = cur_pan;
+
+  ) : (
+    // Linked Sweep
+    pan_phase += (freq * pan_sweep_ratio) / srate;
+    pan_phase >= 1 ? pan_phase -= 1;
+    cur_pan = (pan_phase * 2.0 - 1.0) * pan_spread;
+    pan_l = cur_pan;
+  );
+
+  // Glide smoothing
+  pan_glide_coeff = pan_glide_ms > 0 ? exp(-1 / (srate * pan_glide_ms * 0.001)) : 0;
+  pan_l_smooth = pan_l_smooth * pan_glide_coeff + pan_l * (1 - pan_glide_coeff);
+
+  pan_pos = (pan_l_smooth + 1.0) * 0.5;
+  mono = (spl0 + spl1) * 0.5;
+  spl0 = mono * cos(pan_pos * $pi * 0.5);
+  spl1 = mono * sin(pan_pos * $pi * 0.5);
+);
+// ===== PAN BLOCK SAMPLE LOGIC END =====

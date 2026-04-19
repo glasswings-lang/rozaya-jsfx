@@ -1,0 +1,386 @@
+desc: Shepard Tone Generator
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// A Shepard-Risset glissando generator — an auditory illusion of pitch that
+// sweeps upward (or downward) continuously without ever actually getting higher.
+//
+// HOW IT WORKS:
+// Each voice is rooted at a musical note. Inside that voice, multiple oscillators
+// are stacked at exact octave intervals from the root. The pitch window is exactly
+// as wide as the Octave Count — so spacing is always 1 octave and handoffs are
+// always clean. All oscillators sweep continuously in the same direction. Each
+// oscillator's volume is shaped by the Fade In/Out controls — loud near the center
+// of the window, silent at the edges. When an oscillator exits the top of the window
+// it wraps silently to the bottom and begins fading in again, producing seamless
+// continuous motion.
+//
+// VOICES:
+// Up to 8 independent voices, each rooted at a different note. Use multiple
+// voices to create Shepard chords (e.g. C+E+G), counterpoint (one ascending,
+// one descending), or polyrhythmic textures (Independent drift mode with
+// different rates per voice).
+//
+// CONTROLS:
+//   Drift Mode       — Synced: all voices share Rate Value; each voice's Drift
+//                      slider is a cents detune offset on its oscillators.
+//                      Independent: each voice's Drift slider is its own rate
+//                      in the current Rate Mode units.
+//   Rate Mode/Value  — How fast the sweep cycles: BPM, cycle length in seconds,
+//                      or direct Hz.
+//   Octave Count     — How many oscillators run per voice (2-12), and how many
+//                      octaves wide the pitch window is. These are the same thing.
+//   Center Octave    — Which octave sits at the middle of the pitch window.
+//   Fade In/Out %    — What fraction of each sweep cycle is spent fading in or
+//                      out. Lower values = longer hold at full volume, shorter
+//                      crossfades. 20/20 is a good starting point for ambient use.
+//   Waveform         — Sine is cleanest for the illusion. Other waveforms add
+//                      harmonic color.
+//   Binaural Beat    — Offsets the right channel frequency by this many Hz,
+//                      producing a binaural beat at the specified frequency.
+//   Tuning Ref       — Reference frequency for A4 (default 440Hz).
+//
+// PER-VOICE:
+//   Note + Octave    — Root note of this voice's octave stack.
+//   Direction        — Ascending or descending sweep.
+//   Drift            — Cents detune (Synced) or independent rate (Independent).
+//   Gain dB          — Volume of this voice.
+//   Active           — Enables the voice. Controls hide when inactive.
+
+// ===== GLOBAL CONTROLS =====
+slider1:0<0,1,1{Synced,Independent}>Drift Mode
+slider2:0<0,2,1{BPM,Seconds,Hz}>Rate Mode
+slider3:30<0.001,1000,0.001>Rate Value
+slider4:8<2,16,1>Octave Count
+slider5:4<0,8,1>Center Octave
+slider6:20<0,100,0.1>Fade In %
+slider7:20<0,100,0.1>Fade Out %
+slider8:0<0,5,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS}>Waveform
+slider9:0<0,100,0.1>Binaural Beat Hz
+slider10:440<400,480,0.1>Tuning Reference Hz
+
+// ===== VOICE 1 =====
+slider11:9<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V1 Note
+slider12:4<0,8,1>V1 Octave
+slider13:0<0,1,1{Asc,Desc}>V1 Direction
+slider14:0<-1000,1000,0.001>V1 Drift (Synced: cents) / Rate (Indep)
+slider15:0<-60,6,0.1>V1 Gain dB
+slider16:1<0,1,1{Off,On}>V1 Active
+
+// ===== VOICE 2 =====
+slider17:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V2 Note
+slider18:4<0,8,1>V2 Octave
+slider19:0<0,1,1{Asc,Desc}>V2 Direction
+slider20:0<-1000,1000,0.001>V2 Drift (Synced: cents) / Rate (Indep)
+slider21:0<-60,6,0.1>V2 Gain dB
+slider22:0<0,1,1{Off,On}>V2 Active
+
+// ===== VOICE 3 =====
+slider23:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V3 Note
+slider24:4<0,8,1>V3 Octave
+slider25:0<0,1,1{Asc,Desc}>V3 Direction
+slider26:0<-1000,1000,0.001>V3 Drift (Synced: cents) / Rate (Indep)
+slider27:0<-60,6,0.1>V3 Gain dB
+slider28:0<0,1,1{Off,On}>V3 Active
+
+// ===== VOICE 4 =====
+slider29:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V4 Note
+slider30:4<0,8,1>V4 Octave
+slider31:0<0,1,1{Asc,Desc}>V4 Direction
+slider32:0<-1000,1000,0.001>V4 Drift (Synced: cents) / Rate (Indep)
+slider33:0<-60,6,0.1>V4 Gain dB
+slider34:0<0,1,1{Off,On}>V4 Active
+
+// ===== VOICE 5 =====
+slider35:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V5 Note
+slider36:5<0,8,1>V5 Octave
+slider37:0<0,1,1{Asc,Desc}>V5 Direction
+slider38:0<-1000,1000,0.001>V5 Drift (Synced: cents) / Rate (Indep)
+slider39:0<-60,6,0.1>V5 Gain dB
+slider40:0<0,1,1{Off,On}>V5 Active
+
+// ===== VOICE 6 =====
+slider41:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V6 Note
+slider42:5<0,8,1>V6 Octave
+slider43:0<0,1,1{Asc,Desc}>V6 Direction
+slider44:0<-1000,1000,0.001>V6 Drift (Synced: cents) / Rate (Indep)
+slider45:0<-60,6,0.1>V6 Gain dB
+slider46:0<0,1,1{Off,On}>V6 Active
+
+// ===== VOICE 7 =====
+slider47:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V7 Note
+slider48:5<0,8,1>V7 Octave
+slider49:0<0,1,1{Asc,Desc}>V7 Direction
+slider50:0<-1000,1000,0.001>V7 Drift (Synced: cents) / Rate (Indep)
+slider51:0<-60,6,0.1>V7 Gain dB
+slider52:0<0,1,1{Off,On}>V7 Active
+
+// ===== VOICE 8 =====
+slider53:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V8 Note
+slider54:6<0,8,1>V8 Octave
+slider55:0<0,1,1{Asc,Desc}>V8 Direction
+slider56:0<-1000,1000,0.001>V8 Drift (Synced: cents) / Rate (Indep)
+slider57:0<-60,6,0.1>V8 Gain dB
+slider58:0<0,1,1{Off,On}>V8 Active
+
+
+@init
+PHI = 1.6180339887;
+NUM_OSC = 16; // max oscillators per voice
+
+// Memory layout — voice * NUM_OSC + osc = index, max 8*16 = 128 slots
+osc_freq    = 0;   // 0-127
+osc_phase_l = 128; // 128-255
+osc_phase_r = 256; // 256-383
+osc_gain    = 384; // 384-511
+
+// Per-voice (8 slots each)
+v_active    = 512;
+v_gain_lin  = 520;
+v_dir       = 528;
+v_root      = 536; // root frequency in Hz
+v_note      = 544;
+v_oct       = 552;
+shep_rate   = 560; // octaves per second
+drifts      = 568;
+
+smooth = exp(-1 / (srate * 0.008)); // one-pole smoothing ~8ms — prevents clicks on gain changes
+last_num_osc = 0;
+needs_init   = 1; // triggers osc position init on first load, no play required
+
+i = 0;
+loop(128,
+  osc_freq[i]    = 0;
+  osc_phase_l[i] = 0;
+  osc_phase_r[i] = 0;
+  osc_gain[i]    = 0;
+  i += 1;
+);
+
+function rate_to_hz(raw_rate, rmode) (
+  rmode == 0 ? max(raw_rate, 0.001) / 60 :
+  rmode == 1 ? 1 / max(raw_rate, 0.001) :
+               max(raw_rate, 0.001)
+);
+
+function note_to_hz(note, oct, tref) (
+  tref * pow(2, ((oct + 1) * 12 + note - 69) / 12.0)
+);
+
+function wave_sample(ph) (
+  waveform == 0 ? sin(ph * 2 * $pi) :
+  waveform == 1 ? (ph < 0.25 ? ph * 4 : ph < 0.75 ? 2 - ph * 4 : ph * 4 - 4) :
+  waveform == 2 ? (
+    ps = ph + 0.5; ps -= floor(ps); ps * 2 - 1
+  ) :
+  waveform == 3 ? (
+    pg = ph < (1/PHI) ? ph * PHI * 0.5 : 0.5 + (ph - 1/PHI) / (1 - 1/PHI) * 0.5;
+    sin(pg * 2 * $pi)
+  ) :
+  waveform == 4 ? (
+    pg = (sin((ph - 0.25) * 2 * $pi) + 1) * 0.5;
+    pg = pg < (1/PHI) ? pg * PHI * 0.5 : 0.5 + (pg - 1/PHI) / (1 - 1/PHI) * 0.5;
+    sin(pg * 2 * $pi)
+  ) : (
+    pg = ph + (1/PHI) * sin(ph * 2 * $pi) / (2 * $pi);
+    pg -= floor(pg);
+    sin(pg * 2 * $pi)
+  )
+);
+
+// window_gain: returns 0-1 gain for an oscillator at log-frequency lf.
+// pos=0 is the bottom of the pitch window, pos=1 is the top.
+// Fade in over the bottom fi fraction, hold at 1, fade out over the top fo fraction.
+// Oscillators outside the window (pos<=0 or pos>=1) return 0 — silent wrap zone.
+function window_gain(lf, log_lo, log_range, fi, fo) (
+  pos = (lf - log_lo) / log_range;
+  pos <= 0 || pos >= 1 ? 0 :
+  pos < fi ? (fi > 0 ? 0.5 - 0.5 * cos(pos / fi * $pi) : 1) :
+  pos > (1 - fo) ? (fo > 0 ? 0.5 - 0.5 * cos((1 - pos) / fo * $pi) : 0) :
+  1
+);
+
+
+@slider
+
+drift_mode   = slider1;
+rate_mode    = slider2;
+rate_val     = slider3;
+num_osc      = max(2, min(16, floor(slider4 + 0.5)));
+center_oct   = floor(slider5 + 0.5);
+fade_in_pct  = slider6;
+fade_out_pct = slider7;
+waveform     = slider8;
+binaural_hz  = slider9;
+tuning_ref   = slider10;
+
+// Read per-voice sliders — 6 sliders per voice starting at slider11
+i = 0;
+loop(8,
+  base = 11 + i * 6;
+  v_note[i]     = slider(base);
+  v_oct[i]      = slider(base + 1);
+  v_dir[i]      = slider(base + 2);
+  drifts[i]     = slider(base + 3);
+  v_gain_lin[i] = pow(10, slider(base + 4) / 20.0);
+  v_active[i]   = slider(base + 5);
+  v_root[i]     = note_to_hz(v_note[i], v_oct[i], tuning_ref);
+  i += 1;
+);
+
+// Show/hide per-voice controls based on active state.
+// Must use actual sliderN variables — slider_show() takes slider variable
+// references or bitmasks, NOT integer indices. Passing an integer like 11
+// would be interpreted as a bitmask, not "slider number 11".
+// Active toggle always visible; other controls hide when voice is inactive;
+// drift additionally requires Independent mode.
+slider_show(slider11, slider16); slider_show(slider12, slider16); slider_show(slider13, slider16);
+slider_show(slider14, slider16 && drift_mode == 1); slider_show(slider15, slider16); 
+slider_show(slider17, slider22); slider_show(slider18, slider22); slider_show(slider19, slider22);
+slider_show(slider20, slider22 && drift_mode == 1); slider_show(slider21, slider22);
+slider_show(slider23, slider28); slider_show(slider24, slider28); slider_show(slider25, slider28);
+slider_show(slider26, slider28 && drift_mode == 1); slider_show(slider27, slider28);
+slider_show(slider29, slider34); slider_show(slider30, slider34); slider_show(slider31, slider34);
+slider_show(slider32, slider34 && drift_mode == 1); slider_show(slider33, slider34);
+slider_show(slider35, slider40); slider_show(slider36, slider40); slider_show(slider37, slider40);
+slider_show(slider38, slider40 && drift_mode == 1); slider_show(slider39, slider40);
+slider_show(slider41, slider46); slider_show(slider42, slider46); slider_show(slider43, slider46);
+slider_show(slider44, slider46 && drift_mode == 1); slider_show(slider45, slider46);
+slider_show(slider47, slider52); slider_show(slider48, slider52); slider_show(slider49, slider52);
+slider_show(slider50, slider52 && drift_mode == 1); slider_show(slider51, slider52);
+slider_show(slider53, slider58); slider_show(slider54, slider58); slider_show(slider55, slider58);
+slider_show(slider56, slider58 && drift_mode == 1); slider_show(slider57, slider58);
+
+// Pitch window: exactly num_osc octaves wide, centered on center_oct.
+// Window width == octave count means spacing is always exactly 1 octave,
+// so oscillators always land on exact octave intervals of the root.
+center_freq     = tuning_ref * pow(2, center_oct - 4); // A in center octave
+pitch_lo        = center_freq * pow(2, -num_osc * 0.5);
+pitch_hi        = center_freq * pow(2,  num_osc * 0.5);
+log_pitch_lo    = log(pitch_lo);
+log_pitch_hi    = log(pitch_hi);
+log_pitch_range = log_pitch_hi - log_pitch_lo;
+
+base_rate_hz = rate_to_hz(rate_val, rate_mode);
+oct_range    = num_osc; // window is exactly num_osc octaves wide
+
+i = 0;
+loop(8,
+  drift_mode == 0 ? (
+    shep_rate[i] = base_rate_hz * oct_range;
+  ) : (
+    shep_rate[i] = rate_to_hz(max(drifts[i], 0.001), rate_mode) * oct_range;
+  );
+  i += 1;
+);
+
+fade_in_frac  = fade_in_pct  / 100.0;
+fade_out_frac = fade_out_pct / 100.0;
+fade_in_frac + fade_out_frac > 1.0 ? (
+  total_f       = fade_in_frac + fade_out_frac;
+  fade_in_frac  /= total_f;
+  fade_out_frac /= total_f;
+);
+
+
+@sample
+
+// Initialize oscillator frequencies. Runs on first load and whenever Octave Count changes.
+// Because the window is exactly num_osc octaves wide, spacing is exactly 1 octave.
+// We bring the root into the window and place each oscillator at exact octave steps up.
+needs_init || num_osc != last_num_osc ? (
+  i = 0;
+  loop(8,
+    // Bring root into window by octave transposition
+    root_in_window = v_root[i];
+    root_in_window < pitch_lo ? root_in_window *= pow(2, ceil(log(pitch_lo / root_in_window) / log(2)));
+    root_in_window > pitch_hi ? root_in_window *= pow(2, -ceil(log(root_in_window / pitch_hi) / log(2)));
+
+    o = 0;
+    loop(NUM_OSC,
+      oi = i * NUM_OSC + o;
+      o < num_osc ? (
+        // Each oscillator is exactly o octaves above root_in_window, wrapping within the window.
+        // Window width == num_osc octaves, so the wrap always lands back on an exact octave of the root.
+        f = root_in_window * pow(2, o);
+        f > pitch_hi ? f *= pitch_lo / pitch_hi;
+      ) : (
+        f = pitch_lo; // park extra slots at bottom — gain=0 there, silent
+      );
+      osc_freq[oi]    = f;
+      osc_phase_l[oi] = 0;
+      osc_phase_r[oi] = 0;
+      osc_gain[oi]    = 0;
+      o += 1;
+    );
+    i += 1;
+  );
+  last_num_osc = num_osc;
+  needs_init = 0;
+);
+out_l = 0;
+out_r = 0;
+active_count = 0;
+
+i = 0;
+loop(8,
+  v_active[i] ? (
+    active_count += 1;
+
+    freq_mul = pow(2, shep_rate[i] / srate);
+
+    o = 0;
+    loop(num_osc,
+      oi = i * NUM_OSC + o;
+
+      v_dir[i] == 0 ? (
+        osc_freq[oi] *= freq_mul;
+        osc_freq[oi] > pitch_hi ? osc_freq[oi] *= pitch_lo / pitch_hi;
+      ) : (
+        osc_freq[oi] /= freq_mul;
+        osc_freq[oi] < pitch_lo ? osc_freq[oi] *= pitch_hi / pitch_lo;
+      );
+
+      // Drift detune (synced mode only — cents offset)
+      drift_mode == 0 ? (
+        freq_l = osc_freq[oi] * pow(2, drifts[i] / 1200.0);
+      ) : (
+        freq_l = osc_freq[oi];
+      );
+      freq_r = freq_l + binaural_hz;
+
+      // Bell gain from position in window
+      lf = log(osc_freq[oi]);
+      target_gain = window_gain(lf, log_pitch_lo, log_pitch_range, fade_in_frac, fade_out_frac) * v_gain_lin[i];
+      osc_gain[oi] = osc_gain[oi] * smooth + target_gain * (1 - smooth);
+
+      // Advance phases
+      osc_phase_l[oi] += freq_l / srate;
+      osc_phase_l[oi] >= 1 ? osc_phase_l[oi] -= 1;
+      osc_phase_r[oi] += freq_r / srate;
+      osc_phase_r[oi] >= 1 ? osc_phase_r[oi] -= 1;
+
+      out_l += wave_sample(osc_phase_l[oi]) * osc_gain[oi];
+      out_r += wave_sample(osc_phase_r[oi]) * osc_gain[oi];
+
+      o += 1;
+    );
+  );
+  i += 1;
+);
+
+active_count > 0 ? (
+  norm = 1.0 / (active_count * num_osc);
+  spl0 = out_l * norm;
+  spl1 = out_r * norm;
+) : (
+  spl0 = 0;
+  spl1 = 0;
+);
+
+
+@gfx 0 0
+// Empty — present only to fix REAPER 7.x FX dialog slider display regression
+// where sliders 1-5 are hidden when a plugin has no @gfx block.
