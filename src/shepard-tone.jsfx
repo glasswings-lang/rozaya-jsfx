@@ -40,10 +40,12 @@ desc: Shepard Tone Generator
 //                      harmonic color.
 //   Binaural Beat    — Offsets the right channel frequency by this many Hz,
 //                      producing a binaural beat at the specified frequency.
+//   Root Note        — Global tonic. Per-voice Note sliders offset from this.
 //   Tuning Ref       — Reference frequency for A4 (default 440Hz).
 //
 // PER-VOICE:
-//   Note + Octave    — Root note of this voice's octave stack.
+//   Note             — Pitch class of this voice, relative to Root Note.
+//   Pan              — Stereo position. Negative = left, positive = right. 0 = center.
 //   Direction        — Ascending or descending sweep.
 //   Drift            — Cents detune (Synced) or independent rate (Independent).
 //   Gain dB          — Volume of this voice.
@@ -52,78 +54,79 @@ desc: Shepard Tone Generator
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Synced,Independent}>Drift Mode
 slider2:0<0,2,1{BPM,Seconds,Hz}>Rate Mode
-slider3:30<0.001,1000,0.001>Rate Value
+slider3:0.5<0.001,1000,0.001>Rate Value
 slider4:8<2,16,1>Octave Count
-slider5:4<0,8,1>Center Octave
+slider5:3<0,8,1>Center Octave
 slider6:20<0,100,0.1>Fade In %
 slider7:20<0,100,0.1>Fade Out %
 slider8:0<0,5,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS}>Waveform
 slider9:0<0,100,0.1>Binaural Beat Hz
-slider10:440<400,480,0.1>Tuning Reference Hz
+slider10:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
+slider11:440<400,480,0.1>Tuning Reference Hz
 
 // ===== VOICE 1 =====
-slider11:9<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V1 Note
-slider12:4<0,8,1>V1 Octave
-slider13:0<0,1,1{Asc,Desc}>V1 Direction
-slider14:0<-1000,1000,0.001>V1 Drift (Synced: cents) / Rate (Indep)
-slider15:0<-60,6,0.1>V1 Gain dB
-slider16:1<0,1,1{Off,On}>V1 Active
+slider12:9<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V1 Note
+slider13:0<-100,100,0.1>V1 Pan (neg=left, pos=right)
+slider14:0<0,1,1{Asc,Desc}>V1 Direction
+slider15:0<-1000,1000,0.001>V1 Drift (Synced: cents) / Rate (Indep)
+slider16:0<-60,6,0.1>V1 Gain dB
+slider17:1<0,1,1{Off,On}>V1 Active
 
 // ===== VOICE 2 =====
-slider17:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V2 Note
-slider18:4<0,8,1>V2 Octave
-slider19:0<0,1,1{Asc,Desc}>V2 Direction
-slider20:0<-1000,1000,0.001>V2 Drift (Synced: cents) / Rate (Indep)
-slider21:0<-60,6,0.1>V2 Gain dB
-slider22:0<0,1,1{Off,On}>V2 Active
+slider18:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V2 Note
+slider19:0<-100,100,0.1>V2 Pan (neg=left, pos=right)
+slider20:0<0,1,1{Asc,Desc}>V2 Direction
+slider21:0<-1000,1000,0.001>V2 Drift (Synced: cents) / Rate (Indep)
+slider22:0<-60,6,0.1>V2 Gain dB
+slider23:0<0,1,1{Off,On}>V2 Active
 
 // ===== VOICE 3 =====
-slider23:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V3 Note
-slider24:4<0,8,1>V3 Octave
-slider25:0<0,1,1{Asc,Desc}>V3 Direction
-slider26:0<-1000,1000,0.001>V3 Drift (Synced: cents) / Rate (Indep)
-slider27:0<-60,6,0.1>V3 Gain dB
-slider28:0<0,1,1{Off,On}>V3 Active
+slider24:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V3 Note
+slider25:0<-100,100,0.1>V3 Pan (neg=left, pos=right)
+slider26:0<0,1,1{Asc,Desc}>V3 Direction
+slider27:0<-1000,1000,0.001>V3 Drift (Synced: cents) / Rate (Indep)
+slider28:0<-60,6,0.1>V3 Gain dB
+slider29:0<0,1,1{Off,On}>V3 Active
 
 // ===== VOICE 4 =====
-slider29:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V4 Note
-slider30:4<0,8,1>V4 Octave
-slider31:0<0,1,1{Asc,Desc}>V4 Direction
-slider32:0<-1000,1000,0.001>V4 Drift (Synced: cents) / Rate (Indep)
-slider33:0<-60,6,0.1>V4 Gain dB
-slider34:0<0,1,1{Off,On}>V4 Active
+slider30:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V4 Note
+slider31:0<-100,100,0.1>V4 Pan (neg=left, pos=right)
+slider32:0<0,1,1{Asc,Desc}>V4 Direction
+slider33:0<-1000,1000,0.001>V4 Drift (Synced: cents) / Rate (Indep)
+slider34:0<-60,6,0.1>V4 Gain dB
+slider35:0<0,1,1{Off,On}>V4 Active
 
 // ===== VOICE 5 =====
-slider35:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V5 Note
-slider36:5<0,8,1>V5 Octave
-slider37:0<0,1,1{Asc,Desc}>V5 Direction
-slider38:0<-1000,1000,0.001>V5 Drift (Synced: cents) / Rate (Indep)
-slider39:0<-60,6,0.1>V5 Gain dB
-slider40:0<0,1,1{Off,On}>V5 Active
+slider36:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V5 Note
+slider37:0<-100,100,0.1>V5 Pan (neg=left, pos=right)
+slider38:0<0,1,1{Asc,Desc}>V5 Direction
+slider39:0<-1000,1000,0.001>V5 Drift (Synced: cents) / Rate (Indep)
+slider40:0<-60,6,0.1>V5 Gain dB
+slider41:0<0,1,1{Off,On}>V5 Active
 
 // ===== VOICE 6 =====
-slider41:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V6 Note
-slider42:5<0,8,1>V6 Octave
-slider43:0<0,1,1{Asc,Desc}>V6 Direction
-slider44:0<-1000,1000,0.001>V6 Drift (Synced: cents) / Rate (Indep)
-slider45:0<-60,6,0.1>V6 Gain dB
-slider46:0<0,1,1{Off,On}>V6 Active
+slider42:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V6 Note
+slider43:0<-100,100,0.1>V6 Pan (neg=left, pos=right)
+slider44:0<0,1,1{Asc,Desc}>V6 Direction
+slider45:0<-1000,1000,0.001>V6 Drift (Synced: cents) / Rate (Indep)
+slider46:0<-60,6,0.1>V6 Gain dB
+slider47:0<0,1,1{Off,On}>V6 Active
 
 // ===== VOICE 7 =====
-slider47:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V7 Note
-slider48:5<0,8,1>V7 Octave
-slider49:0<0,1,1{Asc,Desc}>V7 Direction
-slider50:0<-1000,1000,0.001>V7 Drift (Synced: cents) / Rate (Indep)
-slider51:0<-60,6,0.1>V7 Gain dB
-slider52:0<0,1,1{Off,On}>V7 Active
+slider48:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V7 Note
+slider49:0<-100,100,0.1>V7 Pan (neg=left, pos=right)
+slider50:0<0,1,1{Asc,Desc}>V7 Direction
+slider51:0<-1000,1000,0.001>V7 Drift (Synced: cents) / Rate (Indep)
+slider52:0<-60,6,0.1>V7 Gain dB
+slider53:0<0,1,1{Off,On}>V7 Active
 
 // ===== VOICE 8 =====
-slider53:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V8 Note
-slider54:6<0,8,1>V8 Octave
-slider55:0<0,1,1{Asc,Desc}>V8 Direction
-slider56:0<-1000,1000,0.001>V8 Drift (Synced: cents) / Rate (Indep)
-slider57:0<-60,6,0.1>V8 Gain dB
-slider58:0<0,1,1{Off,On}>V8 Active
+slider54:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V8 Note
+slider55:0<-100,100,0.1>V8 Pan (neg=left, pos=right)
+slider56:0<0,1,1{Asc,Desc}>V8 Direction
+slider57:0<-1000,1000,0.001>V8 Drift (Synced: cents) / Rate (Indep)
+slider58:0<-60,6,0.1>V8 Gain dB
+slider59:0<0,1,1{Off,On}>V8 Active
 
 
 @init
@@ -142,13 +145,12 @@ v_gain_lin  = 520;
 v_dir       = 528;
 v_root      = 536; // root frequency in Hz
 v_note      = 544;
-v_oct       = 552;
+v_pan       = 552; // pan position -100 to 100
 shep_rate   = 560; // octaves per second
 drifts      = 568;
 
 smooth = exp(-1 / (srate * 0.008)); // one-pole smoothing ~8ms — prevents clicks on gain changes
-last_num_osc = 0;
-needs_init   = 1; // triggers osc position init on first load, no play required
+needs_init = 1; // true first-load only — places oscillators before any @sample runs
 
 i = 0;
 loop(128,
@@ -214,44 +216,8 @@ fade_in_pct  = slider6;
 fade_out_pct = slider7;
 waveform     = slider8;
 binaural_hz  = slider9;
-tuning_ref   = slider10;
-
-// Read per-voice sliders — 6 sliders per voice starting at slider11
-i = 0;
-loop(8,
-  base = 11 + i * 6;
-  v_note[i]     = slider(base);
-  v_oct[i]      = slider(base + 1);
-  v_dir[i]      = slider(base + 2);
-  drifts[i]     = slider(base + 3);
-  v_gain_lin[i] = pow(10, slider(base + 4) / 20.0);
-  v_active[i]   = slider(base + 5);
-  v_root[i]     = note_to_hz(v_note[i], v_oct[i], tuning_ref);
-  i += 1;
-);
-
-// Show/hide per-voice controls based on active state.
-// Must use actual sliderN variables — slider_show() takes slider variable
-// references or bitmasks, NOT integer indices. Passing an integer like 11
-// would be interpreted as a bitmask, not "slider number 11".
-// Active toggle always visible; other controls hide when voice is inactive;
-// drift additionally requires Independent mode.
-slider_show(slider11, slider16); slider_show(slider12, slider16); slider_show(slider13, slider16);
-slider_show(slider14, slider16 && drift_mode == 1); slider_show(slider15, slider16); 
-slider_show(slider17, slider22); slider_show(slider18, slider22); slider_show(slider19, slider22);
-slider_show(slider20, slider22 && drift_mode == 1); slider_show(slider21, slider22);
-slider_show(slider23, slider28); slider_show(slider24, slider28); slider_show(slider25, slider28);
-slider_show(slider26, slider28 && drift_mode == 1); slider_show(slider27, slider28);
-slider_show(slider29, slider34); slider_show(slider30, slider34); slider_show(slider31, slider34);
-slider_show(slider32, slider34 && drift_mode == 1); slider_show(slider33, slider34);
-slider_show(slider35, slider40); slider_show(slider36, slider40); slider_show(slider37, slider40);
-slider_show(slider38, slider40 && drift_mode == 1); slider_show(slider39, slider40);
-slider_show(slider41, slider46); slider_show(slider42, slider46); slider_show(slider43, slider46);
-slider_show(slider44, slider46 && drift_mode == 1); slider_show(slider45, slider46);
-slider_show(slider47, slider52); slider_show(slider48, slider52); slider_show(slider49, slider52);
-slider_show(slider50, slider52 && drift_mode == 1); slider_show(slider51, slider52);
-slider_show(slider53, slider58); slider_show(slider54, slider58); slider_show(slider55, slider58);
-slider_show(slider56, slider58 && drift_mode == 1); slider_show(slider57, slider58);
+root_note    = floor(slider10 + 0.5);
+tuning_ref   = slider11;
 
 // Pitch window: exactly num_osc octaves wide, centered on center_oct.
 // Window width == octave count means spacing is always exactly 1 octave,
@@ -266,13 +232,26 @@ log_pitch_range = log_pitch_hi - log_pitch_lo;
 base_rate_hz = rate_to_hz(rate_val, rate_mode);
 oct_range    = num_osc; // window is exactly num_osc octaves wide
 
+// Read per-voice sliders and recompute derived values — like polyrhythm, no reinit needed.
+// Oscillators keep sweeping; note changes simply update v_root and the @sample loop
+// brings each oscillator into the new window on its next wrap.
 i = 0;
 loop(8,
+  base = 12 + i * 6;
+  v_note[i]     = slider(base);
+  v_pan[i]      = slider(base + 1);
+  v_dir[i]      = slider(base + 2);
+  drifts[i]     = slider(base + 3);
+  v_gain_lin[i] = pow(10, slider(base + 4) / 20.0);
+  v_active[i]   = slider(base + 5);
+  v_root[i]     = note_to_hz(v_note[i] + root_note, 4, tuning_ref);
+
   drift_mode == 0 ? (
     shep_rate[i] = base_rate_hz * oct_range;
   ) : (
     shep_rate[i] = rate_to_hz(max(drifts[i], 0.001), rate_mode) * oct_range;
   );
+
   i += 1;
 );
 
@@ -284,16 +263,36 @@ fade_in_frac + fade_out_frac > 1.0 ? (
   fade_out_frac /= total_f;
 );
 
+// Show/hide per-voice controls based on active state.
+// Must use actual sliderN variables — slider_show() takes slider variable
+// references or bitmasks, NOT integer indices.
+// Active toggle always visible; other controls hide when voice is inactive;
+// drift additionally requires Independent mode.
+slider_show(slider12, slider17); slider_show(slider13, slider17); slider_show(slider14, slider17);
+slider_show(slider15, slider17 && drift_mode == 1); slider_show(slider16, slider17);
+slider_show(slider18, slider23); slider_show(slider19, slider23); slider_show(slider20, slider23);
+slider_show(slider21, slider23 && drift_mode == 1); slider_show(slider22, slider23);
+slider_show(slider24, slider29); slider_show(slider25, slider29); slider_show(slider26, slider29);
+slider_show(slider27, slider29 && drift_mode == 1); slider_show(slider28, slider29);
+slider_show(slider30, slider35); slider_show(slider31, slider35); slider_show(slider32, slider35);
+slider_show(slider33, slider35 && drift_mode == 1); slider_show(slider34, slider35);
+slider_show(slider36, slider41); slider_show(slider37, slider41); slider_show(slider38, slider41);
+slider_show(slider39, slider41 && drift_mode == 1); slider_show(slider40, slider41);
+slider_show(slider42, slider47); slider_show(slider43, slider47); slider_show(slider44, slider47);
+slider_show(slider45, slider47 && drift_mode == 1); slider_show(slider46, slider47);
+slider_show(slider48, slider53); slider_show(slider49, slider53); slider_show(slider50, slider53);
+slider_show(slider51, slider53 && drift_mode == 1); slider_show(slider52, slider53);
+slider_show(slider54, slider59); slider_show(slider55, slider59); slider_show(slider56, slider59);
+slider_show(slider57, slider59 && drift_mode == 1); slider_show(slider58, slider59);
+
 
 @sample
 
-// Initialize oscillator frequencies. Runs on first load and whenever Octave Count changes.
-// Because the window is exactly num_osc octaves wide, spacing is exactly 1 octave.
-// We bring the root into the window and place each oscillator at exact octave steps up.
-needs_init || num_osc != last_num_osc ? (
+// First-load init: place oscillators before any sweeping begins.
+// Never triggered by slider changes — oscillators keep running through all parameter edits.
+needs_init ? (
   i = 0;
   loop(8,
-    // Bring root into window by octave transposition
     root_in_window = v_root[i];
     root_in_window < pitch_lo ? root_in_window *= pow(2, ceil(log(pitch_lo / root_in_window) / log(2)));
     root_in_window > pitch_hi ? root_in_window *= pow(2, -ceil(log(root_in_window / pitch_hi) / log(2)));
@@ -302,8 +301,6 @@ needs_init || num_osc != last_num_osc ? (
     loop(NUM_OSC,
       oi = i * NUM_OSC + o;
       o < num_osc ? (
-        // Each oscillator is exactly o octaves above root_in_window, wrapping within the window.
-        // Window width == num_osc octaves, so the wrap always lands back on an exact octave of the root.
         f = root_in_window * pow(2, o);
         f > pitch_hi ? f *= pitch_lo / pitch_hi;
       ) : (
@@ -317,9 +314,9 @@ needs_init || num_osc != last_num_osc ? (
     );
     i += 1;
   );
-  last_num_osc = num_osc;
   needs_init = 0;
 );
+
 out_l = 0;
 out_r = 0;
 active_count = 0;
@@ -330,6 +327,11 @@ loop(8,
     active_count += 1;
 
     freq_mul = pow(2, shep_rate[i] / srate);
+
+    // Cosine-law pan: negative = left, positive = right
+    pan_pos = (v_pan[i] / 100.0 + 1.0) * 0.5; // 0=full left, 0.5=center, 1=full right
+    pan_l   = cos(pan_pos * $pi * 0.5);
+    pan_r   = sin(pan_pos * $pi * 0.5);
 
     o = 0;
     loop(num_osc,
@@ -362,8 +364,8 @@ loop(8,
       osc_phase_r[oi] += freq_r / srate;
       osc_phase_r[oi] >= 1 ? osc_phase_r[oi] -= 1;
 
-      out_l += wave_sample(osc_phase_l[oi]) * osc_gain[oi];
-      out_r += wave_sample(osc_phase_r[oi]) * osc_gain[oi];
+      out_l += wave_sample(osc_phase_l[oi]) * osc_gain[oi] * pan_l;
+      out_r += wave_sample(osc_phase_r[oi]) * osc_gain[oi] * pan_r;
 
       o += 1;
     );
