@@ -381,10 +381,14 @@ loop(8,
       pan_smooth_coeff = exp(-1 / (srate * 0.010));
       pan_smooth[i] = pan_smooth[i] * pan_smooth_coeff + raw_pan * (1 - pan_smooth_coeff);
 
-      mono_i  = (osc_l + osc_r) * 0.5;
-      pan_pos = (pan_smooth[i] + 1.0) * 0.5;
-      out_l  += mono_i * cos(pan_pos * $pi * 0.5);
-      out_r  += mono_i * sin(pan_pos * $pi * 0.5);
+      // Apply pan as separate L/R multipliers — keeps osc_l and osc_r independent
+      // so the binaural beat (frequency difference between channels) is preserved.
+      // Collapsing to mono before panning would sum the channels and destroy it.
+      pan_pos   = (pan_smooth[i] + 1.0) * 0.5;
+      pan_l_mul = cos(pan_pos * $pi * 0.5);
+      pan_r_mul = sin(pan_pos * $pi * 0.5);
+      out_l += osc_l * pan_l_mul;
+      out_r += osc_r * pan_r_mul;
     ) : (
       out_l += osc_l;
       out_r += osc_r;
