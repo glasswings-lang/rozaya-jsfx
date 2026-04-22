@@ -22,6 +22,8 @@
 
 **Utilities**
 - [Rhythm Track](#rhythm-track)
+- [Shepard Scale Generator](#shepard-scale-generator)
+- [Shepard Tone Generator](#shepard-tone-generator)
 
 ---
 
@@ -39,7 +41,7 @@ Several plugins in this suite were developed with reference to existing implemen
 - **Resonant Sweeping Filter** and **Sweep Dwell Filter** â€” filter sweep concepts informed by resonant lowpass filter implementations found in standard DAW effect libraries.
 - **Full Feature Tremolo** â€” tremolo concepts informed by existing DAW tremolo implementations, substantially expanded with shaped envelopes, stereo phase control, and pan modulation.
 
-The **Heartbeat Generator**, **Womb Sound Generator**, **Breath Generator**, and **Polyrhythm Phase** plugins are original concepts with no direct external inspiration for their architecture or feature sets.
+The **Heartbeat Generator**, **Womb Sound Generator**, **Breath Generator**, **Polyrhythm Phase**, **Shepard Tone Generator**, and **Shepard Scale Generator** plugins are original concepts with no direct external inspiration for their architecture or feature sets.
 
 ## Technical Notes
 
@@ -477,7 +479,7 @@ Each active voice runs two oscillators â€” one for the left channel at the 
 
 All active voices are summed and normalized by the active voice count, keeping the output level consistent regardless of how many voices are enabled.
 
-When pan is enabled, each voice's contribution is summed to mono and repositioned in the stereo field independently using a sine LFO, before being added to the output mix.
+When pan is enabled, each voice's left and right oscillator outputs are panned independently using separate amplitude multipliers, preserving the binaural beat relationship between channels. The left channel signal is scaled by the cosine of the pan position and the right by the sine, maintaining constant power across the field.
 
 ---
 
@@ -566,8 +568,6 @@ The oscillator waveform used by all voices simultaneously.
 **Pan Enabled** `Off / On`
 Enables per-voice pan modulation. When on, each voice is panned independently using a sine LFO before being summed into the output. When off, all pan controls are hidden and voices sum directly to their L/R oscillator channels.
 
-> **Note:** When pan is enabled, each voice's L and R oscillator outputs are summed to mono before panning. The binaural beat relationship between the voice's oscillators is collapsed â€” pan mode and binaural beats are mutually exclusive in terms of stereo function.
-
 **Pan Mode** `Tremolo / Increment`
 - **Tremolo** â€” each voice's pan LFO runs at the same rate as that voice's tremolo LFO. The pan and amplitude modulation are locked in phase.
 - **Increment** â€” all voices use a shared Pan Base Rate as their pan foundation, with each voice's rate offset by Pan Increment Ã— voice index. Voice 1 pans at the base rate, voice 2 at base + 1Ã—increment, voice 3 at base + 2Ã—increment, and so on.
@@ -587,7 +587,6 @@ The per-voice rate offset in Increment mode. Each successive voice's pan rate is
 
 - **Active voice count determines normalization.** The output is divided by the number of active voices each sample, keeping overall level consistent. Enabling or disabling voices mid-playback will change the level slightly as the normalization adjusts.
 - **Binaural Beat Hz applies to all voices uniformly.** All voices have the same L/R frequency offset. There is no per-voice binaural beat amount.
-- **Pan mode collapses the binaural beat.** When pan is enabled, each voice's L and R signals are summed to mono before panning. For binaural entrainment use, leave pan disabled.
 - **Playback start resets all phases.** Oscillator phases, tremolo phases, and pan phases all reset to zero when playback begins from a stopped state. This ensures consistent behavior from the same starting point.
 - **Rate Mode applies to both tremolo and pan rates.** Both the voice tremolo rates and the Increment mode pan rates are interpreted in whatever unit Rate Mode specifies.
 - **Phase Offset means "when does this voice become audible," not a raw phase shift.** An offset of 8 on a 16-second cycle means the voice fires at second 8. An offset of 0 fires immediately. Offsets wrap freely — an offset of 16 on a 16-second cycle is the same as 0.
@@ -1223,3 +1222,208 @@ Inverts all pan positions. In Normal mode beat 0 anchors to the left in directio
 
 
 
+
+
+---
+
+# Shepard Scale Generator
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+---
+
+## Overview
+
+Shepard Scale Generator is a step sequencer that produces the Shepard scale auditory illusion — a chromatic sequence in which each successive note sounds higher than the last, yet after twelve steps the sequence arrives back where it started with no sense of having moved. Each note in the sequence triggers a stack of octave-spaced oscillators shaped by a bell-curve amplitude window, so the pitch class is clearly defined but no single octave dominates.
+
+The plugin generates no audio from an input signal. It is a pure synthesizer.
+
+---
+
+## Signal Architecture
+
+The sequencer steps through up to twelve chromatic notes (C through B) at a rate set by the BPM parameter. On each beat, the active note's oscillator stack is triggered with an envelope shaped by the Attack, Release, and Note Length parameters. Each note has twelve oscillator slots, one per possible octave layer. The number of active layers is set by Octave Count, and their amplitude is shaped by a cosine bell curve centered on Center Octave — oscillators near the center are loud, oscillators near the edges fade toward silence. This bell shaping is what creates the illusion: the ear perceives the pitch class clearly but cannot anchor to a specific octave.
+
+All active notes are summed and normalized by the oscillator count each sample.
+
+---
+
+## Parameters
+
+### Global Controls
+
+**BPM** `10-300 BPM, default 120`
+The tempo of the sequence in beats per minute.
+
+**Direction** `Asc / Desc`
+The order in which notes are stepped through. Ascending moves C → C# → D → ... → B → C. Descending moves in reverse.
+
+**Inactive Notes** `Skip / Rest`
+Determines how notes with Active set to Off are handled.
+- **Skip** — inactive notes are skipped entirely; the sequencer advances to the next active note immediately.
+- **Rest** — inactive notes hold silence for their full beat duration before advancing.
+
+**Attack %** `0-100%, default 10`
+The fraction of each beat spent fading the note in from silence. At 0% the note begins at full amplitude immediately.
+
+**Release %** `0-100%, default 10`
+The fraction of each beat spent fading the note out. At 0% the note cuts off at the end of its on-time without fading.
+
+> If Attack % + Release % exceeds 100%, both are scaled down proportionally to fit.
+
+**Note Length %** `1-100%, default 100`
+The fraction of each beat during which the note is present. At 100% the note occupies the full beat. At 50% the note plays for the first half of the beat then falls silent for the second half.
+
+**Octave Count** `2-12, default 8`
+The number of oscillator layers stacked per note, and the width of the pitch window in octaves. Higher values produce a richer, more ambiguous pitch quality; lower values sound thinner but more distinct.
+
+**Center Octave** `0-8, default 4`
+The octave at the center of the amplitude bell curve. Oscillators nearest this octave are loudest; those further away fade toward silence at the window edges. Adjusting this shifts the perceived register of the entire sequence.
+
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS`
+The oscillator waveform used by all notes simultaneously. Sine is the cleanest choice for the illusion. See Polyrhythm Phase for waveform descriptions.
+
+**Binaural Beat Hz** `0-100 Hz, default 0`
+Offsets the right channel oscillator frequencies by this many Hz, adding a binaural beat across all notes simultaneously.
+
+**Tuning Reference Hz** `400-480 Hz, default 440`
+The A4 reference frequency used to calculate all note pitches.
+
+---
+
+### Per-Note Controls (C through B)
+
+Each of the twelve chromatic notes has three parameters.
+
+**Active** `Off / On`
+Enables or disables this note in the sequence. When off, behavior depends on the Inactive Notes setting. The gain and pan controls for this note are hidden when inactive.
+
+**Gain dB** `-60–+6 dB, default 0`
+Volume of this note relative to the others. Allows individual notes to be emphasized or de-emphasized within the sequence. Hidden when the note is inactive.
+
+**Pan** `-100–+100, default 0`
+Stereo position of this note. Negative values place it left, positive values right, 0 is center. Uses constant-power panning. Hidden when the note is inactive.
+
+---
+
+## Usage Notes
+
+- **The illusion depends on Octave Count and the bell window.** Too few layers (2-3) and individual octave jumps become audible. Eight or more layers produce the smoothest illusion.
+- **Center Octave shifts register without changing pitch classes.** Lowering it pushes the perceived center of the sequence down; raising it pushes it up. The illusion remains intact.
+- **Attack and Release are proportions of Note Length, not the full beat.** With Note Length at 50%, an Attack of 20% means the note spends 20% of its 50% window fading in — 10% of the total beat.
+- **Binaural beat applies uniformly across all notes.** There is no per-note binaural amount. For entrainment use, keep the value consistent with your target beat frequency.
+- **Skip vs Rest affects rhythmic feel significantly.** With many inactive notes, Skip produces a sparse irregular rhythm; Rest maintains the underlying pulse with silences in place of notes.
+
+---
+
+*Shepard Scale Generator is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic)*
+
+
+---
+
+# Shepard Tone Generator
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+---
+
+## Overview
+
+Shepard Tone Generator produces the Shepard-Risset glissando — a continuous auditory illusion of pitch that sweeps endlessly upward or downward without ever actually arriving anywhere. Unlike the Shepard Scale, which steps through discrete notes, this plugin sweeps continuously, producing a tone that feels like it is perpetually rising (or falling) through pitch space.
+
+Up to eight simultaneous voices allow complex chord textures, counterpoint (voices moving in opposite directions), or polyrhythmic drift patterns. Each voice is an independent continuous sweep, rooted on a different pitch class.
+
+The plugin generates no audio from an input signal. It is a pure synthesizer.
+
+---
+
+## Signal Architecture
+
+Each voice maintains a stack of oscillators spread across a pitch window exactly as wide as the Octave Count setting. All oscillators in a voice sweep continuously in the same direction — upward or downward — at a rate determined by the Rate parameters. Each oscillator's amplitude is shaped by a fade-in / fade-out window: loud near the center of the pitch range, silent at the edges. When an oscillator sweeps out of the top of the window it wraps silently to the bottom and begins fading in again. Because the window width equals the oscillator spacing (always exactly one octave), wraps are always seamless.
+
+All active voices are summed and normalized by active voice count and oscillator count each sample.
+
+---
+
+## Parameters
+
+### Global Controls
+
+**Drift Mode** `Synced / Independent`
+Sets how per-voice sweep rates are determined.
+- **Synced** — all voices share the global Rate Value as their sweep speed. Each voice's Drift slider adds a cents offset to its oscillators, creating subtle detuning without changing the underlying rate.
+- **Independent** — the global Rate Value is ignored. Each voice's Drift / Rate slider sets that voice's sweep rate directly, in the units set by Rate Mode. Voices can sweep at entirely different speeds.
+
+**Rate Mode** `BPM / Seconds / Hz`
+Unit for interpreting rate values.
+
+**Rate Value** `0.001-1000, default 0.5 BPM`
+The global sweep rate, in the units set by Rate Mode. Only used in Synced mode. At 0.5 BPM, one full sweep cycle takes two minutes — appropriate for slow ambient use.
+
+**Octave Count** `2-16, default 8`
+The number of oscillator layers per voice and the width of the pitch window in octaves. Higher values produce a richer, denser texture. Also controls the spacing — oscillators are always exactly one octave apart regardless of count.
+
+**Center Octave** `0-8, default 3`
+The octave at the center of the pitch window. All voices sweep through a range centered here. Lower values produce a deeper, more bass-heavy texture.
+
+**Fade In %** `0-100%, default 20`
+The fraction of each sweep cycle spent fading in at the bottom of the pitch window. Lower values produce a sharper entry; higher values a longer crossfade.
+
+**Fade Out %** `0-100%, default 20`
+The fraction of each sweep cycle spent fading out at the top of the pitch window. Fade In and Fade Out together determine how much of the window is at full volume.
+
+> If Fade In % + Fade Out % exceeds 100%, both are scaled down proportionally.
+
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS`
+The oscillator waveform used by all voices simultaneously. Sine produces the purest illusion. See Polyrhythm Phase for waveform descriptions.
+
+**Binaural Beat Hz** `0-100 Hz, default 0`
+Offsets the right channel oscillator frequencies by this many Hz, adding a binaural beat across all voices and oscillators simultaneously.
+
+**Root Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B, default C`
+The global tonic. Per-voice Note sliders are interpreted as offsets from this value. Setting Root Note to D and a voice Note to E produces F# (D + a major second).
+
+**Tuning Reference Hz** `400-480 Hz, default 440`
+The A4 reference frequency used to calculate all oscillator pitches.
+
+---
+
+### Per-Voice Controls (Voices 1-8)
+
+Each voice has five parameters. Voice 1 is active by default; Voices 2-8 are inactive.
+
+**Vn Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B`
+The pitch class of this voice, relative to Root Note. Combined with Root Note, this determines the interval relationship between voices.
+
+**Vn Pan** `-100–+100, default 0`
+Stereo position of this voice. Negative values place it left, positive values right, 0 is center. Uses constant-power panning. Pan and binaural beats can be used simultaneously — the binaural beat is preserved across the pan field.
+
+**Vn Direction** `Asc / Desc`
+Whether this voice sweeps upward or downward. Setting two voices to opposite directions creates counterpoint — one pitch class continuously rising, another continuously falling.
+
+**Vn Drift / Rate** `-1000–+1000, default 0`
+In Synced mode: a cents offset applied to all of this voice's oscillators. Positive values pitch the voice slightly sharp; negative values slightly flat. Creates subtle beating between voices without changing their sweep rates.
+In Independent mode: this voice's sweep rate directly, in the units set by Rate Mode.
+
+**Vn Gain dB** `-60–+6 dB, default 0`
+Per-voice output level, applied before the voice is summed into the mix.
+
+**Vn Active** `Off / On`
+Enables or disables the voice. Inactive voices contribute nothing to the output and are excluded from normalization.
+
+---
+
+## Usage Notes
+
+- **The illusion works because no single octave dominates.** The bell-shaped amplitude window ensures that as one oscillator fades out at the window edge, an identical one is fading in at the other edge. The listener perceives continuous directional motion with no anchor point.
+- **Fade In and Fade Out control the crossfade quality.** At 20%/20%, the middle 60% of the window plays at full volume with 20% ramps at each edge. At 50%/50%, the entire window is one continuous crossfade — no hold at full volume, maximum smoothness.
+- **Multiple voices create Shepard chords.** Enabling voices on different note intervals (e.g. C, E, G for a major triad) produces a sweeping chord where all voices move in parallel. Each voice can be panned independently for spatial spread.
+- **Independent mode with different rates creates polyrhythmic sweep textures.** One voice sweeping at 0.3 BPM and another at 0.5 BPM will periodically converge and diverge in unpredictable ways.
+- **Pan and binaural beats are complementary.** Unlike some other plugins in this suite, Shepard Tone's pan implementation preserves the binaural beat when voices are panned — the L/R frequency difference is maintained across the stereo field.
+- **Root Note transposes the entire plugin at once.** Changing Root Note shifts all voices simultaneously by the same interval, making it suitable for automation-based key changes.
+
+---
+
+*Shepard Tone Generator is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic)*
