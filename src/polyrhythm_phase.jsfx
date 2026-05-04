@@ -22,7 +22,7 @@ slider12:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Base Note
 slider13:4<0,8,1>Center Octave
 
 // ===== WAVEFORM =====
-slider14:0<0,5,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS}>Waveform
+slider14:0<0,9,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade}>Waveform
 
 // ===== PAN =====
 slider15:0<0,1,1{Off,On}>Pan Enabled
@@ -387,7 +387,7 @@ loop(8,
       ph_r = ph_r < (1/PHI) ? ph_r * PHI * 0.5 : 0.5 + (ph_r - 1/PHI) / (1 - 1/PHI) * 0.5;
       osc_l = sin(ph_l * 2 * $pi) * gain_l[i] * v_gain[i];
       osc_r = sin(ph_r * 2 * $pi) * gain_r[i] * v_gain[i];
-    ) : (
+    ) : waveform == 5 ? (
       ph_l = osc_phase_l[i];
       ph_r = osc_phase_r[i];
       ph_l = ph_l + (1/PHI) * sin(ph_l * 2 * $pi) / (2 * $pi);
@@ -396,6 +396,59 @@ loop(8,
       ph_r = ph_r - floor(ph_r);
       osc_l = sin(ph_l * 2 * $pi) * gain_l[i] * v_gain[i];
       osc_r = sin(ph_r * 2 * $pi) * gain_r[i] * v_gain[i];
+    ) : waveform == 6 ? (
+      // Bell: additive partials at integer harmonics with bell-leaning
+      // amplitude weights. Real bells have inharmonic partials (2.4, 4.5,
+      // ...) but those create discontinuities at each phase wrap; integer
+      // partials wrap cleanly. Result is a tonal-rich additive voice that
+      // shimmers nicely under tremolo even if it isn't a true singing-bowl.
+      ph_l = osc_phase_l[i];
+      ph_r = osc_phase_r[i];
+      osc_l = (
+        sin(ph_l * 1 * 2 * $pi) +
+        0.5  * sin(ph_l * 2 * 2 * $pi) +
+        0.3  * sin(ph_l * 3 * 2 * $pi) +
+        0.4  * sin(ph_l * 4 * 2 * $pi) +
+        0.15 * sin(ph_l * 6 * 2 * $pi)
+      ) * 0.43 * gain_l[i] * v_gain[i];
+      osc_r = (
+        sin(ph_r * 1 * 2 * $pi) +
+        0.5  * sin(ph_r * 2 * 2 * $pi) +
+        0.3  * sin(ph_r * 3 * 2 * $pi) +
+        0.4  * sin(ph_r * 4 * 2 * $pi) +
+        0.15 * sin(ph_r * 6 * 2 * $pi)
+      ) * 0.43 * gain_r[i] * v_gain[i];
+    ) : waveform == 7 ? (
+      // Wavefold: sine-of-sine with index 2. Soft, gentle harmonic
+      // enrichment — like a sine that's been "warmed" without any harsh
+      // edges. Stays in [-1, +1] naturally; no clipping artifacts.
+      osc_l = sin(2 * sin(osc_phase_l[i] * 2 * $pi)) * gain_l[i] * v_gain[i];
+      osc_r = sin(2 * sin(osc_phase_r[i] * 2 * $pi)) * gain_r[i] * v_gain[i];
+    ) : waveform == 8 ? (
+      // Half-sine: full-wave rectified sine remapped to bipolar. Even
+      // harmonics only — gives a hollow, vaguely-reedy character distinct
+      // from any of the other waveforms. Has a small DC offset (mean ≈ 0.27)
+      // which speakers won't reproduce; tremolo and pan attenuate it further.
+      osc_l = (2 * abs(sin(osc_phase_l[i] * 2 * $pi)) - 1) * gain_l[i] * v_gain[i];
+      osc_r = (2 * abs(sin(osc_phase_r[i] * 2 * $pi)) - 1) * gain_r[i] * v_gain[i];
+    ) : (
+      // Phi-cascade: additive harmonics with golden-ratio-decreasing
+      // amplitudes — fundamental + (1/φ)*2nd + (1/φ²)*3rd. On theme with
+      // the Golden TS/SG/GS family but uses pure additive synthesis rather
+      // than phase warping. Continuous across phase wraps (integer harmonic
+      // multipliers) so no discontinuity artifacts.
+      ph_l = osc_phase_l[i];
+      ph_r = osc_phase_r[i];
+      osc_l = (
+        sin(ph_l * 2 * $pi) +
+        (1/PHI)       * sin(ph_l * 2 * 2 * $pi) +
+        (1/(PHI*PHI)) * sin(ph_l * 3 * 2 * $pi)
+      ) * 0.5 * gain_l[i] * v_gain[i];
+      osc_r = (
+        sin(ph_r * 2 * $pi) +
+        (1/PHI)       * sin(ph_r * 2 * 2 * $pi) +
+        (1/(PHI*PHI)) * sin(ph_r * 3 * 2 * $pi)
+      ) * 0.5 * gain_r[i] * v_gain[i];
     );
 
     pan_enabled ? (

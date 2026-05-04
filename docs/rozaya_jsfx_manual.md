@@ -551,15 +551,19 @@ Enables or disables the voice. Off bypasses oscillator computation entirely (no 
 
 ### Waveform
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS`
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade`
 The oscillator waveform used by all voices simultaneously.
 
-- **Sine** â€” pure sinusoidal tone. Cleanest binaural beat interaction, no harmonics.
-- **Triangle** â€” bipolar triangle wave with odd harmonics, softer than saw.
-- **Saw** â€” sawtooth wave with a full harmonic series. Rich and bright.
-- **Golden TS** â€” a triangle wave whose phase is warped using the golden ratio (Ï† â‰ˆ 1.618), creating an asymmetric waveform with a distinctive harmonic character. The phase is split at the 1/Ï† point and each segment is remapped.
-- **Golden SG** â€” a sine wave whose input phase is mapped through the same golden ratio warping as Golden TS before the sine function is applied. Produces a sine-like tone with subtle golden ratio phase distortion.
-- **Golden GS** â€” the oscillator phase is self-modulated: the phase is offset by `(1/Ï†) * sin(phase) / 2Ï€` before the sine function is applied. This creates a continuously self-warping waveform whose harmonic content shifts with frequency.
+- **Sine** — pure sinusoidal tone. Cleanest binaural beat interaction, no harmonics.
+- **Triangle** — bipolar triangle wave with odd harmonics, softer than saw.
+- **Saw** — sawtooth wave with a full harmonic series. Rich and bright.
+- **Golden TS** — a triangle wave whose phase is warped using the golden ratio (φ ≈ 1.618), creating an asymmetric waveform with a distinctive harmonic character. The phase is split at the 1/φ point and each segment is remapped.
+- **Golden SG** — a sine wave whose input phase is mapped through the same golden ratio warping as Golden TS before the sine function is applied. Produces a sine-like tone with subtle golden ratio phase distortion.
+- **Golden GS** — the oscillator phase is self-modulated: the phase is offset by `(1/φ) * sin(phase) / 2π` before the sine function is applied. This creates a continuously self-warping waveform whose harmonic content shifts with frequency.
+- **Bell** — additive partials at integer harmonics (1×, 2×, 3×, 4×, 6×) with bell-leaning amplitude weights. Produces a tonal-rich, slightly metallic voice that shimmers under tremolo. Not a true singing-bowl (those use inharmonic partials, which would create discontinuities at each phase wrap), but bell-flavoured in spirit.
+- **Wavefold** — sine-of-sine with index 2: `sin(2 · sin(phase))`. A gentle wavefolder — the sine "warms" without any harsh edges, adding mild harmonic content. Stays in the [-1, +1] range naturally; no clipping artifacts. Good when Sine feels too pure.
+- **Half-sine** — full-wave rectified sine remapped to bipolar (`2 · |sin(phase)| − 1`). Even-harmonic-only character, hollow and vaguely reedy. Distinct from any of the other waveforms here. Carries a small DC offset (mean ≈ 0.27) which speakers don't reproduce; tremolo and pan attenuate it further.
+- **Phi-cascade** — additive harmonics with golden-ratio-decreasing amplitudes: `fundamental + (1/φ)·2nd + (1/φ²)·3rd`. On theme with the Golden TS/SG/GS family but uses pure additive synthesis rather than phase warping. Gives a brighter, more "stacked" character than the phase-warped Goldens.
 
 ---
 
