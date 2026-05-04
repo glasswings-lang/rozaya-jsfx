@@ -529,23 +529,23 @@ The reference pitch used to calculate all voice frequencies. At 440 Hz, A4 = 440
 
 ### Per-Voice Controls (Voices 1-8)
 
-Each voice has five parameters. Voices 3-8 are inactive by default.
+Each voice has five parameters. By default V1 is audible (Gain -6 dB, Active On), V2 is active but silent (Gain -60 dB, Active On — counted in normalization but contributes nothing audibly until you raise its gain), and V3-V8 are inactive (Active Off — bypassed entirely with no CPU cost).
 
-**Vn Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B`
-The pitch class of the voice within its octave.
+**Vn Gain dB** `-60 to +6 dB, default -6 for V1 and -60 for V2-V8`
+Per-voice output level applied before the voice is summed into the mix. -60 dB is effectively silent. Use this to balance voices relative to one another. To fully cut a voice with no CPU cost, prefer Vn Active = Off rather than gain at -60.
 
-**Vn Octave** `0-8, default varies`
-The octave of the voice. Combined with the note, this determines the base frequency fed to the left oscillator. The right oscillator runs at this frequency plus the Binaural Beat Hz offset.
+**Vn Semitones** `-1000 to +1000, default 0`
+The voice's pitch offset in semitones from the global Base Note + Center Octave anchor. 0 plays the anchor pitch; +12 plays one octave up; -7 plays a fifth down. The left oscillator runs at this resulting frequency; the right oscillator runs at the same frequency plus the Binaural Beat Hz offset.
 
-**Vn Drift / Rate** `-1000â€“+1000, default 0`
-In Drift mode: an offset added to the global Rate Value to determine this voice's tremolo rate. Positive values make the voice run faster; negative values slower. A value of 0 means the voice runs at exactly the global rate.
+**Vn Drift / Rate** `-1000 to +1000, default 0`
+In Drift mode: an offset added to the global Rate Value to determine this voice's tremolo rate. Positive values make the voice run faster than the global rate; negative values slower. 0 means the voice runs at exactly the global rate.
 In Independent mode: this voice's tremolo rate directly, in the units set by Rate Mode.
 
-**Vn Active** `Off / On`
-Enables or disables the voice. Inactive voices contribute nothing to the output and are excluded from the normalization count.
+**Vn Phase Offset** `-1000 to +1000, default 0`
+When this voice becomes audible within its tremolo cycle, in the units set by Rate Mode (BPM = beats, Seconds = seconds, Hz = cycles). Offset 0 fires the voice immediately at playback start; offset 8 in Seconds mode means the voice waits 8 seconds before becoming audible. Values wrap freely — there is no clamping.
 
-**Vn Gain dB** `-60â€“+6 dB, default 0`
-Per-voice output level applied before the voice is summed into the mix. Allows individual voices to be balanced relative to one another.
+**Vn Active** `Off / On, default On for V1 and V2, Off for V3-V8`
+Enables or disables the voice. Off bypasses oscillator computation entirely (no CPU cost) and excludes the voice from the active-voice normalization count.
 
 ---
 
