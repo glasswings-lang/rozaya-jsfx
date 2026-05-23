@@ -636,11 +636,11 @@ When Loop is on, the sequence wraps from the last active voice back to the first
 
 ### Global
 
-**Rate Mode** `BPM / Seconds / Hz`
-How to interpret Rate Value. BPM = beats per minute. Seconds = seconds per cycle. Hz = cycles per second.
+**Rate Mode** `BPM / Seconds` (default Seconds)
+How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1 (also the default), one cycle equals one second, so the per-voice "Next voice in" and "Note rings for" numbers behave as raw seconds. This is the easiest way to work in plain time — set a voice to 2 and it plays for 2 seconds. **BPM** = beats per minute; Rate Value becomes the tempo, and the per-voice numbers become beats. Useful if you want a polyrhythmic feel where every voice is in a sensible ratio of a common tempo.
 
 **Rate Value** `0.001 – 1000`
-The global rate. Each voice's Step Length and Note Length is expressed as a multiple of this rate's cycle.
+The global rate. Meaning depends on Rate Mode (see above). Default 1, which in the default Seconds mode means "each per-voice cycle is one second."
 
 **Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade`
 Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions. Note that Half-sine sounds an octave higher than the others at the same note + Center Octave setting (full-wave-rectified spectrum has no fundamental).

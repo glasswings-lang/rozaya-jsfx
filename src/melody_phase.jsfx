@@ -26,8 +26,8 @@ desc:Melody Phase
 // CC0 — public domain.
 
 // --- Global sliders (1-14) ---
-slider1:0<0,2,1{BPM,Seconds,Hz}>Rate Mode
-slider2:60<0.001,1000,0.001>Rate Value
+slider1:1<0,1,1{BPM,Seconds}>Rate Mode
+slider2:1<0.001,1000,0.001>Rate Value (seconds-per-cycle in Seconds mode, BPM in BPM mode)
 slider3:0<0,9,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade}>Waveform
 slider4:440<400,480,0.1>Tuning Reference Hz
 slider5:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
@@ -155,11 +155,14 @@ function apply_curve(t, shape) (
 function rate_to_cycle_seconds(raw_rate, rmode) (
   // Convert the user's Rate Value + Rate Mode into seconds-per-cycle.
   // BPM:  60 / value     (60 BPM = 1 cycle/sec, so 1 sec/cycle)
-  // Sec:  value          (literal seconds per cycle)
-  // Hz:   1 / value      (cycles/sec inverted to sec/cycle)
+  // Sec:  value          (literal seconds per cycle — default mode,
+  //                      so per-voice "cycles" are directly seconds
+  //                      when Rate Value is left at 1)
+  // (Hz mode was removed — users said they didn't need it. Existing
+  // saved instances with rmode=2 will be clamped to Seconds by
+  // Reaper when the slider range tightens.)
   rmode == 0 ? 60 / max(raw_rate, 0.001) :
-  rmode == 1 ? max(raw_rate, 0.001) :
-               1 / max(raw_rate, 0.001)
+               max(raw_rate, 0.001)
 );
 
 function db_to_lin(db) (
