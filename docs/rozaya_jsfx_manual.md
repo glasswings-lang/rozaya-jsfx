@@ -14,6 +14,7 @@
 - [Breath Generator](#breath-generator)
 - [Womb Sound Generator](#womb-sound-generator)
 - [Polyrhythm Phase](#polyrhythm-phase)
+- [Melody Phase](#melody-phase)
 
 **Effects**
 - [Resonant Sweeping Filter](#full-feature-sweeping-filter)
@@ -605,6 +606,115 @@ The per-voice rate offset in Increment mode. Each successive voice's pan rate is
 
 *Polyrhythm Phase is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya â€” Developed with Claude (Anthropic)*
+
+
+---
+
+# Melody Phase
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+## Overview
+
+A step-sequencer melody synth, sibling to Polyrhythm Phase. Up to 8 voices participate in a sequence; each voice plays a single note (a configurable number of semitones from the root) for its own Step Length, then hands off to the next active voice. Each voice has its own Note Length controlling how long its note actually rings — when Note Length is longer than Step Length, the voice's release continues in parallel with the next voice's attack (overlap / phrasing). When Note Length is shorter than Step Length, there's a rest before the next voice enters. When they're equal, the handoff is clean and sequential.
+
+Inactive voices are skipped in the sequence entirely. To insert a rest in the sequence (a silent step), leave a voice Active and set its Note Length to 0 — the voice contributes silence for its Step Length, then hands off.
+
+The waveform list (10 options), envelope shapes, tuning math, and binaural beat are all carried over directly from Polyrhythm Phase. Step Length and Note Length per voice are expressed in cycles of the global rate, so rhythmic relationships line up — V1 set to 2 cycles, V2 set to 1 cycle, V3 set to 0.5 cycles will line up cleanly against the same rate.
+
+## Signal Architecture
+
+Each voice runs two oscillators (one for L, one for R). The R oscillator's frequency is offset from the L oscillator's by the binaural beat value (in Hz). When binaural beat is 0, L and R are identical and the voice sums to mono.
+
+A sequencer index tracks which voice is currently "in its step." When that voice's Step Length elapses, the index advances to the next active voice and triggers its envelope attack. The outgoing voice's envelope keeps running through its own (longer or shorter) duration independently — that's where overlap comes from. Up to 8 voices can be in non-silent states simultaneously during overlapping phrasing.
+
+The envelope is a four-segment state machine: attack → sustain → release → silent. Each segment respects the voice's Note Length: Attack % and Release % set how much of the note duration is attack and release; sustain fills the middle. If Attack% + Release% would exceed 100%, both are scaled proportionally to fit.
+
+When Loop is on, the sequence wraps from the last active voice back to the first. When off, the sequence plays through once and stops.
+
+## Parameters
+
+### Global
+
+**Rate Mode** `BPM / Seconds / Hz`
+How to interpret Rate Value. BPM = beats per minute. Seconds = seconds per cycle. Hz = cycles per second.
+
+**Rate Value** `0.001 – 1000`
+The global rate. Each voice's Step Length and Note Length is expressed as a multiple of this rate's cycle.
+
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade`
+Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions. Note that Half-sine sounds an octave higher than the others at the same note + Center Octave setting (full-wave-rectified spectrum has no fundamental).
+
+**Tuning Reference Hz** `400 – 480`
+Frequency of A4. Standard concert pitch is 440.
+
+**Root Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B`
+The base note. Each voice's Semitones field is relative to this.
+
+**Center Octave** `0 – 8`
+Octave of the root note. With Root Note = A and Center Octave = 4, the base frequency is A4 = 440 Hz (at default tuning).
+
+**Loop** `Off / On`
+When on, the sequence wraps from the last active voice back to the first. When off, the sequence plays one full pass and stops.
+
+**Master Gain dB** `-60 – 0`
+Output level for the whole plugin.
+
+**Binaural Beat Hz** `0 – 100`
+Hz offset added to the right-channel oscillator only. 0 disables the effect and the plugin sums to mono. Same shape as Polyrhythm Phase's binaural beat.
+
+**Attack % of Note Length** `0 – 100`
+What fraction of each voice's Note Length is the attack ramp.
+
+**Release % of Note Length** `0 – 100`
+What fraction of each voice's Note Length is the release ramp. If Attack% + Release% exceeds 100%, both are scaled proportionally to fit the note duration.
+
+**Attack Shape** `Linear / Cosine / Logarithmic / Exponential`
+Curve of the attack ramp. Cosine is the smoothest perceptually; Linear is the most "musical-instrument-like."
+
+**Release Shape** `Linear / Cosine / Logarithmic / Exponential`
+Curve of the release ramp.
+
+**Sequence Length** `All Active / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8`
+How many voice slots participate. "All Active" walks all 8 slots, skipping any with Active = Off. A numeric setting truncates the sequence to the first N voice slots (still skipping any inactive within that range). Useful for shortening a sequence without having to flip Active toggles.
+
+### Per Voice (V1–V8)
+
+**Vn Semitones from root** `-24 – 24`
+This voice's note, in semitones above (positive) or below (negative) the global Root Note + Center Octave.
+
+**Vn Step Length (cycles)** `0.01 – 16`
+How long this voice "owns" the sequence, in cycles of the global rate. After Vn's Step Length elapses, the sequencer hands off to the next active voice. Vn's own Note Length may continue ringing past this handoff (overlap) or end before it (rest).
+
+**Vn Note Length (cycles; 0 = rest)** `0 – 16`
+How long this voice's note actually sounds. Independent of Step Length:
+- **Note Length < Step Length** → there's silence between Vn ending and the next voice entering (rest).
+- **Note Length = Step Length** → clean sequential handoff, no overlap, no rest.
+- **Note Length > Step Length** → Vn's release continues while the next voice plays (overlap / phrasing).
+- **Note Length = 0** → Vn acts as a silent step (rest in the sequence) of duration Step Length.
+
+**Vn Gain dB** `-60 – 6`
+Per-voice level.
+
+**Vn Active** `Off / On`
+Off = this voice is skipped in the sequence entirely (not just silent — the sequence pretends it doesn't exist). On = voice participates per the Sequence Length rule above.
+
+## Usage Notes
+
+**Building a melody.** Start with all 8 voices set Active, give each a different Semitones value (the default spec gives a rough C major arpeggio), keep Step Length = Note Length = 1 cycle for a clean walk. Adjust Step Length per voice for rhythmic variation, Note Length for phrasing.
+
+**Adding rests.** Set a voice's Note Length to 0. The voice still "takes up" its Step Length in the sequence — that's the rest duration.
+
+**Overlap for sustain.** Set Note Length to a value greater than Step Length. When the sequencer moves to the next voice, the previous voice's note keeps ringing through its release. With Release Shape = Cosine and a long Release %, this gives a gentle decaying tail under the new note.
+
+**Looping vs one-shot.** Loop = On for ambient / sleep loops where the sequence cycles indefinitely. Loop = Off for a one-shot melodic phrase that plays once on plugin activate / playback start, then goes silent.
+
+**Pairing with Polyrhythm Phase.** Run both on separate tracks at the same Tuning Reference — Polyrhythm Phase as the sustained drone bed, Melody Phase as the melodic figure on top. Match Root Notes for consonance, or detune Melody Phase slightly for movement.
+
+---
+
+*Melody Phase is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic)*
 
 
 ---
