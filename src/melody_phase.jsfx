@@ -43,50 +43,50 @@ slider14:0<0,8,1{All Active,1,2,3,4,5,6,7,8}>Sequence Length
 
 // --- Per-voice sliders (5 each) ---
 slider20:0<-24,24,1>V1 Semitones from root
-slider21:1<0.01,16,0.01>V1 Step Length (cycles)
-slider22:1<0,16,0.01>V1 Note Length (cycles; 0 = rest)
+slider21:1<0.01,16,0.01>V1 Next voice in (cycles)
+slider22:1<0,16,0.01>V1 Note rings for (cycles; 0 = silent)
 slider23:-6<-60,6,0.1>V1 Gain dB
 slider24:1<0,1,1{Off,On}>V1 Active
 
 slider25:2<-24,24,1>V2 Semitones from root
-slider26:1<0.01,16,0.01>V2 Step Length (cycles)
-slider27:1<0,16,0.01>V2 Note Length (cycles; 0 = rest)
+slider26:1<0.01,16,0.01>V2 Next voice in (cycles)
+slider27:1<0,16,0.01>V2 Note rings for (cycles; 0 = silent)
 slider28:-6<-60,6,0.1>V2 Gain dB
 slider29:1<0,1,1{Off,On}>V2 Active
 
 slider30:4<-24,24,1>V3 Semitones from root
-slider31:1<0.01,16,0.01>V3 Step Length (cycles)
-slider32:1<0,16,0.01>V3 Note Length (cycles; 0 = rest)
+slider31:1<0.01,16,0.01>V3 Next voice in (cycles)
+slider32:1<0,16,0.01>V3 Note rings for (cycles; 0 = silent)
 slider33:-6<-60,6,0.1>V3 Gain dB
 slider34:1<0,1,1{Off,On}>V3 Active
 
 slider35:5<-24,24,1>V4 Semitones from root
-slider36:1<0.01,16,0.01>V4 Step Length (cycles)
-slider37:1<0,16,0.01>V4 Note Length (cycles; 0 = rest)
+slider36:1<0.01,16,0.01>V4 Next voice in (cycles)
+slider37:1<0,16,0.01>V4 Note rings for (cycles; 0 = silent)
 slider38:-6<-60,6,0.1>V4 Gain dB
 slider39:1<0,1,1{Off,On}>V4 Active
 
 slider40:7<-24,24,1>V5 Semitones from root
-slider41:1<0.01,16,0.01>V5 Step Length (cycles)
-slider42:1<0,16,0.01>V5 Note Length (cycles; 0 = rest)
+slider41:1<0.01,16,0.01>V5 Next voice in (cycles)
+slider42:1<0,16,0.01>V5 Note rings for (cycles; 0 = silent)
 slider43:-6<-60,6,0.1>V5 Gain dB
 slider44:0<0,1,1{Off,On}>V5 Active
 
 slider45:9<-24,24,1>V6 Semitones from root
-slider46:1<0.01,16,0.01>V6 Step Length (cycles)
-slider47:1<0,16,0.01>V6 Note Length (cycles; 0 = rest)
+slider46:1<0.01,16,0.01>V6 Next voice in (cycles)
+slider47:1<0,16,0.01>V6 Note rings for (cycles; 0 = silent)
 slider48:-6<-60,6,0.1>V6 Gain dB
 slider49:0<0,1,1{Off,On}>V6 Active
 
 slider50:11<-24,24,1>V7 Semitones from root
-slider51:1<0.01,16,0.01>V7 Step Length (cycles)
-slider52:1<0,16,0.01>V7 Note Length (cycles; 0 = rest)
+slider51:1<0.01,16,0.01>V7 Next voice in (cycles)
+slider52:1<0,16,0.01>V7 Note rings for (cycles; 0 = silent)
 slider53:-6<-60,6,0.1>V7 Gain dB
 slider54:0<0,1,1{Off,On}>V7 Active
 
 slider55:12<-24,24,1>V8 Semitones from root
-slider56:1<0.01,16,0.01>V8 Step Length (cycles)
-slider57:1<0,16,0.01>V8 Note Length (cycles; 0 = rest)
+slider56:1<0.01,16,0.01>V8 Next voice in (cycles)
+slider57:1<0,16,0.01>V8 Note rings for (cycles; 0 = silent)
 slider58:-6<-60,6,0.1>V8 Gain dB
 slider59:0<0,1,1{Off,On}>V8 Active
 
@@ -255,6 +255,29 @@ loop(8,
       rel_t = rel_t / total * v_note_seconds[i];
     );
   );
+  // Anti-click floor on attack/release. A user-set attack% of 0
+  // (or a Note Length so small that 10% of it is sub-millisecond)
+  // would let the envelope ramp from 0 to 1 in a single sample —
+  // that's an instantaneous discontinuity which the listener
+  // hears as a click. Clamp each segment to at least 3ms,
+  // capped by half the note length so the clamp can't itself
+  // make attack+release exceed note duration.
+  // Skip the clamp entirely for the rest case (Note Length = 0)
+  // — those voices don't ring at all and shouldn't be padded
+  // into ringing. The sequencer-trigger / state-machine code
+  // handles the rest case separately by keeping voice_state = 0.
+  v_note_seconds[i] > 0.0001 ? (
+    min_ramp = min(0.003, v_note_seconds[i] * 0.5);
+    att_t = max(att_t, min_ramp);
+    rel_t = max(rel_t, min_ramp);
+    // Re-balance if the clamp pushed att+rel past the note
+    // duration (only possible when note is shorter than ~6ms).
+    att_t + rel_t > v_note_seconds[i] ? (
+      total = att_t + rel_t;
+      att_t = att_t / total * v_note_seconds[i];
+      rel_t = rel_t / total * v_note_seconds[i];
+    );
+  );
   v_attack_seconds[i]  = att_t;
   v_release_seconds[i] = rel_t;
   v_sustain_seconds[i] = max(0, v_note_seconds[i] - att_t - rel_t);
@@ -266,14 +289,24 @@ loop(8,
 dt = 1 / srate;
 
 // === Sequencer advance ===
-// On the very first sample, trigger the first active voice's attack.
+// On the very first sample, trigger the first active voice's attack
+// — unless that voice is a rest (Note Length = 0), in which case it
+// stays in state 0 (silent) and just consumes its Step Length
+// before handing off. Triggering attack on a zero-length note used
+// to click: envelope jumped from 0 to 1 to 0 in adjacent samples
+// (no time for the ramp to actually ramp), so the listener heard
+// the oscillator's sample value at full gain for one sample, then
+// silence. Skipping the trigger for rest voices fixes that — a
+// rest is now truly silent for its entire step.
 seq_started == 0 ? (
   first_idx = next_active_voice(0, 1);
   first_idx >= 0 ? (
     seq_index = first_idx;
     seq_step_elapsed = 0;
-    voice_state[seq_index] = 1;       // attack
-    state_elapsed[seq_index] = 0;
+    v_note_seconds[seq_index] > 0.0001 ? (
+      voice_state[seq_index] = 1;       // attack
+      state_elapsed[seq_index] = 0;
+    );
     seq_started = 1;
   );
 );
@@ -302,12 +335,14 @@ seq_started && !seq_finished ? (
         seq_finished = 1;
       ) : (
         seq_index = nxt;
-        // Re-trigger the new voice's envelope from attack. If the
-        // voice was still mid-release from a prior cycle, the
-        // attack restart cleanly takes over (envelope just starts
-        // rising again from wherever it was).
-        voice_state[seq_index] = 1;
-        state_elapsed[seq_index] = 0;
+        // Re-trigger the new voice's envelope from attack — unless
+        // the voice is a rest (Note Length = 0), in which case it
+        // stays silent for its Step Length. Same click-prevention
+        // as the initial trigger above.
+        v_note_seconds[seq_index] > 0.0001 ? (
+          voice_state[seq_index] = 1;
+          state_elapsed[seq_index] = 0;
+        );
       );
     );
   );

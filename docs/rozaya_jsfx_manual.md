@@ -616,11 +616,11 @@ The per-voice rate offset in Increment mode. Each successive voice's pan rate is
 
 ## Overview
 
-A step-sequencer melody synth, sibling to Polyrhythm Phase. Up to 8 voices participate in a sequence; each voice plays a single note (a configurable number of semitones from the root) for its own Step Length, then hands off to the next active voice. Each voice has its own Note Length controlling how long its note actually rings — when Note Length is longer than Step Length, the voice's release continues in parallel with the next voice's attack (overlap / phrasing). When Note Length is shorter than Step Length, there's a rest before the next voice enters. When they're equal, the handoff is clean and sequential.
+A step-sequencer melody synth, sibling to Polyrhythm Phase. Up to 8 voices participate in a sequence; each voice plays a single note (a configurable number of semitones from the root) for its own *Next voice in* duration, then hands off to the next active voice. Each voice has its own *Note rings for* duration controlling how long its note actually sounds — when "Note rings for" is longer than "Next voice in," the voice's release continues in parallel with the next voice's attack (overlap / phrasing). When "Note rings for" is shorter than "Next voice in," there's a rest before the next voice enters. When they're equal, the handoff is clean and sequential.
 
-Inactive voices are skipped in the sequence entirely. To insert a rest in the sequence (a silent step), leave a voice Active and set its Note Length to 0 — the voice contributes silence for its Step Length, then hands off.
+Inactive voices are skipped in the sequence entirely. To insert a rest in the sequence (a silent step), leave a voice Active and set its "Note rings for" to 0 — the voice contributes silence for its "Next voice in" duration, then hands off, with no click on entry or exit.
 
-The waveform list (10 options), envelope shapes, tuning math, and binaural beat are all carried over directly from Polyrhythm Phase. Step Length and Note Length per voice are expressed in cycles of the global rate, so rhythmic relationships line up — V1 set to 2 cycles, V2 set to 1 cycle, V3 set to 0.5 cycles will line up cleanly against the same rate.
+The waveform list (10 options), envelope shapes, tuning math, and binaural beat are all carried over directly from Polyrhythm Phase. Both per-voice timing sliders are expressed in cycles of the global rate, so rhythmic relationships line up — V1 set to 2 cycles, V2 set to 1 cycle, V3 set to 0.5 cycles will line up cleanly against the same rate.
 
 ## Signal Architecture
 
@@ -683,15 +683,15 @@ How many voice slots participate. "All Active" walks all 8 slots, skipping any w
 **Vn Semitones from root** `-24 – 24`
 This voice's note, in semitones above (positive) or below (negative) the global Root Note + Center Octave.
 
-**Vn Step Length (cycles)** `0.01 – 16`
-How long this voice "owns" the sequence, in cycles of the global rate. After Vn's Step Length elapses, the sequencer hands off to the next active voice. Vn's own Note Length may continue ringing past this handoff (overlap) or end before it (rest).
+**Vn Next voice in (cycles)** `0.01 – 16`
+How long until the sequencer hands off from this voice to the next active one, in cycles of the global rate. Controls *sequence timing* — when does V[n+1] start? Vn's own note may continue ringing past this handoff (overlap) or end before it (rest), depending on the "Note rings for" slider below.
 
-**Vn Note Length (cycles; 0 = rest)** `0 – 16`
-How long this voice's note actually sounds. Independent of Step Length:
-- **Note Length < Step Length** → there's silence between Vn ending and the next voice entering (rest).
-- **Note Length = Step Length** → clean sequential handoff, no overlap, no rest.
-- **Note Length > Step Length** → Vn's release continues while the next voice plays (overlap / phrasing).
-- **Note Length = 0** → Vn acts as a silent step (rest in the sequence) of duration Step Length.
+**Vn Note rings for (cycles; 0 = silent)** `0 – 16`
+How long this voice's note actually sounds, in cycles. Controls *sound timing* — independent from sequence timing. The relationship between this and "Next voice in" is what gives the plugin its phrasing range:
+- **Note rings for < Next voice in** → there's silence between Vn ending and the next voice entering (rest in the sequence).
+- **Note rings for = Next voice in** → clean sequential handoff, no overlap, no rest.
+- **Note rings for > Next voice in** → Vn's release continues while the next voice plays (overlap / phrasing).
+- **Note rings for = 0** → Vn is a silent step (rest) of duration "Next voice in." Silent on entry and exit, no click.
 
 **Vn Gain dB** `-60 – 6`
 Per-voice level.
@@ -701,11 +701,13 @@ Off = this voice is skipped in the sequence entirely (not just silent — the se
 
 ## Usage Notes
 
-**Building a melody.** Start with all 8 voices set Active, give each a different Semitones value (the default spec gives a rough C major arpeggio), keep Step Length = Note Length = 1 cycle for a clean walk. Adjust Step Length per voice for rhythmic variation, Note Length for phrasing.
+**Building a melody.** Start with all 8 voices set Active, give each a different Semitones value (the default spec gives a rough C major arpeggio), keep "Next voice in" = "Note rings for" = 1 cycle for a clean walk. Adjust "Next voice in" per voice for rhythmic variation, "Note rings for" for phrasing.
 
-**Adding rests.** Set a voice's Note Length to 0. The voice still "takes up" its Step Length in the sequence — that's the rest duration.
+**Adding rests.** Set a voice's "Note rings for" to 0. The voice still "takes up" its "Next voice in" duration in the sequence — that's the rest length. The rest is true silence: no envelope ramp, no click on entry or exit.
 
-**Overlap for sustain.** Set Note Length to a value greater than Step Length. When the sequencer moves to the next voice, the previous voice's note keeps ringing through its release. With Release Shape = Cosine and a long Release %, this gives a gentle decaying tail under the new note.
+**Overlap for sustain.** Set "Note rings for" to a value greater than "Next voice in." When the sequencer moves to the next voice, the previous voice's note keeps ringing through its release. With Release Shape = Cosine and a long Release %, this gives a gentle decaying tail under the new note.
+
+**Click-free envelope on short notes.** Even when you set Attack % or Release % to 0, the plugin clamps the actual ramp time to a minimum of 3 milliseconds (capped by half the note length on very short notes). This stops the envelope from jumping instantaneously between values, which the ear hears as a click. The clamp is invisible at normal settings; it only kicks in when the user-set percentages would produce sub-millisecond ramps.
 
 **Looping vs one-shot.** Loop = On for ambient / sleep loops where the sequence cycles indefinitely. Loop = Off for a one-shot melodic phrase that plays once on plugin activate / playback start, then goes silent.
 
