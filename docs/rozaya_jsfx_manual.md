@@ -700,10 +700,17 @@ Pan LFO rate, in the same units as the global Rate Mode. Hidden when pan is off 
 **Pan Increment per Voice** `-1000 – 1000` (Increment mode only)
 How much each successive voice's pan rate increases over the previous voice's. Hidden in other modes.
 
-### Glide / portamento (slider 60)
+### Glide / portamento (sliders 20-21)
 
 **Glide time (seconds; 0 = off)** `0 – 5`
-When > 0, each new voice's pitch starts at the previous voice's target frequency and slides to its own target over this many seconds. 0 = no glide; voices jump directly to their pitch. Independent of all other timing — set Glide to 0.05 and notes will slide quickly into pitch from wherever the last one was, regardless of Step Length or Note Length. The glide affects only newly-triggered voices; if a previous voice is still ringing (overlap case), it keeps its own pitch — only the incoming voice slides.
+When > 0, each new voice's pitch starts at the previous voice's target frequency and slides to its own target over this many seconds. 0 = no glide; voices jump directly to their pitch. Independent of all other timing — set Glide to 0.05 and notes will slide quickly into pitch from wherever the last one was, regardless of Step Length or Note Length.
+
+**Legato glide** `Off / On`
+Changes how the new voice's envelope is triggered when there's a hand-off and the previous voice is still ringing:
+- **Off** (default) — each voice has its own attack and release. Glide just bends the pitch *during* each note; you still hear each voice as a distinct envelope event at the hand-off (attack ramp on the new note, release ramp on the old). Good for plucky / articulated melodies where each note should feel separately spoken.
+- **On** — when the new voice triggers AND the previous voice is still in a non-silent state, the new voice inherits the previous voice's envelope value (no re-attack) AND its oscillator phase (no waveform discontinuity), and the previous voice goes silent immediately. Result: one continuous tone, pitch slides via glide, no envelope ceremony at the boundary. The first note of a sequence still attacks normally; the last note still releases normally; rests (Note rings for = 0) and gaps (Note rings for < Next voice in) reset back to a fresh attack on the next note. Good for legato / flowing melodies where you want one bending tone instead of articulated steps.
+
+For the cleanest legato result: set every voice's Note rings for slightly longer than Next voice in (so a previous voice is always still ringing when the next triggers — the inheritance condition is met every hand-off).
 
 ### Per Voice (V1–V8)
 
@@ -740,7 +747,9 @@ Off = this voice is skipped in the sequence entirely (not just silent — the se
 
 **Pairing with Polyrhythm Phase.** Run both on separate tracks at the same Tuning Reference — Polyrhythm Phase as the sustained drone bed, Melody Phase as the melodic figure on top. Match Root Notes for consonance, or detune Melody Phase slightly for movement.
 
-**Glide for legato phrasing.** Set Glide time to something small (0.05 – 0.2 seconds) and notes will smoothly slide from one to the next instead of jumping. Combine with longish Note rings for + sharp release for a connected, legato-style line. Set Glide to 0 for clean stepped pitches.
+**Glide for pitch bends within notes.** With Glide time > 0 and Legato glide Off (the default), each note retains its own attack / release ceremony and the pitch bends *during* the note — you hear distinct voices that each slide pitch-wise. Useful for articulated melodies where the pitch movement is the ornament, not the structure.
+
+**Legato glide for one continuous bending tone.** Turn Legato glide On (and keep Glide time > 0) for the classic monosynth portamento sound — one ongoing tone whose pitch slides smoothly between targets, with no attack / release events at each note boundary. The first note still attacks normally, the last note still releases normally, and rests (Note rings for = 0) reset back to a fresh attack on the next note. For the cleanest legato, set each voice's Note rings for slightly longer than Next voice in so a previous voice is always still ringing when the new one triggers (which is what the inheritance code checks for).
 
 **Spread pan for melodic clarity.** With Pan enabled and Mode = Spread, each voice in the sequence gets a fixed position across the stereo field. The ear easily tracks which voice is which — V1 might be far left, V8 might be far right — and the melody feels spatially organised even if the notes themselves overlap or sit close in pitch. Pair with a second instance set to Spread Reversed (and slightly different timing) for a wider, more enveloping result.
 

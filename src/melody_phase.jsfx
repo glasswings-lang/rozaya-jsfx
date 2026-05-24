@@ -48,60 +48,63 @@ slider17:100<0,100,0.1>Pan Spread %
 slider18:1<0.001,1000,0.001>Pan Base Rate (Tremolo / Increment modes)
 slider19:0<-1000,1000,0.001>Pan Increment per Voice (Increment mode)
 
-// --- Per-voice sliders (5 each) ---
-slider20:0<-24,24,1>V1 Semitones from root
-slider21:1<0.01,16,0.01>V1 Next voice in (cycles)
-slider22:1<0,16,0.01>V1 Note rings for (cycles; 0 = silent)
-slider23:-6<-60,6,0.1>V1 Gain dB
-slider24:1<0,1,1{Off,On}>V1 Active
-
-slider25:2<-24,24,1>V2 Semitones from root
-slider26:1<0.01,16,0.01>V2 Next voice in (cycles)
-slider27:1<0,16,0.01>V2 Note rings for (cycles; 0 = silent)
-slider28:-6<-60,6,0.1>V2 Gain dB
-slider29:1<0,1,1{Off,On}>V2 Active
-
-slider30:4<-24,24,1>V3 Semitones from root
-slider31:1<0.01,16,0.01>V3 Next voice in (cycles)
-slider32:1<0,16,0.01>V3 Note rings for (cycles; 0 = silent)
-slider33:-6<-60,6,0.1>V3 Gain dB
-slider34:1<0,1,1{Off,On}>V3 Active
-
-slider35:5<-24,24,1>V4 Semitones from root
-slider36:1<0.01,16,0.01>V4 Next voice in (cycles)
-slider37:1<0,16,0.01>V4 Note rings for (cycles; 0 = silent)
-slider38:-6<-60,6,0.1>V4 Gain dB
-slider39:1<0,1,1{Off,On}>V4 Active
-
-slider40:7<-24,24,1>V5 Semitones from root
-slider41:1<0.01,16,0.01>V5 Next voice in (cycles)
-slider42:1<0,16,0.01>V5 Note rings for (cycles; 0 = silent)
-slider43:-6<-60,6,0.1>V5 Gain dB
-slider44:0<0,1,1{Off,On}>V5 Active
-
-slider45:9<-24,24,1>V6 Semitones from root
-slider46:1<0.01,16,0.01>V6 Next voice in (cycles)
-slider47:1<0,16,0.01>V6 Note rings for (cycles; 0 = silent)
-slider48:-6<-60,6,0.1>V6 Gain dB
-slider49:0<0,1,1{Off,On}>V6 Active
-
-slider50:11<-24,24,1>V7 Semitones from root
-slider51:1<0.01,16,0.01>V7 Next voice in (cycles)
-slider52:1<0,16,0.01>V7 Note rings for (cycles; 0 = silent)
-slider53:-6<-60,6,0.1>V7 Gain dB
-slider54:0<0,1,1{Off,On}>V7 Active
-
-slider55:12<-24,24,1>V8 Semitones from root
-slider56:1<0.01,16,0.01>V8 Next voice in (cycles)
-slider57:1<0,16,0.01>V8 Note rings for (cycles; 0 = silent)
-slider58:-6<-60,6,0.1>V8 Gain dB
-slider59:0<0,1,1{Off,On}>V8 Active
-
-// --- Glide / portamento (slider 60) ---
-// When > 0, each new voice's pitch starts at the previous voice's
-// target frequency and slides to its own target over this many
+// --- Glide / portamento (sliders 20-21) ---
+// When Glide time > 0, each new voice's pitch starts at the previous
+// voice's target frequency and slides to its own target over this many
 // seconds. 0 = no glide; voices jump straight to their pitch.
-slider60:0<0,5,0.001>Glide time (seconds; 0 = off)
+// Legato glide changes how the new voice's envelope is triggered:
+// see slider21 description for details.
+slider20:0<0,5,0.001>Glide time (seconds; 0 = off)
+slider21:0<0,1,1{Off,On}>Legato glide
+
+// --- Per-voice sliders (5 each, V1=22-26 ... V8=57-61) ---
+slider22:0<-24,24,1>V1 Semitones from root
+slider23:1<0.01,16,0.01>V1 Next voice in (cycles)
+slider24:1<0,16,0.01>V1 Note rings for (cycles; 0 = silent)
+slider25:-6<-60,6,0.1>V1 Gain dB
+slider26:1<0,1,1{Off,On}>V1 Active
+
+slider27:2<-24,24,1>V2 Semitones from root
+slider28:1<0.01,16,0.01>V2 Next voice in (cycles)
+slider29:1<0,16,0.01>V2 Note rings for (cycles; 0 = silent)
+slider30:-6<-60,6,0.1>V2 Gain dB
+slider31:1<0,1,1{Off,On}>V2 Active
+
+slider32:4<-24,24,1>V3 Semitones from root
+slider33:1<0.01,16,0.01>V3 Next voice in (cycles)
+slider34:1<0,16,0.01>V3 Note rings for (cycles; 0 = silent)
+slider35:-6<-60,6,0.1>V3 Gain dB
+slider36:1<0,1,1{Off,On}>V3 Active
+
+slider37:5<-24,24,1>V4 Semitones from root
+slider38:1<0.01,16,0.01>V4 Next voice in (cycles)
+slider39:1<0,16,0.01>V4 Note rings for (cycles; 0 = silent)
+slider40:-6<-60,6,0.1>V4 Gain dB
+slider41:1<0,1,1{Off,On}>V4 Active
+
+slider42:7<-24,24,1>V5 Semitones from root
+slider43:1<0.01,16,0.01>V5 Next voice in (cycles)
+slider44:1<0,16,0.01>V5 Note rings for (cycles; 0 = silent)
+slider45:-6<-60,6,0.1>V5 Gain dB
+slider46:0<0,1,1{Off,On}>V5 Active
+
+slider47:9<-24,24,1>V6 Semitones from root
+slider48:1<0.01,16,0.01>V6 Next voice in (cycles)
+slider49:1<0,16,0.01>V6 Note rings for (cycles; 0 = silent)
+slider50:-6<-60,6,0.1>V6 Gain dB
+slider51:0<0,1,1{Off,On}>V6 Active
+
+slider52:11<-24,24,1>V7 Semitones from root
+slider53:1<0.01,16,0.01>V7 Next voice in (cycles)
+slider54:1<0,16,0.01>V7 Note rings for (cycles; 0 = silent)
+slider55:-6<-60,6,0.1>V7 Gain dB
+slider56:0<0,1,1{Off,On}>V7 Active
+
+slider57:12<-24,24,1>V8 Semitones from root
+slider58:1<0.01,16,0.01>V8 Next voice in (cycles)
+slider59:1<0,16,0.01>V8 Note rings for (cycles; 0 = silent)
+slider60:-6<-60,6,0.1>V8 Gain dB
+slider61:0<0,1,1{Off,On}>V8 Active
 
 @init
 // Memory layout per voice (16 slots each — V0 starts at the
@@ -172,9 +175,13 @@ loop(8,
 // glide from there. have_prev_trigger guards the first-ever
 // trigger (no previous voice to slide from — just snap so we
 // don't sweep up from 0 Hz on the very first note).
+// prev_seq_index also tracks WHICH voice was previously playing
+// — needed for Legato glide to inherit envelope state and the
+// oscillator phase from the previous voice on hand-off.
 prev_trigger_freq_l = 440;
 prev_trigger_freq_r = 440;
 have_prev_trigger   = 0;
+prev_seq_index      = -1;
 
 // Sequencer global state. seq_index is the voice whose step is
 // currently elapsing. seq_step_elapsed tracks how far into that
@@ -268,12 +275,13 @@ release_pct   = slider11 / 100;
 attack_shape  = slider12;
 release_shape = slider13;
 seq_length_cfg = slider14;
-pan_enabled   = slider15;
-pan_mode      = slider16;
-pan_spread    = slider17 / 100;
-pan_base_rate = slider18;
-pan_increment = slider19;
-glide_time    = slider60;
+pan_enabled    = slider15;
+pan_mode       = slider16;
+pan_spread     = slider17 / 100;
+pan_base_rate  = slider18;
+pan_increment  = slider19;
+glide_time     = slider20;
+legato_enabled = slider21;
 // Glide coefficient: one-pole smoother applied per sample to
 // v_freq_current_l/r, with glide_time as the time constant.
 // When glide_time = 0 we just snap (handled inline at the
@@ -293,14 +301,14 @@ seq_length_eff = seq_length_cfg == 0 ? 8 : seq_length_cfg;
 // to seconds via the global cycle_seconds.
 i = 0;
 loop(8,
-  i == 0 ? ( v_semitones[i] = slider20; v_step_cycles = slider21; v_note_cycles = slider22; v_gain_db = slider23; v_active[i] = slider24; );
-  i == 1 ? ( v_semitones[i] = slider25; v_step_cycles = slider26; v_note_cycles = slider27; v_gain_db = slider28; v_active[i] = slider29; );
-  i == 2 ? ( v_semitones[i] = slider30; v_step_cycles = slider31; v_note_cycles = slider32; v_gain_db = slider33; v_active[i] = slider34; );
-  i == 3 ? ( v_semitones[i] = slider35; v_step_cycles = slider36; v_note_cycles = slider37; v_gain_db = slider38; v_active[i] = slider39; );
-  i == 4 ? ( v_semitones[i] = slider40; v_step_cycles = slider41; v_note_cycles = slider42; v_gain_db = slider43; v_active[i] = slider44; );
-  i == 5 ? ( v_semitones[i] = slider45; v_step_cycles = slider46; v_note_cycles = slider47; v_gain_db = slider48; v_active[i] = slider49; );
-  i == 6 ? ( v_semitones[i] = slider50; v_step_cycles = slider51; v_note_cycles = slider52; v_gain_db = slider53; v_active[i] = slider54; );
-  i == 7 ? ( v_semitones[i] = slider55; v_step_cycles = slider56; v_note_cycles = slider57; v_gain_db = slider58; v_active[i] = slider59; );
+  i == 0 ? ( v_semitones[i] = slider22; v_step_cycles = slider23; v_note_cycles = slider24; v_gain_db = slider25; v_active[i] = slider26; );
+  i == 1 ? ( v_semitones[i] = slider27; v_step_cycles = slider28; v_note_cycles = slider29; v_gain_db = slider30; v_active[i] = slider31; );
+  i == 2 ? ( v_semitones[i] = slider32; v_step_cycles = slider33; v_note_cycles = slider34; v_gain_db = slider35; v_active[i] = slider36; );
+  i == 3 ? ( v_semitones[i] = slider37; v_step_cycles = slider38; v_note_cycles = slider39; v_gain_db = slider40; v_active[i] = slider41; );
+  i == 4 ? ( v_semitones[i] = slider42; v_step_cycles = slider43; v_note_cycles = slider44; v_gain_db = slider45; v_active[i] = slider46; );
+  i == 5 ? ( v_semitones[i] = slider47; v_step_cycles = slider48; v_note_cycles = slider49; v_gain_db = slider50; v_active[i] = slider51; );
+  i == 6 ? ( v_semitones[i] = slider52; v_step_cycles = slider53; v_note_cycles = slider54; v_gain_db = slider55; v_active[i] = slider56; );
+  i == 7 ? ( v_semitones[i] = slider57; v_step_cycles = slider58; v_note_cycles = slider59; v_gain_db = slider60; v_active[i] = slider61; );
 
   v_step_seconds[i] = max(v_step_cycles * cycle_seconds, 0.001);
   v_note_seconds[i] = max(v_note_cycles * cycle_seconds, 0);
@@ -426,6 +434,7 @@ seq_started == 0 ? (
       prev_trigger_freq_l = v_freq_l[seq_index];
       prev_trigger_freq_r = v_freq_r[seq_index];
       have_prev_trigger = 1;
+      prev_seq_index = seq_index;
     );
     seq_started = 1;
   );
@@ -454,14 +463,54 @@ seq_started && !seq_finished ? (
       !loop_enabled && nxt <= seq_index ? (
         seq_finished = 1;
       ) : (
+        // Capture the previous (still-playing-or-just-released)
+        // voice index BEFORE we advance seq_index. Used by the
+        // Legato glide hand-off below — we need to know which
+        // voice to inherit envelope + oscillator phase from.
+        prev_voice = prev_seq_index;
         seq_index = nxt;
         // Re-trigger the new voice's envelope from attack — unless
         // the voice is a rest (Note Length = 0), in which case it
         // stays silent for its Step Length. Same click-prevention
         // as the initial trigger above.
         v_note_seconds[seq_index] > 0.0001 ? (
-          voice_state[seq_index] = 1;
-          state_elapsed[seq_index] = 0;
+          // Legato hand-off: if Legato glide is on AND the
+          // previous voice is still ringing (state != 0), inherit
+          // its envelope and oscillator phase, and silence it.
+          // Result: one continuous tone — no re-attack at the
+          // hand-off, the previous voice doesn't release, and
+          // glide bends the pitch across the boundary. When
+          // Legato is off OR the previous voice has already fully
+          // released, we do a normal trigger (attack from 0).
+          legato_enabled && prev_voice >= 0 && voice_state[prev_voice] != 0 ? (
+            // Inherit envelope (raw + smoothed) so the new voice
+            // picks up at the same amplitude the previous one was
+            // sustaining at.
+            v_envelope[seq_index]     = v_envelope[prev_voice];
+            v_env_smoothed[seq_index] = v_env_smoothed[prev_voice];
+            // Inherit oscillator phase so the waveform doesn't
+            // discontinue at the hand-off — the tone is literally
+            // continuous, only the pitch (frequency) changes.
+            osc_phase_l[seq_index] = osc_phase_l[prev_voice];
+            osc_phase_r[seq_index] = osc_phase_r[prev_voice];
+            // Start in sustain (skip attack); the new voice will
+            // run its own sustain → release naturally based on
+            // its Note rings for.
+            voice_state[seq_index] = 2;
+            state_elapsed[seq_index] = 0;
+            // Silence the previous voice immediately. Setting
+            // both raw and smoothed envelope to 0 stops it
+            // contributing to the output — the new voice has
+            // already taken over its envelope value, so the
+            // total amplitude doesn't jump.
+            voice_state[prev_voice]    = 0;
+            v_envelope[prev_voice]     = 0;
+            v_env_smoothed[prev_voice] = 0;
+          ) : (
+            // Normal trigger: fresh attack from 0.
+            voice_state[seq_index] = 1;
+            state_elapsed[seq_index] = 0;
+          );
           // Glide: start the new voice's playing frequency at the
           // previous trigger's target. The per-sample glide step
           // below slides it toward this voice's own target over
@@ -480,6 +529,7 @@ seq_started && !seq_finished ? (
           );
           prev_trigger_freq_l = v_freq_l[seq_index];
           prev_trigger_freq_r = v_freq_r[seq_index];
+          prev_seq_index = seq_index;
         );
       );
     );
