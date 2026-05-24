@@ -620,15 +620,25 @@ A step-sequencer melody synth, sibling to Polyrhythm Phase. Up to 8 voices parti
 
 Inactive voices are skipped in the sequence entirely. To insert a rest in the sequence (a silent step), leave a voice Active and set its "Note rings for" to 0 — the voice contributes silence for its "Next voice in" duration, then hands off, with no click on entry or exit.
 
-The waveform list (10 options), envelope shapes, tuning math, and binaural beat are all carried over directly from Polyrhythm Phase. Both per-voice timing sliders are expressed in cycles of the global rate, so rhythmic relationships line up — V1 set to 2 cycles, V2 set to 1 cycle, V3 set to 0.5 cycles will line up cleanly against the same rate.
+Beyond the core sequencer:
+
+- **Per-voice pan** with four modes (Tremolo, Increment, Spread, Spread Reversed) — Spread is especially useful for melody since each active voice gets a fixed position across the stereo field, making the line easy to track spatially.
+- **Glide / portamento** — pitch slides between voices over a configurable duration. Independent of all other timing.
+- **Legato glide** — when on, the whole sequence becomes one continuous tone whose pitch slides between voices, with no attack / release ceremony at the boundaries. The pan smoother also slows to match the glide time so pitch and pan transition as one coherent slide.
+
+The waveform list (10 options), envelope shapes, tuning math, binaural beat, and pan section are all carried over directly from Polyrhythm Phase. Both per-voice timing sliders are expressed in cycles of the global rate, so rhythmic relationships line up — V1 set to 2 cycles, V2 set to 1 cycle, V3 set to 0.5 cycles will line up cleanly against the same rate.
 
 ## Signal Architecture
 
 Each voice runs two oscillators (one for L, one for R). The R oscillator's frequency is offset from the L oscillator's by the binaural beat value (in Hz). When binaural beat is 0, L and R are identical and the voice sums to mono.
 
-A sequencer index tracks which voice is currently "in its step." When that voice's Step Length elapses, the index advances to the next active voice and triggers its envelope attack. The outgoing voice's envelope keeps running through its own (longer or shorter) duration independently — that's where overlap comes from. Up to 8 voices can be in non-silent states simultaneously during overlapping phrasing.
+A sequencer index tracks which voice is currently "in its step." When that voice's *Next voice in* elapses, the index advances to the next active voice and triggers its envelope attack. The outgoing voice's envelope keeps running through its own (longer or shorter) *Note rings for* duration independently — that's where overlap comes from. Up to 8 voices can be in non-silent states simultaneously during overlapping phrasing.
 
-The envelope is a four-segment state machine: attack → sustain → release → silent. Each segment respects the voice's Note Length: Attack % and Release % set how much of the note duration is attack and release; sustain fills the middle. If Attack% + Release% would exceed 100%, both are scaled proportionally to fit.
+The envelope is a four-segment state machine: attack → sustain → release → silent. Each segment respects the voice's *Note rings for*: Attack % and Release % set how much of the note duration is attack and release; sustain fills the middle. If Attack% + Release% would exceed 100%, both are scaled proportionally to fit. The output amplitude passes through a one-pole exponential smoother (~3ms time constant) before reaching the oscillator, so even instantaneous envelope transitions (attack% = 0 or release% = 0) come out click-free.
+
+When Glide time > 0, each new voice's frequency starts at the previous voice's target and slides toward its own target via a one-pole smoother. Multiple voices can be in different sliding states simultaneously during overlap.
+
+When Legato glide is on, the sustain → release transition is suppressed — each voice rings continuously from its trigger until the sequencer's next hand-off silences it via inheritance. The new voice inherits the previous voice's envelope value, oscillator phase, and pan position, so amplitude, waveform, and stereo position are all literally continuous across the boundary — only the pitch slides via glide. The first note still attacks normally; the last note (when Loop = Off and the sequence ends) releases normally. The pan smoother slows to match the glide time so pitch and pan transition together.
 
 When Loop is on, the sequence wraps from the last active voice back to the first. When off, the sequence plays through once and stops.
 
@@ -663,11 +673,11 @@ Output level for the whole plugin.
 **Binaural Beat Hz** `0 – 100`
 Hz offset added to the right-channel oscillator only. 0 disables the effect and the plugin sums to mono. Same shape as Polyrhythm Phase's binaural beat.
 
-**Attack % of Note Length** `0 – 100`
-What fraction of each voice's Note Length is the attack ramp.
+**Attack % of Note rings for** `0 – 100`
+What fraction of each voice's *Note rings for* is taken up by the attack ramp.
 
-**Release % of Note Length** `0 – 100`
-What fraction of each voice's Note Length is the release ramp. If Attack% + Release% exceeds 100%, both are scaled proportionally to fit the note duration.
+**Release % of Note rings for** `0 – 100`
+What fraction of each voice's *Note rings for* is taken up by the release ramp. If Attack% + Release% exceeds 100%, both are scaled proportionally to fit the note duration.
 
 **Attack Shape** `Linear / Cosine / Logarithmic / Exponential`
 Curve of the attack ramp. Cosine is the smoothest perceptually; Linear is the most "musical-instrument-like."
@@ -703,7 +713,7 @@ How much each successive voice's pan rate increases over the previous voice's. H
 ### Glide / portamento (sliders 20-21)
 
 **Glide time (seconds; 0 = off)** `0 – 5`
-When > 0, each new voice's pitch starts at the previous voice's target frequency and slides to its own target over this many seconds. 0 = no glide; voices jump directly to their pitch. Independent of all other timing — set Glide to 0.05 and notes will slide quickly into pitch from wherever the last one was, regardless of Step Length or Note Length.
+When > 0, each new voice's pitch starts at the previous voice's target frequency and slides to its own target over this many seconds. 0 = no glide; voices jump directly to their pitch. Independent of all other timing — set Glide to 0.05 and notes will slide quickly into pitch from wherever the last one was, regardless of *Next voice in* or *Note rings for*.
 
 **Legato glide** `Off / On`
 - **Off** (default) — each voice has its own attack and release. Glide bends the pitch *during* each note; you hear each voice as a distinct envelope event at the hand-off (attack ramp on the new note, release ramp on the old). Good for plucky / articulated melodies where each note should feel separately spoken.

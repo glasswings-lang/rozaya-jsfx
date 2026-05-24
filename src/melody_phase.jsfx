@@ -35,8 +35,8 @@ slider6:4<0,8,1>Center Octave
 slider7:1<0,1,1{Off,On}>Loop
 slider8:-6<-60,0,0.1>Master Gain dB
 slider9:0<0,100,0.1>Binaural Beat Hz (L/R offset)
-slider10:10<0,100,0.1>Attack % of Note Length
-slider11:30<0,100,0.1>Release % of Note Length
+slider10:10<0,100,0.1>Attack % of Note rings for
+slider11:30<0,100,0.1>Release % of Note rings for
 slider12:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider13:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
 slider14:0<0,8,1{All Active,1,2,3,4,5,6,7,8}>Sequence Length
