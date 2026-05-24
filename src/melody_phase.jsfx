@@ -26,8 +26,8 @@ desc:Melody Phase
 // CC0 — public domain.
 
 // --- Global sliders (1-14) ---
-slider1:1<0,1,1{BPM,Seconds}>Rate Mode
-slider2:1<0.001,1000,0.001>Rate Value (seconds-per-cycle in Seconds mode, BPM in BPM mode)
+slider1:1<0,2,1{BPM,Seconds,Hz}>Rate Mode
+slider2:1<0.001,1000,0.001>Rate Value
 slider3:0<0,9,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade}>Waveform
 slider4:440<400,480,0.1>Tuning Reference Hz
 slider5:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
@@ -98,9 +98,13 @@ osc_phase_l       = 0;
 osc_phase_r       = 16;
 voice_state       = 32;   // 0 = silent, 1 = attack, 2 = sustain, 3 = release
 state_elapsed     = 48;   // seconds elapsed in current state
-v_envelope        = 64;   // current envelope output, 0..1
+v_envelope        = 64;   // current envelope output, 0..1 (raw state-machine value)
 v_freq_l          = 80;
 v_freq_r          = 96;
+// 240 is the next free 16-slot bank — see CLAUDE.md for the
+// Polyrhythm Phase layout; we follow the same per-voice 16-slot
+// convention.
+v_env_smoothed    = 240;  // amplitude after the click-prevention one-pole smoother
 v_active          = 112;
 v_semitones       = 128;
 v_step_seconds    = 144;  // computed at @slider: step_length_cycles * cycle_seconds
@@ -119,6 +123,7 @@ loop(8,
   voice_state[i]       = 0;
   state_elapsed[i]     = 0;
   v_envelope[i]        = 0;
+  v_env_smoothed[i]    = 0;
   v_freq_l[i]          = 440;
   v_freq_r[i]          = 440;
   v_active[i]          = 0;
@@ -141,6 +146,19 @@ seq_step_elapsed = 0;
 seq_started      = 0;
 seq_finished     = 0;  // set when Loop=Off and we've walked off the end
 
+// One-pole exponential smoother coefficient for the envelope
+// output. Polyrhythm Phase uses this exact pattern: the raw
+// state-machine envelope value (which can step instantly when
+// attack% or release% is 0) gets fed through a smoother before
+// being applied to the oscillator, so the actual amplitude ramps
+// up over ~3ms instead of jumping in a single sample. That's
+// what eliminates the click on attack=0 / release=0 / rest
+// transitions without forcing the user-set attack/release
+// percentages to be non-zero. exp(-1/(srate * 0.003)) gives a
+// ~3ms time constant: after 3ms, the smoother is ~63% of the
+// way to the new target.
+smooth_coeff = exp(-1 / (srate * 0.003));
+
 function semitones_to_hz(base_note, center_octave, semitones) (
   tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
 );
@@ -158,11 +176,10 @@ function rate_to_cycle_seconds(raw_rate, rmode) (
   // Sec:  value          (literal seconds per cycle — default mode,
   //                      so per-voice "cycles" are directly seconds
   //                      when Rate Value is left at 1)
-  // (Hz mode was removed — users said they didn't need it. Existing
-  // saved instances with rmode=2 will be clamped to Seconds by
-  // Reaper when the slider range tightens.)
+  // Hz:   1 / value      (cycles/sec inverted to sec/cycle)
   rmode == 0 ? 60 / max(raw_rate, 0.001) :
-               max(raw_rate, 0.001)
+  rmode == 1 ? max(raw_rate, 0.001) :
+               1 / max(raw_rate, 0.001)
 );
 
 function db_to_lin(db) (
@@ -258,29 +275,13 @@ loop(8,
       rel_t = rel_t / total * v_note_seconds[i];
     );
   );
-  // Anti-click floor on attack/release. A user-set attack% of 0
-  // (or a Note Length so small that 10% of it is sub-millisecond)
-  // would let the envelope ramp from 0 to 1 in a single sample —
-  // that's an instantaneous discontinuity which the listener
-  // hears as a click. Clamp each segment to at least 3ms,
-  // capped by half the note length so the clamp can't itself
-  // make attack+release exceed note duration.
-  // Skip the clamp entirely for the rest case (Note Length = 0)
-  // — those voices don't ring at all and shouldn't be padded
-  // into ringing. The sequencer-trigger / state-machine code
-  // handles the rest case separately by keeping voice_state = 0.
-  v_note_seconds[i] > 0.0001 ? (
-    min_ramp = min(0.003, v_note_seconds[i] * 0.5);
-    att_t = max(att_t, min_ramp);
-    rel_t = max(rel_t, min_ramp);
-    // Re-balance if the clamp pushed att+rel past the note
-    // duration (only possible when note is shorter than ~6ms).
-    att_t + rel_t > v_note_seconds[i] ? (
-      total = att_t + rel_t;
-      att_t = att_t / total * v_note_seconds[i];
-      rel_t = rel_t / total * v_note_seconds[i];
-    );
-  );
+  // No anti-click floor here on purpose — the @sample loop runs
+  // the raw envelope through a one-pole smoother (smooth_coeff)
+  // before applying it to the oscillator, which handles the
+  // 0-duration ramp case the same way Polyrhythm Phase does.
+  // Forcing a minimum ramp here would let a user's "attack = 0"
+  // setting silently become "attack = 3ms" — annoying when the
+  // user actually wanted a percussive transient.
   v_attack_seconds[i]  = att_t;
   v_release_seconds[i] = rel_t;
   v_sustain_seconds[i] = max(0, v_note_seconds[i] - att_t - rel_t);
@@ -356,60 +357,103 @@ seq_started && !seq_finished ? (
 // envelope based on its own elapsed-in-state, render its sample,
 // sum to L/R. A voice can be ringing here even if it's not the
 // "current" sequencer voice (overlap case).
+//
+// Click prevention: after the state machine produces a raw
+// envelope value, that value goes through a one-pole smoother
+// (smooth_coeff, ~3ms time constant) before being applied to
+// the oscillator. So even when attack% = 0 or release% = 0
+// would let the raw envelope jump instantly from 0 to 1 (or
+// vice versa), the smoothed amplitude ramps over a few
+// milliseconds and the listener hears a clean transition.
+// This mirrors Polyrhythm Phase's gain_l[i] = gain_l[i] *
+// smooth + target * (1 - smooth) pattern.
+//
+// Voices in state 0 (silent) still pass through the smoother
+// so any tail from a previous note rings out gracefully if
+// the voice was just released. We only skip the oscillator
+// render once both the raw envelope AND the smoothed value
+// are near zero — otherwise the smoothed tail would get cut
+// off mid-fade.
 out_l = 0;
 out_r = 0;
 
 i = 0;
 loop(8,
-  v_active[i] && voice_state[i] != 0 ? (
-    state_elapsed[i] += dt;
-    elapsed = state_elapsed[i];
+  v_active[i] && (voice_state[i] != 0 || v_env_smoothed[i] > 0.0001) ? (
+    // Advance the state machine ONLY when the voice is in a
+    // non-silent state. A voice in state 0 with a non-zero
+    // smoothed envelope is decaying its tail — the state machine
+    // has nothing more to do; we just let the smoother converge
+    // to 0 (v_envelope[i] is already 0, the smoother was set to
+    // 0 by the release-end transition).
+    voice_state[i] != 0 ? (
+      state_elapsed[i] += dt;
+      elapsed = state_elapsed[i];
 
-    // State machine: attack → sustain → release → silent.
-    // Note Length = 0 (rest voice) ends up silent immediately
-    // because both attack and release durations end up 0.
-    voice_state[i] == 1 ? (  // attack
-      v_attack_seconds[i] > 0.0001 ? (
-        t = elapsed / v_attack_seconds[i];
-        t >= 1 ? (
+      // State machine: attack → sustain → release → silent.
+      // Note Length = 0 (rest voice) never enters here because
+      // the sequencer-trigger code refuses to set state to 1
+      // when v_note_seconds <= 0.0001 — rests stay silent.
+      voice_state[i] == 1 ? (  // attack
+        v_attack_seconds[i] > 0.0001 ? (
+          t = elapsed / v_attack_seconds[i];
+          t >= 1 ? (
+            v_envelope[i] = 1;
+            voice_state[i] = 2;
+            state_elapsed[i] = 0;
+          ) : (
+            v_envelope[i] = apply_curve(t, attack_shape);
+          );
+        ) : (
+          // attack% = 0 — jump straight to sustain. The smoother
+          // below catches the 0→1 jump so no click reaches the
+          // listener; this matches Polyrhythm Phase's behavior.
           v_envelope[i] = 1;
           voice_state[i] = 2;
           state_elapsed[i] = 0;
-        ) : (
-          v_envelope[i] = apply_curve(t, attack_shape);
         );
-      ) : (
-        // No attack duration — jump straight to sustain.
+      ) :
+      voice_state[i] == 2 ? (  // sustain
         v_envelope[i] = 1;
-        voice_state[i] = 2;
-        state_elapsed[i] = 0;
-      );
-    ) :
-    voice_state[i] == 2 ? (  // sustain
-      v_envelope[i] = 1;
-      elapsed >= v_sustain_seconds[i] ? (
-        voice_state[i] = 3;
-        state_elapsed[i] = 0;
-      );
-    ) :
-    voice_state[i] == 3 ? (  // release
-      v_release_seconds[i] > 0.0001 ? (
-        t = elapsed / v_release_seconds[i];
-        t >= 1 ? (
+        elapsed >= v_sustain_seconds[i] ? (
+          voice_state[i] = 3;
+          state_elapsed[i] = 0;
+        );
+      ) :
+      voice_state[i] == 3 ? (  // release
+        v_release_seconds[i] > 0.0001 ? (
+          t = elapsed / v_release_seconds[i];
+          t >= 1 ? (
+            v_envelope[i] = 0;
+            voice_state[i] = 0;
+            state_elapsed[i] = 0;
+          ) : (
+            v_envelope[i] = apply_curve(1 - t, release_shape);
+          );
+        ) : (
+          // release% = 0 — drop to silent. Smoother handles the
+          // 1→0 fade so no click reaches the listener.
           v_envelope[i] = 0;
           voice_state[i] = 0;
           state_elapsed[i] = 0;
-        ) : (
-          v_envelope[i] = apply_curve(1 - t, release_shape);
         );
-      ) : (
-        v_envelope[i] = 0;
-        voice_state[i] = 0;
-        state_elapsed[i] = 0;
       );
     );
 
-    voice_state[i] != 0 ? (
+    // One-pole exponential smoother on the envelope output.
+    // smooth_coeff = exp(-1/(srate * 0.003)), so the smoothed
+    // value tracks the raw envelope with a ~3ms time constant.
+    // This is what prevents clicks on the attack=0 and release=0
+    // edge cases — the raw v_envelope[i] may step instantly
+    // (0→1 on attack=0, 1→0 on release=0), but the smoother
+    // ramps over a few milliseconds and the listener hears a
+    // clean transition. Same pattern as Polyrhythm Phase.
+    v_env_smoothed[i] = v_env_smoothed[i] * smooth_coeff + v_envelope[i] * (1 - smooth_coeff);
+
+    // Always render the oscillator while the smoothed envelope
+    // is non-trivial — covers both the active-state case and the
+    // post-release tail-decay case.
+    (
       // Advance oscillator phases. L and R are independent so the
       // binaural beat (Hz offset on R only) works cleanly.
       osc_phase_l[i] += v_freq_l[i] / srate;
@@ -483,8 +527,10 @@ loop(8,
         osc_r = sin(2 * $pi * pr) + inv_phi * sin(4 * $pi * pr) + inv_phi2 * sin(6 * $pi * pr);
       );
 
-      // Apply this voice's envelope, per-voice gain, and master gain.
-      amp = v_envelope[i] * v_gain[i] * master_gain;
+      // Apply this voice's smoothed envelope, per-voice gain, and
+      // master gain. Smoothed (not raw) so attack=0 / release=0
+      // transitions don't click.
+      amp = v_env_smoothed[i] * v_gain[i] * master_gain;
       out_l += osc_l * amp;
       out_r += osc_r * amp;
     );

@@ -636,8 +636,8 @@ When Loop is on, the sequence wraps from the last active voice back to the first
 
 ### Global
 
-**Rate Mode** `BPM / Seconds` (default Seconds)
-How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1 (also the default), one cycle equals one second, so the per-voice "Next voice in" and "Note rings for" numbers behave as raw seconds. This is the easiest way to work in plain time — set a voice to 2 and it plays for 2 seconds. **BPM** = beats per minute; Rate Value becomes the tempo, and the per-voice numbers become beats. Useful if you want a polyrhythmic feel where every voice is in a sensible ratio of a common tempo.
+**Rate Mode** `BPM / Seconds / Hz` (default Seconds)
+How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1 (also the default), one cycle equals one second, so the per-voice "Next voice in" and "Note rings for" numbers behave as raw seconds. This is the easiest way to work in plain time — set a voice to 2 and it plays for 2 seconds. **BPM** = beats per minute; Rate Value becomes the tempo, and the per-voice numbers become beats. Useful if you want a polyrhythmic feel where every voice is in a sensible ratio of a common tempo. **Hz** = cycles per second; Rate Value is the cycle frequency. Useful for very slow ambient pacing (Rate = 0.05 Hz means one cycle every 20 seconds).
 
 **Rate Value** `0.001 – 1000`
 The global rate. Meaning depends on Rate Mode (see above). Default 1, which in the default Seconds mode means "each per-voice cycle is one second."
@@ -707,7 +707,7 @@ Off = this voice is skipped in the sequence entirely (not just silent — the se
 
 **Overlap for sustain.** Set "Note rings for" to a value greater than "Next voice in." When the sequencer moves to the next voice, the previous voice's note keeps ringing through its release. With Release Shape = Cosine and a long Release %, this gives a gentle decaying tail under the new note.
 
-**Click-free envelope on short notes.** Even when you set Attack % or Release % to 0, the plugin clamps the actual ramp time to a minimum of 3 milliseconds (capped by half the note length on very short notes). This stops the envelope from jumping instantaneously between values, which the ear hears as a click. The clamp is invisible at normal settings; it only kicks in when the user-set percentages would produce sub-millisecond ramps.
+**Click-free envelope on instant transitions.** Even when you set Attack % or Release % to 0 (sharp gate on or off), the plugin's output amplitude is passed through a one-pole exponential smoother with a ~3 millisecond time constant before reaching the oscillator — same trick Polyrhythm Phase uses. The state machine's raw envelope value can step instantly from 0 to 1 or vice versa, but what reaches the speakers ramps over a few milliseconds, which the ear hears as a clean transition rather than a click. Your user-set attack / release percentages aren't silently rewritten — if you ask for 0% you get a sharp envelope, just one that's perceptually click-free. Same applies to rest steps (Note rings for = 0): the smoother fades any tail from the previous voice gracefully.
 
 **Looping vs one-shot.** Loop = On for ambient / sleep loops where the sequence cycles indefinitely. Loop = Off for a one-shot melodic phrase that plays once on plugin activate / playback start, then goes silent.
 
