@@ -28,7 +28,7 @@ desc:Melody Phase
 // --- Global sliders (1-14) ---
 slider1:1<0,2,1{BPM,Seconds,Hz}>Rate Mode
 slider2:1<0.001,1000,0.001>Rate Value
-slider3:0<0,9,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade}>Waveform
+slider3:0<0,11,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine}>Waveform
 slider4:440<400,480,0.1>Tuning Reference Hz
 slider5:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
 slider6:4<0,8,1>Center Octave
@@ -730,17 +730,35 @@ loop(8,
         osc_l = 2 * pl - 1;
         osc_r = 2 * pr - 1;
       ) :
-      waveform == 3 ? (  // Golden TS
+      waveform == 3 ? (  // Golden TS (Polyrhythm-Phase-compatible: golden
+                         //   phase warp → SINE output. The originally-
+                         //   shipped Melody Phase slot 3 fed the warp into
+                         //   a triangle, which sounded different from the
+                         //   same-named slot in Polyrhythm Phase. To make
+                         //   the two plugins match — and to preserve the
+                         //   sound of existing Polyrhythm Phase projects
+                         //   that built on this — the triangle-output
+                         //   variant moved to the "Phi Triangle" slot at
+                         //   the end of this list. See docs for context.)
         inv_phi = 1 / 1.618033988749895;
         wl = pl < inv_phi ? pl / inv_phi * 0.5 : 0.5 + (pl - inv_phi) / (1 - inv_phi) * 0.5;
         wr = pr < inv_phi ? pr / inv_phi * 0.5 : 0.5 + (pr - inv_phi) / (1 - inv_phi) * 0.5;
-        osc_l = (wl < 0.5 ? 4 * wl - 1 : 3 - 4 * wl);
-        osc_r = (wr < 0.5 ? 4 * wr - 1 : 3 - 4 * wr);
+        osc_l = sin(2 * $pi * wl);
+        osc_r = sin(2 * $pi * wr);
       ) :
-      waveform == 4 ? (  // Golden SG
+      waveform == 4 ? (  // Golden SG (Polyrhythm-Phase-compatible: sine
+                         //   prewarp + golden phase warp → sine output.
+                         //   The originally-shipped Melody Phase slot 4
+                         //   was the no-prewarp "clean" version; the
+                         //   prewarp version is what Polyrhythm Phase
+                         //   has always shipped, and the prewarp adds
+                         //   harmonic content. Clean (no-prewarp) version
+                         //   moved to "Phi Sine" at the end of this list.)
         inv_phi = 1 / 1.618033988749895;
-        wl = pl < inv_phi ? pl / inv_phi * 0.5 : 0.5 + (pl - inv_phi) / (1 - inv_phi) * 0.5;
-        wr = pr < inv_phi ? pr / inv_phi * 0.5 : 0.5 + (pr - inv_phi) / (1 - inv_phi) * 0.5;
+        pl_pre = (sin((pl - 0.25) * 2 * $pi) + 1) * 0.5;
+        pr_pre = (sin((pr - 0.25) * 2 * $pi) + 1) * 0.5;
+        wl = pl_pre < inv_phi ? pl_pre / inv_phi * 0.5 : 0.5 + (pl_pre - inv_phi) / (1 - inv_phi) * 0.5;
+        wr = pr_pre < inv_phi ? pr_pre / inv_phi * 0.5 : 0.5 + (pr_pre - inv_phi) / (1 - inv_phi) * 0.5;
         osc_l = sin(2 * $pi * wl);
         osc_r = sin(2 * $pi * wr);
       ) :
@@ -774,6 +792,34 @@ loop(8,
         inv_phi2 = inv_phi * inv_phi;
         osc_l = sin(2 * $pi * pl) + inv_phi * sin(4 * $pi * pl) + inv_phi2 * sin(6 * $pi * pl);
         osc_r = sin(2 * $pi * pr) + inv_phi * sin(4 * $pi * pr) + inv_phi2 * sin(6 * $pi * pr);
+      ) :
+      waveform == 10 ? (  // Phi Triangle — golden phase warp → TRIANGLE output.
+                          //   This is the manual's documented "Golden TS"
+                          //   behavior, and was Melody Phase's original
+                          //   slot 3 implementation. Moved here so the
+                          //   Polyrhythm-compatible sine-output Golden TS
+                          //   can live at slot 3 in both plugins. Matches
+                          //   the corresponding "Phi Triangle" slot in
+                          //   Polyrhythm Phase.
+        inv_phi = 1 / 1.618033988749895;
+        wl = pl < inv_phi ? pl / inv_phi * 0.5 : 0.5 + (pl - inv_phi) / (1 - inv_phi) * 0.5;
+        wr = pr < inv_phi ? pr / inv_phi * 0.5 : 0.5 + (pr - inv_phi) / (1 - inv_phi) * 0.5;
+        osc_l = (wl < 0.5 ? 4 * wl - 1 : 3 - 4 * wl);
+        osc_r = (wr < 0.5 ? 4 * wr - 1 : 3 - 4 * wr);
+      ) :
+      waveform == 11 ? (  // Phi Sine — golden phase warp → sine output, no
+                          //   pre-warp. The manual's documented "Golden SG"
+                          //   behavior, and was Melody Phase's original
+                          //   slot 4 implementation. Cleaner / less bright
+                          //   than the Polyrhythm-compatible Golden SG at
+                          //   slot 4, which adds a sine prewarp. Matches
+                          //   the corresponding "Phi Sine" slot in
+                          //   Polyrhythm Phase.
+        inv_phi = 1 / 1.618033988749895;
+        wl = pl < inv_phi ? pl / inv_phi * 0.5 : 0.5 + (pl - inv_phi) / (1 - inv_phi) * 0.5;
+        wr = pr < inv_phi ? pr / inv_phi * 0.5 : 0.5 + (pr - inv_phi) / (1 - inv_phi) * 0.5;
+        osc_l = sin(2 * $pi * wl);
+        osc_r = sin(2 * $pi * wr);
       );
 
       // Apply this voice's smoothed envelope, per-voice gain, and

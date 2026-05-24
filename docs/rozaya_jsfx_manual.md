@@ -552,19 +552,23 @@ Enables or disables the voice. Off bypasses oscillator computation entirely (no 
 
 ### Waveform
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade`
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
 The oscillator waveform used by all voices simultaneously.
+
+> **A note on the Golden / Phi family.** Polyrhythm Phase shipped with three "Golden" waveforms whose audible behavior didn't match the names a strict reading would expect — slot 3 ("Golden TS") was a phi-warped sine, not a phi-warped triangle; slot 4 ("Golden SG") added an extra sine pre-warp before the phi-warp. Those sounds are preserved here as Golden TS / SG for back-compat with existing projects. The two **Phi Triangle / Phi Sine** slots at the end of the list are the strict-reading versions (phi-warp into triangle, and phi-warp into clean sine with no pre-warp) — pick those if you want the cleaner interpretations.
 
 - **Sine** — pure sinusoidal tone. Cleanest binaural beat interaction, no harmonics.
 - **Triangle** — bipolar triangle wave with odd harmonics, softer than saw.
 - **Saw** — sawtooth wave with a full harmonic series. Rich and bright.
-- **Golden TS** — a triangle wave whose phase is warped using the golden ratio (φ ≈ 1.618), creating an asymmetric waveform with a distinctive harmonic character. The phase is split at the 1/φ point and each segment is remapped.
-- **Golden SG** — a sine wave whose input phase is mapped through the same golden ratio warping as Golden TS before the sine function is applied. Produces a sine-like tone with subtle golden ratio phase distortion.
-- **Golden GS** — the oscillator phase is self-modulated: the phase is offset by `(1/φ) * sin(phase) / 2π` before the sine function is applied. This creates a continuously self-warping waveform whose harmonic content shifts with frequency.
+- **Golden TS** — a sine wave whose phase is warped using the golden ratio (φ ≈ 1.618): phase split at the 1/φ point, each segment remapped to half a cycle. Produces an asymmetric sine with a slight kink at the warp point. (For the triangle-output reading of the same warp, see Phi Triangle.)
+- **Golden SG** — a sine wave whose phase is first remapped through a cosine-shaped pre-warp, then passed through the same golden-ratio warp as Golden TS, then taken through sine. The double pass adds harmonic content the no-prewarp version doesn't have — brighter and more textured. (For the no-prewarp version, see Phi Sine.)
+- **Golden GS** — the oscillator phase is self-modulated: the phase is offset by `(1/φ) · sin(phase) / 2π` before the sine function is applied. Creates a continuously self-warping waveform whose harmonic content shifts subtly with frequency.
 - **Bell** — additive partials at integer harmonics (1×, 2×, 3×, 4×, 6×) with bell-leaning amplitude weights. Produces a tonal-rich, slightly metallic voice that shimmers under tremolo. Not a true singing-bowl (those use inharmonic partials, which would create discontinuities at each phase wrap), but bell-flavoured in spirit.
 - **Wavefold** — sine-of-sine with index 2: `sin(2 · sin(phase))`. A gentle wavefolder — the sine "warms" without any harsh edges, adding mild harmonic content. Stays in the [-1, +1] range naturally; no clipping artifacts. Good when Sine feels too pure.
 - **Half-sine** — full-wave rectified sine remapped to bipolar (`2 · |sin(phase)| − 1`). Even-harmonic-only character, hollow and vaguely reedy. Distinct from any of the other waveforms here. **Sounds an octave higher than the same note + Center Octave setting would on any other waveform in this list.** This isn't a tuning bug — full-wave rectification produces a spectrum with no fundamental and its lowest partial at 2× the carrier frequency, so the perceived pitch is one octave up by design. To match the pitch you'd hear on Sine / Triangle / etc., drop the Center Octave by 1 (or each per-voice Semitones by 12). To stack a Half-sine drone an octave above another waveform, run this plugin on a second track with a different Waveform selection — Polyrhythm Phase plays one global waveform per instance, so cross-waveform stacking is a multi-track move, not a per-voice one. Also carries a small DC offset (mean ≈ 0.27) which speakers don't reproduce; tremolo and pan attenuate it further.
 - **Phi-cascade** — additive harmonics with golden-ratio-decreasing amplitudes: `fundamental + (1/φ)·2nd + (1/φ²)·3rd`. On theme with the Golden TS/SG/GS family but uses pure additive synthesis rather than phase warping. Gives a brighter, more "stacked" character than the phase-warped Goldens.
+- **Phi Triangle** — golden-ratio phase warp (same as Golden TS) fed into a TRIANGLE output instead of a sine. Brighter and harmonically richer than Golden TS — triangles carry odd harmonics that the sine-output version smooths over.
+- **Phi Sine** — golden-ratio phase warp (same as Golden TS) fed into a clean sine output, with **no** sine pre-warp. The minimalist version of Golden SG: same warp shape, no added prewarp brightness.
 
 ---
 
@@ -652,8 +656,8 @@ How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 
 **Rate Value** `0.001 – 1000`
 The global rate. Meaning depends on Rate Mode (see above). Default 1, which in the default Seconds mode means "each per-voice cycle is one second."
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade`
-Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions. Note that Half-sine sounds an octave higher than the others at the same note + Center Octave setting (full-wave-rectified spectrum has no fundamental).
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
+Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions, including the back-compat note on the Golden / Phi family. Note that Half-sine sounds an octave higher than the others at the same note + Center Octave setting (full-wave-rectified spectrum has no fundamental).
 
 **Tuning Reference Hz** `400 – 480`
 Frequency of A4. Standard concert pitch is 440.
@@ -1450,8 +1454,8 @@ The number of oscillator layers stacked per note, and the width of the pitch win
 **Center Octave** `0-8, default 4`
 The octave at the center of the amplitude bell curve. Oscillators nearest this octave are loudest; those further away fade toward silence at the window edges. Adjusting this shifts the perceived register of the entire sequence.
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS`
-The oscillator waveform used by all notes simultaneously. Sine is the cleanest choice for the illusion. See Polyrhythm Phase for waveform descriptions.
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
+The oscillator waveform used by all notes simultaneously. Sine is the cleanest choice for the Shepard illusion — additional harmonics can muddy the perceived register-wrap. The richer waveforms (Bell, Phi-cascade, etc.) are still available if you want the illusion to sit inside a more textured tone. See Polyrhythm Phase for waveform descriptions, including the back-compat note on the Golden / Phi family.
 
 **Binaural Beat Hz** `0-100 Hz, default 0`
 Offsets the right channel oscillator frequencies by this many Hz, adding a binaural beat across all notes simultaneously.
@@ -1545,8 +1549,8 @@ The fraction of each sweep cycle spent fading out at the top of the pitch window
 
 > If Fade In % + Fade Out % exceeds 100%, both are scaled down proportionally.
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS`
-The oscillator waveform used by all voices simultaneously. Sine produces the purest illusion. See Polyrhythm Phase for waveform descriptions.
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
+The oscillator waveform used by all voices simultaneously. Sine produces the purest Shepard illusion — fewer harmonics means a cleaner register-wrap. The richer waveforms (Bell, Phi-cascade, etc.) are available if you want the illusion to sit inside a more textured tone. See Polyrhythm Phase for waveform descriptions, including the back-compat note on the Golden / Phi family.
 
 **Binaural Beat Hz** `0-100 Hz, default 0`
 Offsets the right channel oscillator frequencies by this many Hz, adding a binaural beat across all voices and oscillators simultaneously.
