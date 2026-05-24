@@ -457,11 +457,25 @@ seq_started && !seq_finished ? (
     nxt < 0 ? (
       // No active voices at all — silence everything.
       seq_finished = 1;
+      // In Legato mode the current voice has been ignoring the
+      // sustain→release transition (it keeps sustaining until a
+      // hand-off silences it). At end-of-sequence there's no more
+      // hand-off coming, so force the release here — otherwise the
+      // sound would ring forever.
+      legato_enabled && voice_state[seq_index] != 0 ? (
+        voice_state[seq_index] = 3;
+        state_elapsed[seq_index] = 0;
+      );
     ) : (
       // If wrapped to <= current index AND loop is off, we've
       // completed one pass through the sequence; stop here.
       !loop_enabled && nxt <= seq_index ? (
         seq_finished = 1;
+        // Same Legato end-of-sequence release as above.
+        legato_enabled && voice_state[seq_index] != 0 ? (
+          voice_state[seq_index] = 3;
+          state_elapsed[seq_index] = 0;
+        );
       ) : (
         // Capture the previous (still-playing-or-just-released)
         // voice index BEFORE we advance seq_index. Used by the
@@ -599,7 +613,17 @@ loop(8,
       ) :
       voice_state[i] == 2 ? (  // sustain
         v_envelope[i] = 1;
-        elapsed >= v_sustain_seconds[i] ? (
+        // Sustain → release on its own ONLY when Legato is off.
+        // In Legato mode, each voice rings continuously until the
+        // sequencer's next hand-off silences it via the legato
+        // inheritance path — so the user's "Note rings for"
+        // effectively becomes "ring until the next note takes
+        // over," giving a true continuous tone with pitch sliding
+        // between voices. End-of-sequence (Loop=Off, walked past
+        // the last active voice) is handled separately above by
+        // forcing the current voice into release state so the
+        // sound doesn't ring forever.
+        !legato_enabled && elapsed >= v_sustain_seconds[i] ? (
           voice_state[i] = 3;
           state_elapsed[i] = 0;
         );
