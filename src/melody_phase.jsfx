@@ -288,6 +288,19 @@ legato_enabled = slider21;
 // @sample step), so glide_coeff doesn't need a safe value
 // for the glide_time = 0 case; compute defensively anyway.
 glide_coeff   = glide_time > 0.0001 ? exp(-1 / max(srate * glide_time, 1)) : 0;
+// Pan smoother coefficient. Default 10ms for snappy-but-click-free
+// pan transitions; matches Polyrhythm Phase. In Legato mode with
+// Glide > 0, slow it down to match the glide time so pan moves
+// at the same perceived speed as pitch — otherwise pan finishes
+// its transition in 10-30ms while pitch is still gliding for
+// hundreds of ms, which the listener hears as two separate
+// transitions at different rates (the pan one feels like a
+// sharp position change against the slower pitch slide). Tying
+// them together makes the whole transition feel like one
+// coherent slide. Floor stays at 10ms so non-Legato use and
+// Glide-off still get the snappy-but-click-free behavior.
+pan_smooth_time = (legato_enabled && glide_time > 0.0001) ? max(0.010, glide_time) : 0.010;
+pan_smooth_coeff_global = exp(-1 / (srate * pan_smooth_time));
 
 cycle_seconds = rate_to_cycle_seconds(rate_value, rate_mode);
 
@@ -787,8 +800,11 @@ loop(8,
           // a voice's Active toggle or changes Pan Mode mid-play.
           raw_pan = v_pan_static[i] * pan_spread;
         );
-        pan_smooth_coeff = exp(-1 / (srate * 0.010));
-        pan_smooth[i] = pan_smooth[i] * pan_smooth_coeff + raw_pan * (1 - pan_smooth_coeff);
+        // pan_smooth_coeff_global is computed in @slider so we don't
+        // call exp() 8 times per sample. Time constant follows
+        // Glide time in Legato mode (so pan and pitch glide
+        // together), 10ms otherwise.
+        pan_smooth[i] = pan_smooth[i] * pan_smooth_coeff_global + raw_pan * (1 - pan_smooth_coeff_global);
         pan_pos   = (pan_smooth[i] + 1.0) * 0.5;
         pan_l_mul = cos(pan_pos * $pi * 0.5);
         pan_r_mul = sin(pan_pos * $pi * 0.5);

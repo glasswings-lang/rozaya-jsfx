@@ -752,6 +752,8 @@ Off = this voice is skipped in the sequence entirely (not just silent — the se
 
 **Spread pan for melodic clarity.** With Pan enabled and Mode = Spread, each voice in the sequence gets a fixed position across the stereo field. The ear easily tracks which voice is which — V1 might be far left, V8 might be far right — and the melody feels spatially organised even if the notes themselves overlap or sit close in pitch. Pair with a second instance set to Spread Reversed (and slightly different timing) for a wider, more enveloping result.
 
+**Pan transition follows Glide in Legato mode.** Pan position uses a one-pole smoother to slide between positions (~10ms by default — fast enough to feel snappy, slow enough to be click-free). When Legato glide is on AND Glide time > 0, the pan smoother slows down to match the Glide time — so pitch and pan transition at the same perceived speed and feel like one coherent slide. Without this, the pan finishes its 10ms slide while the pitch is still gliding for hundreds of ms, which the ear hears as a sharper-than-expected position change on top of a slow pitch bend.
+
 ---
 
 *Melody Phase is part of the Rozaya JSFX plugin suite.*
