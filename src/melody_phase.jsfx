@@ -507,6 +507,21 @@ seq_started && !seq_finished ? (
             // continuous, only the pitch (frequency) changes.
             osc_phase_l[seq_index] = osc_phase_l[prev_voice];
             osc_phase_r[seq_index] = osc_phase_r[prev_voice];
+            // Inherit pan state (smoothed pan position + LFO phase
+            // for Tremolo/Increment modes) so the apparent stereo
+            // position is continuous across the hand-off. Without
+            // this, the new voice's pan_smooth starts at whatever
+            // value it last held (typically 0 = center) and ramps
+            // toward its own target via the 10ms smoother — the
+            // listener hears the pan position JUMP from the
+            // previous voice's static position to center (or
+            // wherever) and then sweep, which clicks. Inheriting
+            // the previous voice's pan_smooth means the new voice
+            // starts at the previous voice's pan position and the
+            // smoother slides it toward its own target — same
+            // continuity story as envelope and oscillator phase.
+            pan_smooth[seq_index] = pan_smooth[prev_voice];
+            pan_phase[seq_index]  = pan_phase[prev_voice];
             // Start in sustain (skip attack); the new voice will
             // run its own sustain → release naturally based on
             // its Note rings for.
