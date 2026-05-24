@@ -25,6 +25,14 @@ tick_buf_len = 65536;
 strong_buf    = 0;
 weak_buf      = strong_buf + tick_buf_len;
 noise_scratch = weak_buf   + tick_buf_len;
+// swing_offset needs its own memory region. Eel2 defaults any
+// undeclared variable to 0; without an explicit base address here,
+// swing_offset[i] would alias strong_buf[i] and the per-beat swing
+// writes in @slider would corrupt the first `timesig` samples of
+// the rendered strong-beat audio (~tiny click at the very start of
+// the strong beat). 32 slots is generous — slider max is 20.
+noise_len    = 300;
+swing_offset = noise_scratch + noise_len;
 
 strong_len = 0;
 weak_len   = 0;
@@ -35,11 +43,15 @@ tick_src     = 0;
 tick_len     = 0;
 tick_pan     = 0;
 
-beat_phase       = 0;
+// Start beat_phase at 1.0 so the very first @sample call triggers
+// the downbeat. With beat_phase=0 the first beat doesn't fire until
+// samples_per_beat samples have elapsed — a full beat of silence
+// before the metronome actually starts ticking. (Bug pre-dated the
+// initial public release; reported by ear.)
+beat_phase       = 1.0;
 beat_index       = 0;
 samples_per_beat = (60.0 / 120.0) * srate;
 
-noise_len = 300;
 nx = 1;
 i = 0;
 loop(noise_len,
