@@ -678,6 +678,33 @@ Curve of the release ramp.
 **Sequence Length** `All Active / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8`
 How many voice slots participate. "All Active" walks all 8 slots, skipping any with Active = Off. A numeric setting truncates the sequence to the first N voice slots (still skipping any inactive within that range). Useful for shortening a sequence without having to flip Active toggles.
 
+### Pan (sliders 15-19)
+
+Mirrors Polyrhythm Phase's pan section. When enabled, each voice gets independently-positioned L and R amplitudes — the binaural beat is preserved across the pan because each channel keeps its own oscillator. Pan Mode picks one of four behaviors.
+
+**Pan Enabled** `Off / On`
+Toggles the whole pan group. When off, voices sum straight to mono (and the sub-sliders below are hidden in Reaper). Default Off.
+
+**Pan Mode** `Tremolo / Increment / Spread / Spread Reversed` (default Spread)
+- **Tremolo** — each voice's pan position oscillates over time at Pan Base Rate. All voices share the same rate.
+- **Increment** — each voice's pan rate is Pan Base Rate + (voice index × Pan Increment), so V1, V2, V3… all pan at slightly different rates and drift in and out of phase.
+- **Spread** — voices get static pan positions ranked across the stereo field. V1 sits at one end, V8 at the other, the rest spread evenly between. Active voices only; inactive ones are skipped in the ranking. **Most useful for melodies** — each note in the sequence lives in a distinct spatial position, which makes the line easy to follow.
+- **Spread Reversed** — same as Spread but flipped. Pairs nicely with another instance set to Spread for compositional stereo width.
+
+**Pan Spread %** `0 – 100`
+How wide the pan moves. 100 = full stereo. 0 = collapses to center (effectively defeats pan).
+
+**Pan Base Rate** `0.001 – 1000` (Tremolo / Increment modes only)
+Pan LFO rate, in the same units as the global Rate Mode. Hidden when pan is off or when Pan Mode is Spread / Spread Reversed.
+
+**Pan Increment per Voice** `-1000 – 1000` (Increment mode only)
+How much each successive voice's pan rate increases over the previous voice's. Hidden in other modes.
+
+### Glide / portamento (slider 60)
+
+**Glide time (seconds; 0 = off)** `0 – 5`
+When > 0, each new voice's pitch starts at the previous voice's target frequency and slides to its own target over this many seconds. 0 = no glide; voices jump directly to their pitch. Independent of all other timing — set Glide to 0.05 and notes will slide quickly into pitch from wherever the last one was, regardless of Step Length or Note Length. The glide affects only newly-triggered voices; if a previous voice is still ringing (overlap case), it keeps its own pitch — only the incoming voice slides.
+
 ### Per Voice (V1–V8)
 
 **Vn Semitones from root** `-24 – 24`
@@ -712,6 +739,10 @@ Off = this voice is skipped in the sequence entirely (not just silent — the se
 **Looping vs one-shot.** Loop = On for ambient / sleep loops where the sequence cycles indefinitely. Loop = Off for a one-shot melodic phrase that plays once on plugin activate / playback start, then goes silent.
 
 **Pairing with Polyrhythm Phase.** Run both on separate tracks at the same Tuning Reference — Polyrhythm Phase as the sustained drone bed, Melody Phase as the melodic figure on top. Match Root Notes for consonance, or detune Melody Phase slightly for movement.
+
+**Glide for legato phrasing.** Set Glide time to something small (0.05 – 0.2 seconds) and notes will smoothly slide from one to the next instead of jumping. Combine with longish Note rings for + sharp release for a connected, legato-style line. Set Glide to 0 for clean stepped pitches.
+
+**Spread pan for melodic clarity.** With Pan enabled and Mode = Spread, each voice in the sequence gets a fixed position across the stereo field. The ear easily tracks which voice is which — V1 might be far left, V8 might be far right — and the melody feels spatially organised even if the notes themselves overlap or sit close in pitch. Pair with a second instance set to Spread Reversed (and slightly different timing) for a wider, more enveloping result.
 
 ---
 

@@ -41,6 +41,13 @@ slider12:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider13:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
 slider14:0<0,8,1{All Active,1,2,3,4,5,6,7,8}>Sequence Length
 
+// --- Pan (sliders 15-19) — mirrors Polyrhythm Phase ---
+slider15:0<0,1,1{Off,On}>Pan Enabled
+slider16:2<0,3,1{Tremolo,Increment,Spread,Spread Reversed}>Pan Mode
+slider17:100<0,100,0.1>Pan Spread %
+slider18:1<0.001,1000,0.001>Pan Base Rate (Tremolo / Increment modes)
+slider19:0<-1000,1000,0.001>Pan Increment per Voice (Increment mode)
+
 // --- Per-voice sliders (5 each) ---
 slider20:0<-24,24,1>V1 Semitones from root
 slider21:1<0.01,16,0.01>V1 Next voice in (cycles)
@@ -90,6 +97,12 @@ slider57:1<0,16,0.01>V8 Note rings for (cycles; 0 = silent)
 slider58:-6<-60,6,0.1>V8 Gain dB
 slider59:0<0,1,1{Off,On}>V8 Active
 
+// --- Glide / portamento (slider 60) ---
+// When > 0, each new voice's pitch starts at the previous voice's
+// target frequency and slides to its own target over this many
+// seconds. 0 = no glide; voices jump straight to their pitch.
+slider60:0<0,5,0.001>Glide time (seconds; 0 = off)
+
 @init
 // Memory layout per voice (16 slots each — V0 starts at the
 // labelled base, voice i offsets by i; e.g., V3's osc_phase_l is
@@ -105,6 +118,17 @@ v_freq_r          = 96;
 // Polyrhythm Phase layout; we follow the same per-voice 16-slot
 // convention.
 v_env_smoothed    = 240;  // amplitude after the click-prevention one-pole smoother
+// Pan (sliders 15-19, mirrored from Polyrhythm Phase).
+pan_phase         = 256;  // per-voice pan LFO phase (Tremolo / Increment modes)
+pan_smooth        = 272;  // smoothed pan position, -1..+1
+v_pan_freq        = 288;  // cached pan LFO frequency (Hz)
+v_pan_static      = 304;  // static pan target for Spread / Spread Reversed modes
+// Glide / portamento (slider 60). Each voice tracks its currently-
+// playing frequency (slides toward v_freq_l/r[i] over glide_time);
+// the oscillator phase increment uses v_freq_current_l/r instead
+// of v_freq_l/r directly so the pitch slides smoothly.
+v_freq_current_l  = 320;
+v_freq_current_r  = 336;
 v_active          = 112;
 v_semitones       = 128;
 v_step_seconds    = 144;  // computed at @slider: step_length_cycles * cycle_seconds
@@ -134,8 +158,23 @@ loop(8,
   v_release_seconds[i] = 0.3;
   v_sustain_seconds[i] = 0.6;
   v_gain[i]            = 1;
+  pan_phase[i]         = 0;
+  pan_smooth[i]        = 0;
+  v_pan_freq[i]        = 1;
+  v_pan_static[i]      = 0;
+  v_freq_current_l[i]  = 440;
+  v_freq_current_r[i]  = 440;
   i += 1;
 );
+
+// Glide / portamento state. Tracks the last triggered voice's
+// target frequencies so the NEXT triggered voice can start its
+// glide from there. have_prev_trigger guards the first-ever
+// trigger (no previous voice to slide from — just snap so we
+// don't sweep up from 0 Hz on the very first note).
+prev_trigger_freq_l = 440;
+prev_trigger_freq_r = 440;
+have_prev_trigger   = 0;
 
 // Sequencer global state. seq_index is the voice whose step is
 // currently elapsing. seq_step_elapsed tracks how far into that
@@ -229,6 +268,18 @@ release_pct   = slider11 / 100;
 attack_shape  = slider12;
 release_shape = slider13;
 seq_length_cfg = slider14;
+pan_enabled   = slider15;
+pan_mode      = slider16;
+pan_spread    = slider17 / 100;
+pan_base_rate = slider18;
+pan_increment = slider19;
+glide_time    = slider60;
+// Glide coefficient: one-pole smoother applied per sample to
+// v_freq_current_l/r, with glide_time as the time constant.
+// When glide_time = 0 we just snap (handled inline at the
+// @sample step), so glide_coeff doesn't need a safe value
+// for the glide_time = 0 case; compute defensively anyway.
+glide_coeff   = glide_time > 0.0001 ? exp(-1 / max(srate * glide_time, 1)) : 0;
 
 cycle_seconds = rate_to_cycle_seconds(rate_value, rate_mode);
 
@@ -289,6 +340,63 @@ loop(8,
   i += 1;
 );
 
+// Pan: per-voice LFO frequency for Tremolo / Increment modes.
+// Tremolo: every voice pans at Pan Base Rate (same as PRP's
+// "use the voice's tremolo rate" idea, except this plugin has
+// no per-voice tremolo rate — the sequencer IS the rhythm, so
+// we collapse to a single shared pan rate here).
+// Increment: voice i pans at Pan Base Rate + i * Pan Increment.
+// Spread / Spread Reversed: pan position is static (computed
+// below), pan frequency is unused.
+i = 0;
+loop(8,
+  pan_mode == 1 ? (
+    pan_rate_i = pan_base_rate + pan_increment * i;
+    pan_cycle_sec = rate_to_cycle_seconds(pan_rate_i, rate_mode);
+    v_pan_freq[i] = pan_cycle_sec > 0 ? 1 / pan_cycle_sec : 0;
+  ) : (
+    pan_cycle_sec = rate_to_cycle_seconds(pan_base_rate, rate_mode);
+    v_pan_freq[i] = pan_cycle_sec > 0 ? 1 / pan_cycle_sec : 0;
+  );
+  i += 1;
+);
+
+// Static pan positions for Spread / Spread Reversed modes.
+// Rank active voices and place evenly across the stereo field.
+// Mirrors Polyrhythm Phase's implementation exactly.
+total_active = 0;
+i = 0;
+loop(8,
+  v_active[i] ? total_active += 1;
+  i += 1;
+);
+pan_mode >= 2 ? (
+  rank = 0;
+  i = 0;
+  loop(8,
+    v_active[i] ? (
+      total_active > 1 ? (
+        pos = -1.0 + 2.0 * rank / (total_active - 1);
+      ) : (
+        pos = 0;
+      );
+      pan_mode == 3 ? pos = -pos;
+      v_pan_static[i] = pos;
+      rank += 1;
+    ) : (
+      v_pan_static[i] = 0;
+    );
+    i += 1;
+  );
+);
+
+// Show pan sub-sliders only when pan is enabled, and only the
+// ones relevant to the chosen mode (matches PRP's UX).
+slider_show(slider16, pan_enabled);
+slider_show(slider17, pan_enabled);
+slider_show(slider18, pan_enabled && (pan_mode == 0 || pan_mode == 1));
+slider_show(slider19, pan_enabled && pan_mode == 1);
+
 @sample
 dt = 1 / srate;
 
@@ -310,6 +418,14 @@ seq_started == 0 ? (
     v_note_seconds[seq_index] > 0.0001 ? (
       voice_state[seq_index] = 1;       // attack
       state_elapsed[seq_index] = 0;
+      // First ever trigger: snap glide source to this voice's own
+      // target so the very first note doesn't sweep up from nothing.
+      // Subsequent triggers will start from prev_trigger_freq.
+      v_freq_current_l[seq_index] = v_freq_l[seq_index];
+      v_freq_current_r[seq_index] = v_freq_r[seq_index];
+      prev_trigger_freq_l = v_freq_l[seq_index];
+      prev_trigger_freq_r = v_freq_r[seq_index];
+      have_prev_trigger = 1;
     );
     seq_started = 1;
   );
@@ -346,6 +462,24 @@ seq_started && !seq_finished ? (
         v_note_seconds[seq_index] > 0.0001 ? (
           voice_state[seq_index] = 1;
           state_elapsed[seq_index] = 0;
+          // Glide: start the new voice's playing frequency at the
+          // previous trigger's target. The per-sample glide step
+          // below slides it toward this voice's own target over
+          // glide_time. If glide_time = 0 the per-sample step
+          // snaps to target immediately anyway, but setting the
+          // start frequency is harmless. have_prev_trigger guard
+          // shouldn't matter here (we set it on first trigger
+          // above) but is defensive.
+          have_prev_trigger ? (
+            v_freq_current_l[seq_index] = prev_trigger_freq_l;
+            v_freq_current_r[seq_index] = prev_trigger_freq_r;
+          ) : (
+            v_freq_current_l[seq_index] = v_freq_l[seq_index];
+            v_freq_current_r[seq_index] = v_freq_r[seq_index];
+            have_prev_trigger = 1;
+          );
+          prev_trigger_freq_l = v_freq_l[seq_index];
+          prev_trigger_freq_r = v_freq_r[seq_index];
         );
       );
     );
@@ -454,10 +588,23 @@ loop(8,
     // is non-trivial — covers both the active-state case and the
     // post-release tail-decay case.
     (
-      // Advance oscillator phases. L and R are independent so the
-      // binaural beat (Hz offset on R only) works cleanly.
-      osc_phase_l[i] += v_freq_l[i] / srate;
-      osc_phase_r[i] += v_freq_r[i] / srate;
+      // Glide step: slide v_freq_current_l/r toward this voice's
+      // own target (v_freq_l/r[i]) over glide_time seconds via a
+      // one-pole smoother. When glide_time = 0, just snap so the
+      // pitch jumps cleanly to its target (the original behavior
+      // before glide was added).
+      glide_time > 0.0001 ? (
+        v_freq_current_l[i] = v_freq_current_l[i] * glide_coeff + v_freq_l[i] * (1 - glide_coeff);
+        v_freq_current_r[i] = v_freq_current_r[i] * glide_coeff + v_freq_r[i] * (1 - glide_coeff);
+      ) : (
+        v_freq_current_l[i] = v_freq_l[i];
+        v_freq_current_r[i] = v_freq_r[i];
+      );
+      // Advance oscillator phases using the (possibly gliding)
+      // current frequency. L and R are independent so the binaural
+      // beat (Hz offset on R only) works cleanly.
+      osc_phase_l[i] += v_freq_current_l[i] / srate;
+      osc_phase_r[i] += v_freq_current_r[i] / srate;
       osc_phase_l[i] >= 1 ? osc_phase_l[i] -= 1;
       osc_phase_r[i] >= 1 ? osc_phase_r[i] -= 1;
 
@@ -531,8 +678,37 @@ loop(8,
       // master gain. Smoothed (not raw) so attack=0 / release=0
       // transitions don't click.
       amp = v_env_smoothed[i] * v_gain[i] * master_gain;
-      out_l += osc_l * amp;
-      out_r += osc_r * amp;
+
+      // Pan — mirrors Polyrhythm Phase. When enabled, each voice's
+      // L and R get separate amplitude multipliers based on the
+      // pan position, instead of summing straight to out_l/out_r.
+      // Pan is applied AFTER the osc/amp split so the binaural
+      // beat (frequency difference between channels) is preserved
+      // across the pan — collapsing osc_l + osc_r before panning
+      // would destroy that.
+      pan_enabled ? (
+        pan_mode < 2 ? (
+          // Tremolo / Increment: pan position oscillates via LFO
+          pan_phase[i] += v_pan_freq[i] / srate;
+          pan_phase[i] >= 1 ? pan_phase[i] -= 1;
+          raw_pan = sin(pan_phase[i] * 2 * $pi) * pan_spread;
+        ) : (
+          // Spread / Spread Reversed: position is static; smoother
+          // below handles transitions cleanly when the user flips
+          // a voice's Active toggle or changes Pan Mode mid-play.
+          raw_pan = v_pan_static[i] * pan_spread;
+        );
+        pan_smooth_coeff = exp(-1 / (srate * 0.010));
+        pan_smooth[i] = pan_smooth[i] * pan_smooth_coeff + raw_pan * (1 - pan_smooth_coeff);
+        pan_pos   = (pan_smooth[i] + 1.0) * 0.5;
+        pan_l_mul = cos(pan_pos * $pi * 0.5);
+        pan_r_mul = sin(pan_pos * $pi * 0.5);
+        out_l += osc_l * amp * pan_l_mul;
+        out_r += osc_r * amp * pan_r_mul;
+      ) : (
+        out_l += osc_l * amp;
+        out_r += osc_r * amp;
+      );
     );
   );
   i += 1;
