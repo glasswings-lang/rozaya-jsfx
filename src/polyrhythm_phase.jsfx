@@ -94,6 +94,45 @@ slider57:0<-1000,1000,0.001>V8 Drift / Rate
 slider58:0<-1000,1000,0.001>V8 Phase Offset
 slider59:0<0,1,1{Off,On}>V8 Active (Off = no CPU cost)
 
+// ===== DIRECTION & REVERSE =====
+// Forward            — 8 voices, current behavior.
+// Reverse — permute  — 8 voices. Drift values mirrored V1↔V8, V2↔V7,
+//                       V3↔V6, V4↔V5; notes, gains, phase offsets,
+//                       active flags stay in place. The low note now
+//                       fires at the highest cadence and vice versa.
+//                       (Permuting every setting together is a no-op
+//                       on the audio sum — slot order doesn't change
+//                       what gets added. Mirroring just drift is what
+//                       produces an audible reordering.)
+// Reverse — time     — 8 voices, tremolo phase decrements instead of
+//                       increments. The on/off pattern (and any
+//                       asymmetric attack/release envelope) plays
+//                       backwards.
+// Both — permute     — 16 voices. Forward layer (slots 0-7) unchanged.
+//                       Reverse layer (slots 8-15) is the forward layer
+//                       with drift values mirrored — each note plays at
+//                       TWO different cadences across the two layers,
+//                       creating harmonic-pair pulses at the fast end
+//                       and offset solo pulses at the slow end.
+// Both — time        — 16 voices. Forward layer (slots 0-7) unchanged.
+//                       Reverse layer (slots 8-15) has the same drift
+//                       as the forward layer but the tremolo phase
+//                       advances backward, so the asymmetric envelope
+//                       fades in where the forward layer fades out —
+//                       the pulsing cancels into a continuous drone.
+slider60:0<0,4,1{Forward,Reverse — permute,Reverse — time,Both — permute,Both — time}>Direction & Reverse
+
+// Added to every drift/rate value in the reverse layer (slots 8-15) in
+// Both modes. With a non-zero offset the two layers no longer run at
+// matched cadences — the reverse layer's drift range shifts away from
+// the forward layer's, so each voice in the reverse layer fires at a
+// genuinely different cadence than its forward counterpart. This
+// replaces the multi-track-per-scene stacking workflow where each
+// track of a "drift pair" sat at a different rate range. Hidden by
+// slider_show in single-layer modes (Forward / Reverse — permute /
+// Reverse — time) where it would only duplicate the global Rate Value.
+slider61:0<-1000,1000,0.001>Reverse Drift Offset
+
 
 @init
 PHI = 1.6180339887;
@@ -118,8 +157,10 @@ v_phase_off      = 240;  // Phase offset, stored as raw slider value (unit = Rat
 v_phase_off_last = 256;  // Last known offset per voice — used to detect live changes
 v_pan_static     = 272;  // Static pan target per voice (-1..+1) for Spread modes
 
+// Initialize 16 slots — slots 0-7 always used; slots 8-15 hold the
+// reverse layer in Both modes and stay zeroed otherwise.
 i = 0;
-loop(8,
+loop(16,
   osc_phase_l[i] = 0;
   osc_phase_r[i] = 0;
   trem_phase[i]  = 0;
@@ -214,8 +255,88 @@ v_gain[5] = slider45; v_semitones[5] = slider46; v_dr[5] = slider47; v_phase_off
 v_gain[6] = slider50; v_semitones[6] = slider51; v_dr[6] = slider52; v_phase_off[6] = slider53; v_active[6] = slider54;
 v_gain[7] = slider55; v_semitones[7] = slider56; v_dr[7] = slider57; v_phase_off[7] = slider58; v_active[7] = slider59;
 
+direction_reverse     = slider60;
+reverse_drift_offset  = slider61;
+slot0_7_permute       = (direction_reverse == 1);
+slot8_15_permute      = (direction_reverse == 3);
+slot0_7_reverse_time  = (direction_reverse == 2);
+slot8_15_reverse_time = (direction_reverse == 4);
+is_both               = (direction_reverse == 3 || direction_reverse == 4);
+n_voices              = is_both ? 16 : 8;
+
+// Reverse — permute (single layer, option 1): mirror the per-voice
+// drift/rate values V1↔V8, V2↔V7, V3↔V6, V4↔V5. Notes, gains, phase
+// offsets, and active flags stay in place — only the cadences swap.
+// The audio sum is commutative across voice slots, so swapping a
+// voice's COMPLETE identity is a no-op; mirroring just drift means
+// V1's note now fires at V8's cadence and vice versa, which is the
+// audible effect modders expect from this slider.
+slot0_7_permute ? (
+  i = 0;
+  loop(4,
+    j = 7 - i;
+    tmp = v_dr[i]; v_dr[i] = v_dr[j]; v_dr[j] = tmp;
+    i += 1;
+  );
+);
+
+// Both modes (options 3, 4): copy slots 0-7 to slots 8-15. Slots 0-7
+// keep the forward-layer settings; slots 8-15 hold the reverse-layer
+// settings. v_phase_off_last is intentionally NOT copied — leaving it
+// at slot 8-15's prior value (0 from @init, or stale) means the
+// @sample live-offset-change detector fires when entering Both mode,
+// cleanly initializing trem_phase[8..15] from the offset.
+is_both ? (
+  i = 0;
+  loop(8,
+    v_gain[i + 8]      = v_gain[i];
+    v_semitones[i + 8] = v_semitones[i];
+    v_dr[i + 8]        = v_dr[i];
+    v_phase_off[i + 8] = v_phase_off[i];
+    v_active[i + 8]    = v_active[i];
+    i += 1;
+  );
+  // Both — permute: mirror the drift values inside the reverse layer
+  // (slots 8↔15, 9↔14, 10↔13, 11↔12), keeping notes/gains/offsets in
+  // place. Result: slot 8 plays V1's note at V8's cadence, slot 15
+  // plays V8's note at V1's cadence. Each note now fires at TWO
+  // different cadences across the two layers — harmonic pairs at the
+  // fast cadences, separate notes at the slow ones. Both — time skips
+  // the swap (slots 8-15 keep V1..V8's drift unchanged) so the two
+  // layers run at matched cadences in opposite time directions, which
+  // cancels asymmetric envelope pulses into a continuous drone.
+  slot8_15_permute ? (
+    i = 0;
+    loop(4,
+      k = 8 + i;
+      j = 15 - i;
+      tmp = v_dr[k]; v_dr[k] = v_dr[j]; v_dr[j] = tmp;
+      i += 1;
+    );
+  );
+
+  // Shift every drift value in the reverse layer by the offset. Applied
+  // AFTER the optional mirror so the post-mirror values are what get
+  // shifted (mirror and offset commute mathematically since mirror is
+  // just reordering and offset is a uniform add, but keeping the order
+  // "mirror then offset" matches how the manual describes it).
+  reverse_drift_offset != 0 ? (
+    i = 0;
+    loop(8,
+      v_dr[i + 8] += reverse_drift_offset;
+      i += 1;
+    );
+  );
+);
+
 // Rate Value only shown in Drift mode; Rate Mode always visible
 slider_show(slider3, trem_mode == 0);
+
+// Reverse Drift Offset only meaningful in Both modes — in single-layer
+// modes it would duplicate the global Rate Value's effect on tremolo
+// rate, so hide to avoid the confusion of two sliders doing the same
+// thing.
+slider_show(slider61, is_both);
 
 // Show/hide pan controls
 slider_show(slider16, pan_enabled);
@@ -228,7 +349,7 @@ sc     = 0.5 * amount;
 amount = 1 - amount;
 
 i = 0;
-loop(8,
+loop(n_voices,
   hz = semitones_to_hz(base_note, center_octave, v_semitones[i]);
   v_freq_l[i] = hz;
   v_freq_r[i] = hz + bin_beat_hz;
@@ -248,14 +369,16 @@ loop(8,
 );
 
 // Static pan positions for Spread / Spread Reversed modes.
-// Rank active voices and place evenly across the stereo field.
+// Rank active voices and place evenly across the stereo field. In Both
+// modes the reverse layer's voices participate in the ranking too, so
+// 16 voices spread evenly across the field rather than 8 + 8 stacked.
 total_active = 0;
-i = 0; loop(8, v_active[i] ? total_active += 1; i += 1;);
+i = 0; loop(n_voices, v_active[i] ? total_active += 1; i += 1;);
 
 pan_mode >= 2 ? (
   rank = 0;
   i = 0;
-  loop(8,
+  loop(n_voices,
     v_active[i] ? (
       total_active > 1 ? (
         pos = -1.0 + 2.0 * rank / (total_active - 1);
@@ -274,12 +397,14 @@ pan_mode >= 2 ? (
 
 // Pan frequencies — Increment mode always uses Pan Base Rate as foundation
 i = 0;
-loop(8,
+loop(n_voices,
   pan_mode == 0 ? (
     // Tremolo mode: pan at each voice's own tremolo rate
     v_pan_freq[i] = v_trem_freq[i];
   ) : (
-    // Increment mode: Pan Base Rate + increment * voice index
+    // Increment mode: Pan Base Rate + increment * voice index. In Both
+    // modes voice index runs 0..15, so the reverse layer's voices keep
+    // extending the pan-rate ramp past slot 7 rather than restarting.
     pan_rate_i = pan_base_rate + pan_increment * i;
     v_pan_freq[i] = rate_to_hz(pan_rate_i, rate_mode);
   );
@@ -292,9 +417,12 @@ rel_frac = rel_pct    / 100.0;
 
 @sample
 
-// Live phase offset update — fires when an offset slider is moved during playback
+// Live phase offset update — fires when an offset slider is moved during
+// playback. Runs over n_voices so the reverse layer's slots 8-15 also
+// respond when v_phase_off there changes (entry into Both mode, toggle
+// between Both — permute and Both — time, etc.).
 i = 0;
-loop(8,
+loop(n_voices,
   v_phase_off[i] != v_phase_off_last[i] ? (
     // Offset means "when does this voice become audible" — so we set the phase
     // such that the on-window leading edge lands at offset seconds/beats/cycles.
@@ -309,8 +437,11 @@ loop(8,
 );
 
 play_state > 0 && last_play_state == 0 ? (
+  // Always reset all 16 slots on play start. Slots 8-15 are no-ops when
+  // not in a Both mode (n_voices=8 means @sample's voice loop skips
+  // them) but the reset is harmless and saves a conditional.
   i = 0;
-  loop(8,
+  loop(16,
     // Offset is in Rate Mode units (seconds/beats/cycles) and means
     // "this voice becomes audible at this time." We set the phase clock
     // so it arrives at phase 0 (on-window start) exactly at that time.
@@ -335,12 +466,25 @@ out_r = 0;
 active_count = 0;
 
 i = 0;
-loop(8,
+loop(n_voices,
   v_active[i] ? (
     active_count += 1;
 
-    trem_phase[i] += v_trem_freq[i] / srate;
-    trem_phase[i] >= 1 ? trem_phase[i] -= 1;
+    // Tremolo phase advances forward by default; in any reverse-time
+    // mode it decrements so the envelope shape is traced backwards.
+    // Direction is per-slot: slots 0-7 advance backward only in
+    // single-layer Reverse — time (option 2). Slots 8-15 advance
+    // backward only in Both — time (option 4). Both — permute (option 3)
+    // is forward in both layers; the "reverse" there is slot-mirroring,
+    // not time. Phase wrap handled in both directions.
+    voice_reverse_time = (i < 8) ? slot0_7_reverse_time : slot8_15_reverse_time;
+    voice_reverse_time ? (
+      trem_phase[i] -= v_trem_freq[i] / srate;
+      trem_phase[i] < 0 ? trem_phase[i] += 1;
+    ) : (
+      trem_phase[i] += v_trem_freq[i] / srate;
+      trem_phase[i] >= 1 ? trem_phase[i] -= 1;
+    );
 
     lfo_val     = calc_lfo(trem_phase[i], on_frac, att_frac, rel_frac, att_shape, rel_shape);
     target_gain = lfo_val * sc + amount;
