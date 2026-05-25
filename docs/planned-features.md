@@ -136,7 +136,7 @@ Mentioned in the design session but explicitly deferred to keep current scope ma
 
 - **Start delay on other rhythm plugins** — Shepard Scale, Shepard Tone, Full Feature Tremolo, Full Feature Sweeping Filter, Sweep Dwell Filter, Heartbeat Generator, Breath Generator, Womb Sound Generator. Add later when there's a concrete need; mechanically straightforward addition using the same pattern as polyrhythm/melody/rhythm-track.
 
-- **"Rest between voices" macro for Melody Phase** — a pan-mode-style global mode + per-voice increment for automatic rest distribution across voices. The existing per-voice "Note rings for" + "Next voice in" sliders already cover the underlying mechanism (set Note rings for < Next voice in to get silence between voices); the macro would be a shortcut for setting up uniform rest patterns without going voice-by-voice. Needs its own design pass — what modes, override semantics, etc.
+- **"Rest between voices" macro for Melody Phase** — a pan-mode-style global mode + per-voice increment for automatic rest distribution across voices. The existing per-voice "Note duration" + "Next voice in" sliders already cover the underlying mechanism (set Note duration < Next voice in to get silence between voices); the macro would be a shortcut for setting up uniform rest patterns without going voice-by-voice. Needs its own design pass — what modes, override semantics, etc.
 
 ---
 

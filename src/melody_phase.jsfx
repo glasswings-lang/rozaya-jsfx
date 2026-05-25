@@ -35,8 +35,8 @@ slider6:4<0,8,1>Center Octave
 slider7:1<0,1,1{Off,On}>Loop
 slider8:-6<-60,0,0.1>Master Gain dB
 slider9:0<0,100,0.1>Binaural Beat Hz (L/R offset)
-slider10:10<0,100,0.1>Attack % of Note rings for
-slider11:30<0,100,0.1>Release % of Note rings for
+slider10:10<0,100,0.1>Attack % of Note duration
+slider11:30<0,100,0.1>Release % of Note duration
 slider12:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider13:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
 slider14:0<0,8,1{All Active,1,2,3,4,5,6,7,8}>Sequence Length
@@ -60,49 +60,49 @@ slider21:0<0,1,1{Off,On}>Legato glide
 // --- Per-voice sliders (5 each, V1=22-26 ... V8=57-61) ---
 slider22:0<-24,24,1>V1 Semitones from root
 slider23:1<0.01,16,0.01>V1 Next voice in (cycles)
-slider24:1<0,16,0.01>V1 Note rings for (cycles; 0 = silent)
+slider24:1<0,16,0.01>V1 Note duration (cycles; 0 = silent)
 slider25:-6<-60,6,0.1>V1 Gain dB
 slider26:1<0,1,1{Off,On}>V1 Active
 
 slider27:2<-24,24,1>V2 Semitones from root
 slider28:1<0.01,16,0.01>V2 Next voice in (cycles)
-slider29:1<0,16,0.01>V2 Note rings for (cycles; 0 = silent)
+slider29:1<0,16,0.01>V2 Note duration (cycles; 0 = silent)
 slider30:-6<-60,6,0.1>V2 Gain dB
 slider31:1<0,1,1{Off,On}>V2 Active
 
 slider32:4<-24,24,1>V3 Semitones from root
 slider33:1<0.01,16,0.01>V3 Next voice in (cycles)
-slider34:1<0,16,0.01>V3 Note rings for (cycles; 0 = silent)
+slider34:1<0,16,0.01>V3 Note duration (cycles; 0 = silent)
 slider35:-6<-60,6,0.1>V3 Gain dB
 slider36:1<0,1,1{Off,On}>V3 Active
 
 slider37:5<-24,24,1>V4 Semitones from root
 slider38:1<0.01,16,0.01>V4 Next voice in (cycles)
-slider39:1<0,16,0.01>V4 Note rings for (cycles; 0 = silent)
+slider39:1<0,16,0.01>V4 Note duration (cycles; 0 = silent)
 slider40:-6<-60,6,0.1>V4 Gain dB
 slider41:1<0,1,1{Off,On}>V4 Active
 
 slider42:7<-24,24,1>V5 Semitones from root
 slider43:1<0.01,16,0.01>V5 Next voice in (cycles)
-slider44:1<0,16,0.01>V5 Note rings for (cycles; 0 = silent)
+slider44:1<0,16,0.01>V5 Note duration (cycles; 0 = silent)
 slider45:-6<-60,6,0.1>V5 Gain dB
 slider46:0<0,1,1{Off,On}>V5 Active
 
 slider47:9<-24,24,1>V6 Semitones from root
 slider48:1<0.01,16,0.01>V6 Next voice in (cycles)
-slider49:1<0,16,0.01>V6 Note rings for (cycles; 0 = silent)
+slider49:1<0,16,0.01>V6 Note duration (cycles; 0 = silent)
 slider50:-6<-60,6,0.1>V6 Gain dB
 slider51:0<0,1,1{Off,On}>V6 Active
 
 slider52:11<-24,24,1>V7 Semitones from root
 slider53:1<0.01,16,0.01>V7 Next voice in (cycles)
-slider54:1<0,16,0.01>V7 Note rings for (cycles; 0 = silent)
+slider54:1<0,16,0.01>V7 Note duration (cycles; 0 = silent)
 slider55:-6<-60,6,0.1>V7 Gain dB
 slider56:0<0,1,1{Off,On}>V7 Active
 
 slider57:12<-24,24,1>V8 Semitones from root
 slider58:1<0.01,16,0.01>V8 Next voice in (cycles)
-slider59:1<0,16,0.01>V8 Note rings for (cycles; 0 = silent)
+slider59:1<0,16,0.01>V8 Note duration (cycles; 0 = silent)
 slider60:-6<-60,6,0.1>V8 Gain dB
 slider61:0<0,1,1{Off,On}>V8 Active
 
@@ -578,7 +578,7 @@ seq_started && !seq_finished ? (
             pan_phase[seq_index]  = pan_phase[prev_voice];
             // Start in sustain (skip attack); the new voice will
             // run its own sustain → release naturally based on
-            // its Note rings for.
+            // its Note duration.
             voice_state[seq_index] = 2;
             state_elapsed[seq_index] = 0;
             // Silence the previous voice immediately. Setting
@@ -685,7 +685,7 @@ loop(8,
         // Sustain → release on its own ONLY when Legato is off.
         // In Legato mode, each voice rings continuously until the
         // sequencer's next hand-off silences it via the legato
-        // inheritance path — so the user's "Note rings for"
+        // inheritance path — so the user's "Note duration"
         // effectively becomes "ring until the next note takes
         // over," giving a true continuous tone with pitch sliding
         // between voices. End-of-sequence (Loop=Off, walked past
