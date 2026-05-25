@@ -27,6 +27,12 @@ slider19:0<0,2,1{Hz,Seconds,BPM}>Pan Sweep Rate Unit
 slider20:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 // ===== PAN BLOCK SLIDERS END =====
 
+// Pass-through for N seconds after playback starts, then apply the
+// sweep-dwell filter + pan effect normally. As an EFFECT plugin the
+// dry signal passes through during the delay. Re-arms on every
+// transport stop/start. 0 disables the delay.
+slider21:0<0,1000,0.001>Start Delay (seconds)
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -147,6 +153,11 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
 );
 // ===== PAN BLOCK FUNCTIONS END =====
 
+// Start Delay state.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
+
 
 @slider
 
@@ -182,8 +193,23 @@ slider_show(slider19, pan_enabled && (pan_mode == 10 || pan_mode == 11));
 slider_show(slider20, pan_enabled && pan_mode == 12);
 // ===== PAN BLOCK SLIDER READ END =====
 
+start_delay_sec = slider21;
+
 
 @sample
+
+// Re-arm Start Delay on every transport stop/start. During the delay
+// window the filter state stays frozen and spl0/spl1 pass through
+// unchanged.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  // No-op — spl0 and spl1 pass through unchanged.
+) : (
 
 freq_lo         = min(slider1, slider2);
 freq_hi         = max(slider1, slider2);
@@ -308,3 +334,5 @@ pan_enabled ? (
   spl1 = mono * sin(pan_pos * $pi * 0.5);
 );
 // ===== PAN BLOCK SAMPLE LOGIC END =====
+
+);  // close start-delay else branch

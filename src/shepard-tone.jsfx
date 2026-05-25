@@ -128,6 +128,12 @@ slider57:0<-1000,1000,0.001>V8 Drift (Synced: cents) / Rate (Indep)
 slider58:0<-60,6,0.1>V8 Gain dB
 slider59:0<0,1,1{Off,On}>V8 Active
 
+// Sit silent for N units after playback starts, then begin normally.
+// Units match Rate Mode (BPM beats / Seconds / Hz cycles), interpreted
+// against Rate Value. Re-arms on every transport stop/start. 0
+// disables the delay.
+slider60:0<0,1000,0.001>Start Delay
+
 
 @init
 PHI = 1.6180339887;
@@ -233,6 +239,11 @@ function window_gain(lf, log_lo, log_range, fi, fo) (
   1
 );
 
+// Start Delay state.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
+
 
 @slider
 
@@ -314,8 +325,29 @@ slider_show(slider51, slider53 && drift_mode == 1); slider_show(slider52, slider
 slider_show(slider54, slider59); slider_show(slider55, slider59); slider_show(slider56, slider59);
 slider_show(slider57, slider59 && drift_mode == 1); slider_show(slider58, slider59);
 
+// Start Delay: convert to seconds based on Rate Mode. BPM beats and
+// Hz cycles are interpreted against Rate Value; Seconds is literal.
+start_delay_units = slider60;
+rate_mode == 0 ? start_delay_sec = start_delay_units * 60 / max(rate_val, 0.001) :
+rate_mode == 1 ? start_delay_sec = start_delay_units :
+                 start_delay_sec = start_delay_units / max(rate_val, 0.001);
+
 
 @sample
+
+// Re-arm Start Delay on every transport stop/start, then gate the
+// tone-generation work — oscillator phases stay frozen during the
+// silent window so the tone begins cleanly when the delay elapses.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
 
 // First-load init: place oscillators before any sweeping begins.
 // Never triggered by slider changes — oscillators keep running through all parameter edits.
@@ -410,6 +442,8 @@ active_count > 0 ? (
   spl0 = 0;
   spl1 = 0;
 );
+
+);  // close start-delay else branch
 
 
 @gfx 0 0

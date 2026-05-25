@@ -25,6 +25,15 @@ slider17:0<0,2,1{Hz,Seconds,BPM}>Pan Sweep Rate Unit
 slider18:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 // ===== PAN BLOCK SLIDERS END =====
 
+// Pass-through for N units after playback starts, then apply the
+// tremolo + pan effect normally. Units match Rate Mode (BPM beats /
+// Seconds / Hz cycles), interpreted against Rate Value. As an EFFECT
+// plugin (not a generator) the dry signal passes through during the
+// delay rather than being silenced — silence-during-delay would mute
+// the dry track too, which is rarely what you want. Re-arms on every
+// transport stop/start. 0 disables the delay.
+slider19:0<0,1000,0.001>Start Delay
+
 @init
 phase_l = 0;
 phase_r = 0;
@@ -153,6 +162,11 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
 );
 // ===== PAN BLOCK FUNCTIONS END =====
 
+// Start Delay state.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
+
 
 @slider
 
@@ -189,8 +203,28 @@ slider_show(slider17, pan_enabled && (pan_mode == 9 || pan_mode == 10));
 slider_show(slider18, pan_enabled && pan_mode == 11);
 // ===== PAN BLOCK SLIDER READ END =====
 
+// Start Delay: convert to seconds based on Rate Mode. BPM beats and
+// Hz cycles are interpreted against Rate Value; Seconds is literal.
+start_delay_units = slider19;
+slider2 == 0 ? start_delay_sec = start_delay_units * 60 / max(slider1, 0.001) :
+slider2 == 1 ? start_delay_sec = start_delay_units :
+               start_delay_sec = start_delay_units / max(slider1, 0.001);
+
 
 @sample
+
+// Re-arm Start Delay on every transport stop/start. During the delay
+// window all effect-internal state (phase_l/r, gain_l/r, pan phase)
+// stays frozen and spl0/spl1 pass through unchanged.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  // No-op — spl0 and spl1 pass through unchanged.
+) : (
 
 rate_val     = slider1;
 rate_mode    = slider2;
@@ -304,3 +338,5 @@ pan_enabled ? (
   spl1 = mono * sin(pan_pos * $pi * 0.5);
 );
 // ===== PAN BLOCK SAMPLE LOGIC END =====
+
+);  // close start-delay else branch

@@ -56,6 +56,12 @@ slider38:0.02<0.0,0.08,0.005>Random HRV Depth
 slider39:600<50,4000,1>Breath Post-filter Hz
 slider40:1.5<0.5,8.0,0.1>Breath Post-filter Q
 
+// Sit silent for N heartbeats after playback starts, then begin
+// normally. Beats are counted at the current Heartbeat BPM (slider1)
+// so a delay value of 4 at 60 BPM is 4 seconds; at 120 BPM it's 2.
+// Re-arms on every transport stop/start. 0 disables the delay.
+slider41:0<0,1000,0.01>Start Delay (beats)
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -167,6 +173,11 @@ function apply_fade(pos, fade_in, fade_out, mode) local(raw, t) (
   raw;
 );
 
+// Start Delay state.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
+
 @slider
 // Heartbeat
 cycle_len_base = floor(srate * 60.0 / slider1);
@@ -243,7 +254,25 @@ rand_hrv_depth = slider38;
 bpf_f = min(2.0 * sin($pi * slider39 * srate_inv), 0.98);
 bpf_q = 1.0 / slider40;
 
+// Start Delay: convert heartbeats to seconds at the current Heartbeat BPM.
+start_delay_sec = slider41 * 60 / max(slider1, 1);
+
 @sample
+
+// Re-arm Start Delay on every transport stop/start, then gate the
+// whole @sample work — all internal state (heartbeat phase, breath
+// state, post-filter buffers) stays frozen during the silent window
+// so the womb soundscape begins cleanly when the delay elapses.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
 
 // --- NOISE ---
 ns1 = (ns1 * 1664525 + 1013904223) & 0xFFFFFFFF;
@@ -481,3 +510,5 @@ slider2 == 0 ? (
 ) : (
   spl0 = out_r; spl1 = out_l;
 );
+
+);  // close start-delay else branch

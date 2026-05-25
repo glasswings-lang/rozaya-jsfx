@@ -142,6 +142,12 @@ How much the breath sine wave shifts the BPM. A value of 0.08 produces approxima
 **Random HRV Depth** `0.0-0.08, default 0.02`
 Adds a slowly wandering random offset to heart rate on top of the breath modulation. The random target updates approximately every 5 seconds and slews toward the new value over ~3 seconds, preventing the breath modulation from feeling too regular. At 0.0 random HRV is disabled.
 
+### Start Delay
+
+**Start Delay (beats)** `0–1000, default 0`
+
+Silent for N heartbeats after playback starts, then the heartbeat begins normally. Beats are counted at the current BPM (the same slider that sets the heart rate) — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. Internal state (cycle phase, breath modulation, HRV smoothing) stays frozen during the delay so the first beat lands cleanly at delay-end rather than mid-cycle. Re-arms on every transport stop/start. 0 disables the delay.
+
 ---
 
 ## Usage Notes
@@ -242,6 +248,12 @@ Spreads the filter frequencies between L and R channels. At 0.0, both channels u
 
 **Stereo Flip** `Normal / Flipped`
 Swaps the left and right output channels. Useful for adjusting orientation when the breath image needs to be reversed without reconfiguring other routing.
+
+### Start Delay
+
+**Start Delay (seconds)** `0–1000, default 0`
+
+Silent for N seconds after playback starts, then the breath cycle begins normally. State machine and filter state stay frozen during the delay so the inhale starts cleanly at delay-end rather than mid-cycle. Re-arms on every transport stop/start. 0 disables the delay.
 
 ---
 
@@ -441,6 +453,12 @@ Cutoff frequency of the post-filter. Lowering this darkens the entire breath lay
 
 **Breath Post-filter Q** `0.5-8.0, default 1.5`
 Resonance of the post-filter. Higher slider values produce lower resonance â€” this parameter is implemented internally as `1/Q`. Lower slider values produce a more resonant peak at the cutoff frequency.
+
+### Start Delay
+
+**Start Delay (beats)** `0–1000, default 0`
+
+Silent for N heartbeats after playback starts, then the full womb soundscape (heartbeat, breath, bloodflow) begins normally. Beats are counted at the Heartbeat BPM — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. All internal state (heartbeat cycle phase, breath state machine, bloodflow LFO, post-filter buffers) stays frozen during the delay so everything begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
 ---
 
@@ -1008,6 +1026,12 @@ Unit for Pan Sweep Rate.
 **Filter Speed Multiplier (Linked Sweep)** `0.125-8Ã—, default 1Ã—`
 Speed of pan sweep relative to filter LFO rate, for Linked Sweep only.
 
+### Start Delay
+
+**Start Delay** `0–1000, default 0`
+
+Pass-through for N units after playback starts, then applies the filter sweep + pan effect normally. Units match Rate Mode: BPM mode counts cycles of the LFO Rate Value, Seconds is literal seconds, Hz mode counts cycles of Rate Value. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Filter and LFO state stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
+
 ---
 
 ## Usage Notes
@@ -1168,6 +1192,12 @@ Unit for Pan Sweep Rate.
 
 **Filter Speed Multiplier (Linked Sweep)** `0.125-8Ã—, default 1Ã—`
 Pan sweep speed relative to filter cycle, for Linked Sweep only.
+
+### Start Delay
+
+**Start Delay (seconds)** `0–1000, default 0`
+
+Pass-through for N seconds after playback starts, then applies the sweep-dwell filter + pan effect normally. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Sweep state and filter buffers stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
 ---
 
@@ -1334,6 +1364,12 @@ Unit for Pan Sweep Rate. Hidden for modes that don't use it.
 
 **Filter Speed Multiplier (Linked Sweep)** `0.125-8Ã—, default 2Ã—`
 Speed of the pan sweep relative to the tremolo rate, for Linked Sweep mode only. Hidden for other modes.
+
+### Start Delay
+
+**Start Delay** `0–1000, default 0`
+
+Pass-through for N units after playback starts, then applies the tremolo + pan effect normally. Units match Rate Mode: BPM mode counts cycles of the tremolo Rate Value, Seconds is literal seconds, Hz mode counts cycles of Rate Value. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Phase counters and gain smoothing stay frozen during the delay so the tremolo begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
 ---
 
@@ -1545,6 +1581,12 @@ Volume of this note relative to the others. Allows individual notes to be emphas
 **Pan** `-100–+100, default 0`
 Stereo position of this note. Negative values place it left, positive values right, 0 is center. Uses constant-power panning. Hidden when the note is inactive.
 
+### Start Delay
+
+**Start Delay (beats)** `0–1000, default 0`
+
+Silent for N beats after playback starts, then the scale begins normally. Beats are counted at the BPM slider (the same slider that sets the note pacing) — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. Oscillator phases and note-step state stay frozen during the delay so the first note of the scale lands cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
+
 ---
 
 ## Usage Notes
@@ -1652,6 +1694,12 @@ Per-voice output level, applied before the voice is summed into the mix.
 
 **Vn Active** `Off / On`
 Enables or disables the voice. Inactive voices contribute nothing to the output and are excluded from normalization.
+
+### Start Delay
+
+**Start Delay** `0–1000, default 0`
+
+Silent for N units after playback starts, then the Shepard tone(s) begin normally. Units match Rate Mode (BPM beats / Seconds / Hz cycles), interpreted against Rate Value. Oscillator phases stay frozen during the delay so the illusion begins cleanly at delay-end rather than mid-sweep. Re-arms on every transport stop/start. 0 disables the delay.
 
 ---
 

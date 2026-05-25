@@ -18,6 +18,10 @@ slider11:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade Mode
 slider12:0.5<0.0,1.0,0.01>Stereo Width
 slider13:0<0,1,1{Normal,Flipped}>Stereo Flip
 
+// Sit silent for N seconds after playback starts, then begin normally.
+// Re-arms on every transport stop/start. 0 disables the delay.
+slider14:0<0,1000,0.001>Start Delay (seconds)
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -88,6 +92,11 @@ function apply_fade(pos, fade_in, fade_out, mode) local(raw, t) (
   raw;
 );
 
+// Start Delay state.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
+
 @slider
 inhale_len = max(floor(srate * slider1), 1);
 top_len    = max(floor(srate * slider2), 1);
@@ -114,7 +123,25 @@ fade_ex_out = slider10;
 fade_mode   = slider11;
 stereo_width = slider12;
 
+start_delay_sec = slider14;
+
 @sample
+
+// Re-arm Start Delay on every transport stop/start, then gate
+// the whole @sample work — state machine stays frozen during the
+// silent window so the breath cycle begins cleanly when the delay
+// elapses.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
+
 // Advance state machine
 state_pos += 1;
 state_pos >= state_len ? (
@@ -183,3 +210,5 @@ nr = (noise_seed2 - 0x80000000) * (1.0 / 2147483648.0);
     );
   );
 );
+
+);  // close start-delay else branch

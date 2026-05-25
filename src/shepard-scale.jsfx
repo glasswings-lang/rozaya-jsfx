@@ -100,6 +100,12 @@ slider45:1<0,1,1{Off,On}>B Active
 slider46:0<-60,6,0.1>B Gain dB
 slider47:0<-100,100,0.1>B Pan
 
+// Sit silent for N beats after playback starts, then begin normally.
+// Beats are counted at the current scale BPM (slider1) so a delay
+// value of 4 at 60 BPM is 4 seconds; at 120 BPM it's 2 seconds.
+// Re-arms on every transport stop/start. 0 disables the delay.
+slider48:0<0,1000,0.01>Start Delay (beats)
+
 
 @init
 PHI = 1.6180339887;
@@ -239,6 +245,11 @@ function init_oscs() (
   );
 );
 
+// Start Delay state.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
+
 
 @slider
 
@@ -290,8 +301,26 @@ loop(12,
   last_tuning  = tuning_ref;
 );
 
+// Start Delay: convert beats to seconds at the current scale BPM.
+start_delay_sec = slider48 * 60 / max(bpm, 1);
+
 
 @sample
+
+// Re-arm Start Delay on every transport stop/start, then gate the
+// scale-generation work — oscillator phases and note state stay
+// frozen during the silent window so the scale begins cleanly when
+// the delay elapses.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
 
 needs_init ? (
   init_oscs();
@@ -377,3 +406,5 @@ loop(12,
 norm = 1.0 / max(num_osc, 1);
 spl0 = out_l * norm;
 spl1 = out_r * norm;
+
+);  // close start-delay else branch
