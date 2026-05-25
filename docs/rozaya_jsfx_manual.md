@@ -786,6 +786,25 @@ How long the plugin sits silent at the start of playback before the sequencer be
 
 During the delay the sequencer state stays frozen — when the delay elapses, the sequence begins cleanly from V1 (or the first active voice) rather than mid-step. Re-arms on every transport stop/start.
 
+### Direction
+
+**Direction** `Up / Down / Up-Down (repeat) / Up-Down (no repeat) / Down-Up (repeat) / Down-Up (no repeat)` (default Up)
+
+Walk order through the active voices in the pool. The "pool" is the first *Sequence Length* slots; inactive voices within the pool are skipped in all directions.
+
+- **Up** — voices play in slot order V1, V2, V3, ..., loop back to V1. (Default, matches the original behavior.)
+- **Down** — voices play in reverse slot order V8, V7, V6, ..., loop back to V8. (With *Sequence Length* = 4, plays V4, V3, V2, V1, V4, V3, ...)
+- **Up-Down (repeat)** — walks up to the highest active voice, plays it twice (the "repeat" at the turnaround), walks back down, plays V1 twice, repeats. With 4 voices: 1, 2, 3, 4, 4, 3, 2, 1, 1, 2, 3, 4, 4, ...
+- **Up-Down (no repeat)** — same bounce pattern but the boundary voices play just once. With 4 voices: 1, 2, 3, 4, 3, 2, 1, 2, 3, 4, 3, ...
+- **Down-Up (repeat)** — bounce starting at the top. With 4 voices: 4, 3, 2, 1, 1, 2, 3, 4, 4, 3, 2, 1, 1, ...
+- **Down-Up (no repeat)** — bounce starting at the top, no repeat at edges. With 4 voices: 4, 3, 2, 1, 2, 3, 4, 3, 2, 1, 2, 3, ...
+
+**Loop = Off interactions.** Up or Down play one full pass through the pool and stop. Bounce modes play one complete bounce cycle (start edge → other edge → back to start edge) and stop. With 4 voices, Loop=Off + Up-Down (repeat) plays 1, 2, 3, 4, 4, 3, 2, 1 and stops; Up-Down (no repeat) plays 1, 2, 3, 4, 3, 2, 1 and stops.
+
+**Glide and Legato interactions.** Glide bends between consecutive voices in whatever direction they're going — no glide-specific changes were needed. Legato mode (no re-attack at hand-offs) works the same: each voice rings until the next one takes over, regardless of walk direction.
+
+**Switching direction mid-playback.** Toggling between Up and Down flips the walk immediately at the next hand-off. Toggling into or out of a bounce mode picks up with the current seq_dir at the next hand-off (no glitch).
+
 ## Usage Notes
 
 **Building a melody.** Start with all 8 voices set Active, give each a different Semitones value (the default spec gives a rough C major arpeggio), keep "Next voice in" = "Note duration" = 1 cycle for a clean walk. Adjust "Next voice in" per voice for rhythmic variation, "Note duration" for phrasing.

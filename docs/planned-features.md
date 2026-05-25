@@ -9,9 +9,9 @@ Modern Reaper JSFX supports `slider1` through `slider256`, so 64 isn't a hard li
 
 | Plugin | Pre-change | Landed | Remaining | Final total |
 |---|---|---|---|---|
-| polyrhythm_phase | 59 (highest `slider59`) | 2 (slider60 Direction & Reverse, slider61 Reverse Drift Offset) | 3 (Start delay, Play for, Rest for) | **64** (right at the line) |
-| melody_phase | 61 (highest `slider61`) | 0 | 2 (Direction, Start delay) | 63 |
-| rhythm-track | 13 | 0 | 1 (Start delay) | 14 |
+| polyrhythm_phase | 59 (highest `slider59`) | 3 (slider60 Direction & Reverse, slider61 Reverse Drift Offset, slider62 Start Delay) | 2 (Play for, Rest for) | **64** (right at the line) |
+| melody_phase | 61 (highest `slider61`) | 2 (slider62 Start Delay, slider63 Direction) | 0 | 63 |
+| rhythm-track | 13 | 1 (slider14 Start Delay) | 0 | 14 |
 
 The polyrhythm_phase budget is why Direction and Reverse Type were collapsed into a single 5-option slider (`Direction & Reverse`) rather than two — see section 1 below.
 
