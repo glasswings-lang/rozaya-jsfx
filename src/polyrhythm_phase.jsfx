@@ -133,6 +133,17 @@ slider60:0<0,4,1{Forward,Reverse — permute,Reverse — time,Both — permute,B
 // Reverse — time) where it would only duplicate the global Rate Value.
 slider61:0<-1000,1000,0.001>Reverse Drift Offset
 
+// ===== START DELAY =====
+// Plugin sits silent for this many units after playback starts, then
+// resumes normally. Units match Rate Mode (BPM beats / Seconds /
+// Hz cycles), interpreted against the global Rate Value (slider3) for
+// beats and cycles. 0 (default) = no delay. Re-arms on every transport
+// stop/start. During the delay window the voice loop is skipped
+// entirely so the per-voice phase counters stay at their play-start
+// reset positions — when the delay ends, voices begin cleanly from
+// phase 0 (or their phase offsets) rather than mid-fade.
+slider62:0<0,1000,0.001>Start Delay
+
 
 @init
 PHI = 1.6180339887;
@@ -175,6 +186,13 @@ loop(16,
 
 smooth = exp(-1 / (srate * 0.003));
 last_play_state = 0;
+
+// Counts up from 0 at each play start until it reaches start_delay_sec,
+// then the voice loop runs normally. start_delay_sec is computed in
+// @slider from the user-facing units; initialized to 0 here so the
+// default behavior (no delay) doesn't gate the first sample.
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
 
 function semitones_to_hz(base_note, center_octave, semitones) (
   tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
@@ -263,6 +281,15 @@ slot0_7_reverse_time  = (direction_reverse == 2);
 slot8_15_reverse_time = (direction_reverse == 4);
 is_both               = (direction_reverse == 3 || direction_reverse == 4);
 n_voices              = is_both ? 16 : 8;
+
+// Start delay — convert the user-facing units to seconds based on Rate
+// Mode. BPM beats and Hz cycles are interpreted against the global
+// Rate Value (slider3), which is what "1 beat" or "1 cycle" means.
+// Seconds mode is literal seconds regardless of Rate Value.
+start_delay_units = slider62;
+rate_mode == 0 ? start_delay_sec = start_delay_units * 60 / max(rate_val, 0.001) :
+rate_mode == 1 ? start_delay_sec = start_delay_units :
+                 start_delay_sec = start_delay_units / max(rate_val, 0.001);
 
 // Reverse — permute (single layer, option 1): mirror the per-voice
 // drift/rate values V1↔V8, V2↔V7, V3↔V6, V4↔V5. Notes, gains, phase
@@ -458,8 +485,21 @@ play_state > 0 && last_play_state == 0 ? (
     pan_smooth[i]  = 0;
     i += 1;
   );
+  // Re-arm the Start Delay gate on each transport stop/start.
+  start_delay_elapsed = 0;
 );
 last_play_state = play_state;
+
+// Start Delay — gate the voice processing. In the delay window the
+// output is zeroed and the elapsed counter advances; the voice loop is
+// skipped entirely so phases stay at their play-start reset positions.
+// When the delay ends, voices begin cleanly from phase 0 (or their
+// phase offsets) rather than from a mid-cycle position.
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
 
 out_l = 0;
 out_r = 0;
@@ -661,3 +701,5 @@ active_count > 0 ? (
   spl0 = 0;
   spl1 = 0;
 );
+
+);  // close start-delay else branch

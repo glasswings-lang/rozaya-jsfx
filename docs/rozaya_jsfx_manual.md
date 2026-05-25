@@ -614,6 +614,16 @@ In single-layer modes the slider hides because adding a constant to every drift 
 
 **Replacing multi-track stacks.** If you previously layered two tracks of this plugin with shared notes but different drift palettes (e.g. one track with drift values 0.00 → 0.35 ascending and a second track with 1.55 → 1.20 descending), one instance with Direction & Reverse = Both — permute and Reverse Drift Offset = 1.20 produces the same audible result from a single track. The mirror brings the descending pattern; the offset brings the rate range. Use Both — time when you want parallel-ascending pairing instead (both layers ascending in drift, one playing forward and one backward in time).
 
+### Start Delay
+
+**Start Delay** `0–1000, default 0`
+
+How long the plugin sits silent at the start of playback before voices begin. Units match Rate Mode: BPM mode counts in tremolo cycles of the global Rate Value (so 4 with Rate Value = 60 BPM = 4 cycles = 4 seconds), Seconds mode is literal seconds, Hz mode counts in cycles of the global Rate Value. 0 disables the delay entirely.
+
+During the delay window the voice loop is skipped — phases stay frozen at their play-start reset positions. When the delay elapses, voices begin from phase 0 (or their per-voice Phase Offsets) rather than from a mid-cycle position. So if you set V1 Phase Offset = 2 seconds and Start Delay = 4 seconds, V1 first fires at t = 6 seconds (4 seconds of silence, then V1's own 2-second wait counted from there).
+
+Re-arms on every transport stop/start, so each playback run begins with a fresh silent window.
+
 ---
 
 ## Usage Notes
@@ -767,6 +777,14 @@ Per-voice level.
 
 **Vn Active** `Off / On`
 Off = this voice is skipped in the sequence entirely (not just silent — the sequence pretends it doesn't exist). On = voice participates per the Sequence Length rule above.
+
+### Start Delay
+
+**Start Delay** `0–1000, default 0`
+
+How long the plugin sits silent at the start of playback before the sequencer begins. Units match Rate Mode: BPM mode counts cycles of the global Rate Value (so 4 with Rate Value = 60 BPM = 4 beats = 4 seconds), Seconds mode is literal seconds, Hz mode counts cycles of Rate Value. 0 disables the delay entirely.
+
+During the delay the sequencer state stays frozen — when the delay elapses, the sequence begins cleanly from V1 (or the first active voice) rather than mid-step. Re-arms on every transport stop/start.
 
 ## Usage Notes
 
@@ -1400,6 +1418,14 @@ Controls how beats are distributed across the stereo field. Positions are calcul
 
 **Pan direction** `Normal / Flipped`
 Inverts all pan positions. In Normal mode beat 0 anchors to the left in directional modes; in Flipped mode it anchors to the right. Applies as a global sign flip to all pan calculations.
+
+### Start Delay
+
+**Start Delay (beats)** `0–1000, default 0`
+
+How long the metronome sits silent at the start of playback before ticks begin. Counted in beats at the current Tempo (so at 120 BPM, "4 beats" = 2 seconds). 0 disables the delay entirely.
+
+During the delay the beat phase stays frozen, so when the delay elapses the metronome begins cleanly from the downbeat. Re-arms on every transport stop/start.
 
 ---
 

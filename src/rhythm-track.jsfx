@@ -18,6 +18,11 @@ slider11:1<0,1,0.01>Pan spread (0=mono, 1=full L/R)
 slider12:0<0,5,1{Mono,Accent L / Weak R,Alternating,Distributed,Converging,Diverging}>Pan mode
 slider13:0<0,1,1{Normal,Flipped}>Pan direction
 
+// Sit silent for N beats after playback starts, then resume normally.
+// Counted at the current Tempo. 0 disables the delay. Re-arms on every
+// transport stop/start.
+slider14:0<0,1000,0.01>Start Delay (beats)
+
 @init
 
 tick_buf_len = 65536;
@@ -51,6 +56,13 @@ tick_pan     = 0;
 beat_phase       = 1.0;
 beat_index       = 0;
 samples_per_beat = (60.0 / 120.0) * srate;
+
+// Start Delay state. start_delay_elapsed counts up from 0 at each
+// play start; while it's below start_delay_sec the @sample work is
+// gated and output is silent.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
 
 nx = 1;
 i = 0;
@@ -213,6 +225,9 @@ pan_flip     = slider13;
 
 samples_per_beat = (60.0 / tempo) * srate;
 
+// Start Delay — beats at the current Tempo.
+start_delay_sec = slider14 * 60 / max(tempo, 1);
+
 strong_len = render_tick(strong_buf, strong_hz, strong_gain, strong_decay, tone_q);
 weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_q);
 
@@ -224,6 +239,21 @@ loop(timesig,
 
 
 @sample
+
+// Re-arm Start Delay on each transport stop/start.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+// Start Delay gate. During the silent window beat_phase and tick_pos
+// don't advance, so when the delay elapses the metronome begins from
+// the downbeat as expected.
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
 
 beat_phase += 1.0 / samples_per_beat;
 
@@ -251,3 +281,5 @@ tick_playing ? (
 pan_pos = (tick_pan + 1.0) * 0.5;
 spl0 = out * cos(pan_pos * $pi * 0.5);
 spl1 = out * sin(pan_pos * $pi * 0.5);
+
+);  // close start-delay else branch

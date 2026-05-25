@@ -106,6 +106,15 @@ slider59:1<0,16,0.01>V8 Note rings for (cycles; 0 = silent)
 slider60:-6<-60,6,0.1>V8 Gain dB
 slider61:0<0,1,1{Off,On}>V8 Active
 
+// --- Start Delay (slider 62) ---
+// Sit silent for N units after playback starts, then resume normally.
+// Units match Rate Mode (BPM beats / Seconds / Hz cycles, interpreted
+// against Rate Value). 0 disables the delay. Re-arms on every
+// transport stop/start. During the delay the @sample work is gated
+// entirely so the sequencer state stays at its play-start position
+// rather than advancing silently through the silent window.
+slider62:0<0,1000,0.001>Start Delay
+
 @init
 // Memory layout per voice (16 slots each — V0 starts at the
 // labelled base, voice i offsets by i; e.g., V3's osc_phase_l is
@@ -191,6 +200,14 @@ seq_index        = 0;
 seq_step_elapsed = 0;
 seq_started      = 0;
 seq_finished     = 0;  // set when Loop=Off and we've walked off the end
+
+// Start Delay state. start_delay_elapsed counts up from 0 at each
+// play start; while it's below start_delay_sec the @sample work is
+// gated and output is silent. start_delay_sec is computed in @slider
+// from the user-facing units; default 0 means no delay.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
 
 // One-pole exponential smoother coefficient for the envelope
 // output. Polyrhythm Phase uses this exact pattern: the raw
@@ -418,8 +435,32 @@ slider_show(slider17, pan_enabled);
 slider_show(slider18, pan_enabled && (pan_mode == 0 || pan_mode == 1));
 slider_show(slider19, pan_enabled && pan_mode == 1);
 
+// Start Delay — convert the user-facing value to seconds. BPM beats
+// and Hz cycles are interpreted against Rate Value (so 1 beat at
+// 60 BPM = 1 second). Seconds mode is literal seconds.
+start_delay_units = slider62;
+rate_mode == 0 ? start_delay_sec = start_delay_units * 60 / max(rate_value, 0.001) :
+rate_mode == 1 ? start_delay_sec = start_delay_units :
+                 start_delay_sec = start_delay_units / max(rate_value, 0.001);
+
 @sample
 dt = 1 / srate;
+
+// Re-arm Start Delay on each transport stop/start.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+// Start Delay gate. During the silent window the sequencer state
+// (seq_started, voice envelopes, etc.) doesn't advance, so when the
+// delay elapses the sequencer kicks in cleanly from V1 as if just
+// loaded. After the gate releases the rest of @sample runs normally.
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
 
 // === Sequencer advance ===
 // On the very first sample, trigger the first active voice's attack
@@ -867,3 +908,5 @@ loop(8,
 
 spl0 = out_l;
 spl1 = out_r;
+
+);  // close start-delay else branch
