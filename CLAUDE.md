@@ -30,6 +30,18 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
 - **`play_state` enumeration** (verbatim from official docs): `0 = stopped, <0 = error, 1 = playing, 2 = paused, 5 = recording, 6 = record paused`. There's no `3` or `4`. Common pitfall: `play_state == 0` alone misses the pause case — use `play_state == 0 || play_state == 2` if you want to gate "transport is not advancing." For "transport is actively moving" (regardless of mode) use `play_state == 1 || play_state == 5`. Transport-edge detection via `play_state != last_play_state` is more robust than the `play_state > 0 && last_play_state == 0` pattern (which only catches stop→play, not pause→play or play→pause).
 - **Transport-edge detection belongs in `@block`, not `@sample`.** `play_state` updates per block, never mid-block, so polling in `@sample` is wasted work. Audio behavior is the same; it's a code-quality / performance note. (Polyrhythm Phase v2 doesn't currently poll play_state at all — `@init` running per-play covers the reset case without explicit edge detection. Noted here for future plugins that might.)
 - **The active-voice normalizer is per-sample, and it bites you when voices drop out.** Polyrhythm Phase divides its summed output by the count of currently-audible voices each sample. When voices come and go (Play/Rest gate, future per-voice mutes, anything that silences some voices but not others) the divisor shrinks and the surviving voices get LOUDER — up to +18 dB when only one voice is still audible. Fix: divide by `total_active` (precomputed in `@slider` from `v_active` toggles), so the divisor is stable across runtime voice silencing. Polyrhythm Phase v2 has the fix; the Play/Rest gate exposes it, but the fix is correct for the engine generally and should be the pattern for any future plugin that can silence voices at runtime.
+- **Empty `()` from a comment-only conditional branch breaks compilation silently.** JSFX strips comments at compile time, so this:
+
+  ```
+  pr_resting ? (
+    // stay where we are
+  ) : (
+    breath_state = 0;
+    state_len = inhale_len;
+  );
+  ```
+
+  ...becomes `pr_resting ? ( ) : (...)` to the eel2 parser. Empty paren block is a syntax error. The plugin fails to compile, but Reaper doesn't always pop a visible error — symptom is just "no sound." Discovered 2026-05-26 while adding Play/Rest to Breath Generator (commit `a546fce` is the fix). **Workarounds:** either invert the conditional to a one-armed form (`!pr_resting ? (...);` — only the populated case runs), or put a no-op like `0;` inside the empty branch. Whenever you write a `cond ? (...) : (...)` where one branch is "do nothing," prefer the one-armed inverted form so the parser never sees an empty block.
 - **Polyrhythm Phase voice memory layout** (16 slots each):
   - 0  osc_phase_l
   - 16 osc_phase_r
