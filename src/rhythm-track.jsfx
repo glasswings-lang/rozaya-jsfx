@@ -23,6 +23,20 @@ slider13:0<0,1,1{Normal,Flipped}>Pan direction
 // transport stop/start.
 slider14:0<0,1000,0.01>Start Delay (beats)
 
+// Per-beat Play/Rest gate. Plays N ticks normally, then suppresses
+// the next M tick triggers (silent), then resumes — repeats forever.
+// Useful as a practice tool ("4 ticks, 4 silent, 4 ticks, 4 silent").
+// The previous tick's decay tail continues through the start of the
+// rest period — gate is "don't trigger new ticks," not a hard cut.
+// The bar grid (beat_index, accent placement) keeps marching during
+// rest, so the accent stays locked to Beats per bar regardless of
+// where the rest periods fall. If you want the accent to always land
+// on beat 1 of every play period, set Play for to a multiple of
+// Beats per bar. 0 in either slider disables the gate. Resets on
+// every transport stop/start.
+slider15:0<0,1000,1>Play for (beats)
+slider16:0<0,1000,1>Rest for (beats)
+
 @init
 
 tick_buf_len = 65536;
@@ -63,6 +77,16 @@ samples_per_beat = (60.0 / 120.0) * srate;
 last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
+
+// Play/Rest gate state. pr_beat counts ticks elapsed in the current
+// play (or rest) period; threshold compare flips the period. Init
+// to 0 because rhythm-track has no init pre-fire — the first tick
+// fires via the normal beat_phase >= 1.0 trigger path on sample 1.
+pr_resting     = 0;
+pr_beat        = 0;
+play_for_beats = 0;
+rest_for_beats = 0;
+pr_enabled     = 0;
 
 nx = 1;
 i = 0;
@@ -228,6 +252,12 @@ samples_per_beat = (60.0 / tempo) * srate;
 // Start Delay — beats at the current Tempo.
 start_delay_sec = slider14 * 60 / max(tempo, 1);
 
+// Play/Rest gate: integer beat counts. Both must be > 0 for the
+// gate to engage; 0 in either slider disables.
+play_for_beats = slider15;
+rest_for_beats = slider16;
+pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
+
 strong_len = render_tick(strong_buf, strong_hz, strong_gain, strong_decay, tone_q);
 weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_q);
 
@@ -260,13 +290,32 @@ beat_phase += 1.0 / samples_per_beat;
 beat_phase >= 1.0 ? (
   beat_phase -= 1.0;
 
-  is_accent = (beat_index == 0) ? 1 : 0;
-  tick_src  = is_accent ? strong_buf : weak_buf;
-  tick_len  = is_accent ? strong_len : weak_len;
-  tick_pan  = beat_pan(beat_index);
-  tick_pos  = 0;
-  tick_playing = 1;
+  // Per-beat Play/Rest gate. Check first whether we've reached the
+  // threshold for the current period — if so, flip play↔rest and
+  // reset the counter. Then increment the counter for the beat we're
+  // about to (maybe) fire. Tick fires only if !pr_resting (or gate
+  // is off entirely). The previously-fired tick keeps playing through
+  // its decay tail regardless — gate doesn't touch the audio buffer.
+  pr_enabled ? (
+    pr_beat >= (pr_resting ? rest_for_beats : play_for_beats) ? (
+      pr_resting = 1 - pr_resting;
+      pr_beat = 0;
+    );
+    pr_beat += 1;
+  );
 
+  (!pr_enabled || !pr_resting) ? (
+    is_accent = (beat_index == 0) ? 1 : 0;
+    tick_src  = is_accent ? strong_buf : weak_buf;
+    tick_len  = is_accent ? strong_len : weak_len;
+    tick_pan  = beat_pan(beat_index);
+    tick_pos  = 0;
+    tick_playing = 1;
+  );
+
+  // beat_index and swing always advance — preserves the bar grid
+  // through rest periods so the accent stays locked to "every
+  // timesig beats" regardless of where rest falls.
   beat_index  = (beat_index + 1) % timesig;
   beat_phase -= swing_offset[beat_index];
 );

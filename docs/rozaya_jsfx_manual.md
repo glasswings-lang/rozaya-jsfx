@@ -1531,6 +1531,23 @@ How long the metronome sits silent at the start of playback before ticks begin. 
 
 During the delay the beat phase stays frozen, so when the delay elapses the metronome begins cleanly from the downbeat. Re-arms on every transport stop/start.
 
+### Play / Rest Gating (v2.1)
+
+**Play for (beats)** `0–1000, default 0`
+**Rest for (beats)** `0–1000, default 0`
+
+A per-beat cyclic gate. The metronome plays for **Play for** beats, sits silent for **Rest for** beats, then resumes — the pattern repeats forever. Useful as a practice tool: "play 4 beats, then 4 beats of silence to internalize the pulse, then 4 more beats."
+
+The feature is **disabled when either slider is 0** (the default). With both at 0, the metronome behaves as before.
+
+**Tick tails finish naturally.** The gate suppresses new tick triggers — it doesn't cut off any tick that's already playing. So if the last beat of a play period was a strong beat with a long decay, its decay tail continues into the rest period.
+
+**The bar grid keeps marching during rest.** Beat index (which determines accent placement, pan position, and which beat is the "strong" one) advances on every potential beat, even silent ones. This keeps the accent locked to "every Beats per bar beats" regardless of where the rest periods fall. With `Play for = 3` and `Beats per bar = 4`, the strong beat (beat 0 of the bar) walks through different positions in successive play periods — period 1 starts with a strong beat, period 2 starts mid-bar, etc. If you want the accent to always land on the first beat of every play period, set `Play for` to a multiple of `Beats per bar`.
+
+**Swing still works.** Swing offsets are applied based on beat index, which advances during rest. So when rest ends and play resumes, the swing alignment is exactly where it would have been if the rest hadn't happened.
+
+**Transport behavior**: conventional. Stop silences; play re-initializes everything (beat phase back to 1.0 for the immediate downbeat, period counter, rest state) and starts fresh from beat 1.
+
 ---
 
 ## Usage Notes
