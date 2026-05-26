@@ -132,6 +132,21 @@ slider62:0<0,1000,0.001>Start Delay
 // edge), stops.
 slider63:0<0,5,1{Up,Down,Up-Down (repeat),Up-Down (no repeat),Down-Up (repeat),Down-Up (no repeat)}>Direction
 
+// --- Play/Rest gating (sliders 64-65) ---
+// Per-step gate: the sequencer fires N notes normally, then walks
+// silently through M more steps, then resumes — repeats forever. Each
+// "step" is one voice's "Next voice in" period (regardless of whether
+// that voice's Note duration is non-zero — programmed rests still
+// count as steps). The previously-firing note finishes its natural
+// envelope (sustain → release in non-Legato mode; forced into release
+// at the rest boundary in Legato mode so it doesn't ring forever) so
+// the rest is a clean tail-out, not a hard cut. Rest duration is
+// variable: it's the sum of "Next voice in" for the M voices the
+// sequencer walks through silently. 0 in either slider disables the
+// gate. Resets on every transport stop/start.
+slider64:0<0,1000,1>Play for (steps)
+slider65:0<0,1000,1>Rest for (steps)
+
 @init
 // Memory layout per voice (16 slots each — V0 starts at the
 // labelled base, voice i offsets by i; e.g., V3's osc_phase_l is
@@ -232,6 +247,18 @@ bounce_count_total = 0;
 last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
+
+// Play/Rest gate state. pr_step counts sequencer steps elapsed in
+// the current play (or rest) period; threshold compare flips the
+// period at each handoff. Init to 0 because the first trigger
+// (inside seq_started == 0 branch) increments pr_step at the
+// moment the first note fires — same "count notes that have fired"
+// semantic as Heartbeat / Rhythm Track.
+pr_resting     = 0;
+pr_step        = 0;
+play_for_steps = 0;
+rest_for_steps = 0;
+pr_enabled     = 0;
 
 // One-pole exponential smoother coefficient for the envelope
 // output. Polyrhythm Phase uses this exact pattern: the raw
@@ -491,6 +518,12 @@ bounce_is_repeat = (direction_mode == 2 || direction_mode == 4);
 direction_mode == 0 ? seq_dir =  1;
 direction_mode == 1 ? seq_dir = -1;
 
+// Play/Rest gate: integer step counts. Both must be > 0 for the
+// gate to engage; 0 in either slider disables.
+play_for_steps = slider64;
+rest_for_steps = slider65;
+pr_enabled     = (play_for_steps > 0 && rest_for_steps > 0);
+
 @sample
 dt = 1 / srate;
 
@@ -546,6 +579,10 @@ seq_started == 0 ? (
       prev_seq_index = seq_index;
     );
     seq_started = 1;
+    // Count this step toward the play period. No threshold check on
+    // the first step (pr_step is 0; threshold is always >= 1 when
+    // pr_enabled, so it'd never fire here anyway).
+    pr_enabled ? pr_step += 1;
   );
 );
 
@@ -615,11 +652,39 @@ seq_started && !seq_finished ? (
       // voice to inherit envelope + oscillator phase from.
       prev_voice = prev_seq_index;
       seq_index = nxt;
+
+      // Play/Rest gate. Check first whether the step we just
+      // completed took us to the threshold for the current period;
+      // if so, flip play↔rest and reset the counter. Then increment
+      // for the step we're about to (maybe) trigger. The note
+      // trigger below is conditioned on !pr_resting so during rest
+      // the sequencer walks silently — seq_index still advances,
+      // pr_step still increments, just no new attack fires.
+      //
+      // Legato edge case: in Legato mode the previous voice's
+      // sustain doesn't auto-release (it normally only releases when
+      // the next voice's Legato handoff inherits it). When PR flips
+      // to rest, no handoff fires and the previous voice would ring
+      // forever. Force it into release at the rest-entry moment —
+      // same trick the seq_finished branch uses for Loop=Off.
+      pr_enabled ? (
+        pr_step >= (pr_resting ? rest_for_steps : play_for_steps) ? (
+          !pr_resting && legato_enabled && voice_state[prev_voice] != 0 ? (
+            voice_state[prev_voice]   = 3;
+            state_elapsed[prev_voice] = 0;
+          );
+          pr_resting = 1 - pr_resting;
+          pr_step    = 0;
+        );
+        pr_step += 1;
+      );
+
         // Re-trigger the new voice's envelope from attack — unless
         // the voice is a rest (Note Length = 0), in which case it
         // stays silent for its Step Length. Same click-prevention
-        // as the initial trigger above.
-        v_note_seconds[seq_index] > 0.0001 ? (
+        // as the initial trigger above. Also skip the trigger when
+        // PR is in its rest period.
+        v_note_seconds[seq_index] > 0.0001 && (!pr_enabled || !pr_resting) ? (
           // Legato hand-off: if Legato glide is on AND the
           // previous voice is still ringing (state != 0), inherit
           // its envelope and oscillator phase, and silence it.

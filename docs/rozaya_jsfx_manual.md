@@ -872,6 +872,27 @@ Walk order through the active voices in the pool. The "pool" is the first *Seque
 
 **Switching direction mid-playback.** Toggling between Up and Down flips the walk immediately at the next hand-off. Toggling into or out of a bounce mode picks up with the current seq_dir at the next hand-off (no glitch).
 
+### Play / Rest Gating (v2.1)
+
+**Play for (steps)** `0–1000, default 0`
+**Rest for (steps)** `0–1000, default 0`
+
+A per-step cyclic gate. The sequencer fires **Play for** notes normally, then walks silently through **Rest for** more steps, then resumes — the pattern repeats forever. Useful for phrase-and-pause melodies: "play 4 notes, sit silent for 4 notes' worth of time, play 4 more."
+
+The feature is **disabled when either slider is 0** (the default). With both at 0, the sequencer behaves as before.
+
+**What counts as a step.** Each handoff between voices is one step, regardless of whether the voice produces sound. Programmed rests (a voice with Note duration = 0) still count as steps — they consume their Next voice in time and tick the step counter. So "Play for = 4" plays exactly 4 sequence positions, which may include programmed rests within them.
+
+**Rest duration is the sum of the silent steps' Next voice in.** Because each voice has its own Next voice in, the rest period's wall-clock duration depends on which voices the sequencer walks through during the silent stretch. With evenly-timed voices (all the same Next voice in), it's just M × that duration. With varied timings, the rest length varies between cycles — which can be a feature for organic phrasing.
+
+**Tails finish naturally — except in Legato mode where we force release.** When PR transitions to rest, the previously-firing voice continues:
+- **Non-Legato mode**: the voice's sustain → release happens automatically based on its own Note duration, so it tails out naturally during the start of the rest period.
+- **Legato mode**: a sustaining voice doesn't auto-release (it normally only releases when the next voice's Legato handoff inherits it). To prevent the voice ringing forever during rest, it's forced into release at the rest-entry moment — same trick used when a Loop=Off sequence walks off the end.
+
+**Glide across rest.** When the play period resumes, the new note's glide source is whatever the last triggered voice's target frequency was — same as a normal handoff. The pitch slides from the last played note into the first note of the new play period.
+
+**Transport behavior**: conventional. Stop silences; play re-initializes everything (sequencer index, step counter, rest state) and starts fresh from the first active voice.
+
 ## Usage Notes
 
 **Building a melody.** Start with all 8 voices set Active, give each a different Semitones value (the default spec gives a rough C major arpeggio), keep "Next voice in" = "Note duration" = 1 cycle for a clean walk. Adjust "Next voice in" per voice for rhythmic variation, "Note duration" for phrasing.
