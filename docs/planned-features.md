@@ -9,11 +9,14 @@ Modern Reaper JSFX supports `slider1` through `slider256`, so 64 isn't a hard li
 
 | Plugin | Pre-change | Landed | Remaining | Final total |
 |---|---|---|---|---|
-| polyrhythm_phase | 59 (highest `slider59`) | 3 (slider60 Direction & Reverse, slider61 Reverse Drift Offset, slider62 Start Delay) | 2 (Play for, Rest for) | **64** (right at the line) |
+| polyrhythm_phase | 59 (highest `slider59`) | 3 (slider60 Direction & Reverse, slider61 Reverse Drift Offset, slider62 Start Delay) | 0 | 62 |
+| polyrhythm_phase_loops | 62 (forked from polyrhythm_phase) | 2 (slider63 Play for, slider64 Rest for) | 0 | **64** (right at the line) |
 | melody_phase | 61 (highest `slider61`) | 2 (slider62 Start Delay, slider63 Direction) | 0 | 63 |
 | rhythm-track | 13 | 1 (slider14 Start Delay) | 0 | 14 |
 
 The polyrhythm_phase budget is why Direction and Reverse Type were collapsed into a single 5-option slider (`Direction & Reverse`) rather than two — see section 1 below.
+
+Play/Rest gating lives in `polyrhythm_phase_loops.jsfx` rather than the main plugin so the experimental gate work doesn't risk the stable polyrhythm_phase. The new file is a verbatim copy of polyrhythm_phase plus the gate sliders; both stay in sync as the engine evolves.
 
 ---
 
@@ -68,20 +71,43 @@ Behavior:
 - Re-arms on each transport stop/start — detect via `play_state` transitions
 - Doesn't affect per-voice phase logic — just gates output
 
-### 3. Play/Rest gating
+### 3. Play/Rest gating — moved to `polyrhythm_phase_loops.jsfx`
 
-Two new sliders:
+The Play/Rest feature has been spun out into a sibling plugin to keep `polyrhythm_phase.jsfx` stable while the gate design is still being refined. See the new section below.
 
-- **Play for** — units match Rate Mode
-- **Rest for** — units match Rate Mode
+---
 
-Behavior:
-- Voices play normally for `Play for` duration
-- Then output silent for `Rest for` duration
-- Then voices resume EXACTLY where they were — phase counters frozen during rest, not reset
-- Repeats forever
-- During rest: audio output = 0, voice phase counters do NOT advance, all other state preserved
-- When Play for=0 or Rest for=0: feature disabled, plugin plays continuously as today
+## Polyrhythm Phase Loops (sibling plugin — IN PROGRESS)
+
+`src/polyrhythm_phase_loops.jsfx` — full fork of polyrhythm_phase plus a Play/Rest gate. Two sliders at the end of the file:
+
+- **Play for (cycles)** — slider63
+- **Rest for (cycles)** — slider64
+
+Sliders are integers (step 1) interpreted as **per-voice cycle counts**. Each voice counts its OWN cycles, so V8 (high drift) hits its play threshold sooner in real time than V1 (drift 0) and enters rest first. The rest counter advances at the same per-voice rate, so V8 also wakes first — preserving per-voice cadence symmetry through both halves of the loop. Disabled when either slider is 0.
+
+**Implementation notes (already landed in the sibling plugin):**
+
+- `ext_noinit = 1` in `@init` so state persists across transport stop/play. Without this, Reaper re-zeroes memory on every play press, which makes the "paused loop" semantic impossible.
+- Conditional reset on transport play: skipped when Play/Rest is engaged (so drift relationships survive stop/play). Reverts to conventional "reset on every play" when Play/Rest is off.
+- "Loops paused" freeze when transport is stopped *or* paused while Play/Rest is engaged — `@sample` body skipped so state stays put.
+- Per-voice counter at memory slot 304 (`v_pr_cycle[i]`) advances at `v_trem_freq[i] / srate`. Same value drives both play and rest thresholds.
+- Normalizer divides by precomputed `total_active` (set in `@slider`) rather than the per-sample currently-audible count — keeps surviving voices' level steady when other voices enter rest. (Was a pre-existing latent bug; only became audible once voices started dropping in/out of rest.)
+- Freeze-in-place: each voice freezes at whatever phase it was at when its counter expired (not aligned to a cycle boundary), so drift relationships between voices survive every rest period.
+
+**Known rough edge — cutoff thud:**
+
+With the default Polyrhythm Phase settings (Depth = -6 dB, Attack = 0%, On Duration = 100%) the voice never reaches silence during play — it tremolos between roughly 50% and 75% volume. When the gate forces gain to 0 on rest entry, the existing 3 ms smoother ramps from ~50% to 0 over ~15 ms, which the ear hears as a soft thud rather than a clean pause.
+
+Three candidate fixes, **not yet picked**:
+
+1. **Slower rest-fade smoother.** Add a separate ~30-50 ms coefficient used only when `v_resting` toggles. Cushions the drop regardless of LFO position. Drift preserved. Smallest code change. Closest to a "just make it sound right" defensive cushion.
+2. **Settings-only.** Document that Depth = 0 dB + Attack > 0% gives the voice real silent gaps that the gate slides into without any thud. Free, but only works if the user sets things up that way; any preset drifting back toward continuous tremolo will thud again.
+3. **Wait for natural release.** Set a "rest pending" flag instead of freezing on counter hit; let the voice play through the release portion of its current cycle, then freeze once LFO actually reaches 0. Sounds the most musical but collapses the drift relationships (all voices freeze at the same relative phase, just at different real-time moments).
+
+(2) and (1) compose well: ship (1) as a defensive fade, encourage (2) in the manual for the cleanest sound.
+
+**Tangential lesson from earlier "cycle-end freeze" attempt:** freezing every voice at "near phase 1" (silent zone) made them all attack in unison on wake, drift collapses every cycle. Freeze-in-place avoids that. Any cleanup of the cutoff thud needs to preserve freeze-in-place (or accept the drift collapse — option 3 above).
 
 ---
 
