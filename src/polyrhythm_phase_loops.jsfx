@@ -6,14 +6,13 @@ desc: Binaural Polyrhythm Oscillator with Play/Rest Looping
 //
 // Experimental sibling of polyrhythm_phase.jsfx. Same engine — same
 // voices, waveforms, direction modes, start delay — plus a Play/Rest
-// gate (sliders 63/64) that turns the synth into a series of paused
-// loops, and an ext_noinit=1 transport behavior so state persists
-// across stop/play when the gate is engaged. Known rough edge: with
-// the default Depth -6 dB + Attack 0% the voice never reaches silence
-// during play, so the gain smoother audibly thumps on rest entry.
-// Workaround: Depth = 0 dB + Attack > 0% gives the voice real silent
-// gaps that the gate slides into cleanly. See docs/planned-features.md
-// for the open design questions on this plugin.
+// gate (sliders 63/64) that turns the synth into a series of voices-
+// ringing-then-silent loops. Per-voice cycle counting (V8 paces ahead
+// of V1). On the final cycle of each play period the always-on Depth
+// floor is cancelled during the release portion of the LFO, so the
+// voice glides to actual silence before the rest freeze regardless
+// of the user's Depth setting. Conventional Reaper transport: stop /
+// play re-initializes everything.
 
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
@@ -157,44 +156,48 @@ slider62:0<0,1000,0.001>Start Delay
 
 // ===== PLAY / REST GATING =====
 // Per-voice cyclic gate. Each voice plays for `Play for` cycles of
-// its OWN tremolo rate (global rate + per-voice drift), then freezes
-// in place for `Rest for` cycles of the same per-voice rate, then
-// resumes exactly where it left off. Because counting is per-voice,
-// V8 (high drift, fast cadence) reaches its play threshold sooner in
-// real time than V1 (drift 0, slow cadence) and enters rest first —
-// and wakes first too, since the rest counter also advances at the
-// voice's own rate. The "loop" the user hears is per-voice; the
-// global rhythmic identity comes from how the voices' independent
-// play/rest cycles interlock.
+// its OWN tremolo rate (global rate + per-voice drift), then is silent
+// for `Rest for` cycles of the same per-voice rate, then resumes.
+// Because counting is per-voice, V8 (high drift, fast cadence) reaches
+// its play threshold sooner in real time than V1 (drift 0, slow
+// cadence) and enters rest first — and wakes first too, since the
+// rest counter also advances at the voice's own rate. The "loop" the
+// listener hears is per-voice; the global rhythmic identity comes
+// from how the voices' independent play/rest cycles interlock.
 //
-// Freeze-in-place: each voice freezes at WHATEVER phase it was at
-// when its play counter expired (not aligned to a cycle boundary),
-// so drift relationships between voices survive every rest period.
-// Anti-click reuses the existing 3 ms gain smoother — when v_resting
-// flips to 1, target_gain is forced to 0 and gain_l/gain_r ramp down
-// naturally; same mechanism that handles Attack=0% at cycle starts.
+// Reaching actual silence before rest. On the FINAL cycle of each
+// play period, the always-on Depth floor (`amount`) is cancelled
+// during the release portion of the LFO — so the release tail decays
+// to genuine 0 instead of bottoming at the Depth setting. With
+// default Depth = -6 dB the voice tremolos between ~50% and ~75%
+// gain during normal play, so without this override the rest freeze
+// would catch the voice at ~50% and the 3 ms smoother would thud on
+// the way down. With the override, the voice naturally glides to 0
+// over the final release and the freeze is silent. Cycles 1 through
+// (Play for - 1) play with the normal formula — only the last
+// release shape changes.
+//
+// This requires a non-zero Release setting to do anything audible.
+// With Release = 0% the release zone has zero width, the override
+// never fires, and you get the sharp cutoff that Release = 0 implies.
 //
 // Feature disabled if either slider is 0 — the voice loop runs
-// continuously then with no resting. While disabled, the conventional
-// "reset on every play" transport behavior applies; while enabled,
-// state persists across transport stop/pause/play (drift relations,
-// per-voice cycle progress, freeze positions) — see ext_noinit=1 at
-// the top of @init.
+// continuously then with no resting and no Depth-floor override.
+//
+// Transport. Stop/play does NOT preserve gate state — pressing play
+// re-initializes everything (voice phases, Start Delay counter,
+// per-voice cycle counters all reset). Conventional Reaper behavior;
+// the gate begins a fresh play period from voice cycle 0 on every
+// play press.
 slider63:0<0,1000,1>Play for (cycles)
 slider64:0<0,1000,1>Rest for (cycles)
 
 
 @init
-// Prevent Reaper from re-running @init on every transport start. By
-// default @init fires on plugin load AND on every play-press, which
-// re-zeros all memory and breaks state preservation across stop/play
-// — specifically the "Play/Rest engaged = persistent loops" behavior
-// (drift relationships across stop/play) and the Start Delay one-shot
-// semantic in that mode. With ext_noinit=1, @init only runs on actual
-// plugin load; transport start leaves memory intact and our @sample
-// transition-reset code (conditional on !pr_enabled) is the only path
-// that can clear voice phases.
-ext_noinit = 1;
+// Conventional Reaper behavior: @init runs on plugin load AND on every
+// transport play. That re-zeros all the slot memory below, so stop/play
+// gives a clean restart — voice phases reset, Start Delay re-arms,
+// per-voice Play/Rest counters reset. No `ext_noinit = 1` here.
 
 PHI = 1.6180339887;
 
@@ -246,7 +249,6 @@ loop(16,
 );
 
 smooth = exp(-1 / (srate * 0.003));
-last_play_state = 0;
 
 // Counts up from 0 at each play start until it reaches start_delay_sec,
 // then the voice loop runs normally. start_delay_sec is computed in
@@ -258,8 +260,9 @@ start_delay_sec     = 0;
 // Play/Rest gating state. play_for_cycles / rest_for_cycles are read
 // from sliders 63/64 in @slider. Each voice has its own cycle counter
 // (v_pr_cycle[i]) advancing at its own v_trem_freq[i] — no global
-// counter needed. v_resting slots are zeroed in the slot-init loop
-// above, so all voices start in the "playing" state on plugin load.
+// counter needed. v_resting and v_pr_cycle are zeroed in the slot-init
+// loop above, so all voices start in the "playing" state on every
+// transport play (since @init re-runs on play).
 play_for_cycles = 0;
 rest_for_cycles = 0;
 
@@ -519,6 +522,20 @@ on_frac  = on_dur_pct / 100.0;
 att_frac = att_pct    / 100.0;
 rel_frac = rel_pct    / 100.0;
 
+// Effective attack / release widths (after the calc_lfo "if aw+rw > on_frac,
+// scale both down to fit" normalization), and the trem_phase value at which
+// the release segment begins. Voice loop uses re_start to detect whether
+// a sample falls in the release portion of the LFO — needed to "cancel the
+// Depth floor for the last release of the play period" in Play/Rest mode.
+aw_eff = att_frac;
+rw_eff = rel_frac;
+aw_eff + rw_eff > on_frac ? (
+  rt_total = aw_eff + rw_eff;
+  aw_eff = aw_eff / rt_total * on_frac;
+  rw_eff = rw_eff / rt_total * on_frac;
+);
+re_start = on_frac - rw_eff;
+
 @sample
 
 // Live phase offset update — fires when an offset slider is moved during
@@ -540,55 +557,12 @@ loop(n_voices,
   i += 1;
 );
 
-// Whether Play/Rest gating is engaged this sample. When it is, the
-// plugin behaves like a series of paused loops — phases / SD / PR
-// state all persist across transport stop/start. When it ISN'T, the
-// conventional "reset on every play" behavior kicks in so the plugin
-// feels normal for users who aren't using the loop-pause workflow.
+// Whether Play/Rest gating is engaged this sample. Used by the voice
+// loop's gate logic and by the "cancel Depth floor on the last
+// release" branch. No transport gymnastics — @init runs on every
+// play and re-zeros all per-voice state, so stop/play gives a clean
+// restart automatically (conventional Reaper behavior).
 pr_enabled = (play_for_cycles > 0 && rest_for_cycles > 0);
-
-(play_state > 0 && last_play_state == 0 && !pr_enabled) ? (
-  // Conventional reset (PR is OFF): on every transport play, reset all
-  // 16 slots back to play-start positions so voices begin cleanly from
-  // their phase offsets. The PR re-arm and SD re-arm also happen here
-  // even though PR is currently off, so they're armed if the user
-  // turns them on later in the run.
-  i = 0;
-  loop(16,
-    // Offset is in Rate Mode units (seconds/beats/cycles) and means
-    // "this voice becomes audible at this time." We set the phase clock
-    // so it arrives at phase 0 (on-window start) exactly at that time.
-    // Offset=0 → phase 0 → fires immediately. Offset=8s on a 16s cycle
-    // → phase 0.5 → 8 seconds of silence, then fires. frac>0 guard
-    // ensures offset=0 stays cleanly at 0 rather than wrapping to 1.
-    frac = v_phase_off[i] * v_trem_freq[i];
-    frac = frac - floor(frac);
-    trem_phase[i]  = frac > 0 ? 1.0 - frac : 0;
-    osc_phase_l[i] = 0;
-    osc_phase_r[i] = 0;
-    gain_l[i]      = 1;
-    gain_r[i]      = 1;
-    pan_smooth[i]  = 0;
-    v_resting[i]   = 0;
-    v_pr_cycle[i]  = 0;
-    i += 1;
-  );
-  start_delay_elapsed = 0;
-);
-last_play_state = play_state;
-
-// "Loops paused" freeze: when Play/Rest gating is engaged AND transport
-// is stopped OR paused, skip all of @sample so phases / SD / PR state
-// stay frozen. Pressing play later resumes everything from where it
-// was — no resets, drift relationships preserved. play_state == 2 is
-// pause (transport pause button); 0 is stop. We freeze for both.
-// When PR is NOT engaged, fall through normally (conventional Reaper
-// behavior: state advances during stop, output muted by Reaper, reset
-// on next play above).
-(pr_enabled && (play_state == 0 || play_state == 2)) ? (
-  spl0 = 0;
-  spl1 = 0;
-) : (
 
 // Start Delay — gate the voice processing. In the delay window the
 // output is zeroed and the elapsed counter advances; the voice loop is
@@ -665,17 +639,42 @@ loop(n_voices,
       );
     );
 
-    // Anti-click via the existing gain smoother. When the voice is
-    // resting, target_gain is forced to 0 — the gain_l[i] / gain_r[i]
-    // one-pole smoothers (3ms time constant, see @init) then ramp the
-    // audio down to silence over the next few milliseconds. Same
-    // mechanism that prevents Attack=0 from clicking at cycle starts;
-    // no separate gate-fade machinery needed.
+    // Target gain. Three regimes:
+    //
+    // 1) Resting: target_gain = 0. The 3 ms gain smoother handles any
+    //    residual.
+    //
+    // 2) Playing, NOT in the final cycle's release portion:
+    //    target_gain = lfo_val * sc + amount  (normal Polyrhythm Phase).
+    //
+    // 3) Playing, in the release portion of the FINAL cycle of the
+    //    play period: target_gain = lfo_val * (sc + amount). This drops
+    //    the always-on Depth floor (`amount`) and lets the release tail
+    //    decay all the way to 0 — so the voice actually reaches silence
+    //    before the rest freeze, regardless of Depth dB setting.
+    //
+    //    Peak of release (lfo_val = 1, at re_start): gain = sc + amount,
+    //    same as the normal peak. So there's no discontinuity entering
+    //    the release. By the end of release (lfo_val = 0, at on_frac):
+    //    gain = 0. Voice glides to silence over the release width.
+    //
+    //    Only the final cycle is touched; cycles 1 through (play_for - 1)
+    //    play with the normal formula. With Release = 0% the formula
+    //    still works mechanically but the release zone has zero width
+    //    so the override never fires — you'll get the sharp cutoff
+    //    that Release=0 implies. Use a non-zero Release for the clean
+    //    rest entry this branch is designed to produce.
     v_resting[i] ? (
       target_gain = 0;
     ) : (
       lfo_val = calc_lfo(trem_phase[i], on_frac, att_frac, rel_frac, att_shape, rel_shape);
-      target_gain = lfo_val * sc + amount;
+      in_last_cycle  = pr_enabled && (v_pr_cycle[i] >= play_for_cycles - 1);
+      in_release_zone = (trem_phase[i] >= re_start) && (trem_phase[i] < on_frac);
+      (in_last_cycle && in_release_zone) ? (
+        target_gain = lfo_val * (sc + amount);
+      ) : (
+        target_gain = lfo_val * sc + amount;
+      );
     );
     gain_l[i] = gain_l[i] * smooth + target_gain * (1 - smooth);
     gain_r[i] = gain_r[i] * smooth + target_gain * (1 - smooth);
@@ -867,5 +866,3 @@ total_active > 0 ? (
 );
 
 );  // close start-delay else branch
-
-);  // close "loops paused" stop-while-PR-engaged ternary

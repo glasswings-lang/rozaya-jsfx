@@ -86,28 +86,24 @@ The Play/Rest feature has been spun out into a sibling plugin to keep `polyrhyth
 
 Sliders are integers (step 1) interpreted as **per-voice cycle counts**. Each voice counts its OWN cycles, so V8 (high drift) hits its play threshold sooner in real time than V1 (drift 0) and enters rest first. The rest counter advances at the same per-voice rate, so V8 also wakes first — preserving per-voice cadence symmetry through both halves of the loop. Disabled when either slider is 0.
 
-**Implementation notes (already landed in the sibling plugin):**
+**Implementation notes (landed):**
 
-- `ext_noinit = 1` in `@init` so state persists across transport stop/play. Without this, Reaper re-zeroes memory on every play press, which makes the "paused loop" semantic impossible.
-- Conditional reset on transport play: skipped when Play/Rest is engaged (so drift relationships survive stop/play). Reverts to conventional "reset on every play" when Play/Rest is off.
-- "Loops paused" freeze when transport is stopped *or* paused while Play/Rest is engaged — `@sample` body skipped so state stays put.
 - Per-voice counter at memory slot 304 (`v_pr_cycle[i]`) advances at `v_trem_freq[i] / srate`. Same value drives both play and rest thresholds.
 - Normalizer divides by precomputed `total_active` (set in `@slider`) rather than the per-sample currently-audible count — keeps surviving voices' level steady when other voices enter rest. (Was a pre-existing latent bug; only became audible once voices started dropping in/out of rest.)
-- Freeze-in-place: each voice freezes at whatever phase it was at when its counter expired (not aligned to a cycle boundary), so drift relationships between voices survive every rest period.
+- **Depth-floor cancel on the final release.** On the final cycle of every play period, the always-on Depth term (`amount`) is dropped from the gain formula during the release portion of the LFO. So during that final release, gain = `lfo_val * (sc + amount)` instead of `lfo_val * sc + amount` — it starts at the same peak (when `lfo_val = 1`) but decays all the way to 0 (when `lfo_val = 0`) instead of bottoming at the Depth floor. The voice glides to actual silence before the rest freeze regardless of the user's Depth setting. Cycles 1 through (Play for - 1) play with the normal formula — only the final release shape changes.
+- **Conventional transport.** No `ext_noinit`, no transport-edge reset logic, no "loops paused" freeze. `@init` runs on every transport play (Reaper default), which re-zeros voice phases, gain smoothers, Start Delay counter, per-voice cycle counters, and resting flags. Stop/play gives a clean restart — the gate begins a fresh play period from voice cycle 0 on every press. Same behavior as polyrhythm_phase.
 
-**Known rough edge — cutoff thud:**
+**Caveat — Release = 0%.** The Depth-floor cancel only fires during the release portion of the LFO. With Release = 0% there is no release portion (zero width), so the override never fires and you get a sharp cutoff at the rest boundary. For a clean rest entry, use a non-zero Release setting.
 
-With the default Polyrhythm Phase settings (Depth = -6 dB, Attack = 0%, On Duration = 100%) the voice never reaches silence during play — it tremolos between roughly 50% and 75% volume. When the gate forces gain to 0 on rest entry, the existing 3 ms smoother ramps from ~50% to 0 over ~15 ms, which the ear hears as a soft thud rather than a clean pause.
+**Wake side is intentionally untouched.** On wake from rest, the voice resumes a fresh ring from wherever its frozen `trem_phase` left off (typically near `on_frac` after the depth-floor-cancel release brought it to silence). With Attack = 0% the first ring after wake re-attacks at full peak — depending on settings, this can be heard as an attack click. Not addressed yet; revisit if it bothers in practice.
 
-Three candidate fixes, **not yet picked**:
+**Rejected alternatives:**
 
-1. **Slower rest-fade smoother.** Add a separate ~30-50 ms coefficient used only when `v_resting` toggles. Cushions the drop regardless of LFO position. Drift preserved. Smallest code change. Closest to a "just make it sound right" defensive cushion.
-2. **Settings-only.** Document that Depth = 0 dB + Attack > 0% gives the voice real silent gaps that the gate slides into without any thud. Free, but only works if the user sets things up that way; any preset drifting back toward continuous tremolo will thud again.
-3. **Wait for natural release.** Set a "rest pending" flag instead of freezing on counter hit; let the voice play through the release portion of its current cycle, then freeze once LFO actually reaches 0. Sounds the most musical but collapses the drift relationships (all voices freeze at the same relative phase, just at different real-time moments).
+1. **Slower rest-fade smoother.** Bolt a longer time-constant onto the smoother for rest entry. Felt like a band-aid — cushioned the drop without addressing the underlying "LFO doesn't reach silence" issue.
+2. **Settings-only (Depth = 0 + Attack > 0 + On Duration < 100%).** Discarded as primary fix because it pushed the burden onto user settings. Still valid as a sound-design tip in the manual.
+3. **Per-cycle fade shoulders.** First-cycle fade-in + last-cycle fade-out applied as a multiplier on top of the normal LFO. Tried briefly (commit `080f505`, since reverted). Ate two full cycles of the user's `Play for` count for fades and didn't match the "voice rings, then rests" mental model the user described.
 
-(2) and (1) compose well: ship (1) as a defensive fade, encourage (2) in the manual for the cleanest sound.
-
-**Tangential lesson from earlier "cycle-end freeze" attempt:** freezing every voice at "near phase 1" (silent zone) made them all attack in unison on wake, drift collapses every cycle. Freeze-in-place avoids that. Any cleanup of the cutoff thud needs to preserve freeze-in-place (or accept the drift collapse — option 3 above).
+Earlier worry about "drift collapse" from waiting for the cycle end turned out not to apply with per-voice rest counters: voices wake at different wall-clock times because V8's counter advances faster than V1's, so the polyrhythm cadence lives in the wake-time differences rather than in relative freeze phases.
 
 ---
 
