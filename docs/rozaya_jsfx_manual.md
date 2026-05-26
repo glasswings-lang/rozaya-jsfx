@@ -148,6 +148,21 @@ Adds a slowly wandering random offset to heart rate on top of the breath modulat
 
 Silent for N heartbeats after playback starts, then the heartbeat begins normally. Beats are counted at the current BPM (the same slider that sets the heart rate) — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. Internal state (cycle phase, breath modulation, HRV smoothing) stays frozen during the delay so the first beat lands cleanly at delay-end rather than mid-cycle. Re-arms on every transport stop/start. 0 disables the delay.
 
+### Play / Rest Gating (v2.1)
+
+**Play for (beats)** `0–1000, default 0`
+**Rest for (beats)** `0–1000, default 0`
+
+A per-beat cyclic gate. Heartbeats fire normally for **Play for** beats, then no new beats trigger for **Rest for** beats' worth of time, then beats resume — the pattern repeats indefinitely. With Play for = 4 and Rest for = 4, you hear four heartbeats followed by four-beats-of-silence followed by four heartbeats, and so on.
+
+The feature is **disabled when either slider is 0** (the default). With both at 0, the plugin behaves exactly as before — no gating, no behavior change.
+
+**What "rest" means here.** The gate sits at the trigger level — when a new beat would fire, it's suppressed. The previous beat's S1 and S2 envelopes are still decaying through their natural release tail, so you don't hear an abrupt cutoff at the boundary; the last beat fades into the rest period naturally. Rest is "don't trigger new beats," not "instantly silence the plugin."
+
+**Beat counting** is in heartbeats at the current BPM, same unit as Start Delay. At 60 BPM, "4 beats" is roughly 4 seconds (with some HRV jitter). Both sliders are integers — fractional beats don't make sense here.
+
+**Transport behavior**: conventional. Stop silences; play re-initializes everything (cycle phase, period counter, resting state) and starts a fresh play period from beat 1.
+
 ---
 
 ## Usage Notes
