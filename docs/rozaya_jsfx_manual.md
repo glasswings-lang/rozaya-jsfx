@@ -1685,6 +1685,29 @@ Stereo position of this note. Negative values place it left, positive values rig
 
 Silent for N beats after playback starts, then the scale begins normally. Beats are counted at the BPM slider (the same slider that sets the note pacing) — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. Oscillator phases and note-step state stay frozen during the delay so the first note of the scale lands cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
+### Play / Rest Gating (v2.1)
+
+**Play for (beats)** `0–1000, default 0`
+**Rest for (beats)** `0–1000, default 0`
+**Rest mode** `Walk through / Freeze in place, default Walk through`
+
+A per-beat cyclic gate. The scale fires **Play for** notes normally, then sits silent for some number of beats determined by **Rest for** + **Rest mode**, then resumes — the pattern repeats forever. Useful for phrase-and-pause scale playback or contemplative gaps between rising / descending phrases.
+
+The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the scale behaves as before; Rest mode has no effect when the gate is off.
+
+**Rest mode** picks one of two fundamentally different behaviors for what the sequencer does during the rest period:
+
+- **Walk through** (default): the sequencer keeps advancing through notes during rest. Each rest beat moves the current note forward silently. If `Play + Rest` doesn't divide evenly into your active-note count, the starting note of each play period walks across the scale — `Play=4, Rest=4` with all 12 notes active means cycle 1 plays C–D#, cycle 2 plays G#–B, cycle 3 plays E–G, and you return to C after three cycles. Notes get "skipped" in the literal sense (the sequencer walks past them silently); they reappear in subsequent play periods at different positions. Good for **abstract / pattern-shifting use** where the walking-start effect is part of the appeal.
+- **Freeze in place**: the sequencer pauses on the note that would have fired when rest began. Rest duration is `Rest for × one beat (60/BPM seconds)`, timed by a sample counter rather than a beat count. When rest ends, the frozen note fires and the scale continues from there — **every note plays in order across multiple cycles, just with pauses between phrases**. Good for **complete-scale-with-rests use** where you want to hear every step of the Shepard illusion in order.
+
+**Tails finish naturally.** When PR transitions to rest, the previously-firing note's beat envelope continues to decay via the per-note smoother (the same one that already smooths the crossfade between notes). No special anti-click logic is needed — the existing envelope smoothing handles the transition.
+
+**Inactive Notes + Play/Rest interaction.** In **Skip mode** (the default for Inactive Notes), inactive notes are jumped past, so "one beat" always equals "one active-note step." In **Rest mode** for Inactive Notes, inactive notes consume their full beat silently — they still count as a Play/Rest step. So with Inactive Notes = Rest and some notes inactive, Play for = 4 may include a couple of silent-anyway beats within the audible 4-note phrase.
+
+**Transport behavior**: conventional. Stop silences; play re-initializes everything (sequence position, beat phase, period counter, rest state) and starts fresh from the first beat of seq_pos = 0 (C).
+
+**Changing Rest mode mid-rest** is handled defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unexpectedly.
+
 ---
 
 ## Usage Notes

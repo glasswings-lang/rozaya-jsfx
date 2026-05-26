@@ -106,6 +106,33 @@ slider47:0<-100,100,0.1>B Pan
 // Re-arms on every transport stop/start. 0 disables the delay.
 slider48:0<0,1000,0.01>Start Delay (beats)
 
+// Per-beat Play/Rest gate. Plays N notes normally, then sits silent
+// for M beats' worth of time, then resumes — repeats forever. The
+// previously-firing note's envelope decays naturally via the existing
+// per-note smoother during the start of the rest period, so rest is
+// a clean tail-out rather than a hard cut. 0 in either slider
+// disables the gate entirely. Resets on every transport stop/start.
+// The Rest mode slider below picks between two different rest
+// behaviors — see its comment for details.
+slider49:0<0,1000,1>Play for (beats)
+slider50:0<0,1000,1>Rest for (beats)
+
+// How the sequencer behaves during the rest period.
+//   Walk through (default) — the sequencer keeps advancing through
+//     notes during rest. Each rest beat moves seq_pos forward
+//     silently. If Play + Rest doesn't divide evenly into your
+//     active-note count, the starting note of each play period
+//     walks across the scale. Notes get "skipped" in the literal
+//     sense (the sequencer walks past them silently); they reappear
+//     in subsequent play periods at different positions.
+//   Freeze in place — the sequencer pauses on the note that would
+//     have fired when rest started. Rest duration is Rest for ×
+//     one beat (60/BPM seconds). When rest ends, the frozen note
+//     fires and the scale continues from there — every note plays
+//     in order across multiple cycles, just with pauses between
+//     phrases.
+slider51:0<0,1,1{Walk through,Freeze in place}>Rest mode
+
 
 @init
 PHI = 1.6180339887;
@@ -250,6 +277,21 @@ last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
+// Play/Rest gate state. pr_step counts beats in the current play
+// (or rest) period. Init to 1 because the first audible note (whatever
+// seq_pos points at initially, default 0 = C) plays from sample 0
+// without going through a beat boundary — so that note IS step 1 of
+// the first play period. Subsequent beats increment pr_step at each
+// boundary fire.
+pr_resting               = 0;
+pr_step                  = 1;
+play_for_beats           = 0;
+rest_for_beats           = 0;
+pr_enabled               = 0;
+rest_mode                = 0;
+pr_rest_elapsed          = 0;
+pr_rest_duration_samples = 0;
+
 
 @slider
 
@@ -304,6 +346,13 @@ loop(12,
 // Start Delay: convert beats to seconds at the current scale BPM.
 start_delay_sec = slider48 * 60 / max(bpm, 1);
 
+// Play/Rest gate: integer beat counts. Both must be > 0 for the
+// gate to engage; 0 in either slider disables.
+play_for_beats = slider49;
+rest_for_beats = slider50;
+pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
+rest_mode      = slider51;
+
 
 @sample
 
@@ -327,8 +376,12 @@ needs_init ? (
   needs_init = 0;
 );
 
-// Advance beat phase
-seq_phase += beat_hz / srate;
+// Advance beat phase — unless we're in a Freeze-mode Play/Rest
+// pause, in which case the sequencer is paused on the would-be-next
+// note and seq_phase stays put until the rest timer (further down)
+// fires us back into the play period.
+in_frozen_rest = pr_enabled && pr_resting && rest_mode == 1;
+!in_frozen_rest ? seq_phase += beat_hz / srate;
 
 // On beat boundary: advance sequencer to next note
 seq_phase >= 1.0 ? (
@@ -351,7 +404,54 @@ seq_phase >= 1.0 ? (
       );
     );
   );
+
+  // Play/Rest gate. Check whether the beat we just completed took us
+  // to the threshold for the current period; if so, flip play↔rest
+  // and reset the counter. Then increment for the beat we're about
+  // to (maybe) play. In Walk mode, seq_pos always advances to `next`
+  // regardless of pr_resting; the env_target gate further down
+  // suppresses audio during rest. In Freeze mode, seq_pos also
+  // advances to `next` at the rest-entry boundary (so the frozen
+  // note is the would-be-next note), but seq_phase is then pinned
+  // by in_frozen_rest above so no further boundary fires until
+  // rest exits.
+  pr_enabled ? (
+    pr_step >= (pr_resting ? rest_for_beats : play_for_beats) ? (
+      just_entered_rest = !pr_resting;
+      pr_resting = 1 - pr_resting;
+      pr_step    = 0;
+      just_entered_rest && rest_mode == 1 ? (
+        // Freeze-mode rest entry: compute rest duration in samples
+        // based on one beat at the current BPM. Same formula every
+        // cycle (BPM is global) — unlike Melody Phase where each
+        // voice's Next voice in could vary.
+        pr_rest_duration_samples = rest_for_beats * srate / beat_hz;
+        pr_rest_elapsed = 0;
+      );
+    );
+    pr_step += 1;
+  );
+
   seq_pos = next;
+);
+
+// Freeze-mode rest timer. While Rest mode = Freeze AND we're in
+// the rest period, count samples elapsed. When the threshold hits,
+// exit rest and reset pr_step to 1 so the next beat counts as step 1
+// of the new play period. seq_phase is already ~0 (we last touched
+// it at the boundary that triggered rest) so the frozen note's beat
+// envelope starts cleanly from the beat origin on the next sample.
+// The pr_rest_duration_samples > 0 guard handles the edge case where
+// the user changes Rest mode mid-rest — without the duration being
+// set, the comparison would fire immediately and snap out of rest
+// with inconsistent state.
+pr_enabled && pr_resting && rest_mode == 1 && pr_rest_duration_samples > 0 ? (
+  pr_rest_elapsed += 1;
+  pr_rest_elapsed >= pr_rest_duration_samples ? (
+    pr_resting               = 0;
+    pr_step                  = 1;
+    pr_rest_duration_samples = 0;
+  );
 );
 
 cur = seq_pos;
@@ -360,8 +460,11 @@ out_r = 0;
 
 n = 0;
 loop(12,
-  // Envelope target: current active note gets beat shape, all others decay to 0
-  n == cur && n_active[cur] ? (
+  // Envelope target: current active note gets beat shape, all others decay to 0.
+  // During Play/Rest's rest period, force env_target = 0 for the current note
+  // too — the per-note smoother (n_env) handles the natural tail-out of whatever
+  // was playing when rest started.
+  n == cur && n_active[cur] && (!pr_enabled || !pr_resting) ? (
     seq_phase < note_len_frac ? (
       env_target = beat_env(seq_phase / note_len_frac, attack_frac, release_frac);
     ) : (
