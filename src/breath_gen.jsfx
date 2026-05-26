@@ -207,11 +207,13 @@ state_pos >= state_len ? (
         pr_rest_elapsed = 0;
       );
     );
-    pr_resting ? (
-      // Stay in state 3 (already silent). The rest timer below
-      // will exit rest when the threshold elapses.
-    ) : (
-      // Normal transition to inhale — start a new breath cycle.
+    // Start a new breath cycle ONLY if not resting. If pr_resting is
+    // true (either we just flipped to rest, or we've been resting),
+    // leave breath_state at 3 and state_pos at 0 so the next pass
+    // through the state-end check just re-enters the bottom pause
+    // (already silent). The rest timer below is what eventually
+    // exits rest and forces a fresh inhale.
+    !pr_resting ? (
       breath_state = 0;
       state_len = inhale_len;
     );
