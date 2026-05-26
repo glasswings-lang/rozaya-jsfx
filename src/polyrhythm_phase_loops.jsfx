@@ -641,36 +641,46 @@ loop(n_voices,
 
     // Target gain. Three regimes:
     //
-    // 1) Resting: target_gain = 0. The 3 ms gain smoother handles any
-    //    residual.
+    // 1) Resting: target_gain = 0. By the time v_resting flips, the
+    //    depth-cancel branch below has already decayed gain to 0 via
+    //    the natural release, so there's almost nothing for the gain
+    //    smoother to do here.
     //
-    // 2) Playing, NOT in the final cycle's release portion:
+    // 2) Playing, NOT in the final cycle's release / silent portion:
     //    target_gain = lfo_val * sc + amount  (normal Polyrhythm Phase).
     //
-    // 3) Playing, in the release portion of the FINAL cycle of the
+    // 3) Playing, at or past re_start within the FINAL cycle of the
     //    play period: target_gain = lfo_val * (sc + amount). This drops
     //    the always-on Depth floor (`amount`) and lets the release tail
     //    decay all the way to 0 — so the voice actually reaches silence
     //    before the rest freeze, regardless of Depth dB setting.
     //
     //    Peak of release (lfo_val = 1, at re_start): gain = sc + amount,
-    //    same as the normal peak. So there's no discontinuity entering
-    //    the release. By the end of release (lfo_val = 0, at on_frac):
-    //    gain = 0. Voice glides to silence over the release width.
+    //    same as the normal peak. So no discontinuity entering release.
+    //    End of release (lfo_val = 0): gain = 0. The override extends
+    //    through the silent zone (re_start..1, not re_start..on_frac)
+    //    so when On Duration < 100% the silent tail of the final cycle
+    //    also stays at 0 — otherwise gain would snap back to `amount`
+    //    in the silent zone and need the smoother to bring it down.
     //
     //    Only the final cycle is touched; cycles 1 through (play_for - 1)
-    //    play with the normal formula. With Release = 0% the formula
-    //    still works mechanically but the release zone has zero width
-    //    so the override never fires — you'll get the sharp cutoff
-    //    that Release=0 implies. Use a non-zero Release for the clean
-    //    rest entry this branch is designed to produce.
+    //    play with the normal formula. Release = 0% has zero release
+    //    width, so the override never fires and you get a sharp cutoff
+    //    at the rest boundary — use a non-zero Release for clean rest
+    //    entry.
+    //
+    // Wake side: when v_resting flips back to 0, target_gain jumps from
+    // 0 to whatever the LFO says at the resumed phase. The same 3 ms
+    // gain_l/r smoother that already prevents Attack=0% from clicking
+    // at normal cycle wraps handles this transition — gain_l ramps from
+    // 0 to the new target over ~3 ms, perceptually a clean attack rather
+    // than a click. No separate wake-fade machinery needed.
     v_resting[i] ? (
       target_gain = 0;
     ) : (
       lfo_val = calc_lfo(trem_phase[i], on_frac, att_frac, rel_frac, att_shape, rel_shape);
       in_last_cycle  = pr_enabled && (v_pr_cycle[i] >= play_for_cycles - 1);
-      in_release_zone = (trem_phase[i] >= re_start) && (trem_phase[i] < on_frac);
-      (in_last_cycle && in_release_zone) ? (
+      (in_last_cycle && trem_phase[i] >= re_start) ? (
         target_gain = lfo_val * (sc + amount);
       ) : (
         target_gain = lfo_val * sc + amount;

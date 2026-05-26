@@ -95,7 +95,7 @@ Sliders are integers (step 1) interpreted as **per-voice cycle counts**. Each vo
 
 **Caveat — Release = 0%.** The Depth-floor cancel only fires during the release portion of the LFO. With Release = 0% there is no release portion (zero width), so the override never fires and you get a sharp cutoff at the rest boundary. For a clean rest entry, use a non-zero Release setting.
 
-**Wake side is intentionally untouched.** On wake from rest, the voice resumes a fresh ring from wherever its frozen `trem_phase` left off (typically near `on_frac` after the depth-floor-cancel release brought it to silence). With Attack = 0% the first ring after wake re-attacks at full peak — depending on settings, this can be heard as an attack click. Not addressed yet; revisit if it bothers in practice.
+**Wake side needs no special handling.** On wake from rest, target_gain jumps from 0 to whatever the LFO says at the resumed phase (possibly full peak with Attack = 0%). The existing 3 ms `gain_l` / `gain_r` smoother — the same one that prevents Attack = 0% from clicking at normal cycle wraps — ramps gain_l from 0 to the new target over ~3 ms. Perceptually a clean attack, not a click. Same anti-click mechanism, same behavior at every gain transition (cycle start, rest entry, wake from rest).
 
 **Rejected alternatives:**
 
