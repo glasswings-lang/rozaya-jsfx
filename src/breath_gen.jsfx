@@ -22,6 +22,19 @@ slider13:0<0,1,1{Normal,Flipped}>Stereo Flip
 // Re-arms on every transport stop/start. 0 disables the delay.
 slider14:0<0,1000,0.001>Start Delay (seconds)
 
+// Per-breath Play/Rest gate. Runs N full breath cycles, then sits
+// silent for M breath cycles' worth of time, then resumes — repeats
+// forever. A "breath cycle" is one full inhale + top pause + exhale
+// + bottom pause. During rest the state machine pauses on the
+// bottom-pause state (already silent in normal operation), so the
+// gate's silence is just an extended bottom pause — no extra fade
+// logic needed. The breath in progress when the threshold hits
+// finishes its natural envelope before the rest begins; the gate
+// only stops the NEXT breath from starting. 0 in either slider
+// disables the gate. Resets on every transport stop/start.
+slider15:0<0,1000,1>Play for (breaths)
+slider16:0<0,1000,1>Rest for (breaths)
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -97,6 +110,19 @@ last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
+// Play/Rest gate state. pr_breath counts breaths completed in the
+// current play period (init to 0 because the first breath is still
+// in progress at t=0). pr_rest_elapsed counts samples spent in rest
+// — when it reaches rest_for_breaths * total_breath_samples, exit
+// rest and start a fresh breath cycle from inhale.
+pr_resting          = 0;
+pr_breath           = 0;
+pr_rest_elapsed     = 0;
+play_for_breaths    = 0;
+rest_for_breaths    = 0;
+pr_enabled          = 0;
+total_breath_samples = 0;
+
 @slider
 inhale_len = max(floor(srate * slider1), 1);
 top_len    = max(floor(srate * slider2), 1);
@@ -125,6 +151,24 @@ stereo_width = slider12;
 
 start_delay_sec = slider14;
 
+// Play/Rest gate: integer breath counts. Both must be > 0 for the
+// gate to engage. total_breath_samples is the sample-count of one
+// full breath cycle, used to time the rest period (which is a
+// continuous sample counter, not a state-machine count).
+total_breath_samples = inhale_len + top_len + exhale_len + bot_len;
+play_for_breaths = slider15;
+rest_for_breaths = slider16;
+new_pr_enabled = (play_for_breaths > 0 && rest_for_breaths > 0);
+// If the user disables the gate mid-rest, snap back to the start of
+// a fresh inhale so the plugin doesn't stay stuck silent in state 3.
+!new_pr_enabled && pr_resting ? (
+  pr_resting = 0;
+  breath_state = 0;
+  state_len = inhale_len;
+  state_pos = 0;
+);
+pr_enabled = new_pr_enabled;
+
 @sample
 
 // Re-arm Start Delay on every transport stop/start, then gate
@@ -142,15 +186,59 @@ start_delay_elapsed < start_delay_sec ? (
   spl1 = 0;
 ) : (
 
-// Advance state machine
+// Advance state machine. The 3→0 transition (end of bottom pause,
+// start of a new breath cycle) is special-cased so the Play/Rest
+// gate can decide whether to actually start a new breath or stay
+// silent in state 3 for the rest of the rest period.
 state_pos += 1;
 state_pos >= state_len ? (
   state_pos = 0;
-  breath_state = (breath_state + 1) % 4;
-  breath_state == 0 ? state_len = inhale_len;
-  breath_state == 1 ? state_len = top_len;
-  breath_state == 2 ? state_len = exhale_len;
-  breath_state == 3 ? state_len = bot_len;
+  breath_state == 3 ? (
+    // End of bottom pause — would normally start a new breath.
+    // First: did the breath we JUST completed take us to the play
+    // threshold? If so, flip to rest. (Only counts when actually
+    // playing — during rest, repeated state-3 ends don't increment
+    // the breath counter.)
+    pr_enabled && !pr_resting ? (
+      pr_breath += 1;
+      pr_breath >= play_for_breaths ? (
+        pr_resting = 1;
+        pr_breath = 0;
+        pr_rest_elapsed = 0;
+      );
+    );
+    pr_resting ? (
+      // Stay in state 3 (already silent). The rest timer below
+      // will exit rest when the threshold elapses.
+    ) : (
+      // Normal transition to inhale — start a new breath cycle.
+      breath_state = 0;
+      state_len = inhale_len;
+    );
+  ) : (
+    // Normal advance within a breath (0→1, 1→2, 2→3).
+    breath_state = (breath_state + 1) % 4;
+    breath_state == 1 ? state_len = top_len;
+    breath_state == 2 ? state_len = exhale_len;
+    breath_state == 3 ? state_len = bot_len;
+  );
+);
+
+// Rest timer. While resting, count samples elapsed since rest
+// began. When that reaches rest_for_breaths * total_breath_samples,
+// exit rest and force a fresh inhale to start. total_breath_samples
+// is recomputed in @slider whenever any phase-duration slider
+// changes, so changing those mid-rest stretches/compresses the
+// remaining rest accordingly.
+pr_resting ? (
+  pr_rest_elapsed += 1;
+  pr_rest_elapsed >= rest_for_breaths * total_breath_samples ? (
+    pr_resting = 0;
+    pr_breath = 0;
+    breath_state = 0;
+    state_len = inhale_len;
+    state_pos = 0;
+  );
 );
 
 // Position within current state as 0..1

@@ -270,6 +270,23 @@ Swaps the left and right output channels. Useful for adjusting orientation when 
 
 Silent for N seconds after playback starts, then the breath cycle begins normally. State machine and filter state stay frozen during the delay so the inhale starts cleanly at delay-end rather than mid-cycle. Re-arms on every transport stop/start. 0 disables the delay.
 
+### Play / Rest Gating (v2.1)
+
+**Play for (breaths)** `0–1000, default 0`
+**Rest for (breaths)** `0–1000, default 0`
+
+A per-breath cyclic gate. The plugin breathes normally for **Play for** breath cycles, then sits silent for **Rest for** breath cycles' worth of time, then resumes — the pattern repeats forever. With Play for = 4 and Rest for = 4, you hear four breaths in / breaths out, then about four breaths' worth of quiet (an extended bottom pause), then four more breaths, and so on.
+
+The feature is **disabled when either slider is 0** (the default). With both at 0, the plugin behaves exactly as before.
+
+**What counts as a breath.** One breath cycle is one full inhale → top pause → exhale → bottom pause. The Play counter increments at each completed cycle (at the moment the bottom pause ends and a new inhale would start). At Play for = 4, the fourth completed breath triggers rest — the breath you were in the middle of finishes naturally, then no new breath starts until the rest period elapses.
+
+**What "rest" looks like internally.** The state machine sits paused on the bottom-pause state, which is already silent in normal operation. There's no extra fade or mute logic — the gate just doesn't start a new breath, and the bottom-pause silence extends for the rest period. The breath whose completion triggered the rest finished its exhale and bottom-pause normally before the gate fired.
+
+**Rest length** is measured in breath cycles' worth of *time* — specifically, `Rest for × (inhale + top + exhale + bottom)` in samples. If you change any phase duration mid-rest, the remaining rest length stretches or compresses to match the new total. After rest ends, a fresh inhale starts.
+
+**Transport behavior**: conventional. Stop silences; play re-initializes everything (breath state, period counter, rest timer) and starts fresh from an inhale.
+
 ---
 
 ## Usage Notes
