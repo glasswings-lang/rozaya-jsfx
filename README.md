@@ -8,7 +8,7 @@ A collection of audio synthesis and effect plugins for [REAPER](https://www.reap
 - `Heartbeat Generator` — stereo binaural heartbeat simulator with S1/S2 sounds
 - `Breath Generator` — synthesized breathing with inhale/exhale cycles
 - `Womb Sound Generator` — multi-layered intrauterine soundscape (heartbeat, breath, bloodflow)
-- `Binaural Polyrhythm Oscillator` — up to 8 voices with tremolo and pan modulation
+- `Binaural Polyrhythm Oscillator v2` — up to 8 voices with tremolo and pan modulation, plus optional Play/Rest gating (each voice plays for N of its own cycles, rests for M, on its own per-voice clock)
 
 **Effects**
 - `Resonant Sweeping Filter with Shaped LFO and Pan Modes` — resonant lowpass sweep with LFO start phase, stereo phase control, and pan modes

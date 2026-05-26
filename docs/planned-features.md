@@ -9,14 +9,11 @@ Modern Reaper JSFX supports `slider1` through `slider256`, so 64 isn't a hard li
 
 | Plugin | Pre-change | Landed | Remaining | Final total |
 |---|---|---|---|---|
-| polyrhythm_phase | 59 (highest `slider59`) | 3 (slider60 Direction & Reverse, slider61 Reverse Drift Offset, slider62 Start Delay) | 0 | 62 |
-| polyrhythm_phase_loops | 62 (forked from polyrhythm_phase) | 2 (slider63 Play for, slider64 Rest for) | 0 | **64** (right at the line) |
+| polyrhythm_phase | 59 (highest `slider59`) | 5 (slider60 Direction & Reverse, slider61 Reverse Drift Offset, slider62 Start Delay, slider63 Play for, slider64 Rest for) | 0 | **64** (right at the line) |
 | melody_phase | 61 (highest `slider61`) | 2 (slider62 Start Delay, slider63 Direction) | 0 | 63 |
 | rhythm-track | 13 | 1 (slider14 Start Delay) | 0 | 14 |
 
 The polyrhythm_phase budget is why Direction and Reverse Type were collapsed into a single 5-option slider (`Direction & Reverse`) rather than two — see section 1 below.
-
-Play/Rest gating lives in `polyrhythm_phase_loops.jsfx` rather than the main plugin so the experimental gate work doesn't risk the stable polyrhythm_phase. The new file is a verbatim copy of polyrhythm_phase plus the gate sliders; both stay in sync as the engine evolves.
 
 ---
 
@@ -71,39 +68,35 @@ Behavior:
 - Re-arms on each transport stop/start — detect via `play_state` transitions
 - Doesn't affect per-voice phase logic — just gates output
 
-### 3. Play/Rest gating — moved to `polyrhythm_phase_loops.jsfx`
+### 3. Play/Rest gating — LANDED (v2)
 
-The Play/Rest feature has been spun out into a sibling plugin to keep `polyrhythm_phase.jsfx` stable while the gate design is still being refined. See the new section below.
-
----
-
-## Polyrhythm Phase Loops (sibling plugin — IN PROGRESS)
-
-`src/polyrhythm_phase_loops.jsfx` — full fork of polyrhythm_phase plus a Play/Rest gate. Two sliders at the end of the file:
+Two new sliders at the end of the file:
 
 - **Play for (cycles)** — slider63
 - **Rest for (cycles)** — slider64
 
-Sliders are integers (step 1) interpreted as **per-voice cycle counts**. Each voice counts its OWN cycles, so V8 (high drift) hits its play threshold sooner in real time than V1 (drift 0) and enters rest first. The rest counter advances at the same per-voice rate, so V8 also wakes first — preserving per-voice cadence symmetry through both halves of the loop. Disabled when either slider is 0.
+Integer per-voice cycle counts. Each voice counts its OWN cycles, so V8 (high drift) hits its play threshold sooner in real time than V1 (drift 0) and enters rest first. The rest counter advances at the same per-voice rate, so V8 also wakes first — per-voice symmetry through both halves of the loop. Feature disabled when either slider is 0, in which case the plugin is functionally identical to v1.
 
 **Implementation notes (landed):**
 
 - Per-voice counter at memory slot 304 (`v_pr_cycle[i]`) advances at `v_trem_freq[i] / srate`. Same value drives both play and rest thresholds.
-- Normalizer divides by precomputed `total_active` (set in `@slider`) rather than the per-sample currently-audible count — keeps surviving voices' level steady when other voices enter rest. (Was a pre-existing latent bug; only became audible once voices started dropping in/out of rest.)
-- **Depth-floor cancel on the final release.** On the final cycle of every play period, the always-on Depth term (`amount`) is dropped from the gain formula during the release portion of the LFO. So during that final release, gain = `lfo_val * (sc + amount)` instead of `lfo_val * sc + amount` — it starts at the same peak (when `lfo_val = 1`) but decays all the way to 0 (when `lfo_val = 0`) instead of bottoming at the Depth floor. The voice glides to actual silence before the rest freeze regardless of the user's Depth setting. Cycles 1 through (Play for - 1) play with the normal formula — only the final release shape changes.
-- **Conventional transport.** No `ext_noinit`, no transport-edge reset logic, no "loops paused" freeze. `@init` runs on every transport play (Reaper default), which re-zeros voice phases, gain smoothers, Start Delay counter, per-voice cycle counters, and resting flags. Stop/play gives a clean restart — the gate begins a fresh play period from voice cycle 0 on every press. Same behavior as polyrhythm_phase.
+- Normalizer divides by precomputed `total_active` (set in `@slider`) rather than the per-sample currently-audible count — keeps surviving voices' level steady when other voices enter rest. (Was a pre-existing latent bug in v1; only became audible once voices started dropping in/out of rest.)
+- **Depth-floor cancel on the final release.** On the final cycle of every play period, the always-on Depth term (`amount`) is dropped from the gain formula during the release portion (and any silent tail) of the LFO. So during that final release, gain = `lfo_val * (sc + amount)` instead of `lfo_val * sc + amount` — same peak at `lfo_val = 1`, decays all the way to 0 at `lfo_val = 0` instead of bottoming at the Depth floor. The voice glides to actual silence before the rest freeze regardless of the user's Depth setting. Cycles 1 through (Play for - 1) play with the normal formula — only the final release shape changes.
+- **Conventional transport.** No `ext_noinit`, no transport-edge reset logic, no freeze on stop. `@init` runs on every transport play (Reaper default), which re-zeros voice phases, gain smoothers, Start Delay counter, per-voice cycle counters, and resting flags. Stop/play gives a clean restart — same behavior as v1.
 
 **Caveat — Release = 0%.** The Depth-floor cancel only fires during the release portion of the LFO. With Release = 0% there is no release portion (zero width), so the override never fires and you get a sharp cutoff at the rest boundary. For a clean rest entry, use a non-zero Release setting.
 
-**Wake side needs no special handling.** On wake from rest, target_gain jumps from 0 to whatever the LFO says at the resumed phase (possibly full peak with Attack = 0%). The existing 3 ms `gain_l` / `gain_r` smoother — the same one that prevents Attack = 0% from clicking at normal cycle wraps — ramps gain_l from 0 to the new target over ~3 ms. Perceptually a clean attack, not a click. Same anti-click mechanism, same behavior at every gain transition (cycle start, rest entry, wake from rest).
+**Wake side needs no special handling.** On wake from rest, target_gain jumps from 0 to whatever the LFO says at the resumed phase (possibly full peak with Attack = 0%). The existing 3 ms `gain_l` / `gain_r` smoother — the same one that prevents Attack = 0% from clicking at normal cycle wraps — ramps gain_l from 0 to the new target over ~3 ms. Perceptually a clean attack, not a click. Same anti-click mechanism, same behavior at every gain transition.
 
-**Rejected alternatives:**
+**Rejected alternatives during iteration:**
 
 1. **Slower rest-fade smoother.** Bolt a longer time-constant onto the smoother for rest entry. Felt like a band-aid — cushioned the drop without addressing the underlying "LFO doesn't reach silence" issue.
 2. **Settings-only (Depth = 0 + Attack > 0 + On Duration < 100%).** Discarded as primary fix because it pushed the burden onto user settings. Still valid as a sound-design tip in the manual.
-3. **Per-cycle fade shoulders.** First-cycle fade-in + last-cycle fade-out applied as a multiplier on top of the normal LFO. Tried briefly (commit `080f505`, since reverted). Ate two full cycles of the user's `Play for` count for fades and didn't match the "voice rings, then rests" mental model the user described.
+3. **Per-cycle fade shoulders.** First-cycle fade-in + last-cycle fade-out applied as a multiplier on top of the normal LFO. Ate two full cycles of the user's `Play for` count for fades and didn't match the "voice rings, then rests" mental model.
 
 Earlier worry about "drift collapse" from waiting for the cycle end turned out not to apply with per-voice rest counters: voices wake at different wall-clock times because V8's counter advances faster than V1's, so the polyrhythm cadence lives in the wake-time differences rather than in relative freeze phases.
+
+**Iteration history.** v2 went through three approaches before landing: in-place edits to polyrhythm_phase on `feature/play-rest-gating` (abandoned), a sibling plugin `polyrhythm_phase_loops.jsfx` while the rest-entry sound was being worked out, then consolidation back into polyrhythm_phase.jsfx once the depth-cancel approach proved solid in user testing. The `feature/play-rest-gating` branch is parked as a historical record.
 
 ---
 

@@ -1,8 +1,18 @@
-desc: Binaural Polyrhythm Oscillator with Tremolo and Pan Modulation
+desc: Binaural Polyrhythm Oscillator v2
 // Designed by Rozaya, developed with Claude (Anthropic)
 //
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v2 adds Play/Rest gating (sliders 63, 64) on top of the v1 feature
+// set. Per-voice cycle counting means V8 (fast drift) paces ahead of
+// V1 in real time. On the final cycle of each play period the always-
+// on Depth floor is cancelled during the release portion of the LFO
+// so the voice glides to actual silence before the rest freeze,
+// regardless of the user's Depth setting. With the new sliders at
+// their defaults (both 0), the gate is disabled and the plugin is
+// functionally identical to v1 — existing project files keep working
+// without modification.
 
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
@@ -144,8 +154,51 @@ slider61:0<-1000,1000,0.001>Reverse Drift Offset
 // phase 0 (or their phase offsets) rather than mid-fade.
 slider62:0<0,1000,0.001>Start Delay
 
+// ===== PLAY / REST GATING =====
+// Per-voice cyclic gate. Each voice plays for `Play for` cycles of
+// its OWN tremolo rate (global rate + per-voice drift), then is silent
+// for `Rest for` cycles of the same per-voice rate, then resumes.
+// Because counting is per-voice, V8 (high drift, fast cadence) reaches
+// its play threshold sooner in real time than V1 (drift 0, slow
+// cadence) and enters rest first — and wakes first too, since the
+// rest counter also advances at the voice's own rate. The "loop" the
+// listener hears is per-voice; the global rhythmic identity comes
+// from how the voices' independent play/rest cycles interlock.
+//
+// Reaching actual silence before rest. On the FINAL cycle of each
+// play period, the always-on Depth floor (`amount`) is cancelled
+// during the release portion of the LFO — so the release tail decays
+// to genuine 0 instead of bottoming at the Depth setting. With
+// default Depth = -6 dB the voice tremolos between ~50% and ~75%
+// gain during normal play, so without this override the rest freeze
+// would catch the voice at ~50% and the 3 ms smoother would thud on
+// the way down. With the override, the voice naturally glides to 0
+// over the final release and the freeze is silent. Cycles 1 through
+// (Play for - 1) play with the normal formula — only the last
+// release shape changes.
+//
+// This requires a non-zero Release setting to do anything audible.
+// With Release = 0% the release zone has zero width, the override
+// never fires, and you get the sharp cutoff that Release = 0 implies.
+//
+// Feature disabled if either slider is 0 — the voice loop runs
+// continuously then with no resting and no Depth-floor override.
+//
+// Transport. Stop/play does NOT preserve gate state — pressing play
+// re-initializes everything (voice phases, Start Delay counter,
+// per-voice cycle counters all reset). Conventional Reaper behavior;
+// the gate begins a fresh play period from voice cycle 0 on every
+// play press.
+slider63:0<0,1000,1>Play for (cycles)
+slider64:0<0,1000,1>Rest for (cycles)
+
 
 @init
+// Conventional Reaper behavior: @init runs on plugin load AND on every
+// transport play. That re-zeros all the slot memory below, so stop/play
+// gives a clean restart — voice phases reset, Start Delay re-arms,
+// per-voice Play/Rest counters reset. No `ext_noinit = 1` here.
+
 PHI = 1.6180339887;
 
 // Memory layout — 16 slots each
@@ -167,6 +220,15 @@ v_gain       = 224;
 v_phase_off      = 240;  // Phase offset, stored as raw slider value (unit = Rate Mode unit)
 v_phase_off_last = 256;  // Last known offset per voice — used to detect live changes
 v_pan_static     = 272;  // Static pan target per voice (-1..+1) for Spread modes
+v_resting        = 288;  // Per-voice Play/Rest flag: 1 = frozen (rest), 0 = playing
+v_pr_cycle       = 304;  // Per-voice Play/Rest cycle counter — accumulates at the
+                         //   voice's own v_trem_freq[i] regardless of play/rest
+                         //   state. Compared against play_for_cycles (when playing)
+                         //   or rest_for_cycles (when resting); reset to 0 on each
+                         //   state flip. This is what makes V8 (fast drift) pause
+                         //   sooner in real time than V1 (slow drift) — and wake
+                         //   sooner too, since the rest counter also advances at
+                         //   the voice's own rate. Symmetric per-voice semantic.
 
 // Initialize 16 slots — slots 0-7 always used; slots 8-15 hold the
 // reverse layer in Both modes and stay zeroed otherwise.
@@ -181,11 +243,12 @@ loop(16,
   v_gain[i]      = 1;
   v_phase_off[i]      = 0;
   v_phase_off_last[i] = 0;
+  v_resting[i]        = 0;
+  v_pr_cycle[i]       = 0;
   i += 1;
 );
 
 smooth = exp(-1 / (srate * 0.003));
-last_play_state = 0;
 
 // Counts up from 0 at each play start until it reaches start_delay_sec,
 // then the voice loop runs normally. start_delay_sec is computed in
@@ -193,6 +256,15 @@ last_play_state = 0;
 // default behavior (no delay) doesn't gate the first sample.
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
+
+// Play/Rest gating state. play_for_cycles / rest_for_cycles are read
+// from sliders 63/64 in @slider. Each voice has its own cycle counter
+// (v_pr_cycle[i]) advancing at its own v_trem_freq[i] — no global
+// counter needed. v_resting and v_pr_cycle are zeroed in the slot-init
+// loop above, so all voices start in the "playing" state on every
+// transport play (since @init re-runs on play).
+play_for_cycles = 0;
+rest_for_cycles = 0;
 
 function semitones_to_hz(base_note, center_octave, semitones) (
   tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
@@ -290,6 +362,14 @@ start_delay_units = slider62;
 rate_mode == 0 ? start_delay_sec = start_delay_units * 60 / max(rate_val, 0.001) :
 rate_mode == 1 ? start_delay_sec = start_delay_units :
                  start_delay_sec = start_delay_units / max(rate_val, 0.001);
+
+// Play/Rest gating — slider values are integer voice-cycle counts.
+// Each voice counts ITS OWN cycles (advancing at v_trem_freq[i],
+// which is the voice's tremolo Hz after global rate + per-voice drift
+// are applied). Per-voice counting + thresholding lives in the voice
+// loop in @sample; nothing global to compute here.
+play_for_cycles = slider63;
+rest_for_cycles = slider64;
 
 // Reverse — permute (single layer, option 1): mirror the per-voice
 // drift/rate values V1↔V8, V2↔V7, V3↔V6, V4↔V5. Notes, gains, phase
@@ -442,6 +522,20 @@ on_frac  = on_dur_pct / 100.0;
 att_frac = att_pct    / 100.0;
 rel_frac = rel_pct    / 100.0;
 
+// Effective attack / release widths (after the calc_lfo "if aw+rw > on_frac,
+// scale both down to fit" normalization), and the trem_phase value at which
+// the release segment begins. Voice loop uses re_start to detect whether
+// a sample falls in the release portion of the LFO — needed to "cancel the
+// Depth floor for the last release of the play period" in Play/Rest mode.
+aw_eff = att_frac;
+rw_eff = rel_frac;
+aw_eff + rw_eff > on_frac ? (
+  rt_total = aw_eff + rw_eff;
+  aw_eff = aw_eff / rt_total * on_frac;
+  rw_eff = rw_eff / rt_total * on_frac;
+);
+re_start = on_frac - rw_eff;
+
 @sample
 
 // Live phase offset update — fires when an offset slider is moved during
@@ -463,32 +557,12 @@ loop(n_voices,
   i += 1;
 );
 
-play_state > 0 && last_play_state == 0 ? (
-  // Always reset all 16 slots on play start. Slots 8-15 are no-ops when
-  // not in a Both mode (n_voices=8 means @sample's voice loop skips
-  // them) but the reset is harmless and saves a conditional.
-  i = 0;
-  loop(16,
-    // Offset is in Rate Mode units (seconds/beats/cycles) and means
-    // "this voice becomes audible at this time." We set the phase clock
-    // so it arrives at phase 0 (on-window start) exactly at that time.
-    // Offset=0 → phase 0 → fires immediately. Offset=8s on a 16s cycle
-    // → phase 0.5 → 8 seconds of silence, then fires. frac>0 guard
-    // ensures offset=0 stays cleanly at 0 rather than wrapping to 1.
-    frac = v_phase_off[i] * v_trem_freq[i];
-    frac = frac - floor(frac);
-    trem_phase[i]  = frac > 0 ? 1.0 - frac : 0;
-    osc_phase_l[i] = 0;
-    osc_phase_r[i] = 0;
-    gain_l[i]      = 1;
-    gain_r[i]      = 1;
-    pan_smooth[i]  = 0;
-    i += 1;
-  );
-  // Re-arm the Start Delay gate on each transport stop/start.
-  start_delay_elapsed = 0;
-);
-last_play_state = play_state;
+// Whether Play/Rest gating is engaged this sample. Used by the voice
+// loop's gate logic and by the "cancel Depth floor on the last
+// release" branch. No transport gymnastics — @init runs on every
+// play and re-zeros all per-voice state, so stop/play gives a clean
+// restart automatically (conventional Reaper behavior).
+pr_enabled = (play_for_cycles > 0 && rest_for_cycles > 0);
 
 // Start Delay — gate the voice processing. In the delay window the
 // output is zeroed and the elapsed counter advances; the voice loop is
@@ -501,14 +575,45 @@ start_delay_elapsed < start_delay_sec ? (
   spl1 = 0;
 ) : (
 
+// Per-voice Play/Rest gating runs inside the voice loop below
+// (search for "v_pr_cycle"). Each voice keeps its own cycle counter
+// advancing at its own v_trem_freq, flips v_resting[i] independently
+// when its threshold is hit, and freezes in place at whatever phase
+// it was at — so drift relationships persist across rest. The rest
+// counter advances off the same per-voice rate, so V8 (fast) wakes
+// before V1 (slow), preserving the per-voice symmetry. pr_enabled
+// was computed earlier (above the play_state transition check) so
+// the reset-on-play behavior can also see whether PR is engaged; the
+// voice loop references it directly.
+
 out_l = 0;
 out_r = 0;
-active_count = 0;
 
 i = 0;
 loop(n_voices,
   v_active[i] ? (
-    active_count += 1;
+    // Per-voice Play/Rest cycle counting. Each voice has its own
+    // counter that advances at the voice's own tremolo rate, so V8
+    // (fast drift) reaches play_for_cycles in less wall-clock time
+    // than V1 (slow drift) and enters rest first. The same per-voice
+    // rate drives the rest counter, so V8 also wakes first —
+    // preserving the per-voice cadence symmetry through both halves
+    // of the loop. Counter advances regardless of v_resting state;
+    // the threshold comparison just picks which target to check.
+    pr_enabled ? (
+      v_pr_cycle[i] += v_trem_freq[i] / srate;
+      !v_resting[i] ? (
+        v_pr_cycle[i] >= play_for_cycles ? (
+          v_resting[i]  = 1;
+          v_pr_cycle[i] = 0;
+        );
+      ) : (
+        v_pr_cycle[i] >= rest_for_cycles ? (
+          v_resting[i]  = 0;
+          v_pr_cycle[i] = 0;
+        );
+      );
+    );
 
     // Tremolo phase advances forward by default; in any reverse-time
     // mode it decrements so the envelope shape is traced backwards.
@@ -517,20 +622,81 @@ loop(n_voices,
     // backward only in Both — time (option 4). Both — permute (option 3)
     // is forward in both layers; the "reverse" there is slot-mirroring,
     // not time. Phase wrap handled in both directions.
-    voice_reverse_time = (i < 8) ? slot0_7_reverse_time : slot8_15_reverse_time;
-    voice_reverse_time ? (
-      trem_phase[i] -= v_trem_freq[i] / srate;
-      trem_phase[i] < 0 ? trem_phase[i] += 1;
-    ) : (
-      trem_phase[i] += v_trem_freq[i] / srate;
-      trem_phase[i] >= 1 ? trem_phase[i] -= 1;
+    //
+    // Phase only advances while !v_resting; once this voice's PR
+    // counter flips v_resting[i] to 1 (above), trem_phase stays put
+    // until the rest counter expires and v_resting clears. Each voice
+    // freezes at WHATEVER phase it was at the rest trigger — not at a
+    // cycle boundary — so drift relationships persist across rest.
+    !v_resting[i] ? (
+      voice_reverse_time = (i < 8) ? slot0_7_reverse_time : slot8_15_reverse_time;
+      voice_reverse_time ? (
+        trem_phase[i] -= v_trem_freq[i] / srate;
+        trem_phase[i] < 0 ? trem_phase[i] += 1;
+      ) : (
+        trem_phase[i] += v_trem_freq[i] / srate;
+        trem_phase[i] >= 1 ? trem_phase[i] -= 1;
+      );
     );
 
-    lfo_val     = calc_lfo(trem_phase[i], on_frac, att_frac, rel_frac, att_shape, rel_shape);
-    target_gain = lfo_val * sc + amount;
-    gain_l[i]   = gain_l[i] * smooth + target_gain * (1 - smooth);
-    gain_r[i]   = gain_r[i] * smooth + target_gain * (1 - smooth);
+    // Target gain. Three regimes:
+    //
+    // 1) Resting: target_gain = 0. By the time v_resting flips, the
+    //    depth-cancel branch below has already decayed gain to 0 via
+    //    the natural release, so there's almost nothing for the gain
+    //    smoother to do here.
+    //
+    // 2) Playing, NOT in the final cycle's release / silent portion:
+    //    target_gain = lfo_val * sc + amount  (normal Polyrhythm Phase).
+    //
+    // 3) Playing, at or past re_start within the FINAL cycle of the
+    //    play period: target_gain = lfo_val * (sc + amount). This drops
+    //    the always-on Depth floor (`amount`) and lets the release tail
+    //    decay all the way to 0 — so the voice actually reaches silence
+    //    before the rest freeze, regardless of Depth dB setting.
+    //
+    //    Peak of release (lfo_val = 1, at re_start): gain = sc + amount,
+    //    same as the normal peak. So no discontinuity entering release.
+    //    End of release (lfo_val = 0): gain = 0. The override extends
+    //    through the silent zone (re_start..1, not re_start..on_frac)
+    //    so when On Duration < 100% the silent tail of the final cycle
+    //    also stays at 0 — otherwise gain would snap back to `amount`
+    //    in the silent zone and need the smoother to bring it down.
+    //
+    //    Only the final cycle is touched; cycles 1 through (play_for - 1)
+    //    play with the normal formula. Release = 0% has zero release
+    //    width, so the override never fires and you get a sharp cutoff
+    //    at the rest boundary — use a non-zero Release for clean rest
+    //    entry.
+    //
+    // Wake side: when v_resting flips back to 0, target_gain jumps from
+    // 0 to whatever the LFO says at the resumed phase. The same 3 ms
+    // gain_l/r smoother that already prevents Attack=0% from clicking
+    // at normal cycle wraps handles this transition — gain_l ramps from
+    // 0 to the new target over ~3 ms, perceptually a clean attack rather
+    // than a click. No separate wake-fade machinery needed.
+    v_resting[i] ? (
+      target_gain = 0;
+    ) : (
+      lfo_val = calc_lfo(trem_phase[i], on_frac, att_frac, rel_frac, att_shape, rel_shape);
+      in_last_cycle  = pr_enabled && (v_pr_cycle[i] >= play_for_cycles - 1);
+      (in_last_cycle && trem_phase[i] >= re_start) ? (
+        target_gain = lfo_val * (sc + amount);
+      ) : (
+        target_gain = lfo_val * sc + amount;
+      );
+    );
+    gain_l[i] = gain_l[i] * smooth + target_gain * (1 - smooth);
+    gain_r[i] = gain_r[i] * smooth + target_gain * (1 - smooth);
 
+    // CPU-saver skip: when fully decayed in rest, bypass osc +
+    // waveform + pan computation (voice would contribute ~0 anyway).
+    // The gain smoother keeps running above this, so the catch-up
+    // ramp is ready the moment v_resting flips back to 0. The
+    // divisor (total_active, set in @slider) is NOT decremented when
+    // we skip — that level-jump-on-rest was the "sounds louder after
+    // rest" bug fixed 2026-05-25.
+    v_resting[i] && gain_l[i] < 0.001 ? 0 : (
     osc_phase_l[i] += v_freq_l[i] / srate;
     osc_phase_l[i] >= 1 ? osc_phase_l[i] -= 1;
     osc_phase_r[i] += v_freq_r[i] / srate;
@@ -689,12 +855,19 @@ loop(n_voices,
       out_l += osc_l;
       out_r += osc_r;
     );
+    );  // close "fully silent skip" ternary
   );
   i += 1;
 );
 
-active_count > 0 ? (
-  norm = 1.0 / active_count;
+// Normalize by the count of v_active voices — NOT by how many are
+// currently audible. Counting only currently-audible voices makes the
+// normalizer drop (and remaining voices get louder) every time a
+// voice enters rest, then spike back up on wake. Stable divisor =
+// stable level. total_active is precomputed in @slider, updated only
+// when the user toggles a voice's Active state.
+total_active > 0 ? (
+  norm = 1.0 / total_active;
   spl0 = out_l * norm;
   spl1 = out_r * norm;
 ) : (
