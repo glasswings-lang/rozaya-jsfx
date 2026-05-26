@@ -134,6 +134,32 @@ slider59:0<0,1,1{Off,On}>V8 Active
 // disables the delay.
 slider60:0<0,1000,0.001>Start Delay
 
+// Per-cycle Play/Rest gate over the continuous glissando. Voices
+// play normally for N cycles of the master Rate Value, then go
+// silent for M cycles, then resume — repeats forever. Cycle unit
+// matches Start Delay (Rate Mode units against Rate Value): at
+// Rate Value = 0.5 Hz, 4 cycles = 8 seconds; at 120 BPM, 4 cycles
+// = 2 seconds. 0 in either slider disables the gate entirely.
+// Resets on every transport stop/start. The Rest mode slider below
+// picks between two different rest behaviors — see its comment.
+slider61:0<0,1000,1>Play for (cycles)
+slider62:0<0,1000,1>Rest for (cycles)
+
+// How the oscillators behave during the rest period.
+//   Walk through (default) — oscillators keep sweeping during rest,
+//     just silently. When rest ends, you hear the tone wherever
+//     the sweep happened to be — the position has shifted during
+//     the silent stretch. Preserves the "the glissando is always
+//     running, the gate just controls output" feel.
+//   Freeze in place — oscillators stop sweeping during rest, frozen
+//     at their current frequencies and phases. When rest ends, the
+//     tone resumes from exactly where it left off. Preserves the
+//     "pause and resume continuous motion" feel.
+// For short rests the difference is subtle; for long rests (or fast
+// sweep rates) Walk noticeably re-positions the harmonics while
+// Freeze always resumes at the pre-rest position.
+slider63:0<0,1,1{Walk through,Freeze in place}>Rest mode
+
 
 @init
 PHI = 1.6180339887;
@@ -244,6 +270,19 @@ last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
+// Play/Rest gate state. pr_cycle_progress is a continuous counter
+// (fractional cycles elapsed in the current play or rest period)
+// that flips pr_resting and resets when it crosses the relevant
+// threshold. Always uses base_rate_hz as the clock, same as
+// Start Delay — Rate Value is the master cycle unit regardless of
+// drift_mode.
+pr_resting        = 0;
+pr_cycle_progress = 0;
+play_for_cycles   = 0;
+rest_for_cycles   = 0;
+pr_enabled        = 0;
+rest_mode         = 0;
+
 
 @slider
 
@@ -332,6 +371,21 @@ rate_mode == 0 ? start_delay_sec = start_delay_units * 60 / max(rate_val, 0.001)
 rate_mode == 1 ? start_delay_sec = start_delay_units :
                  start_delay_sec = start_delay_units / max(rate_val, 0.001);
 
+// Play/Rest gate: integer cycle counts. Both must be > 0 for the
+// gate to engage; 0 in either slider disables.
+play_for_cycles = slider61;
+rest_for_cycles = slider62;
+new_pr_enabled  = (play_for_cycles > 0 && rest_for_cycles > 0);
+// Defensive reset: if user disables the gate (sets either slider to
+// 0), drop pr_resting back to play and zero the progress counter so
+// the gate doesn't carry stuck state into a future re-enable.
+!new_pr_enabled && pr_resting ? (
+  pr_resting = 0;
+  pr_cycle_progress = 0;
+);
+pr_enabled = new_pr_enabled;
+rest_mode  = slider63;
+
 
 @sample
 
@@ -378,6 +432,33 @@ needs_init ? (
   needs_init = 0;
 );
 
+// Play/Rest gate: advance the cycle counter and flip pr_resting at
+// thresholds. base_rate_hz / srate is fractional cycles per sample,
+// using the master Rate Value clock regardless of drift_mode (so
+// the gate timing matches what Start Delay would do at the same
+// Rate Value setting).
+pr_enabled ? (
+  pr_cycle_progress += base_rate_hz / srate;
+  !pr_resting ? (
+    pr_cycle_progress >= play_for_cycles ? (
+      pr_resting = 1;
+      pr_cycle_progress = 0;
+    );
+  ) : (
+    pr_cycle_progress >= rest_for_cycles ? (
+      pr_resting = 0;
+      pr_cycle_progress = 0;
+    );
+  );
+);
+
+// in_frozen_rest is the Freeze-mode-and-resting condition. Used
+// below to gate oscillator frequency and phase advancement, so
+// Freeze mode literally pauses the glissando. In Walk mode this
+// stays false and oscillators keep sweeping during rest (just
+// silently, via the target_gain = 0 branch).
+in_frozen_rest = pr_enabled && pr_resting && rest_mode == 1;
+
 out_l = 0;
 out_r = 0;
 active_count = 0;
@@ -398,12 +479,17 @@ loop(8,
     loop(num_osc,
       oi = i * NUM_OSC + o;
 
-      v_dir[i] == 0 ? (
-        osc_freq[oi] *= freq_mul;
-        osc_freq[oi] > pitch_hi ? osc_freq[oi] *= pitch_lo / pitch_hi;
-      ) : (
-        osc_freq[oi] /= freq_mul;
-        osc_freq[oi] < pitch_lo ? osc_freq[oi] *= pitch_hi / pitch_lo;
+      // Sweep oscillator frequency along the glissando, unless we
+      // are in Freeze-mode rest — in that case the frequency stays
+      // pinned so the tone resumes from the exact same position.
+      !in_frozen_rest ? (
+        v_dir[i] == 0 ? (
+          osc_freq[oi] *= freq_mul;
+          osc_freq[oi] > pitch_hi ? osc_freq[oi] *= pitch_lo / pitch_hi;
+        ) : (
+          osc_freq[oi] /= freq_mul;
+          osc_freq[oi] < pitch_lo ? osc_freq[oi] *= pitch_hi / pitch_lo;
+        );
       );
 
       // Drift detune (synced mode only — cents offset)
@@ -414,16 +500,25 @@ loop(8,
       );
       freq_r = freq_l + binaural_hz;
 
-      // Bell gain from position in window
-      lf = log(osc_freq[oi]);
-      target_gain = window_gain(lf, log_pitch_lo, log_pitch_range, fade_in_frac, fade_out_frac) * v_gain_lin[i];
+      // Target gain — bell window position, unless Play/Rest is
+      // resting (Walk OR Freeze mode), in which case force 0 and
+      // let the existing smoother fade audio out.
+      pr_enabled && pr_resting ? (
+        target_gain = 0;
+      ) : (
+        lf = log(osc_freq[oi]);
+        target_gain = window_gain(lf, log_pitch_lo, log_pitch_range, fade_in_frac, fade_out_frac) * v_gain_lin[i];
+      );
       osc_gain[oi] = osc_gain[oi] * smooth + target_gain * (1 - smooth);
 
-      // Advance phases
-      osc_phase_l[oi] += freq_l / srate;
-      osc_phase_l[oi] >= 1 ? osc_phase_l[oi] -= 1;
-      osc_phase_r[oi] += freq_r / srate;
-      osc_phase_r[oi] >= 1 ? osc_phase_r[oi] -= 1;
+      // Advance phases, unless Freeze-mode rest is pinning them so
+      // the waveform resumes at the same phase on rest exit.
+      !in_frozen_rest ? (
+        osc_phase_l[oi] += freq_l / srate;
+        osc_phase_l[oi] >= 1 ? osc_phase_l[oi] -= 1;
+        osc_phase_r[oi] += freq_r / srate;
+        osc_phase_r[oi] >= 1 ? osc_phase_r[oi] -= 1;
+      );
 
       out_l += wave_sample(osc_phase_l[oi]) * osc_gain[oi] * pan_l;
       out_r += wave_sample(osc_phase_r[oi]) * osc_gain[oi] * pan_r;
