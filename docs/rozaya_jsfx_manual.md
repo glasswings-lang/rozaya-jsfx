@@ -876,22 +876,33 @@ Walk order through the active voices in the pool. The "pool" is the first *Seque
 
 **Play for (steps)** `0–1000, default 0`
 **Rest for (steps)** `0–1000, default 0`
+**Rest mode** `Walk through / Freeze in place, default Walk through`
 
-A per-step cyclic gate. The sequencer fires **Play for** notes normally, then walks silently through **Rest for** more steps, then resumes — the pattern repeats forever. Useful for phrase-and-pause melodies: "play 4 notes, sit silent for 4 notes' worth of time, play 4 more."
+A per-step cyclic gate. The sequencer fires **Play for** notes normally, then sits in silence for some number of steps determined by **Rest for** + **Rest mode**, then resumes — the pattern repeats forever. Useful for phrase-and-pause melodies: "play 4 notes, sit silent for 4 notes' worth of time, play 4 more."
 
-The feature is **disabled when either slider is 0** (the default). With both at 0, the sequencer behaves as before.
+The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the sequencer behaves as before; Rest mode has no effect when the gate is off.
 
-**What counts as a step.** Each handoff between voices is one step, regardless of whether the voice produces sound. Programmed rests (a voice with Note duration = 0) still count as steps — they consume their Next voice in time and tick the step counter. So "Play for = 4" plays exactly 4 sequence positions, which may include programmed rests within them.
+**Rest mode** picks one of two fundamentally different behaviors for what the sequencer does during the rest period:
 
-**Rest duration is the sum of the silent steps' Next voice in.** Because each voice has its own Next voice in, the rest period's wall-clock duration depends on which voices the sequencer walks through during the silent stretch. With evenly-timed voices (all the same Next voice in), it's just M × that duration. With varied timings, the rest length varies between cycles — which can be a feature for organic phrasing.
+- **Walk through** (default): the sequencer keeps advancing through voice handoffs during rest. Each rest step consumes that voice's *Next voice in* duration silently. The total cycle is `Play for + Rest for` steps of the underlying sequencer grid. If `Play + Rest` doesn't divide evenly into your active voice count, the starting voice of each play period walks across the melody — `Play=5, Rest=4` with 8 active voices means you hear V1–V5, walk through V6–V8+V1 silently, then V2–V6, walk through V7+V8+V1+V2, etc. Notes get "skipped" in the literal sense and reappear in subsequent play periods at different positions. Good for **abstract / drone-friendly use** where the melody loops as a backdrop and play/rest is a rhythmic gate over it.
+
+- **Freeze in place**: the sequencer **pauses** at the voice that would have fired when rest began. Rest duration is `Rest for × that frozen voice's "Next voice in"` seconds, timed by a sample counter rather than a step count. When rest ends, the frozen voice fires and the sequence picks up from there — **no notes lost, every voice plays in order across multiple cycles, just with pauses between phrases**. Good for **melodic / phrasal use** where the sequence is meant to be heard in full and the rest is just punctuation.
+
+**What counts as a step (Walk mode).** Each handoff between voices is one step, regardless of whether the voice produces sound. Programmed rests (a voice with Note duration = 0) still count as steps — they consume their Next voice in time and tick the step counter. "Play for = 4" plays exactly 4 sequence positions, which may include programmed rests within them.
+
+**Rest duration is variable in Walk mode.** Because each voice has its own Next voice in, the rest period's wall-clock duration depends on which voices the sequencer walks through during the silent stretch. With evenly-timed voices it's `Rest for × that duration`. With varied timings the rest length varies between cycles — which can be a feature for organic phrasing.
+
+**Rest duration is fixed-per-cycle in Freeze mode** (based on the frozen voice's Next voice in). If your frozen voice changes between cycles (which it will if `Play + Rest != active voice count`), the rest duration changes too. Less variable than Walk mode but not constant unless your timing setup makes it constant.
 
 **Tails finish naturally — except in Legato mode where we force release.** When PR transitions to rest, the previously-firing voice continues:
 - **Non-Legato mode**: the voice's sustain → release happens automatically based on its own Note duration, so it tails out naturally during the start of the rest period.
-- **Legato mode**: a sustaining voice doesn't auto-release (it normally only releases when the next voice's Legato handoff inherits it). To prevent the voice ringing forever during rest, it's forced into release at the rest-entry moment — same trick used when a Loop=Off sequence walks off the end.
+- **Legato mode**: a sustaining voice doesn't auto-release (it normally only releases when the next voice's Legato handoff inherits it). To prevent the voice ringing forever during rest, it's forced into release at the rest-entry moment — same trick used when a Loop=Off sequence walks off the end. This applies in both Walk and Freeze modes.
 
 **Glide across rest.** When the play period resumes, the new note's glide source is whatever the last triggered voice's target frequency was — same as a normal handoff. The pitch slides from the last played note into the first note of the new play period.
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (sequencer index, step counter, rest state) and starts fresh from the first active voice.
+
+**Changing Rest mode mid-rest** is an edge case the code handles defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unpredictably.
 
 ## Usage Notes
 

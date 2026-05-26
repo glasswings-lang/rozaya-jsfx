@@ -147,6 +147,26 @@ slider63:0<0,5,1{Up,Down,Up-Down (repeat),Up-Down (no repeat),Down-Up (repeat),D
 slider64:0<0,1000,1>Play for (steps)
 slider65:0<0,1000,1>Rest for (steps)
 
+// --- Rest mode (slider 66) ---
+// How the sequencer behaves during the rest period.
+//   Walk through (default) — sequencer keeps advancing; rest steps
+//     consume "Next voice in" seconds silently. Total cycle = Play
+//     + Rest steps consumed from the underlying sequencer grid.
+//     If Play + Rest doesn't divide evenly into your active voice
+//     count, the starting voice of each play period walks across
+//     the melody. Notes get "skipped" in the literal sense (the
+//     sequencer walks past them silently); they reappear in
+//     subsequent play periods at different positions.
+//   Freeze in place — sequencer pauses on the voice that WOULD
+//     have been triggered when rest started. Rest duration is
+//     Rest for × that frozen voice's "Next voice in" seconds.
+//     When rest ends, the frozen voice fires and the sequence
+//     continues from there — every voice plays in order across
+//     multiple cycles, just with pauses between phrases.
+// Both modes do the same Legato force-release at rest entry so
+// the previous voice doesn't ring forever in Legato mode.
+slider66:0<0,1,1{Walk through,Freeze in place}>Rest mode
+
 @init
 // Memory layout per voice (16 slots each — V0 starts at the
 // labelled base, voice i offsets by i; e.g., V3's osc_phase_l is
@@ -260,6 +280,20 @@ play_for_steps = 0;
 rest_for_steps = 0;
 pr_enabled     = 0;
 
+// Rest mode state. rest_mode = 0 → Walk through (sequencer advances
+// during rest, current behavior). rest_mode = 1 → Freeze in place
+// (sequencer pauses; rest is a sample-counted timer instead of a
+// step counter). pr_frozen_prev_voice remembers the voice that was
+// playing when Freeze rest started — used as the "prev_voice"
+// argument to the trigger function when rest ends. The frozen
+// "would-be-next" voice index lives in seq_index itself (we set it
+// at the handoff above the PR check and never overwrite it during
+// Freeze rest, since the sequencer advance is gated off).
+rest_mode                = 0;
+pr_rest_elapsed          = 0;
+pr_rest_duration_samples = 0;
+pr_frozen_prev_voice     = -1;
+
 // One-pole exponential smoother coefficient for the envelope
 // output. Polyrhythm Phase uses this exact pattern: the raw
 // state-machine envelope value (which can step instantly when
@@ -339,6 +373,45 @@ function step_in_dir_no_wrap(cur_idx, dir) local(j, found) (
     found < 0 ? j += dir;
   );
   found
+);
+
+function trigger_seq_voice(prev_idx) (
+  // Fire whatever voice seq_index points to. Shared by three call
+  // sites: the first-ever trigger (seq_started == 0 branch, passes
+  // prev_idx = -1), the normal handoff (passes the just-replaced
+  // prev_seq_index), and Freeze-mode rest exit (passes the saved
+  // pr_frozen_prev_voice). Encapsulates the Legato handoff branch,
+  // the glide source setup, and the prev_trigger_freq bookkeeping
+  // so all three sites stay in sync.
+  v_note_seconds[seq_index] > 0.0001 ? (
+    legato_enabled && prev_idx >= 0 && voice_state[prev_idx] != 0 ? (
+      v_envelope[seq_index]     = v_envelope[prev_idx];
+      v_env_smoothed[seq_index] = v_env_smoothed[prev_idx];
+      osc_phase_l[seq_index]    = osc_phase_l[prev_idx];
+      osc_phase_r[seq_index]    = osc_phase_r[prev_idx];
+      pan_smooth[seq_index]     = pan_smooth[prev_idx];
+      pan_phase[seq_index]      = pan_phase[prev_idx];
+      voice_state[seq_index]    = 2;
+      state_elapsed[seq_index]  = 0;
+      voice_state[prev_idx]     = 0;
+      v_envelope[prev_idx]      = 0;
+      v_env_smoothed[prev_idx]  = 0;
+    ) : (
+      voice_state[seq_index]    = 1;
+      state_elapsed[seq_index]  = 0;
+    );
+    have_prev_trigger ? (
+      v_freq_current_l[seq_index] = prev_trigger_freq_l;
+      v_freq_current_r[seq_index] = prev_trigger_freq_r;
+    ) : (
+      v_freq_current_l[seq_index] = v_freq_l[seq_index];
+      v_freq_current_r[seq_index] = v_freq_r[seq_index];
+      have_prev_trigger = 1;
+    );
+    prev_trigger_freq_l = v_freq_l[seq_index];
+    prev_trigger_freq_r = v_freq_r[seq_index];
+    prev_seq_index = seq_index;
+  );
 );
 
 @slider
@@ -523,6 +596,7 @@ direction_mode == 1 ? seq_dir = -1;
 play_for_steps = slider64;
 rest_for_steps = slider65;
 pr_enabled     = (play_for_steps > 0 && rest_for_steps > 0);
+rest_mode      = slider66;
 
 @sample
 dt = 1 / srate;
@@ -565,19 +639,12 @@ seq_started == 0 ? (
   first_idx >= 0 ? (
     seq_index = first_idx;
     seq_step_elapsed = 0;
-    v_note_seconds[seq_index] > 0.0001 ? (
-      voice_state[seq_index] = 1;       // attack
-      state_elapsed[seq_index] = 0;
-      // First ever trigger: snap glide source to this voice's own
-      // target so the very first note doesn't sweep up from nothing.
-      // Subsequent triggers will start from prev_trigger_freq.
-      v_freq_current_l[seq_index] = v_freq_l[seq_index];
-      v_freq_current_r[seq_index] = v_freq_r[seq_index];
-      prev_trigger_freq_l = v_freq_l[seq_index];
-      prev_trigger_freq_r = v_freq_r[seq_index];
-      have_prev_trigger = 1;
-      prev_seq_index = seq_index;
-    );
+    // Fire the first voice via the shared trigger function. prev_idx
+    // = -1 means "no previous voice exists"; the Legato handoff
+    // branch needs prev_idx >= 0 so it won't fire, and the glide
+    // branch hits the !have_prev_trigger path which snaps the
+    // current frequency to this voice's own target.
+    trigger_seq_voice(-1);
     seq_started = 1;
     // Count this step toward the play period. No threshold check on
     // the first step (pr_step is 0; threshold is always >= 1 when
@@ -591,8 +658,17 @@ seq_started == 0 ? (
 // off to the next active voice. The OUTGOING voice's envelope
 // keeps progressing through its own (longer or shorter) note
 // duration in parallel — that's where overlap comes from.
+//
+// Freeze-mode rest exception: when the Play/Rest gate is engaged
+// AND we're in the rest period AND Rest mode = Freeze, the step
+// clock does NOT advance. This is what keeps the sequencer paused
+// at the would-be-next voice (seq_index already points to it from
+// the handoff that triggered rest) — no new handoffs fire during
+// the silent period. The rest timer block further down handles
+// resuming with that frozen voice when the rest duration elapses.
 seq_started && !seq_finished ? (
-  seq_step_elapsed += dt;
+  in_frozen_rest = pr_enabled && pr_resting && rest_mode == 1;
+  !in_frozen_rest ? seq_step_elapsed += dt;
   cur_step = v_step_seconds[seq_index];
   seq_step_elapsed >= cur_step ? (
     seq_step_elapsed -= cur_step;
@@ -658,8 +734,12 @@ seq_started && !seq_finished ? (
       // if so, flip play↔rest and reset the counter. Then increment
       // for the step we're about to (maybe) trigger. The note
       // trigger below is conditioned on !pr_resting so during rest
-      // the sequencer walks silently — seq_index still advances,
-      // pr_step still increments, just no new attack fires.
+      // the sequencer walks silently in Walk mode (seq_index still
+      // advances, pr_step still increments, just no new attack
+      // fires). In Freeze mode the rest-entry block below saves
+      // the would-be-next voice and sets up the sample-timed rest
+      // window; the sequencer-advance gate higher up keeps
+      // seq_step_elapsed pinned so this handoff doesn't re-fire.
       //
       // Legato edge case: in Legato mode the previous voice's
       // sustain doesn't auto-release (it normally only releases when
@@ -669,97 +749,61 @@ seq_started && !seq_finished ? (
       // same trick the seq_finished branch uses for Loop=Off.
       pr_enabled ? (
         pr_step >= (pr_resting ? rest_for_steps : play_for_steps) ? (
-          !pr_resting && legato_enabled && voice_state[prev_voice] != 0 ? (
+          just_entered_rest = !pr_resting;
+          just_entered_rest && legato_enabled && voice_state[prev_voice] != 0 ? (
             voice_state[prev_voice]   = 3;
             state_elapsed[prev_voice] = 0;
           );
           pr_resting = 1 - pr_resting;
           pr_step    = 0;
+          // Freeze-mode rest entry: remember the voice that was
+          // playing (for the trigger function's prev_idx when we
+          // resume), and compute the rest duration in samples
+          // based on the frozen voice's "Next voice in." The
+          // sequencer-advance gate higher up will keep seq_index
+          // pointing at the frozen voice for the entire rest.
+          just_entered_rest && rest_mode == 1 ? (
+            pr_frozen_prev_voice = prev_voice;
+            pr_rest_duration_samples = rest_for_steps * v_step_seconds[seq_index] * srate;
+            pr_rest_elapsed = 0;
+          );
         );
         pr_step += 1;
       );
 
         // Re-trigger the new voice's envelope from attack — unless
-        // the voice is a rest (Note Length = 0), in which case it
-        // stays silent for its Step Length. Same click-prevention
-        // as the initial trigger above. Also skip the trigger when
-        // PR is in its rest period.
-        v_note_seconds[seq_index] > 0.0001 && (!pr_enabled || !pr_resting) ? (
-          // Legato hand-off: if Legato glide is on AND the
-          // previous voice is still ringing (state != 0), inherit
-          // its envelope and oscillator phase, and silence it.
-          // Result: one continuous tone — no re-attack at the
-          // hand-off, the previous voice doesn't release, and
-          // glide bends the pitch across the boundary. When
-          // Legato is off OR the previous voice has already fully
-          // released, we do a normal trigger (attack from 0).
-          legato_enabled && prev_voice >= 0 && voice_state[prev_voice] != 0 ? (
-            // Inherit envelope (raw + smoothed) so the new voice
-            // picks up at the same amplitude the previous one was
-            // sustaining at.
-            v_envelope[seq_index]     = v_envelope[prev_voice];
-            v_env_smoothed[seq_index] = v_env_smoothed[prev_voice];
-            // Inherit oscillator phase so the waveform doesn't
-            // discontinue at the hand-off — the tone is literally
-            // continuous, only the pitch (frequency) changes.
-            osc_phase_l[seq_index] = osc_phase_l[prev_voice];
-            osc_phase_r[seq_index] = osc_phase_r[prev_voice];
-            // Inherit pan state (smoothed pan position + LFO phase
-            // for Tremolo/Increment modes) so the apparent stereo
-            // position is continuous across the hand-off. Without
-            // this, the new voice's pan_smooth starts at whatever
-            // value it last held (typically 0 = center) and ramps
-            // toward its own target via the 10ms smoother — the
-            // listener hears the pan position JUMP from the
-            // previous voice's static position to center (or
-            // wherever) and then sweep, which clicks. Inheriting
-            // the previous voice's pan_smooth means the new voice
-            // starts at the previous voice's pan position and the
-            // smoother slides it toward its own target — same
-            // continuity story as envelope and oscillator phase.
-            pan_smooth[seq_index] = pan_smooth[prev_voice];
-            pan_phase[seq_index]  = pan_phase[prev_voice];
-            // Start in sustain (skip attack); the new voice will
-            // run its own sustain → release naturally based on
-            // its Note duration.
-            voice_state[seq_index] = 2;
-            state_elapsed[seq_index] = 0;
-            // Silence the previous voice immediately. Setting
-            // both raw and smoothed envelope to 0 stops it
-            // contributing to the output — the new voice has
-            // already taken over its envelope value, so the
-            // total amplitude doesn't jump.
-            voice_state[prev_voice]    = 0;
-            v_envelope[prev_voice]     = 0;
-            v_env_smoothed[prev_voice] = 0;
-          ) : (
-            // Normal trigger: fresh attack from 0.
-            voice_state[seq_index] = 1;
-            state_elapsed[seq_index] = 0;
-          );
-          // Glide: start the new voice's playing frequency at the
-          // previous trigger's target. The per-sample glide step
-          // below slides it toward this voice's own target over
-          // glide_time. If glide_time = 0 the per-sample step
-          // snaps to target immediately anyway, but setting the
-          // start frequency is harmless. have_prev_trigger guard
-          // shouldn't matter here (we set it on first trigger
-          // above) but is defensive.
-          have_prev_trigger ? (
-            v_freq_current_l[seq_index] = prev_trigger_freq_l;
-            v_freq_current_r[seq_index] = prev_trigger_freq_r;
-          ) : (
-            v_freq_current_l[seq_index] = v_freq_l[seq_index];
-            v_freq_current_r[seq_index] = v_freq_r[seq_index];
-            have_prev_trigger = 1;
-          );
-          prev_trigger_freq_l = v_freq_l[seq_index];
-          prev_trigger_freq_r = v_freq_r[seq_index];
-          prev_seq_index = seq_index;
-        );
-      );
+        // the voice is a rest (Note Length = 0; the trigger
+        // function handles that case internally) or PR is in its
+        // rest period.
+        !pr_enabled || !pr_resting ? trigger_seq_voice(prev_voice);
     );
   );
+);
+
+// Freeze-mode rest timer. When Rest mode = Freeze in place AND we
+// entered a rest period, the sequencer-advance gate above keeps
+// seq_step_elapsed pinned so no handoffs fire. This block counts
+// samples of rest elapsed; when we hit the threshold (rest_for_steps
+// × the frozen voice's "Next voice in" duration, in samples), exit
+// rest and fire the frozen voice via the shared trigger function.
+// pr_step is reset to 1 so the next handoff sees this fired voice
+// as step 1 of the new play period — matching how Walk mode counts
+// the first fired note of a new play period.
+//
+// The pr_rest_duration_samples > 0 guard handles the edge case where
+// the user changes Rest mode mid-rest (Walk → Freeze): without the
+// duration being set, the comparison would fire immediately and
+// snap out of rest, leaving state inconsistent. With the guard we
+// just sit until the user presses stop/play to reset cleanly.
+pr_enabled && pr_resting && rest_mode == 1 && pr_rest_duration_samples > 0 ? (
+  pr_rest_elapsed += 1;
+  pr_rest_elapsed >= pr_rest_duration_samples ? (
+    pr_resting = 0;
+    pr_step = 1;
+    seq_step_elapsed = 0;
+    trigger_seq_voice(pr_frozen_prev_voice);
+  );
+);
 
 // === Per-voice envelope + oscillator + sum ===
 // Walk every voice that's in a non-silent state; update its
