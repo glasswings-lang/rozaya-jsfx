@@ -34,6 +34,30 @@ slider18:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 // transport stop/start. 0 disables the delay.
 slider19:0<0,1000,0.001>Start Delay
 
+// Per-cycle Play/Rest gate. Effect is applied normally for N cycles
+// of the Rate Value, then bypassed (dry signal passes through
+// unchanged) for M cycles, then resumes — repeats forever. Cycle
+// unit matches Start Delay (Rate Mode units against Rate Value).
+// As with Start Delay, "rest" here means dry pass-through, NOT
+// silence — silencing the input would mute the upstream track.
+// The transition between effect-on and dry uses a ~3 ms fade so
+// the gate is click-free. 0 in either slider disables the gate.
+// Resets on every transport stop/start.
+slider20:0<0,1000,1>Play for (cycles)
+slider21:0<0,1000,1>Rest for (cycles)
+
+// How the tremolo and pan LFOs behave during the rest period.
+//   Walk through (default) — LFOs keep cycling during rest, just
+//     not applied to the signal. When the effect resumes, the LFOs
+//     are at new phase positions reflecting however much wall-clock
+//     time passed. The rhythmic cycle of the effect is continuously
+//     running even when you can't hear it.
+//   Freeze in place — tremolo and pan LFO phases pause during rest,
+//     frozen at their values at rest entry. When the effect resumes,
+//     the LFOs pick up from the same phase. The rhythmic cycle of
+//     the effect pauses and resumes in lockstep with the gate.
+slider22:0<0,1,1{Walk through,Freeze in place}>Rest mode
+
 @init
 phase_l = 0;
 phase_r = 0;
@@ -167,6 +191,22 @@ last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
+// Play/Rest gate state. pr_cycle_progress is a continuous fractional
+// counter (cycles elapsed in the current play or rest period) that
+// flips pr_resting and resets when it crosses the threshold for the
+// current state. effect_mix smoothes between 1 (effect fully on) and
+// 0 (full dry pass-through) — the tremolo gain target blends with
+// 1.0 via this mix, and the pan output blends with the un-panned
+// signal the same way, so the transition between play and rest is
+// a soft fade rather than an abrupt switch.
+pr_resting        = 0;
+pr_cycle_progress = 0;
+play_for_cycles   = 0;
+rest_for_cycles   = 0;
+pr_enabled        = 0;
+rest_mode         = 0;
+effect_mix        = 1;
+
 
 @slider
 
@@ -209,6 +249,21 @@ start_delay_units = slider19;
 slider2 == 0 ? start_delay_sec = start_delay_units * 60 / max(slider1, 0.001) :
 slider2 == 1 ? start_delay_sec = start_delay_units :
                start_delay_sec = start_delay_units / max(slider1, 0.001);
+
+// Play/Rest gate: integer cycle counts. Both must be > 0 for the
+// gate to engage; 0 in either slider disables.
+play_for_cycles = slider20;
+rest_for_cycles = slider21;
+new_pr_enabled  = (play_for_cycles > 0 && rest_for_cycles > 0);
+// Defensive reset: if user disables the gate mid-rest, snap pr_resting
+// back to 0 and zero the progress counter. effect_mix will smoothly
+// ramp back to 1 via the @sample smoother.
+!new_pr_enabled && pr_resting ? (
+  pr_resting = 0;
+  pr_cycle_progress = 0;
+);
+pr_enabled = new_pr_enabled;
+rest_mode  = slider22;
 
 
 @sample
@@ -260,30 +315,79 @@ on_secs  = (dur_pct / 100.0) * period;
 att_secs = (att_pct / 100.0) * period;
 rel_secs = (rel_pct / 100.0) * period;
 
-phase_l += freq / srate;
-phase_l >= 1 ? phase_l -= 1;
+// Play/Rest gate state machine. pr_cycle_progress accumulates
+// fractional cycles at the tremolo rate; when it crosses the
+// threshold for the current state (play_for_cycles when playing,
+// rest_for_cycles when resting), pr_resting flips and the counter
+// resets.
+pr_enabled ? (
+  pr_cycle_progress += freq / srate;
+  !pr_resting ? (
+    pr_cycle_progress >= play_for_cycles ? (
+      pr_resting = 1;
+      pr_cycle_progress = 0;
+    );
+  ) : (
+    pr_cycle_progress >= rest_for_cycles ? (
+      pr_resting = 0;
+      pr_cycle_progress = 0;
+    );
+  );
+);
 
-slider10 == 0 ? (
-  phase_r += freq / srate;
-  phase_r >= 1 ? phase_r -= 1;
-) : (
-  phase_r = phase_l + phase_offset;
-  phase_r >= 1 ? phase_r -= 1;
-  phase_r < 0  ? phase_r += 1;
+// Smoother coefficient — used for the existing gain smoother and
+// (just below) for effect_mix. Moved up from its original spot
+// inside the gain section so effect_mix can reuse it.
+smooth = exp(-1 / (srate * 0.003));
+
+// in_frozen_rest gates LFO phase advancement (tremolo phase_l/r
+// and pan_phase) so Freeze mode pauses the modulation. Walk mode
+// leaves it false and the LFOs keep cycling silently during rest.
+in_frozen_rest = pr_enabled && pr_resting && rest_mode == 1;
+
+// effect_mix smoothly transitions between 1 (effect fully on) and
+// 0 (full dry pass-through) at rest boundaries. The tremolo gain
+// target and pan output both blend with their dry equivalents via
+// this mix — yields a soft fade between effect-on and bypass.
+target_effect_mix = pr_enabled && pr_resting ? 0 : 1;
+effect_mix = effect_mix * smooth + target_effect_mix * (1 - smooth);
+
+// Advance tremolo phases unless Freeze rest is pinning them.
+!in_frozen_rest ? (
+  phase_l += freq / srate;
+  phase_l >= 1 ? phase_l -= 1;
+
+  slider10 == 0 ? (
+    phase_r += freq / srate;
+    phase_r >= 1 ? phase_r -= 1;
+  ) : (
+    phase_r = phase_l + phase_offset;
+    phase_r >= 1 ? phase_r -= 1;
+    phase_r < 0  ? phase_r += 1;
+  );
 );
 
 lfo_l = calc_lfo(phase_l, on_secs, att_secs, rel_secs, period, att_shape, rel_shape);
 lfo_r = calc_lfo(phase_r, on_secs, att_secs, rel_secs, period, att_shape, rel_shape);
 
-smooth = exp(-1 / (srate * 0.003));
-gain_l = gain_l * smooth + (lfo_l * sc + amount) * (1 - smooth);
-gain_r = gain_r * smooth + (lfo_r * sc + amount) * (1 - smooth);
+// Gain target blends LFO-based modulation with 1.0 (no modulation)
+// based on effect_mix. During rest, effect_mix → 0, gain target → 1,
+// the smoother ramps gain to 1, signal passes through unchanged.
+target_gain_l = effect_mix * (lfo_l * sc + amount) + (1 - effect_mix);
+target_gain_r = effect_mix * (lfo_r * sc + amount) + (1 - effect_mix);
+gain_l = gain_l * smooth + target_gain_l * (1 - smooth);
+gain_r = gain_r * smooth + target_gain_r * (1 - smooth);
 
 spl0 *= gain_l;
 spl1 *= gain_r;
 
 // ===== PAN BLOCK SAMPLE LOGIC START =====
 pan_enabled ? (
+  // Per-cycle pan modes (0-8) advance pan_cycle_index on tremolo
+  // phase wraps. Since the tremolo phase advancement above is
+  // gated by !in_frozen_rest, cycle_fired never triggers during
+  // Freeze rest — pan_cycle_index naturally pauses without needing
+  // its own gate.
   cycle_fired  = (phase_l < last_phase_l);
   last_phase_l = phase_l;
 
@@ -301,41 +405,55 @@ pan_enabled ? (
     pan_l = cur_pan;
 
   ) : pan_mode == 9 ? (
-    // Pan Sweep
+    // Pan Sweep — gate phase advance for Freeze mode.
     pan_sweep_mode == 0 ? (pan_freq = pan_sweep_val) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(pan_sweep_val, 0.001)) :
                           (pan_freq = pan_sweep_val / 60);
-    pan_phase += pan_freq / srate;
-    pan_phase >= 1 ? pan_phase -= 1;
+    !in_frozen_rest ? (
+      pan_phase += pan_freq / srate;
+      pan_phase >= 1 ? pan_phase -= 1;
+    );
     cur_pan = (pan_phase * 2.0 - 1.0) * pan_spread;
     pan_l = cur_pan;
 
   ) : pan_mode == 10 ? (
-    // Pan Sweep Flipped
+    // Pan Sweep Flipped — gate phase advance for Freeze mode.
     pan_sweep_mode == 0 ? (pan_freq = pan_sweep_val) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(pan_sweep_val, 0.001)) :
                           (pan_freq = pan_sweep_val / 60);
-    pan_phase += pan_freq / srate;
-    pan_phase >= 1 ? pan_phase -= 1;
+    !in_frozen_rest ? (
+      pan_phase += pan_freq / srate;
+      pan_phase >= 1 ? pan_phase -= 1;
+    );
     cur_pan = (1.0 - pan_phase * 2.0) * pan_spread;
     pan_l = cur_pan;
 
   ) : (
-    // Linked Sweep
-    pan_phase += (freq * pan_sweep_ratio) / srate;
-    pan_phase >= 1 ? pan_phase -= 1;
+    // Linked Sweep — gate phase advance for Freeze mode.
+    !in_frozen_rest ? (
+      pan_phase += (freq * pan_sweep_ratio) / srate;
+      pan_phase >= 1 ? pan_phase -= 1;
+    );
     cur_pan = (pan_phase * 2.0 - 1.0) * pan_spread;
     pan_l = cur_pan;
   );
 
-  // Glide smoothing
+  // Glide smoothing — runs always, so pan_l_smooth still tracks
+  // pan_l targets even when phases are frozen (pan_l just stays
+  // constant in that case, smoother converges to it).
   pan_glide_coeff = pan_glide_ms > 0 ? exp(-1 / (srate * pan_glide_ms * 0.001)) : 0;
   pan_l_smooth = pan_l_smooth * pan_glide_coeff + pan_l * (1 - pan_glide_coeff);
 
+  // Apply the pan, then blend the panned output with the un-panned
+  // signal via effect_mix. During rest, effect_mix → 0 means the
+  // output is the un-panned (post-tremolo, but tremolo has also
+  // smoothed back to 1.0) signal — i.e., dry pass-through.
   pan_pos = (pan_l_smooth + 1.0) * 0.5;
   mono = (spl0 + spl1) * 0.5;
-  spl0 = mono * cos(pan_pos * $pi * 0.5);
-  spl1 = mono * sin(pan_pos * $pi * 0.5);
+  spl0_panned = mono * cos(pan_pos * $pi * 0.5);
+  spl1_panned = mono * sin(pan_pos * $pi * 0.5);
+  spl0 = spl0 * (1 - effect_mix) + spl0_panned * effect_mix;
+  spl1 = spl1 * (1 - effect_mix) + spl1_panned * effect_mix;
 );
 // ===== PAN BLOCK SAMPLE LOGIC END =====
 

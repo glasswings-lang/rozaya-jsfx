@@ -1450,6 +1450,29 @@ Speed of the pan sweep relative to the tremolo rate, for Linked Sweep mode only.
 
 Pass-through for N units after playback starts, then applies the tremolo + pan effect normally. Units match Rate Mode: BPM mode counts cycles of the tremolo Rate Value, Seconds is literal seconds, Hz mode counts cycles of Rate Value. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Phase counters and gain smoothing stay frozen during the delay so the tremolo begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
+### Play / Rest Gating (v2.1)
+
+**Play for (cycles)** `0–1000, default 0`
+**Rest for (cycles)** `0–1000, default 0`
+**Rest mode** `Walk through / Freeze in place, default Walk through`
+
+A cyclic gate over the tremolo + pan effect. The effect is applied normally for **Play for** cycles, then bypassed for **Rest for** cycles, then resumes — the pattern repeats forever. Useful for rhythmic on/off of the modulation: "tremolo for 4 bars, no tremolo for 4 bars, repeat."
+
+Cycle unit is the same as Start Delay: Rate Mode units measured against Rate Value. At the default Rate Value = 2 in Hz mode, "4 cycles" = 2 seconds.
+
+The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the plugin behaves as before; Rest mode has no effect when the gate is off.
+
+**Rest means bypass, not silence.** Unlike the synth plugins in the suite where rest = silent output, here "rest" means the dry signal passes through unchanged. Your track keeps playing during the rest period; you just don't hear the tremolo or pan modulation. Same behavior Start Delay uses on this plugin — silencing the input would mute whatever's upstream in the FX chain, which is rarely useful.
+
+**Click-free transitions.** When entering rest, the tremolo gain smoothly ramps back to 1.0 and the pan output blends back toward the un-panned dry signal — both using the same ~3 ms fade. On rest exit, the same fade brings the effect back in. The gate sounds like a soft swell rather than an abrupt switch.
+
+**Rest mode** picks one of two behaviors for what the LFOs do during rest:
+
+- **Walk through** (default): tremolo LFO and pan LFOs keep cycling during rest, just not applied to the signal. When the effect resumes, the LFOs are at new phase positions reflecting however much wall-clock time passed. The rhythmic cycle of the effect is continuously running even when you can't hear it — feels like a curtain being pulled aside on a continuously-running modulation.
+- **Freeze in place**: tremolo and pan LFO phases pause during rest, frozen at their values at rest entry. When the effect resumes, the LFOs pick up from the same phase. The rhythmic cycle pauses and resumes in lockstep with the gate — feels like the modulation itself is being paused and resumed.
+
+**Transport behavior**: conventional. Stop passes through dry; play re-initializes everything (LFO phases, rest state, cycle counter) and starts fresh in its play period from cycle 0.
+
 ---
 
 ## Usage Notes
