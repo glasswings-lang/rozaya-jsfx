@@ -375,6 +375,72 @@ function step_in_dir_no_wrap(cur_idx, dir) local(j, found) (
   found
 );
 
+function simulate_rest_duration_seconds(start_idx, num_steps)
+local(saved_dir, saved_bounce, sim_idx, total_sec, ran_out, next_idx, wrap_start) (
+  // Simulate exactly what Walk mode would do for the next num_steps
+  // handoffs starting from start_idx, summing each visited voice's
+  // "Next voice in" — returns the total wall-clock seconds. Used by
+  // Freeze mode at rest entry so its rest duration matches the Walk
+  // equivalent, instead of just being num_steps × the frozen voice's
+  // step duration (which only matches when all active voices share
+  // the same Next voice in).
+  //
+  // Mirrors the bounce_active / loop_enabled / bounce_is_repeat
+  // branches from the real handoff logic. Temporarily mutates
+  // seq_dir and bounce_count_total via step_in_dir_no_wrap calls
+  // and the bounce flips below; saved at the top and restored at
+  // the bottom so the actual sequencer state is untouched.
+  //
+  // If the simulated walk would hit a hard stop (Loop=Off bounce
+  // completed, or Loop=Off Up/Down past the pool edge), ran_out is
+  // set and the loop stops counting. The returned duration is the
+  // partial sum — meaning Freeze mode's rest will end earlier than
+  // num_steps × something in that case. That matches Walk mode's
+  // actual behavior (Walk hits seq_finished and the gate stops
+  // exiting rest), with the caveat that Freeze still cleanly resumes
+  // when its timer expires while Walk would just stay finished.
+  saved_dir = seq_dir;
+  saved_bounce = bounce_count_total;
+  sim_idx = start_idx;
+  total_sec = 0;
+  ran_out = 0;
+  loop(num_steps,
+    ran_out ? 0 : (
+      total_sec += v_step_seconds[sim_idx];
+      next_idx = step_in_dir_no_wrap(sim_idx, seq_dir);
+      next_idx < 0 ? (
+        bounce_active ? (
+          seq_dir = -seq_dir;
+          bounce_count_total += 1;
+          !loop_enabled && bounce_count_total >= 2 ? (
+            ran_out = 1;
+          ) : (
+            bounce_is_repeat ? (
+              next_idx = sim_idx;
+            ) : (
+              next_idx = step_in_dir_no_wrap(sim_idx, seq_dir);
+              next_idx < 0 ? ran_out = 1;
+            );
+            bounce_count_total >= 2 ? bounce_count_total = 0;
+          );
+        ) : (
+          loop_enabled ? (
+            wrap_start = seq_dir > 0 ? 0 : seq_length_eff - 1;
+            next_idx = next_active_voice(wrap_start, seq_dir);
+            next_idx < 0 ? ran_out = 1;
+          ) : (
+            ran_out = 1;
+          );
+        );
+      );
+      !ran_out ? sim_idx = next_idx;
+    );
+  );
+  seq_dir = saved_dir;
+  bounce_count_total = saved_bounce;
+  total_sec
+);
+
 function trigger_seq_voice(prev_idx) (
   // Fire whatever voice seq_index points to. Shared by three call
   // sites: the first-ever trigger (seq_started == 0 branch, passes
@@ -758,13 +824,17 @@ seq_started && !seq_finished ? (
           pr_step    = 0;
           // Freeze-mode rest entry: remember the voice that was
           // playing (for the trigger function's prev_idx when we
-          // resume), and compute the rest duration in samples
-          // based on the frozen voice's "Next voice in." The
-          // sequencer-advance gate higher up will keep seq_index
-          // pointing at the frozen voice for the entire rest.
+          // resume), and compute the rest duration in samples by
+          // simulating exactly what Walk mode would have done from
+          // this point — sum the next rest_for_steps voices' Next
+          // voice in durations. This makes the slider's wall-clock
+          // meaning consistent across Walk and Freeze even when
+          // voices have different per-step timings. The sequencer-
+          // advance gate higher up keeps seq_index pointing at the
+          // frozen voice for the entire rest.
           just_entered_rest && rest_mode == 1 ? (
             pr_frozen_prev_voice = prev_voice;
-            pr_rest_duration_samples = rest_for_steps * v_step_seconds[seq_index] * srate;
+            pr_rest_duration_samples = simulate_rest_duration_seconds(seq_index, rest_for_steps) * srate;
             pr_rest_elapsed = 0;
           );
         );
