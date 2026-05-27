@@ -1311,6 +1311,39 @@ Pan sweep speed relative to filter cycle, for Linked Sweep only.
 
 Pass-through for N seconds after playback starts, then applies the sweep-dwell filter + pan effect normally. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Sweep state and filter buffers stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
+### Play / Rest Gating (v2.1)
+
+**Play for (cycles)** `0–1000, default 0`
+**Rest for (cycles)** `0–1000, default 0`
+**LFO at rest** `Walk through / Freeze in place, default Walk through`
+**Output at rest** `Pass-through / Silence, default Pass-through`
+
+A cyclic gate over the filter + pan effect. The effect is applied normally for **Play for** cycles, then enters its rest period for **Rest for** cycles, then resumes — the pattern repeats forever.
+
+One "cycle" here is one full dwell pattern: **High Dwell + Fade Down + Low Dwell + Fade Up**. So with the default settings (4 + 1 + 6 + 1 = 12 sec/cycle), `Play for = 4` plays 48 seconds of the sweep before entering rest, and `Rest for = 2` rests for 24 seconds. Cycle counts at this plugin can produce long play / rest periods because the dwell pattern itself is long — adjust the dwell + fade sliders if you want shorter cycles.
+
+The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the plugin behaves as before; the two "at rest" sliders have no effect when the gate is off.
+
+**Click-free transitions.** The effect smoothly fades out on rest entry (and back in on exit) using the same ~3 ms smoother that handles the cutoff sweep. The filter coefficients and resonance state keep running through the rest period so the filter is "warm" and ready to re-engage cleanly.
+
+Two independent sliders shape what happens during rest:
+
+**LFO at rest** — what the dwell-pattern LFO and pan LFOs do during rest:
+
+- **Walk through** (default): LFOs keep cycling during rest. When the effect resumes, the dwell pattern has advanced to a different position — you might hear it resume mid-fade-down or mid-low-dwell rather than at the start of a fresh high dwell.
+- **Freeze in place**: LFO phases pause, frozen at their values at rest entry. When the effect resumes, the dwell pattern picks up from the same position. Useful when you want predictable phase relationships across multiple play/rest cycles.
+
+**Output at rest** — what the audio output does during rest:
+
+- **Pass-through** (default): dry signal passes through unchanged. Matches Start Delay's behavior.
+- **Silence**: wet+dry mix smooths to 0 over ~3 ms; the audio fades into silence rather than passing dry. Useful when you want the gate to act like a hard mute rather than a filter bypass.
+
+The two sliders are orthogonal — all four combinations work and produce distinct behavior.
+
+**Filter resonance state and cutoff smoother keep running across all four combinations.** Only the LFO phase advancement is frozen in Freeze — the actual filter math continues processing the input throughout rest. This avoids transients on rest exit, at the cost of the filter potentially having settled to a slightly different cutoff position than at rest entry.
+
+**Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
+
 ---
 
 ## Usage Notes

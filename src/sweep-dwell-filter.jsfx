@@ -33,6 +33,36 @@ slider20:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 // transport stop/start. 0 disables the delay.
 slider21:0<0,1000,0.001>Start Delay (seconds)
 
+// Per-cycle Play/Rest gate. Effect is applied normally for N
+// cycles, then enters its rest period for M cycles, then resumes
+// — repeats forever. One "cycle" is one full dwell pattern (High
+// Dwell + Fade Down + Low Dwell + Fade Up). So with the default
+// settings (4 + 1 + 6 + 1 = 12 sec/cycle), "Play for = 4" plays
+// 48 seconds of the sweep before entering rest. The LFO at rest /
+// Output at rest sliders below pick what happens during rest.
+// 0 in either slider disables the gate. Resets on every transport
+// stop/start.
+slider22:0<0,1000,1>Play for (cycles)
+slider23:0<0,1000,1>Rest for (cycles)
+
+// What the LFOs do during the rest period.
+//   Walk through (default) — filter dwell LFO and pan LFOs keep
+//     cycling during rest. When the effect resumes, the LFOs are
+//     at new positions reflecting wall-clock time passed.
+//   Freeze in place — LFO phases pause, frozen at their values at
+//     rest entry. When the effect resumes, the cutoff picks up
+//     from the same position. The dwell pattern pauses and
+//     resumes in lockstep with the gate.
+slider24:0<0,1,1{Walk through,Freeze in place}>LFO at rest
+
+// What the output does during the rest period.
+//   Pass-through (default) — dry signal passes through unchanged
+//     (matches Start Delay's behavior).
+//   Silence — wet+dry mix smooths to 0; audio fades into silence
+//     instead of passing dry. Useful when you want the gate to
+//     act like a hard mute rather than a filter bypass.
+slider25:0<0,1,1{Pass-through,Silence}>Output at rest
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -158,6 +188,19 @@ last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
+// Play/Rest gate state. Same per-cycle counter + effect_mix design
+// used in the other effect plugins. effect_mix smoothly transitions
+// between 1 (effect on) and 0 (rest target — either dry pass-through
+// or silence, picked by Output at rest).
+pr_resting        = 0;
+pr_cycle_progress = 0;
+play_for_cycles   = 0;
+rest_for_cycles   = 0;
+pr_enabled        = 0;
+rest_lfo_mode     = 0;
+rest_output_mode  = 0;
+effect_mix        = 1;
+
 
 @slider
 
@@ -194,6 +237,22 @@ slider_show(slider20, pan_enabled && pan_mode == 12);
 // ===== PAN BLOCK SLIDER READ END =====
 
 start_delay_sec = slider21;
+
+// Play/Rest gate: integer cycle counts. Both must be > 0 for the
+// gate to engage; 0 in either slider disables.
+play_for_cycles = slider22;
+rest_for_cycles = slider23;
+new_pr_enabled  = (play_for_cycles > 0 && rest_for_cycles > 0);
+// Defensive reset: if user disables the gate mid-rest, snap pr_resting
+// back to 0 and zero the progress counter. effect_mix will smoothly
+// ramp back to 1 via the @sample smoother.
+!new_pr_enabled && pr_resting ? (
+  pr_resting = 0;
+  pr_cycle_progress = 0;
+);
+pr_enabled       = new_pr_enabled;
+rest_lfo_mode    = slider24;
+rest_output_mode = slider25;
 
 
 @sample
@@ -238,16 +297,57 @@ pan_sweep_ratio = slider20;
 period = high_secs + fade_down_secs + low_secs + fade_up_secs;
 freq   = 1 / max(period, 0.00001);
 
-phase_l += freq / srate;
-phase_l >= 1 ? phase_l -= 1;
+// Smoother coefficient — used for cut_smooth below and effect_mix
+// just below that. Moved up so both can share the same value.
+smooth = exp(-1 / (srate * 0.003));
 
-slider12 == 0 ? (
-  phase_r += freq / srate;
-  phase_r >= 1 ? phase_r -= 1;
-) : (
-  phase_r = phase_l + phase_offset;
-  phase_r >= 1 ? phase_r -= 1;
-  phase_r < 0  ? phase_r += 1;
+// Play/Rest gate state machine. pr_cycle_progress accumulates
+// fractional cycles at the dwell-pattern frequency (1 / total
+// period); when it crosses the threshold for the current state,
+// pr_resting flips and the counter resets.
+pr_enabled ? (
+  pr_cycle_progress += freq / srate;
+  !pr_resting ? (
+    pr_cycle_progress >= play_for_cycles ? (
+      pr_resting = 1;
+      pr_cycle_progress = 0;
+    );
+  ) : (
+    pr_cycle_progress >= rest_for_cycles ? (
+      pr_resting = 0;
+      pr_cycle_progress = 0;
+    );
+  );
+);
+
+// LFO at rest = Freeze → in_frozen_rest gates phase_l/r and
+// pan_phase advancement during rest.
+in_frozen_rest = pr_enabled && pr_resting && rest_lfo_mode == 1;
+
+// effect_mix smoothly transitions between 1 (effect fully on) and
+// 0 (rest target) at rest boundaries. The rest target depends on
+// Output at rest: dry_l/r (pass-through) for Pass-through, 0
+// (silence) for Silence. Below, the play-mode wet/dry mix and the
+// rest target are interpolated by effect_mix to produce the final
+// spl0/spl1 — soft fade between effect-on and whichever rest
+// state was chosen.
+target_effect_mix = pr_enabled && pr_resting ? 0 : 1;
+effect_mix        = effect_mix * smooth + target_effect_mix * (1 - smooth);
+silence_mode      = (rest_output_mode == 1);
+
+// Advance dwell-pattern LFO phases unless Freeze rest is pinning them.
+!in_frozen_rest ? (
+  phase_l += freq / srate;
+  phase_l >= 1 ? phase_l -= 1;
+
+  slider12 == 0 ? (
+    phase_r += freq / srate;
+    phase_r >= 1 ? phase_r -= 1;
+  ) : (
+    phase_r = phase_l + phase_offset;
+    phase_r >= 1 ? phase_r -= 1;
+    phase_r < 0  ? phase_r += 1;
+  );
 );
 
 lfo_l = calc_lfo(phase_l, high_secs, low_secs, fade_down_secs, fade_up_secs, fade_down_shape, fade_up_shape);
@@ -259,7 +359,6 @@ target_freq_r = freq_lo + lfo_r * (freq_hi - freq_lo);
 cut_target_l = target_freq_l * 2 / srate;
 cut_target_r = target_freq_r * 2 / srate;
 
-smooth = exp(-1 / (srate * 0.003));
 cut_smooth_l = cut_smooth_l * smooth + cut_target_l * (1 - smooth);
 cut_smooth_r = cut_smooth_r * smooth + cut_target_r * (1 - smooth);
 
@@ -276,11 +375,24 @@ rn3  = rn3 + cut_smooth_r * (spl1 - rn3 + fb_r * (rn3 - rn4));
 rn4  = rn4 + cut_smooth_r * (rn3  - rn4);
 out_r = rn4;
 
-spl0 = dry * dry_l + wet * out_l;
-spl1 = dry * dry_r + wet * out_r;
+// Compute play-mode output (normal wet/dry mix), then blend with
+// the rest target via effect_mix. Rest target: dry_l/r for
+// Pass-through, 0 for Silence. Filter state (n3/n4/rn3/rn4) and
+// cut_smooth keep running through rest so the filter is "warm"
+// and re-engages cleanly on rest exit.
+play_spl0 = dry * dry_l + wet * out_l;
+play_spl1 = dry * dry_r + wet * out_r;
+rest_spl0 = silence_mode ? 0 : dry_l;
+rest_spl1 = silence_mode ? 0 : dry_r;
+spl0 = effect_mix * play_spl0 + (1 - effect_mix) * rest_spl0;
+spl1 = effect_mix * play_spl1 + (1 - effect_mix) * rest_spl1;
 
 // ===== PAN BLOCK SAMPLE LOGIC START =====
 pan_enabled ? (
+  // Per-cycle pan modes (0-9) advance pan_cycle_index on dwell LFO
+  // phase wraps. Since the dwell phase_l advancement above is
+  // gated by !in_frozen_rest, cycle_fired never triggers during
+  // Freeze rest — pan_cycle_index naturally pauses too.
   cycle_fired  = (phase_l < last_phase_l);
   last_phase_l = phase_l;
 
@@ -298,29 +410,35 @@ pan_enabled ? (
     pan_l = cur_pan;
 
   ) : pan_mode == 10 ? (
-    // Pan Sweep
+    // Pan Sweep — gate phase advance for Freeze mode.
     pan_sweep_mode == 0 ? (pan_freq = pan_sweep_val) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(pan_sweep_val, 0.001)) :
                           (pan_freq = pan_sweep_val / 60);
-    pan_phase += pan_freq / srate;
-    pan_phase >= 1 ? pan_phase -= 1;
+    !in_frozen_rest ? (
+      pan_phase += pan_freq / srate;
+      pan_phase >= 1 ? pan_phase -= 1;
+    );
     cur_pan = (pan_phase * 2.0 - 1.0) * pan_spread;
     pan_l = cur_pan;
 
   ) : pan_mode == 11 ? (
-    // Pan Sweep Flipped
+    // Pan Sweep Flipped — gate phase advance for Freeze mode.
     pan_sweep_mode == 0 ? (pan_freq = pan_sweep_val) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(pan_sweep_val, 0.001)) :
                           (pan_freq = pan_sweep_val / 60);
-    pan_phase += pan_freq / srate;
-    pan_phase >= 1 ? pan_phase -= 1;
+    !in_frozen_rest ? (
+      pan_phase += pan_freq / srate;
+      pan_phase >= 1 ? pan_phase -= 1;
+    );
     cur_pan = (1.0 - pan_phase * 2.0) * pan_spread;
     pan_l = cur_pan;
 
   ) : (
-    // Linked Sweep
-    pan_phase += (freq * pan_sweep_ratio) / srate;
-    pan_phase >= 1 ? pan_phase -= 1;
+    // Linked Sweep — gate phase advance for Freeze mode.
+    !in_frozen_rest ? (
+      pan_phase += (freq * pan_sweep_ratio) / srate;
+      pan_phase >= 1 ? pan_phase -= 1;
+    );
     cur_pan = (pan_phase * 2.0 - 1.0) * pan_spread;
     pan_l = cur_pan;
   );
@@ -328,10 +446,17 @@ pan_enabled ? (
   pan_glide_coeff = pan_glide_ms > 0 ? exp(-1 / (srate * pan_glide_ms * 0.001)) : 0;
   pan_l_smooth = pan_l_smooth * pan_glide_coeff + pan_l * (1 - pan_glide_coeff);
 
+  // Apply the pan, then blend with the un-panned signal via
+  // effect_mix. During rest, effect_mix → 0 means the output is
+  // whatever spl0 was BEFORE the pan block ran — which already
+  // reflects the rest target (dry pass-through OR silence)
+  // because the wet/dry blend above used effect_mix.
   pan_pos = (pan_l_smooth + 1.0) * 0.5;
   mono = (spl0 + spl1) * 0.5;
-  spl0 = mono * cos(pan_pos * $pi * 0.5);
-  spl1 = mono * sin(pan_pos * $pi * 0.5);
+  spl0_panned = mono * cos(pan_pos * $pi * 0.5);
+  spl1_panned = mono * sin(pan_pos * $pi * 0.5);
+  spl0 = spl0 * (1 - effect_mix) + spl0_panned * effect_mix;
+  spl1 = spl1 * (1 - effect_mix) + spl1_panned * effect_mix;
 );
 // ===== PAN BLOCK SAMPLE LOGIC END =====
 
