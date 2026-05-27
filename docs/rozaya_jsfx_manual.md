@@ -1127,12 +1127,13 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Click-free transitions.** Wet mix smoothly ramps to 0 on rest entry (and back up on exit) using the same ~3 ms smoother that handles the cutoff sweep. The filter coefficients and resonance state keep running through the rest period so the filter is "warm" and ready to re-engage cleanly — no transient when the effect comes back.
 
-**Rest mode** picks one of two behaviors for the LFOs:
+**Rest mode** picks one of three behaviors:
 
-- **Walk through** (default): filter sweep LFO and pan LFOs keep cycling during rest. When the effect resumes, the filter cutoff has swept to a different position — you hear the filter come back in at wherever the LFO landed.
-- **Freeze in place**: filter sweep LFO and pan LFO phases pause during rest, frozen at their values at rest entry. When the effect resumes, the cutoff is at the same position it left off at. The rhythmic sweep pauses and resumes in lockstep with the gate.
+- **Walk through** (default): filter sweep LFO and pan LFOs keep cycling during rest, dry signal passes through. When the effect resumes, the filter cutoff has swept to a different position — you hear the filter come back in at wherever the LFO landed.
+- **Freeze in place**: LFO phases pause during rest, dry signal still passes through. When the effect resumes, the cutoff is at the same position it left off at. The rhythmic sweep pauses and resumes in lockstep with the gate.
+- **Silence**: LFO phases pause AND the output is muted entirely. The wet+dry mix smooths to 0 over ~3 ms, so the audio fades into silence rather than passing dry. Useful when you want the gate to act like a hard mute rather than a filter bypass.
 
-**Filter resonance state and cutoff smoother keep running in both modes.** Only the LFO phase advancement is frozen in Freeze mode — the actual filter math continues processing the input throughout rest. This avoids transients on rest exit, at the cost of the filter potentially having settled to a slightly different cutoff position than it was at rest entry (because the smoother chases the frozen cutoff target). For long rests with a slow smoother time constant this matters little; for short rests the difference is imperceptible.
+**Filter resonance state and cutoff smoother keep running across all three modes.** Only the LFO phase advancement is frozen in Freeze and Silence — the actual filter math continues processing the input throughout rest. This avoids transients on rest exit, at the cost of the filter potentially having settled to a slightly different cutoff position than it was at rest entry (because the smoother chases the frozen cutoff target). For long rests with a slow smoother this matters little; for short rests the difference is imperceptible.
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
 
@@ -1491,10 +1492,11 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Click-free transitions.** When entering rest, the tremolo gain smoothly ramps back to 1.0 and the pan output blends back toward the un-panned dry signal — both using the same ~3 ms fade. On rest exit, the same fade brings the effect back in. The gate sounds like a soft swell rather than an abrupt switch.
 
-**Rest mode** picks one of two behaviors for what the LFOs do during rest:
+**Rest mode** picks one of three behaviors for what happens during rest:
 
-- **Walk through** (default): tremolo LFO and pan LFOs keep cycling during rest, just not applied to the signal. When the effect resumes, the LFOs are at new phase positions reflecting however much wall-clock time passed. The rhythmic cycle of the effect is continuously running even when you can't hear it — feels like a curtain being pulled aside on a continuously-running modulation.
-- **Freeze in place**: tremolo and pan LFO phases pause during rest, frozen at their values at rest entry. When the effect resumes, the LFOs pick up from the same phase. The rhythmic cycle pauses and resumes in lockstep with the gate — feels like the modulation itself is being paused and resumed.
+- **Walk through** (default): tremolo LFO and pan LFOs keep cycling during rest, dry signal passes through. When the effect resumes, the LFOs are at new phase positions reflecting wall-clock time passed. The rhythmic cycle keeps running even when you can't hear it — feels like a curtain being pulled aside on continuously-running modulation.
+- **Freeze in place**: LFO phases pause during rest, dry signal still passes through. When the effect resumes, the LFOs pick up from the same phase. The rhythmic cycle pauses and resumes in lockstep with the gate — feels like the modulation itself is being paused and resumed.
+- **Silence**: LFO phases pause AND the output is muted entirely. The tremolo gain smooths to 0 over ~3 ms, so the audio fades into silence rather than passing through. Useful when you want the gate to act like a hard mute rather than an effect bypass — e.g., for rhythmic drop-outs in an arrangement.
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything (LFO phases, rest state, cycle counter) and starts fresh in its play period from cycle 0.
 

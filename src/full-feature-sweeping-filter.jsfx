@@ -48,15 +48,18 @@ slider24:0<0,1000,0.001>Start Delay
 slider25:0<0,1000,1>Play for (cycles)
 slider26:0<0,1000,1>Rest for (cycles)
 
-// How the filter sweep and pan LFOs behave during the rest period.
-//   Walk through (default) — LFOs keep cycling during rest, just
-//     not applied to the signal. When the effect resumes, the
-//     filter cutoff has swept to a different position.
-//   Freeze in place — LFO phases pause during rest, frozen at
-//     their values at rest entry. When the effect resumes, the
-//     filter cutoff picks up from the same position. Pan LFOs
-//     pause the same way.
-slider27:0<0,1,1{Walk through,Freeze in place}>Rest mode
+// What the plugin does during the rest period.
+//   Walk through (default) — LFOs keep cycling during rest, dry
+//     signal passes through unchanged. When the effect resumes,
+//     the filter cutoff has swept to a different position.
+//   Freeze in place — LFO phases pause, dry signal still passes
+//     through. When the effect resumes, the cutoff picks up from
+//     the same position. Pan LFOs pause the same way.
+//   Silence — LFO phases pause AND the output is muted entirely
+//     (the wet+dry mix smooths to 0). The audio drops out during
+//     rest instead of passing dry. Useful when you want the gate
+//     to act like a hard mute rather than a filter bypass.
+slider27:0<0,2,1{Walk through,Freeze in place,Silence}>Rest mode
 
 in_pin:left input
 in_pin:right input
@@ -346,16 +349,21 @@ pr_enabled ? (
 );
 
 // in_frozen_rest gates LFO phase advancement (filter sweep LFO and
-// pan_phase) so Freeze mode pauses the modulation. Walk mode
-// leaves it false and LFOs keep cycling silently during rest.
-in_frozen_rest = pr_enabled && pr_resting && rest_mode == 1;
+// pan_phase) so Freeze AND Silence modes both pause the modulation
+// during rest. Walk mode leaves it false and LFOs keep cycling
+// silently.
+in_frozen_rest = pr_enabled && pr_resting && (rest_mode == 1 || rest_mode == 2);
 
 // effect_mix smoothly transitions between 1 (effect fully on) and
-// 0 (full dry pass-through) at rest boundaries. Used below to
-// scale the user's wet level toward 0 during rest, and (in the
-// pan block) to blend the panned output toward un-panned.
+// 0 (rest target) at rest boundaries. The rest target is whatever
+// the user wants during the silent period: dry_l (input passes
+// through unchanged) for Walk and Freeze, or 0 (full silence) for
+// Silence mode. Below, the play-mode wet/dry mix output and the
+// rest target are interpolated by effect_mix to produce the final
+// spl0/spl1 — soft fade between effect-on and the rest state.
 target_effect_mix = pr_enabled && pr_resting ? 0 : 1;
-effect_mix = effect_mix * smooth + target_effect_mix * (1 - smooth);
+effect_mix        = effect_mix * smooth + target_effect_mix * (1 - smooth);
+silence_mode      = (rest_mode == 2);
 
 // Advance filter sweep LFO phases unless Freeze rest is pinning them.
 !in_frozen_rest ? (
@@ -400,16 +408,18 @@ rn3  = rn3 + cut_smooth_r * (spl1 - rn3 + fb_r * (rn3 - rn4));
 rn4  = rn4 + cut_smooth_r * (rn3  - rn4);
 out_r = rn4;
 
-// Effective wet level scales the user's wet by effect_mix. During
-// rest, effect_mix → 0, so effective_wet → 0 and effective_dry → 1
-// — output becomes pure dry signal. The cut_smooth and filter state
-// (n3/n4/rn3/rn4) keep running through the filter math but their
-// output isn't mixed into the result, so the filter is "warm" and
-// ready to re-engage cleanly on rest exit.
-effective_wet = wet * effect_mix;
-effective_dry = 1 - effective_wet;
-spl0 = effective_dry * dry_l + effective_wet * out_l;
-spl1 = effective_dry * dry_r + effective_wet * out_r;
+// Compute the play-mode output (normal wet/dry mix), then blend
+// with the rest target via effect_mix. Rest target depends on
+// Rest mode: dry_l/r (pass-through) for Walk and Freeze, 0 for
+// Silence. The cut_smooth and filter state (n3/n4/rn3/rn4) keep
+// running through the filter math even during rest, so the filter
+// is "warm" and re-engages cleanly when the gate exits rest.
+play_spl0 = dry * dry_l + wet * out_l;
+play_spl1 = dry * dry_r + wet * out_r;
+rest_spl0 = silence_mode ? 0 : dry_l;
+rest_spl1 = silence_mode ? 0 : dry_r;
+spl0 = effect_mix * play_spl0 + (1 - effect_mix) * rest_spl0;
+spl1 = effect_mix * play_spl1 + (1 - effect_mix) * rest_spl1;
 
 // ===== PAN BLOCK SAMPLE LOGIC START =====
 pan_enabled ? (

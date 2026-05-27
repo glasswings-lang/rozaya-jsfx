@@ -46,17 +46,22 @@ slider19:0<0,1000,0.001>Start Delay
 slider20:0<0,1000,1>Play for (cycles)
 slider21:0<0,1000,1>Rest for (cycles)
 
-// How the tremolo and pan LFOs behave during the rest period.
-//   Walk through (default) — LFOs keep cycling during rest, just
-//     not applied to the signal. When the effect resumes, the LFOs
-//     are at new phase positions reflecting however much wall-clock
-//     time passed. The rhythmic cycle of the effect is continuously
-//     running even when you can't hear it.
-//   Freeze in place — tremolo and pan LFO phases pause during rest,
-//     frozen at their values at rest entry. When the effect resumes,
-//     the LFOs pick up from the same phase. The rhythmic cycle of
-//     the effect pauses and resumes in lockstep with the gate.
-slider22:0<0,1,1{Walk through,Freeze in place}>Rest mode
+// What the plugin does during the rest period.
+//   Walk through (default) — LFOs keep cycling during rest, dry
+//     signal passes through unchanged. When the effect resumes,
+//     the LFOs are at new phase positions reflecting wall-clock
+//     time passed. The rhythmic cycle keeps running silently.
+//   Freeze in place — LFO phases pause, dry signal still passes
+//     through. When the effect resumes, the LFOs pick up from the
+//     same phase. Both effect-on/off transitions are click-free
+//     via the same ~3 ms smoother used for the cutoff/gain ramps.
+//   Silence — LFO phases pause AND the output is muted entirely
+//     (gain target smooths to 0). The audio drops out during rest
+//     instead of passing dry. Useful when you want the gate to
+//     act like a hard mute rather than an effect bypass. The
+//     muting is smooth (no click) but goes all the way to silence,
+//     unlike Walk/Freeze which keep the dry track audible.
+slider22:0<0,2,1{Walk through,Freeze in place,Silence}>Rest mode
 
 @init
 phase_l = 0;
@@ -341,16 +346,22 @@ pr_enabled ? (
 smooth = exp(-1 / (srate * 0.003));
 
 // in_frozen_rest gates LFO phase advancement (tremolo phase_l/r
-// and pan_phase) so Freeze mode pauses the modulation. Walk mode
-// leaves it false and the LFOs keep cycling silently during rest.
-in_frozen_rest = pr_enabled && pr_resting && rest_mode == 1;
+// and pan_phase) so Freeze AND Silence modes both pause the
+// modulation during rest. Walk mode leaves it false and the LFOs
+// keep cycling silently.
+in_frozen_rest = pr_enabled && pr_resting && (rest_mode == 1 || rest_mode == 2);
 
 // effect_mix smoothly transitions between 1 (effect fully on) and
-// 0 (full dry pass-through) at rest boundaries. The tremolo gain
-// target and pan output both blend with their dry equivalents via
-// this mix — yields a soft fade between effect-on and bypass.
+// 0 (rest target) at rest boundaries. What the rest target IS
+// depends on Rest mode: 1.0 (unity gain = dry pass-through) for
+// Walk and Freeze, 0 (full silence) for Silence mode. The tremolo
+// gain target blends between LFO-driven gain and rest_gain_target
+// via effect_mix; pan output blends with the pre-pan signal
+// (which will already be 0 in Silence mode because gain_l has
+// smoothed to 0).
 target_effect_mix = pr_enabled && pr_resting ? 0 : 1;
-effect_mix = effect_mix * smooth + target_effect_mix * (1 - smooth);
+effect_mix        = effect_mix * smooth + target_effect_mix * (1 - smooth);
+rest_gain_target  = (rest_mode == 2) ? 0 : 1;
 
 // Advance tremolo phases unless Freeze rest is pinning them.
 !in_frozen_rest ? (
@@ -370,11 +381,12 @@ effect_mix = effect_mix * smooth + target_effect_mix * (1 - smooth);
 lfo_l = calc_lfo(phase_l, on_secs, att_secs, rel_secs, period, att_shape, rel_shape);
 lfo_r = calc_lfo(phase_r, on_secs, att_secs, rel_secs, period, att_shape, rel_shape);
 
-// Gain target blends LFO-based modulation with 1.0 (no modulation)
-// based on effect_mix. During rest, effect_mix → 0, gain target → 1,
-// the smoother ramps gain to 1, signal passes through unchanged.
-target_gain_l = effect_mix * (lfo_l * sc + amount) + (1 - effect_mix);
-target_gain_r = effect_mix * (lfo_r * sc + amount) + (1 - effect_mix);
+// Gain target blends LFO-based modulation with rest_gain_target
+// (1 for Walk/Freeze = dry pass-through, 0 for Silence = mute)
+// based on effect_mix. During rest, effect_mix → 0, gain target
+// → rest_gain_target, the smoother ramps gain there over ~3 ms.
+target_gain_l = effect_mix * (lfo_l * sc + amount) + (1 - effect_mix) * rest_gain_target;
+target_gain_r = effect_mix * (lfo_r * sc + amount) + (1 - effect_mix) * rest_gain_target;
 gain_l = gain_l * smooth + target_gain_l * (1 - smooth);
 gain_r = gain_r * smooth + target_gain_r * (1 - smooth);
 
