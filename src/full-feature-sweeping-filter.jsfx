@@ -48,18 +48,25 @@ slider24:0<0,1000,0.001>Start Delay
 slider25:0<0,1000,1>Play for (cycles)
 slider26:0<0,1000,1>Rest for (cycles)
 
-// What the plugin does during the rest period.
-//   Walk through (default) — LFOs keep cycling during rest, dry
-//     signal passes through unchanged. When the effect resumes,
-//     the filter cutoff has swept to a different position.
-//   Freeze in place — LFO phases pause, dry signal still passes
-//     through. When the effect resumes, the cutoff picks up from
-//     the same position. Pan LFOs pause the same way.
-//   Silence — LFO phases pause AND the output is muted entirely
-//     (the wet+dry mix smooths to 0). The audio drops out during
+// What the LFOs do during the rest period.
+//   Walk through (default) — filter sweep LFO and pan LFOs keep
+//     cycling during rest. When the effect resumes, the cutoff has
+//     swept to a different position.
+//   Freeze in place — LFO phases pause, frozen at their values at
+//     rest entry. When the effect resumes, the cutoff picks up
+//     from the same position. The rhythmic sweep pauses and
+//     resumes in lockstep with the gate.
+slider27:0<0,1,1{Walk through,Freeze in place}>Rest LFO
+
+// What the output does during the rest period.
+//   Pass-through (default) — dry signal passes through unchanged
+//     (matches Start Delay's behavior). Effect plugins normally
+//     don't silence their input.
+//   Silence — wet+dry mix smooths to 0; the audio drops out during
 //     rest instead of passing dry. Useful when you want the gate
 //     to act like a hard mute rather than a filter bypass.
-slider27:0<0,2,1{Walk through,Freeze in place,Silence}>Rest mode
+//     Combines cleanly with either Rest LFO setting.
+slider28:0<0,1,1{Pass-through,Silence}>Rest output
 
 in_pin:left input
 in_pin:right input
@@ -208,7 +215,8 @@ pr_cycle_progress = 0;
 play_for_cycles   = 0;
 rest_for_cycles   = 0;
 pr_enabled        = 0;
-rest_mode         = 0;
+rest_lfo_mode     = 0;
+rest_output_mode  = 0;
 effect_mix        = 1;
 
 
@@ -271,8 +279,9 @@ new_pr_enabled  = (play_for_cycles > 0 && rest_for_cycles > 0);
   pr_resting = 0;
   pr_cycle_progress = 0;
 );
-pr_enabled = new_pr_enabled;
-rest_mode  = slider27;
+pr_enabled       = new_pr_enabled;
+rest_lfo_mode    = slider27;
+rest_output_mode = slider28;
 
 
 @sample
@@ -349,21 +358,21 @@ pr_enabled ? (
 );
 
 // in_frozen_rest gates LFO phase advancement (filter sweep LFO and
-// pan_phase) so Freeze AND Silence modes both pause the modulation
-// during rest. Walk mode leaves it false and LFOs keep cycling
-// silently.
-in_frozen_rest = pr_enabled && pr_resting && (rest_mode == 1 || rest_mode == 2);
+// pan_phase) so Freeze pauses the modulation during rest. Walk
+// leaves it false. Independent of Rest output, so all four
+// LFO×output combinations work.
+in_frozen_rest = pr_enabled && pr_resting && rest_lfo_mode == 1;
 
 // effect_mix smoothly transitions between 1 (effect fully on) and
-// 0 (rest target) at rest boundaries. The rest target is whatever
-// the user wants during the silent period: dry_l (input passes
-// through unchanged) for Walk and Freeze, or 0 (full silence) for
-// Silence mode. Below, the play-mode wet/dry mix output and the
-// rest target are interpolated by effect_mix to produce the final
-// spl0/spl1 — soft fade between effect-on and the rest state.
+// 0 (rest target) at rest boundaries. The rest target depends on
+// Rest output: dry_l/r (pass-through) for Pass-through, 0 (full
+// silence) for Silence. Below, the play-mode wet/dry mix output
+// and the rest target are interpolated by effect_mix to produce
+// the final spl0/spl1 — soft fade between effect-on and the rest
+// state, regardless of which rest target was chosen.
 target_effect_mix = pr_enabled && pr_resting ? 0 : 1;
 effect_mix        = effect_mix * smooth + target_effect_mix * (1 - smooth);
-silence_mode      = (rest_mode == 2);
+silence_mode      = (rest_output_mode == 1);
 
 // Advance filter sweep LFO phases unless Freeze rest is pinning them.
 !in_frozen_rest ? (

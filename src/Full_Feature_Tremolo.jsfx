@@ -46,22 +46,28 @@ slider19:0<0,1000,0.001>Start Delay
 slider20:0<0,1000,1>Play for (cycles)
 slider21:0<0,1000,1>Rest for (cycles)
 
-// What the plugin does during the rest period.
-//   Walk through (default) — LFOs keep cycling during rest, dry
-//     signal passes through unchanged. When the effect resumes,
-//     the LFOs are at new phase positions reflecting wall-clock
-//     time passed. The rhythmic cycle keeps running silently.
-//   Freeze in place — LFO phases pause, dry signal still passes
-//     through. When the effect resumes, the LFOs pick up from the
-//     same phase. Both effect-on/off transitions are click-free
-//     via the same ~3 ms smoother used for the cutoff/gain ramps.
-//   Silence — LFO phases pause AND the output is muted entirely
-//     (gain target smooths to 0). The audio drops out during rest
-//     instead of passing dry. Useful when you want the gate to
-//     act like a hard mute rather than an effect bypass. The
-//     muting is smooth (no click) but goes all the way to silence,
-//     unlike Walk/Freeze which keep the dry track audible.
-slider22:0<0,2,1{Walk through,Freeze in place,Silence}>Rest mode
+// What the LFOs do during the rest period.
+//   Walk through (default) — tremolo + pan LFOs keep cycling
+//     during rest. When the effect resumes, the LFOs are at new
+//     phase positions reflecting wall-clock time passed. The
+//     rhythmic cycle keeps running silently.
+//   Freeze in place — LFO phases pause, frozen at their values at
+//     rest entry. When the effect resumes, the LFOs pick up from
+//     the same phase. The rhythmic cycle pauses and resumes in
+//     lockstep with the gate.
+slider22:0<0,1,1{Walk through,Freeze in place}>Rest LFO
+
+// What the output does during the rest period.
+//   Pass-through (default) — dry signal passes through unchanged.
+//     Effect plugins normally don't silence their input (silencing
+//     would mute the upstream track in the FX chain), so this
+//     matches Start Delay's pass-through-during-delay behavior.
+//   Silence — gain target smooths to 0; the audio drops out during
+//     rest instead of passing dry. Useful when you want the gate
+//     to act like a hard mute rather than an effect bypass — e.g.,
+//     for rhythmic drop-outs in an arrangement. Combines cleanly
+//     with either Rest LFO setting.
+slider23:0<0,1,1{Pass-through,Silence}>Rest output
 
 @init
 phase_l = 0;
@@ -209,7 +215,8 @@ pr_cycle_progress = 0;
 play_for_cycles   = 0;
 rest_for_cycles   = 0;
 pr_enabled        = 0;
-rest_mode         = 0;
+rest_lfo_mode     = 0;
+rest_output_mode  = 0;
 effect_mix        = 1;
 
 
@@ -267,8 +274,9 @@ new_pr_enabled  = (play_for_cycles > 0 && rest_for_cycles > 0);
   pr_resting = 0;
   pr_cycle_progress = 0;
 );
-pr_enabled = new_pr_enabled;
-rest_mode  = slider22;
+pr_enabled       = new_pr_enabled;
+rest_lfo_mode    = slider22;
+rest_output_mode = slider23;
 
 
 @sample
@@ -346,22 +354,21 @@ pr_enabled ? (
 smooth = exp(-1 / (srate * 0.003));
 
 // in_frozen_rest gates LFO phase advancement (tremolo phase_l/r
-// and pan_phase) so Freeze AND Silence modes both pause the
-// modulation during rest. Walk mode leaves it false and the LFOs
-// keep cycling silently.
-in_frozen_rest = pr_enabled && pr_resting && (rest_mode == 1 || rest_mode == 2);
+// and pan_phase) so Freeze pauses the modulation during rest. Walk
+// leaves it false and the LFOs keep cycling silently. Independent
+// of Rest output, so all four LFO×output combinations work.
+in_frozen_rest = pr_enabled && pr_resting && rest_lfo_mode == 1;
 
 // effect_mix smoothly transitions between 1 (effect fully on) and
-// 0 (rest target) at rest boundaries. What the rest target IS
-// depends on Rest mode: 1.0 (unity gain = dry pass-through) for
-// Walk and Freeze, 0 (full silence) for Silence mode. The tremolo
-// gain target blends between LFO-driven gain and rest_gain_target
-// via effect_mix; pan output blends with the pre-pan signal
-// (which will already be 0 in Silence mode because gain_l has
-// smoothed to 0).
+// 0 (rest target) at rest boundaries. The rest target depends on
+// Rest output: 1.0 (unity gain = dry pass-through) for Pass-through,
+// 0 (full silence) for Silence. The tremolo gain target blends
+// between LFO-driven gain and rest_gain_target via effect_mix;
+// pan output blends with the pre-pan signal (which will already
+// be 0 in Silence mode because gain_l has smoothed to 0).
 target_effect_mix = pr_enabled && pr_resting ? 0 : 1;
 effect_mix        = effect_mix * smooth + target_effect_mix * (1 - smooth);
-rest_gain_target  = (rest_mode == 2) ? 0 : 1;
+rest_gain_target  = (rest_output_mode == 1) ? 0 : 1;
 
 // Advance tremolo phases unless Freeze rest is pinning them.
 !in_frozen_rest ? (
