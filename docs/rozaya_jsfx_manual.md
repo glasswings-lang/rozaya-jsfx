@@ -492,6 +492,28 @@ Resonance of the post-filter. Higher slider values produce lower resonance â€
 
 Silent for N heartbeats after playback starts, then the full womb soundscape (heartbeat, breath, bloodflow) begins normally. Beats are counted at the Heartbeat BPM — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. All internal state (heartbeat cycle phase, breath state machine, bloodflow LFO, post-filter buffers) stays frozen during the delay so everything begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
+### Play / Rest Gating (v2.1) — independent per layer
+
+Each of the three layers has its own Play/Rest gate, so you can run e.g. continuous bloodflow + breathing under a heartbeat that pulses in patterns. Six sliders total — two per layer:
+
+**HB: Play for / Rest for (beats)** `0–1000, default 0`
+**Breath: Play for / Rest for (breaths)** `0–1000, default 0`
+**Bloodflow: Play for / Rest for (heartbeats)** `0–1000, default 0`
+
+Each gate engages only when BOTH of its sliders are > 0. Layers with disabled gates run continuously as before.
+
+**Heartbeat gate** — counts heartbeats at the Heartbeat BPM. Skips the next beat trigger when resting; the previously-fired S1/S2 envelopes finish naturally so the gate sounds like "drop a beat" rather than a hard cut. Same mechanism as the standalone Heartbeat Generator.
+
+**Breath gate** — counts breath cycles (one full inhale → top pause → exhale → bottom pause). At rest entry the state machine pauses on the bottom pause (which is silent anyway), so rest is just an extended bottom pause. A sample-counted timer (`Rest for × total breath duration`) decides when to exit rest and start a fresh inhale. Same as the standalone Breath Generator.
+
+**Bloodflow gate** — counts heartbeats (since bloodflow is phase-locked to the heartbeat cycle, "one bloodflow cycle" = "one heartbeat cycle"). Fades the bloodflow output to 0 via a smooth ~3 ms ramp on rest entry; filter state keeps running so the filter is "warm" and re-engages cleanly on rest exit. Note that bloodflow's gate uses its OWN beat counter independent of the Heartbeat gate's — you can have HB resting while Bloodflow is still in its play period, or vice versa.
+
+**Interactions worth knowing:**
+- HB and Bloodflow both tick on `hb_phase` wraps. So even if HB is gating beats out, `hb_phase` keeps advancing (no audible beats but the underlying clock runs) — Bloodflow's counter advances at the same rate as if HB were playing.
+- Breath uses its own state-machine clock, which is unrelated to Heartbeat BPM. Breath's timing is governed by the four phase-duration sliders.
+
+**Transport behavior**: conventional. Stop silences; play re-initializes all per-layer gate state and starts each gate fresh in its play period.
+
 ---
 
 ## Usage Notes

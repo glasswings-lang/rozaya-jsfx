@@ -62,6 +62,23 @@ slider40:1.5<0.5,8.0,0.1>Breath Post-filter Q
 // Re-arms on every transport stop/start. 0 disables the delay.
 slider41:0<0,1000,0.01>Start Delay (beats)
 
+// --- PLAY/REST GATES (per-layer, independent) ---
+// Each layer (Heartbeat, Breath, Bloodflow) has its own Play/Rest
+// gate so you can run e.g. continuous bloodflow + breathing under
+// a heartbeat that pulses in patterns of N beats with M rest. All
+// three gates work on the same model used by the standalone plugins
+// of each type: play N events, then rest M events' worth of time,
+// repeat. 0 in either slider of a layer disables that layer's gate.
+
+slider42:0<0,1000,1>HB: Play for (beats)
+slider43:0<0,1000,1>HB: Rest for (beats)
+
+slider44:0<0,1000,1>Breath: Play for (breaths)
+slider45:0<0,1000,1>Breath: Rest for (breaths)
+
+slider46:0<0,1000,1>Bloodflow: Play for (heartbeats)
+slider47:0<0,1000,1>Bloodflow: Rest for (heartbeats)
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -178,6 +195,47 @@ last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
+// --- Play/Rest state (per-layer, independent) ---
+// Heartbeat layer (mirrors standalone Heartbeat plugin's gate):
+//   pr_hb_beat counts beats elapsed in the current play (or rest)
+//   period. Init to 1 because the @init s1_active=1 pre-fire counts
+//   as beat 1 of the first play period. this_hb_has_beat carries
+//   "did THIS heartbeat get triggered?" from the s1 site to the
+//   s2 site so they stay paired.
+pr_hb_resting    = 0;
+pr_hb_beat       = 1;
+play_for_hb      = 0;
+rest_for_hb      = 0;
+pr_hb_enabled    = 0;
+this_hb_has_beat = 1;
+// Breath layer (mirrors standalone Breath plugin's gate):
+//   pr_br_breath counts completed breath cycles. pr_br_rest_elapsed
+//   counts samples spent in rest; when it reaches the threshold
+//   (rest_for_breaths * total_breath_samples), exit rest and force
+//   a fresh inhale.
+pr_br_resting            = 0;
+pr_br_breath             = 0;
+pr_br_rest_elapsed       = 0;
+pr_br_rest_duration_samples = 0;
+play_for_br              = 0;
+rest_for_br              = 0;
+pr_br_enabled            = 0;
+total_breath_samples     = 0;
+// Bloodflow layer (continuous LFO locked to heartbeat phase):
+//   pr_bf_beat counts heartbeats (uses hb_phase wraps as its tick).
+//   Gate fades bf_l/bf_r output to 0 via the bf_output_mix smoother
+//   — the bloodflow filter state keeps running so it's "warm" on
+//   rest exit and doesn't transient when un-muted.
+pr_bf_resting    = 0;
+pr_bf_beat       = 0;
+play_for_bf      = 0;
+rest_for_bf      = 0;
+pr_bf_enabled    = 0;
+bf_output_mix    = 1;
+// One-pole smoother coefficient (3 ms) shared by the bloodflow
+// output mix; matches the smoother used in the other plugins.
+pr_smooth = exp(-1 / (srate * 0.003));
+
 @slider
 // Heartbeat
 cycle_len_base = floor(srate * 60.0 / slider1);
@@ -257,6 +315,33 @@ bpf_q = 1.0 / slider40;
 // Start Delay: convert heartbeats to seconds at the current Heartbeat BPM.
 start_delay_sec = slider41 * 60 / max(slider1, 1);
 
+// Play/Rest reads. Each layer's gate engages iff both its sliders > 0.
+play_for_hb   = slider42;
+rest_for_hb   = slider43;
+pr_hb_enabled = (play_for_hb > 0 && rest_for_hb > 0);
+
+play_for_br      = slider44;
+rest_for_br      = slider45;
+new_pr_br_enabled = (play_for_br > 0 && rest_for_br > 0);
+// Total breath cycle duration in samples, used to time Breath's
+// freeze-style rest period. Recomputed whenever any phase duration
+// changes — affects the IN-PROGRESS rest period too (stretches/
+// compresses to match the new total), same as standalone Breath.
+total_breath_samples = inhale_len + top_len + exhale_len + bot_len;
+// Defensive reset: disabling Breath gate mid-rest snaps the state
+// machine back to inhale start so it doesn't stay stuck in state 3.
+!new_pr_br_enabled && pr_br_resting ? (
+  pr_br_resting    = 0;
+  breath_state     = 0;
+  breath_state_len = inhale_len;
+  breath_state_pos = 0;
+);
+pr_br_enabled = new_pr_br_enabled;
+
+play_for_bf   = slider46;
+rest_for_bf   = slider47;
+pr_bf_enabled = (play_for_bf > 0 && rest_for_bf > 0);
+
 @sample
 
 // Re-arm Start Delay on every transport stop/start, then gate the
@@ -308,9 +393,34 @@ cycle_len = max(cycle_len, floor(srate * 60.0 / 200.0));
 hb_phase += 1;
 hb_phase >= cycle_len ? (
   hb_phase = 0;
-  s1_active = 1; s1_env = 0.0; s1_attack_phase = 1;
+  // Per-beat Play/Rest gate (independent of Breath and Bloodflow).
+  // Advance pr_hb_beat at each phase wrap; on threshold, flip
+  // pr_hb_resting and reset. Then trigger s1 only when not resting.
+  // The bloodflow gate below uses the SAME phase wrap as its tick,
+  // so pr_bf_beat also advances here.
+  pr_hb_enabled ? (
+    pr_hb_beat >= (pr_hb_resting ? rest_for_hb : play_for_hb) ? (
+      pr_hb_resting = 1 - pr_hb_resting;
+      pr_hb_beat = 0;
+    );
+    pr_hb_beat += 1;
+  );
+  pr_bf_enabled ? (
+    pr_bf_beat >= (pr_bf_resting ? rest_for_bf : play_for_bf) ? (
+      pr_bf_resting = 1 - pr_bf_resting;
+      pr_bf_beat = 0;
+    );
+    pr_bf_beat += 1;
+  );
+  // Beat fires only if HB gate isn't gating this beat out. Carry
+  // the same decision to the s2 site below so S1 and S2 of a given
+  // beat always stay paired.
+  this_hb_has_beat = !pr_hb_enabled || !pr_hb_resting;
+  this_hb_has_beat ? (
+    s1_active = 1; s1_env = 0.0; s1_attack_phase = 1;
+  );
 );
-hb_phase == systole_samples ? (
+hb_phase == systole_samples && this_hb_has_beat ? (
   s2_active = 1; s2_env = 0.0; s2_attack_phase = 1;
 );
 
@@ -401,14 +511,51 @@ hb_delay_sign == 1 ? (
 hb_l *= slider3; hb_r *= slider3;
 
 // --- BREATH ---
+// State advance. The 3→0 transition (end of bottom pause, start of
+// new breath cycle) is special-cased so the Breath Play/Rest gate
+// can decide whether to actually start a new breath or stay silent
+// in state 3 for the rest period. Mirrors the standalone Breath
+// plugin's gate exactly.
 breath_state_pos += 1;
 breath_state_pos >= breath_state_len ? (
   breath_state_pos = 0;
-  breath_state = (breath_state + 1) % 4;
-  breath_state == 0 ? breath_state_len = inhale_len;
-  breath_state == 1 ? breath_state_len = top_len;
-  breath_state == 2 ? breath_state_len = exhale_len;
-  breath_state == 3 ? breath_state_len = bot_len;
+  breath_state == 3 ? (
+    // End of bottom pause — would normally start a new breath.
+    pr_br_enabled && !pr_br_resting ? (
+      pr_br_breath += 1;
+      pr_br_breath >= play_for_br ? (
+        pr_br_resting = 1;
+        pr_br_breath = 0;
+        pr_br_rest_elapsed = 0;
+      );
+    );
+    // Start a new breath only if not resting. If resting, stay in
+    // state 3 (already silent); the rest timer below will exit
+    // rest and force a fresh inhale when time elapses.
+    !pr_br_resting ? (
+      breath_state     = 0;
+      breath_state_len = inhale_len;
+    );
+  ) : (
+    breath_state = (breath_state + 1) % 4;
+    breath_state == 1 ? breath_state_len = top_len;
+    breath_state == 2 ? breath_state_len = exhale_len;
+    breath_state == 3 ? breath_state_len = bot_len;
+  );
+);
+
+// Breath rest timer (Freeze-style: state machine pauses on bottom
+// pause, sample counter measures the rest duration).
+pr_br_resting ? (
+  pr_br_rest_duration_samples = rest_for_br * total_breath_samples;
+  pr_br_rest_elapsed += 1;
+  pr_br_rest_elapsed >= pr_br_rest_duration_samples ? (
+    pr_br_resting    = 0;
+    pr_br_breath     = 0;
+    breath_state     = 0;
+    breath_state_len = inhale_len;
+    breath_state_pos = 0;
+  );
 );
 
 breath_phase_pos = breath_state_pos / max(breath_state_len - 1, 1);
@@ -490,6 +637,17 @@ bf_n4_r = bf_n4_r + bf_cut_r * (bf_n3_r - bf_n4_r);
 
 bf_l = bf_n4_l * slider29 * 4.0;
 bf_r = bf_n4_r * slider29 * 4.0;
+
+// Bloodflow Play/Rest gate. Counter (pr_bf_beat) advances on each
+// hb_phase wrap above; the gate state is set there too. Here we
+// just fade the output to 0 via bf_output_mix during rest so the
+// transition is click-free. The bloodflow filter state and LFO
+// keep running so the filter is "warm" and re-engages cleanly on
+// rest exit.
+target_bf_mix = pr_bf_enabled && pr_bf_resting ? 0 : 1;
+bf_output_mix = bf_output_mix * pr_smooth + target_bf_mix * (1 - pr_smooth);
+bf_l *= bf_output_mix;
+bf_r *= bf_output_mix;
 
 // --- SOLO LOGIC ---
 any_solo = (slider4 > 0) || (slider15 > 0) || (slider30 > 0);
