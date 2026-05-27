@@ -1115,28 +1115,27 @@ Pass-through for N units after playback starts, then applies the filter sweep + 
 
 **Play for (cycles)** `0–1000, default 0`
 **Rest for (cycles)** `0–1000, default 0`
-**Rest mode** `Walk through / Freeze in place, default Walk through`
+**LFO at rest** `Walk through / Freeze in place, default Walk through`
+**Output at rest** `Pass-through / Silence, default Pass-through`
 
-A cyclic gate over the filter sweep + pan effect. The effect is applied normally for **Play for** cycles, then bypassed for **Rest for** cycles, then resumes — the pattern repeats forever. Useful for rhythmic on/off of the filter: "filter sweep for 4 bars, dry for 4 bars, repeat."
+A cyclic gate over the filter sweep + pan effect. The effect is applied normally for **Play for** cycles, then enters its rest period for **Rest for** cycles, then resumes — the pattern repeats forever. Useful for rhythmic on/off of the filter: "filter sweep for 4 bars, dry for 4 bars, repeat."
 
 Cycle unit matches Start Delay: Rate Mode units measured against Rate Value.
 
-The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the plugin behaves as before; Rest mode has no effect when the gate is off.
+The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the plugin behaves as before; the LFO at rest / Output at rest sliders have no effect when the gate is off.
 
-**Rest means bypass, not silence.** Same convention as Start Delay on this plugin — during rest the dry signal passes through unchanged. The wet level is smoothly faded to 0 (effective wet = your Wet/Dry Mix slider × an internal rest fade), and the pan output blends back to the un-panned signal. Track keeps playing; you just don't hear the filter or pan modulation.
-
-**Click-free transitions.** Wet mix smoothly ramps to 0 on rest entry (and back up on exit) using the same ~3 ms smoother that handles the cutoff sweep. The filter coefficients and resonance state keep running through the rest period so the filter is "warm" and ready to re-engage cleanly — no transient when the effect comes back.
+**Click-free transitions.** The effect smoothly fades out on rest entry (and back in on exit) using the same ~3 ms smoother that handles the cutoff sweep. The filter coefficients and resonance state keep running through the rest period so the filter is "warm" and ready to re-engage cleanly — no transient when the effect comes back.
 
 Two independent sliders shape what happens during rest:
 
-**Rest LFO** — what the filter sweep + pan LFOs do during rest:
+**LFO at rest** — what the filter sweep + pan LFOs do during rest:
 
 - **Walk through** (default): LFOs keep cycling during rest. When the effect resumes, the filter cutoff has swept to a different position — you hear the filter come back in at wherever the LFO landed.
 - **Freeze in place**: LFO phases pause, frozen at their values at rest entry. When the effect resumes, the cutoff picks up from the same position. The rhythmic sweep pauses and resumes in lockstep with the gate.
 
-**Rest output** — what the audio output does during rest:
+**Output at rest** — what the audio output does during rest:
 
-- **Pass-through** (default): dry signal passes through unchanged. Matches Start Delay's behavior.
+- **Pass-through** (default): dry signal passes through unchanged. Matches Start Delay's behavior on this plugin — silencing the input would mute the upstream track in the FX chain.
 - **Silence**: wet+dry mix smooths to 0 over ~3 ms; the audio fades into silence rather than passing dry. Useful when you want the gate to act like a hard mute rather than a filter bypass.
 
 The two sliders are orthogonal — all four combinations work. Walk + Silence keeps the filter sweeping internally while the audio drops out; Freeze + Silence pauses everything; Walk + Pass-through and Freeze + Pass-through are the two "filter bypass" flavors.
@@ -1488,28 +1487,27 @@ Pass-through for N units after playback starts, then applies the tremolo + pan e
 
 **Play for (cycles)** `0–1000, default 0`
 **Rest for (cycles)** `0–1000, default 0`
-**Rest mode** `Walk through / Freeze in place, default Walk through`
+**LFO at rest** `Walk through / Freeze in place, default Walk through`
+**Output at rest** `Pass-through / Silence, default Pass-through`
 
-A cyclic gate over the tremolo + pan effect. The effect is applied normally for **Play for** cycles, then bypassed for **Rest for** cycles, then resumes — the pattern repeats forever. Useful for rhythmic on/off of the modulation: "tremolo for 4 bars, no tremolo for 4 bars, repeat."
+A cyclic gate over the tremolo + pan effect. The effect is applied normally for **Play for** cycles, then enters its rest period for **Rest for** cycles, then resumes — the pattern repeats forever. Useful for rhythmic on/off of the modulation: "tremolo for 4 bars, no tremolo for 4 bars, repeat."
 
 Cycle unit is the same as Start Delay: Rate Mode units measured against Rate Value. At the default Rate Value = 2 in Hz mode, "4 cycles" = 2 seconds.
 
-The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the plugin behaves as before; Rest mode has no effect when the gate is off.
+The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the plugin behaves as before; the LFO at rest / Output at rest sliders have no effect when the gate is off.
 
-**Rest means bypass, not silence.** Unlike the synth plugins in the suite where rest = silent output, here "rest" means the dry signal passes through unchanged. Your track keeps playing during the rest period; you just don't hear the tremolo or pan modulation. Same behavior Start Delay uses on this plugin — silencing the input would mute whatever's upstream in the FX chain, which is rarely useful.
-
-**Click-free transitions.** When entering rest, the tremolo gain smoothly ramps back to 1.0 and the pan output blends back toward the un-panned dry signal — both using the same ~3 ms fade. On rest exit, the same fade brings the effect back in. The gate sounds like a soft swell rather than an abrupt switch.
+**Click-free transitions.** When entering rest, the relevant target (dry pass-through or silence, depending on Output at rest) is smoothly faded toward over ~3 ms. On rest exit, the same fade brings the effect back in. The gate sounds like a soft swell rather than an abrupt switch.
 
 Two independent sliders shape what happens during rest:
 
-**Rest LFO** — what the tremolo + pan LFOs do during rest:
+**LFO at rest** — what the tremolo + pan LFOs do during rest:
 
 - **Walk through** (default): LFOs keep cycling during rest. When the effect resumes, the LFOs are at new phase positions reflecting wall-clock time passed. The rhythmic cycle keeps running even when you can't hear it.
 - **Freeze in place**: LFO phases pause during rest, frozen at their values at rest entry. When the effect resumes, the LFOs pick up from the same phase. The rhythmic cycle pauses and resumes in lockstep with the gate.
 
-**Rest output** — what the audio output does during rest:
+**Output at rest** — what the audio output does during rest:
 
-- **Pass-through** (default): dry signal passes through unchanged. Matches Start Delay's behavior — effect plugins normally don't silence their input.
+- **Pass-through** (default): dry signal passes through unchanged. Effect plugins normally don't silence their input — silencing would mute whatever's upstream in the FX chain. Matches Start Delay's pass-through-during-delay behavior on this plugin.
 - **Silence**: gain target smooths to 0 over ~3 ms; the audio fades into silence rather than passing dry. Useful when you want the gate to act like a hard mute rather than an effect bypass — e.g., for rhythmic drop-outs in an arrangement.
 
 The two sliders are orthogonal — all four combinations work and produce distinct behavior. Walk + Silence keeps the rhythm running internally while the audio drops out; Freeze + Silence pauses everything (audio AND rhythm); Walk + Pass-through and Freeze + Pass-through are the two "effect bypass" flavors.

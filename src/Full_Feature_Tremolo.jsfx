@@ -55,7 +55,7 @@ slider21:0<0,1000,1>Rest for (cycles)
 //     rest entry. When the effect resumes, the LFOs pick up from
 //     the same phase. The rhythmic cycle pauses and resumes in
 //     lockstep with the gate.
-slider22:0<0,1,1{Walk through,Freeze in place}>Rest LFO
+slider22:0<0,1,1{Walk through,Freeze in place}>LFO at rest
 
 // What the output does during the rest period.
 //   Pass-through (default) — dry signal passes through unchanged.
@@ -67,7 +67,7 @@ slider22:0<0,1,1{Walk through,Freeze in place}>Rest LFO
 //     to act like a hard mute rather than an effect bypass — e.g.,
 //     for rhythmic drop-outs in an arrangement. Combines cleanly
 //     with either Rest LFO setting.
-slider23:0<0,1,1{Pass-through,Silence}>Rest output
+slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 
 @init
 phase_l = 0;
