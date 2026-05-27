@@ -1111,6 +1111,31 @@ Speed of pan sweep relative to filter LFO rate, for Linked Sweep only.
 
 Pass-through for N units after playback starts, then applies the filter sweep + pan effect normally. Units match Rate Mode: BPM mode counts cycles of the LFO Rate Value, Seconds is literal seconds, Hz mode counts cycles of Rate Value. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Filter and LFO state stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
+### Play / Rest Gating (v2.1)
+
+**Play for (cycles)** `0–1000, default 0`
+**Rest for (cycles)** `0–1000, default 0`
+**Rest mode** `Walk through / Freeze in place, default Walk through`
+
+A cyclic gate over the filter sweep + pan effect. The effect is applied normally for **Play for** cycles, then bypassed for **Rest for** cycles, then resumes — the pattern repeats forever. Useful for rhythmic on/off of the filter: "filter sweep for 4 bars, dry for 4 bars, repeat."
+
+Cycle unit matches Start Delay: Rate Mode units measured against Rate Value.
+
+The feature is **disabled when either of Play for / Rest for is 0** (the default). With both at 0, the plugin behaves as before; Rest mode has no effect when the gate is off.
+
+**Rest means bypass, not silence.** Same convention as Start Delay on this plugin — during rest the dry signal passes through unchanged. The wet level is smoothly faded to 0 (effective wet = your Wet/Dry Mix slider × an internal rest fade), and the pan output blends back to the un-panned signal. Track keeps playing; you just don't hear the filter or pan modulation.
+
+**Click-free transitions.** Wet mix smoothly ramps to 0 on rest entry (and back up on exit) using the same ~3 ms smoother that handles the cutoff sweep. The filter coefficients and resonance state keep running through the rest period so the filter is "warm" and ready to re-engage cleanly — no transient when the effect comes back.
+
+**Rest mode** picks one of two behaviors for the LFOs:
+
+- **Walk through** (default): filter sweep LFO and pan LFOs keep cycling during rest. When the effect resumes, the filter cutoff has swept to a different position — you hear the filter come back in at wherever the LFO landed.
+- **Freeze in place**: filter sweep LFO and pan LFO phases pause during rest, frozen at their values at rest entry. When the effect resumes, the cutoff is at the same position it left off at. The rhythmic sweep pauses and resumes in lockstep with the gate.
+
+**Filter resonance state and cutoff smoother keep running in both modes.** Only the LFO phase advancement is frozen in Freeze mode — the actual filter math continues processing the input throughout rest. This avoids transients on rest exit, at the cost of the filter potentially having settled to a slightly different cutoff position than it was at rest entry (because the smoother chases the frozen cutoff target). For long rests with a slow smoother time constant this matters little; for short rests the difference is imperceptible.
+
+**Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
+
 ---
 
 ## Usage Notes
