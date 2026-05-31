@@ -178,6 +178,11 @@ slider67:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider68:0<0,60,0.1>Speed ramp duration (minutes)
 slider69:0<0,1,1{Off,On}>Speed ramp engage
 
+// Wobble slot: read a slowly-wandering multiplier from a shared
+// mailbox and apply it to the melody tempo (alongside Speed Ramp).
+// 0 = no wobble.
+slider70:0<0,16,1>Wobble slot (0 = no wobble)
+
 @init
 // Memory layout per voice (16 slots each — V0 starts at the
 // labelled base, voice i offsets by i; e.g., V3's osc_phase_l is
@@ -310,6 +315,9 @@ speed_ramp_engaged_last = 0;
 speed_scale_current     = 1.0;
 speed_scale_start       = 1.0;
 speed_ramp_t            = 0.0;
+
+// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
+WOBBLE_BASE = 100000;
 
 // One-pole exponential smoother coefficient for the envelope
 // output. Polyrhythm Phase uses this exact pattern: the raw
@@ -689,17 +697,24 @@ slider69 && !speed_ramp_engaged_last ? (
 speed_ramp_engaged_last = slider69;
 
 @sample
-// Advance speed ramp every sample, then scale dt by the resulting
-// multiplier so the sequencer + voice envelopes + pan all stretch
-// together. Note: dt is also used for state_elapsed (voice envelope
-// time), so scaling here keeps Attack %, Release %, Note duration
-// proportions intact across speed changes.
+// Advance speed ramp every sample, read wobble, scale dt by the
+// resulting combined multiplier so the sequencer + voice envelopes
+// + pan all stretch together. Note: dt is also used for
+// state_elapsed (voice envelope time), so scaling here keeps
+// Attack %, Release %, Note duration proportions intact across
+// speed changes.
 slider69 && slider68 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider68 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider67 - speed_scale_start) * speed_ramp_t;
 );
-dt = speed_scale_current / srate;
+wobble_mult = 1.0;
+slider70 > 0 ? (
+  raw_wobble = gmem[WOBBLE_BASE + slider70];
+  raw_wobble > 0 ? wobble_mult = raw_wobble;
+);
+combined_scale = speed_scale_current * wobble_mult;
+dt = combined_scale / srate;
 
 // Re-arm Start Delay on each transport stop/start.
 play_state > 0 && last_play_state == 0 ? (
@@ -900,10 +915,10 @@ seq_started && !seq_finished ? (
 // snap out of rest, leaving state inconsistent. With the guard we
 // just sit until the user presses stop/play to reset cleanly.
 pr_enabled && pr_resting && rest_mode == 1 && pr_rest_duration_samples > 0 ? (
-  // Scale rest accumulation by speed_scale_current so rest duration
-  // tracks the effective tempo set by the Speed Ramp (consistent with
+  // Scale rest accumulation by combined_scale so rest duration tracks
+  // the effective tempo set by Speed Ramp + Wobble (consistent with
   // how Walk-mode rest auto-tracks via the stretched dt).
-  pr_rest_elapsed += speed_scale_current;
+  pr_rest_elapsed += combined_scale;
   pr_rest_elapsed >= pr_rest_duration_samples ? (
     pr_resting = 0;
     pr_step = 1;
