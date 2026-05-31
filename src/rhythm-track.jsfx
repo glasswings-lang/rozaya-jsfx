@@ -37,6 +37,14 @@ slider14:0<0,1000,0.01>Start Delay (beats)
 slider15:0<0,1000,1>Play for (beats)
 slider16:0<0,1000,1>Rest for (beats)
 
+// Speed ramp: in-plugin slowdown/speedup. beat_phase advance is
+// scaled by speed_scale_current per sample (was 1/samples_per_beat,
+// now speed_scale_current/samples_per_beat). 0.5 = half speed (BPM
+// effectively halved without changing the slider), 2.0 = double.
+slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider18:0<0,60,0.1>Speed ramp duration (minutes)
+slider19:0<0,1,1{Off,On}>Speed ramp engage
+
 @init
 
 tick_buf_len = 65536;
@@ -87,6 +95,12 @@ pr_beat        = 0;
 play_for_beats = 0;
 rest_for_beats = 0;
 pr_enabled     = 0;
+
+// Speed ramp state.
+speed_ramp_engaged_last = 0;
+speed_scale_current     = 1.0;
+speed_scale_start       = 1.0;
+speed_ramp_t            = 0.0;
 
 nx = 1;
 i = 0;
@@ -258,6 +272,13 @@ play_for_beats = slider15;
 rest_for_beats = slider16;
 pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 
+// Speed ramp engage-edge.
+slider19 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider19;
+
 strong_len = render_tick(strong_buf, strong_hz, strong_gain, strong_decay, tone_q);
 weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_q);
 
@@ -269,6 +290,13 @@ loop(timesig,
 
 
 @sample
+
+// Advance speed ramp every sample, regardless of Start Delay.
+slider19 && slider18 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider18 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
+);
 
 // Re-arm Start Delay on each transport stop/start.
 play_state > 0 && last_play_state == 0 ? (
@@ -285,7 +313,7 @@ start_delay_elapsed < start_delay_sec ? (
   spl1 = 0;
 ) : (
 
-beat_phase += 1.0 / samples_per_beat;
+beat_phase += speed_scale_current / samples_per_beat;
 
 beat_phase >= 1.0 ? (
   beat_phase -= 1.0;

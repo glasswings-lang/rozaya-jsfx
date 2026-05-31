@@ -1735,6 +1735,16 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (beat phase back to 1.0 for the immediate downbeat, period counter, rest state) and starts fresh from beat 1.
 
+### Speed Ramp (new)
+
+In-plugin tempo morph over time, without automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+Engage = ramp advances from the current multiplier toward target over the duration. **0.5** halves effective tempo (120 BPM → 60), **2.0** doubles it. The Tempo slider stays where it is; the ramp is layered on top. Off → On captures the in-flight multiplier and starts a fresh ramp; On → Off freezes at the current position. Set target = 1.0 and re-engage to return to slider tempo.
+
+The accent grid and swing follow effective tempo automatically — the bar still feels right at any speed. Resets to 1.0 on every play press.
+
 ---
 
 ## Usage Notes
