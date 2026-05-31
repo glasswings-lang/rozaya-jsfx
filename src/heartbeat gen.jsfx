@@ -134,10 +134,12 @@ pr_enabled     = 0;
 // ~100 ms time constant — short enough to feel responsive on manual
 // tweaks, long enough to bury any per-sample discontinuity.
 // speed_scale_current is the multiplier applied AFTER smoothing, so
-// effective_bpm = bpm_smoothed * speed_scale_current.
+// effective_bpm = bpm_smoothed * speed_scale_current. Seeded from
+// the current BPM slider so the first beat after transport-start
+// isn't smoothed from a stale default.
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
-bpm_target               = 70.0;
-bpm_smoothed             = 70.0;
+bpm_target               = slider1;
+bpm_smoothed             = slider1;
 speed_ramp_engaged_last  = 0;
 speed_scale_current      = 1.0;
 speed_scale_start        = 1.0;

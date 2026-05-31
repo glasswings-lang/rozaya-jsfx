@@ -1607,6 +1607,20 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything (LFO phases, rest state, cycle counter) and starts fresh in its play period from cycle 0.
 
+### Speed Ramp (new)
+
+In-plugin tremolo-rate morph over time. Set a target multiplier, set a duration in minutes, flip engage on — the tremolo rate eases toward target without needing automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+The multiplier scales the effective tremolo frequency on top of the Rate slider. **0.5** = half tremolo rate (slower modulation cycle); **2.0** = double. Off → On captures the current multiplier and ramps fresh toward the target; On → Off freezes at the in-flight value. Set target = 1.0 and re-engage to return.
+
+A ~100 ms smoother also sits between the Rate slider and the effective frequency, so manual Rate tweaks no longer click. Always on.
+
+The ramp also scales the linked-sweep pan rate (Pan Mode 11), since that mode derives its rate from the tremolo frequency. Pan Sweep modes 9 and 10 have their own independent rate slider and are NOT scaled by the speed ramp — they stay at whatever Pan Sweep Rate is set to. (Same with Cycle Steps / Pan Glide; those are positional / smoothing controls, not rate.)
+
+Resets on every play press.
+
 ---
 
 ## Usage Notes
