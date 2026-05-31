@@ -79,6 +79,10 @@ slider29:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider30:0<0,60,0.1>Speed ramp duration (minutes)
 slider31:0<0,1,1{Off,On}>Speed ramp engage
 
+// Wobble slot: read a slowly-wandering multiplier from a shared
+// mailbox and apply it to the sweep rate. 0 = no wobble.
+slider32:0<0,16,1>Wobble slot (0 = no wobble)
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -242,6 +246,9 @@ speed_scale_current      = 1.0;
 speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
 
+// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
+WOBBLE_BASE = 100000;
+
 
 @slider
 
@@ -359,16 +366,21 @@ rate_mode == 0 ? (freq_raw = rate_val) :
 rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
                  (freq_raw = rate_val / 60);
 
-// Smooth the rate slider, advance the speed ramp, multiply to get
-// effective freq used downstream by the LFO phase advance and the
-// cycle counter.
+// Smooth the rate slider, advance the speed ramp, apply the wobble
+// (if a slot is assigned), multiply to get effective freq used
+// downstream by the LFO phase advance and the cycle counter.
 freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
 slider31 && slider30 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider30 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider29 - speed_scale_start) * speed_ramp_t;
 );
-freq = freq_smoothed * speed_scale_current;
+wobble_mult = 1.0;
+slider32 > 0 ? (
+  raw_wobble = gmem[WOBBLE_BASE + slider32];
+  raw_wobble > 0 ? wobble_mult = raw_wobble;
+);
+freq = freq_smoothed * speed_scale_current * wobble_mult;
 
 period   = 1 / max(freq, 0.00001);
 on_secs  = (dur_pct / 100.0) * period;
