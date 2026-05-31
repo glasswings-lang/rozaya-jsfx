@@ -35,6 +35,19 @@ slider14:0<0,1000,0.01>Start Delay (beats)
 slider15:0<0,1000,1>Play for (beats)
 slider16:0<0,1000,1>Rest for (beats)
 
+// Speed ramp: in-plugin slowdown/speedup over time. The audio rate
+// equals slider1 (BPM) multiplied by an internal speed_scale that
+// eases from its current value toward slider17 over slider18 minutes
+// when slider19 is On. Flipping slider19 Off freezes the ramp at its
+// current position (does not reset to 1.0); flipping it On again
+// captures the frozen position and ramps fresh toward slider17.
+// A small smoother (~100 ms) sits between slider1 and the audio so
+// manual BPM tweaks don't click either. Resets on every transport
+// stop/start, matching Start Delay + Play/Rest.
+slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider18:0<0,60,0.1>Speed ramp duration (minutes)
+slider19:0<0,1,1{Off,On}>Speed ramp engage
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -116,8 +129,34 @@ play_for_beats = 0;
 rest_for_beats = 0;
 pr_enabled     = 0;
 
+// Speed ramp + BPM smoother state.
+// rate_smoother_coeff eases bpm_smoothed toward bpm_target with a
+// ~100 ms time constant — short enough to feel responsive on manual
+// tweaks, long enough to bury any per-sample discontinuity.
+// speed_scale_current is the multiplier applied AFTER smoothing, so
+// effective_bpm = bpm_smoothed * speed_scale_current.
+rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
+bpm_target               = 70.0;
+bpm_smoothed             = 70.0;
+speed_ramp_engaged_last  = 0;
+speed_scale_current      = 1.0;
+speed_scale_start        = 1.0;
+speed_ramp_t             = 0.0;
+
 @slider
-cycle_len_base = floor(srate * 60.0 / slider1);
+// bpm_target feeds the per-sample smoother; cycle_len_base is now
+// recomputed each sample in @sample from the smoothed, speed-scaled
+// value, so we don't compute it here anymore.
+bpm_target = slider1;
+
+// Speed ramp engage-edge: capture the in-flight scale so a re-engage
+// starts a fresh ramp from wherever the previous one left off.
+slider19 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider19;
+
 systole_samples = floor(srate * slider2 * 0.001);
 s1_vol = slider3;
 s2_vol = slider4;
@@ -169,6 +208,19 @@ rest_for_beats = slider16;
 pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 
 @sample
+
+// Smooth BPM toward slider1's target and advance the speed ramp.
+// Both run regardless of Start Delay — slider movements made during
+// the silent pre-roll still settle by the time audio starts. Once
+// settled, cycle_len_base is the source of truth for beat cadence.
+bpm_smoothed += (bpm_target - bpm_smoothed) * rate_smoother_coeff;
+slider19 && slider18 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider18 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
+);
+effective_bpm  = max(bpm_smoothed * speed_scale_current, 20.0);
+cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // Re-arm Start Delay on every transport stop/start, then gate
 // the whole @sample work — phases stay frozen during the silent

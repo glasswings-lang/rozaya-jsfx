@@ -163,6 +163,25 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (cycle phase, period counter, resting state) and starts a fresh play period from beat 1.
 
+### Speed Ramp (new)
+
+In-plugin slowdown / speedup over time, designed for sleep use without needing automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0`
+The multiplier the ramp moves toward. **0.5** = half speed (BPM slider 70 → effective 35), **2.0** = double speed (70 → 140), **1.0** = no change. Always relative to the current BPM slider, so adjusting BPM mid-ramp scales the target accordingly.
+
+**Speed ramp duration (minutes)** `0–60, default 0`
+How long the ramp takes from start to target. **0** disables the ramp entirely — the multiplier stays wherever it currently is.
+
+**Speed ramp engage** `Off / On, default Off`
+Off = ramp is not advancing. On = ramp advances from its current position toward the target over the duration.
+
+**How it behaves.** Flipping engage Off → On captures the current multiplier as the ramp's starting point and begins easing toward the target over the duration. When it reaches the target it stays there until you change something. Flipping engage On → Off **freezes** the multiplier at its current position — it does NOT snap back to 1.0. To return to normal speed, set target = 1.0 and re-engage.
+
+A small ~100 ms smoother also sits between the BPM slider and the audio, so manual BPM tweaks no longer click. This is always on; you don't have to do anything to get it.
+
+**Transport behavior**: resets on stop/play just like Start Delay and Play/Rest. The multiplier returns to 1.0 and the ramp clock restarts on every play press. If you want the ramp to begin from a non-1.0 starting point on play, set the BPM slider to the value you want at start and use the multiplier to ramp away from 1.0; the multiplier's "1.0 = current BPM" anchor means the BPM slider IS your starting rate.
+
 ---
 
 ## Usage Notes
