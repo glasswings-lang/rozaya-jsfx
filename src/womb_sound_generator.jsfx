@@ -91,6 +91,12 @@ slider48:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider49:0<0,60,0.1>Speed ramp duration (minutes)
 slider50:0<0,1,1{Off,On}>Speed ramp engage
 
+// Wobble slot: read a slowly-wandering multiplier from a shared
+// mailbox and apply it to ALL THREE LAYERS together (heartbeat,
+// breath, bloodflow) — same scope as Speed Ramp, so the whole
+// womb wobbles as one organism. 0 = no wobble.
+slider51:0<0,16,1>Wobble slot (0 = no wobble)
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -258,6 +264,9 @@ speed_scale_current      = 1.0;
 speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
 
+// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
+WOBBLE_BASE = 100000;
+
 @slider
 // Heartbeat — bpm_target feeds the per-sample smoother; cycle_len_base
 // is recomputed per sample in @sample using the smoothed + speed-ramped
@@ -375,16 +384,23 @@ speed_ramp_engaged_last = slider50;
 
 @sample
 
-// Smooth BPM toward bpm_target and advance the speed ramp every
-// sample. effective_bpm drives cycle_len_base; the ramp also gates
-// breath_state_pos advancement below so breath stretches with HB.
+// Smooth BPM toward bpm_target, advance the speed ramp, then read
+// the wobble multiplier. The single combined_scale applies to all
+// three layers (HB BPM, breath state_pos, breath rest timer) so the
+// whole womb wobbles together as one organism.
 bpm_smoothed += (bpm_target - bpm_smoothed) * rate_smoother_coeff;
 slider50 && slider49 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider49 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider48 - speed_scale_start) * speed_ramp_t;
 );
-effective_bpm  = max(bpm_smoothed * speed_scale_current, 20.0);
+wobble_mult = 1.0;
+slider51 > 0 ? (
+  raw_wobble = gmem[WOBBLE_BASE + slider51];
+  raw_wobble > 0 ? wobble_mult = raw_wobble;
+);
+combined_scale = speed_scale_current * wobble_mult;
+effective_bpm  = max(bpm_smoothed * combined_scale, 20.0);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // Re-arm Start Delay on every transport stop/start, then gate the
@@ -558,10 +574,10 @@ hb_l *= slider3; hb_r *= slider3;
 // new breath cycle) is special-cased so the Breath Play/Rest gate
 // can decide whether to actually start a new breath or stay silent
 // in state 3 for the rest period. Mirrors the standalone Breath
-// plugin's gate exactly. Speed ramp: state_pos advances by
-// speed_scale_current per sample so breath stretches/compresses
-// in lockstep with the HB BPM ramp — the womb stays coherent.
-breath_state_pos += speed_scale_current;
+// plugin's gate exactly. state_pos advances by combined_scale per
+// sample (Speed Ramp × Wobble) so breath stretches/compresses in
+// lockstep with HB — the womb stays coherent.
+breath_state_pos += combined_scale;
 breath_state_pos >= breath_state_len ? (
   breath_state_pos = 0;
   breath_state == 3 ? (
@@ -593,9 +609,9 @@ breath_state_pos >= breath_state_len ? (
 // pause, sample counter measures the rest duration).
 pr_br_resting ? (
   pr_br_rest_duration_samples = rest_for_br * total_breath_samples;
-  // Scale rest accumulation by speed_scale_current so breath rest
-  // stretches in lockstep with the rest of the breath cycle.
-  pr_br_rest_elapsed += speed_scale_current;
+  // Scale rest accumulation by combined_scale so breath rest stretches
+  // in lockstep with the rest of the breath cycle (Speed Ramp + Wobble).
+  pr_br_rest_elapsed += combined_scale;
   pr_br_rest_elapsed >= pr_br_rest_duration_samples ? (
     pr_br_resting    = 0;
     pr_br_breath     = 0;
