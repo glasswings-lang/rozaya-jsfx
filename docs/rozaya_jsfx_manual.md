@@ -1204,6 +1204,18 @@ The two sliders are orthogonal — all four combinations work. Walk + Silence ke
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
 
+### Speed Ramp (new)
+
+In-plugin sweep-rate morph over time. Set a target multiplier, set a duration in minutes, flip engage on — the filter sweep eases toward target without needing automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+The multiplier scales the effective sweep frequency on top of the Rate slider. **0.5** = half sweep rate (slower cutoff movement); **2.0** = double. Off → On captures the current multiplier and ramps fresh; On → Off freezes at the in-flight value. Set target = 1.0 and re-engage to return.
+
+A ~100 ms smoother sits between the Rate slider and the audio so manual Rate tweaks no longer click.
+
+The ramp also scales the Linked Sweep pan mode (12), since that mode derives its rate from the sweep frequency. The two Pan Sweep modes (10, 11) have their own independent rate slider and are NOT scaled. Resets on every play press.
+
 ---
 
 ## Usage Notes

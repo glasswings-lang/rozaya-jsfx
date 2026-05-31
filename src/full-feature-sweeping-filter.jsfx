@@ -68,6 +68,17 @@ slider27:0<0,1,1{Walk through,Freeze in place}>LFO at rest
 //     Combines cleanly with either Rest LFO setting.
 slider28:0<0,1,1{Pass-through,Silence}>Output at rest
 
+// Speed ramp: in-plugin sweep-rate slowdown/speedup. The effective
+// sweep frequency = rate-slider-derived freq × speed_scale_current
+// per sample. 0.5 = half sweep rate (slower cutoff movement), 2.0 =
+// double. A ~100 ms smoother on freq removes clicks from manual Rate
+// adjustment too. Linked Sweep pan mode (12) scales with this since
+// it derives its rate from the sweep frequency; the two pan-sweep
+// modes (10, 11) have their own independent rate and are untouched.
+slider29:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider30:0<0,60,0.1>Speed ramp duration (minutes)
+slider31:0<0,1,1{Off,On}>Speed ramp engage
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -219,6 +230,18 @@ rest_lfo_mode     = 0;
 rest_output_mode  = 0;
 effect_mix        = 1;
 
+// Speed ramp + rate smoother state. Seeded from current slider values
+// in @init so the first sample after transport-start uses the saved
+// rate, not a default — same pattern as Tremolo.
+rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
+slider4 == 0 ? (freq_smoothed = slider3) :
+slider4 == 1 ? (freq_smoothed = 1 / max(slider3, 0.001)) :
+               (freq_smoothed = slider3 / 60);
+speed_ramp_engaged_last  = 0;
+speed_scale_current      = 1.0;
+speed_scale_start        = 1.0;
+speed_ramp_t             = 0.0;
+
 
 @slider
 
@@ -283,6 +306,13 @@ pr_enabled       = new_pr_enabled;
 rest_lfo_mode    = slider27;
 rest_output_mode = slider28;
 
+// Speed ramp engage-edge.
+slider31 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider31;
+
 
 @sample
 
@@ -325,9 +355,20 @@ pan_sweep_mode  = slider22;
 pan_sweep_ratio = slider23;
 // ===== PAN BLOCK SAMPLE READ END =====
 
-rate_mode == 0 ? (freq = rate_val) :
-rate_mode == 1 ? (freq = 1 / max(rate_val, 0.001)) :
-                 (freq = rate_val / 60);
+rate_mode == 0 ? (freq_raw = rate_val) :
+rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
+                 (freq_raw = rate_val / 60);
+
+// Smooth the rate slider, advance the speed ramp, multiply to get
+// effective freq used downstream by the LFO phase advance and the
+// cycle counter.
+freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
+slider31 && slider30 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider30 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider29 - speed_scale_start) * speed_ramp_t;
+);
+freq = freq_smoothed * speed_scale_current;
 
 period   = 1 / max(freq, 0.00001);
 on_secs  = (dur_pct / 100.0) * period;
