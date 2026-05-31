@@ -205,6 +205,11 @@ slider65:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider66:0<0,60,0.1>Speed ramp duration (minutes)
 slider67:0<0,1,1{Off,On}>Speed ramp engage
 
+// Wobble slot: read a slowly-wandering multiplier from a shared
+// mailbox and apply it polyrhythm-wide alongside Speed Ramp.
+// 0 = no wobble.
+slider68:0<0,16,1>Wobble slot (0 = no wobble)
+
 
 @init
 // Conventional Reaper behavior: @init runs on plugin load AND on every
@@ -284,6 +289,9 @@ speed_ramp_engaged_last = 0;
 speed_scale_current     = 1.0;
 speed_scale_start       = 1.0;
 speed_ramp_t            = 0.0;
+
+// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
+WOBBLE_BASE = 100000;
 
 function semitones_to_hz(base_note, center_octave, semitones) (
   tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
@@ -564,15 +572,22 @@ re_start = on_frac - rw_eff;
 
 @sample
 
-// Advance speed ramp every sample (runs through Start Delay too).
-// speed_scale_current multiplies every voice's tremolo + pan + cycle
-// counter advance below, so the whole polyrhythm stretches as one
-// piece — rate RELATIONSHIPS between voices stay intact.
+// Advance speed ramp every sample (runs through Start Delay too),
+// then layer the Wobble on top. combined_scale multiplies every
+// voice's tremolo + pan + cycle counter advance below, so the
+// whole polyrhythm stretches as one piece and rate RELATIONSHIPS
+// between voices stay intact regardless of whether Wobble is on.
 slider67 && slider66 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider66 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider65 - speed_scale_start) * speed_ramp_t;
 );
+wobble_mult = 1.0;
+slider68 > 0 ? (
+  raw_wobble = gmem[WOBBLE_BASE + slider68];
+  raw_wobble > 0 ? wobble_mult = raw_wobble;
+);
+combined_scale = speed_scale_current * wobble_mult;
 
 // Live phase offset update — fires when an offset slider is moved during
 // playback. Runs over n_voices so the reverse layer's slots 8-15 also
@@ -637,7 +652,7 @@ loop(n_voices,
     // of the loop. Counter advances regardless of v_resting state;
     // the threshold comparison just picks which target to check.
     pr_enabled ? (
-      v_pr_cycle[i] += v_trem_freq[i] * speed_scale_current / srate;
+      v_pr_cycle[i] += v_trem_freq[i] * combined_scale / srate;
       !v_resting[i] ? (
         v_pr_cycle[i] >= play_for_cycles ? (
           v_resting[i]  = 1;
@@ -667,10 +682,10 @@ loop(n_voices,
     !v_resting[i] ? (
       voice_reverse_time = (i < 8) ? slot0_7_reverse_time : slot8_15_reverse_time;
       voice_reverse_time ? (
-        trem_phase[i] -= v_trem_freq[i] * speed_scale_current / srate;
+        trem_phase[i] -= v_trem_freq[i] * combined_scale / srate;
         trem_phase[i] < 0 ? trem_phase[i] += 1;
       ) : (
-        trem_phase[i] += v_trem_freq[i] * speed_scale_current / srate;
+        trem_phase[i] += v_trem_freq[i] * combined_scale / srate;
         trem_phase[i] >= 1 ? trem_phase[i] -= 1;
       );
     );
@@ -868,7 +883,7 @@ loop(n_voices,
     pan_enabled ? (
       pan_mode < 2 ? (
         // Tremolo / Increment: oscillating LFO drives raw_pan
-        pan_phase[i] += v_pan_freq[i] * speed_scale_current / srate;
+        pan_phase[i] += v_pan_freq[i] * combined_scale / srate;
         pan_phase[i] >= 1 ? pan_phase[i] -= 1;
         raw_pan = sin(pan_phase[i] * 2 * $pi) * pan_spread;
       ) : (
