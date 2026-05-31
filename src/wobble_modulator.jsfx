@@ -1,0 +1,64 @@
+desc: Wobble Modulator
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Broadcasts a slowly-wandering multiplier into a shared "slot" so any
+// wobble-aware plugin in this Reaper session can read it and apply the
+// wander to its own rate. Drop this on any track, set Slot to 1, then
+// in any synth plugin set its "Wobble slot" slider to 1 — the synth is
+// now wobbling. Use multiple Wobble Modulator instances on different
+// slot numbers for independent wobbles on different plugins; use the
+// same slot number on multiple synths to make them wobble together.
+//
+// This plugin does not process audio; signal passes through unchanged.
+// Put it on whatever track is convenient — gmem is global so the
+// modulator doesn't have to share a track with the synth it's driving.
+//
+// gmem note: this plugin writes to gmem[100001..100016]. The high
+// offset is chosen to avoid collision with other JSFX plugins you may
+// have installed that also use gmem. If you ever see "wobble" behavior
+// where you didn't expect it, that's the only collision risk worth
+// being aware of, and it's unlikely.
+
+slider1:1<1,16,1>Slot
+slider2:0<0,1.0,0.01>Depth (0 = off)
+slider3:5<0.1,60,0.01>Period (minutes per full cycle)
+slider4:0<0,1,1{Sine,Triangle}>Shape
+
+@init
+// Base offset into gmem. All wobble-aware plugins read from
+// gmem[WOBBLE_BASE + slot]. DO NOT change this without updating
+// every wobble-aware plugin in the suite — they're hardcoded to
+// match.
+WOBBLE_BASE = 100000;
+wobble_phase = 0.0;
+
+@sample
+slot       = slider1;
+depth      = slider2;
+period_sec = slider3 * 60;
+shape      = slider4;
+
+// Advance phase. Wraps 0..1 over period_sec seconds.
+wobble_phase += 1.0 / (srate * period_sec);
+wobble_phase >= 1.0 ? wobble_phase -= 1.0;
+
+// Shape value in [-1, +1]. Sine and Triangle both peak at phase 0.25
+// and trough at 0.75, so swapping between them mid-session doesn't
+// jump the modulation discontinuously.
+shape_val = shape == 0 ? sin(wobble_phase * 2 * $pi) :
+            (wobble_phase < 0.25 ? wobble_phase * 4 :
+             wobble_phase < 0.75 ? 2 - wobble_phase * 4 :
+                                   wobble_phase * 4 - 4);
+
+// Multiplier centered on 1.0 — ±depth around no-change.
+// At depth=0 the multiplier is exactly 1.0, so a Modulator with
+// depth=0 produces no audible effect even when synths are listening.
+multiplier = 1.0 + depth * shape_val;
+
+// Broadcast to the shared mailbox.
+gmem[WOBBLE_BASE + slot] = multiplier;
+
+// spl0 and spl1 are left untouched — audio passes through unchanged.
