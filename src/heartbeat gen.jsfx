@@ -48,6 +48,12 @@ slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider18:0<0,60,0.1>Speed ramp duration (minutes)
 slider19:0<0,1,1{Off,On}>Speed ramp engage
 
+// Wobble slot: read a slowly-wandering multiplier from a shared
+// mailbox and apply it to the heartbeat rate. 0 = no wobble. Any
+// other value = read from that slot. Set a Wobble Modulator plugin
+// to the same slot number to drive the wobble.
+slider20:0<0,16,1>Wobble slot (0 = no wobble)
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -145,6 +151,11 @@ speed_scale_current      = 1.0;
 speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
 
+// Wobble: shared mailbox base in gmem. Hardcoded across all
+// wobble-aware plugins in the suite — must match wobble_modulator.jsfx
+// and every other synth's WOBBLE_BASE.
+WOBBLE_BASE = 100000;
+
 @slider
 // bpm_target feeds the per-sample smoother; cycle_len_base is now
 // recomputed each sample in @sample from the smoothed, speed-scaled
@@ -221,7 +232,17 @@ slider19 && slider18 > 0 ? (
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
 );
-effective_bpm  = max(bpm_smoothed * speed_scale_current, 20.0);
+// Read wobble multiplier from the mailbox if a slot is assigned.
+// Default to 1.0 (no wobble) if no slot, or if the mailbox is empty
+// (no Wobble Modulator currently writing to that slot — safety
+// against multiplying the rate by 0 and silencing the heartbeat).
+wobble_mult = 1.0;
+slider20 > 0 ? (
+  raw_wobble = gmem[WOBBLE_BASE + slider20];
+  raw_wobble > 0 ? wobble_mult = raw_wobble;
+);
+
+effective_bpm  = max(bpm_smoothed * speed_scale_current * wobble_mult, 20.0);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // Re-arm Start Delay on every transport stop/start, then gate
