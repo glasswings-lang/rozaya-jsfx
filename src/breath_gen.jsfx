@@ -35,6 +35,16 @@ slider14:0<0,1000,0.001>Start Delay (seconds)
 slider15:0<0,1000,1>Play for (breaths)
 slider16:0<0,1000,1>Rest for (breaths)
 
+// Speed ramp: in-plugin slowdown/speedup over time. The breath state
+// machine advances by speed_scale_current per audio sample (was +=1),
+// so 0.5 = half speed = breaths take twice as long; 2.0 = double speed
+// = breaths take half as long. Same multiplier applies to the rest
+// timer so the play/rest ratio is preserved. Engage edge captures the
+// current scale and ramps fresh toward slider17 over slider18 minutes.
+slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider18:0<0,60,0.1>Speed ramp duration (minutes)
+slider19:0<0,1,1{Off,On}>Speed ramp engage
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -123,6 +133,14 @@ rest_for_breaths    = 0;
 pr_enabled          = 0;
 total_breath_samples = 0;
 
+// Speed ramp state. state_pos and pr_rest_elapsed advance by
+// speed_scale_current each sample instead of 1, so the entire breath
+// timeline (states + rest period) scales together.
+speed_ramp_engaged_last = 0;
+speed_scale_current     = 1.0;
+speed_scale_start       = 1.0;
+speed_ramp_t            = 0.0;
+
 @slider
 inhale_len = max(floor(srate * slider1), 1);
 top_len    = max(floor(srate * slider2), 1);
@@ -169,7 +187,25 @@ new_pr_enabled = (play_for_breaths > 0 && rest_for_breaths > 0);
 );
 pr_enabled = new_pr_enabled;
 
+// Speed ramp engage-edge: capture in-flight scale so re-engaging
+// starts a fresh ramp from wherever the previous one left off.
+slider19 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider19;
+
 @sample
+
+// Advance the speed ramp continuously — runs through Start Delay
+// too, so a ramp engaged during pre-roll is partway in when audio
+// starts. Slider17/18/19 == 0 cases keep speed_scale_current at
+// whatever it last was (1.0 by default).
+slider19 && slider18 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider18 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
+);
 
 // Re-arm Start Delay on every transport stop/start, then gate
 // the whole @sample work — state machine stays frozen during the
@@ -190,7 +226,11 @@ start_delay_elapsed < start_delay_sec ? (
 // start of a new breath cycle) is special-cased so the Play/Rest
 // gate can decide whether to actually start a new breath or stay
 // silent in state 3 for the rest of the rest period.
-state_pos += 1;
+//
+// Speed ramp: increment by speed_scale_current instead of 1, so the
+// whole breath cycle stretches/compresses smoothly without changing
+// state_len (and therefore without recomputing filter coefficients).
+state_pos += speed_scale_current;
 state_pos >= state_len ? (
   state_pos = 0;
   breath_state == 3 ? (
@@ -233,7 +273,9 @@ state_pos >= state_len ? (
 // changes, so changing those mid-rest stretches/compresses the
 // remaining rest accordingly.
 pr_resting ? (
-  pr_rest_elapsed += 1;
+  // Rest timer also scales by speed_scale_current so the play/rest
+  // ratio stays consistent — slowing breath also lengthens rest.
+  pr_rest_elapsed += speed_scale_current;
   pr_rest_elapsed >= rest_for_breaths * total_breath_samples ? (
     pr_resting = 0;
     pr_breath = 0;

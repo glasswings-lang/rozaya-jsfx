@@ -306,6 +306,25 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (breath state, period counter, rest timer) and starts fresh from an inhale.
 
+### Speed Ramp (new)
+
+In-plugin slowdown / speedup over time. Lets you wind breaths down toward sleep tempo (or up toward waking) without needing automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0`
+The target multiplier. **0.5** = half speed, so a 4-second inhale becomes ~8 seconds; **2.0** = double speed (4s inhale → ~2s); **1.0** = no change. The multiplier applies to **all four phase durations and the rest period** so the cycle stretches/compresses as a whole — your Play/Rest ratio stays the same.
+
+**Speed ramp duration (minutes)** `0–60, default 0`
+How long the ramp takes from start to target. **0** disables the ramp.
+
+**Speed ramp engage** `Off / On, default Off`
+Off = ramp not advancing. On = ramp advances from its current position toward the target.
+
+**How it behaves.** Off → On captures the current multiplier as the starting point and ramps toward the target over the duration. On → Off freezes the multiplier at its current position — it does NOT snap back to 1.0. Set target = 1.0 and re-engage to return to normal speed.
+
+**Filter timbre is unchanged.** The speed ramp scales the state machine's *time*, not the filter coefficients — so a slow breath sounds exactly like a fast breath, just stretched. No re-tuning artifacts.
+
+**Transport behavior**: resets to 1.0 on every play press.
+
 ---
 
 ## Usage Notes
