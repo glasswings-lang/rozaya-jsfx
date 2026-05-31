@@ -160,6 +160,16 @@ slider62:0<0,1000,1>Rest for (cycles)
 // Freeze always resumes at the pre-rest position.
 slider63:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
+// Speed ramp: in-plugin slowdown/speedup over time. Scales the
+// glissando sweep rate by speed_scale_current per sample, applied
+// to BOTH the per-voice freq_mul and the Play/Rest cycle counter so
+// the cycle gate stays aligned with the actual sweep. The audible
+// pitch of any given oscillator is NOT scaled — only the rate of
+// the sweep. 0.5 = sweep takes twice as long; 2.0 = half the time.
+slider64:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider65:0<0,60,0.1>Speed ramp duration (minutes)
+slider66:0<0,1,1{Off,On}>Speed ramp engage
+
 
 @init
 PHI = 1.6180339887;
@@ -283,6 +293,12 @@ rest_for_cycles   = 0;
 pr_enabled        = 0;
 rest_mode         = 0;
 
+// Speed ramp state.
+speed_ramp_engaged_last = 0;
+speed_scale_current     = 1.0;
+speed_scale_start       = 1.0;
+speed_ramp_t            = 0.0;
+
 
 @slider
 
@@ -386,6 +402,13 @@ new_pr_enabled  = (play_for_cycles > 0 && rest_for_cycles > 0);
 pr_enabled = new_pr_enabled;
 rest_mode  = slider63;
 
+// Speed ramp engage-edge.
+slider66 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider66;
+
 
 @sample
 
@@ -396,6 +419,14 @@ play_state > 0 && last_play_state == 0 ? (
   start_delay_elapsed = 0;
 );
 last_play_state = play_state;
+
+// Advance speed ramp every sample (runs through start delay too —
+// engaging a ramp during pre-roll is partway in when audio starts).
+slider66 && slider65 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider65 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider64 - speed_scale_start) * speed_ramp_t;
+);
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
@@ -438,7 +469,7 @@ needs_init ? (
 // the gate timing matches what Start Delay would do at the same
 // Rate Value setting).
 pr_enabled ? (
-  pr_cycle_progress += base_rate_hz / srate;
+  pr_cycle_progress += base_rate_hz * speed_scale_current / srate;
   !pr_resting ? (
     pr_cycle_progress >= play_for_cycles ? (
       pr_resting = 1;
@@ -468,7 +499,7 @@ loop(8,
   v_active[i] ? (
     active_count += 1;
 
-    freq_mul = pow(2, shep_rate[i] / srate);
+    freq_mul = pow(2, shep_rate[i] * speed_scale_current / srate);
 
     // Cosine-law pan: negative = left, positive = right
     pan_pos = (v_pan[i] / 100.0 + 1.0) * 0.5; // 0=full left, 0.5=center, 1=full right

@@ -2048,6 +2048,16 @@ For short rests with slow sweep rates the difference between modes is subtle (sm
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (oscillator positions, rest state, cycle counter) and starts fresh in its play period from cycle 0.
 
+### Speed Ramp (new)
+
+In-plugin sweep-rate morph over time. Lets you slow the glissando illusion down (or speed it up) without touching automation.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+Scales the sweep rate on top of the Rate slider. **0.5** = sweep takes twice as long to complete; **2.0** = half the time. The audible pitch of any oscillator is NOT scaled — only the rate at which oscillators sweep through the pitch window. The Play/Rest cycle counter scales with the ramp too, so the cycle gate stays aligned with the actual sweep.
+
+Off → On captures the in-flight multiplier; On → Off freezes at the current position. Set target = 1.0 and re-engage to return. Resets on every play press.
+
 ---
 
 ## Usage Notes
