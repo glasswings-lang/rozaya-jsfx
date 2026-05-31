@@ -45,6 +45,11 @@ slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider18:0<0,60,0.1>Speed ramp duration (minutes)
 slider19:0<0,1,1{Off,On}>Speed ramp engage
 
+// Wobble slot: read a slowly-wandering multiplier from a shared
+// mailbox and apply it to the tempo. 0 = no wobble. Set a Wobble
+// Modulator plugin to the same slot number to drive it.
+slider20:0<0,16,1>Wobble slot (0 = no wobble)
+
 @init
 
 tick_buf_len = 65536;
@@ -101,6 +106,9 @@ speed_ramp_engaged_last = 0;
 speed_scale_current     = 1.0;
 speed_scale_start       = 1.0;
 speed_ramp_t            = 0.0;
+
+// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
+WOBBLE_BASE = 100000;
 
 nx = 1;
 i = 0;
@@ -298,6 +306,14 @@ slider19 && slider18 > 0 ? (
   speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
 );
 
+// Read wobble multiplier. 1.0 = no wobble (slot unassigned or empty).
+wobble_mult = 1.0;
+slider20 > 0 ? (
+  raw_wobble = gmem[WOBBLE_BASE + slider20];
+  raw_wobble > 0 ? wobble_mult = raw_wobble;
+);
+combined_scale = speed_scale_current * wobble_mult;
+
 // Re-arm Start Delay on each transport stop/start.
 play_state > 0 && last_play_state == 0 ? (
   start_delay_elapsed = 0;
@@ -313,7 +329,7 @@ start_delay_elapsed < start_delay_sec ? (
   spl1 = 0;
 ) : (
 
-beat_phase += speed_scale_current / samples_per_beat;
+beat_phase += combined_scale / samples_per_beat;
 
 beat_phase >= 1.0 ? (
   beat_phase -= 1.0;
