@@ -79,6 +79,18 @@ slider45:0<0,1000,1>Breath: Rest for (breaths)
 slider46:0<0,1000,1>Bloodflow: Play for (heartbeats)
 slider47:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 
+// Speed ramp: a single in-plugin slowdown/speedup that scales ALL
+// THREE layers together — heartbeat, breath, and bloodflow (which
+// is locked to heartbeat and follows automatically). Designed for
+// sleep wind-down: 0.5 over 15 minutes takes the whole womb down
+// to half tempo gradually. A ~100 ms smoother on BPM kills clicks
+// from manual BPM tweaks too. Speed_scale_current is shared by HB
+// (multiplies BPM) and breath (multiplies state_pos and rest timer
+// advance), so the three layers stay coherent at any speed.
+slider48:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider49:0<0,60,0.1>Speed ramp duration (minutes)
+slider50:0<0,1,1{Off,On}>Speed ramp engage
+
 @init
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -236,9 +248,21 @@ bf_output_mix    = 1;
 // output mix; matches the smoother used in the other plugins.
 pr_smooth = exp(-1 / (srate * 0.003));
 
+// Speed ramp + BPM smoother state. Seeded from slider1 so the first
+// heartbeat after transport-start uses the saved BPM, not a default.
+rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
+bpm_target               = slider1;
+bpm_smoothed             = slider1;
+speed_ramp_engaged_last  = 0;
+speed_scale_current      = 1.0;
+speed_scale_start        = 1.0;
+speed_ramp_t             = 0.0;
+
 @slider
-// Heartbeat
-cycle_len_base = floor(srate * 60.0 / slider1);
+// Heartbeat — bpm_target feeds the per-sample smoother; cycle_len_base
+// is recomputed per sample in @sample using the smoothed + speed-ramped
+// value, so we don't compute it from slider1 here anymore.
+bpm_target = slider1;
 systole_samples = floor(srate * slider5 * 0.001);
 s1_vol = slider6;
 s2_vol = slider7;
@@ -342,7 +366,26 @@ play_for_bf   = slider46;
 rest_for_bf   = slider47;
 pr_bf_enabled = (play_for_bf > 0 && rest_for_bf > 0);
 
+// Speed ramp engage-edge.
+slider50 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider50;
+
 @sample
+
+// Smooth BPM toward bpm_target and advance the speed ramp every
+// sample. effective_bpm drives cycle_len_base; the ramp also gates
+// breath_state_pos advancement below so breath stretches with HB.
+bpm_smoothed += (bpm_target - bpm_smoothed) * rate_smoother_coeff;
+slider50 && slider49 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider49 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider48 - speed_scale_start) * speed_ramp_t;
+);
+effective_bpm  = max(bpm_smoothed * speed_scale_current, 20.0);
+cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // Re-arm Start Delay on every transport stop/start, then gate the
 // whole @sample work — all internal state (heartbeat phase, breath
@@ -515,8 +558,10 @@ hb_l *= slider3; hb_r *= slider3;
 // new breath cycle) is special-cased so the Breath Play/Rest gate
 // can decide whether to actually start a new breath or stay silent
 // in state 3 for the rest period. Mirrors the standalone Breath
-// plugin's gate exactly.
-breath_state_pos += 1;
+// plugin's gate exactly. Speed ramp: state_pos advances by
+// speed_scale_current per sample so breath stretches/compresses
+// in lockstep with the HB BPM ramp — the womb stays coherent.
+breath_state_pos += speed_scale_current;
 breath_state_pos >= breath_state_len ? (
   breath_state_pos = 0;
   breath_state == 3 ? (
@@ -548,7 +593,9 @@ breath_state_pos >= breath_state_len ? (
 // pause, sample counter measures the rest duration).
 pr_br_resting ? (
   pr_br_rest_duration_samples = rest_for_br * total_breath_samples;
-  pr_br_rest_elapsed += 1;
+  // Scale rest accumulation by speed_scale_current so breath rest
+  // stretches in lockstep with the rest of the breath cycle.
+  pr_br_rest_elapsed += speed_scale_current;
   pr_br_rest_elapsed >= pr_br_rest_duration_samples ? (
     pr_br_resting    = 0;
     pr_br_breath     = 0;

@@ -552,6 +552,18 @@ Each gate engages only when BOTH of its sliders are > 0. Layers with disabled ga
 
 **Transport behavior**: conventional. Stop silences; play re-initializes all per-layer gate state and starts each gate fresh in its play period.
 
+### Speed Ramp (new)
+
+A single in-plugin slowdown / speedup that takes **all three layers down together** — heartbeat, breath, and bloodflow (locked to heartbeat). Designed for sleep use without needing automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+The multiplier scales the heartbeat BPM and the breath state machine's advance rate simultaneously. **0.5** = the whole womb at half tempo (HB drops from 70 → 35 BPM, breaths take twice as long, bloodflow follows HB as always); **2.0** = double. The HB Stereo Width delay is unaffected, so the spatial relationship between near/far heart sounds doesn't change as the speed ramps.
+
+Off → On captures the in-flight multiplier; On → Off freezes at the current position. Set target = 1.0 and re-engage to return. Resets on every play press.
+
+A ~100 ms smoother also sits between the BPM slider and the audio so manual BPM tweaks no longer click. Always on.
+
 ---
 
 ## Usage Notes
