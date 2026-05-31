@@ -73,6 +73,10 @@ slider26:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider27:0<0,60,0.1>Speed ramp duration (minutes)
 slider28:0<0,1,1{Off,On}>Speed ramp engage
 
+// Wobble slot: read a slowly-wandering multiplier from a shared
+// mailbox and apply it to the dwell-pattern rate. 0 = no wobble.
+slider29:0<0,16,1>Wobble slot (0 = no wobble)
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -217,6 +221,9 @@ speed_scale_current     = 1.0;
 speed_scale_start       = 1.0;
 speed_ramp_t            = 0.0;
 
+// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
+WOBBLE_BASE = 100000;
+
 
 @slider
 
@@ -322,13 +329,19 @@ freq   = 1 / max(period, 0.00001);
 
 // Advance speed ramp and scale freq by the resulting multiplier so
 // the whole dwell pattern stretches/compresses smoothly. The cut
-// smoother below absorbs any per-sample step change.
+// smoother below absorbs any per-sample step change. Wobble layers
+// on top, multiplying freq again when a slot is assigned.
 slider28 && slider27 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider27 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider26 - speed_scale_start) * speed_ramp_t;
 );
-freq = freq * speed_scale_current;
+wobble_mult = 1.0;
+slider29 > 0 ? (
+  raw_wobble = gmem[WOBBLE_BASE + slider29];
+  raw_wobble > 0 ? wobble_mult = raw_wobble;
+);
+freq = freq * speed_scale_current * wobble_mult;
 
 // Smoother coefficient — used for cut_smooth below and effect_mix
 // just below that. Moved up so both can share the same value.
