@@ -1079,9 +1079,28 @@ You can run **multiple Wobble Modulators at once**, each on a different Slot num
 
 ## About the mailbox
 
-Behind the scenes there are 16 numbered mailboxes that every JSFX plugin in your Reaper session can see at once. The Wobble Modulator writes its current wander value into the mailbox whose number matches its Slot setting. Any synth with its Wobble slot set to the same number reads from that mailbox. That's the entire connection — no plugin-to-plugin handshake, just a number sitting in a shared box that one plugin writes and another reads.
+Behind the scenes there are 16 numbered mailboxes that every JSFX plugin in your Reaper session can see at once. That's the whole mechanism, in plain English: mailbox #1, mailbox #2, ... mailbox #16. Any plugin can drop a number into any mailbox; any plugin can read what's currently in any mailbox.
 
-This means **the Wobble Modulator doesn't need to be on the same track as the synth it's driving**. You can put a Wobble Modulator on a dedicated utility track and have it drive synths on five other tracks simultaneously. It just needs to be running somewhere in the session.
+For the wobble system:
+
+- Every sample, the Wobble Modulator does the math for its current wander value (say "multiply by 1.05 right now") and writes `1.05` into whatever mailbox matches its **Slot** setting.
+- Every sample, the synth peeks into whatever mailbox matches *its* **Wobble slot** setting, reads whatever number is there, and multiplies its rate by it.
+
+That's the entire connection. There's no handshake, no subscription, no plugin-talks-to-plugin negotiation. The two plugins don't even know about each other. They're both just glancing at the same mailbox — one writing, one reading. If your Modulator is on Slot 1 and the synth is on Wobble slot 1, they're using the same mailbox, so they're connected. If they're on different numbers, they're on different mailboxes — disconnected, the synth just doesn't wobble.
+
+This is also why **the Wobble Modulator doesn't have to be on the same track as the synth it's driving**. The mailboxes are global to the Reaper session, not scoped to any track. You can put a Wobble Modulator on a dedicated utility track and have it drive synths on five other tracks at once. It just needs to be running somewhere in the session.
+
+### Why the slot numbers go up to 16 and not 100
+
+The mailboxes are technically shared with **every JSFX plugin you have installed**, including ones written by other people who use the same shared-memory system for their own purposes. If someone else's plugin happens to use mailbox #5 for something, and we also used #5 for our Slot 5, they'd stomp on each other.
+
+To dodge that, the suite uses mailboxes way out at high numbers (#100001 through #100016 internally) and exposes them as Slot 1 through 16 in the UI. Other people's plugins almost certainly don't reach that far, so we get our own neighborhood. The 16 Slots aren't a Reaper limit — they're a deliberate cap on how many independent wobbles we expect any one user to run at once.
+
+### Two things worth knowing about the mailboxes
+
+1. **The mailboxes start empty when Reaper opens.** Before any Wobble Modulator has written to one, that mailbox holds a 0. The synth side is written to treat 0 (or any negative number) as "no wobble, just leave the rate alone" — so if you set a synth's Wobble slot but forget to add a Modulator, the synth doesn't go silent. It just doesn't wobble.
+
+2. **The mailboxes are session-wide, not project-wide.** If you open a second project in the same Reaper window — or in a different one running off the same Reaper installation — they share the same mailboxes. Edge case, but worth knowing if you ever wonder why a wobble in one project seems to be affecting another.
 
 ## Sliders
 
