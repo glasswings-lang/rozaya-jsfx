@@ -79,6 +79,10 @@ slider24:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider25:0<0,60,0.1>Speed ramp duration (minutes)
 slider26:0<0,1,1{Off,On}>Speed ramp engage
 
+// Wobble slot: read a slowly-wandering multiplier from a shared
+// mailbox and apply it to the tremolo rate. 0 = no wobble.
+slider27:0<0,16,1>Wobble slot (0 = no wobble)
+
 @init
 phase_l = 0;
 phase_r = 0;
@@ -245,6 +249,9 @@ speed_scale_current      = 1.0;
 speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
 
+// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
+WOBBLE_BASE = 100000;
+
 
 @slider
 
@@ -358,15 +365,20 @@ rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
                  (freq_raw = rate_val / 60);
 
 // Smooth the rate slider so manual tweaks don't click, then advance
-// the speed ramp, then multiply for the effective tremolo frequency
-// used downstream.
+// the speed ramp, then multiply by the wobble (if a slot is assigned)
+// for the effective tremolo frequency used downstream.
 freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
 slider26 && slider25 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider25 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider24 - speed_scale_start) * speed_ramp_t;
 );
-freq = freq_smoothed * speed_scale_current;
+wobble_mult = 1.0;
+slider27 > 0 ? (
+  raw_wobble = gmem[WOBBLE_BASE + slider27];
+  raw_wobble > 0 ? wobble_mult = raw_wobble;
+);
+freq = freq_smoothed * speed_scale_current * wobble_mult;
 
 period   = 1 / max(freq, 0.00001);
 on_secs  = (dur_pct / 100.0) * period;
