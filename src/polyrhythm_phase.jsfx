@@ -192,6 +192,19 @@ slider62:0<0,1000,0.001>Start Delay
 slider63:0<0,1000,1>Play for (cycles)
 slider64:0<0,1000,1>Rest for (cycles)
 
+// Speed ramp: in-plugin slowdown/speedup over time. Scales every
+// voice's tremolo + pan + per-voice-cycle-counter advance by
+// speed_scale_current per sample, so the entire polyrhythm stretches
+// or compresses while preserving the rate RELATIONSHIPS between
+// voices. 0.5 = whole polyrhythm at half speed (every voice slows
+// proportionally — V1's 60 BPM and V2's 60.5 BPM both halve to 30
+// and 30.25 BPM, preserving the slow beat between them); 2.0 =
+// double. Tuning and binaural beat are unaffected — only the
+// modulation rates scale.
+slider65:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider66:0<0,60,0.1>Speed ramp duration (minutes)
+slider67:0<0,1,1{Off,On}>Speed ramp engage
+
 
 @init
 // Conventional Reaper behavior: @init runs on plugin load AND on every
@@ -265,6 +278,12 @@ start_delay_sec     = 0;
 // transport play (since @init re-runs on play).
 play_for_cycles = 0;
 rest_for_cycles = 0;
+
+// Speed ramp state.
+speed_ramp_engaged_last = 0;
+speed_scale_current     = 1.0;
+speed_scale_start       = 1.0;
+speed_ramp_t            = 0.0;
 
 function semitones_to_hz(base_note, center_octave, semitones) (
   tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
@@ -370,6 +389,13 @@ rate_mode == 1 ? start_delay_sec = start_delay_units :
 // loop in @sample; nothing global to compute here.
 play_for_cycles = slider63;
 rest_for_cycles = slider64;
+
+// Speed ramp engage-edge.
+slider67 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider67;
 
 // Reverse — permute (single layer, option 1): mirror the per-voice
 // drift/rate values V1↔V8, V2↔V7, V3↔V6, V4↔V5. Notes, gains, phase
@@ -538,6 +564,16 @@ re_start = on_frac - rw_eff;
 
 @sample
 
+// Advance speed ramp every sample (runs through Start Delay too).
+// speed_scale_current multiplies every voice's tremolo + pan + cycle
+// counter advance below, so the whole polyrhythm stretches as one
+// piece — rate RELATIONSHIPS between voices stay intact.
+slider67 && slider66 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider66 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider65 - speed_scale_start) * speed_ramp_t;
+);
+
 // Live phase offset update — fires when an offset slider is moved during
 // playback. Runs over n_voices so the reverse layer's slots 8-15 also
 // respond when v_phase_off there changes (entry into Both mode, toggle
@@ -601,7 +637,7 @@ loop(n_voices,
     // of the loop. Counter advances regardless of v_resting state;
     // the threshold comparison just picks which target to check.
     pr_enabled ? (
-      v_pr_cycle[i] += v_trem_freq[i] / srate;
+      v_pr_cycle[i] += v_trem_freq[i] * speed_scale_current / srate;
       !v_resting[i] ? (
         v_pr_cycle[i] >= play_for_cycles ? (
           v_resting[i]  = 1;
@@ -631,10 +667,10 @@ loop(n_voices,
     !v_resting[i] ? (
       voice_reverse_time = (i < 8) ? slot0_7_reverse_time : slot8_15_reverse_time;
       voice_reverse_time ? (
-        trem_phase[i] -= v_trem_freq[i] / srate;
+        trem_phase[i] -= v_trem_freq[i] * speed_scale_current / srate;
         trem_phase[i] < 0 ? trem_phase[i] += 1;
       ) : (
-        trem_phase[i] += v_trem_freq[i] / srate;
+        trem_phase[i] += v_trem_freq[i] * speed_scale_current / srate;
         trem_phase[i] >= 1 ? trem_phase[i] -= 1;
       );
     );
@@ -832,7 +868,7 @@ loop(n_voices,
     pan_enabled ? (
       pan_mode < 2 ? (
         // Tremolo / Increment: oscillating LFO drives raw_pan
-        pan_phase[i] += v_pan_freq[i] / srate;
+        pan_phase[i] += v_pan_freq[i] * speed_scale_current / srate;
         pan_phase[i] >= 1 ? pan_phase[i] -= 1;
         raw_pan = sin(pan_phase[i] * 2 * $pi) * pan_spread;
       ) : (

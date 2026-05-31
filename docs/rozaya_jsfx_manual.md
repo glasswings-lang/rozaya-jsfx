@@ -751,6 +751,16 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior** is conventional: pressing stop silences the plugin, pressing play re-initializes everything (voice phases, Start Delay counter, per-voice cycle counters, resting flags). Every play press starts a fresh play period from voice cycle 0. Same behavior as without the gate engaged.
 
+### Speed Ramp (new)
+
+In-plugin slowdown/speedup over time, designed for sleep / wind-down use without automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+Scales **every voice's tremolo + pan + cycle-counter advance** by a single multiplier, so the whole polyrhythm stretches or compresses while preserving the rate RELATIONSHIPS between voices. At 0.5, V1 at 60 BPM and V2 at 60.5 BPM both halve to 30 and 30.25 BPM — the slow beat between them slows proportionally too. **Tuning and binaural beat are unaffected** — only the modulation rates scale, not the audible pitch.
+
+Off → On captures the current multiplier and ramps fresh toward target; On → Off freezes at the in-flight position. Set target = 1.0 and re-engage to return to slider speed. Resets on every play press.
+
 ---
 
 ## Usage Notes
