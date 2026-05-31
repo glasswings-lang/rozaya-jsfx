@@ -1909,6 +1909,14 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Changing Rest mode mid-rest** is handled defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unexpectedly.
 
+### Speed Ramp (new)
+
+In-plugin tempo morph over time, without automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+Scales the scale's tempo on top of the BPM slider. **0.5** = notes take twice as long each (half tempo); **2.0** = notes fire twice as fast. Both halves of the Play/Rest gate scale together so the gate stays internally consistent at any speed. Off → On captures the in-flight multiplier; On → Off freezes at the current position. Resets on every play press.
+
 ---
 
 ## Usage Notes

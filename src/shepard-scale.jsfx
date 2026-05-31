@@ -133,6 +133,16 @@ slider50:0<0,1000,1>Rest for (beats)
 //     phrases.
 slider51:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
+// Speed ramp: in-plugin tempo morph over time. Scales seq_phase
+// advancement (and the Freeze-mode rest timer) by speed_scale_current
+// per sample, so the entire scale tempo stretches/compresses without
+// touching the BPM slider. 0.5 = half tempo, 2.0 = double. Play/Rest
+// timing stays internally consistent because both halves of the gate
+// scale together.
+slider52:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider53:0<0,60,0.1>Speed ramp duration (minutes)
+slider54:0<0,1,1{Off,On}>Speed ramp engage
+
 
 @init
 PHI = 1.6180339887;
@@ -292,6 +302,12 @@ rest_mode                = 0;
 pr_rest_elapsed          = 0;
 pr_rest_duration_samples = 0;
 
+// Speed ramp state.
+speed_ramp_engaged_last = 0;
+speed_scale_current     = 1.0;
+speed_scale_start       = 1.0;
+speed_ramp_t            = 0.0;
+
 
 @slider
 
@@ -353,6 +369,13 @@ rest_for_beats = slider50;
 pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 rest_mode      = slider51;
 
+// Speed ramp engage-edge.
+slider54 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider54;
+
 
 @sample
 
@@ -364,6 +387,13 @@ play_state > 0 && last_play_state == 0 ? (
   start_delay_elapsed = 0;
 );
 last_play_state = play_state;
+
+// Advance speed ramp every sample, regardless of Start Delay.
+slider54 && slider53 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider53 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider52 - speed_scale_start) * speed_ramp_t;
+);
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
@@ -379,9 +409,10 @@ needs_init ? (
 // Advance beat phase — unless we're in a Freeze-mode Play/Rest
 // pause, in which case the sequencer is paused on the would-be-next
 // note and seq_phase stays put until the rest timer (further down)
-// fires us back into the play period.
+// fires us back into the play period. seq_phase advance scales by
+// speed_scale_current so the entire scale tempo morphs with the ramp.
 in_frozen_rest = pr_enabled && pr_resting && rest_mode == 1;
-!in_frozen_rest ? seq_phase += beat_hz / srate;
+!in_frozen_rest ? seq_phase += beat_hz * speed_scale_current / srate;
 
 // On beat boundary: advance sequencer to next note
 seq_phase >= 1.0 ? (
@@ -446,7 +477,9 @@ seq_phase >= 1.0 ? (
 // set, the comparison would fire immediately and snap out of rest
 // with inconsistent state.
 pr_enabled && pr_resting && rest_mode == 1 && pr_rest_duration_samples > 0 ? (
-  pr_rest_elapsed += 1;
+  // Scale rest accumulation by speed_scale_current so the rest
+  // duration tracks the same effective tempo as the play period.
+  pr_rest_elapsed += speed_scale_current;
   pr_rest_elapsed >= pr_rest_duration_samples ? (
     pr_resting               = 0;
     pr_step                  = 1;
