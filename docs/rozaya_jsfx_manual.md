@@ -962,6 +962,16 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Changing Rest mode mid-rest** is an edge case the code handles defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unpredictably.
 
+### Speed Ramp (new)
+
+In-plugin melody-tempo morph over time, without automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+Scales the effective dt (time-per-sample) the sequencer + voice envelopes see. **0.5** = the whole melody plays at half tempo (notes twice as long, glide stretches with them); **2.0** = double tempo. The Rate Value slider and per-voice cycle counts stay where they are; the ramp morphs effective tempo on top.
+
+Voice envelope proportions (Attack %, Release %, Note duration) stay intact because they're percentages of the stretched step. Pan modulation also scales, so the whole melody timeline including pan motion morphs as one piece. Resets on every play press.
+
 ## Usage Notes
 
 **Building a melody.** Start with all 8 voices set Active, give each a different Semitones value (the default spec gives a rough C major arpeggio), keep "Next voice in" = "Note duration" = 1 cycle for a clean walk. Adjust "Next voice in" per voice for rhythmic variation, "Note duration" for phrasing.
