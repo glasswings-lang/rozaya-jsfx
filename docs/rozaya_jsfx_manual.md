@@ -1416,6 +1416,16 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
 
+### Speed Ramp (new)
+
+In-plugin sweep-pattern slowdown/speedup over time, without automation envelopes.
+
+**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+
+The multiplier scales the whole dwell pattern's frequency. **0.5** = the entire pattern (high dwell + fade down + low dwell + fade up) takes twice as long; **2.0** = half the time. All four timing sliders stay where they are; the ramp is layered on top. Off → On captures the in-flight multiplier; On → Off freezes at the current position.
+
+The existing ~3 ms cutoff smoother handles any per-sample step change cleanly, so manual dwell-slider tweaks are already click-free. Resets on every play press.
+
 ---
 
 ## Usage Notes
