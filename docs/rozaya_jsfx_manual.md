@@ -16,6 +16,9 @@
 - [Polyrhythm Phase](#polyrhythm-phase)
 - [Melody Phase](#melody-phase)
 
+**Modulators**
+- [Wobble Modulator](#wobble-modulator)
+
 **Effects**
 - [Resonant Sweeping Filter](#full-feature-sweeping-filter)
 - [Sweep Dwell Filter](#sweep-dwell-filter)
@@ -182,6 +185,11 @@ A small ~100 ms smoother also sits between the BPM slider and the audio, so manu
 
 **Transport behavior**: resets on stop/play just like Start Delay and Play/Rest. The multiplier returns to 1.0 and the ramp clock restarts on every play press. If you want the ramp to begin from a non-1.0 starting point on play, set the BPM slider to the value you want at start and use the multiplier to ramp away from 1.0; the multiplier's "1.0 = current BPM" anchor means the BPM slider IS your starting rate.
 
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern broadcast by a [Wobble Modulator](#wobble-modulator) plugin running elsewhere in the session. **0** (the default) = no wobble. Any other value reads from that numbered mailbox and applies the wobble multiplier to BPM in real time, alongside whatever the Speed Ramp is doing. Set this to the same number as a Wobble Modulator's Slot to connect them — the heartbeat now drifts up and down organically around its target rate.
+
 ---
 
 ## Usage Notes
@@ -324,6 +332,11 @@ Off = ramp not advancing. On = ramp advances from its current position toward th
 **Filter timbre is unchanged.** The speed ramp scales the state machine's *time*, not the filter coefficients — so a slow breath sounds exactly like a fast breath, just stretched. No re-tuning artifacts.
 
 **Transport behavior**: resets to 1.0 on every play press.
+
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the breath cycle rate, on top of whatever Speed Ramp is doing. Set this to the same number as the Modulator's Slot to connect them — breathing now drifts gently in length cycle to cycle.
 
 ---
 
@@ -564,6 +577,11 @@ Off → On captures the in-flight multiplier; On → Off freezes at the current 
 
 A ~100 ms smoother also sits between the BPM slider and the audio so manual BPM tweaks no longer click. Always on.
 
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to **all three layers together** — heartbeat, breath, and bloodflow — so the womb wanders as a coherent organism. Set this to the same number as the Modulator's Slot to connect them. This is the layer that makes Womb feel like something alive instead of a recording on loop.
+
 ---
 
 ## Usage Notes
@@ -772,6 +790,11 @@ In-plugin slowdown/speedup over time, designed for sleep / wind-down use without
 Scales **every voice's tremolo + pan + cycle-counter advance** by a single multiplier, so the whole polyrhythm stretches or compresses while preserving the rate RELATIONSHIPS between voices. At 0.5, V1 at 60 BPM and V2 at 60.5 BPM both halve to 30 and 30.25 BPM — the slow beat between them slows proportionally too. **Tuning and binaural beat are unaffected** — only the modulation rates scale, not the audible pitch.
 
 Off → On captures the current multiplier and ramps fresh toward target; On → Off freezes at the in-flight position. Set target = 1.0 and re-engage to return to slider speed. Resets on every play press.
+
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier polyrhythm-wide — every voice's tremolo speeds up and slows down in step, preserving the rate relationships between voices while the underlying pulse breathes. Sits on top of whatever Speed Ramp is doing.
 
 ---
 
@@ -994,6 +1017,11 @@ Scales the effective dt (time-per-sample) the sequencer + voice envelopes see. *
 
 Voice envelope proportions (Attack %, Release %, Note duration) stay intact because they're percentages of the stretched step. Pan modulation also scales, so the whole melody timeline including pan motion morphs as one piece. Resets on every play press.
 
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the melody's effective tempo on top of Speed Ramp — sequencer, voice envelopes, and pan motion all stretch together, like an unforced live player rather than a metronomic loop.
+
 ## Usage Notes
 
 **Building a melody.** Start with all 8 voices set Active, give each a different Semitones value (the default spec gives a rough C major arpeggio), keep "Next voice in" = "Note duration" = 1 cycle for a clean walk. Adjust "Next voice in" per voice for rhythmic variation, "Note duration" for phrasing.
@@ -1019,6 +1047,66 @@ Voice envelope proportions (Attack %, Release %, Note duration) stay intact beca
 ---
 
 *Melody Phase is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic)*
+
+
+---
+
+# Wobble Modulator
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+---
+
+## Overview
+
+The Wobble Modulator is a small utility plugin that adds a slow, organic wobble to the rate of any other plugin in the suite. It doesn't make sound on its own — it broadcasts a wandering multiplier value into a shared "mailbox," and any other plugin you've set up to listen will read from that mailbox and apply the wobble to its own rate.
+
+The reason this exists: a metronome at a fixed BPM, a heartbeat at a fixed BPM, a breath at a fixed cycle length — these can all feel mechanical over a long stretch. A real heart speeds up and slows down a bit; real breathing does too. Wobble Modulator lets you add that "it's alive" texture to anything in the suite that has a rate.
+
+## How it works (the patching workflow)
+
+Once you understand this, the rest of the section is just slider descriptions.
+
+1. Put a Wobble Modulator plugin on any track in your project. (It doesn't have to be the same track as the plugin you want to wobble — see "About the mailbox" below for why.)
+2. On the Wobble Modulator, set **Slot** to 1.
+3. Open the synth plugin you want to wobble (say Womb, or Breath, or any other). Find its **Wobble slot** slider and set it to 1.
+4. The synth is now wobbling.
+
+That's the whole workflow. You set a number on the Modulator, you set the same number on the synth, they're connected. To stop the wobble, set the synth's Wobble slot back to 0.
+
+You can run **multiple Wobble Modulators at once**, each on a different Slot number, driving different synths with different wobble shapes. Or run multiple synths on the same Slot — they'll wobble together in lockstep.
+
+## About the mailbox
+
+Behind the scenes there are 16 numbered mailboxes that every JSFX plugin in your Reaper session can see at once. The Wobble Modulator writes its current wander value into the mailbox whose number matches its Slot setting. Any synth with its Wobble slot set to the same number reads from that mailbox. That's the entire connection — no plugin-to-plugin handshake, just a number sitting in a shared box that one plugin writes and another reads.
+
+This means **the Wobble Modulator doesn't need to be on the same track as the synth it's driving**. You can put a Wobble Modulator on a dedicated utility track and have it drive synths on five other tracks simultaneously. It just needs to be running somewhere in the session.
+
+## Sliders
+
+**Slot** `1–16, default 1`
+Which mailbox this Modulator writes to. Set the listening synth's "Wobble slot" slider to the same number to connect them. Two different Modulator instances should use different Slot numbers, or they'll overwrite each other.
+
+**Depth** `0–1.0, default 0`
+How wide the wobble is, as a multiplier amplitude. At **0** (the default) the Modulator writes a no-op value and effectively does nothing — useful as an off-switch. At **0.15** the synth's rate wanders between 85% and 115% of its slider value. At **0.5** the rate halves and doubles. For gentle organic feel, 0.05–0.2 is the natural range.
+
+**Period (minutes per full cycle)** `0.1–60, default 5`
+How long one full wobble cycle takes. **5** (the default) = one slow up-and-down every 5 minutes — suits sleep. **1** = one cycle per minute. **0.1** = six seconds per cycle, getting into tremolo territory. For long-form ambient and sleep audio, 2–15 minutes is the sweet spot.
+
+**Shape** `Sine / Triangle, default Sine`
+What the wobble pattern looks like. **Sine** is smoothly rounded; **Triangle** is similar but with linear rises and a defined peak/trough corner. Either works for organic wobble. Sine is the safer default.
+
+## Usage notes
+
+- **The Wobble Modulator processes no audio.** Drop it on any track without worrying about it changing the sound on that track. Putting it on an empty utility track is a clean way to keep your modulators organized separately from your synth tracks.
+- **Set Depth to 0 to "mute" the wobble without unloading the plugin.** Useful if you want to A/B with and without wobble while keeping all your settings.
+- **Transport behavior.** Each time you press play, the wobble phase restarts from the same point. This keeps the entry consistent across multiple play presses.
+- **Mailbox lifetime.** The mailbox values live for as long as Reaper is open. If you remove a Wobble Modulator without replacing it, the last value it wrote stays in the mailbox until something else writes there or you close Reaper — which means any synth still listening to that slot will keep wobble-at-rest at whatever value happened to be there at removal. To fully disengage, set the listening synth's **Wobble slot** back to 0. Restarting Reaper also clears all mailboxes.
+
+---
+
+*Wobble Modulator is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
 
 
@@ -1248,6 +1336,11 @@ A ~100 ms smoother sits between the Rate slider and the audio so manual Rate twe
 
 The ramp also scales the Linked Sweep pan mode (12), since that mode derives its rate from the sweep frequency. The two Pan Sweep modes (10, 11) have their own independent rate slider and are NOT scaled. Resets on every play press.
 
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the sweep rate on top of Speed Ramp — the cutoff still moves through the same Low and High frequencies, but the pace breathes instead of locking to one rate.
+
 ---
 
 ## Usage Notes
@@ -1457,6 +1550,11 @@ In-plugin sweep-pattern slowdown/speedup over time, without automation envelopes
 The multiplier scales the whole dwell pattern's frequency. **0.5** = the entire pattern (high dwell + fade down + low dwell + fade up) takes twice as long; **2.0** = half the time. All four timing sliders stay where they are; the ramp is layered on top. Off → On captures the in-flight multiplier; On → Off freezes at the current position.
 
 The existing ~3 ms cutoff smoother handles any per-sample step change cleanly, so manual dwell-slider tweaks are already click-free. Resets on every play press.
+
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the dwell pattern's overall pace on top of Speed Ramp — high dwells become a little longer or shorter as the wobble drifts, instead of being identical every cycle.
 
 ---
 
@@ -1675,6 +1773,11 @@ The ramp also scales the linked-sweep pan rate (Pan Mode 11), since that mode de
 
 Resets on every play press.
 
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the tremolo rate on top of Speed Ramp — useful when you want the modulation pulse to feel breathing rather than metronomic.
+
 ---
 
 ## Usage Notes
@@ -1813,6 +1916,11 @@ Engage = ramp advances from the current multiplier toward target over the durati
 
 The accent grid and swing follow effective tempo automatically — the bar still feels right at any speed. Resets to 1.0 on every play press.
 
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the tempo on top of Speed Ramp, giving the metronome a slightly human-feeling drift rather than a perfectly fixed click.
+
 ---
 
 ## Usage Notes
@@ -1948,6 +2056,11 @@ In-plugin tempo morph over time, without automation envelopes.
 **Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
 
 Scales the scale's tempo on top of the BPM slider. **0.5** = notes take twice as long each (half tempo); **2.0** = notes fire twice as fast. Both halves of the Play/Rest gate scale together so the gate stays internally consistent at any speed. Off → On captures the in-flight multiplier; On → Off freezes at the current position. Resets on every play press.
+
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the scale's pace on top of Speed Ramp — the rising or descending illusion still works, just with the pace drifting up and down instead of running at one fixed rate.
 
 ---
 
@@ -2097,6 +2210,11 @@ In-plugin sweep-rate morph over time. Lets you slow the glissando illusion down 
 Scales the sweep rate on top of the Rate slider. **0.5** = sweep takes twice as long to complete; **2.0** = half the time. The audible pitch of any oscillator is NOT scaled — only the rate at which oscillators sweep through the pitch window. The Play/Rest cycle counter scales with the ramp too, so the cycle gate stays aligned with the actual sweep.
 
 Off → On captures the in-flight multiplier; On → Off freezes at the current position. Set target = 1.0 and re-engage to return. Resets on every play press.
+
+### Wobble slot
+
+**Wobble slot** `0–16, default 0`
+Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the glissando sweep rate on top of Speed Ramp — the rising/falling illusion still feels endless, but the pace breathes rather than running at one fixed speed.
 
 ---
 
