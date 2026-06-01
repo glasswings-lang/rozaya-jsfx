@@ -1,0 +1,141 @@
+desc: Feature Drone
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// "Place a peak and a trough on the graph" drone synth. Think of the
+// waveform as a 2D graph: X axis is time (0 at start of cycle, 1 at
+// end), Y axis is amplitude (0 in the middle, +100 = fully pushed
+// out, -100 = fully pulled in). Each of Peak and Trough is a point
+// on that graph with TWO sliders: where it sits (X position) and how
+// high/low it goes (Y height). The wave is then drawn as three line
+// segments connecting:
+//
+//     (0, 0)  →  Peak  →  Trough  →  (1, 0)
+//
+// Move Peak X earlier (toward 0) and the rising portion shortens;
+// move it later (toward 1) and the climb takes most of the cycle.
+// Move Peak Y down toward 0 and the peak flattens. Same for Trough.
+//
+// Sister to point_drone (8 equally-spaced points, Y only) and
+// shape_drone (continuous shape morph). This one matches the "I
+// want to place this feature THERE on the graph" mental model —
+// you're literally moving features around in X/Y space.
+//
+// On default load: Peak at (0.25, +100), Trough at (0.75, -100).
+// That's a triangle wave at A2 (110 Hz), -12 dB master, mono,
+// half-second swell on transport start.
+//
+// What you can draw with two features:
+//   - Triangle (defaults)
+//   - Saw-leaning: Peak X at ~0.99 (slow climb, fast drop)
+//   - Reverse saw: Peak X at ~0.01 (fast jump, slow descent)
+//   - Asymmetric ramps: Peak X anywhere in between
+//   - Two-positive or two-negative waves: ignore the "Trough" label
+//     and put both Ys above (or below) zero
+//
+// What you can't draw with this design: square waves or pulses —
+// those need FLAT regions, which line segments between two points
+// can't produce. For those, use polyrhythm_phase's fixed waveforms
+// (or wait for Square/Pulse to land there as proper slots).
+//
+// Sorting note: internally Peak and Trough are sorted by X position
+// before drawing, so whichever has the smaller X is drawn first
+// regardless of which slider it lives in. This means putting Peak
+// X at 0.75 and Trough X at 0.25 still produces a valid wave —
+// just one that has its trough first, peak second.
+
+// ===== FEATURES =====
+slider1:0.25<0,1,0.001>Peak X (position in cycle, 0=start, 1=end)
+slider2:100<-100,100,0.1>Peak Y (height)
+slider3:0.75<0,1,0.001>Trough X (position in cycle)
+slider4:-100<-100,100,0.1>Trough Y (height)
+
+// ===== GLOBAL =====
+slider5:110<20,2000,0.01>Fundamental Hz
+slider6:-12<-60,0,0.1>Master Gain dB
+slider7:0.5<0,10,0.01>Attack (sec)
+slider8:1.5<0,10,0.01>Release (sec)
+
+@init
+
+// Oscillator phase, 0..1
+phase = 0;
+
+// Smoothed master gain (linear scale, 0..1 territory)
+current_gain = 0;
+
+// Smoother coefficient defaults so @sample is safe even before
+// @slider fires.
+attack_coeff  = 0;
+release_coeff = 0;
+
+@slider
+
+fundamental = slider5;
+target_gain = pow(10, slider6 / 20.0);
+
+// Pull feature positions into local vars + convert Y from -100..+100
+// percent into the -1..+1 audio range up-front.
+peak_x   = slider1;
+peak_y   = slider2 / 100.0;
+trough_x = slider3;
+trough_y = slider4 / 100.0;
+
+// Sort the two features by X so segment drawing is always in phase
+// order. f1 is whichever has the smaller X; f2 is the other one. This
+// means the user can put Peak and Trough sliders in any order without
+// the wave breaking — the labels are just labels.
+peak_x < trough_x ? (
+  f1_x = peak_x;   f1_y = peak_y;
+  f2_x = trough_x; f2_y = trough_y;
+) : (
+  f1_x = trough_x; f1_y = trough_y;
+  f2_x = peak_x;   f2_y = peak_y;
+);
+
+// Precompute segment widths, clamped to a tiny minimum to avoid
+// divide-by-zero if the user puts a feature at exactly X=0 or X=1,
+// or both features at the same X. With the minimum at 0.001, the
+// "missing" segment becomes a near-instant transition rather than
+// causing a NaN.
+seg0_w = max(f1_x,         0.001);
+seg1_w = max(f2_x - f1_x,  0.001);
+seg2_w = max(1.0 - f2_x,   0.001);
+
+// Smoother coefficients
+slider7 > 0 ? (attack_coeff  = exp(-1 / (srate * slider7))) : (attack_coeff  = 0);
+slider8 > 0 ? (release_coeff = exp(-1 / (srate * slider8))) : (release_coeff = 0);
+
+@sample
+
+// Advance phase
+phase += fundamental / srate;
+phase >= 1 ? phase -= 1;
+
+// Find which of the three segments the current phase is in and
+// linearly interpolate the wave value between the segment endpoints.
+//   Segment 0: (0, 0)        → (f1_x, f1_y)
+//   Segment 1: (f1_x, f1_y)  → (f2_x, f2_y)
+//   Segment 2: (f2_x, f2_y)  → (1, 0)
+phase < f1_x ? (
+  out = f1_y * (phase / seg0_w);
+) : phase < f2_x ? (
+  local = (phase - f1_x) / seg1_w;
+  out   = f1_y * (1 - local) + f2_y * local;
+) : (
+  local = (phase - f2_x) / seg2_w;
+  out   = f2_y * (1 - local);
+);
+
+// Smooth master gain (attack on rising target, release on falling).
+target_gain > current_gain ? (
+  current_gain = target_gain + (current_gain - target_gain) * attack_coeff;
+) : target_gain < current_gain ? (
+  current_gain = target_gain + (current_gain - target_gain) * release_coeff;
+);
+
+// Mono output — both channels carry the same signal.
+spl0 = out * current_gain;
+spl1 = spl0;

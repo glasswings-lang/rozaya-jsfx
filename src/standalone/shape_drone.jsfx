@@ -1,0 +1,226 @@
+desc: Shape Drone
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Single-oscillator drone synth that lets you shape the waveform's
+// "feel" directly: sine, triangle, saw, and square all live on one
+// slider (Shape) that you morph through. Symmetry tilts the wave to
+// one side. Brightness softens the high-frequency content via a
+// one-pole lowpass (bypassed at default 100 = full brightness).
+//
+// Sibling to additive_drone.jsfx — same gentle A2 sine on first
+// load, but reached by a different, more direct road. Use Shape
+// Drone when you want to find a "vibe" by ear with a few sliders;
+// use Additive Drone when you want to sculpt by harmonic.
+//
+// On default load: pure sine at A2 (110 Hz), -12 dB master, mono,
+// half-second swell on transport start. Bring Shape up to add
+// edge; nudge Symmetry to tilt the wave; pull Brightness down to
+// muffle.
+//
+// Anti-aliasing: the saw and square discontinuities are smoothed
+// using PolyBLEP (Polynomial Band-Limited stEP). One correction at
+// the saw's wrap; two for the square (the wrap up-step and the
+// midpoint down-step). Quiet but real — keeps high fundamentals
+// + extreme Symmetry settings from going gritty.
+
+// ===== SHAPE CONTROLS =====
+
+// Shape morphs continuously through four reference waves:
+//    0  = pure sine     (smoothest, flute-y)
+//   33  = pure triangle (soft, mellow)
+//   66  = pure saw      (bright, buzzy)
+//  100  = pure square   (hollow, organ-like)
+// In between, the wave is a linear blend of the two neighbouring
+// reference shapes (sine↔triangle, triangle↔saw, or saw↔square).
+slider1:0<0,100,0.1>Shape (Sine -> Triangle -> Saw -> Square)
+
+// Symmetry tilts the wave so one half of each cycle is shorter
+// than the other. 0 = symmetric (default shape). Positive values
+// shrink the rising portion (spike-like at the extreme); negative
+// values shrink the falling portion. For a square this acts as
+// pulse-width modulation; for a triangle it morphs toward saw or
+// reverse-saw. Capped so neither half ever shrinks below 5% of the
+// cycle (a hard zero would divide by zero in the phase warp).
+slider2:0<-100,100,0.1>Symmetry %
+
+// Brightness applies a gentle one-pole lowpass to the output. 100
+// (default) bypasses the filter entirely — full brightness, no
+// colour change. Lower values progressively roll off the highs,
+// going from bright through warm to muffled. The bypass at 100
+// matters: a "transparent" filter is never quite transparent, so
+// at default it's safer to skip it altogether.
+slider3:100<0,100,0.1>Brightness
+
+// ===== GLOBAL =====
+slider4:110<20,2000,0.01>Fundamental Hz
+slider5:-12<-60,0,0.1>Master Gain dB
+
+// Attack / release smooth the master gain. Applies on transport
+// start (gain ramps from 0 over the Attack time) and any time you
+// change the Master slider. 0 = instant.
+slider6:0.5<0,10,0.01>Attack (sec)
+slider7:1.5<0,10,0.01>Release (sec)
+
+// PolyBLEP correction for a step discontinuity. Returns a small
+// positive bump in the samples immediately before AND after the
+// discontinuity (relative to t = 0 / t = 1 boundary). Caller adds
+// this for an UPWARD step (-1 → +1) or subtracts for a DOWNWARD
+// step (+1 → -1) to band-limit the corner over ~2 samples.
+//   t  = current warped phase (0..1)
+//   dt = warped phase increment per sample at this position
+function polyblep(t, dt) local(s) (
+  t < dt ? (
+    s = t / dt;
+    s + s - s * s - 1;
+  ) : t > 1 - dt ? (
+    s = (t - 1) / dt;
+    s * s + s + s + 1;
+  ) : (
+    0;
+  );
+);
+
+@init
+
+// Oscillator phase, 0..1
+phase = 0;
+
+// Phase increment per sample (recomputed in @slider whenever
+// fundamental changes — pulled out so PolyBLEP can see it).
+phase_inc = 0;
+
+// Smoothed master gain (linear, 0..1 territory)
+current_gain = 0;
+
+// Lowpass filter state (one-pole, single sample memory)
+filter_state = 0;
+
+// Coefficient defaults so @sample can run even before @slider fires.
+// attack_coeff = 0 means "instant jump to target" in the smoother,
+// which is safe behaviour for the very first sample.
+attack_coeff  = 0;
+release_coeff = 0;
+filter_a      = 0;
+filter_b      = 1;
+filter_active = 0;
+
+@slider
+
+fundamental = slider4;
+phase_inc   = fundamental / srate;
+target_gain = pow(10, slider5 / 20.0);
+
+// Shape: map slider 0..100 → segment (0, 1, or 2) + local blend
+// factor (0..1) within that segment. At slider=100, seg=2 and
+// local=1 → pure square. At slider=0, seg=0 and local=0 → pure sine.
+shape_norm   = slider1 / 100.0;
+shape_scaled = shape_norm * 3;
+shape_seg    = min(2, floor(shape_scaled));
+shape_local  = shape_scaled - shape_seg;
+
+// Symmetry: warps the phase so the cycle midpoint (where the falling
+// portion would normally start) shifts left or right. mid stays in
+// [0.05, 0.95] so neither half of the warp ever shrinks to zero.
+//   symmetry =  +1 → mid = 0.05 (rising portion squeezed to 5%)
+//   symmetry =   0 → mid = 0.50 (no warp)
+//   symmetry =  -1 → mid = 0.95 (rising portion takes 95%)
+symmetry_val = slider2 / 100.0;
+mid          = 0.5 - symmetry_val * 0.45;
+mid_inv      = 1 - mid;
+
+// Precompute reciprocals so @sample doesn't divide each sample.
+inv_mid     = 1 / mid;
+inv_mid_inv = 1 / mid_inv;
+
+// Brightness: at 100 (or floating-point-close to 100) bypass the
+// filter entirely. Below that, set up a one-pole lowpass with
+// cutoff scaled logarithmically from ~50 Hz (Brightness=0, heavily
+// muffled) to near-Nyquist (Brightness just under 100, basically
+// transparent). srate * 0.45 keeps the cutoff comfortably below
+// Nyquist at any sample rate Reaper might be running.
+brightness_norm = slider3 / 100.0;
+brightness_norm >= 0.9999 ? (
+  filter_active = 0;
+) : (
+  filter_cutoff = 50 * pow((srate * 0.45) / 50, brightness_norm);
+  filter_a      = exp(-2 * $pi * filter_cutoff / srate);
+  filter_b      = 1 - filter_a;
+  filter_active = 1;
+);
+
+// Attack / release smoother coefficients. One-pole exponential:
+//   out += (target - out) * (1 - coeff)
+// where coeff = exp(-1 / (srate * time)). 0 time → coeff = 0 → jump.
+slider6 > 0 ? (attack_coeff  = exp(-1 / (srate * slider6))) : (attack_coeff  = 0);
+slider7 > 0 ? (release_coeff = exp(-1 / (srate * slider7))) : (release_coeff = 0);
+
+@sample
+
+// Advance phase
+phase += fundamental / srate;
+phase >= 1 ? phase -= 1;
+
+// Apply symmetry warp. Two linear pieces, both mapping into [0, 1)
+// for the wave generators below. At phase = mid the warp hits
+// wp = 0.5 (the midpoint of the underlying wave shape). dwp is the
+// warped phase increment per sample (needed by PolyBLEP — the
+// effective rate near a discontinuity changes with symmetry).
+phase < mid ? (
+  wp  = phase * inv_mid * 0.5;
+  dwp = phase_inc * inv_mid * 0.5;
+) : (
+  wp  = 0.5 + (phase - mid) * inv_mid_inv * 0.5;
+  dwp = phase_inc * inv_mid_inv * 0.5;
+);
+
+// Compute the two waveforms bracketing the current Shape position
+// and blend them. We only compute the pair we need — never all
+// four simultaneously — to keep CPU low. PolyBLEP corrections are
+// applied to saw (wrap discontinuity, downward) and square (wrap
+// upward + midpoint downward) — sine and triangle are continuous
+// and need no correction.
+shape_seg == 0 ? (
+  // Sine ↔ Triangle (both continuous, no anti-alias needed)
+  sine_v = sin(wp * 2 * $pi);
+  tri_v  = wp < 0.5 ? wp * 4 - 1 : 3 - wp * 4;
+  out    = sine_v * (1 - shape_local) + tri_v * shape_local;
+) : shape_seg == 1 ? (
+  // Triangle ↔ Saw
+  tri_v = wp < 0.5 ? wp * 4 - 1 : 3 - wp * 4;
+  saw_v = wp * 2 - 1 - polyblep(wp, dwp);
+  out   = tri_v * (1 - shape_local) + saw_v * shape_local;
+) : (
+  // Saw ↔ Square. Square has two discontinuities per cycle:
+  // upward at wp=0 (wrap, -1→+1) and downward at wp=0.5 (+1→-1).
+  // Add polyblep at the upward step, subtract at the downward.
+  // wp_mid is wp shifted by 0.5 so polyblep's "near 0 / near 1"
+  // matching catches the midpoint discontinuity.
+  saw_v   = wp * 2 - 1 - polyblep(wp, dwp);
+  wp_mid  = wp + 0.5;
+  wp_mid >= 1 ? wp_mid -= 1;
+  sq_v    = (wp < 0.5 ? 1 : -1) + polyblep(wp, dwp) - polyblep(wp_mid, dwp);
+  out     = saw_v * (1 - shape_local) + sq_v * shape_local;
+);
+
+// Apply Brightness lowpass (if active). One-pole IIR.
+filter_active ? (
+  filter_state = filter_state * filter_a + out * filter_b;
+  out = filter_state;
+);
+
+// Smooth master gain (attack going up, release going down).
+target_gain > current_gain ? (
+  current_gain = target_gain + (current_gain - target_gain) * attack_coeff;
+) : target_gain < current_gain ? (
+  current_gain = target_gain + (current_gain - target_gain) * release_coeff;
+);
+
+// Mono output — both channels carry the same signal. No detune /
+// width here on purpose; this synth lives in the "find a vibe by
+// ear" lane, not the "build a wide stereo bed" lane. Drop a chorus
+// or stereo widener after this plugin if you want spatial depth.
+spl0 = out * current_gain;
+spl1 = spl0;

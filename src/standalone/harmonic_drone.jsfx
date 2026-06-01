@@ -1,0 +1,150 @@
+desc: Harmonic Drone
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// "Start from a saw, then take harmonics out." Sixteen faders, one per
+// harmonic, PRE-LOADED to a sawtooth wave (every harmonic present, each
+// quieter than the last). Pull any fader down and you remove that
+// harmonic from the saw. Push it up and you emphasize it.
+//
+// This is the inverse mental model from a build-up-from-silence additive
+// synth: you don't construct a sound from nothing, you SUBTRACT from a
+// sound that's already rich. Each fader maps directly to one harmonic
+// your ear can hear — grab the one you want gone and pull it down.
+//
+// Things you can do by ear:
+//   - Pull DOWN every even harmonic (H2, H4, H6...) → the saw turns
+//     hollow and woody, toward a square/clarinet character
+//   - Pull down the top handful (H10-H16) → warmer, darker, less buzzy
+//   - Pull down everything except H1 → back to a pure sine
+//   - Pull down H1 itself, leave the upper harmonics → thin, hollow,
+//     the fundamental gone but the overtones ringing
+//   - Notch out one harmonic in the middle → subtle vowel-like color
+//
+// On default load: a full sawtooth at A2 (110 Hz), -12 dB master,
+// half-second swell on transport start. Bright and buzzy — the
+// starting point you sculpt away from.
+
+// ===== HARMONIC FADERS (dB) =====
+// Each fader sets the level of harmonic N. Defaults trace a sawtooth:
+// harmonic N at 1/N amplitude (H1 = 0 dB, H2 = -6 dB, H3 = -9.5 dB,
+// etc.). -60 dB is treated as fully removed (the oscillator for that
+// harmonic is skipped entirely — saves CPU and silences it cleanly).
+slider1:0<-60,6,0.1>Harmonic 1 (fundamental) dB
+slider2:-6<-60,6,0.1>Harmonic 2 dB
+slider3:-9.5<-60,6,0.1>Harmonic 3 dB
+slider4:-12<-60,6,0.1>Harmonic 4 dB
+slider5:-14<-60,6,0.1>Harmonic 5 dB
+slider6:-15.6<-60,6,0.1>Harmonic 6 dB
+slider7:-16.9<-60,6,0.1>Harmonic 7 dB
+slider8:-18.1<-60,6,0.1>Harmonic 8 dB
+slider9:-19.1<-60,6,0.1>Harmonic 9 dB
+slider10:-20<-60,6,0.1>Harmonic 10 dB
+slider11:-20.8<-60,6,0.1>Harmonic 11 dB
+slider12:-21.6<-60,6,0.1>Harmonic 12 dB
+slider13:-22.3<-60,6,0.1>Harmonic 13 dB
+slider14:-22.9<-60,6,0.1>Harmonic 14 dB
+slider15:-23.5<-60,6,0.1>Harmonic 15 dB
+slider16:-24.1<-60,6,0.1>Harmonic 16 dB
+
+// ===== GLOBAL =====
+slider17:110<20,2000,0.01>Fundamental Hz
+slider18:-12<-60,0,0.1>Master Gain dB
+slider19:0.5<0,10,0.01>Attack (sec)
+slider20:1.5<0,10,0.01>Release (sec)
+
+@init
+
+N_HARM = 16;
+
+// Per-harmonic memory banks
+//   h_phase   — oscillator phase per harmonic
+//   h_target  — target linear amplitude (dB→linear * master)
+//   h_current — smoothed current amplitude
+//   h_db      — mirror of slider1..16 for indexed access (eel2 can't
+//               index named sliders dynamically)
+h_phase   = 0;
+h_target  = 16;
+h_current = 32;
+h_db      = 48;
+
+// Zero phases + currents at load (and on each transport play, since
+// @init re-runs on play by default — gives a clean attack ramp from
+// silence every time you press play).
+i = 0;
+loop(N_HARM,
+  h_phase[i]   = 0;
+  h_current[i] = 0;
+  i += 1;
+);
+
+// Smoother coefficient defaults so @sample is safe before @slider fires.
+attack_coeff  = 0;
+release_coeff = 0;
+
+@slider
+
+fundamental = slider17;
+master_lin  = pow(10, slider18 / 20.0);
+
+// Mirror the 16 harmonic-level sliders into the indexable bank.
+h_db[0]  = slider1;  h_db[1]  = slider2;  h_db[2]  = slider3;  h_db[3]  = slider4;
+h_db[4]  = slider5;  h_db[5]  = slider6;  h_db[6]  = slider7;  h_db[7]  = slider8;
+h_db[8]  = slider9;  h_db[9]  = slider10; h_db[10] = slider11; h_db[11] = slider12;
+h_db[12] = slider13; h_db[13] = slider14; h_db[14] = slider15; h_db[15] = slider16;
+
+// Build per-harmonic linear targets. -60 dB (the bottom of the fader)
+// = fully removed → target 0 so the @sample loop skips it and the
+// release smoother can drag the level all the way to silence.
+i = 0;
+loop(N_HARM,
+  db = h_db[i];
+  db <= -59.99 ? (
+    h_target[i] = 0;
+  ) : (
+    h_target[i] = pow(10, db / 20.0) * master_lin;
+  );
+  i += 1;
+);
+
+// Smoother coefficients (one-pole). 0 time → coeff 0 → instant.
+slider19 > 0 ? (attack_coeff  = exp(-1 / (srate * slider19))) : (attack_coeff  = 0);
+slider20 > 0 ? (release_coeff = exp(-1 / (srate * slider20))) : (release_coeff = 0);
+
+@sample
+
+out = 0;
+
+i = 0;
+loop(N_HARM,
+  target  = h_target[i];
+  current = h_current[i];
+
+  // Smooth toward target (attack rising, release falling).
+  target > current ? (
+    h_current[i] = target + (current - target) * attack_coeff;
+  ) : target < current ? (
+    h_current[i] = target + (current - target) * release_coeff;
+  );
+
+  // CPU saver: skip the oscillator entirely when this harmonic is
+  // effectively silent both at target and right now. Reset its phase
+  // so the next time it's brought up, it starts clean.
+  (target <= 0 && h_current[i] < 0.000001) ? (
+    h_phase[i] = 0;
+  ) : (
+    // Harmonic N runs at fundamental * (N) — harmonic index i is 0-based,
+    // so the multiplier is (i + 1).
+    h_phase[i] += (fundamental * (i + 1)) / srate;
+    h_phase[i] >= 1 ? h_phase[i] -= 1;
+    out += sin(h_phase[i] * 2 * $pi) * h_current[i];
+  );
+
+  i += 1;
+);
+
+// Mono output — both channels carry the same signal.
+spl0 = out;
+spl1 = out;

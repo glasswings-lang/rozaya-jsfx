@@ -1,0 +1,138 @@
+desc: Point Drone
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Direct draw-the-waveform-with-sliders synth. Eight point sliders
+// (Point 1 through Point 8) each set the height of the wave at one
+// position in the cycle. The wave is the linear connection between
+// consecutive points (and wraps from Point 8 back to Point 1). Each
+// slider's arrow keys move that point up or down — so you're
+// literally drawing the wave shape by ear, point by point.
+//
+// Sibling to additive_drone.jsfx and shape_drone.jsfx. Three
+// paradigms covering the same sonic territory by very different
+// roads:
+//   - Additive Drone — control each harmonic's loudness (spectrum side)
+//   - Shape Drone    — pick a shape and tilt it (recipe + skew)
+//   - Point Drone    — set each control point directly (literally draw)
+//
+// On default load: the eight points form a piecewise-linear
+// approximation of a sine wave (heights sampled from sin(2π·p) at
+// p = 0, 1/8, 2/8, ..., 7/8). Pure-ish sine at A2 (110 Hz), -12 dB
+// master, mono, half-second swell on transport start. Move any
+// point slider up/down to deform the sine into something else —
+// flatten the top into a square-ish shape, push the peak earlier
+// into a saw-ish shape, draw asymmetric forms with multiple peaks,
+// whatever you want.
+//
+// Eight points is the minimum for interesting variety; the trade
+// is more points = more sliders to manage. If 8 turns out to be
+// too coarse for what you want to draw, a v2 with 16 points is a
+// one-line change (and the same architecture).
+
+// ===== POINTS =====
+// Each Point N slider sets the wave height at position N/8 of the
+// cycle, in percent (-100 = fully down, 0 = centered, +100 = fully
+// up). The wave is the line segments connecting Point 1 → Point 2
+// → ... → Point 8 → wraps back to Point 1. Defaults form a
+// piecewise-linear sine so the plugin loads with a familiar soft
+// tone — change any of them to start sculpting.
+slider1:0<-100,100,0.1>Point 1 (start of cycle)
+slider2:71<-100,100,0.1>Point 2
+slider3:100<-100,100,0.1>Point 3 (peak in default sine)
+slider4:71<-100,100,0.1>Point 4
+slider5:0<-100,100,0.1>Point 5 (mid-cycle, zero in default sine)
+slider6:-71<-100,100,0.1>Point 6
+slider7:-100<-100,100,0.1>Point 7 (trough in default sine)
+slider8:-71<-100,100,0.1>Point 8 (last before wrap)
+
+// ===== GLOBAL =====
+slider9:110<20,2000,0.01>Fundamental Hz
+slider10:-12<-60,0,0.1>Master Gain dB
+
+// Attack / release smooth the master gain. Applies on transport
+// start (gain ramps from 0 over the Attack time) and on any
+// change to Master Gain. 0 = instant changes.
+slider11:0.5<0,10,0.01>Attack (sec)
+slider12:1.5<0,10,0.01>Release (sec)
+
+@init
+
+// Oscillator phase, 0..1
+phase = 0;
+
+// Smoothed master gain (linear scale, 0..1 territory)
+current_gain = 0;
+
+// Coefficient defaults so @sample can run even before @slider fires.
+// attack_coeff = 0 means "instant jump to target" in the smoother,
+// which is safe behaviour for the first sample.
+attack_coeff  = 0;
+release_coeff = 0;
+
+// Point heights memory bank: mirrors slider1..slider8 into indexable
+// slots 0..7 so the per-sample segment lookup can index by position.
+// JSFX can't index sliders dynamically — sliderN is a named variable,
+// not callable — so we mirror in @slider whenever they change.
+p_height = 0;
+
+@slider
+
+fundamental = slider9;
+target_gain = pow(10, slider10 / 20.0);
+
+// Mirror point sliders into indexable bank. Divide by 100 to map the
+// user-facing -100..+100 percent into the -1..+1 audio range up-front
+// (avoids the divide in @sample).
+p_height[0] = slider1 / 100.0;
+p_height[1] = slider2 / 100.0;
+p_height[2] = slider3 / 100.0;
+p_height[3] = slider4 / 100.0;
+p_height[4] = slider5 / 100.0;
+p_height[5] = slider6 / 100.0;
+p_height[6] = slider7 / 100.0;
+p_height[7] = slider8 / 100.0;
+
+// Attack / release smoother coefficients (one-pole). 0 time → coeff 0
+// → instant jump.
+slider11 > 0 ? (attack_coeff  = exp(-1 / (srate * slider11))) : (attack_coeff  = 0);
+slider12 > 0 ? (release_coeff = exp(-1 / (srate * slider12))) : (release_coeff = 0);
+
+@sample
+
+// Advance phase
+phase += fundamental / srate;
+phase >= 1 ? phase -= 1;
+
+// Find which segment we're in (0..7) and the position within it (0..1).
+// `scaled` is phase * 8, so segment 0 covers [0, 0.125), segment 1
+// covers [0.125, 0.25), etc. The last segment (7) wraps from
+// p_height[7] back to p_height[0] so the wave connects continuously
+// across the cycle boundary — no amplitude discontinuity unless Point 8
+// and Point 1 happen to differ a lot (in which case the slope is just
+// steep at the wrap, not a hard step).
+scaled = phase * 8;
+seg    = floor(scaled);
+local  = scaled - seg;
+
+// Wrap-aware next-segment lookup.
+next_seg = seg == 7 ? 0 : seg + 1;
+
+// Linear interpolation between the two bracketing point heights.
+out = p_height[seg] * (1 - local) + p_height[next_seg] * local;
+
+// Smooth master gain (attack when target rising, release when falling).
+target_gain > current_gain ? (
+  current_gain = target_gain + (current_gain - target_gain) * attack_coeff;
+) : target_gain < current_gain ? (
+  current_gain = target_gain + (current_gain - target_gain) * release_coeff;
+);
+
+// Mono output — both channels carry the same signal. No stereo width
+// here on purpose; this synth lives in the "draw and listen" lane,
+// not the "build a wide stereo bed" lane. Drop a chorus or stereo
+// widener after this plugin if you want spatial depth.
+spl0 = out * current_gain;
+spl1 = spl0;

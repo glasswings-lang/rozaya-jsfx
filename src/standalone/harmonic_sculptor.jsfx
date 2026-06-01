@@ -1,0 +1,300 @@
+desc: Harmonic Sculptor
+options:gmem=rozaya_harmonic_sculptor
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Pick a base wave, get its harmonics, customize them. The plugin
+// analyses whatever base wave you choose into 64 individual harmonics,
+// loads those as the starting point, and lets you push or pull any one
+// of them by ear. "Customize the elements of an existing waveform" —
+// the elements being its harmonics.
+//
+// HOW THE CONTROLS WORK (the two-slider harmonic editor):
+//   - "Harmonic Select" picks WHICH harmonic you're editing (1-64).
+//   - "Harmonic Level" sets the level of the selected harmonic, in dB.
+//   When you move Harmonic Select, the Level slider jumps to show that
+//   harmonic's current level. Adjust Level, it writes back. Move Select
+//   again to edit a different one. All 64 harmonic values live in memory
+//   behind those two sliders, so the parameter list stays short.
+//
+//   NVDA NOTE: the Level slider always reads as "Harmonic Level" — it
+//   does NOT announce which harmonic number you're on (JSFX can't
+//   relabel a slider live). So keep track of the Harmonic Select value;
+//   that's the one you're editing. After moving Select, tab to Level to
+//   hear where that harmonic currently sits.
+//
+// LOUDNESS: this synth has automatic loudness control (Normalize, on by
+// default). It keeps the overall level roughly constant no matter how
+// many harmonics are present or how you sculpt them — pulling a harmonic
+// out won't make the sound jump up or down in volume, only change its
+// character. Master Gain sets the final level on top of that. Turn
+// Normalize off if you want to hear the raw, un-leveled sum (educational,
+// but it can get loud when many harmonics stack — Master Gain still
+// applies as a safety).
+//
+// The base waves are analysed into pure sine harmonics, so the output is
+// naturally band-limited — no aliasing buzz on saw/square even at high
+// pitches (harmonics that would exceed half the sample rate are simply
+// not played). This makes the sculpted saw/square CLEANER than a raw
+// phase-generated one.
+//
+// On default load: a sawtooth at A2 (110 Hz), Normalize on, -12 dB
+// master, half-second swell on transport start.
+
+// ===== BASE WAVE =====
+// Choosing one analyses it into the 64 harmonics and loads them as your
+// starting point. Re-choosing the same one (or any) RELOADS the recipe,
+// discarding manual edits — think of it as "stamp this wave, then sculpt."
+slider1:2<0,11,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine}>Base Wave (load recipe)
+
+// ===== HARMONIC EDITOR (two-slider selector) =====
+// Harmonic Select is a 0-indexed enum: each value carries the musical
+// interval that harmonic lands on above the fundamental, so OSARA reads
+// e.g. "H5 +maj3rd (flat)" rather than a bare number. The labels tell the
+// truth about the harmonic series: many upper harmonics drift away from
+// equal temperament (H7 is a flat minor 7th, H11 sits between 4th and
+// tritone, etc.) — that drift is WHERE A WAVE'S CHARACTER LIVES, so the
+// labels name it honestly. Above ~H32 the intervals crowd together and
+// the labels get approximate; those harmonics also often sit above the
+// Nyquist ceiling and won't play at higher fundamentals anyway.
+slider2:0<0,63,1{H1 root,H2 octave,H3 oct+5th,H4 2 octaves,H5 +maj3rd (flat),H6 +5th,H7 +min7th (flat),H8 3 octaves,H9 +maj2nd,H10 +maj3rd,H11 between 4th and tritone,H12 +5th,H13 between 5th and 6th,H14 +min7th (flat),H15 +maj7th,H16 4 octaves,H17 +min2nd,H18 +maj2nd,H19 +min3rd,H20 +maj3rd,H21 +sharp 4th,H22 +tritone,H23 +flat 5th,H24 +5th,H25 +sharp 5th,H26 +min6th,H27 +maj6th,H28 +min7th (flat),H29 +min7th,H30 +maj7th,H31 +sharp 7th,H32 5 octaves,H33 +min2nd,H34 +flat maj2nd,H35 +maj2nd,H36 +min3rd,H37 +flat maj3rd,H38 +maj3rd,H39 near 4th,H40 +4th,H41 +sharp 4th,H42 +tritone,H43 +flat 5th,H44 near 5th,H45 +5th,H46 +sharp 5th,H47 +min6th,H48 +maj6th,H49 +maj6th,H50 +min7th (flat),H51 +min7th,H52 near maj7th,H53 +maj7th,H54 +sharp 7th,H55 near octave,H56 near octave,H57 +min2nd top,H58 +2nd top,H59 +2nd top,H60 +min3rd top,H61 +maj3rd top,H62 +maj3rd top,H63 +4th top,H64 6 octaves}>Harmonic Select
+slider3:0<-60,12,0.1>Harmonic Level dB (of selected)
+
+// ===== GLOBAL =====
+slider4:110<20,2000,0.01>Fundamental Hz
+slider5:-12<-60,0,0.1>Master Gain dB
+slider6:1<0,1,1{Off,On}>Normalize loudness
+slider7:0.5<0,10,0.01>Attack (sec)
+slider8:1.5<0,10,0.01>Release (sec)
+
+@init
+
+// Persist memory across transport stop/play. Without this, @init re-runs
+// on every play press, resetting last_base to -1 — which makes the plugin
+// think the Base Wave "changed" and re-analyze the recipe over your edits,
+// flushing all your harmonic sculpting on every play. With ext_noinit set,
+// @init runs only on actual plugin load; Reaper leaves memory intact at
+// transport boundaries so your sculpted harmonics survive stop/play.
+// (Documented gotcha — see rozaya-jsfx CLAUDE.md "@init re-runs on play".)
+ext_noinit = 1;
+
+N_HARM      = 64;
+PHI         = 1.6180339887;
+ANALYZE_LEN = 1024;   // samples per cycle used for harmonic analysis
+
+// Memory banks
+harm_amp   = 0;    //   0..63   linear target amplitude per harmonic (edited)
+harm_phase = 64;   //  64..127  oscillator phase per harmonic
+harm_cur   = 128;  // 128..191  smoothed current amplitude per harmonic
+render_buf = 256;  // 256..1279 scratch buffer for one rendered cycle
+
+// Selector / change tracking
+last_base   = -1;   // forces an analysis on first @slider
+last_select = -1;
+
+// Loudness + master smoothing state
+norm_gain_cur   = 1;
+master_cur      = 0;
+
+// Smoother coefficients (set in @slider)
+attack_coeff  = 0;
+release_coeff = 0;
+
+// Zero per-harmonic playback state. @init re-runs on transport play,
+// so each play press starts clean and the attack ramps up from silence.
+i = 0;
+loop(N_HARM,
+  harm_phase[i] = 0;
+  harm_cur[i]   = 0;
+  i += 1;
+);
+
+// ---- render_wave(wf, ph): one sample of base wave `wf` at phase `ph`
+// (0..1). Mirrors polyrhythm_phase's waveform formulas so the analysed
+// recipes match the suite's existing waves. Phase offset doesn't matter
+// here — analysis keeps only harmonic MAGNITUDES, discarding phase — so
+// these can be the simplest form of each shape.
+function render_wave(wf, ph) local(w, s) (
+  wf == 0 ? (
+    sin(ph * 2 * $pi);
+  ) : wf == 1 ? (                              // Triangle
+    ph < 0.25 ? ph * 4 : ph < 0.75 ? 2 - ph * 4 : ph * 4 - 4;
+  ) : wf == 2 ? (                              // Saw
+    ph * 2 - 1;
+  ) : wf == 3 ? (                              // Golden TS (phi warp -> sine)
+    w = ph < (1/PHI) ? ph * PHI * 0.5 : 0.5 + (ph - 1/PHI) / (1 - 1/PHI) * 0.5;
+    sin(w * 2 * $pi);
+  ) : wf == 4 ? (                              // Golden SG (sine prewarp -> phi warp -> sine)
+    s = (sin((ph - 0.25) * 2 * $pi) + 1) * 0.5;
+    w = s < (1/PHI) ? s * PHI * 0.5 : 0.5 + (s - 1/PHI) / (1 - 1/PHI) * 0.5;
+    sin(w * 2 * $pi);
+  ) : wf == 5 ? (                              // Golden GS (phi sine-shift -> sine)
+    w = ph + (1/PHI) * sin(ph * 2 * $pi) / (2 * $pi);
+    w = w - floor(w);
+    sin(w * 2 * $pi);
+  ) : wf == 6 ? (                              // Bell (additive partials)
+    ( sin(ph * 1 * 2 * $pi)
+    + 0.5  * sin(ph * 2 * 2 * $pi)
+    + 0.3  * sin(ph * 3 * 2 * $pi)
+    + 0.4  * sin(ph * 4 * 2 * $pi)
+    + 0.15 * sin(ph * 6 * 2 * $pi) ) * 0.43;
+  ) : wf == 7 ? (                              // Wavefold
+    sin(2 * sin(ph * 2 * $pi));
+  ) : wf == 8 ? (                              // Half-sine (rectified)
+    2 * abs(sin(ph * 2 * $pi)) - 1;
+  ) : wf == 9 ? (                              // Phi-cascade (additive)
+    ( sin(ph * 2 * $pi)
+    + (1/PHI)       * sin(ph * 2 * 2 * $pi)
+    + (1/(PHI*PHI)) * sin(ph * 3 * 2 * $pi) ) * 0.5;
+  ) : wf == 10 ? (                             // Phi Triangle
+    w = ph < (1/PHI) ? ph * PHI * 0.5 : 0.5 + (ph - 1/PHI) / (1 - 1/PHI) * 0.5;
+    w < 0.5 ? 4 * w - 1 : 3 - 4 * w;
+  ) : (                                        // Phi Sine
+    w = ph < (1/PHI) ? ph * PHI * 0.5 : 0.5 + (ph - 1/PHI) / (1 - 1/PHI) * 0.5;
+    sin(w * 2 * $pi);
+  );
+);
+
+// ---- db_to_lin / lin_to_db (the editor speaks dB, memory holds linear)
+function db_to_lin(db) ( db <= -59.99 ? 0 : pow(10, db / 20.0) );
+function lin_to_db(a)  ( a <= 0.0000001 ? -60 : 20 * log(a) / log(10) );
+
+// ---- analyze_base(wf): render one cycle of `wf`, then measure the
+// magnitude of each harmonic and store it into harm_amp[0..63]. This is
+// the "the plugin measures the recipe for you" step — runs only when the
+// Base Wave selector changes, never per sample.
+function analyze_base(wf) local(k, n, re, im, ang, s) (
+  // Render one cycle into the scratch buffer.
+  k = 0;
+  loop(ANALYZE_LEN,
+    render_buf[k] = render_wave(wf, k / ANALYZE_LEN);
+    k += 1;
+  );
+  // For each harmonic, correlate the cycle against that harmonic's
+  // sine + cosine and take the magnitude — a single-bin DFT per harmonic.
+  n = 1;
+  loop(N_HARM,
+    re = 0; im = 0;
+    k = 0;
+    loop(ANALYZE_LEN,
+      ang = 2 * $pi * n * k / ANALYZE_LEN;
+      s   = render_buf[k];
+      re += s * cos(ang);
+      im += s * sin(ang);
+      k  += 1;
+    );
+    harm_amp[n - 1] = 2 / ANALYZE_LEN * sqrt(re * re + im * im);
+    n += 1;
+  );
+);
+
+@slider
+
+fundamental = slider4;
+master_lin  = pow(10, slider5 / 20.0);
+normalize_on = slider6;
+
+// ----- Base wave changed → analyse + load recipe, refresh the editor -----
+// slider2 is the 0-indexed harmonic selector, so it indexes harm_amp
+// directly (harm_amp[0] = harmonic 1 = "H1 root", etc.).
+slider1 != last_base ? (
+  analyze_base(slider1);
+  last_base = slider1;
+  // Refresh the Level slider so it shows the freshly-loaded value of the
+  // currently-selected harmonic (and mark select as handled this pass).
+  slider3 = lin_to_db(harm_amp[slider2]);
+  sliderchange(slider3);
+  last_select = slider2;
+) : (
+  // ----- Selector moved → load that harmonic's value into Level -----
+  slider2 != last_select ? (
+    slider3 = lin_to_db(harm_amp[slider2]);
+    sliderchange(slider3);
+    last_select = slider2;
+  ) : (
+    // ----- Otherwise Level moved → write it into the selected harmonic -----
+    harm_amp[slider2] = db_to_lin(slider3);
+  );
+);
+
+// ----- Loudness normalization -----
+// Target RMS for a complex tone is sqrt( sum of (amplitude^2) / 2 ). We
+// compute it over only the harmonics that will actually PLAY (those below
+// the Nyquist-safe ceiling at the current fundamental), then scale so the
+// playing set hits a fixed target RMS. Pulling a harmonic out lowers the
+// sum, so the gain rises to compensate — constant loudness, changing tone.
+// Clamped to +12 dB max boost so a near-silent spectrum can't blast.
+nyq_ceiling = srate * 0.45;
+sumsq = 0;
+n = 1;
+loop(N_HARM,
+  (fundamental * n) < nyq_ceiling ? (
+    a = harm_amp[n - 1];
+    sumsq += a * a;
+  );
+  n += 1;
+);
+rms = sqrt(sumsq * 0.5);
+TARGET_RMS = 0.25;
+normalize_on ? (
+  norm_gain_target = rms > 0.000001 ? min(4.0, TARGET_RMS / rms) : 0;
+) : (
+  norm_gain_target = 1.0;
+);
+
+// Smoother coefficients (one-pole). 0 time → instant.
+slider7 > 0 ? (attack_coeff  = exp(-1 / (srate * slider7))) : (attack_coeff  = 0);
+slider8 > 0 ? (release_coeff = exp(-1 / (srate * slider8))) : (release_coeff = 0);
+
+@sample
+
+// Smooth the normalization gain and master toward their targets so
+// sculpting / level changes don't click (these are set per-@slider, which
+// would otherwise step). A fixed ~5 ms smoothing is plenty.
+gsm = exp(-1 / (srate * 0.005));
+norm_gain_cur = norm_gain_cur * gsm + norm_gain_target * (1 - gsm);
+master_cur    = master_cur    * gsm + master_lin       * (1 - gsm);
+
+out = 0;
+nyq = srate * 0.45;
+
+i = 0;
+loop(N_HARM,
+  n   = i + 1;
+  hz  = fundamental * n;
+
+  // Skip harmonics above the Nyquist-safe ceiling — that's what keeps the
+  // output alias-free at any pitch. Their amplitude smoother also relaxes
+  // to 0 so they don't pop back in if the fundamental later drops.
+  hz < nyq ? (
+    target = harm_amp[i];
+    // Attack/release smoothing on each harmonic's amplitude.
+    target > harm_cur[i] ? (
+      harm_cur[i] = target + (harm_cur[i] - target) * attack_coeff;
+    ) : target < harm_cur[i] ? (
+      harm_cur[i] = target + (harm_cur[i] - target) * release_coeff;
+    );
+
+    (target <= 0 && harm_cur[i] < 0.000001) ? (
+      harm_phase[i] = 0;
+    ) : (
+      harm_phase[i] += hz / srate;
+      harm_phase[i] >= 1 ? harm_phase[i] -= 1;
+      out += sin(harm_phase[i] * 2 * $pi) * harm_cur[i];
+    );
+  ) : (
+    harm_cur[i]   = 0;
+    harm_phase[i] = 0;
+  );
+
+  i += 1;
+);
+
+out = out * norm_gain_cur * master_cur;
+
+// Mono output — both channels identical. Add a chorus/widener after this
+// plugin if you want stereo motion.
+spl0 = out;
+spl1 = out;

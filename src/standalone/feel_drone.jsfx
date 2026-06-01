@@ -1,0 +1,194 @@
+desc: Feel Drone
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Drone synth for someone who doesn't know synthesis. No talk of
+// waveforms, harmonics, partials, oscillators, or shape morphs —
+// just six sliders that describe how the sound should FEEL. Move
+// them and listen.
+//
+//   Warmth     — how much low-end body and roundness
+//   Brightness — how much air and high-frequency presence
+//   Edge       — how much buzz / grit / saw-y bite
+//   Hollowness — how reedy / woody / square-y (suppresses even tones)
+//   Body       — how strongly the root note sits in the low end
+//   Movement   — how much shimmer / chorus / motion in the sound
+//
+// Under the hood: additive synthesis (16 sine partials). Each feel
+// slider secretly drives a recipe of partial amplitudes. The user
+// never has to know that, and the labels are deliberately not synth
+// jargon — Warmth doesn't say "boost the low partials," it just says
+// Warmth.
+//
+// Sibling to Additive Drone, Shape Drone, Point Drone. Four
+// paradigms covering the same sonic territory; this is the one for
+// people who don't want to think about synthesis at all.
+//
+// On default load: Warmth 50, Brightness 20, Body 50, everything
+// else at 0. Pure-ish warm sine-leaning pad at A2 (110 Hz), -12 dB
+// master, mono, half-second swell on transport start. Quiet, warm,
+// ready to be reshaped by moving the feel sliders.
+
+// ===== FEEL =====
+slider1:50<0,100,0.1>Warmth
+slider2:20<0,100,0.1>Brightness
+slider3:0<0,100,0.1>Edge
+slider4:0<0,100,0.1>Hollowness
+slider5:50<0,100,0.1>Body
+slider6:0<0,100,0.1>Movement
+
+// ===== GLOBAL =====
+slider7:110<20,2000,0.01>Fundamental Hz
+slider8:-12<-60,0,0.1>Master Gain dB
+slider9:0.5<0,10,0.01>Attack (sec)
+slider10:1.5<0,10,0.01>Release (sec)
+
+@init
+
+N_PARTIALS = 16;
+
+// Per-partial memory banks
+//   p_phase   — oscillator phase per partial
+//   p_target  — target linear amplitude (after feel-recipe math)
+//   p_current — smoothed current amplitude
+//   p_freq    — current frequency in Hz (fundamental * harmonic * detune)
+p_phase   = 0;
+p_target  = 16;
+p_current = 32;
+p_freq    = 48;
+
+// Zero phases and currents at load (and on transport play — Reaper
+// re-runs @init on each play press, giving a clean attack ramp).
+i = 0;
+loop(N_PARTIALS,
+  p_phase[i]   = 0;
+  p_current[i] = 0;
+  i += 1;
+);
+
+// Smoother coefficient defaults so @sample can run before @slider fires.
+attack_coeff  = 0;
+release_coeff = 0;
+
+@slider
+
+// Pull slider values into 0..1 normalized form for cleaner math.
+s_warmth     = slider1 / 100.0;
+s_brightness = slider2 / 100.0;
+s_edge       = slider3 / 100.0;
+s_hollowness = slider4 / 100.0;
+s_body       = slider5 / 100.0;
+s_movement   = slider6 / 100.0;
+
+fundamental = slider7;
+master_lin  = pow(10, slider8 / 20.0);
+
+// Build per-partial amplitude and frequency from the feel-slider
+// recipe. Each feel control contributes to specific partials in a
+// way that produces its label's perceived effect:
+//
+//   Warmth     — boosts the low partials 1-4 with a 1/N falloff
+//                (fundamental + first few harmonics; the "round" zone)
+//   Brightness — boosts the high partials 8-16 with mild decay
+//                (the "air" and "shimmer" frequencies)
+//   Edge       — adds a 1/N saw-like spectrum across ALL partials
+//                (uniform harmonic ladder; the "buzz" character)
+//   Body       — boosts partials 1-2 specifically (fundamental + octave;
+//                what sits in the low end)
+//   Hollowness — attenuates EVEN partials (the recipe behind a square
+//                wave's hollow, reedy timbre — odd harmonics only)
+//   Movement   — small per-partial detune (chorus-like body, no
+//                amplitude change — only frequency)
+//
+// All contributions are additive into a linear amplitude, then
+// hollowness multiplies the even-partial amplitudes down. Master
+// gain is folded in at the end. Scale factors below are tuned so
+// the gentle defaults produce a comfortable level and pushing one
+// or two feel sliders to extremes stays clean; pushing ALL of them
+// to 100 simultaneously can clip — the user just pulls Master down
+// in that case, no different from any other synth.
+i = 0;
+loop(N_PARTIALS,
+  // 1-indexed harmonic number for the formulas below.
+  n = i + 1;
+
+  amp = 0;
+
+  // Warmth: low-partial boost with 1/N falloff over partials 1-4.
+  n <= 4 ? amp += s_warmth * (0.5 / n);
+
+  // Brightness: high-partial boost with mild decay over 8-16.
+  n >= 8 ? amp += s_brightness * 0.15 * (1 - (n - 8) * 0.05);
+
+  // Edge: saw-like 1/N spectrum across ALL partials, scaled down so
+  // it adds character without dominating at moderate settings.
+  amp += s_edge * (1.0 / n) * 0.4;
+
+  // Body: specific boost to fundamental + octave (the low presence).
+  n <= 2 ? amp += s_body * 0.35;
+
+  // Hollowness: attenuate even partials (n=2, 4, 6, ...). The (n & 1)
+  // bit-and trick tests odd-ness; 0 = even. At hollowness=100, even
+  // partials are reduced by 95% (a fully-square spectrum has odd
+  // harmonics only; we leave 5% so the transition feels smooth rather
+  // than gating off entirely).
+  (n & 1) == 0 ? amp *= (1 - s_hollowness * 0.95);
+
+  // Bake in master gain so the per-partial smoother does the
+  // attack/release on the final (post-feel-mix) amplitude. When the
+  // user lowers Master, all partial targets drop proportionally and
+  // the release smoother eases each one down independently.
+  p_target[i] = amp * master_lin;
+
+  // Movement: per-partial deterministic detune (no rand() — same
+  // chorus character every transport press). Alternating ± across
+  // partials, magnitude grows slightly with index so different
+  // partials get different cent offsets even at the same Movement
+  // setting (otherwise all partials would just retune together).
+  detune_sign  = (i & 1) ? -1 : 1;
+  detune_cents = s_movement * 10 * detune_sign * (1 + i * 0.1);
+  detune_ratio = pow(2, detune_cents / 1200.0);
+  p_freq[i]    = fundamental * n * detune_ratio;
+
+  i += 1;
+);
+
+// Attack / release smoother coefficients (one-pole).
+slider9  > 0 ? (attack_coeff  = exp(-1 / (srate * slider9)))  : (attack_coeff  = 0);
+slider10 > 0 ? (release_coeff = exp(-1 / (srate * slider10))) : (release_coeff = 0);
+
+@sample
+
+out = 0;
+
+i = 0;
+loop(N_PARTIALS,
+  target  = p_target[i];
+  current = p_current[i];
+
+  // Smooth toward target (attack going up, release going down).
+  target > current ? (
+    p_current[i] = target + (current - target) * attack_coeff;
+  ) : target < current ? (
+    p_current[i] = target + (current - target) * release_coeff;
+  );
+
+  // CPU saver: if a partial is effectively silent both at target and
+  // currently, skip the oscillator entirely. Reset phase so the next
+  // attack starts clean.
+  (target <= 0 && p_current[i] < 0.000001) ? (
+    p_phase[i] = 0;
+  ) : (
+    p_phase[i] += p_freq[i] / srate;
+    p_phase[i] >= 1 ? p_phase[i] -= 1;
+    out += sin(p_phase[i] * 2 * $pi) * p_current[i];
+  );
+
+  i += 1;
+);
+
+// Mono output — both channels carry the same signal.
+spl0 = out;
+spl1 = out;

@@ -1,0 +1,241 @@
+desc: Additive Drone
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Accessible alternative to drawable-waveform additive synths: each of
+// 16 sliders sets the dB amplitude of one harmonic partial above the
+// fundamental. No mouse-on-canvas required — every parameter is a
+// regular slider that screen readers can announce and step through.
+//
+// On default load: only Partial 1 is audible (-6 dB), all others at
+// -60 dB (effectively silent), master -12 dB, fundamental 110 Hz (A2,
+// drone-friendly low). That gives a gentle pure sine at A2 — soft,
+// nothing startling. Bring up Partial 2-16 to taste to add harmonic
+// colour; bring up Detune for chorus body; bring up Width for stereo
+// spread (mono-safe at default 0).
+
+// ===== PER-PARTIAL AMPLITUDES (dB) =====
+// Each slider sets the amplitude of harmonic N above the fundamental
+// (Partial 1 = fundamental itself, Partial 2 = 2x freq, etc.). -60 dB
+// is treated as silence in code (skip the oscillator entirely — saves
+// CPU and avoids contributing inaudible noise to the sum).
+slider1:-6<-60,6,0.1>Partial 1 (fundamental) dB
+slider2:-60<-60,6,0.1>Partial 2 dB
+slider3:-60<-60,6,0.1>Partial 3 dB
+slider4:-60<-60,6,0.1>Partial 4 dB
+slider5:-60<-60,6,0.1>Partial 5 dB
+slider6:-60<-60,6,0.1>Partial 6 dB
+slider7:-60<-60,6,0.1>Partial 7 dB
+slider8:-60<-60,6,0.1>Partial 8 dB
+slider9:-60<-60,6,0.1>Partial 9 dB
+slider10:-60<-60,6,0.1>Partial 10 dB
+slider11:-60<-60,6,0.1>Partial 11 dB
+slider12:-60<-60,6,0.1>Partial 12 dB
+slider13:-60<-60,6,0.1>Partial 13 dB
+slider14:-60<-60,6,0.1>Partial 14 dB
+slider15:-60<-60,6,0.1>Partial 15 dB
+slider16:-60<-60,6,0.1>Partial 16 dB
+
+// ===== GLOBAL =====
+slider17:110<20,2000,0.01>Fundamental Hz
+slider18:-12<-60,0,0.1>Master Gain dB
+
+// Attack / release smooth the per-partial linear gain from its previous
+// value to its current target over the given time. Applies on slider
+// changes AND on transport start (partials ramp up from 0 over the
+// attack time when play begins). Set both to 0 for instant changes.
+slider19:0.5<0,10,0.01>Attack (sec)
+slider20:1.5<0,10,0.01>Release (sec)
+
+// Per-partial detune in cents (0..20). At 0 each partial sits at exact
+// integer multiples of the fundamental (cleanest, most "organ"-like).
+// Above 0, each partial gets a small fixed cent offset (deterministic
+// from its index, so it doesn't change with replays) that produces
+// chorus-like body. Kept small (<= 20 cents) to avoid the partials
+// detuning into a different note.
+slider21:0<0,20,0.01>Detune (cents)
+
+// Stereo width spreads partials across L/R via equal-power pan. 0 =
+// pure mono (every partial centered, both channels identical). 100 =
+// maximum spread. The pan position per partial alternates by index
+// using a stable assignment that avoids any partial ever sitting at
+// hard left or hard right — max excursion is ±50% pan even at 100%
+// width — so mono summing recombines without phase cancellation
+// (equal-power L/R taps both stay positive, no inverted-phase pairs).
+slider22:0<0,100,0.1>Stereo Width %
+
+@init
+N_PARTIALS = 16;
+
+// Per-partial memory banks (one slot per partial, indices 0..15).
+//   p_phase     — current oscillator phase, 0..1
+//   p_target    — target linear gain after dB → linear conversion
+//                 (multiplied in by master gain)
+//   p_current   — currently-applied linear gain (smoothed toward target)
+//   p_freq      — current frequency in Hz (fundamental * partial * detune)
+//   p_pan_l     — equal-power L multiplier (cos(pan_pos * pi/2))
+//   p_pan_r     — equal-power R multiplier (sin(pan_pos * pi/2))
+//   p_db        — copy of slider1..slider16 (per-partial dB) for
+//                 indexable access — JSFX has no dynamic slider()
+//                 function, so we mirror named sliders into a bank
+p_phase   = 0;
+p_target  = 16;
+p_current = 32;
+p_freq    = 48;
+p_pan_l   = 64;
+p_pan_r   = 80;
+p_db      = 96;
+
+// Zero phases at load. @init re-runs on every transport play (default
+// Reaper behavior — no ext_noinit here), so every transport press also
+// re-zeros the phases and the gain ramps: partials swell up over the
+// Attack time from silence, giving a clean entry every play.
+i = 0;
+loop(N_PARTIALS,
+  p_phase[i]   = 0;
+  p_current[i] = 0;
+  i += 1;
+);
+
+// Attack / release smoothing coefficients. One-pole exp smoother per
+// direction — recomputed in @slider whenever Attack or Release changes.
+// Initialized here so @sample can run even before @slider fires.
+attack_coeff  = 0;
+release_coeff = 0;
+
+@slider
+
+fundamental = slider17;
+master_lin  = pow(10, slider18 / 20.0);
+detune_amt  = slider21;
+width       = slider22 / 100.0;
+
+// Recompute smoother coefficients. One-pole: out += (target - out) * (1 - coeff)
+// where coeff = exp(-1 / (srate * time)). 0 time → coeff = 0 → instant jump.
+slider19 > 0 ? (attack_coeff  = exp(-1 / (srate * slider19))) : (attack_coeff  = 0);
+slider20 > 0 ? (release_coeff = exp(-1 / (srate * slider20))) : (release_coeff = 0);
+
+// Copy per-partial dB sliders into an indexable memory bank. JSFX has no
+// dynamic slider() function — slider1..slider16 are named variables, so
+// we explicitly mirror them into p_db[0..15] for the loop below.
+p_db[0]  = slider1;  p_db[1]  = slider2;  p_db[2]  = slider3;  p_db[3]  = slider4;
+p_db[4]  = slider5;  p_db[5]  = slider6;  p_db[6]  = slider7;  p_db[7]  = slider8;
+p_db[8]  = slider9;  p_db[9]  = slider10; p_db[10] = slider11; p_db[11] = slider12;
+p_db[12] = slider13; p_db[13] = slider14; p_db[14] = slider15; p_db[15] = slider16;
+
+// Build per-partial targets, frequencies, and pan multipliers in one
+// pass. dB-to-linear conversion uses pow(10, dB/20). -60 dB is the
+// "silence floor" — anything at -60 gets target 0 so the @sample loop
+// can short-circuit (skip the oscillator) AND so the release smoother
+// can drag the gain all the way to 0 instead of asymptoting to a
+// tiny-but-nonzero value.
+//
+// Detune: each partial gets a fixed cent offset = detune_amt * pattern[i]
+// where pattern[i] is a deterministic ±1-ish value that alternates
+// across partials. Using i-as-seed (rather than rand()) keeps the same
+// "voice" every play — modders won't hear it shift around between
+// transport presses.
+//
+// Pan: index i maps to a position in [-0.5, +0.5] * width. The pattern
+// alternates partials to opposite sides (even i → +, odd i → -) and
+// the absolute offset grows with i so high partials sit further out
+// than low ones. Capping at ±0.5 (not ±1.0) keeps both equal-power
+// channel taps strictly positive — mono summing recombines cleanly
+// with no inverted-phase cancellation. The fundamental (i=0) stays
+// centered regardless of width so the low end is always solid in mono.
+i = 0;
+loop(N_PARTIALS,
+  db = p_db[i];
+  db <= -59.99 ? (
+    p_target[i] = 0;
+  ) : (
+    p_target[i] = pow(10, db / 20.0) * master_lin;
+  );
+
+  // Deterministic ±1 pattern for detune: alternates by bit 0, scaled by
+  // (1 + i*0.1) so different partials get different cent offsets even
+  // at the same Detune setting (avoids all partials shifting by the
+  // exact same amount, which would just retune the whole drone).
+  detune_sign  = (i & 1) ? -1 : 1;
+  detune_cents = detune_amt * detune_sign * (1 + i * 0.1);
+  // cents → ratio: 2^(cents/1200)
+  detune_ratio = pow(2, detune_cents / 1200.0);
+  // Partial 1 = fundamental * 1 (i=0 → harmonic 1); partial N = fundamental * N
+  p_freq[i] = fundamental * (i + 1) * detune_ratio;
+
+  // Pan position: 0 for fundamental, alternating for the rest, magnitude
+  // grows gently with partial index but capped well short of hard pan.
+  i == 0 ? (
+    pan_pos = 0;
+  ) : (
+    pan_sign = (i & 1) ? -1 : 1;
+    // Map i=1..15 to magnitude 0.15..0.5 (linear), then scale by width.
+    pan_mag  = 0.15 + (i - 1) / 14.0 * 0.35;
+    pan_pos  = pan_sign * pan_mag * width;
+  );
+  // Equal-power pan: pan_pos in [-1, +1] → angle 0..pi/2.
+  // Map [-0.5, +0.5] (the actual range we use) → [pi/4 - x, pi/4 + x]
+  // so center stays at L=R=cos(pi/4)≈0.707.
+  pan_angle = ($pi * 0.25) * (1 + pan_pos * 2);
+  // Clamp pan_pos's range so pan_angle stays in [0, pi/2] even if width
+  // logic ever changes — defensive against future edits introducing
+  // larger pan magnitudes.
+  pan_angle = max(0, min($pi * 0.5, pan_angle));
+  p_pan_l[i] = cos(pan_angle);
+  p_pan_r[i] = sin(pan_angle);
+
+  i += 1;
+);
+
+@sample
+
+out_l = 0;
+out_r = 0;
+
+i = 0;
+loop(N_PARTIALS,
+  // Pick attack or release coefficient based on direction of travel.
+  // Target rising → attack; target falling → release. When target ==
+  // current, neither smoother runs and the partial holds steady.
+  target  = p_target[i];
+  current = p_current[i];
+
+  target > current ? (
+    p_current[i] = target + (current - target) * attack_coeff;
+  ) : target < current ? (
+    p_current[i] = target + (current - target) * release_coeff;
+  );
+
+  // CPU saver: if both the target AND the smoothed current value are
+  // effectively zero, skip the oscillator entirely. Threshold is just
+  // above the -60 dB master-scaled floor so partials that are ramping
+  // up through silence still get their phases advanced (otherwise the
+  // first audible cycle would start mid-period and might click).
+  // Phase advance still has to happen during release so the wave keeps
+  // its shape as it fades — only the dead-silent case short-circuits.
+  (target <= 0 && p_current[i] < 0.000001) ? (
+    // Reset phase to 0 while idle so the next attack starts clean.
+    p_phase[i] = 0;
+  ) : (
+    p_phase[i] += p_freq[i] / srate;
+    p_phase[i] >= 1 ? p_phase[i] -= 1;
+    osc = sin(p_phase[i] * 2 * $pi) * p_current[i];
+    out_l += osc * p_pan_l[i];
+    out_r += osc * p_pan_r[i];
+  );
+
+  i += 1;
+);
+
+// No active-voice normalizer here — partial count is fixed at 16 and
+// the per-partial gain sliders ARE the user's normalization control.
+// (The active-voice normalizer in Polyrhythm Phase is there because
+// voices can be muted at runtime; here, "muting" means setting a
+// partial's dB to -60, and the user can see the master sum scale by
+// reading the slider values directly. Auto-normalizing would fight
+// the user's intent — e.g. raising Partial 1 would silently change
+// the level of every other partial.)
+spl0 = out_l;
+spl1 = out_r;
