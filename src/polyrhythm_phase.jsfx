@@ -32,7 +32,7 @@ slider12:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Base Note
 slider13:4<0,8,1>Center Octave
 
 // ===== WAVEFORM =====
-slider14:0<0,11,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine}>Waveform
+slider14:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
 
 // ===== PAN =====
 slider15:0<0,1,1{Off,On}>Pan Enabled
@@ -210,6 +210,50 @@ slider67:0<0,1,1{Off,On}>Speed ramp engage
 // 0 = no wobble.
 slider68:0<0,16,1>Wobble slot (0 = no wobble)
 
+// ===== CHARACTER (global post-effects) =====
+// Four sliders that adjust the character of WHATEVER waveform is
+// selected. Applied to the summed output of all voices after all
+// per-voice processing — so they shape the overall sound, not each
+// individual voice. Defaults are all neutral (Tone=0, Edge=0,
+// Movement=0, Body=0), so loading the plugin sounds identical to
+// the v2.x release until you push one.
+//
+// Tone (-100 to +100): tilt EQ. Negative = warmer/darker (boost
+// lows, attenuate highs); positive = brighter/airier (boost highs,
+// attenuate lows). One slider that covers the warmth ↔ brightness
+// axis. Crossover ~700 Hz, max boost ±~9 dB at the extremes.
+//
+// Edge (0-100): soft-clip drive on the summed signal. At 0 = clean;
+// higher values progressively add harmonic grit. A sine + Edge gets
+// a saw-flavored character; a triangle + Edge gets more bite. Uses
+// tanh saturation with gain compensation so the level stays roughly
+// constant as you push it.
+//
+// Movement (0-100): chorus on the output. Mono input fed through a
+// modulated delay line read at two LFO-offset points (one for each
+// output channel) to give stereo shimmer and motion. At 0 = no
+// effect; higher values increase the wet mix.
+//
+// Body (0-100): peaking EQ at the Base Note + Center Octave
+// frequency. Boosts the root note's fundamental region by up to
+// +12 dB. Pitch-tracking — as you change Base Note or Center
+// Octave, the body peak moves with it. Useful for the Golden /
+// Phi waves which can sound thin in the low end.
+slider69:0<-100,100,0.1>Tone (Warm <-> Bright)
+slider70:0<0,100,0.1>Edge
+slider71:0<0,100,0.1>Movement
+slider72:0<0,100,0.1>Body
+
+// ===== PULSE WIDTH (Waveform slot 13 only) =====
+// Duty cycle for the Pulse waveform: the fraction of each cycle the
+// wave spends "high" before snapping low. 50% is a square wave (and
+// equals the Square slot); narrower values get thinner and more nasal,
+// wider values mirror the same back the other way. Only meaningful when
+// Waveform is set to Pulse (slot 13); hidden via slider_show otherwise.
+// Default 25% so Pulse sounds audibly distinct from the Square slot on
+// first selection. Range stops short of 0/100 (which would be silence/DC).
+slider73:25<1,99,0.1>Pulse Width % (50 = square)
+
 
 @init
 // Conventional Reaper behavior: @init runs on plugin load AND on every
@@ -247,6 +291,29 @@ v_pr_cycle       = 304;  // Per-voice Play/Rest cycle counter — accumulates at
                          //   sooner in real time than V1 (slow drift) — and wake
                          //   sooner too, since the rest counter also advances at
                          //   the voice's own rate. Symmetric per-voice semantic.
+
+// Character chain state (post-voice-sum DSP, sliders 69-72).
+// Tone:  one-pole lowpass state per channel for the tilt EQ.
+// Edge:  stateless (tanh) — no state needed.
+// Body:  biquad peaking EQ per channel — last 2 in / last 2 out samples each.
+tone_lp_l   = 0;
+tone_lp_r   = 0;
+body_x1_l   = 0;
+body_x2_l   = 0;
+body_y1_l   = 0;
+body_y2_l   = 0;
+body_x1_r   = 0;
+body_x2_r   = 0;
+body_y1_r   = 0;
+body_y2_r   = 0;
+
+// Movement: mono delay buffer at slot 320, 8192 samples (enough for ~85 ms
+// at 96 kHz, ~170 ms at 48 kHz). Two LFO-offset read taps drive L/R output
+// for stereo chorus motion.
+chorus_buf       = 320;   // 320..8511 (8192 slots)
+chorus_buf_size  = 8192;
+chorus_write_pos = 0;
+chorus_lfo_phase = 0;
 
 // Initialize 16 slots — slots 0-7 always used; slots 8-15 hold the
 // reverse layer in Both modes and stay zeroed otherwise.
@@ -339,6 +406,36 @@ function rate_to_hz(raw_rate, rmode) (
   rmode == 0 ? max(raw_rate, 0.001) / 60 :
   rmode == 1 ? 1 / max(raw_rate, 0.001) :
                max(raw_rate, 0.001)
+);
+
+// Hyperbolic tangent — not built into eel2, so define it here. Used
+// by the Edge character slider for soft-clip saturation. Clamps the
+// exp() input above |x| > 7 to avoid overflow on extreme inputs
+// (tanh saturates to ±1 well before that anyway).
+function tanh(x) local(e2x) (
+  abs(x) > 7 ? sign(x) : (
+    e2x = exp(2 * x);
+    (e2x - 1) / (e2x + 1)
+  )
+);
+
+// PolyBLEP correction for a step discontinuity. Returns a small
+// corrective bump in the samples immediately before AND after t = 0/1.
+// Caller ADDs it at an upward step (-1 → +1) or SUBTRACTs at a downward
+// step (+1 → -1) to band-limit the corner over ~2 samples. Used by the
+// Square (slot 12) and Pulse (slot 13) waveforms.
+//   t  = phase position relative to the edge (0..1)
+//   dt = phase increment per sample at this voice's frequency
+function polyblep(t, dt) local(s) (
+  t < dt ? (
+    s = t / dt;
+    s + s - s * s - 1;
+  ) : t > 1 - dt ? (
+    s = (t - 1) / dt;
+    s * s + s + s + 1;
+  ) : (
+    0;
+  );
 );
 
 @slider
@@ -484,6 +581,71 @@ slider_show(slider16, pan_enabled);
 slider_show(slider17, pan_enabled);
 slider_show(slider18, pan_enabled && pan_mode == 1);
 slider_show(slider19, pan_enabled && pan_mode == 1);
+
+// Pulse duty cycle (slider73) → 0..1 fraction for the Pulse waveform.
+// Only relevant when Waveform == 13 (Pulse); shown/hidden accordingly.
+pulse_duty = slider73 / 100.0;
+slider_show(slider73, waveform == 13);
+
+// ===== CHARACTER CHAIN PARAMETERS =====
+// Normalize all four character sliders into useful internal forms.
+
+// Tone: -1..+1 range. Tilt EQ uses a one-pole lowpass to split lows
+// from highs; the tilt is a symmetric boost-one-cut-the-other (so the
+// overall level stays roughly constant — no loudness jump as you push
+// the slider). Cutoff ~700 Hz, max tilt ±6 dB.
+//   At tone_norm = 0:  both gains = 1.0  (pass-through, lp + hi = original)
+//   At tone_norm = +1: highs ×2.0 (+6 dB), lows ×0.5 (-6 dB)  →  bright
+//   At tone_norm = -1: lows  ×2.0 (+6 dB), highs ×0.5 (-6 dB) →  warm
+tone_norm    = slider69 / 100.0;
+tone_lp_a    = exp(-2 * $pi * 700 / srate);
+tone_lp_b    = 1 - tone_lp_a;
+tone_hi_gain = pow(2, tone_norm);
+tone_lo_gain = pow(2, -tone_norm);
+
+// Edge: 0..1 range. Drive scales 1..1.7x; wet mix scales 0..0.5.
+// Tuned for "tasteful saturation" — pushing the slider to max adds
+// noticeable harmonic character without sounding like clipping or a
+// guitar fuzz pedal. Matches the suite's gentle-by-default ethos.
+// (Earlier version went 1..3x drive with 0..0.8 wet, which crossed
+// into obvious soft-clip territory; rolled back here.)
+edge_norm  = slider70 / 100.0;
+edge_drive = 1 + edge_norm * 0.7;
+edge_wet   = edge_norm * 0.5;
+
+// Movement: 0..1 range. LFO rate fixed at 0.5 Hz (slow shimmer);
+// delay base 15 ms, modulation depth ±5 ms. Wet mix 0..0.5 so even
+// at maximum the dry signal stays present.
+movement_norm    = slider71 / 100.0;
+chorus_lfo_inc   = 0.5 / srate;
+chorus_base_ms   = 0.015;
+chorus_depth_ms  = 0.005;
+chorus_wet       = movement_norm * 0.5;
+chorus_active    = movement_norm > 0.001;
+
+// Body: 0..1 range. Peaking EQ at the Base Note + Center Octave
+// fundamental, max +6 dB at that peak (was +12 in v0; halved here so
+// pushing Body up doesn't crater the headroom). Plus a -3 dB makeup
+// attenuation scaled by body_norm so the OVERALL level stays roughly
+// constant — Body re-balances energy toward the fundamental rather
+// than just adding it. Q = 1 for a musically-wide peak.
+body_norm    = slider72 / 100.0;
+body_active  = body_norm > 0.001;
+body_makeup  = pow(10, -body_norm * 3 / 20);  // 1.0 at body=0; ~0.71 at body=100 (-3 dB)
+body_active ? (
+  body_freq  = semitones_to_hz(base_note, center_octave, 0);
+  body_gain  = body_norm * 6;
+  body_A     = pow(10, body_gain / 40);
+  body_omega = 2 * $pi * body_freq / srate;
+  body_cos   = cos(body_omega);
+  body_alpha = sin(body_omega) / 2;          // Q = 1
+  body_a0    = 1 + body_alpha / body_A;
+  body_b0    = (1 + body_alpha * body_A) / body_a0;
+  body_b1    = -2 * body_cos / body_a0;
+  body_b2    = (1 - body_alpha * body_A) / body_a0;
+  body_a1    = -2 * body_cos / body_a0;
+  body_a2    = (1 - body_alpha / body_A) / body_a0;
+);
 
 amount = pow(2, depth_db / 6);
 sc     = 0.5 * amount;
@@ -864,7 +1026,7 @@ loop(n_voices,
       ph_r = ph_r < (1/PHI) ? ph_r * PHI * 0.5 : 0.5 + (ph_r - 1/PHI) / (1 - 1/PHI) * 0.5;
       osc_l = (ph_l < 0.5 ? 4 * ph_l - 1 : 3 - 4 * ph_l) * gain_l[i] * v_gain[i];
       osc_r = (ph_r < 0.5 ? 4 * ph_r - 1 : 3 - 4 * ph_r) * gain_r[i] * v_gain[i];
-    ) : (
+    ) : waveform == 11 ? (
       // Phi Sine: golden-ratio phase warp → sine output, with no extra
       // pre-warp. The "clean" version of what the manual described as
       // "Golden SG" — the original polyrhythm slot 4 had an additional
@@ -878,6 +1040,50 @@ loop(n_voices,
       ph_r = ph_r < (1/PHI) ? ph_r * PHI * 0.5 : 0.5 + (ph_r - 1/PHI) / (1 - 1/PHI) * 0.5;
       osc_l = sin(ph_l * 2 * $pi) * gain_l[i] * v_gain[i];
       osc_r = sin(ph_r * 2 * $pi) * gain_r[i] * v_gain[i];
+    ) : waveform == 12 ? (
+      // Square: +1 for the first half of the cycle, -1 for the second.
+      // PolyBLEP-corrected at both discontinuities — the rising edge at
+      // the phase wrap (0) and the falling edge at mid-cycle (0.5) — so
+      // it stays clean at high fundamentals. dt is each channel's phase
+      // increment per sample (left/right differ by the binaural offset).
+      dt_l = v_freq_l[i] / srate;
+      dt_r = v_freq_r[i] / srate;
+      ph_l = osc_phase_l[i];
+      ph_r = osc_phase_r[i];
+      // Left: naive square + rising-edge BLEP - falling-edge BLEP.
+      // td is the phase distance from the mid-cycle falling edge.
+      sq_l = ph_l < 0.5 ? 1 : -1;
+      td_l = ph_l - 0.5; td_l < 0 ? td_l += 1;
+      sq_l = sq_l + polyblep(ph_l, dt_l) - polyblep(td_l, dt_l);
+      osc_l = sq_l * gain_l[i] * v_gain[i];
+      // Right
+      sq_r = ph_r < 0.5 ? 1 : -1;
+      td_r = ph_r - 0.5; td_r < 0 ? td_r += 1;
+      sq_r = sq_r + polyblep(ph_r, dt_r) - polyblep(td_r, dt_r);
+      osc_r = sq_r * gain_r[i] * v_gain[i];
+    ) : (
+      // Pulse: +1 while phase < pulse_duty, -1 otherwise. pulse_duty
+      // (0..1) comes from slider73. At duty 0.5 this is identical to the
+      // Square slot; narrower duty gets thinner and more nasal. PolyBLEP
+      // at the rising edge (phase 0) and the falling edge (phase = duty).
+      // A non-50% duty introduces a DC offset, which is inaudible on
+      // speakers and attenuated by tremolo/master — same accepted
+      // tradeoff as the Half-sine waveform.
+      dt_l = v_freq_l[i] / srate;
+      dt_r = v_freq_r[i] / srate;
+      ph_l = osc_phase_l[i];
+      ph_r = osc_phase_r[i];
+      // Left: naive pulse + rising-edge BLEP - falling-edge BLEP.
+      // td is the phase distance from the falling edge at `pulse_duty`.
+      pu_l = ph_l < pulse_duty ? 1 : -1;
+      td_l = ph_l - pulse_duty; td_l < 0 ? td_l += 1;
+      pu_l = pu_l + polyblep(ph_l, dt_l) - polyblep(td_l, dt_l);
+      osc_l = pu_l * gain_l[i] * v_gain[i];
+      // Right
+      pu_r = ph_r < pulse_duty ? 1 : -1;
+      td_r = ph_r - pulse_duty; td_r < 0 ? td_r += 1;
+      pu_r = pu_r + polyblep(ph_r, dt_r) - polyblep(td_r, dt_r);
+      osc_r = pu_r * gain_r[i] * v_gain[i];
     );
 
     pan_enabled ? (
@@ -924,6 +1130,98 @@ total_active > 0 ? (
 ) : (
   spl0 = 0;
   spl1 = 0;
+);
+
+// ===== CHARACTER CHAIN =====
+// Apply post-voice-sum character processing (Tone, Edge, Movement,
+// Body). Runs only when there's audio (total_active > 0); during
+// start delay or all-voices-off it stays bypassed since spl0/spl1
+// would be 0 anyway.
+
+// --- Tone (symmetric tilt EQ via one-pole lowpass split) ---
+// Split into low + high using a one-pole lowpass at ~700 Hz, then
+// apply symmetric boost/cut so the overall level stays neutral as
+// the slider moves. tone_lo_gain and tone_hi_gain are precomputed
+// in @slider — see the comments there for the gain mapping.
+tone_lp_l = tone_lp_l * tone_lp_a + spl0 * tone_lp_b;
+tone_lp_r = tone_lp_r * tone_lp_a + spl1 * tone_lp_b;
+tone_hi_l = spl0 - tone_lp_l;
+tone_hi_r = spl1 - tone_lp_r;
+spl0 = tone_lp_l * tone_lo_gain + tone_hi_l * tone_hi_gain;
+spl1 = tone_lp_r * tone_lo_gain + tone_hi_r * tone_hi_gain;
+
+// --- Edge (soft-clip drive) ---
+// Tanh saturation with gain compensation. Wet/dry mix prevents the
+// distortion from taking over completely even at max setting.
+edge_wet > 0 ? (
+  spl0 = spl0 * (1 - edge_wet) + tanh(spl0 * edge_drive) / edge_drive * edge_wet;
+  spl1 = spl1 * (1 - edge_wet) + tanh(spl1 * edge_drive) / edge_drive * edge_wet;
+);
+
+// --- Movement (stereo chorus from one delay buffer, two LFO taps) ---
+// Write the dry signal (L+R averaged) into the circular buffer; read
+// it back at two LFO-modulated positions for L and R. The two LFOs
+// are phase-offset by 180° so the stereo motion is "out of phase"
+// between channels — gives a wide swirling shimmer.
+chorus_active ? (
+  // Advance LFO
+  chorus_lfo_phase += chorus_lfo_inc;
+  chorus_lfo_phase >= 1 ? chorus_lfo_phase -= 1;
+  chorus_lfo_l = sin(chorus_lfo_phase * 2 * $pi);
+  chorus_lfo_r = sin((chorus_lfo_phase + 0.5) * 2 * $pi);  // 180° offset
+
+  // Compute delay times in samples and read positions
+  delay_l = (chorus_base_ms + chorus_depth_ms * chorus_lfo_l) * srate;
+  delay_r = (chorus_base_ms + chorus_depth_ms * chorus_lfo_r) * srate;
+  read_pos_l = chorus_write_pos - delay_l;
+  read_pos_r = chorus_write_pos - delay_r;
+  read_pos_l < 0 ? read_pos_l += chorus_buf_size;
+  read_pos_r < 0 ? read_pos_r += chorus_buf_size;
+
+  // Linear-interp read for L
+  read_int_l  = floor(read_pos_l);
+  read_frac_l = read_pos_l - read_int_l;
+  read_int2_l = read_int_l + 1;
+  read_int2_l >= chorus_buf_size ? read_int2_l -= chorus_buf_size;
+  chorus_out_l = chorus_buf[read_int_l] * (1 - read_frac_l)
+               + chorus_buf[read_int2_l] * read_frac_l;
+
+  // Linear-interp read for R
+  read_int_r  = floor(read_pos_r);
+  read_frac_r = read_pos_r - read_int_r;
+  read_int2_r = read_int_r + 1;
+  read_int2_r >= chorus_buf_size ? read_int2_r -= chorus_buf_size;
+  chorus_out_r = chorus_buf[read_int_r] * (1 - read_frac_r)
+               + chorus_buf[read_int2_r] * read_frac_r;
+
+  // Write the mono mix into the buffer, advance the write head
+  chorus_buf[chorus_write_pos] = (spl0 + spl1) * 0.5;
+  chorus_write_pos += 1;
+  chorus_write_pos >= chorus_buf_size ? chorus_write_pos = 0;
+
+  // Mix dry + delayed
+  spl0 = spl0 * (1 - chorus_wet) + chorus_out_l * chorus_wet;
+  spl1 = spl1 * (1 - chorus_wet) + chorus_out_r * chorus_wet;
+);
+
+// --- Body (peaking EQ at the root note frequency + makeup gain) ---
+// Standard biquad direct-form-I. Per-channel state so L and R filter
+// independently (preserves stereo image at the boost frequency). The
+// makeup attenuation applied after the filter compensates for the
+// peak's energy injection so overall loudness stays roughly neutral
+// across the slider's range.
+body_active ? (
+  body_out_l = body_b0 * spl0 + body_b1 * body_x1_l + body_b2 * body_x2_l
+             - body_a1 * body_y1_l - body_a2 * body_y2_l;
+  body_x2_l = body_x1_l;  body_x1_l = spl0;
+  body_y2_l = body_y1_l;  body_y1_l = body_out_l;
+  spl0 = body_out_l * body_makeup;
+
+  body_out_r = body_b0 * spl1 + body_b1 * body_x1_r + body_b2 * body_x2_r
+             - body_a1 * body_y1_r - body_a2 * body_y2_r;
+  body_x2_r = body_x1_r;  body_x1_r = spl1;
+  body_y2_r = body_y1_r;  body_y1_r = body_out_r;
+  spl1 = body_out_r * body_makeup;
 );
 
 );  // close start-delay else branch
