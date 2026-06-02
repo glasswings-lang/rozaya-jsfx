@@ -92,51 +92,46 @@ slider48:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider49:0<0,60,0.1>Speed ramp duration (minutes)
 slider50:0<0,1,1{Off,On}>Speed ramp engage
 
-// Per-plugin Drift: two independent organic-drift sources that add to
-// the effective BPM. Musical drift is keyed in heartbeats (so it
-// stretches with Speed Ramp); Slow drift is keyed in wall-clock minutes
-// (so it does NOT scale with Speed Ramp). Both apply to ALL THREE
-// LAYERS together (heartbeat, breath, bloodflow) — same scope as
-// Speed Ramp, so the whole womb breathes as one organism. Set Up by
-// and Down by to 0 to disable either source.
-slider52:0<0,20,0.1>Musical drift: Up by
-slider53:0<0,20,0.1>Musical drift: Down by
-slider54:8<1,1000,1>Musical drift: Period (cycles)
-slider55:0<0,20,0.1>Slow drift: Up by
-slider56:0<0,20,0.1>Slow drift: Down by
-slider57:5<0.1,60,0.1>Slow drift: Period (minutes)
-slider58:0<0,2,1{Sine,Triangle,Random}>Drift shape
-
-// Breath cycle scaler: a single tempo-like knob that multiplies all four
-// breath phase durations (Inhale, Top Pause, Exhale, Bottom Pause) by
-// the same number. 1.0 = no change (default). 0.5 = breath cycle half
-// as long (twice as fast). 2.0 = twice as long (half as fast). The
-// phase RATIOS stay the same — only the overall breath rate scales.
-slider59:1.0<0.1,4.0,0.01>Breath cycle scaler
-
-// Breath drift: organic wander on the breath rate (modulates the
-// scaler above). When "Link to heartbeat" is On (default), breath
-// drift mirrors the heartbeat's drift proportionally — when HB drifts
-// +5% faster, breath also drifts +5% faster. Womb-as-one-organism.
-// When Off, breath has its own independent drift sliders below: each
-// Up by / Down by value is an additive delta on the breath scaler.
-// E.g. with scaler 1.0 and Musical drift: Up by 0.5, the effective
-// scaler swings up to 1.5 at peak drift — a 50% slower breath cycle.
-// Drift shape selector is shared with the heartbeat drift (slider58).
-slider60:1<0,1,1{Off,On}>Breath drift: Link to heartbeat
-slider61:0<0,2,0.01>Breath drift: Musical Up by
-slider62:0<0,2,0.01>Breath drift: Musical Down by
-slider63:8<1,1000,1>Breath drift: Musical Period (cycles)
-slider64:0<0,2,0.01>Breath drift: Slow Up by
-slider65:0<0,2,0.01>Breath drift: Slow Down by
-slider66:5<0.1,60,0.1>Breath drift: Slow Period (minutes)
-
 // Speed ramp start delay: when Speed Ramp engage flips on, wait this
-// long before the ramp actually starts. The plugin plays at its base
-// rate during the wait, then begins ramping toward target over the
-// duration set by slider49. Default 0 = ramp starts immediately
-// (preserves the v1-era Speed Ramp behavior).
-slider67:0<0,60,0.1>Speed ramp start delay (minutes)
+// long at base rate before the ramp begins. Default 0 = ramp starts
+// immediately (preserves v1-era Speed Ramp behavior).
+slider51:0<0,60,0.1>Speed ramp start delay (minutes)
+
+// Breaths per minute: master rate control for the breath cycle.
+// Bidirectional sync with the four phase duration sliders 16-19:
+// tweak THIS and the four durations rescale proportionally (preserving
+// their inhale/exhale/pause ratios); tweak ANY duration and this
+// updates to reflect the new total cycle. The four duration sliders
+// still set the SHAPE of the breath; this just controls the overall
+// rate.
+slider52:7<4,30,0.1>Breaths per minute
+
+// Per-plugin Drift uses a two-slider selector pattern (modeled after
+// Harmonic Sculptor). Slider 53 picks which drift parameter you're
+// editing; slider 54 sets its value. A memory bank stores all five
+// values, so switching the selector doesn't lose the others. Five
+// parameters, all in BPM (heart) or breaths/min (breath):
+//   - Heart Up by:     how many BPM the heart can speed up by, organically
+//   - Heart Down by:   how many BPM the heart can slow down by, organically
+//   - Heart with breath: how many BPM the heart fluctuates with the
+//                        breath cycle (RSA — the v1 "Breath HRV Depth"
+//                        knob expressed in concrete BPM)
+//   - Breath Up by:    how many breaths/min the breath can speed up by
+//   - Breath Down by:  how many breaths/min the breath can slow down by
+// Set the value to 0 to disable that source. The value slider always
+// reads as "Drift value" on a screen reader — JSFX can't relabel it
+// live based on the selector — so keep track of which selector entry
+// you're on. (Same NVDA constraint as Harmonic Sculptor.)
+slider53:0<0,4,1{Heart Up by,Heart Down by,Heart with breath,Breath Up by,Breath Down by}>Drift parameter
+slider54:0<0,50,0.1>Drift value (BPM for the selected parameter)
+
+// Periods: how long ONE drift cycle takes for heart and breath
+// respectively. Heart period in heartbeats; breath period in breath
+// cycles. Higher numbers = slower wander. Shape (Sine/Triangle/Random)
+// is shared by both drifts.
+slider55:8<1,1000,1>Heart drift: Period (cycles)
+slider56:8<1,1000,1>Breath drift: Period (cycles)
+slider57:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
 srate_inv = 1.0 / srate;
@@ -220,9 +215,6 @@ bf_fade_in = 0.15;
 bf_fade_out = 0.15;
 bf_stereo_width = 0.5;
 
-// --- BREATH CYCLE SCALER INIT ---
-breath_scaler = 1.0;
-
 // --- NOISE SEEDS ---
 ns1 = 12345; ns2 = 67890; ns3 = 54321;
 ns4 = 11111; ns5 = 22222; ns6 = 33333;
@@ -302,15 +294,38 @@ speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
 speed_ramp_delay_elapsed = 0;
 
-// Per-plugin Drift phase state. Phases advance in @sample and wrap
-// at 1.0. Random shape uses prev_target -> curr_target linear interp
-// across one drift period; new target is drawn on each wrap.
-musical_drift_phase     = 0;
-slow_drift_phase        = 0;
-musical_drift_prev_target = 0;
-musical_drift_curr_target = 0;
-slow_drift_prev_target  = 0;
-slow_drift_curr_target  = 0;
+// Per-plugin Drift state.
+//
+// The five drift values (Heart Up, Heart Down, Heart with breath,
+// Breath Up, Breath Down) live in a memory bank rather than on five
+// separate sliders. The selector + value pair (slider53 + slider54)
+// reads/writes one slot at a time.
+drift_values_bank = 1024;
+drift_values_bank[0] = 0;  // Heart Up by         (BPM)
+drift_values_bank[1] = 0;  // Heart Down by       (BPM)
+drift_values_bank[2] = 0;  // Heart with breath   (BPM, RSA depth)
+drift_values_bank[3] = 0;  // Breath Up by        (breaths/min)
+drift_values_bank[4] = 0;  // Breath Down by      (breaths/min)
+last_drift_select   = -1;  // forces first @slider to load slot 0
+
+// Drift wave state: one phase per cycle (heart, breath). Phases wrap
+// at 1.0; Random shape uses prev_target -> curr_target linear interp
+// across one drift period.
+heart_drift_phase        = 0;
+heart_drift_prev_target  = 0;
+heart_drift_curr_target  = 0;
+breath_drift_phase       = 0;
+breath_drift_prev_target = 0;
+breath_drift_curr_target = 0;
+
+// Bidirectional BPM <-> phase duration sync state. We snapshot the
+// last-seen slider values so @slider can detect which side the user
+// just changed and update the other accordingly.
+last_bpm        = slider52;
+last_inhale_sec = slider16;
+last_top_sec    = slider17;
+last_exhale_sec = slider18;
+last_bottom_sec = slider19;
 
 @slider
 // Heartbeat — bpm_target feeds the per-sample smoother; cycle_len_base
@@ -351,12 +366,42 @@ new_hb_sign != hb_delay_sign ? (
 );
 hb_delay_sign = new_hb_sign;
 
-// Breath
-breath_scaler = max(slider59, 0.01);
-inhale_len = max(floor(srate * slider16 * breath_scaler), 1);
-top_len    = max(floor(srate * slider17 * breath_scaler), 1);
-exhale_len = max(floor(srate * slider18 * breath_scaler), 1);
-bot_len    = max(floor(srate * slider19 * breath_scaler), 1);
+// Breath: bidirectional BPM <-> phase duration sync.
+//
+// If a duration slider changed, recompute BPM from the new total.
+// Else if BPM changed, rescale the four durations proportionally to
+// fit the new target total. "Durations changed" wins ties (which only
+// happens on first load / param-reload, and recomputing BPM from
+// durations is the safer default — durations are explicit).
+new_total_sec     = slider16 + slider17 + slider18 + slider19;
+durations_changed = (slider16 != last_inhale_sec) ||
+                    (slider17 != last_top_sec) ||
+                    (slider18 != last_exhale_sec) ||
+                    (slider19 != last_bottom_sec);
+bpm_changed       = slider52 != last_bpm;
+
+durations_changed ? (
+  slider52 = 60.0 / max(new_total_sec, 0.1);
+  slider_automate(slider52);
+) : bpm_changed ? (
+  target_total_sec = 60.0 / max(slider52, 0.1);
+  rescale_ratio    = target_total_sec / max(new_total_sec, 0.1);
+  slider16 *= rescale_ratio; slider_automate(slider16);
+  slider17 *= rescale_ratio; slider_automate(slider17);
+  slider18 *= rescale_ratio; slider_automate(slider18);
+  slider19 *= rescale_ratio; slider_automate(slider19);
+);
+
+last_bpm        = slider52;
+last_inhale_sec = slider16;
+last_top_sec    = slider17;
+last_exhale_sec = slider18;
+last_bottom_sec = slider19;
+
+inhale_len = max(floor(srate * slider16), 1);
+top_len    = max(floor(srate * slider17), 1);
+exhale_len = max(floor(srate * slider18), 1);
+bot_len    = max(floor(srate * slider19), 1);
 
 breath_state == 0 ? breath_state_len = inhale_len;
 breath_state == 1 ? breath_state_len = top_len;
@@ -426,15 +471,19 @@ slider50 && !speed_ramp_engaged_last ? (
 );
 speed_ramp_engaged_last = slider50;
 
-// Hide the independent breath-drift sliders when Link is On (their
-// values do nothing in linked mode). Keeps the UI honest about what
-// is actually wired in.
-slider_show(slider61, !slider60);
-slider_show(slider62, !slider60);
-slider_show(slider63, !slider60);
-slider_show(slider64, !slider60);
-slider_show(slider65, !slider60);
-slider_show(slider66, !slider60);
+// Drift selector + value (Harmonic Sculptor pattern). When the
+// selector moved, load the new slot's stored value into the value
+// slider (read-only direction). When the selector didn't move, the
+// user changed the value slider, so write it back into the current
+// slot (write direction). Each slot's value is preserved when not
+// being edited.
+last_drift_select != slider53 ? (
+  slider54 = drift_values_bank[slider53];
+  slider_automate(slider54);
+) : (
+  drift_values_bank[slider53] = slider54;
+);
+last_drift_select = slider53;
 
 @sample
 
@@ -449,7 +498,7 @@ slider50 && slider49 > 0 ? (
   // elapses, then begin the actual ramp. During the delay window
   // speed_scale_current stays at speed_scale_start, so combined_scale
   // is whatever it was when engage flipped on.
-  speed_ramp_delay_samples = slider67 * 60 * srate;
+  speed_ramp_delay_samples = slider51 * 60 * srate;
   speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
     speed_ramp_delay_elapsed += 1;
   ) : (
@@ -460,162 +509,106 @@ slider50 && slider49 > 0 ? (
 );
 combined_scale = speed_scale_current;
 
-// --- Per-plugin Drift ---
-// One primary cycle for Womb = one heartbeat (cycle_len_base samples).
-// Musical drift scales with combined_scale so it stretches with Speed
-// Ramp; slow drift is wall-clock and does not.
-musical_drift_up     = slider52;
-musical_drift_down   = slider53;
-musical_drift_period = slider54;
-slow_drift_up        = slider55;
-slow_drift_down      = slider56;
-slow_drift_period    = max(slider57, 0.1);
-drift_shape          = slider58;
+// --- Per-plugin Drift (selector-driven) ---
+// Read all five drift slot values from the memory bank. Each is the
+// peak amplitude in BPM (heart) or breaths/min (breath) the relevant
+// rate can swing.
+heart_drift_up_bpm     = drift_values_bank[0];
+heart_drift_down_bpm   = drift_values_bank[1];
+heart_with_breath_bpm  = drift_values_bank[2];
+breath_drift_up_bpm    = drift_values_bank[3];
+breath_drift_down_bpm  = drift_values_bank[4];
+drift_shape            = slider57;
+heart_drift_period     = slider55;
+breath_drift_period    = slider56;
 
-musical_drift_offset = 0;
-slow_drift_offset    = 0;
+// Helper: advance a phase variable by `inc` per sample, wrap at 1.0,
+// re-roll Random target on wrap, and return shape_val in [-1, +1].
+// (Inlined per source below — JSFX has no functions, so this is the
+// repeated pattern.)
 
-// Musical drift source
-(musical_drift_up > 0 || musical_drift_down > 0) ? (
-  musical_period_samples = max(musical_drift_period * cycle_len_base, 1);
-  prev_musical_phase = musical_drift_phase;
-  musical_drift_phase += combined_scale / musical_period_samples;
-  musical_drift_phase >= 1.0 ? (
-    musical_drift_phase -= 1.0;
+// Heart drift wave. Period in heartbeats: one drift cycle takes
+// heart_drift_period heartbeats. Advance scales with combined_scale
+// so it tracks Speed Ramp.
+heart_drift_offset = 0;
+(heart_drift_up_bpm > 0 || heart_drift_down_bpm > 0) ? (
+  heart_period_samples = max(heart_drift_period * cycle_len_base, 1);
+  heart_drift_phase += combined_scale / heart_period_samples;
+  heart_drift_phase >= 1.0 ? (
+    heart_drift_phase -= 1.0;
     drift_shape == 2 ? (
-      musical_drift_prev_target = musical_drift_curr_target;
-      musical_drift_curr_target = rand(2) - 1;
+      heart_drift_prev_target = heart_drift_curr_target;
+      heart_drift_curr_target = rand(2) - 1;
     );
   );
   drift_shape == 0 ? (
-    musical_shape_val = sin(2 * $pi * musical_drift_phase);
+    heart_shape_val = sin(2 * $pi * heart_drift_phase);
   ) : drift_shape == 1 ? (
-    musical_shape_val = musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
-                        musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
-                                                     (4 * musical_drift_phase - 4);
+    heart_shape_val = heart_drift_phase < 0.25 ? (4 * heart_drift_phase) :
+                      heart_drift_phase < 0.75 ? (2 - 4 * heart_drift_phase) :
+                                                 (4 * heart_drift_phase - 4);
   ) : (
-    musical_shape_val = musical_drift_prev_target +
-      (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+    heart_shape_val = heart_drift_prev_target +
+      (heart_drift_curr_target - heart_drift_prev_target) * heart_drift_phase;
   );
-  musical_drift_offset = musical_shape_val > 0 ? musical_shape_val * musical_drift_up
-                                               : musical_shape_val * musical_drift_down;
+  heart_drift_offset = heart_shape_val > 0 ? heart_shape_val * heart_drift_up_bpm
+                                           : heart_shape_val * heart_drift_down_bpm;
 );
 
-// Slow drift source (wall-clock; no Speed Ramp scaling)
-(slow_drift_up > 0 || slow_drift_down > 0) ? (
-  slow_period_samples = slow_drift_period * 60 * srate;
-  slow_drift_phase += 1.0 / slow_period_samples;
-  slow_drift_phase >= 1.0 ? (
-    slow_drift_phase -= 1.0;
+// Heart-with-breath modulation (RSA, in BPM). Heart speeds up on
+// inhale, holds at top of inhale, slows on exhale, baseline during
+// bottom pause. Same per-state pattern v1 used, but the offset is
+// in concrete BPM now instead of an abstract depth multiplier.
+heart_with_breath_offset = 0;
+heart_with_breath_bpm > 0 ? (
+  breath_phase_pos_for_rsa = breath_state_pos / max(breath_state_len - 1, 1);
+  breath_state == 0 ? heart_with_breath_offset = breath_phase_pos_for_rsa * heart_with_breath_bpm :
+  breath_state == 1 ? heart_with_breath_offset = heart_with_breath_bpm :
+  breath_state == 2 ? heart_with_breath_offset = (1.0 - breath_phase_pos_for_rsa) * heart_with_breath_bpm :
+                      heart_with_breath_offset = 0;
+);
+
+// Breath drift wave. Period in breath cycles: one drift cycle takes
+// breath_drift_period breath cycles. Advance scales with combined_scale
+// so it tracks Speed Ramp.
+breath_drift_offset_bpm = 0;
+(breath_drift_up_bpm > 0 || breath_drift_down_bpm > 0) ? (
+  // total_breath_samples is one full breath cycle at the user's
+  // current durations; period_samples = period_cycles * one_cycle.
+  breath_period_samples = max(breath_drift_period * max(total_breath_samples, 1), 1);
+  breath_drift_phase += combined_scale / breath_period_samples;
+  breath_drift_phase >= 1.0 ? (
+    breath_drift_phase -= 1.0;
     drift_shape == 2 ? (
-      slow_drift_prev_target = slow_drift_curr_target;
-      slow_drift_curr_target = rand(2) - 1;
+      breath_drift_prev_target = breath_drift_curr_target;
+      breath_drift_curr_target = rand(2) - 1;
     );
   );
   drift_shape == 0 ? (
-    slow_shape_val = sin(2 * $pi * slow_drift_phase);
+    breath_shape_val = sin(2 * $pi * breath_drift_phase);
   ) : drift_shape == 1 ? (
-    slow_shape_val = slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
-                     slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
-                                               (4 * slow_drift_phase - 4);
+    breath_shape_val = breath_drift_phase < 0.25 ? (4 * breath_drift_phase) :
+                       breath_drift_phase < 0.75 ? (2 - 4 * breath_drift_phase) :
+                                                   (4 * breath_drift_phase - 4);
   ) : (
-    slow_shape_val = slow_drift_prev_target +
-      (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+    breath_shape_val = breath_drift_prev_target +
+      (breath_drift_curr_target - breath_drift_prev_target) * breath_drift_phase;
   );
-  slow_drift_offset = slow_shape_val > 0 ? slow_shape_val * slow_drift_up
-                                         : slow_shape_val * slow_drift_down;
+  breath_drift_offset_bpm = breath_shape_val > 0 ? breath_shape_val * breath_drift_up_bpm
+                                                 : breath_shape_val * breath_drift_down_bpm;
 );
 
-effective_bpm  = max(bpm_smoothed * combined_scale + musical_drift_offset + slow_drift_offset, 20.0);
+// Apply heart-side modulation: heart drift + heart-with-breath.
+effective_bpm  = max(bpm_smoothed * combined_scale + heart_drift_offset + heart_with_breath_offset, 20.0);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
-// --- Breath drift (modulates the Breath cycle scaler) ---
-// Result is breath_combined_scale: how fast the breath state-pos
-// advances this sample. Replaces combined_scale at the two breath
-// advance sites below (state pos and rest timer).
-breath_drift_link = slider60;
-scaler_drift_offset = 0;
-
-breath_drift_link ? (
-  // Linked: derive a scaler delta from the heartbeat drift so the
-  // whole womb wobbles together. We compute HB's instantaneous drift
-  // ratio (effective_bpm divided by its no-drift baseline) and apply
-  // the inverse to the breath scaler — when HB drifts faster, the
-  // effective scaler shrinks, so breath cycles faster too.
-  hb_drift_total   = musical_drift_offset + slow_drift_offset;
-  hb_baseline_bpm  = bpm_smoothed * combined_scale;
-  hb_drift_ratio   = (hb_baseline_bpm + hb_drift_total) / max(hb_baseline_bpm, 1);
-  scaler_drift_offset = breath_scaler / max(hb_drift_ratio, 0.01) - breath_scaler;
-) : (
-  // Unlinked: independent breath drift sliders. Each Up by / Down by
-  // is an additive delta on the breath scaler. drift_shape (slider58)
-  // is shared with the heartbeat drift block above.
-  breath_drift_musical_up     = slider61;
-  breath_drift_musical_down   = slider62;
-  breath_drift_musical_period = slider63;
-  breath_drift_slow_up        = slider64;
-  breath_drift_slow_down      = slider65;
-  breath_drift_slow_period    = max(slider66, 0.1);
-
-  // Musical drift: period in breath-equivalent cycles; advance scales
-  // with combined_scale so it tracks Speed Ramp.
-  (breath_drift_musical_up > 0 || breath_drift_musical_down > 0) ? (
-    breath_musical_period_samples = max(breath_drift_musical_period * cycle_len_base, 1);
-    breath_musical_drift_phase += combined_scale / breath_musical_period_samples;
-    breath_musical_drift_phase >= 1.0 ? (
-      breath_musical_drift_phase -= 1.0;
-      drift_shape == 2 ? (
-        breath_musical_drift_prev_target = breath_musical_drift_curr_target;
-        breath_musical_drift_curr_target = rand(2) - 1;
-      );
-    );
-    drift_shape == 0 ? (
-      breath_musical_shape_val = sin(2 * $pi * breath_musical_drift_phase);
-    ) : drift_shape == 1 ? (
-      breath_musical_shape_val = breath_musical_drift_phase < 0.25 ? (4 * breath_musical_drift_phase) :
-                                  breath_musical_drift_phase < 0.75 ? (2 - 4 * breath_musical_drift_phase) :
-                                                                      (4 * breath_musical_drift_phase - 4);
-    ) : (
-      breath_musical_shape_val = breath_musical_drift_prev_target +
-        (breath_musical_drift_curr_target - breath_musical_drift_prev_target) * breath_musical_drift_phase;
-    );
-    breath_musical_drift_offset = breath_musical_shape_val > 0 ? breath_musical_shape_val * breath_drift_musical_up
-                                                                : breath_musical_shape_val * breath_drift_musical_down;
-    scaler_drift_offset += breath_musical_drift_offset;
-  );
-
-  // Slow drift: wall-clock period, ignores Speed Ramp.
-  (breath_drift_slow_up > 0 || breath_drift_slow_down > 0) ? (
-    breath_slow_period_samples = breath_drift_slow_period * 60 * srate;
-    breath_slow_drift_phase += 1.0 / breath_slow_period_samples;
-    breath_slow_drift_phase >= 1.0 ? (
-      breath_slow_drift_phase -= 1.0;
-      drift_shape == 2 ? (
-        breath_slow_drift_prev_target = breath_slow_drift_curr_target;
-        breath_slow_drift_curr_target = rand(2) - 1;
-      );
-    );
-    drift_shape == 0 ? (
-      breath_slow_shape_val = sin(2 * $pi * breath_slow_drift_phase);
-    ) : drift_shape == 1 ? (
-      breath_slow_shape_val = breath_slow_drift_phase < 0.25 ? (4 * breath_slow_drift_phase) :
-                              breath_slow_drift_phase < 0.75 ? (2 - 4 * breath_slow_drift_phase) :
-                                                                (4 * breath_slow_drift_phase - 4);
-    ) : (
-      breath_slow_shape_val = breath_slow_drift_prev_target +
-        (breath_slow_drift_curr_target - breath_slow_drift_prev_target) * breath_slow_drift_phase;
-    );
-    breath_slow_drift_offset = breath_slow_shape_val > 0 ? breath_slow_shape_val * breath_drift_slow_up
-                                                          : breath_slow_shape_val * breath_drift_slow_down;
-    scaler_drift_offset += breath_slow_drift_offset;
-  );
-);
-
-// Combine: effective_breath_scaler is what scaler WOULD have been if
-// drift were baked into the @slider pass. The ratio of base scaler to
-// effective scaler drives the state-pos advance rate this sample.
-effective_breath_scaler = max(breath_scaler + scaler_drift_offset, 0.05);
-breath_combined_scale   = combined_scale * breath_scaler / effective_breath_scaler;
+// Apply breath-side drift: the slider52 baseline (breaths/min) plus
+// the per-sample breath drift offset gives the effective breath rate.
+// Convert that to a per-sample state-advance multiplier so the breath
+// state machine cycles at the drifted rate without us having to
+// recompute the per-phase lengths each sample.
+effective_breath_bpm  = max(slider52 + breath_drift_offset_bpm, 0.1);
+breath_combined_scale = combined_scale * (effective_breath_bpm / max(slider52, 0.1));
 
 // Re-arm Start Delay on every transport stop/start, then gate the
 // whole @sample work — all internal state (heartbeat phase, breath
