@@ -48,11 +48,20 @@ slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider18:0<0,60,0.1>Speed ramp duration (minutes)
 slider19:0<0,1,1{Off,On}>Speed ramp engage
 
-// Wobble slot: read a slowly-wandering multiplier from a shared
-// mailbox and apply it to the heartbeat rate. 0 = no wobble. Any
-// other value = read from that slot. Set a Wobble Modulator plugin
-// to the same slot number to drive the wobble.
-slider20:0<0,16,1>Wobble slot (0 = no wobble)
+// Per-plugin drift: two independent drift sources (musical + slow)
+// each with up/down amplitudes in BPM and a shape selector shared
+// between them. Musical drift's period is counted in heartbeats and
+// scales with Speed Ramp (slows when Speed Ramp slows the rate).
+// Slow drift's period is wall-clock minutes and does not scale.
+// Set Up by and Down by to 0 to disable a source; the math is
+// skipped entirely when both amplitudes are 0.
+slider21:0<0,20,0.1>Musical drift: Up by
+slider22:0<0,20,0.1>Musical drift: Down by
+slider23:8<1,1000,1>Musical drift: Period (cycles)
+slider24:0<0,20,0.1>Slow drift: Up by
+slider25:0<0,20,0.1>Slow drift: Down by
+slider26:5<0.1,60,0.1>Slow drift: Period (minutes)
+slider27:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
 srate_inv = 1.0 / srate;
@@ -151,10 +160,19 @@ speed_scale_current      = 1.0;
 speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
 
-// Wobble: shared mailbox base in gmem. Hardcoded across all
-// wobble-aware plugins in the suite — must match wobble_modulator.jsfx
-// and every other synth's WOBBLE_BASE.
-WOBBLE_BASE = 100000;
+// Per-plugin drift state. Two independent sources (musical, slow);
+// each has a phase in [0,1) advancing toward 1 then wrapping. For
+// shape=Random, on each wrap we generate a new target in [-1,+1]
+// and linearly interpolate from the previous target across the
+// next cycle. Seeded so the first cycle starts at phase 0 with
+// curr_target = 0 (neutral) — drift comes in smoothly rather than
+// jumping straight to a random target on bar one.
+musical_drift_phase       = 0;
+slow_drift_phase          = 0;
+musical_drift_prev_target = 0;
+musical_drift_curr_target = 0;
+slow_drift_prev_target    = 0;
+slow_drift_curr_target    = 0;
 
 @slider
 // bpm_target feeds the per-sample smoother; cycle_len_base is now
@@ -232,17 +250,80 @@ slider19 && slider18 > 0 ? (
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
 );
-// Read wobble multiplier from the mailbox if a slot is assigned.
-// Default to 1.0 (no wobble) if no slot, or if the mailbox is empty
-// (no Wobble Modulator currently writing to that slot — safety
-// against multiplying the rate by 0 and silencing the heartbeat).
-wobble_mult = 1.0;
-slider20 > 0 ? (
-  raw_wobble = gmem[WOBBLE_BASE + slider20];
-  raw_wobble > 0 ? wobble_mult = raw_wobble;
+// Per-plugin drift. Two independent additive offsets to BPM:
+//   - Musical drift: period counted in heartbeats, advances at a rate
+//     that scales with Speed Ramp (slower ramp = slower drift). One
+//     "primary cycle" for Heartbeat = one beat = cycle_len_base samples.
+//   - Slow drift: period counted in wall-clock minutes, does NOT
+//     scale with Speed Ramp.
+// Both sources share the Drift shape selector (Sine / Triangle /
+// Random-interpolated). Each source is skipped entirely if both its
+// Up by and Down by are 0.
+musical_drift_up     = slider21;
+musical_drift_down   = slider22;
+musical_drift_period = slider23;
+slow_drift_up        = slider24;
+slow_drift_down      = slider25;
+slow_drift_period    = max(slider26, 0.1);
+drift_shape          = slider27;
+
+musical_drift_offset = 0;
+(musical_drift_up > 0 || musical_drift_down > 0) ? (
+  musical_phase_inc  = speed_scale_current / (max(musical_drift_period, 1) * max(cycle_len_base, 1));
+  musical_drift_phase += musical_phase_inc;
+  musical_drift_phase >= 1.0 ? (
+    musical_drift_phase -= 1.0;
+    drift_shape == 2 ? (
+      musical_drift_prev_target = musical_drift_curr_target;
+      musical_drift_curr_target = (rand(2) - 1);
+    );
+  );
+  drift_shape == 0 ? (
+    musical_shape_val = sin(2 * $pi * musical_drift_phase);
+  );
+  drift_shape == 1 ? (
+    musical_shape_val = musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
+                        musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
+                                                     (4 * musical_drift_phase - 4);
+  );
+  drift_shape == 2 ? (
+    musical_shape_val = musical_drift_prev_target +
+                        (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+  );
+  musical_drift_offset = musical_shape_val > 0 ? (musical_shape_val * musical_drift_up) :
+                                           (musical_shape_val * musical_drift_down);
 );
 
-effective_bpm  = max(bpm_smoothed * speed_scale_current * wobble_mult, 20.0);
+slow_drift_offset = 0;
+(slow_drift_up > 0 || slow_drift_down > 0) ? (
+  slow_phase_inc = 1.0 / (slow_drift_period * 60.0 * srate);
+  slow_drift_phase += slow_phase_inc;
+  slow_drift_phase >= 1.0 ? (
+    slow_drift_phase -= 1.0;
+    drift_shape == 2 ? (
+      slow_drift_prev_target = slow_drift_curr_target;
+      slow_drift_curr_target = (rand(2) - 1);
+    );
+  );
+  drift_shape == 0 ? (
+    slow_shape_val = sin(2 * $pi * slow_drift_phase);
+  );
+  drift_shape == 1 ? (
+    slow_shape_val = slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
+                     slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
+                                               (4 * slow_drift_phase - 4);
+  );
+  drift_shape == 2 ? (
+    slow_shape_val = slow_drift_prev_target +
+                     (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+  );
+  slow_drift_offset = slow_shape_val > 0 ? (slow_shape_val * slow_drift_up) :
+                                     (slow_shape_val * slow_drift_down);
+);
+
+// Clamp effective BPM at 10 so an over-aggressive Down by can't
+// drag the heartbeat to a stop or invert it.
+effective_bpm  = max(bpm_smoothed * speed_scale_current + musical_drift_offset + slow_drift_offset, 10.0);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // Re-arm Start Delay on every transport stop/start, then gate

@@ -79,9 +79,18 @@ slider29:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider30:0<0,60,0.1>Speed ramp duration (minutes)
 slider31:0<0,1,1{Off,On}>Speed ramp engage
 
-// Wobble slot: read a slowly-wandering multiplier from a shared
-// mailbox and apply it to the sweep rate. 0 = no wobble.
-slider32:0<0,16,1>Wobble slot (0 = no wobble)
+// Per-plugin drift: two independent drift sources (musical and slow)
+// modulate the effective sweep rate (in Hz) with asymmetric up/down
+// amplitudes. Musical drift is measured in cycles of the filter LFO
+// itself and scales with Speed Ramp. Slow drift is wall-clock minutes
+// and does NOT scale with Speed Ramp. Shape applies to both.
+slider33:0<0,5,0.01>Musical drift: Up by
+slider34:0<0,5,0.01>Musical drift: Down by
+slider35:8<1,1000,1>Musical drift: Period (cycles)
+slider36:0<0,5,0.01>Slow drift: Up by
+slider37:0<0,5,0.01>Slow drift: Down by
+slider38:5<0.1,60,0.1>Slow drift: Period (minutes)
+slider39:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 in_pin:left input
 in_pin:right input
@@ -246,8 +255,15 @@ speed_scale_current      = 1.0;
 speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
 
-// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
-WOBBLE_BASE = 100000;
+// Per-plugin drift state. Phases advance per sample; on each wrap the
+// Random shape latches a new target in [-1, +1] and interpolates from
+// the previous target across the next cycle.
+musical_drift_phase       = 0;
+slow_drift_phase          = 0;
+musical_drift_prev_target = 0;
+musical_drift_curr_target = 0;
+slow_drift_prev_target    = 0;
+slow_drift_curr_target    = 0;
 
 
 @slider
@@ -366,21 +382,82 @@ rate_mode == 0 ? (freq_raw = rate_val) :
 rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
                  (freq_raw = rate_val / 60);
 
-// Smooth the rate slider, advance the speed ramp, apply the wobble
-// (if a slot is assigned), multiply to get effective freq used
-// downstream by the LFO phase advance and the cycle counter.
+// Smooth the rate slider, advance the speed ramp, apply per-plugin
+// drift, then derive the effective freq used downstream by the LFO
+// phase advance and the cycle counter.
 freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
 slider31 && slider30 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider30 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider29 - speed_scale_start) * speed_ramp_t;
 );
-wobble_mult = 1.0;
-slider32 > 0 ? (
-  raw_wobble = gmem[WOBBLE_BASE + slider32];
-  raw_wobble > 0 ? wobble_mult = raw_wobble;
+
+// Per-plugin drift. Musical drift's "primary cycle" is one LFO cycle
+// (one full filter sweep), so its period in samples is
+// (musical_drift_period / freq_base) * srate where freq_base is the
+// current Speed-Ramp-scaled sweep frequency. We advance the phase by
+// (speed_scale_current / (musical_drift_period * samples_per_primary_cycle))
+// per sample, which equals (freq_smoothed * speed_scale_current) /
+// (musical_drift_period * srate) per sample — i.e., it scales with
+// Speed Ramp. Slow drift advances on wall clock and ignores Speed Ramp.
+freq_base = freq_smoothed * speed_scale_current;
+
+musical_drift_up     = slider33;
+musical_drift_down   = slider34;
+musical_drift_period = slider35;
+slow_drift_up        = slider36;
+slow_drift_down      = slider37;
+slow_drift_period    = max(slider38, 0.1);
+drift_shape          = slider39;
+
+musical_drift_offset = 0;
+(musical_drift_up > 0 || musical_drift_down > 0) ? (
+  musical_period_samples = (musical_drift_period / max(freq_base, 0.00001)) * srate;
+  musical_drift_phase += 1 / max(musical_period_samples, 1);
+  musical_drift_phase >= 1 ? (
+    musical_drift_phase -= 1;
+    drift_shape == 2 ? (
+      musical_drift_prev_target = musical_drift_curr_target;
+      musical_drift_curr_target = rand(2) - 1;
+    );
+  );
+  drift_shape == 0 ? (
+    m_shape_val = sin(2 * $pi * musical_drift_phase);
+  ) : drift_shape == 1 ? (
+    m_shape_val = musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
+                  musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
+                                               (4 * musical_drift_phase - 4);
+  ) : (
+    m_shape_val = musical_drift_prev_target +
+                  (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+  );
+  musical_drift_offset = m_shape_val > 0 ? m_shape_val * musical_drift_up : m_shape_val * musical_drift_down;
 );
-freq = freq_smoothed * speed_scale_current * wobble_mult;
+
+slow_drift_offset = 0;
+(slow_drift_up > 0 || slow_drift_down > 0) ? (
+  slow_drift_phase += 1 / (slow_drift_period * 60 * srate);
+  slow_drift_phase >= 1 ? (
+    slow_drift_phase -= 1;
+    drift_shape == 2 ? (
+      slow_drift_prev_target = slow_drift_curr_target;
+      slow_drift_curr_target = rand(2) - 1;
+    );
+  );
+  drift_shape == 0 ? (
+    s_shape_val = sin(2 * $pi * slow_drift_phase);
+  ) : drift_shape == 1 ? (
+    s_shape_val = slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
+                  slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
+                                            (4 * slow_drift_phase - 4);
+  ) : (
+    s_shape_val = slow_drift_prev_target +
+                  (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+  );
+  slow_drift_offset = s_shape_val > 0 ? s_shape_val * slow_drift_up : s_shape_val * slow_drift_down;
+);
+
+freq = max(freq_base + musical_drift_offset + slow_drift_offset, 0.001);
 
 period   = 1 / max(freq, 0.00001);
 on_secs  = (dur_pct / 100.0) * period;

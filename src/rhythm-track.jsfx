@@ -45,10 +45,22 @@ slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider18:0<0,60,0.1>Speed ramp duration (minutes)
 slider19:0<0,1,1{Off,On}>Speed ramp engage
 
-// Wobble slot: read a slowly-wandering multiplier from a shared
-// mailbox and apply it to the tempo. 0 = no wobble. Set a Wobble
-// Modulator plugin to the same slot number to drive it.
-slider20:0<0,16,1>Wobble slot (0 = no wobble)
+// Musical drift: organic up/down wander on tempo, paced in beats.
+// Scales with Speed Ramp — slow the tempo down, drift slows with it.
+// Up by / Down by are in BPM; Period is how many beats per one full
+// drift cycle. 0 amplitudes disable.
+slider21:0<0,20,0.1>Musical drift: Up by
+slider22:0<0,20,0.1>Musical drift: Down by
+slider23:8<1,1000,1>Musical drift: Period (cycles)
+
+// Slow drift: wall-clock wander on tempo. Independent of Speed Ramp.
+// Up by / Down by are in BPM; Period is in wall-clock minutes.
+slider24:0<0,20,0.1>Slow drift: Up by
+slider25:0<0,20,0.1>Slow drift: Down by
+slider26:5<0.1,60,0.1>Slow drift: Period (minutes)
+
+// Drift shape applies to BOTH musical and slow drift.
+slider27:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
 
@@ -107,8 +119,15 @@ speed_scale_current     = 1.0;
 speed_scale_start       = 1.0;
 speed_ramp_t            = 0.0;
 
-// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
-WOBBLE_BASE = 100000;
+// Drift state. Phases advance per sample and wrap [0,1). For Random
+// shape we interpolate between prev_target → curr_target over one
+// full period; new target is drawn from uniform [-1, +1] on each wrap.
+musical_drift_phase       = 0;
+slow_drift_phase          = 0;
+musical_drift_prev_target = 0;
+musical_drift_curr_target = 0;
+slow_drift_prev_target    = 0;
+slow_drift_curr_target    = 0;
 
 nx = 1;
 i = 0;
@@ -306,13 +325,71 @@ slider19 && slider18 > 0 ? (
   speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
 );
 
-// Read wobble multiplier. 1.0 = no wobble (slot unassigned or empty).
-wobble_mult = 1.0;
-slider20 > 0 ? (
-  raw_wobble = gmem[WOBBLE_BASE + slider20];
-  raw_wobble > 0 ? wobble_mult = raw_wobble;
+combined_scale = speed_scale_current;
+
+// Drift: compute musical + slow offsets in BPM and apply to tempo.
+// Musical drift advances by combined_scale (so it slows with Speed
+// Ramp); slow drift advances by wall-clock. Each phase wraps [0,1).
+musical_drift_up     = slider21;
+musical_drift_down   = slider22;
+musical_drift_period = slider23;
+slow_drift_up        = slider24;
+slow_drift_down      = slider25;
+slow_drift_period    = max(slider26, 0.1);
+drift_shape          = slider27;
+
+musical_drift_offset = 0;
+slow_drift_offset    = 0;
+
+(musical_drift_up > 0 || musical_drift_down > 0) ? (
+  musical_drift_phase += combined_scale / (musical_drift_period * samples_per_beat);
+  musical_drift_phase >= 1.0 ? (
+    musical_drift_phase -= 1.0;
+    // On wrap, draw a fresh Random target. Shape-agnostic so the
+    // value is ready if shape changes mid-cycle.
+    musical_drift_prev_target = musical_drift_curr_target;
+    musical_drift_curr_target = (rand(2) - 1);
+  );
+  drift_shape == 0 ? (
+    drift_shape_val = sin(2 * $pi * musical_drift_phase);
+  ) : drift_shape == 1 ? (
+    drift_shape_val = musical_drift_phase < 0.25 ? (4 * musical_drift_phase)
+                    : musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase)
+                    : (4 * musical_drift_phase - 4);
+  ) : (
+    drift_shape_val = musical_drift_prev_target
+                    + (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+  );
+  musical_drift_offset = drift_shape_val > 0 ? drift_shape_val * musical_drift_up
+                                              : drift_shape_val * musical_drift_down;
 );
-combined_scale = speed_scale_current * wobble_mult;
+
+(slow_drift_up > 0 || slow_drift_down > 0) ? (
+  slow_drift_phase += 1 / (slow_drift_period * 60 * srate);
+  slow_drift_phase >= 1.0 ? (
+    slow_drift_phase -= 1.0;
+    slow_drift_prev_target = slow_drift_curr_target;
+    slow_drift_curr_target = (rand(2) - 1);
+  );
+  drift_shape == 0 ? (
+    drift_shape_val = sin(2 * $pi * slow_drift_phase);
+  ) : drift_shape == 1 ? (
+    drift_shape_val = slow_drift_phase < 0.25 ? (4 * slow_drift_phase)
+                    : slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase)
+                    : (4 * slow_drift_phase - 4);
+  ) : (
+    drift_shape_val = slow_drift_prev_target
+                    + (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+  );
+  slow_drift_offset = drift_shape_val > 0 ? drift_shape_val * slow_drift_up
+                                          : drift_shape_val * slow_drift_down;
+);
+
+// Effective tempo with drift, clamped so over-aggressive Down-by
+// can't silence or break the metronome. Recompute samples_per_beat
+// each sample so beat_phase advances at the drifted rate.
+effective_tempo = max(10, tempo + musical_drift_offset + slow_drift_offset);
+effective_samples_per_beat = (60.0 / effective_tempo) * srate;
 
 // Re-arm Start Delay on each transport stop/start.
 play_state > 0 && last_play_state == 0 ? (
@@ -329,7 +406,7 @@ start_delay_elapsed < start_delay_sec ? (
   spl1 = 0;
 ) : (
 
-beat_phase += combined_scale / samples_per_beat;
+beat_phase += combined_scale / effective_samples_per_beat;
 
 beat_phase >= 1.0 ? (
   beat_phase -= 1.0;

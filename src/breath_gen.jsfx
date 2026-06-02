@@ -45,10 +45,21 @@ slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider18:0<0,60,0.1>Speed ramp duration (minutes)
 slider19:0<0,1,1{Off,On}>Speed ramp engage
 
-// Wobble slot: read a slowly-wandering multiplier from a shared
-// mailbox and apply it to the breath cycle rate. 0 = no wobble.
-// Set a Wobble Modulator plugin to the same slot number to drive it.
-slider20:0<0,16,1>Wobble slot (0 = no wobble)
+// Musical drift: cycles-per-drift-period, scales with Speed Ramp.
+// Up/Down amplitudes in seconds added to the breath cycle.
+// One "primary cycle" here is one full breath
+// (inhale + top pause + exhale + bottom pause).
+slider21:0<0,2,0.01>Musical drift: Up by
+slider22:0<0,2,0.01>Musical drift: Down by
+slider23:8<1,1000,1>Musical drift: Period (cycles)
+
+// Slow drift: wall-clock minutes per drift cycle, does NOT scale with
+// Speed Ramp. Up/Down amplitudes in seconds added to the breath cycle.
+slider24:0<0,2,0.01>Slow drift: Up by
+slider25:0<0,2,0.01>Slow drift: Down by
+slider26:5<0.1,60,0.1>Slow drift: Period (minutes)
+
+slider27:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
 srate_inv = 1.0 / srate;
@@ -146,9 +157,16 @@ speed_scale_current     = 1.0;
 speed_scale_start       = 1.0;
 speed_ramp_t            = 0.0;
 
-// Wobble: shared mailbox base in gmem. Hardcoded across all
-// wobble-aware plugins — must match wobble_modulator.jsfx.
-WOBBLE_BASE = 100000;
+// Per-plugin drift state. Phases run 0..1, advancing each sample.
+// Musical drift advances at a rate tied to one breath cycle (scaled
+// by Speed Ramp); slow drift advances on wall-clock time.
+musical_drift_phase = 0;
+slow_drift_phase    = 0;
+// Random-shape interpolation targets (uniform in [-1, +1]).
+musical_drift_prev_target = 0;
+musical_drift_curr_target = 0;
+slow_drift_prev_target    = 0;
+slow_drift_curr_target    = 0;
 
 @slider
 inhale_len = max(floor(srate * slider1), 1);
@@ -216,13 +234,87 @@ slider19 && slider18 > 0 ? (
   speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
 );
 
-// Read wobble multiplier. 1.0 = no wobble (slot unassigned or empty).
-wobble_mult = 1.0;
-slider20 > 0 ? (
-  raw_wobble = gmem[WOBBLE_BASE + slider20];
-  raw_wobble > 0 ? wobble_mult = raw_wobble;
+combined_scale = speed_scale_current;
+
+// Per-plugin drift. Two independent sources (musical + slow) sum into
+// a seconds-offset on the breath cycle period, which is then converted
+// back to a scale multiplier so it composes cleanly with Speed Ramp.
+// Musical drift's phase advance scales with combined_scale so it tracks
+// the kin's breath when Speed Ramp slows things down; slow drift is
+// wall-clock and does not.
+musical_drift_up     = slider21;
+musical_drift_down   = slider22;
+musical_drift_period = slider23;
+slow_drift_up        = slider24;
+slow_drift_down      = slider25;
+slow_drift_period    = max(slider26, 0.1);
+drift_shape          = slider27;
+
+drift_sec = 0;
+(musical_drift_up > 0 || musical_drift_down > 0) ? (
+  // total_breath_samples is one full breath cycle. Phase wraps once
+  // per (musical_drift_period) breaths.
+  musical_period_samples = max(musical_drift_period, 1) * max(total_breath_samples, 1);
+  musical_drift_phase_prev = musical_drift_phase;
+  musical_drift_phase += combined_scale / musical_period_samples;
+  musical_drift_phase >= 1.0 ? (
+    musical_drift_phase -= floor(musical_drift_phase);
+    drift_shape == 2 ? (
+      musical_drift_prev_target = musical_drift_curr_target;
+      musical_drift_curr_target = rand(2) - 1;
+    );
+  );
+  drift_shape == 0 ? (
+    musical_shape = sin(2 * $pi * musical_drift_phase);
+  );
+  drift_shape == 1 ? (
+    musical_shape = musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
+                    musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
+                    (4 * musical_drift_phase - 4);
+  );
+  drift_shape == 2 ? (
+    musical_shape = musical_drift_prev_target + (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+  );
+  musical_drift_offset = musical_shape > 0 ? (musical_shape * musical_drift_up) : (musical_shape * musical_drift_down);
+  drift_sec += musical_drift_offset;
 );
-combined_scale = speed_scale_current * wobble_mult;
+
+(slow_drift_up > 0 || slow_drift_down > 0) ? (
+  slow_period_samples = slow_drift_period * 60 * srate;
+  slow_drift_phase += 1.0 / slow_period_samples;
+  slow_drift_phase >= 1.0 ? (
+    slow_drift_phase -= floor(slow_drift_phase);
+    drift_shape == 2 ? (
+      slow_drift_prev_target = slow_drift_curr_target;
+      slow_drift_curr_target = rand(2) - 1;
+    );
+  );
+  drift_shape == 0 ? (
+    slow_shape = sin(2 * $pi * slow_drift_phase);
+  );
+  drift_shape == 1 ? (
+    slow_shape = slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
+                 slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
+                 (4 * slow_drift_phase - 4);
+  );
+  drift_shape == 2 ? (
+    slow_shape = slow_drift_prev_target + (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+  );
+  slow_drift_offset = slow_shape > 0 ? (slow_shape * slow_drift_up) : (slow_shape * slow_drift_down);
+  drift_sec += slow_drift_offset;
+);
+
+// Apply drift as a seconds offset on the breath cycle period, then
+// convert to an effective scale multiplier. Clamp the resulting cycle
+// to at least 0.2s so a heavy Down-by can't drive the rate to zero.
+drift_sec != 0 ? (
+  base_breath_sec = total_breath_samples / srate;
+  combined_scale > 0 ? (
+    effective_breath_sec = base_breath_sec / combined_scale + drift_sec;
+    effective_breath_sec = max(effective_breath_sec, 0.2);
+    combined_scale = base_breath_sec / effective_breath_sec;
+  );
+);
 
 // Re-arm Start Delay on every transport stop/start, then gate
 // the whole @sample work — state machine stays frozen during the
@@ -244,9 +336,9 @@ start_delay_elapsed < start_delay_sec ? (
 // gate can decide whether to actually start a new breath or stay
 // silent in state 3 for the rest of the rest period.
 //
-// Speed ramp + wobble: increment by combined_scale instead of 1, so
+// Speed ramp + drift: increment by combined_scale instead of 1, so
 // the whole breath cycle stretches/compresses smoothly with both the
-// long-form ramp and the live wobble layered together.
+// long-form ramp and the per-plugin drift layered together.
 state_pos += combined_scale;
 state_pos >= state_len ? (
   state_pos = 0;
@@ -291,7 +383,7 @@ state_pos >= state_len ? (
 // remaining rest accordingly.
 pr_resting ? (
   // Rest timer also uses combined_scale so the play/rest ratio stays
-  // consistent under both Speed Ramp and Wobble.
+  // consistent under both Speed Ramp and per-plugin drift.
   pr_rest_elapsed += combined_scale;
   pr_rest_elapsed >= rest_for_breaths * total_breath_samples ? (
     pr_resting = 0;

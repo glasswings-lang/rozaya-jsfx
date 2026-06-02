@@ -178,10 +178,27 @@ slider67:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider68:0<0,60,0.1>Speed ramp duration (minutes)
 slider69:0<0,1,1{Off,On}>Speed ramp engage
 
-// Wobble slot: read a slowly-wandering multiplier from a shared
-// mailbox and apply it to the melody tempo (alongside Speed Ramp).
-// 0 = no wobble.
-slider70:0<0,16,1>Wobble slot (0 = no wobble)
+// Musical drift (sliders 71-73): adds a slow oscillation to the
+// effective rate, measured in cycles of the global rate. Up by and
+// Down by are in the same units as Rate Value (BPM / Seconds / Hz
+// depending on Rate Mode); dial down for Seconds / Hz modes where
+// 20 is a huge swing. Period is how many rate cycles per one drift
+// cycle. Musical drift SCALES with Speed Ramp so it slows when the
+// melody slows.
+slider71:0<0,20,0.1>Musical drift: Up by
+slider72:0<0,20,0.1>Musical drift: Down by
+slider73:8<1,1000,1>Musical drift: Period (cycles)
+
+// Slow drift (sliders 74-76): same shape as musical drift, but the
+// period is wall-clock minutes and it does NOT scale with Speed
+// Ramp. Useful for very long-form wandering on top of the musical
+// drift.
+slider74:0<0,20,0.1>Slow drift: Up by
+slider75:0<0,20,0.1>Slow drift: Down by
+slider76:5<0.1,60,0.1>Slow drift: Period (minutes)
+
+// Drift shape (slider 77): applies to BOTH drift sources.
+slider77:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
 // Memory layout per voice (16 slots each — V0 starts at the
@@ -316,8 +333,17 @@ speed_scale_current     = 1.0;
 speed_scale_start       = 1.0;
 speed_ramp_t            = 0.0;
 
-// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
-WOBBLE_BASE = 100000;
+// Per-plugin drift state. Two independent drift sources (musical
+// scales with Speed Ramp, slow is wall-clock) summed at the rate-
+// use site. Random-shape targets are uniform in [-1, +1] and get
+// regenerated each time the phase wraps; the offset interpolates
+// linearly from prev → curr over one drift period.
+musical_drift_phase       = 0;
+slow_drift_phase          = 0;
+musical_drift_prev_target = 0;
+musical_drift_curr_target = 0;
+slow_drift_prev_target    = 0;
+slow_drift_curr_target    = 0;
 
 // One-pole exponential smoother coefficient for the envelope
 // output. Polyrhythm Phase uses this exact pattern: the raw
@@ -696,24 +722,109 @@ slider69 && !speed_ramp_engaged_last ? (
 );
 speed_ramp_engaged_last = slider69;
 
+// Drift cache. Read slider values once per @slider run; @sample
+// reads from these locals so it doesn't pay the slider lookup
+// cost per sample.
+musical_drift_up        = slider71;
+musical_drift_down      = slider72;
+musical_drift_period    = max(slider73, 1);
+slow_drift_up           = slider74;
+slow_drift_down         = slider75;
+slow_drift_period_min   = max(slider76, 0.1);
+drift_shape             = slider77;
+musical_drift_enabled   = (musical_drift_up > 0 || musical_drift_down > 0);
+slow_drift_enabled      = (slow_drift_up > 0 || slow_drift_down > 0);
+// Samples per one global rate cycle — the "primary cycle" for
+// musical drift. Recomputed here because cycle_seconds may have
+// changed (rate_mode / rate_value sliders).
+samples_per_primary_cycle = max(cycle_seconds * srate, 1);
+
 @sample
-// Advance speed ramp every sample, read wobble, scale dt by the
-// resulting combined multiplier so the sequencer + voice envelopes
-// + pan all stretch together. Note: dt is also used for
-// state_elapsed (voice envelope time), so scaling here keeps
-// Attack %, Release %, Note duration proportions intact across
-// speed changes.
+// Advance speed ramp every sample, then compute musical + slow
+// drift offsets to the effective rate. combined_scale stretches
+// dt so the sequencer + voice envelopes + pan all track the
+// effective tempo (dt is also used for state_elapsed, so scaling
+// here keeps Attack %, Release %, Note duration proportions
+// intact across speed changes).
 slider69 && slider68 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider68 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider67 - speed_scale_start) * speed_ramp_t;
 );
-wobble_mult = 1.0;
-slider70 > 0 ? (
-  raw_wobble = gmem[WOBBLE_BASE + slider70];
-  raw_wobble > 0 ? wobble_mult = raw_wobble;
+
+// Musical drift: phase advances at speed_scale_current /
+// (period_cycles × samples_per_primary_cycle) per sample, so it
+// slows when Speed Ramp slows the rate (one drift cycle still
+// spans the same number of musical cycles regardless of tempo).
+musical_drift_offset = 0;
+musical_drift_enabled ? (
+  musical_drift_phase_prev = musical_drift_phase;
+  musical_drift_phase += speed_scale_current / (musical_drift_period * samples_per_primary_cycle);
+  musical_drift_phase >= 1 ? (
+    musical_drift_phase -= 1;
+    drift_shape == 2 ? (
+      musical_drift_prev_target = musical_drift_curr_target;
+      musical_drift_curr_target = rand(2) - 1;
+    );
+  );
+  drift_shape == 0 ? (
+    musical_drift_shape_val = sin(2 * $pi * musical_drift_phase);
+  ) : drift_shape == 1 ? (
+    musical_drift_shape_val =
+      musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
+      musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
+                                   (4 * musical_drift_phase - 4);
+  ) : (
+    musical_drift_shape_val = musical_drift_prev_target + (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+  );
+  musical_drift_offset = musical_drift_shape_val > 0 ?
+    musical_drift_shape_val * musical_drift_up :
+    musical_drift_shape_val * musical_drift_down;
 );
-combined_scale = speed_scale_current * wobble_mult;
+
+// Slow drift: phase advances by 1 / (period_min × 60 × srate) —
+// wall-clock, independent of Speed Ramp.
+slow_drift_offset = 0;
+slow_drift_enabled ? (
+  slow_drift_phase += 1 / (slow_drift_period_min * 60 * srate);
+  slow_drift_phase >= 1 ? (
+    slow_drift_phase -= 1;
+    drift_shape == 2 ? (
+      slow_drift_prev_target = slow_drift_curr_target;
+      slow_drift_curr_target = rand(2) - 1;
+    );
+  );
+  drift_shape == 0 ? (
+    slow_drift_shape_val = sin(2 * $pi * slow_drift_phase);
+  ) : drift_shape == 1 ? (
+    slow_drift_shape_val =
+      slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
+      slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
+                                (4 * slow_drift_phase - 4);
+  ) : (
+    slow_drift_shape_val = slow_drift_prev_target + (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+  );
+  slow_drift_offset = slow_drift_shape_val > 0 ?
+    slow_drift_shape_val * slow_drift_up :
+    slow_drift_shape_val * slow_drift_down;
+);
+
+// Apply drift to the effective rate. Drift is in the same units as
+// Rate Value; we convert to a speed multiplier by computing the
+// ratio of the drifted rate to the base rate. Clamp the drifted
+// rate to a sensible minimum so an over-aggressive Down by doesn't
+// silence or break the sequencer. Rate Mode interpretation:
+//   BPM (0):  higher rate_value = faster, so drift_mult = drifted / base
+//   Sec (1):  higher rate_value = slower (seconds per cycle), so
+//             drift_mult = base / drifted (inverted)
+//   Hz  (2):  higher rate_value = faster, same as BPM
+drift_total = musical_drift_offset + slow_drift_offset;
+drifted_rate = max(rate_value + drift_total, 0.001);
+rate_mode == 1 ?
+  drift_mult = rate_value / drifted_rate :
+  drift_mult = drifted_rate / rate_value;
+
+combined_scale = speed_scale_current * drift_mult;
 dt = combined_scale / srate;
 
 // Re-arm Start Delay on each transport stop/start.
@@ -916,7 +1027,7 @@ seq_started && !seq_finished ? (
 // just sit until the user presses stop/play to reset cleanly.
 pr_enabled && pr_resting && rest_mode == 1 && pr_rest_duration_samples > 0 ? (
   // Scale rest accumulation by combined_scale so rest duration tracks
-  // the effective tempo set by Speed Ramp + Wobble (consistent with
+  // the effective tempo set by Speed Ramp + drift (consistent with
   // how Walk-mode rest auto-tracks via the stretched dt).
   pr_rest_elapsed += combined_scale;
   pr_rest_elapsed >= pr_rest_duration_samples ? (

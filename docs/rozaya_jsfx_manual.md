@@ -16,8 +16,8 @@
 - [Polyrhythm Phase](#polyrhythm-phase)
 - [Melody Phase](#melody-phase)
 
-**Modulators**
-- [Wobble Modulator](#wobble-modulator)
+**Universal Features**
+- [Per-Plugin Drift](#per-plugin-drift)
 
 **Effects**
 - [Resonant Sweeping Filter](#full-feature-sweeping-filter)
@@ -188,10 +188,30 @@ A small ~100 ms smoother also sits between the BPM slider and the audio, so manu
 
 **Transport behavior**: resets on stop/play just like Start Delay and Play/Rest. The multiplier returns to 1.0 and the ramp clock restarts on every play press. If you want the ramp to begin from a non-1.0 starting point on play, set the BPM slider to the value you want at start and use the multiplier to ramp away from 1.0; the multiplier's "1.0 = current BPM" anchor means the BPM slider IS your starting rate.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern broadcast by a [Wobble Modulator](#wobble-modulator) plugin running elsewhere in the session. **0** (the default) = no wobble. Any other value reads from that numbered mailbox and applies the wobble multiplier to BPM in real time, alongside whatever the Speed Ramp is doing. Set this to the same number as a Wobble Modulator's Slot to connect them — the heartbeat now drifts up and down organically around its target rate.
+Slow organic wander applied to BPM on top of Speed Ramp. The heartbeat speeds up and slows down a little instead of locking to one fixed rate. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (heartbeats)** `1–256, default 32`
+Period of the musical drift source, measured in heartbeats of the kin's own cycle. Scales with Speed Ramp — if the heartbeat slows down, this period stretches with it.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center BPM the musical drift wanders at its peak, as a multiplier amplitude. 0.1 = up to +10% above the slider BPM.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center BPM the musical drift wanders at its trough. Independent from Up by — asymmetric drift wanders further one direction than the other.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources. Sine is smoothest; Triangle has a defined peak corner; Random wanders smoothly between random targets.
 
 ---
 
@@ -336,10 +356,30 @@ Off = ramp not advancing. On = ramp advances from its current position toward th
 
 **Transport behavior**: resets to 1.0 on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the breath cycle rate, on top of whatever Speed Ramp is doing. Set this to the same number as the Modulator's Slot to connect them — breathing now drifts gently in length cycle to cycle.
+Slow organic wander applied to the breath cycle rate on top of Speed Ramp. Breaths get slightly longer or shorter cycle to cycle instead of all being identical. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (breaths)** `1–256, default 8`
+Period of the musical drift source, measured in breath cycles. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center cycle rate the musical drift wanders at its peak, as a multiplier amplitude. 0.1 = breaths up to 10% faster at the peak.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center cycle rate the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 
@@ -580,10 +620,30 @@ Off → On captures the in-flight multiplier; On → Off freezes at the current 
 
 A ~100 ms smoother also sits between the BPM slider and the audio so manual BPM tweaks no longer click. Always on.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to **all three layers together** — heartbeat, breath, and bloodflow — so the womb wanders as a coherent organism. Set this to the same number as the Modulator's Slot to connect them. This is the layer that makes Womb feel like something alive instead of a recording on loop.
+Slow organic wander applied to **all three layers together** — heartbeat, breath, and bloodflow — so the womb wanders as a coherent organism rather than three independent recordings. Sits on top of Speed Ramp. This is the layer that makes Womb feel like something alive instead of a loop. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (heartbeats)** `1–256, default 32`
+Period of the musical drift source, measured in heartbeats. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center rate the musical drift wanders at its peak, as a multiplier amplitude. Applied uniformly to heartbeat BPM and the breath state machine's advance rate.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center rate the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 
@@ -794,10 +854,30 @@ Scales **every voice's tremolo + pan + cycle-counter advance** by a single multi
 
 Off → On captures the current multiplier and ramps fresh toward target; On → Off freezes at the in-flight position. Set target = 1.0 and re-engage to return to slider speed. Resets on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier polyrhythm-wide — every voice's tremolo speeds up and slows down in step, preserving the rate relationships between voices while the underlying pulse breathes. Sits on top of whatever Speed Ramp is doing.
+Slow organic wander applied polyrhythm-wide on top of Speed Ramp — every voice's tremolo speeds up and slows down in step, preserving the rate relationships between voices while the underlying pulse breathes. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (cycles)** `1–256, default 32`
+Period of the musical drift source, measured in cycles of the global Rate Value. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center rate the musical drift wanders at its peak, as a multiplier amplitude applied to every voice's tremolo together.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center rate the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 
@@ -1020,10 +1100,30 @@ Scales the effective dt (time-per-sample) the sequencer + voice envelopes see. *
 
 Voice envelope proportions (Attack %, Release %, Note duration) stay intact because they're percentages of the stretched step. Pan modulation also scales, so the whole melody timeline including pan motion morphs as one piece. Resets on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the melody's effective tempo on top of Speed Ramp — sequencer, voice envelopes, and pan motion all stretch together, like an unforced live player rather than a metronomic loop.
+Slow organic wander applied to the melody's effective tempo on top of Speed Ramp — sequencer, voice envelopes, and pan motion all stretch together, like an unforced live player rather than a metronomic loop. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (cycles)** `1–256, default 32`
+Period of the musical drift source, measured in cycles of the global Rate Value. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center tempo the musical drift wanders at its peak, as a multiplier amplitude.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center tempo the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ## Usage Notes
 
@@ -1055,7 +1155,7 @@ Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) pl
 
 ---
 
-# Wobble Modulator
+# Per-Plugin Drift
 
 **Designed by Rozaya — Developed with Claude (Anthropic)**
 
@@ -1063,72 +1163,48 @@ Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) pl
 
 ## Overview
 
-The Wobble Modulator is a small utility plugin that adds a slow, organic wobble to the rate of any other plugin in the suite. It doesn't make sound on its own — it broadcasts a wandering multiplier value into a shared "mailbox," and any other plugin you've set up to listen will read from that mailbox and apply the wobble to its own rate.
+Drift adds slow, organic wandering to a plugin's rate — heartbeat, breath, tremolo, filter sweep, metronome, melody tempo, any rate-bearing plugin in the suite. A heartbeat at a perfectly fixed BPM feels mechanical over a long stretch; a real heart speeds up and slows down a little. Drift is the "it's alive" texture.
 
-The reason this exists: a metronome at a fixed BPM, a heartbeat at a fixed BPM, a breath at a fixed cycle length — these can all feel mechanical over a long stretch. A real heart speeds up and slows down a bit; real breathing does too. Wobble Modulator lets you add that "it's alive" texture to anything in the suite that has a rate.
+Every rate-bearing plugin in the suite carries its own Drift block — there is no separate modulator plugin, no shared mailbox, no cross-plugin routing. Each plugin's drift is self-contained: it lives in the plugin, runs in the plugin, and only affects that plugin. The trade is that you set drift per plugin instead of broadcasting one wobble to everything; the gain is that drift is guaranteed to work, with no patching to set up and nothing to forget.
 
-## How it works (the patching workflow)
+(This replaces the v2.3-prototype Wobble Modulator, which used global gmem mailboxes to broadcast a single drift value to listening plugins. The mailbox approach was clever in principle but fragile in practice — wrong plugin loaded, wrong slot number, leftover values from a removed modulator. Per-plugin drift is boring and reliable.)
 
-Once you understand this, the rest of the section is just slider descriptions.
+## How it works
 
-1. Put a Wobble Modulator plugin on any track in your project. (It doesn't have to be the same track as the plugin you want to wobble — see "About the mailbox" below for why.)
-2. On the Wobble Modulator, set **Slot** to 1.
-3. Open the synth plugin you want to wobble (say Womb, or Breath, or any other). Find its **Wobble slot** slider and set it to 1.
-4. The synth is now wobbling.
+Each plugin's Drift block stacks **two independent drift sources** that both modulate the same rate at the same time. They were given different time scales on purpose so they can shape the rate at two layers at once without fighting:
 
-That's the whole workflow. You set a number on the Modulator, you set the same number on the synth, they're connected. To stop the wobble, set the synth's Wobble slot back to 0.
+- **Musical drift** — its period is measured in the plugin's own cycles (heartbeats, breaths, tremolo cycles, etc.). This means musical drift **scales with the Speed Ramp** automatically — if the plugin is at half speed, a musical-drift cycle takes twice as long in wall-clock time, so the drift stays musically locked to the underlying tempo. Best for "wander that breathes with the music."
+- **Slow drift** — its period is measured in wall-clock minutes. This means slow drift **does not scale with the Speed Ramp** — five minutes is five minutes regardless of what the plugin tempo is doing. Best for "long arc that doesn't care about the music," for example a 20-minute wander across a sleep session.
 
-You can run **multiple Wobble Modulators at once**, each on a different Slot number, driving different synths with different wobble shapes. Or run multiple synths on the same Slot — they'll wobble together in lockstep.
+Each source is independent — you can set one and leave the other at 0, or run both stacked.
 
-## About the mailbox
+## Asymmetric amplitudes
 
-Behind the scenes there are 16 numbered mailboxes that every JSFX plugin in your Reaper session can see at once. That's the whole mechanism, in plain English: mailbox #1, mailbox #2, ... mailbox #16. Any plugin can drop a number into any mailbox; any plugin can read what's currently in any mailbox.
+Each source has separate **Up by** and **Down by** amplitudes, so the drift can wander further above the center than below, or vice versa. With Up by = 0.2 and Down by = 0.05, a heartbeat at 60 BPM wanders up to 72 BPM at the peak but only down to 57 BPM at the trough — useful when you want the wander to feel like "occasional surges" rather than "even sway."
 
-For the wobble system:
+Symmetric drift (Up by = Down by = 0.1) wanders equally either way, like a sine around the center.
 
-- Every sample, the Wobble Modulator does the math for its current wander value (say "multiply by 1.05 right now") and writes `1.05` into whatever mailbox matches its **Slot** setting.
-- Every sample, the synth peeks into whatever mailbox matches *its* **Wobble slot** setting, reads whatever number is there, and multiplies its rate by it.
+## Shape options
 
-That's the entire connection. There's no handshake, no subscription, no plugin-talks-to-plugin negotiation. The two plugins don't even know about each other. They're both just glancing at the same mailbox — one writing, one reading. If your Modulator is on Slot 1 and the synth is on Wobble slot 1, they're using the same mailbox, so they're connected. If they're on different numbers, they're on different mailboxes — disconnected, the synth just doesn't wobble.
+A single Shape control sits across both drift sources:
 
-This is also why **the Wobble Modulator doesn't have to be on the same track as the synth it's driving**. The mailboxes are global to the Reaper session, not scoped to any track. You can put a Wobble Modulator on a dedicated utility track and have it drive synths on five other tracks at once. It just needs to be running somewhere in the session.
+- **Sine** — smoothest. Continuous rounded wander, no corners. The safe default.
+- **Triangle** — same envelope as Sine but with linear rises and a defined peak/trough corner. Feels slightly more deliberate; subtle distinction at slow periods.
+- **Random** — value-noise. The drift picks a random target within the amplitude range and slews smoothly toward it, then picks a new random target, then slews. The result is a slow, unrepeating, smooth wander rather than a clean periodic shape. Good when periodic wobble starts to feel predictable on long sessions.
 
-### Why the slot numbers go up to 16 and not 100
+## Defaults are off
 
-The mailboxes are technically shared with **every JSFX plugin you have installed**, including ones written by other people who use the same shared-memory system for their own purposes. If someone else's plugin happens to use mailbox #5 for something, and we also used #5 for our Slot 5, they'd stomp on each other.
+Every Drift amplitude slider defaults to 0. Drift is **opt-in** — set Up by and/or Down by on at least one source to a non-zero value to engage it. With Up by = 0 and Down by = 0 the source does nothing, regardless of period or shape.
 
-To dodge that, the suite uses mailboxes way out at high numbers (#100001 through #100016 internally) and exposes them as Slot 1 through 16 in the UI. Other people's plugins almost certainly don't reach that far, so we get our own neighborhood. The 16 Slots aren't a Reaper limit — they're a deliberate cap on how many independent wobbles we expect any one user to run at once.
+Set both sources' Up by and Down by to 0 to turn drift off entirely.
 
-### Two things worth knowing about the mailboxes
+## Where to find it
 
-1. **The mailboxes start empty when Reaper opens.** Before any Wobble Modulator has written to one, that mailbox holds a 0. The synth side is written to treat 0 (or any negative number) as "no wobble, just leave the rate alone" — so if you set a synth's Wobble slot but forget to add a Modulator, the synth doesn't go silent. It just doesn't wobble.
-
-2. **The mailboxes are session-wide, not project-wide.** If you open a second project in the same Reaper window — or in a different one running off the same Reaper installation — they share the same mailboxes. Edge case, but worth knowing if you ever wonder why a wobble in one project seems to be affecting another.
-
-## Sliders
-
-**Slot** `1–16, default 1`
-Which mailbox this Modulator writes to. Set the listening synth's "Wobble slot" slider to the same number to connect them. Two different Modulator instances should use different Slot numbers, or they'll overwrite each other.
-
-**Depth** `0–1.0, default 0`
-How wide the wobble is, as a multiplier amplitude. At **0** (the default) the Modulator writes a no-op value and effectively does nothing — useful as an off-switch. At **0.15** the synth's rate wanders between 85% and 115% of its slider value. At **0.5** the rate halves and doubles. For gentle organic feel, 0.05–0.2 is the natural range.
-
-**Period (minutes per full cycle)** `0.1–60, default 5`
-How long one full wobble cycle takes. **5** (the default) = one slow up-and-down every 5 minutes — suits sleep. **1** = one cycle per minute. **0.1** = six seconds per cycle, getting into tremolo territory. For long-form ambient and sleep audio, 2–15 minutes is the sweet spot.
-
-**Shape** `Sine / Triangle, default Sine`
-What the wobble pattern looks like. **Sine** is smoothly rounded; **Triangle** is similar but with linear rises and a defined peak/trough corner. Either works for organic wobble. Sine is the safer default.
-
-## Usage notes
-
-- **The Wobble Modulator processes no audio.** Drop it on any track without worrying about it changing the sound on that track. Putting it on an empty utility track is a clean way to keep your modulators organized separately from your synth tracks.
-- **Set Depth to 0 to "mute" the wobble without unloading the plugin.** Useful if you want to A/B with and without wobble while keeping all your settings.
-- **Transport behavior.** Each time you press play, the wobble phase restarts from the same point. This keeps the entry consistent across multiple play presses.
-- **Mailbox lifetime.** The mailbox values live for as long as Reaper is open. If you remove a Wobble Modulator without replacing it, the last value it wrote stays in the mailbox until something else writes there or you close Reaper — which means any synth still listening to that slot will keep wobble-at-rest at whatever value happened to be there at removal. To fully disengage, set the listening synth's **Wobble slot** back to 0. Restarting Reaper also clears all mailboxes.
+Every rate-bearing plugin in the suite has a **Drift** subsection in its own parameters. See the per-plugin sections below for the seven sliders in each plugin's Drift block. The slider names, defaults, and behavior are identical from plugin to plugin — only the rate being modulated differs.
 
 ---
 
-*Wobble Modulator is part of the Rozaya JSFX plugin suite.*
+*Per-Plugin Drift is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
 
 
@@ -1358,10 +1434,30 @@ A ~100 ms smoother sits between the Rate slider and the audio so manual Rate twe
 
 The ramp also scales the Linked Sweep pan mode (12), since that mode derives its rate from the sweep frequency. The two Pan Sweep modes (10, 11) have their own independent rate slider and are NOT scaled. Resets on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the sweep rate on top of Speed Ramp — the cutoff still moves through the same Low and High frequencies, but the pace breathes instead of locking to one rate.
+Slow organic wander applied to the sweep rate on top of Speed Ramp — the cutoff still moves through the same Low and High frequencies, but the pace breathes instead of locking to one rate. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (cycles)** `1–256, default 32`
+Period of the musical drift source, measured in LFO cycles of the Rate Value. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center sweep rate the musical drift wanders at its peak, as a multiplier amplitude.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center sweep rate the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 
@@ -1573,10 +1669,30 @@ The multiplier scales the whole dwell pattern's frequency. **0.5** = the entire 
 
 The existing ~3 ms cutoff smoother handles any per-sample step change cleanly, so manual dwell-slider tweaks are already click-free. Resets on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the dwell pattern's overall pace on top of Speed Ramp — high dwells become a little longer or shorter as the wobble drifts, instead of being identical every cycle.
+Slow organic wander applied to the dwell pattern's overall pace on top of Speed Ramp — high dwells become a little longer or shorter as the drift evolves, instead of being identical every cycle. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (cycles)** `1–256, default 32`
+Period of the musical drift source, measured in dwell cycles (one full high dwell + fade down + low dwell + fade up). Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center pace the musical drift wanders at its peak, as a multiplier amplitude.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center pace the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 
@@ -1795,10 +1911,30 @@ The ramp also scales the linked-sweep pan rate (Pan Mode 11), since that mode de
 
 Resets on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the tremolo rate on top of Speed Ramp — useful when you want the modulation pulse to feel breathing rather than metronomic.
+Slow organic wander applied to the tremolo rate on top of Speed Ramp — useful when you want the modulation pulse to feel breathing rather than metronomic. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (cycles)** `1–256, default 32`
+Period of the musical drift source, measured in tremolo cycles. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center rate the musical drift wanders at its peak, as a multiplier amplitude.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center rate the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 
@@ -1938,10 +2074,30 @@ Engage = ramp advances from the current multiplier toward target over the durati
 
 The accent grid and swing follow effective tempo automatically — the bar still feels right at any speed. Resets to 1.0 on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the tempo on top of Speed Ramp, giving the metronome a slightly human-feeling drift rather than a perfectly fixed click.
+Slow organic wander applied to the tempo on top of Speed Ramp, giving the metronome a slightly human-feeling drift rather than a perfectly fixed click. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (beats)** `1–256, default 32`
+Period of the musical drift source, measured in beats at the current Tempo. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center tempo the musical drift wanders at its peak, as a multiplier amplitude.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center tempo the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 
@@ -2079,10 +2235,30 @@ In-plugin tempo morph over time, without automation envelopes.
 
 Scales the scale's tempo on top of the BPM slider. **0.5** = notes take twice as long each (half tempo); **2.0** = notes fire twice as fast. Both halves of the Play/Rest gate scale together so the gate stays internally consistent at any speed. Off → On captures the in-flight multiplier; On → Off freezes at the current position. Resets on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the scale's pace on top of Speed Ramp — the rising or descending illusion still works, just with the pace drifting up and down instead of running at one fixed rate.
+Slow organic wander applied to the scale's pace on top of Speed Ramp — the rising or descending illusion still works, just with the pace drifting up and down instead of running at one fixed rate. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (beats)** `1–256, default 32`
+Period of the musical drift source, measured in scale beats at the current BPM. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center tempo the musical drift wanders at its peak, as a multiplier amplitude.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center tempo the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 
@@ -2233,10 +2409,30 @@ Scales the sweep rate on top of the Rate slider. **0.5** = sweep takes twice as 
 
 Off → On captures the in-flight multiplier; On → Off freezes at the current position. Set target = 1.0 and re-engage to return. Resets on every play press.
 
-### Wobble slot
+### Drift
 
-**Wobble slot** `0–16, default 0`
-Listen for a live wobble pattern from a [Wobble Modulator](#wobble-modulator) plugin. **0** = off. Any other value applies the wobble multiplier to the glissando sweep rate on top of Speed Ramp — the rising/falling illusion still feels endless, but the pace breathes rather than running at one fixed speed.
+Slow organic wander applied to the glissando sweep rate on top of Speed Ramp — the rising/falling illusion still feels endless, but the pace breathes rather than running at one fixed speed. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+
+**Musical Period (cycles)** `1–256, default 32`
+Period of the musical drift source, measured in sweep cycles of the global Rate Value. Scales with Speed Ramp.
+
+**Musical Up by** `0.0–1.0, default 0`
+How far above the center sweep rate the musical drift wanders at its peak, as a multiplier amplitude.
+
+**Musical Down by** `0.0–1.0, default 0`
+How far below the center sweep rate the musical drift wanders at its trough. Independent from Up by.
+
+**Slow Period (minutes)** `0.1–60, default 5`
+Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+
+**Slow Up by** `0.0–1.0, default 0`
+Above-center amplitude for the slow drift source.
+
+**Slow Down by** `0.0–1.0, default 0`
+Below-center amplitude for the slow drift source.
+
+**Shape** `Sine / Triangle / Random, default Sine`
+Wander shape applied to both sources.
 
 ---
 

@@ -205,11 +205,6 @@ slider65:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
 slider66:0<0,60,0.1>Speed ramp duration (minutes)
 slider67:0<0,1,1{Off,On}>Speed ramp engage
 
-// Wobble slot: read a slowly-wandering multiplier from a shared
-// mailbox and apply it polyrhythm-wide alongside Speed Ramp.
-// 0 = no wobble.
-slider68:0<0,16,1>Wobble slot (0 = no wobble)
-
 // ===== CHARACTER (global post-effects) =====
 // Four sliders that adjust the character of WHATEVER waveform is
 // selected. Applied to the summed output of all voices after all
@@ -253,6 +248,31 @@ slider72:0<0,100,0.1>Body
 // Default 25% so Pulse sounds audibly distinct from the Square slot on
 // first selection. Range stops short of 0/100 (which would be silence/DC).
 slider73:25<1,99,0.1>Pulse Width % (50 = square)
+
+// ===== DRIFT (per-plugin, built-in) =====
+// Two independent drift sources that perturb the global rate. Both are
+// applied polyrhythm-wide (added to every voice's effective rate via
+// v_dr offset), preserving the rate RELATIONSHIPS between voices —
+// the whole pattern breathes together. Output is in the plugin's
+// natural rate unit (BPM when Rate Mode = BPM; the magnitudes below
+// assume BPM as the most common default — values still apply in
+// Seconds / Hz modes but the perceptual amount differs).
+//
+// Musical drift scales with Speed Ramp (when Speed Ramp slows the
+// rate, musical drift slows with it). Slow drift is wall-clock —
+// independent of Speed Ramp.
+//
+// Shape applies to both drift sources.
+//
+// Defensive: if both Up by and Down by are 0, that source's math is
+// skipped entirely (zero CPU cost when unused).
+slider74:0<0,20,0.1>Musical drift: Up by
+slider75:0<0,20,0.1>Musical drift: Down by
+slider76:8<1,1000,1>Musical drift: Period (cycles)
+slider77:0<0,20,0.1>Slow drift: Up by
+slider78:0<0,20,0.1>Slow drift: Down by
+slider79:5<0.1,60,0.1>Slow drift: Period (minutes)
+slider80:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 
 @init
@@ -357,8 +377,17 @@ speed_scale_current     = 1.0;
 speed_scale_start       = 1.0;
 speed_ramp_t            = 0.0;
 
-// Wobble: shared mailbox base in gmem. Must match wobble_modulator.jsfx.
-WOBBLE_BASE = 100000;
+// Drift state. Two independent phase accumulators (musical = scales
+// with Speed Ramp, slow = wall-clock). prev/curr targets feed the
+// Random shape's linear interpolation between successive random
+// targets at each wrap. @init re-runs on transport play so phases
+// reset cleanly on every play press, matching Speed Ramp behavior.
+musical_drift_phase = 0;
+slow_drift_phase    = 0;
+musical_drift_prev_target = 0;
+musical_drift_curr_target = 0;
+slow_drift_prev_target    = 0;
+slow_drift_curr_target    = 0;
 
 function semitones_to_hz(base_note, center_octave, semitones) (
   tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
@@ -734,22 +763,125 @@ re_start = on_frac - rw_eff;
 
 @sample
 
-// Advance speed ramp every sample (runs through Start Delay too),
-// then layer the Wobble on top. combined_scale multiplies every
-// voice's tremolo + pan + cycle counter advance below, so the
-// whole polyrhythm stretches as one piece and rate RELATIONSHIPS
-// between voices stay intact regardless of whether Wobble is on.
+// Advance speed ramp every sample (runs through Start Delay too).
+// combined_scale multiplies every voice's tremolo + pan + cycle
+// counter advance below, so the whole polyrhythm stretches as one
+// piece and rate RELATIONSHIPS between voices stay intact.
 slider67 && slider66 > 0 ? (
   speed_ramp_t += 1.0 / (srate * slider66 * 60);
   speed_ramp_t = min(speed_ramp_t, 1.0);
   speed_scale_current = speed_scale_start + (slider65 - speed_scale_start) * speed_ramp_t;
 );
-wobble_mult = 1.0;
-slider68 > 0 ? (
-  raw_wobble = gmem[WOBBLE_BASE + slider68];
-  raw_wobble > 0 ? wobble_mult = raw_wobble;
+combined_scale = speed_scale_current;
+
+// ===== DRIFT (per-plugin, built-in) =====
+// Compute the current drift offset (in the plugin's natural rate
+// unit — BPM in default Rate Mode) by advancing two independent
+// phases and reading their shape. The offset is then converted to
+// an Hz delta against the global rate and applied additively to
+// each voice's effective tremolo freq below.
+//
+// Musical drift advances scaled by combined_scale (Speed Ramp slows
+// it with the rest of the polyrhythm). Slow drift is wall-clock.
+//
+// "One primary cycle" for Polyrhythm Phase = V1's tremolo period
+// (the global rate, rate_val in BPM-or-equivalent). That's why the
+// musical period samples_per_primary_cycle uses rate_val_hz below.
+//
+// One-armed conditionals around the up==0 && down==0 guards: an
+// empty () branch from a two-armed ternary breaks JSFX compilation.
+musical_drift_up     = slider74;
+musical_drift_down   = slider75;
+musical_drift_period = slider76;
+slow_drift_up        = slider77;
+slow_drift_down      = slider78;
+slow_drift_period    = max(slider79, 0.1);
+drift_shape          = slider80;
+
+// Base rate in Hz — used both as the divisor for "one V1 cycle" and
+// to convert drift-in-natural-units back into an Hz delta.
+rate_val_hz = rate_to_hz(rate_val, rate_mode);
+
+drift_offset_natural = 0;
+
+// ----- Musical drift -----
+(musical_drift_up > 0 || musical_drift_down > 0) ? (
+  // Phase increments by 1 / (period_cycles * samples_per_primary_cycle).
+  // samples_per_primary_cycle = srate / rate_val_hz. So increment is
+  // rate_val_hz / (period_cycles * srate), scaled by combined_scale so
+  // Speed Ramp pulls musical drift along with the rest of the rhythm.
+  musical_drift_phase += (rate_val_hz * combined_scale) / (musical_drift_period * srate);
+  musical_drift_phase >= 1 ? (
+    musical_drift_phase -= 1;
+    // Random shape: pick a new target at every wrap, uniform in [-1, +1].
+    drift_shape == 2 ? (
+      musical_drift_prev_target = musical_drift_curr_target;
+      musical_drift_curr_target = (rand(2) - 1);
+    );
+  );
+
+  drift_shape == 0 ? (
+    musical_shape_val = sin(2 * $pi * musical_drift_phase);
+  ) : drift_shape == 1 ? (
+    // Triangle: 0 at phase=0, +1 at 0.25, 0 at 0.5, -1 at 0.75, 0 at 1.
+    musical_shape_val = musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
+                        musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
+                                                     (4 * musical_drift_phase - 4);
+  ) : (
+    // Random: linear interp prev → curr across one full period.
+    musical_shape_val = musical_drift_prev_target +
+                        (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+  );
+
+  musical_drift_offset = musical_shape_val > 0 ? musical_shape_val * musical_drift_up
+                                         : musical_shape_val * musical_drift_down;
+  drift_offset_natural += musical_drift_offset;
 );
-combined_scale = speed_scale_current * wobble_mult;
+
+// ----- Slow drift -----
+(slow_drift_up > 0 || slow_drift_down > 0) ? (
+  // Wall-clock — no combined_scale here.
+  slow_drift_phase += 1 / (slow_drift_period * 60 * srate);
+  slow_drift_phase >= 1 ? (
+    slow_drift_phase -= 1;
+    drift_shape == 2 ? (
+      slow_drift_prev_target = slow_drift_curr_target;
+      slow_drift_curr_target = (rand(2) - 1);
+    );
+  );
+
+  drift_shape == 0 ? (
+    slow_shape_val = sin(2 * $pi * slow_drift_phase);
+  ) : drift_shape == 1 ? (
+    slow_shape_val = slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
+                     slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
+                                               (4 * slow_drift_phase - 4);
+  ) : (
+    slow_shape_val = slow_drift_prev_target +
+                     (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+  );
+
+  slow_drift_offset = slow_shape_val > 0 ? slow_shape_val * slow_drift_up
+                                   : slow_shape_val * slow_drift_down;
+  drift_offset_natural += slow_drift_offset;
+);
+
+// Convert the natural-unit drift offset to an Hz delta that gets
+// added uniformly to every voice's tremolo freq below (preserving
+// inter-voice relationships). For BPM: drift_hz_delta = drift_bpm / 60.
+// For Seconds: the conversion is nonlinear, so we approximate as
+// (new_hz - base_hz) where new = rate_val + drift in natural units.
+// Clamp the resulting effective rate so an over-aggressive Down-by
+// can't silence or break the plugin (min 10 BPM equivalent).
+drift_hz_delta = 0;
+drift_offset_natural != 0 ? (
+  effective_rate_natural = rate_val + drift_offset_natural;
+  // Clamp to a sensible minimum in natural units.
+  rate_mode == 0 ? effective_rate_natural = max(effective_rate_natural, 10) :   // BPM ≥ 10
+  rate_mode == 1 ? effective_rate_natural = max(effective_rate_natural, 0.1) :  // Seconds ≥ 0.1
+                   effective_rate_natural = max(effective_rate_natural, 0.1);   // Hz ≥ 0.1
+  drift_hz_delta = rate_to_hz(effective_rate_natural, rate_mode) - rate_val_hz;
+);
 
 // Live phase offset update — fires when an offset slider is moved during
 // playback. Runs over n_voices so the reverse layer's slots 8-15 also
@@ -805,6 +937,15 @@ out_r = 0;
 i = 0;
 loop(n_voices,
   v_active[i] ? (
+    // Effective per-voice tremolo Hz this sample = precomputed
+    // v_trem_freq[i] (global rate + per-voice drift offset) plus the
+    // uniform drift Hz delta (musical + slow). Adding the same delta
+    // to every voice preserves the rate RELATIONSHIPS between voices
+    // while shifting the whole pattern up or down together. Clamp to
+    // a tiny minimum so an over-aggressive Drift Down can't drive the
+    // freq to ≤0 (which would freeze trem_phase or run it backward).
+    effective_trem_freq = max(v_trem_freq[i] + drift_hz_delta, 0.001);
+
     // Per-voice Play/Rest cycle counting. Each voice has its own
     // counter that advances at the voice's own tremolo rate, so V8
     // (fast drift) reaches play_for_cycles in less wall-clock time
@@ -814,7 +955,7 @@ loop(n_voices,
     // of the loop. Counter advances regardless of v_resting state;
     // the threshold comparison just picks which target to check.
     pr_enabled ? (
-      v_pr_cycle[i] += v_trem_freq[i] * combined_scale / srate;
+      v_pr_cycle[i] += effective_trem_freq * combined_scale / srate;
       !v_resting[i] ? (
         v_pr_cycle[i] >= play_for_cycles ? (
           v_resting[i]  = 1;
@@ -844,10 +985,10 @@ loop(n_voices,
     !v_resting[i] ? (
       voice_reverse_time = (i < 8) ? slot0_7_reverse_time : slot8_15_reverse_time;
       voice_reverse_time ? (
-        trem_phase[i] -= v_trem_freq[i] * combined_scale / srate;
+        trem_phase[i] -= effective_trem_freq * combined_scale / srate;
         trem_phase[i] < 0 ? trem_phase[i] += 1;
       ) : (
-        trem_phase[i] += v_trem_freq[i] * combined_scale / srate;
+        trem_phase[i] += effective_trem_freq * combined_scale / srate;
         trem_phase[i] >= 1 ? trem_phase[i] -= 1;
       );
     );
