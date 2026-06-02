@@ -1,0 +1,941 @@
+desc: Womb Sound Generator v2
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+
+// --- GLOBAL ---
+slider1:70<20,200,1>BPM
+slider2:0<0,1,1{Normal,Flipped}>Master Stereo Flip
+
+// --- HEARTBEAT ---
+slider3:1.0<0.0,1.0,0.01>HB Master Volume
+slider4:0<0,1,1{Off,Solo}>Heartbeat Solo
+slider5:120<50,400,1>Systole ms (S1->S2 gap)
+slider6:1.0<0.0,1.0,0.01>S1 Volume
+slider7:0.7<0.0,1.0,0.01>S2 Volume
+slider8:0.3<0.0,1.0,0.01>Brightness
+slider9:60<10,200,1>S1 Decay ms
+slider10:25<5,100,1>S2 Decay ms
+slider11:45<20,120,1>S1 Frequency Hz
+slider12:120<60,300,1>S2 Frequency Hz
+slider13:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
+
+// --- BREATH ---
+slider14:0.8<0.0,1.0,0.01>Breath Volume
+slider15:0<0,1,1{Off,Solo}>Breath Solo
+slider16:4.0<0.5,20.0,0.1>Inhale Duration sec
+slider17:0.3<0.0,5.0,0.1>Top Pause sec
+slider18:4.0<0.5,20.0,0.1>Exhale Duration sec
+slider19:0.3<0.0,5.0,0.1>Bottom Pause sec
+slider20:300<50,2000,1>Inhale Frequency Hz
+slider21:180<50,2000,1>Exhale Frequency Hz
+slider22:150<20,800,1>Breath High-pass Hz
+slider23:0.3<0.0,1.0,0.01>Inhale Fade In
+slider24:0.2<0.0,1.0,0.01>Inhale Fade Out
+slider25:0.2<0.0,1.0,0.01>Exhale Fade In
+slider26:0.3<0.0,1.0,0.01>Exhale Fade Out
+slider27:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade Mode
+slider28:0.5<0.0,1.0,0.01>Breath Stereo Width
+
+// --- BLOODFLOW ---
+slider29:0.5<0.0,1.0,0.01>Bloodflow Volume
+slider30:0<0,1,1{Off,Solo}>Bloodflow Solo
+slider31:150<20,2000,1>Bloodflow Low Frequency Hz
+slider32:600<20,4000,1>Bloodflow High Frequency Hz
+slider33:0.2<0.0,0.95,0.01>Bloodflow Resonance
+slider34:0.15<0.0,1.0,0.01>Bloodflow Fade In
+slider35:0.15<0.0,1.0,0.01>Bloodflow Fade Out
+slider36:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
+
+// (slider37, slider38 were Breath HRV Depth and Random HRV Depth in v1;
+// removed in v2 in favor of explicit direct controls — breath drift now
+// modulates the Breath cycle scaler directly, which is more controllable
+// than the old depth-knob-over-hidden-algorithm shape.)
+
+// --- BREATH POST FILTER ---
+slider39:600<50,4000,1>Breath Post-filter Hz
+slider40:1.5<0.5,8.0,0.1>Breath Post-filter Q
+
+// Sit silent for N heartbeats after playback starts, then begin
+// normally. Beats are counted at the current Heartbeat BPM (slider1)
+// so a delay value of 4 at 60 BPM is 4 seconds; at 120 BPM it's 2.
+// Re-arms on every transport stop/start. 0 disables the delay.
+slider41:0<0,1000,0.01>Start Delay (beats)
+
+// --- PLAY/REST GATES (per-layer, independent) ---
+// Each layer (Heartbeat, Breath, Bloodflow) has its own Play/Rest
+// gate so you can run e.g. continuous bloodflow + breathing under
+// a heartbeat that pulses in patterns of N beats with M rest. All
+// three gates work on the same model used by the standalone plugins
+// of each type: play N events, then rest M events' worth of time,
+// repeat. 0 in either slider of a layer disables that layer's gate.
+
+slider42:0<0,1000,1>HB: Play for (beats)
+slider43:0<0,1000,1>HB: Rest for (beats)
+
+slider44:0<0,1000,1>Breath: Play for (breaths)
+slider45:0<0,1000,1>Breath: Rest for (breaths)
+
+slider46:0<0,1000,1>Bloodflow: Play for (heartbeats)
+slider47:0<0,1000,1>Bloodflow: Rest for (heartbeats)
+
+// Speed ramp: a single in-plugin slowdown/speedup that scales ALL
+// THREE layers together — heartbeat, breath, and bloodflow (which
+// is locked to heartbeat and follows automatically). Designed for
+// sleep wind-down: 0.5 over 15 minutes takes the whole womb down
+// to half tempo gradually. A ~100 ms smoother on BPM kills clicks
+// from manual BPM tweaks too. Speed_scale_current is shared by HB
+// (multiplies BPM) and breath (multiplies state_pos and rest timer
+// advance), so the three layers stay coherent at any speed.
+slider48:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider49:0<0,60,0.1>Speed ramp duration (minutes)
+slider50:0<0,1,1{Off,On}>Speed ramp engage
+
+// Per-plugin Drift: two independent organic-drift sources that add to
+// the effective BPM. Musical drift is keyed in heartbeats (so it
+// stretches with Speed Ramp); Slow drift is keyed in wall-clock minutes
+// (so it does NOT scale with Speed Ramp). Both apply to ALL THREE
+// LAYERS together (heartbeat, breath, bloodflow) — same scope as
+// Speed Ramp, so the whole womb breathes as one organism. Set Up by
+// and Down by to 0 to disable either source.
+slider52:0<0,20,0.1>Musical drift: Up by
+slider53:0<0,20,0.1>Musical drift: Down by
+slider54:8<1,1000,1>Musical drift: Period (cycles)
+slider55:0<0,20,0.1>Slow drift: Up by
+slider56:0<0,20,0.1>Slow drift: Down by
+slider57:5<0.1,60,0.1>Slow drift: Period (minutes)
+slider58:0<0,2,1{Sine,Triangle,Random}>Drift shape
+
+// Breath cycle scaler: a single tempo-like knob that multiplies all four
+// breath phase durations (Inhale, Top Pause, Exhale, Bottom Pause) by
+// the same number. 1.0 = no change (default). 0.5 = breath cycle half
+// as long (twice as fast). 2.0 = twice as long (half as fast). The
+// phase RATIOS stay the same — only the overall breath rate scales.
+slider59:1.0<0.1,4.0,0.01>Breath cycle scaler
+
+// Breath drift: organic wander on the breath rate (modulates the
+// scaler above). When "Link to heartbeat" is On (default), breath
+// drift mirrors the heartbeat's drift proportionally — when HB drifts
+// +5% faster, breath also drifts +5% faster. Womb-as-one-organism.
+// When Off, breath has its own independent drift sliders below: each
+// Up by / Down by value is an additive delta on the breath scaler.
+// E.g. with scaler 1.0 and Musical drift: Up by 0.5, the effective
+// scaler swings up to 1.5 at peak drift — a 50% slower breath cycle.
+// Drift shape selector is shared with the heartbeat drift (slider58).
+slider60:1<0,1,1{Off,On}>Breath drift: Link to heartbeat
+slider61:0<0,2,0.01>Breath drift: Musical Up by
+slider62:0<0,2,0.01>Breath drift: Musical Down by
+slider63:8<1,1000,1>Breath drift: Musical Period (cycles)
+slider64:0<0,2,0.01>Breath drift: Slow Up by
+slider65:0<0,2,0.01>Breath drift: Slow Down by
+slider66:5<0.1,60,0.1>Breath drift: Slow Period (minutes)
+
+// Speed ramp start delay: when Speed Ramp engage flips on, wait this
+// long before the ramp actually starts. The plugin plays at its base
+// rate during the wait, then begins ramping toward target over the
+// duration set by slider49. Default 0 = ramp starts immediately
+// (preserves the v1-era Speed Ramp behavior).
+slider67:0<0,60,0.1>Speed ramp start delay (minutes)
+
+@init
+srate_inv = 1.0 / srate;
+two_pi = 2.0 * $pi;
+israte2 = 2.0 / srate;
+
+// --- HEARTBEAT INIT ---
+s1_freq = 45.0; s2_freq = 120.0;
+s1_phase_osc_near = 0; s1_phase_osc_far = 0;
+s2_phase_osc_near = 0; s2_phase_osc_far = 0;
+
+cycle_len_base = floor(srate * 60.0 / 70.0);
+cycle_len = cycle_len_base;
+systole_samples = floor(srate * 120.0 * 0.001);
+s1_vol = 1.0;
+s2_vol = 0.7;
+s1_decay = exp(-srate_inv / 0.060);
+s2_decay = exp(-srate_inv / 0.025);
+s1_attack_rate = exp(-srate_inv / 0.008);
+s2_attack_rate = exp(-srate_inv / 0.004);
+
+hb_delay_buf_size = 4096;
+memset(0, 0, hb_delay_buf_size);
+hb_delay_write = 0;
+hb_delay_samples = floor(srate * 0.003);
+hb_delay_sign = 1;
+
+hb_phase = 0;
+s1_active = 1; s2_active = 0;
+s1_env = 1.0; s2_env = 0;
+s1_attack_phase = 0; s2_attack_phase = 0;
+
+s1_res_f_near = min(2.0 * sin($pi * 50.0 * srate_inv), 0.98);
+s1_res_q_near = 2.8; s1_res_low_near = 0; s1_res_band_near = 0;
+s2_res_f_near = min(2.0 * sin($pi * 138.0 * srate_inv), 0.98);
+s2_res_q_near = 2.0; s2_res_low_near = 0; s2_res_band_near = 0;
+lp_f_near = min(2.0 * sin($pi * 200.0 * srate_inv), 0.98);
+lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
+
+s1_res_f_far = min(2.0 * sin($pi * 58.0 * srate_inv), 0.98);
+s1_res_q_far = 2.2; s1_res_low_far = 0; s1_res_band_far = 0;
+s2_res_f_far = min(2.0 * sin($pi * 150.0 * srate_inv), 0.98);
+s2_res_q_far = 1.6; s2_res_low_far = 0; s2_res_band_far = 0;
+lp_f_far = min(2.0 * sin($pi * 175.0 * srate_inv), 0.98);
+lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
+lp_q = 0.5;
+
+// --- BREATH INIT ---
+breath_state = 0;
+breath_state_pos = 0;
+breath_state_len = floor(srate * 4.0);
+
+in_lp_l = 0; in_bp_l = 0; in_lp_r = 0; in_bp_r = 0;
+ex_lp_l = 0; ex_bp_l = 0; ex_lp_r = 0; ex_bp_r = 0;
+hp_lp_l = 0; hp_lp_r = 0;
+
+bpf_low_l = 0; bpf_band_l = 0;
+bpf_low_r = 0; bpf_band_r = 0;
+bpf_f = min(2.0 * sin($pi * 600.0 * srate_inv), 0.98);
+bpf_q = 0.5;
+
+in_f_l = min(2.0 * sin($pi * 300.0 * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * 285.0 * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * 180.0 * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * 168.0 * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * 150.0 * srate_inv), 0.98);
+breath_lp_q = 0.6;
+
+inhale_len = floor(srate * 4.0);
+top_len    = floor(srate * 0.3);
+exhale_len = floor(srate * 4.0);
+bot_len    = floor(srate * 0.3);
+
+// --- BLOODFLOW INIT ---
+bf_n3_l = 0; bf_n4_l = 0;
+bf_n3_r = 0; bf_n4_r = 0;
+bf_low_hz = 150.0;
+bf_high_hz = 600.0;
+bf_res = 0.2;
+bf_fade_in = 0.15;
+bf_fade_out = 0.15;
+bf_stereo_width = 0.5;
+
+// --- BREATH CYCLE SCALER INIT ---
+breath_scaler = 1.0;
+
+// --- NOISE SEEDS ---
+ns1 = 12345; ns2 = 67890; ns3 = 54321;
+ns4 = 11111; ns5 = 22222; ns6 = 33333;
+
+function apply_fade(pos, fade_in, fade_out, mode) local(raw, t) (
+  raw = 1.0;
+  pos < fade_in ? (
+    t = pos / fade_in;
+    mode == 1 ? raw = t :
+    mode == 2 ? raw = 0.5 - 0.5 * cos(t * $pi) :
+    mode == 3 ? raw = t * t :
+    raw = sin(t * $pi * 0.5);
+  ) : pos > (1.0 - fade_out) ? (
+    t = (pos - (1.0 - fade_out)) / fade_out;
+    mode == 1 ? raw = 1.0 - t :
+    mode == 2 ? raw = 0.5 + 0.5 * cos(t * $pi) :
+    mode == 3 ? raw = (1.0 - t) * (1.0 - t) :
+    raw = cos(t * $pi * 0.5);
+  );
+  raw;
+);
+
+// Start Delay state.
+last_play_state     = 0;
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
+
+// --- Play/Rest state (per-layer, independent) ---
+// Heartbeat layer (mirrors standalone Heartbeat plugin's gate):
+//   pr_hb_beat counts beats elapsed in the current play (or rest)
+//   period. Init to 1 because the @init s1_active=1 pre-fire counts
+//   as beat 1 of the first play period. this_hb_has_beat carries
+//   "did THIS heartbeat get triggered?" from the s1 site to the
+//   s2 site so they stay paired.
+pr_hb_resting    = 0;
+pr_hb_beat       = 1;
+play_for_hb      = 0;
+rest_for_hb      = 0;
+pr_hb_enabled    = 0;
+this_hb_has_beat = 1;
+// Breath layer (mirrors standalone Breath plugin's gate):
+//   pr_br_breath counts completed breath cycles. pr_br_rest_elapsed
+//   counts samples spent in rest; when it reaches the threshold
+//   (rest_for_breaths * total_breath_samples), exit rest and force
+//   a fresh inhale.
+pr_br_resting            = 0;
+pr_br_breath             = 0;
+pr_br_rest_elapsed       = 0;
+pr_br_rest_duration_samples = 0;
+play_for_br              = 0;
+rest_for_br              = 0;
+pr_br_enabled            = 0;
+total_breath_samples     = 0;
+// Bloodflow layer (continuous LFO locked to heartbeat phase):
+//   pr_bf_beat counts heartbeats (uses hb_phase wraps as its tick).
+//   Gate fades bf_l/bf_r output to 0 via the bf_output_mix smoother
+//   — the bloodflow filter state keeps running so it's "warm" on
+//   rest exit and doesn't transient when un-muted.
+pr_bf_resting    = 0;
+pr_bf_beat       = 0;
+play_for_bf      = 0;
+rest_for_bf      = 0;
+pr_bf_enabled    = 0;
+bf_output_mix    = 1;
+// One-pole smoother coefficient (3 ms) shared by the bloodflow
+// output mix; matches the smoother used in the other plugins.
+pr_smooth = exp(-1 / (srate * 0.003));
+
+// Speed ramp + BPM smoother state. Seeded from slider1 so the first
+// heartbeat after transport-start uses the saved BPM, not a default.
+rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
+bpm_target               = slider1;
+bpm_smoothed             = slider1;
+speed_ramp_engaged_last  = 0;
+speed_scale_current      = 1.0;
+speed_scale_start        = 1.0;
+speed_ramp_t             = 0.0;
+speed_ramp_delay_elapsed = 0;
+
+// Per-plugin Drift phase state. Phases advance in @sample and wrap
+// at 1.0. Random shape uses prev_target -> curr_target linear interp
+// across one drift period; new target is drawn on each wrap.
+musical_drift_phase     = 0;
+slow_drift_phase        = 0;
+musical_drift_prev_target = 0;
+musical_drift_curr_target = 0;
+slow_drift_prev_target  = 0;
+slow_drift_curr_target  = 0;
+
+@slider
+// Heartbeat — bpm_target feeds the per-sample smoother; cycle_len_base
+// is recomputed per sample in @sample using the smoothed + speed-ramped
+// value, so we don't compute it from slider1 here anymore.
+bpm_target = slider1;
+systole_samples = floor(srate * slider5 * 0.001);
+s1_vol = slider6;
+s2_vol = slider7;
+s1_freq = slider11; s2_freq = slider12;
+
+s1_center_near = slider11 * 1.1; s2_center_near = slider12 * 1.15;
+s1_center_far  = slider11 * 1.28; s2_center_far = slider12 * 1.25;
+lp_cutoff_near = 200.0 + slider8 * 250.0;
+lp_cutoff_far  = 175.0 + slider8 * 220.0;
+
+s1_res_f_near = min(2.0 * sin($pi * s1_center_near * srate_inv), 0.98);
+s2_res_f_near = min(2.0 * sin($pi * s2_center_near * srate_inv), 0.98);
+lp_f_near = min(2.0 * sin($pi * lp_cutoff_near * srate_inv), 0.98);
+s1_res_f_far = min(2.0 * sin($pi * s1_center_far * srate_inv), 0.98);
+s2_res_f_far = min(2.0 * sin($pi * s2_center_far * srate_inv), 0.98);
+lp_f_far = min(2.0 * sin($pi * lp_cutoff_far * srate_inv), 0.98);
+
+s1_decay = exp(-srate_inv / (slider9 * 0.001));
+s2_decay = exp(-srate_inv / (slider10 * 0.001));
+
+hb_delay_samples = floor(srate * abs(slider13) * 0.001);
+hb_delay_samples = min(hb_delay_samples, hb_delay_buf_size - 1);
+new_hb_sign = slider13 >= 0 ? 1 : -1;
+new_hb_sign != hb_delay_sign ? (
+  s1_res_low_near = 0; s1_res_band_near = 0;
+  s2_res_low_near = 0; s2_res_band_near = 0;
+  lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
+  s1_res_low_far = 0; s1_res_band_far = 0;
+  s2_res_low_far = 0; s2_res_band_far = 0;
+  lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
+  memset(0, 0, hb_delay_buf_size);
+);
+hb_delay_sign = new_hb_sign;
+
+// Breath
+breath_scaler = max(slider59, 0.01);
+inhale_len = max(floor(srate * slider16 * breath_scaler), 1);
+top_len    = max(floor(srate * slider17 * breath_scaler), 1);
+exhale_len = max(floor(srate * slider18 * breath_scaler), 1);
+bot_len    = max(floor(srate * slider19 * breath_scaler), 1);
+
+breath_state == 0 ? breath_state_len = inhale_len;
+breath_state == 1 ? breath_state_len = top_len;
+breath_state == 2 ? breath_state_len = exhale_len;
+breath_state == 3 ? breath_state_len = bot_len;
+breath_state_pos = min(breath_state_pos, breath_state_len - 1);
+
+in_f_l = min(2.0 * sin($pi * (slider20 * (1.0 + slider28 * 0.15)) * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * (slider20 * (1.0 - slider28 * 0.15)) * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * (slider21 * (1.0 + slider28 * 0.12)) * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * (slider21 * (1.0 - slider28 * 0.12)) * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * slider22 * srate_inv), 0.98);
+
+// Bloodflow
+bf_low_hz  = min(slider31, slider32);
+bf_high_hz = max(slider31, slider32);
+bf_res     = slider33;
+bf_stereo_width = slider36;
+
+bf_fade_in  = max(slider34, 0.0001);
+bf_fade_out = max(slider35, 0.0001);
+bf_fade_in + bf_fade_out > 1.0 ? (
+  bf_fade_in  = slider34 / (slider34 + slider35);
+  bf_fade_out = slider35 / (slider34 + slider35);
+);
+
+// Breath post-filter
+bpf_f = min(2.0 * sin($pi * slider39 * srate_inv), 0.98);
+bpf_q = 1.0 / slider40;
+
+// Start Delay: convert heartbeats to seconds at the current Heartbeat BPM.
+start_delay_sec = slider41 * 60 / max(slider1, 1);
+
+// Play/Rest reads. Each layer's gate engages iff both its sliders > 0.
+play_for_hb   = slider42;
+rest_for_hb   = slider43;
+pr_hb_enabled = (play_for_hb > 0 && rest_for_hb > 0);
+
+play_for_br      = slider44;
+rest_for_br      = slider45;
+new_pr_br_enabled = (play_for_br > 0 && rest_for_br > 0);
+// Total breath cycle duration in samples, used to time Breath's
+// freeze-style rest period. Recomputed whenever any phase duration
+// changes — affects the IN-PROGRESS rest period too (stretches/
+// compresses to match the new total), same as standalone Breath.
+total_breath_samples = inhale_len + top_len + exhale_len + bot_len;
+// Defensive reset: disabling Breath gate mid-rest snaps the state
+// machine back to inhale start so it doesn't stay stuck in state 3.
+!new_pr_br_enabled && pr_br_resting ? (
+  pr_br_resting    = 0;
+  breath_state     = 0;
+  breath_state_len = inhale_len;
+  breath_state_pos = 0;
+);
+pr_br_enabled = new_pr_br_enabled;
+
+play_for_bf   = slider46;
+rest_for_bf   = slider47;
+pr_bf_enabled = (play_for_bf > 0 && rest_for_bf > 0);
+
+// Speed ramp engage-edge. Reset BOTH the ramp progress and the
+// start-delay counter so flipping engage Off then On restarts cleanly.
+slider50 && !speed_ramp_engaged_last ? (
+  speed_scale_start        = speed_scale_current;
+  speed_ramp_t             = 0.0;
+  speed_ramp_delay_elapsed = 0;
+);
+speed_ramp_engaged_last = slider50;
+
+// Hide the independent breath-drift sliders when Link is On (their
+// values do nothing in linked mode). Keeps the UI honest about what
+// is actually wired in.
+slider_show(slider61, !slider60);
+slider_show(slider62, !slider60);
+slider_show(slider63, !slider60);
+slider_show(slider64, !slider60);
+slider_show(slider65, !slider60);
+slider_show(slider66, !slider60);
+
+@sample
+
+// Smooth BPM toward bpm_target, advance the speed ramp, then run
+// per-plugin Drift. combined_scale (Speed Ramp) applies to all three
+// layers (HB BPM, breath state_pos, breath rest timer) so the whole
+// womb stays coherent. Drift offsets add on top of bpm_smoothed in
+// the plugin's natural unit (BPM here).
+bpm_smoothed += (bpm_target - bpm_smoothed) * rate_smoother_coeff;
+slider50 && slider49 > 0 ? (
+  // Honor the start delay first: tick the delay counter until it
+  // elapses, then begin the actual ramp. During the delay window
+  // speed_scale_current stays at speed_scale_start, so combined_scale
+  // is whatever it was when engage flipped on.
+  speed_ramp_delay_samples = slider67 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider49 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+    speed_scale_current = speed_scale_start + (slider48 - speed_scale_start) * speed_ramp_t;
+  );
+);
+combined_scale = speed_scale_current;
+
+// --- Per-plugin Drift ---
+// One primary cycle for Womb = one heartbeat (cycle_len_base samples).
+// Musical drift scales with combined_scale so it stretches with Speed
+// Ramp; slow drift is wall-clock and does not.
+musical_drift_up     = slider52;
+musical_drift_down   = slider53;
+musical_drift_period = slider54;
+slow_drift_up        = slider55;
+slow_drift_down      = slider56;
+slow_drift_period    = max(slider57, 0.1);
+drift_shape          = slider58;
+
+musical_drift_offset = 0;
+slow_drift_offset    = 0;
+
+// Musical drift source
+(musical_drift_up > 0 || musical_drift_down > 0) ? (
+  musical_period_samples = max(musical_drift_period * cycle_len_base, 1);
+  prev_musical_phase = musical_drift_phase;
+  musical_drift_phase += combined_scale / musical_period_samples;
+  musical_drift_phase >= 1.0 ? (
+    musical_drift_phase -= 1.0;
+    drift_shape == 2 ? (
+      musical_drift_prev_target = musical_drift_curr_target;
+      musical_drift_curr_target = rand(2) - 1;
+    );
+  );
+  drift_shape == 0 ? (
+    musical_shape_val = sin(2 * $pi * musical_drift_phase);
+  ) : drift_shape == 1 ? (
+    musical_shape_val = musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
+                        musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
+                                                     (4 * musical_drift_phase - 4);
+  ) : (
+    musical_shape_val = musical_drift_prev_target +
+      (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+  );
+  musical_drift_offset = musical_shape_val > 0 ? musical_shape_val * musical_drift_up
+                                               : musical_shape_val * musical_drift_down;
+);
+
+// Slow drift source (wall-clock; no Speed Ramp scaling)
+(slow_drift_up > 0 || slow_drift_down > 0) ? (
+  slow_period_samples = slow_drift_period * 60 * srate;
+  slow_drift_phase += 1.0 / slow_period_samples;
+  slow_drift_phase >= 1.0 ? (
+    slow_drift_phase -= 1.0;
+    drift_shape == 2 ? (
+      slow_drift_prev_target = slow_drift_curr_target;
+      slow_drift_curr_target = rand(2) - 1;
+    );
+  );
+  drift_shape == 0 ? (
+    slow_shape_val = sin(2 * $pi * slow_drift_phase);
+  ) : drift_shape == 1 ? (
+    slow_shape_val = slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
+                     slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
+                                               (4 * slow_drift_phase - 4);
+  ) : (
+    slow_shape_val = slow_drift_prev_target +
+      (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+  );
+  slow_drift_offset = slow_shape_val > 0 ? slow_shape_val * slow_drift_up
+                                         : slow_shape_val * slow_drift_down;
+);
+
+effective_bpm  = max(bpm_smoothed * combined_scale + musical_drift_offset + slow_drift_offset, 20.0);
+cycle_len_base = floor(srate * 60.0 / effective_bpm);
+
+// --- Breath drift (modulates the Breath cycle scaler) ---
+// Result is breath_combined_scale: how fast the breath state-pos
+// advances this sample. Replaces combined_scale at the two breath
+// advance sites below (state pos and rest timer).
+breath_drift_link = slider60;
+scaler_drift_offset = 0;
+
+breath_drift_link ? (
+  // Linked: derive a scaler delta from the heartbeat drift so the
+  // whole womb wobbles together. We compute HB's instantaneous drift
+  // ratio (effective_bpm divided by its no-drift baseline) and apply
+  // the inverse to the breath scaler — when HB drifts faster, the
+  // effective scaler shrinks, so breath cycles faster too.
+  hb_drift_total   = musical_drift_offset + slow_drift_offset;
+  hb_baseline_bpm  = bpm_smoothed * combined_scale;
+  hb_drift_ratio   = (hb_baseline_bpm + hb_drift_total) / max(hb_baseline_bpm, 1);
+  scaler_drift_offset = breath_scaler / max(hb_drift_ratio, 0.01) - breath_scaler;
+) : (
+  // Unlinked: independent breath drift sliders. Each Up by / Down by
+  // is an additive delta on the breath scaler. drift_shape (slider58)
+  // is shared with the heartbeat drift block above.
+  breath_drift_musical_up     = slider61;
+  breath_drift_musical_down   = slider62;
+  breath_drift_musical_period = slider63;
+  breath_drift_slow_up        = slider64;
+  breath_drift_slow_down      = slider65;
+  breath_drift_slow_period    = max(slider66, 0.1);
+
+  // Musical drift: period in breath-equivalent cycles; advance scales
+  // with combined_scale so it tracks Speed Ramp.
+  (breath_drift_musical_up > 0 || breath_drift_musical_down > 0) ? (
+    breath_musical_period_samples = max(breath_drift_musical_period * cycle_len_base, 1);
+    breath_musical_drift_phase += combined_scale / breath_musical_period_samples;
+    breath_musical_drift_phase >= 1.0 ? (
+      breath_musical_drift_phase -= 1.0;
+      drift_shape == 2 ? (
+        breath_musical_drift_prev_target = breath_musical_drift_curr_target;
+        breath_musical_drift_curr_target = rand(2) - 1;
+      );
+    );
+    drift_shape == 0 ? (
+      breath_musical_shape_val = sin(2 * $pi * breath_musical_drift_phase);
+    ) : drift_shape == 1 ? (
+      breath_musical_shape_val = breath_musical_drift_phase < 0.25 ? (4 * breath_musical_drift_phase) :
+                                  breath_musical_drift_phase < 0.75 ? (2 - 4 * breath_musical_drift_phase) :
+                                                                      (4 * breath_musical_drift_phase - 4);
+    ) : (
+      breath_musical_shape_val = breath_musical_drift_prev_target +
+        (breath_musical_drift_curr_target - breath_musical_drift_prev_target) * breath_musical_drift_phase;
+    );
+    breath_musical_drift_offset = breath_musical_shape_val > 0 ? breath_musical_shape_val * breath_drift_musical_up
+                                                                : breath_musical_shape_val * breath_drift_musical_down;
+    scaler_drift_offset += breath_musical_drift_offset;
+  );
+
+  // Slow drift: wall-clock period, ignores Speed Ramp.
+  (breath_drift_slow_up > 0 || breath_drift_slow_down > 0) ? (
+    breath_slow_period_samples = breath_drift_slow_period * 60 * srate;
+    breath_slow_drift_phase += 1.0 / breath_slow_period_samples;
+    breath_slow_drift_phase >= 1.0 ? (
+      breath_slow_drift_phase -= 1.0;
+      drift_shape == 2 ? (
+        breath_slow_drift_prev_target = breath_slow_drift_curr_target;
+        breath_slow_drift_curr_target = rand(2) - 1;
+      );
+    );
+    drift_shape == 0 ? (
+      breath_slow_shape_val = sin(2 * $pi * breath_slow_drift_phase);
+    ) : drift_shape == 1 ? (
+      breath_slow_shape_val = breath_slow_drift_phase < 0.25 ? (4 * breath_slow_drift_phase) :
+                              breath_slow_drift_phase < 0.75 ? (2 - 4 * breath_slow_drift_phase) :
+                                                                (4 * breath_slow_drift_phase - 4);
+    ) : (
+      breath_slow_shape_val = breath_slow_drift_prev_target +
+        (breath_slow_drift_curr_target - breath_slow_drift_prev_target) * breath_slow_drift_phase;
+    );
+    breath_slow_drift_offset = breath_slow_shape_val > 0 ? breath_slow_shape_val * breath_drift_slow_up
+                                                          : breath_slow_shape_val * breath_drift_slow_down;
+    scaler_drift_offset += breath_slow_drift_offset;
+  );
+);
+
+// Combine: effective_breath_scaler is what scaler WOULD have been if
+// drift were baked into the @slider pass. The ratio of base scaler to
+// effective scaler drives the state-pos advance rate this sample.
+effective_breath_scaler = max(breath_scaler + scaler_drift_offset, 0.05);
+breath_combined_scale   = combined_scale * breath_scaler / effective_breath_scaler;
+
+// Re-arm Start Delay on every transport stop/start, then gate the
+// whole @sample work — all internal state (heartbeat phase, breath
+// state, post-filter buffers) stays frozen during the silent window
+// so the womb soundscape begins cleanly when the delay elapses.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
+
+// --- NOISE ---
+ns1 = (ns1 * 1664525 + 1013904223) & 0xFFFFFFFF;
+n1 = (ns1 - 0x80000000) * (1.0 / 2147483648.0);
+ns2 = (ns2 * 22695477 + 1) & 0xFFFFFFFF;
+n2 = (ns2 - 0x80000000) * (1.0 / 2147483648.0);
+ns3 = (ns3 * 1664525 + 1013904223) & 0xFFFFFFFF;
+n3 = (ns3 - 0x80000000) * (1.0 / 2147483648.0);
+ns4 = (ns4 * 22695477 + 1) & 0xFFFFFFFF;
+n4 = (ns4 - 0x80000000) * (1.0 / 2147483648.0);
+ns5 = (ns5 * 1664525 + 1013904223) & 0xFFFFFFFF;
+n5 = (ns5 - 0x80000000) * (1.0 / 2147483648.0);
+ns6 = (ns6 * 22695477 + 1) & 0xFFFFFFFF;
+n6 = (ns6 - 0x80000000) * (1.0 / 2147483648.0);
+
+// --- HEARTBEAT CYCLE LENGTH ---
+// In v1 this was modulated by breath-coupled HRV and a random jitter
+// (the "Breath HRV Depth" / "Random HRV Depth" sliders). v2 drops both
+// in favor of direct controllable variation via per-plugin Drift on
+// the BPM slider — the operator dials in exactly the wobble they want
+// rather than handing depth knobs to a hidden algorithm.
+cycle_len = max(cycle_len_base, floor(srate * 60.0 / 200.0));
+
+// --- HEARTBEAT ---
+hb_phase += 1;
+hb_phase >= cycle_len ? (
+  hb_phase = 0;
+  // Per-beat Play/Rest gate (independent of Breath and Bloodflow).
+  // Advance pr_hb_beat at each phase wrap; on threshold, flip
+  // pr_hb_resting and reset. Then trigger s1 only when not resting.
+  // The bloodflow gate below uses the SAME phase wrap as its tick,
+  // so pr_bf_beat also advances here.
+  pr_hb_enabled ? (
+    pr_hb_beat >= (pr_hb_resting ? rest_for_hb : play_for_hb) ? (
+      pr_hb_resting = 1 - pr_hb_resting;
+      pr_hb_beat = 0;
+    );
+    pr_hb_beat += 1;
+  );
+  pr_bf_enabled ? (
+    pr_bf_beat >= (pr_bf_resting ? rest_for_bf : play_for_bf) ? (
+      pr_bf_resting = 1 - pr_bf_resting;
+      pr_bf_beat = 0;
+    );
+    pr_bf_beat += 1;
+  );
+  // Beat fires only if HB gate isn't gating this beat out. Carry
+  // the same decision to the s2 site below so S1 and S2 of a given
+  // beat always stay paired.
+  this_hb_has_beat = !pr_hb_enabled || !pr_hb_resting;
+  this_hb_has_beat ? (
+    s1_active = 1; s1_env = 0.0; s1_attack_phase = 1;
+  );
+);
+hb_phase == systole_samples && this_hb_has_beat ? (
+  s2_active = 1; s2_env = 0.0; s2_attack_phase = 1;
+);
+
+s1_active ? (
+  s1_attack_phase ? (
+    s1_env += (1.0 - s1_env) * (1.0 - s1_attack_rate);
+    s1_env >= 0.98 ? s1_attack_phase = 0;
+  ) : (
+    s1_env *= s1_decay;
+    s1_env < 0.0001 ? s1_active = 0;
+  );
+) : 0;
+
+s2_active ? (
+  s2_attack_phase ? (
+    s2_env += (1.0 - s2_env) * (1.0 - s2_attack_rate);
+    s2_env >= 0.98 ? s2_attack_phase = 0;
+  ) : (
+    s2_env *= s2_decay;
+    s2_env < 0.0001 ? s2_active = 0;
+  );
+) : 0;
+
+s1_phase_osc_near += two_pi * s1_freq * srate_inv;
+s1_phase_osc_near > two_pi ? s1_phase_osc_near -= two_pi;
+s2_phase_osc_near += two_pi * s2_freq * srate_inv;
+s2_phase_osc_near > two_pi ? s2_phase_osc_near -= two_pi;
+s1_phase_osc_far += two_pi * (s1_freq * 1.003) * srate_inv;
+s1_phase_osc_far > two_pi ? s1_phase_osc_far -= two_pi;
+s2_phase_osc_far += two_pi * (s2_freq * 0.997) * srate_inv;
+s2_phase_osc_far > two_pi ? s2_phase_osc_far -= two_pi;
+
+s1_active ? (
+  s1_res_low_near += s1_res_f_near * s1_res_band_near;
+  s1_res_high_near = (sin(s1_phase_osc_near)*0.8 + n1*0.2) - s1_res_low_near - s1_res_q_near * s1_res_band_near;
+  s1_res_band_near += s1_res_f_near * s1_res_high_near;
+  s1_out_near = s1_res_band_near * s1_env * s1_env * 2.0 * s1_vol;
+) : s1_out_near = 0;
+s2_active ? (
+  s2_res_low_near += s2_res_f_near * s2_res_band_near;
+  s2_res_high_near = (sin(s2_phase_osc_near)*0.5 + n1*0.5) - s2_res_low_near - s2_res_q_near * s2_res_band_near;
+  s2_res_band_near += s2_res_f_near * s2_res_high_near;
+  s2_out_near = s2_res_band_near * s2_env * s2_env * s2_vol;
+) : s2_out_near = 0;
+
+raw_near = s1_out_near + s2_out_near;
+lp_low_near += lp_f_near * lp_band_near;
+lp_high_near = raw_near - lp_low_near - lp_q * lp_band_near;
+lp_band_near += lp_f_near * lp_high_near;
+lp_low2_near += lp_f_near * lp_band2_near;
+lp_high2_near = lp_low_near - lp_low2_near - lp_q * lp_band2_near;
+lp_band2_near += lp_f_near * lp_high2_near;
+heart_near = lp_low2_near * 1.5;
+
+s1_active ? (
+  s1_res_low_far += s1_res_f_far * s1_res_band_far;
+  s1_res_high_far = (sin(s1_phase_osc_far)*0.8 + n2*0.2) - s1_res_low_far - s1_res_q_far * s1_res_band_far;
+  s1_res_band_far += s1_res_f_far * s1_res_high_far;
+  s1_out_far = s1_res_band_far * s1_env * s1_env * 2.0 * s1_vol;
+) : s1_out_far = 0;
+s2_active ? (
+  s2_res_low_far += s2_res_f_far * s2_res_band_far;
+  s2_res_high_far = (sin(s2_phase_osc_far)*0.5 + n2*0.5) - s2_res_low_far - s2_res_q_far * s2_res_band_far;
+  s2_res_band_far += s2_res_f_far * s2_res_high_far;
+  s2_out_far = s2_res_band_far * s2_env * s2_env * s2_vol;
+) : s2_out_far = 0;
+
+raw_far = s1_out_far + s2_out_far;
+lp_low_far += lp_f_far * lp_band_far;
+lp_high_far = raw_far - lp_low_far - lp_q * lp_band_far;
+lp_band_far += lp_f_far * lp_high_far;
+lp_low2_far += lp_f_far * lp_band2_far;
+lp_high2_far = lp_low_far - lp_low2_far - lp_q * lp_band2_far;
+lp_band2_far += lp_f_far * lp_high2_far;
+heart_far_now = lp_low2_far * 1.5;
+
+hb_dw = hb_delay_write & (hb_delay_buf_size - 1);
+hb_dr = (hb_delay_write - hb_delay_samples) & (hb_delay_buf_size - 1);
+hb_dw[0] = heart_far_now;
+heart_far = hb_dr[0];
+hb_delay_write = (hb_delay_write + 1) & (hb_delay_buf_size - 1);
+
+hb_delay_sign == 1 ? (
+  hb_l = heart_near; hb_r = heart_far;
+) : (
+  hb_l = heart_far; hb_r = heart_near;
+);
+hb_l *= slider3; hb_r *= slider3;
+
+// --- BREATH ---
+// State advance. The 3→0 transition (end of bottom pause, start of
+// new breath cycle) is special-cased so the Breath Play/Rest gate
+// can decide whether to actually start a new breath or stay silent
+// in state 3 for the rest period. Mirrors the standalone Breath
+// plugin's gate exactly. state_pos advances by breath_combined_scale
+// per sample — that variable bakes in Speed Ramp and breath drift
+// (linked or independent), computed earlier this @sample.
+breath_state_pos += breath_combined_scale;
+breath_state_pos >= breath_state_len ? (
+  breath_state_pos = 0;
+  breath_state == 3 ? (
+    // End of bottom pause — would normally start a new breath.
+    pr_br_enabled && !pr_br_resting ? (
+      pr_br_breath += 1;
+      pr_br_breath >= play_for_br ? (
+        pr_br_resting = 1;
+        pr_br_breath = 0;
+        pr_br_rest_elapsed = 0;
+      );
+    );
+    // Start a new breath only if not resting. If resting, stay in
+    // state 3 (already silent); the rest timer below will exit
+    // rest and force a fresh inhale when time elapses.
+    !pr_br_resting ? (
+      breath_state     = 0;
+      breath_state_len = inhale_len;
+    );
+  ) : (
+    breath_state = (breath_state + 1) % 4;
+    breath_state == 1 ? breath_state_len = top_len;
+    breath_state == 2 ? breath_state_len = exhale_len;
+    breath_state == 3 ? breath_state_len = bot_len;
+  );
+);
+
+// Breath rest timer (Freeze-style: state machine pauses on bottom
+// pause, sample counter measures the rest duration).
+pr_br_resting ? (
+  pr_br_rest_duration_samples = rest_for_br * total_breath_samples;
+  // Scale rest accumulation by combined_scale so breath rest stretches
+  // in lockstep with the rest of the breath cycle (Speed Ramp).
+  pr_br_rest_elapsed += breath_combined_scale;
+  pr_br_rest_elapsed >= pr_br_rest_duration_samples ? (
+    pr_br_resting    = 0;
+    pr_br_breath     = 0;
+    breath_state     = 0;
+    breath_state_len = inhale_len;
+    breath_state_pos = 0;
+  );
+);
+
+breath_phase_pos = breath_state_pos / max(breath_state_len - 1, 1);
+
+(breath_state == 1 || breath_state == 3) ? (
+  br_l = 0; br_r = 0;
+) : (
+  breath_state == 0 ? (
+    br_env = apply_fade(breath_phase_pos, slider23, slider24, slider27);
+    hp_lp_l += hp_f * (n3 - hp_lp_l);
+    br_hp_l = n3 - hp_lp_l;
+    in_lp_l += in_f_l * in_bp_l;
+    in_hp2_l = br_hp_l - in_lp_l - breath_lp_q * in_bp_l;
+    in_bp_l += in_f_l * in_hp2_l;
+    hp_lp_r += hp_f * (n4 - hp_lp_r);
+    br_hp_r = n4 - hp_lp_r;
+    in_lp_r += in_f_r * in_bp_r;
+    in_hp2_r = br_hp_r - in_lp_r - breath_lp_q * in_bp_r;
+    in_bp_r += in_f_r * in_hp2_r;
+    br_l = in_lp_l * br_env * 1.5;
+    br_r = in_lp_r * br_env * 1.5;
+  ) : (
+    br_env = apply_fade(breath_phase_pos, slider25, slider26, slider27);
+    hp_lp_l += hp_f * (n3 - hp_lp_l);
+    br_hp_l = n3 - hp_lp_l;
+    ex_lp_l += ex_f_l * ex_bp_l;
+    ex_hp2_l = br_hp_l - ex_lp_l - breath_lp_q * ex_bp_l;
+    ex_bp_l += ex_f_l * ex_hp2_l;
+    hp_lp_r += hp_f * (n4 - hp_lp_r);
+    br_hp_r = n4 - hp_lp_r;
+    ex_lp_r += ex_f_r * ex_bp_r;
+    ex_hp2_r = br_hp_r - ex_lp_r - breath_lp_q * ex_bp_r;
+    ex_bp_r += ex_f_r * ex_hp2_r;
+    br_l = ex_lp_l * br_env * 1.5;
+    br_r = ex_lp_r * br_env * 1.5;
+  );
+);
+br_l *= slider14; br_r *= slider14;
+
+// Breath post-filter
+bpf_low_l += bpf_f * bpf_band_l;
+bpf_high_l = br_l - bpf_low_l - bpf_q * bpf_band_l;
+bpf_band_l += bpf_f * bpf_high_l;
+br_l = bpf_low_l;
+
+bpf_low_r += bpf_f * bpf_band_r;
+bpf_high_r = br_r - bpf_low_r - bpf_q * bpf_band_r;
+bpf_band_r += bpf_f * bpf_high_r;
+br_r = bpf_low_r;
+
+// --- BLOODFLOW ---
+// LFO phase locked directly to heartbeat cycle - 0..1 through the cycle
+bf_cycle_pos = hb_phase / max(cycle_len, 1);
+
+// Sweep filter envelope: fade in, hold high, fade out, hold low
+bf_cycle_pos < bf_fade_in ? (
+  bf_t = bf_cycle_pos / bf_fade_in;
+  bf_lfo = 0.5 - 0.5 * cos(bf_t * $pi);
+) : bf_cycle_pos < (1.0 - bf_fade_out) ? (
+  bf_lfo = 1.0;
+) : (
+  bf_t = (bf_cycle_pos - (1.0 - bf_fade_out)) / bf_fade_out;
+  bf_lfo = 0.5 + 0.5 * cos(bf_t * $pi);
+);
+
+// Map lfo to frequency - low at rest, high at peak
+bf_cut_hz = bf_low_hz + (bf_high_hz - bf_low_hz) * bf_lfo;
+bf_cut_l = (bf_cut_hz * (1.0 + bf_stereo_width * 0.08)) * israte2;
+bf_cut_r = (bf_cut_hz * (1.0 - bf_stereo_width * 0.08)) * israte2;
+
+// Cockos resonant lowpass - straight white noise in
+bf_fb_l = bf_res + bf_res / (1.0 - bf_cut_l);
+bf_n3_l = bf_n3_l + bf_cut_l * (n5 - bf_n3_l + bf_fb_l * (bf_n3_l - bf_n4_l));
+bf_n4_l = bf_n4_l + bf_cut_l * (bf_n3_l - bf_n4_l);
+
+bf_fb_r = bf_res + bf_res / (1.0 - bf_cut_r);
+bf_n3_r = bf_n3_r + bf_cut_r * (n6 - bf_n3_r + bf_fb_r * (bf_n3_r - bf_n4_r));
+bf_n4_r = bf_n4_r + bf_cut_r * (bf_n3_r - bf_n4_r);
+
+bf_l = bf_n4_l * slider29 * 4.0;
+bf_r = bf_n4_r * slider29 * 4.0;
+
+// Bloodflow Play/Rest gate. Counter (pr_bf_beat) advances on each
+// hb_phase wrap above; the gate state is set there too. Here we
+// just fade the output to 0 via bf_output_mix during rest so the
+// transition is click-free. The bloodflow filter state and LFO
+// keep running so the filter is "warm" and re-engages cleanly on
+// rest exit.
+target_bf_mix = pr_bf_enabled && pr_bf_resting ? 0 : 1;
+bf_output_mix = bf_output_mix * pr_smooth + target_bf_mix * (1 - pr_smooth);
+bf_l *= bf_output_mix;
+bf_r *= bf_output_mix;
+
+// --- SOLO LOGIC ---
+any_solo = (slider4 > 0) || (slider15 > 0) || (slider30 > 0);
+any_solo ? (
+  hb_l = slider4  > 0 ? hb_l : 0;
+  hb_r = slider4  > 0 ? hb_r : 0;
+  br_l = slider15 > 0 ? br_l : 0;
+  br_r = slider15 > 0 ? br_r : 0;
+  bf_l = slider30 > 0 ? bf_l : 0;
+  bf_r = slider30 > 0 ? bf_r : 0;
+) : 0;
+
+out_l = hb_l + br_l + bf_l;
+out_r = hb_r + br_r + bf_r;
+
+slider2 == 0 ? (
+  spl0 = out_l; spl1 = out_r;
+) : (
+  spl0 = out_r; spl1 = out_l;
+);
+
+);  // close start-delay else branch
