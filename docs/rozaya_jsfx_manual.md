@@ -13,6 +13,7 @@
 - [Heartbeat Generator](#heartbeat-generator)
 - [Breath Generator](#breath-generator)
 - [Womb Sound Generator](#womb-sound-generator)
+- [Womb Sound Generator v2](#womb-sound-generator-v2)
 - [Polyrhythm Phase](#polyrhythm-phase)
 - [Melody Phase](#melody-phase)
 
@@ -658,6 +659,107 @@ Wander shape applied to both sources.
 ---
 
 *Womb Sound Generator is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic)*
+
+
+---
+
+# Womb Sound Generator v2
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+---
+
+## Overview
+
+Womb Sound Generator v2 is a Womb variant with a different breath-rate and HRV/drift architecture. It ships **alongside** the original Womb (both files live in the same plugin folder); choose whichever fits your project. v2 is the recommended version going forward; v1 remains available for projects already built on it.
+
+What's different from v1:
+
+- **Heart Rate Variability is now bidirectional and expressed in concrete BPM.** Heart rate rises during inhale, peaks at top pause, descends past baseline during exhale, and dwells at the trough during bottom pause for 1–2 beats before climbing again — matching real RSA physiology. v1's "Breath HRV Depth" was an abstract 0–0.25 scaler that only modulated above baseline; v2 replaces it with **Heart with breath (BPM peak-to-peak)**, a single slider expressing the full swing in audible BPM.
+- **Breath rate has an optional master rate slider.** Default is 0 (inert — the four duration sliders 16–19 control the breath rate directly, same as v1). Set to nonzero and the four durations rescale once to match the implied total. Subsequent duration edits don't update BPM back — this is a one-way rescale tool, not a bidirectional sync, matching Reaper's per-track Timebase semantics and consumer breathing-app conventions.
+- **Heart drift and breath drift are independent.** Real physiology has heart rate variability and respiratory rate variability that drift on their own timescales, not in lockstep. v2 gives heart and breath separate Up/Down/Period sliders rather than sharing a single drift wave across both. This is a deliberate divergence from the suite-wide canonical per-plugin drift (Musical + Slow); other plugins don't have the same physiological constraint.
+- **The v1 "Random HRV Depth" slider is gone.** Random heart-rate wander is now covered by Heart drift in shape=Random mode.
+
+Sliders 1–51 are identical to Womb v1 — see the [Womb Sound Generator](#womb-sound-generator) section above for Heartbeat, Breath, Bloodflow, Breath Post-Filter, Start Delay, Play/Rest Gating, and Speed Ramp parameters. The only differences are in the breath-rate-and-drift block at sliders 52–60, documented below.
+
+---
+
+## Parameters (v2-specific block, sliders 52–60)
+
+### Breaths per minute
+
+**Breaths per minute** `0–30, default 0 = inert`
+
+Optional one-way master rate control for the breath cycle. At 0 the slider is inert — the four phase duration sliders (Inhale / Top Pause / Exhale / Bottom Pause) control the breath rate directly, identical to v1 behavior. Set to a nonzero value and the four durations rescale proportionally to fit a total cycle of 60 / BPM seconds, preserving their inhale/exhale/pause ratios.
+
+After the rescale, you can keep adjusting the duration sliders directly — those edits don't update BPM back. Each new BPM value you set triggers a fresh rescale of the current durations, so you can sweep the breath cycle longer or shorter by sliding BPM while keeping the shape proportions. Return BPM to 0 to "release" the durations back to manual control.
+
+Behaves like Reaper's per-track Timebase: a top-level convenience knob that affects subordinate controls, not a source of truth that overrides them.
+
+### Heart drift
+
+Slow organic wander of heart rate around its baseline. Asymmetric up/down amplitudes match the bio-feel convention from the suite-wide per-plugin drift (real heart rate variability is famously asymmetric around its mean). Heart drift is independent of Breath drift below — they represent two real biological rates that drift on their own timescales.
+
+**Heart drift: Up by (BPM)** `0–50, default 0`
+How many BPM above baseline the heart rate can wander at the drift peak.
+
+**Heart drift: Down by (BPM)** `0–50, default 0`
+How many BPM below baseline the heart rate can wander at the drift trough.
+
+**Heart drift: Period (heartbeats)** `1–1000, default 8`
+How many heartbeats per one drift cycle. Scales with Speed Ramp.
+
+Set both Up by and Down by to 0 to disable Heart drift entirely. Use Drift shape (slider 60) to pick wave shape.
+
+### Heart with breath (RSA)
+
+**Heart with breath (BPM peak-to-peak)** `0–30, default 0`
+
+Respiratory sinus arrhythmia in concrete BPM. A value of 6 means the heart rate climbs ~3 BPM above baseline at the top of inhale, descends ~3 BPM below baseline at the bottom of exhale, with linear ramps in between and the natural top-pause/bottom-pause durations giving the peak and trough their dwell time.
+
+This replaces v1's "Breath HRV Depth" abstract scaler. Setting matches real RSA physiology: real bodies show 1–2 beats of slowing at the bottom of breath before climbing back — slider 56 set to anything nonzero produces that observable behavior.
+
+Heart with breath is additive on top of Heart drift — when both are active the heart rate gets both the slow wander (Heart drift) and the breath-coupled swing (Heart with breath) layered together. Set to 0 to disable RSA modulation entirely.
+
+### Breath drift
+
+Slow organic wander of breath rate, independent of Heart drift above. Unit is breaths/min, parallel to Heart drift's BPM. Set both Up by and Down by to 0 to disable.
+
+**Breath drift: Up by (breaths/min)** `0–15, default 0`
+How many breaths/min above baseline the breath rate can wander at the drift peak.
+
+**Breath drift: Down by (breaths/min)** `0–15, default 0`
+How many breaths/min below baseline the breath rate can wander at the drift trough.
+
+**Breath drift: Period (breath cycles)** `1–1000, default 8`
+How many breath cycles per one drift cycle. Scales with Speed Ramp.
+
+Breath drift's baseline reads from slider 52 (Breaths per minute) when that's set to nonzero, otherwise from the four duration sliders summed — so Breath drift works correctly regardless of whether you're driving the breath rate from BPM or from durations directly.
+
+### Drift shape
+
+**Drift shape** `Sine / Triangle / Random, default Sine`
+
+Wave shape shared by both Heart drift and Breath drift. Heart with breath (RSA) has its own shape — coupled to the breath state machine — and is not affected by this setting.
+
+- **Sine** — smooth continuous wander.
+- **Triangle** — linear ramps with turnaround points.
+- **Random** — value-noise that interpolates smoothly between random targets at each period boundary.
+
+---
+
+## Usage Notes (v2-specific)
+
+- **The Heart with breath modulation has the right shape automatically.** Because it's coupled to the breath state machine (not an independent oscillator), the dwell at top and bottom of breath comes for free from the breath cycle's own pause durations. You don't need to tune the peak or trough hold separately.
+- **BPM at 0 is the default and the most flexible mode.** Most operators tune the breath cycle by setting the four duration sliders directly. BPM is there for when you want to quickly take the breath cycle from "7 BPM" to "5 BPM" without recalculating the durations. Both modes work fine; BPM is the convenience.
+- **Heart drift and Breath drift are deliberately not linked.** Setting them both with similar amplitudes and periods gives a coherent organism feel; setting them differently gives you a body where the breath and heart wander on their own schedules. Both shapes are physiologically reasonable.
+- **Per-plugin Drift suite convention does NOT apply to Womb v2.** Other rate-bearing plugins in the suite (Polyrhythm Phase, Heartbeat, Tremolo, etc.) use the canonical per-plugin drift sliders (Musical drift Up/Down/Period + Slow drift Up/Down/Period + Shape). Womb v2 diverges intentionally — heart and breath drift independently because real physiology has two independent rate systems. If you're used to the canonical suite drift, the slider names and structure will feel different.
+- **All other Womb v1 usage notes apply** — Bloodflow phase-locked to heartbeat, Breath Post-filter Q inverted, Solo exclusive, frequency display reflects nominal Hz.
+
+---
+
+*Womb Sound Generator v2 is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
 
 
