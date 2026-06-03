@@ -281,3 +281,132 @@ fresh testing.
    what the research surfaces.
 4. Build it in chunks small enough to test each piece by ear before
    moving on.
+
+## Research synthesis + finalized design (2026-06-03)
+
+Research pass done. Synthesis below answers the six open questions
+and lands the slider layout for the next build. Key correction from
+the operator after the first synthesis draft: **HRV is bidirectional,
+not one-directional** — heart rate rises during inhale AND falls
+below baseline during exhale, with a noticeable trough at the bottom
+pause. The v2 source at commit `4628210` has the math wrong for this
+(see "Bug to fix in `@sample`" below).
+
+### Answers to the six open questions
+
+1. **BPM default behavior — one-way "rescale tool."** Every consumer
+   breathing app and every DAW master-tempo pattern is one-way
+   (Reaper's own per-track Timebase is the same shape). Default 0
+   (inert; durations control breath rate). Nonzero = one-way rescale
+   of the four duration sliders to match implied total. After
+   rescale, duration tweaks just change durations; BPM doesn't
+   auto-update back. Bidirectional sync from iteration 2 was novel
+   and the operator pushback ("BPM needs to be at 0, letting you set
+   the durations to be scaled") is "make it one-way like every other
+   plugin."
+
+2. **Breath drift exists — yes.** Heart rate and breath rate drift
+   independently in real physiology; tying them collapses two organic
+   systems into one and the ambient effect flattens. Don't link.
+
+3. **Unit for breath drift — breaths-per-minute.** Consumer breath
+   apps consistently show BPM as the high-level rate handle, seconds
+   as the per-phase shape. The two units describe different things
+   (rate vs. per-phase shape) so they don't compete. Breath drift in
+   breaths/min parallels heart drift in BPM structurally.
+
+4. **HRV / Heart-with-breath — confirmed BPM, additive, bidirectional
+   peak-to-peak.** "RSA depth (RMSSD in ms)" is the clinical term but
+   doesn't map onto what Womb actually does (audible BPM swing). The
+   slider expresses the FULL peak-to-peak swing in BPM: value 6 means
+   HR climbs 3 above baseline at inhale top, descends 3 below baseline
+   at exhale bottom. Natural breath pauses give the peak and trough
+   their dwell automatically (operator-observed: ~1–2 beats of slowing
+   at bottom pause before climbing again, exactly matches the trough
+   phase of bidirectional RSA).
+
+5. **Drift period and shape — keep separate, share shape.** Heart
+   and breath each have their own period slider (different natural
+   timescales). Shape is shared (Sine / Triangle / Random) across both.
+
+6. **Slider clutter vs naming clarity — prefer clarity.** Selector+
+   value patterns work when items are homogeneous (Harmonic Sculptor's
+   64 harmonics). Womb's five drift parameters are heterogeneous;
+   collapsing them adds cognitive overhead without saving meaningful
+   surface. Womb is for slow attentive listening — tweak-frequency
+   is low — clarity wins.
+
+### Finalized slider layout
+
+Sliders 1–51 unchanged. Replace current sliders 52–57 with:
+
+```
+slider52 — Breaths per minute (default 0 = inert; one-way rescale of 16-19)
+slider53 — Heart drift: Up by (BPM, default 0)
+slider54 — Heart drift: Down by (BPM, default 0)
+slider55 — Heart drift: Period (heartbeats, default 8)
+slider56 — Heart with breath (BPM peak-to-peak, default 0)   [bidirectional RSA]
+slider57 — Breath drift: Up by (breaths/min, default 0)
+slider58 — Breath drift: Down by (breaths/min, default 0)
+slider59 — Breath drift: Period (breath cycles, default 8)
+slider60 — Drift shape (Sine / Triangle / Random, default Sine)
+```
+
+Nine sliders for the breath-rate-and-drift block (two more than the
+current selector+value, but every name is unambiguous and there's no
+"which parameter am I editing right now" overhead).
+
+### Divergence from suite-wide canonical drift (intentional)
+
+The canonical per-plugin drift sweep (shipped 2026-06-01 to every
+rate-bearing plugin) uses ONE drift wave for the whole plugin, with
+musical + slow timescales stacked. Womb v2 diverges: heart and breath
+drift independently, single timescale each. Reason: real physiology
+HRV and respiratory-rate-variability are independent — coupling them
+collapses what makes Womb feel alive. Other plugins in the suite
+don't have this physiological constraint so the canonical pattern
+fits them.
+
+The wall-clock slow drift layer (3 more sliders for heart, 3 more
+for breath) was considered and skipped for now: 9 sliders is already
+a lot, and the musical-timescale drift covers the audible wander
+range. Wall-clock layer can be added as a future iteration if needed.
+
+### Bug to fix in `@sample` (commit 4628210)
+
+The current `heart_with_breath_offset` wiring is **one-directional**
+(0 to +bpm only). Lines 562–569 of `womb_sound_generator_v2.jsfx`:
+
+```
+breath_state == 0 ? heart_with_breath_offset = breath_phase_pos_for_rsa * heart_with_breath_bpm :  // 0 → +bpm
+breath_state == 1 ? heart_with_breath_offset = heart_with_breath_bpm :                              // +bpm
+breath_state == 2 ? heart_with_breath_offset = (1.0 - breath_phase_pos_for_rsa) * heart_with_breath_bpm :  // +bpm → 0
+                    heart_with_breath_offset = 0;                                                   // 0
+```
+
+Should be **bidirectional peak-to-peak centered on 0**:
+
+```
+breath_state == 0 ? heart_with_breath_offset = (breath_phase_pos_for_rsa - 0.5) * heart_with_breath_bpm :  // -bpm/2 → +bpm/2
+breath_state == 1 ? heart_with_breath_offset = heart_with_breath_bpm * 0.5 :                                // +bpm/2
+breath_state == 2 ? heart_with_breath_offset = (0.5 - breath_phase_pos_for_rsa) * heart_with_breath_bpm :  // +bpm/2 → -bpm/2
+                    heart_with_breath_offset = -heart_with_breath_bpm * 0.5;                                // -bpm/2
+```
+
+So setting slider56 to 6 means HR swings between -3 (trough at
+bottom pause) and +3 (peak at top pause) around `bpm_smoothed`,
+matching what the operator hears in real bodies.
+
+### Confidence levels going into the build
+
+- BPM one-way rescale: **high confidence** (matches every other plugin's idiom).
+- Heart drift Up/Down/Period as separate sliders: **high confidence** (matches operator's explicit ask, parallels canonical drift's structure).
+- HRV bidirectional peak-to-peak: **high confidence** (matches physiology, matches operator observation, current code is just wrong).
+- Breath drift in breaths/min: **medium-high confidence** (operator hasn't confirmed but consumer apps consistently use BPM for the rate dimension).
+- Drift shape shared: **high confidence** (matches canonical pattern).
+- Slider count of 9: **medium confidence** — operator may prefer to fold something if it feels too dense in REAPER. Tested by ear before tagging release.
+
+### What's still untested by ear
+
+The entire 4628210 commit. The rewrite to the layout above will
+itself be untested when committed. Operator validates by ear next.
