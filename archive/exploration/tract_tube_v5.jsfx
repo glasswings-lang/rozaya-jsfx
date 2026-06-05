@@ -1,0 +1,140 @@
+desc: Tract Tube v5 (Kelly-Lochbaum waveguide)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Fix from v4: the lip radiation was a FULL differentiator, which cut the
+// low frequencies hard -- and F1, the lowest formant, is the loudest and
+// most vowel-defining one. So v4 was suppressing the main resonance of
+// every vowel, and no slider could undo it (radiation was hardcoded).
+//
+//   * Radiation is now a gentle ADD on top of the full signal, so F1
+//     keeps its body. BRIGHTNESS controls how much (0 = dark/full lows,
+//     1 = airy top). It no longer guts the vowel.
+//   * Less damping -> the tube's resonances ring stronger and sharper,
+//     so formant peaks are more prominent.
+//
+// Note: the tube's resonances are physically realistic, so they're a bit
+// gentler than the old formant synth's exaggerated high-Q peaks. If you
+// want that extra-strong "peaky" character back, say so -- it's a
+// resonance-emphasis control, easy to add.
+//
+//   TONGUE HEIGHT 0 low/open .. 1 high/close
+//   TONGUE BACKNESS 0 front .. 1 back     LIP ROUNDING 0 open .. 1 rounded
+//   ee 0.9/0.1/0.0  eh 0.5/0.2/0.0  ah 0.15/0.8/0.0
+//   oo 0.9/0.9/0.8  oh 0.5/0.8/0.6  ue 0.9/0.1/0.8
+
+slider1:110<60,400,1>Pitch f0 (Hz)
+slider2:0.0<0.0,1.0,0.01>Voice (glottal excitation; 0 = silence)
+slider3:0.5<0.0,1.0,0.01>Tongue Height (0 = low/open, 1 = high/close)
+slider4:0.5<0.0,1.0,0.01>Tongue Backness (0 = front, 1 = back)
+slider5:0.0<0.0,1.0,0.01>Lip Rounding (0 = open, 1 = rounded)
+slider6:0.5<0.0,1.0,0.01>Source Brightness (closure speed)
+slider7:0.4<0.0,1.0,0.01>Radiation Brightness (top air; keeps F1)
+slider8:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+N = 44;
+R = 0; L = 64; JR = 128; JL = 192; diam = 256; area = 320; refl = 384;
+
+glottalReflection = 0.75;
+lipReflection     = -0.85;
+damp              = 0.9998;   // less loss -> stronger, sharper formants
+gphase = 0;
+lipout_prev = 0;
+dc_x = 0; dc_y = 0;
+
+i = 0; loop(N, R[i] = 0; L[i] = 0; JR[i] = 0; JL[i] = 0; i += 1; );
+
+function scatter(gin) local(j, k, w) (
+  JR[0]   = gin + glottalReflection * L[0];
+  JL[N-1] = lipReflection * R[N-1];
+  j = 1;
+  while (j < N) (
+    k = refl[j];
+    w = k * (R[j-1] + L[j]);
+    JR[j]   = R[j-1] - w;
+    JL[j-1] = L[j]   + w;
+    j += 1;
+  );
+  j = 0;
+  while (j < N) (
+    R[j] = JR[j] * damp;
+    L[j] = JL[j] * damp;
+    j += 1;
+  );
+);
+
+@slider
+f0       = slider1;
+voicelvl = slider2;
+height   = slider3;
+backness = slider4;
+rounding = slider5;
+srcbright= slider6;
+radbright= slider7;
+vol      = slider8;
+
+restDiam = 1.5;
+i = 0; loop(N, diam[i] = restDiam; i += 1; );
+
+tcenter = (0.20 + (1.0 - backness) * 0.62) * N;
+tdia    = restDiam - height * 1.35;
+twidth  = 5.5;
+i = 0;
+loop(N,
+  d = (i - tcenter) / (twidth * 0.5);
+  abs(d) < 1.0 ? (
+    cur = tdia + (restDiam - tdia) * (d * d);
+    diam[i] = min(diam[i], cur);
+  );
+  i += 1;
+);
+
+ldia = restDiam - rounding * 1.35;
+i = N - 5;
+while (i < N) ( diam[i] = min(diam[i], ldia); i += 1; );
+
+i = 0; loop(N, diam[i] = max(diam[i], 0.0); area[i] = diam[i] * diam[i]; i += 1; );
+i = 1;
+while (i < N) (
+  (area[i-1] + area[i]) > 0.000001 ?
+    refl[i] = (area[i-1] - area[i]) / (area[i-1] + area[i]) :
+    refl[i] = 0.999;
+  i += 1;
+);
+
+oq = 0.6;
+gtp = 0.4 * oq;
+gtc = gtp + (oq - gtp) * (1.0 - srcbright * 0.75);
+
+@sample
+gphase += f0 / srate;
+gphase >= 1.0 ? gphase -= 1.0;
+
+gphase < gtp ? (
+  g = 0.5 * (1.0 - cos($pi * gphase / gtp));
+) : gphase < gtc ? (
+  g = cos(0.5 * $pi * (gphase - gtp) / (gtc - gtp));
+) : (
+  g = 0.0;
+);
+glottal = g * voicelvl;
+
+scatter(glottal); o1 = R[N-1];
+scatter(glottal); o2 = R[N-1];
+lipout = (o1 + o2) * 0.5;
+
+// gentle radiation: full body + an adjustable bright top (keeps F1)
+hp = lipout - lipout_prev;
+lipout_prev = lipout;
+sig = lipout + radbright * 1.5 * hp;
+
+dc_y = sig - dc_x + 0.997 * dc_y;
+dc_x = sig;
+out = dc_y * vol * 1.6;
+out = max(min(out, 1.5), -1.5);
+
+spl0 = out;
+spl1 = out;

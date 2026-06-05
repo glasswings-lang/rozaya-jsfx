@@ -1,0 +1,169 @@
+desc: Tract Diag Effect v6 (tongue span constrained to oral cavity)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v5 data: /u/ landed at Height=0.82 with a hard closure at 0.85.
+// Front vowels (/i/, /ɪ/) "fucked over" — recognizable as not-
+// vowels. Diagnosis: the Pink Trombone tongue span (segments 10
+// to 32) reaches into the pharyngeal narrow zone (rest=0.6 and
+// 1.1 in segments 0-12), where the cosine math either crushes the
+// tract toward closure (in /u/ articulation) or wildly widens it
+// beyond anatomical limits (in /i/ articulation, the cosine's
+// negative side hits pharyngeal segments and balloons them to 2.2+).
+//
+// Fix in v6: constrain tongue span to segments 14-30, fully inside
+// the oral cavity. This keeps the tongue's effects in anatomically
+// flexible tissue, away from the rigid pharyngeal walls.
+//
+// Net effects:
+//   - /u/ at backness=1 lands at segment 14 (proper velar position,
+//     just past pharyngeal-oral boundary). More depth headroom
+//     before closure.
+//   - /i/ at backness=0 lands at segment 28 (tongue blade region).
+//     Cosine widening side stays in oral cavity, producing proper
+//     large back cavity for F2 elevation rather than pathological
+//     pharyngeal balloon.
+//   - Pharyngeal narrow zone preserved (where it should be, since
+//     the throat walls don't actually deform with tongue).
+//
+// Expected vowel space:
+//   Defaults                 -> /ə/ or /ʌ/ (rest, somewhat back-low)
+//   H 0.8, B 0.7, R 0.5      -> /u/ (boot)  — should land cleaner now
+//   H 0.7, B 0.7, R 0.3      -> /o/ (boat)  — try this if /u/ works
+//   H 0.8, B 0.0, R 0        -> /i/ (beet)  — should ACTUALLY land this time
+//   H 0.6, B 0.2, R 0        -> /ɪ/ (bit)
+//   H 0.4, B 0.4, R 0        -> /ɛ/ (bed)
+//   H 0.0, B 0.6, R 0        -> /ɑ/ (father)
+//   H 0.8, B 0.0, R 0.5      -> /ü/ (German "über")
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.9998<0.99,0.99999,0.00001>Damping per scatter step
+slider3:0.0<0.0,1.0,0.01>Lip Rounding
+slider4:5<1,10,1>Lip extent (segments)
+slider5:0.0<0.0,1.0,0.01>Tongue Height (0 = flat, 1 = raised)
+slider6:0.7<0.0,1.0,0.01>Tongue Backness (0 = front /i/, 1 = velar /u/)
+slider7:0<0,1,1{No,Yes}>DC blocker on output
+slider8:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+N = 44;
+R = 0; L = 64; JR = 128; JL = 192; diam = 256; area = 320; refl_bank = 384;
+
+glottalReflection = 0.75;
+lipReflection     = -0.85;
+
+i = 0; loop(N, R[i] = 0; L[i] = 0; JR[i] = 0; JL[i] = 0; diam[i] = 1.5; area[i] = 2.25; refl_bank[i] = 0; i += 1; );
+
+damp     = 0.9998;
+in_gain  = 1.0;
+dc_x     = 0;
+dc_y     = 0;
+
+// === Tongue geometry — CONSTRAINED span ===
+// v6 pulls the tongue span inward to 14-30 (was 10-32 in v5).
+// 14 sits just past the pharyngeal-oral boundary (segment 12);
+// 30 sits short of the lip region (segments 39-44). The full span
+// is in the flexible oral cavity.
+bladeStart = 14.0 * N / 44.0;
+tipStart   = 30.0 * N / 44.0;
+gridOffset = 1.7;
+
+function scatter(gin) local(j, k, w) (
+  JR[0]   = gin + glottalReflection * L[0];
+  JL[N-1] = lipReflection * R[N-1];
+  j = 1;
+  while (j < N) (
+    k = refl_bank[j];
+    w = k * (R[j-1] + L[j]);
+    JR[j]   = R[j-1] - w;
+    JL[j-1] = L[j]   + w;
+    j += 1;
+  );
+  j = 0;
+  while (j < N) (
+    R[j] = JR[j] * damp;
+    L[j] = JL[j] * damp;
+    j += 1;
+  );
+);
+
+@slider
+in_gain   = 10 ^ (slider1 / 20);
+damp      = slider2;
+rounding  = slider3;
+lipExtent = slider4;
+height    = slider5;
+backness  = slider6;
+dc_on     = slider7;
+vol       = slider8;
+
+// === Three-zone rest tract shape (Pink Trombone) ===
+i = 0;
+loop(N,
+  i < (7.0 * N / 44.0) - 0.5 ? (
+    diam[i] = 0.6;
+  ) : i < (12.0 * N / 44.0) ? (
+    diam[i] = 1.1;
+  ) : (
+    diam[i] = 1.5;
+  );
+  i += 1;
+);
+
+// === Tongue shaping (Pink Trombone cosine, constrained span) ===
+// Backness=0 -> tongueIndex at tipStart (segment 30, /i/ blade)
+// Backness=1 -> tongueIndex at bladeStart (segment 14, /u/ velar)
+tongueIndex    = tipStart - backness * (tipStart - bladeStart);
+tongueDia      = 3.5 - height * (3.5 - 2.05);
+diameter_inner = 2.0 + (tongueDia - 2.0) / 1.5;
+tongue_amp     = 1.5 - diameter_inner + gridOffset;
+tongue_span    = tipStart - bladeStart;
+
+// Apply cosine curve to segments in the tongue span ONLY.
+i = floor(bladeStart);
+while (i < N && i <= ceil(tipStart)) (
+  interp = (tongueIndex - i) / tongue_span;
+  curve  = tongue_amp * cos(1.1 * $pi * interp);
+  diam[i] = diam[i] - curve;
+  i += 1;
+);
+
+// Clamp diameters non-negative.
+i = 0; loop(N, diam[i] = max(diam[i], 0.0); i += 1; );
+
+// === Lip rounding ===
+ldia = 1.5 - rounding * 1.0;
+i = N - lipExtent;
+while (i < N) ( diam[i] = min(diam[i], ldia); i += 1; );
+
+// Final clamp + areas.
+i = 0; loop(N, diam[i] = max(diam[i], 0.0); area[i] = diam[i] * diam[i]; i += 1; );
+
+// Reflection coefficients.
+i = 1;
+while (i < N) (
+  (area[i-1] + area[i]) > 0.000001 ?
+    refl_bank[i] = (area[i-1] - area[i]) / (area[i-1] + area[i]) :
+    refl_bank[i] = 0.999;
+  i += 1;
+);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+scatter(in_mono); o1 = R[N-1];
+scatter(in_mono); o2 = R[N-1];
+lipout = (o1 + o2) * 0.5;
+
+dc_on > 0 ? (
+  dc_y = lipout - dc_x + 0.997 * dc_y;
+  dc_x = lipout;
+  out  = dc_y;
+) : (
+  out  = lipout;
+);
+
+spl0 = out * vol;
+spl1 = out * vol;

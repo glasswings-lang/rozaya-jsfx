@@ -1,0 +1,183 @@
+desc: Vowel Shaper v8 (lips shape the air, not layered on top)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v8 restructures the signal chain based on Rozaya's perceptual
+// diagnosis of v7: the constriction noise sounded like it was
+// "coming from outside the mouth, layered on top of the vowel,"
+// when the real physics is that the lip rounding SHAPES the breath
+// itself — air doesn't get noise added to it; the lip constriction
+// is what creates both the resonance emphasis AND the turbulence,
+// as a single physical event.
+//
+// v7 had three parallel paths:
+//   - dry breath × (1-rounding)
+//   - formant-shaped × rounding
+//   - constriction noise (separate signal)
+// These summed together, but perceptually felt layered because
+// each occupied a different spectral region with no shared
+// shaping mechanism.
+//
+// v8 makes the breath the single signal that gets shaped:
+//   - The breath ALWAYS passes through as the base signal
+//   - Lip rounding controls how much emphasis is added at the
+//     formant frequencies (vowel character emerges) and at the
+//     constriction frequency (turbulence emerges)
+//   - The lip aperture LP filter also engages with rounding
+//     (radiation pattern darkens)
+// All three effects happen TO the same signal, gated by the same
+// rounding control. The breath is shaped by the lip rounding —
+// matching the real physics.
+//
+// At rounding 0: output = input (open mouth, just breath flowing)
+// At rounding 1: output = input + vowel peaks + lip turbulence,
+//                with aperture LP darkening it. The breath is
+//                fully shaped.
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.85<0.0,1.0,0.01>Vowel Height (back-cavity shape)
+slider3:1.0<0.0,1.0,0.01>Vowel Backness (back-cavity shape)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (shapes the breath)
+slider5:0.7<0.0,2.0,0.01>Lip Turbulence
+slider6:1.0<0.6,1.6,0.01>Voice Size
+slider7:1.3<0.0,3.0,0.01>F1 Strength
+slider8:1.0<0.0,2.0,0.01>F2 Strength
+slider9:0.5<0.0,2.0,0.01>F3 Strength
+slider10:0.3<0.0,1.0,0.01>Voice tilt
+slider11:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+srate_inv = 1.0 / srate;
+pi_srate  = $pi * srate_inv;
+two_pi    = 2.0 * $pi;
+
+f1_low = 0; f1_band = 0;
+f2_low = 0; f2_band = 0;
+f3_low = 0; f3_band = 0;
+
+f1_damp = 0.12;
+f2_damp = 0.067;
+f3_damp = 0.05;
+
+turb_low  = 0; turb_band = 0;
+turb_freq_hz = 5000;
+turb_damp    = 0.33;
+
+tilt_corner_hz = 1200;
+tilt_coef      = exp(-2 * $pi * tilt_corner_hz / srate);
+tilt_y         = 0;
+
+aperture_y = 0;
+dc_x = 0; dc_y = 0;
+
+i_F1  = 270;  i_F2  = 2290; i_F3  = 3010;
+u_F1  = 300;  u_F2  = 870;  u_F3  = 2240;
+ae_F1 = 660;  ae_F2 = 1720; ae_F3 = 2410;
+ah_F1 = 730;  ah_F2 = 1090; ah_F3 = 2440;
+
+@slider
+in_gain       = 10 ^ (slider1 / 20);
+height        = slider2;
+backness      = slider3;
+rounding      = slider4;
+turb_strength = slider5;
+voice_size    = slider6;
+f1_amp        = slider7;
+f2_amp        = slider8;
+f3_amp        = slider9;
+tilt_amt      = slider10;
+vol           = slider11;
+
+w_i  = (1 - backness) * height;
+w_u  =      backness  * height;
+w_ae = (1 - backness) * (1 - height);
+w_ah =      backness  * (1 - height);
+
+f1_hz = w_i * i_F1 + w_u * u_F1 + w_ae * ae_F1 + w_ah * ah_F1;
+f2_hz = w_i * i_F2 + w_u * u_F2 + w_ae * ae_F2 + w_ah * ah_F2;
+f3_hz = w_i * i_F3 + w_u * u_F3 + w_ae * ae_F3 + w_ah * ah_F3;
+
+f1_hz = f1_hz * voice_size;
+f2_hz = f2_hz * voice_size;
+f3_hz = f3_hz * voice_size;
+
+f1_hz = max(min(f1_hz, srate * 0.45), 50);
+f2_hz = max(min(f2_hz, srate * 0.45), 50);
+f3_hz = max(min(f3_hz, srate * 0.45), 50);
+
+f1_coef = min(2 * sin(pi_srate * f1_hz), 0.98);
+f2_coef = min(2 * sin(pi_srate * f2_hz), 0.98);
+f3_coef = min(2 * sin(pi_srate * f3_hz), 0.98);
+
+turb_coef_freq = min(2 * sin(pi_srate * turb_freq_hz), 0.98);
+
+// Aperture LP corner — softer mapping than v7. At rounding 0 it's
+// essentially bypassed (corner near Nyquist); at rounding 1 it's at
+// ~4 kHz for noticeable darkening without "tiny lips" extreme.
+aperture_corner = 20000 - rounding * 16000;
+aperture_corner = max(min(aperture_corner, srate * 0.45), 200);
+aperture_coef   = exp(-two_pi * aperture_corner / srate);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+// === Back-cavity formant bandpass extraction ===
+// Always running so filter states stay warm for smooth rounding sweeps.
+f1_low  += f1_coef * f1_band;
+f1_high  = in_mono - f1_low - f1_damp * f1_band;
+f1_band += f1_coef * f1_high;
+
+f2_low  += f2_coef * f2_band;
+f2_high  = in_mono - f2_low - f2_damp * f2_band;
+f2_band += f2_coef * f2_high;
+
+f3_low  += f3_coef * f3_band;
+f3_high  = in_mono - f3_low - f3_damp * f3_band;
+f3_band += f3_coef * f3_high;
+
+// === Lip turbulence band extraction ===
+turb_low  += turb_coef_freq * turb_band;
+turb_high  = in_mono - turb_low - turb_damp * turb_band;
+turb_band += turb_coef_freq * turb_high;
+
+// === Formant emphasis (vowel character) ===
+// Klatt parallel sum, alternating signs to prevent inter-formant
+// cancellation in the troughs.
+formant_emphasis = (f1_band * f1_amp) - (f2_band * f2_amp) + (f3_band * f3_amp);
+
+// Voice tilt applied to the formant emphasis only (mimics voiced
+// source slope on the resonance portion of the signal).
+tilt_y = tilt_coef * tilt_y + (1 - tilt_coef) * formant_emphasis;
+formant_emphasis = formant_emphasis + (tilt_y - formant_emphasis) * tilt_amt;
+
+// === Lip turbulence emphasis ===
+// The 15x scalar compensates for the bandpass attenuation, making
+// the turbulence audible at normal strength settings.
+turb_emphasis = turb_band * turb_strength * 15;
+
+// === Single shaping equation: input is the air, lips shape it ===
+// The breath ALWAYS passes through as the base signal. As lip rounding
+// increases, the formant emphasis (vowel character) and turbulence
+// emphasis (constriction noise) progressively add ON TO the breath —
+// not as separate paths but as effects applied to the same air. This
+// is the architectural fix: rounding shapes the breath, and both the
+// vowel and the hiss emerge from that same shaping.
+shaped = in_mono + (formant_emphasis + turb_emphasis) * rounding;
+
+// === Lip aperture LP — radiation pattern ===
+// Applied to the SHAPED signal as a whole. At rounding 0 it's
+// essentially bypassed (open mouth = full bandwidth). At rounding 1
+// it darkens (small aperture radiates HF poorly). One filter, one
+// effect — matching how real lip aperture works on the radiated sound.
+aperture_y = aperture_coef * aperture_y + (1 - aperture_coef) * shaped;
+
+dc_y = aperture_y - dc_x + 0.997 * dc_y;
+dc_x = aperture_y;
+
+out = dc_y * vol * 0.5;
+out = max(min(out, 1.5), -1.5);
+
+spl0 = out;
+spl1 = out;

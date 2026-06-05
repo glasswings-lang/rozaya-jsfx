@@ -1,0 +1,170 @@
+desc: Tract Diag Effect v5 (Pink Trombone tongue shaping)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v4 had vowels clearer than v3 but still not landing cleanly. The
+// fix this round: replace our quadratic localized-bump tongue with
+// Pink Trombone's actual tongue formula — a cosine curve spanning
+// the entire blade-to-tip region (segments 10 to 32). The cosine
+// can go negative outside the constriction zone, which slightly
+// WIDENS the tract there — that bilateral effect (narrow at tongue
+// peak, slightly wider in front and behind) is what produces the
+// coordinated F1/F2 trajectory the ear reads as a specific vowel.
+//
+// Our previous "narrow pinch" approach moved formants but in a
+// dispersed way; PT's broad cosine moves them on a coordinated
+// trajectory toward known vowel targets.
+//
+// Three-zone rest shape from v4 is preserved (Pink Trombone's
+// pharyngeal narrowing — 0.6 / 1.1 / 1.5 — was a real fix and v4
+// confirmed it). Lip rounding stays simple step-narrow (also
+// confirmed working in v2).
+//
+// Expected with breath input:
+//   Defaults (Height 0)              -> /ə/ schwa
+//   Height 0.6, Backness 0.7         -> /o/ (back-mid)
+//   Height 0.6, Backness 0.7, R 0.5  -> /u/ ("hoooo!")
+//   Height 0.6, Backness 0.0         -> /i/-territory (front high)
+//   Height 0.6, Backness 0.5         -> /a/ or /ɑ/ (mid, depending)
+//
+// Height is more sensitive in v5 — 0.6 already produces deep
+// articulation. 1.0 might be over-articulated.
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.9998<0.99,0.99999,0.00001>Damping per scatter step
+slider3:0.0<0.0,1.0,0.01>Lip Rounding
+slider4:5<1,10,1>Lip extent (segments)
+slider5:0.0<0.0,1.0,0.01>Tongue Height (0 = flat, 1 = raised)
+slider6:0.7<0.0,1.0,0.01>Tongue Backness (0 = front /i/, 1 = velar /u/)
+slider7:0<0,1,1{No,Yes}>DC blocker on output
+slider8:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+N = 44;
+R = 0; L = 64; JR = 128; JL = 192; diam = 256; area = 320; refl_bank = 384;
+
+glottalReflection = 0.75;
+lipReflection     = -0.85;
+
+i = 0; loop(N, R[i] = 0; L[i] = 0; JR[i] = 0; JL[i] = 0; diam[i] = 1.5; area[i] = 2.25; refl_bank[i] = 0; i += 1; );
+
+damp     = 0.9998;
+in_gain  = 1.0;
+dc_x     = 0;
+dc_y     = 0;
+
+// Pink Trombone geometry constants (scaled to our N).
+bladeStart = 10.0 * N / 44.0;   // tongue blade segment (back end of tongue body)
+tipStart   = 32.0 * N / 44.0;   // tongue tip segment (front end of tongue body)
+gridOffset = 1.7;               // Pink Trombone's curve-amplitude offset
+
+function scatter(gin) local(j, k, w) (
+  JR[0]   = gin + glottalReflection * L[0];
+  JL[N-1] = lipReflection * R[N-1];
+  j = 1;
+  while (j < N) (
+    k = refl_bank[j];
+    w = k * (R[j-1] + L[j]);
+    JR[j]   = R[j-1] - w;
+    JL[j-1] = L[j]   + w;
+    j += 1;
+  );
+  j = 0;
+  while (j < N) (
+    R[j] = JR[j] * damp;
+    L[j] = JL[j] * damp;
+    j += 1;
+  );
+);
+
+@slider
+in_gain   = 10 ^ (slider1 / 20);
+damp      = slider2;
+rounding  = slider3;
+lipExtent = slider4;
+height    = slider5;
+backness  = slider6;
+dc_on     = slider7;
+vol       = slider8;
+
+// === Three-zone rest tract shape (Pink Trombone) ===
+i = 0;
+loop(N,
+  i < (7.0 * N / 44.0) - 0.5 ? (
+    diam[i] = 0.6;
+  ) : i < (12.0 * N / 44.0) ? (
+    diam[i] = 1.1;
+  ) : (
+    diam[i] = 1.5;
+  );
+  i += 1;
+);
+
+// === Tongue shaping (Pink Trombone cosine formula) ===
+//
+// Backness mapping: backness=0 -> tongueIndex at tipStart (front, /i/)
+//                   backness=1 -> tongueIndex at bladeStart (back, /u/)
+// Height mapping: height=0 -> tongueDia = 3.5 (no raise, flat)
+//                 height=1 -> tongueDia = 2.05 (fully raised)
+//
+// Then PT's curve formula applies across the entire blade-to-tip
+// range. The curve peaks at tongueIndex (cos = 1 = max narrowing)
+// and goes through zero and negative as we move away from there
+// — producing the bilateral widening that creates coordinated
+// F1/F2 trajectories.
+tongueIndex    = tipStart - backness * (tipStart - bladeStart);
+tongueDia      = 3.5 - height * (3.5 - 2.05);
+diameter_inner = 2.0 + (tongueDia - 2.0) / 1.5;
+tongue_amp     = 1.5 - diameter_inner + gridOffset;
+tongue_span    = tipStart - bladeStart;
+
+i = floor(bladeStart);
+while (i < N && i <= ceil(tipStart)) (
+  interp = (tongueIndex - i) / tongue_span;
+  curve  = tongue_amp * cos(1.1 * $pi * interp);
+  diam[i] = diam[i] - curve;
+  i += 1;
+);
+
+// Clamp diameters to non-negative (cosine can produce negative
+// diameters at extreme tongue raises in some regions; that's
+// nonphysical, clamp to 0).
+i = 0; loop(N, diam[i] = max(diam[i], 0.0); i += 1; );
+
+// === Lip rounding ===
+// Same simple step-narrow as v2-v4 (already proven working).
+ldia = 1.5 - rounding * 1.0;
+i = N - lipExtent;
+while (i < N) ( diam[i] = min(diam[i], ldia); i += 1; );
+
+// Final clamp + areas.
+i = 0; loop(N, diam[i] = max(diam[i], 0.0); area[i] = diam[i] * diam[i]; i += 1; );
+
+// Reflection coefficients.
+i = 1;
+while (i < N) (
+  (area[i-1] + area[i]) > 0.000001 ?
+    refl_bank[i] = (area[i-1] - area[i]) / (area[i-1] + area[i]) :
+    refl_bank[i] = 0.999;
+  i += 1;
+);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+scatter(in_mono); o1 = R[N-1];
+scatter(in_mono); o2 = R[N-1];
+lipout = (o1 + o2) * 0.5;
+
+dc_on > 0 ? (
+  dc_y = lipout - dc_x + 0.997 * dc_y;
+  dc_x = lipout;
+  out  = dc_y;
+) : (
+  out  = lipout;
+);
+
+spl0 = out * vol;
+spl1 = out * vol;

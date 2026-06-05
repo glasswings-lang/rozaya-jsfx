@@ -1,0 +1,509 @@
+desc: Resonance Bank
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// 16 parallel bandpass filters (or serial peaking EQ filters) with
+// per-band drift wander on any combination of parameters, stereo
+// processing, asymmetric width control, and cascade-order rolloff.
+//
+// === Two modes ===
+//
+// Parallel bandpass: each band selects its frequency range out of
+// the input; slices are summed.
+//
+// Serial peaking EQ: each band emphasizes or cuts its center on
+// the running signal.
+//
+// === Selector pattern ===
+//
+// Only one band's parameters are visible at a time. The Band
+// selector picks which band to edit; per-band sliders snap to
+// that band's stored values. All 16 bands run simultaneously.
+//
+// === Multi-target drift (nested selector pattern) ===
+//
+// Each band can have up to 5 simultaneous drifts, one per
+// possible target (Frequency, Width up, Width down, Gain, Pan).
+// The Drift target slider picks which target you're currently
+// editing — the drift up/down/period/mode/shape sliders snap to
+// THAT target's stored values. Configure them, they're saved to
+// that target. Change Drift target → previous target's drift
+// keeps running; sliders now show the new target's stored values.
+//
+// All configured drifts on a band run together. So a single band
+// can have its frequency wandering, gain pulsing, and pan
+// sweeping simultaneously, each at its own rate.
+//
+// === Order (parallel mode only) ===
+//
+//   Order 1: -6 dB/oct rolloff
+//   Order 2: -12 dB/oct
+//   Order 4: -24 dB/oct
+//   Order 8: -48 dB/oct (near brick-wall)
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+
+slider2:0<0,15,1>Band selector (0-15)
+
+slider3:500<0,20000,1>Frequency (Hz)
+slider4:250<1,5000,1>Width up (Hz above center)
+slider5:250<1,5000,1>Width down (Hz below center)
+slider6:-60<-60,24,0.1>Gain (dB; -60 = off)
+slider7:0<-1,1,0.01>Pan (-1=L, 0=center, +1=R)
+slider8:0<0,3,1{1 (-6 dB/oct),2 (-12 dB/oct),4 (-24 dB/oct),8 (-48 dB/oct)}>Order (parallel mode only)
+slider9:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Drift target
+slider10:0<0,1000,0.1>Drift up amount (units match target)
+slider11:0<0,1000,0.1>Drift down amount (units match target)
+slider12:0<0,1000,0.001>Drift period (interpret by mode; 0 = off)
+slider13:2<0,2,1{BPM,Hz,Seconds}>Drift period mode
+slider14:0<0,2,1{Sine,Triangle,Random}>Drift shape
+
+slider15:0<0,1,1{Parallel bandpass,Serial peaking EQ}>Mode
+slider16:0.5<0,1,0.01>Wet/Dry mix
+slider17:0.5<0,1,0.01>Output Volume
+
+@init
+ext_noinit = 1;
+
+srate_inv = 1.0 / srate;
+pi_srate  = $pi * srate_inv;
+two_pi    = 2.0 * $pi;
+
+N_BANDS    = 16;
+N_TARGETS  = 5;
+MAX_ORDER  = 8;
+
+// === Per-band parameter memory banks (16 slots each) ===
+band_freq              = 0;
+band_gain              = 16;
+band_width_up          = 32;
+band_width_down        = 48;
+band_pan               = 64;
+band_order_idx         = 80;
+band_last_drift_target = 96;
+
+// === Per-(band, target) drift configuration banks (80 slots each) ===
+// Indexing: band * N_TARGETS + target
+band_drift_up    = 112;
+band_drift_down  = 192;
+band_drift_per   = 272;
+band_drift_mode  = 352;
+band_drift_shape = 432;
+
+// === Per-(band, target) drift runtime state (80 slots each) ===
+band_drift_phase = 512;
+band_rand_old    = 592;
+band_rand_new    = 672;
+
+// === Parallel SVF cascade state ===
+band_svf_L = 768;   // 16 bands * 8 stages * 2 vars = 256 floats
+band_svf_R = 1024;  // same shape for R
+
+// === Serial peaking biquad state ===
+band_bq_x1_L = 1280;
+band_bq_x2_L = 1296;
+band_bq_y1_L = 1312;
+band_bq_y2_L = 1328;
+band_bq_x1_R = 1344;
+band_bq_x2_R = 1360;
+band_bq_y1_R = 1376;
+band_bq_y2_R = 1392;
+
+i = 0;
+loop(N_BANDS,
+  band_freq[i]              = 500;
+  band_gain[i]              = -60;
+  band_width_up[i]          = 250;
+  band_width_down[i]        = 250;
+  band_pan[i]               = 0;
+  band_order_idx[i]         = 0;
+  band_last_drift_target[i] = 0;
+
+  // Initialize all 5 drift slots for this band
+  t = 0;
+  loop(N_TARGETS,
+    slot = i * N_TARGETS + t;
+    band_drift_up[slot]    = 0;
+    band_drift_down[slot]  = 0;
+    band_drift_per[slot]   = 0;
+    band_drift_mode[slot]  = 2;
+    band_drift_shape[slot] = 0;
+    band_drift_phase[slot] = rand(1);
+    band_rand_old[slot]    = rand(2) - 1;
+    band_rand_new[slot]    = rand(2) - 1;
+    t += 1;
+  );
+
+  // Filter states
+  j = 0;
+  loop(MAX_ORDER * 2,
+    band_svf_L[i * MAX_ORDER * 2 + j] = 0;
+    band_svf_R[i * MAX_ORDER * 2 + j] = 0;
+    j += 1;
+  );
+
+  band_bq_x1_L[i] = 0;
+  band_bq_x2_L[i] = 0;
+  band_bq_y1_L[i] = 0;
+  band_bq_y2_L[i] = 0;
+  band_bq_x1_R[i] = 0;
+  band_bq_x2_R[i] = 0;
+  band_bq_y1_R[i] = 0;
+  band_bq_y2_R[i] = 0;
+  i += 1;
+);
+
+last_band_select         = -1;
+last_drift_target_select = -1;
+
+@slider
+in_gain     = 10 ^ (slider1 / 20);
+band_select = slider2;
+
+sel_freq         = slider3;
+sel_width_up     = slider4;
+sel_width_down   = slider5;
+sel_gain         = slider6;
+sel_pan          = slider7;
+sel_order_idx    = slider8;
+sel_drift_target = slider9;
+sel_drift_up     = slider10;
+sel_drift_down   = slider11;
+sel_drift_per    = slider12;
+sel_drift_mode   = slider13;
+sel_drift_shape  = slider14;
+
+mode = slider15;
+wet  = slider16;
+vol  = slider17;
+
+band_changed = last_band_select != band_select;
+
+band_changed ? (
+  // Load this band's per-band sliders.
+  slider3 = band_freq[band_select];
+  slider4 = band_width_up[band_select];
+  slider5 = band_width_down[band_select];
+  slider6 = band_gain[band_select];
+  slider7 = band_pan[band_select];
+  slider8 = band_order_idx[band_select];
+  slider_automate(slider3);
+  slider_automate(slider4);
+  slider_automate(slider5);
+  slider_automate(slider6);
+  slider_automate(slider7);
+  slider_automate(slider8);
+
+  // Load this band's last selected drift target.
+  saved_target = band_last_drift_target[band_select];
+  slider9 = saved_target;
+  slider_automate(slider9);
+  sel_drift_target = saved_target;
+
+  // Load that target's drift config from (band, target) slot.
+  drift_slot = band_select * N_TARGETS + saved_target;
+  slider10 = band_drift_up[drift_slot];
+  slider11 = band_drift_down[drift_slot];
+  slider12 = band_drift_per[drift_slot];
+  slider13 = band_drift_mode[drift_slot];
+  slider14 = band_drift_shape[drift_slot];
+  slider_automate(slider10);
+  slider_automate(slider11);
+  slider_automate(slider12);
+  slider_automate(slider13);
+  slider_automate(slider14);
+) : (
+  // Band didn't change. Check if drift target changed.
+  drift_target_changed = last_drift_target_select != sel_drift_target;
+
+  drift_target_changed ? (
+    // Save current drift sliders to OLD (band, old_target) slot.
+    old_slot = band_select * N_TARGETS + last_drift_target_select;
+    band_drift_up[old_slot]    = sel_drift_up;
+    band_drift_down[old_slot]  = sel_drift_down;
+    band_drift_per[old_slot]   = sel_drift_per;
+    band_drift_mode[old_slot]  = sel_drift_mode;
+    band_drift_shape[old_slot] = sel_drift_shape;
+
+    // Update this band's last drift target memory.
+    band_last_drift_target[band_select] = sel_drift_target;
+
+    // Load NEW (band, new_target) drift config into sliders.
+    new_slot = band_select * N_TARGETS + sel_drift_target;
+    slider10 = band_drift_up[new_slot];
+    slider11 = band_drift_down[new_slot];
+    slider12 = band_drift_per[new_slot];
+    slider13 = band_drift_mode[new_slot];
+    slider14 = band_drift_shape[new_slot];
+    slider_automate(slider10);
+    slider_automate(slider11);
+    slider_automate(slider12);
+    slider_automate(slider13);
+    slider_automate(slider14);
+  ) : (
+    // Neither changed. Save current slider values to their stored
+    // locations.
+    band_freq[band_select]       = sel_freq;
+    band_width_up[band_select]   = sel_width_up;
+    band_width_down[band_select] = sel_width_down;
+    band_gain[band_select]       = sel_gain;
+    band_pan[band_select]        = sel_pan;
+    band_order_idx[band_select]  = sel_order_idx;
+
+    drift_slot = band_select * N_TARGETS + sel_drift_target;
+    band_drift_up[drift_slot]    = sel_drift_up;
+    band_drift_down[drift_slot]  = sel_drift_down;
+    band_drift_per[drift_slot]   = sel_drift_per;
+    band_drift_mode[drift_slot]  = sel_drift_mode;
+    band_drift_shape[drift_slot] = sel_drift_shape;
+  );
+);
+
+last_band_select         = band_select;
+last_drift_target_select = sel_drift_target;
+
+@sample
+in_L = spl0 * in_gain;
+in_R = spl1 * in_gain;
+
+mode == 1 ? (
+  // === Serial peaking EQ mode ===
+  serial_L = in_L;
+  serial_R = in_R;
+
+  i = 0;
+  loop(N_BANDS,
+    b_freq_base   = band_freq[i];
+    b_w_up_base   = band_width_up[i];
+    b_w_down_base = band_width_down[i];
+    b_gain_base   = band_gain[i];
+    b_pan_base    = band_pan[i];
+
+    eff_freq   = b_freq_base;
+    eff_w_up   = b_w_up_base;
+    eff_w_down = b_w_down_base;
+    eff_gain   = b_gain_base;
+    eff_pan    = b_pan_base;
+
+    // Loop through all 5 drift slots for this band
+    t = 0;
+    loop(N_TARGETS,
+      slot         = i * N_TARGETS + t;
+      d_up         = band_drift_up[slot];
+      d_down       = band_drift_down[slot];
+      d_per        = band_drift_per[slot];
+      d_per_mode   = band_drift_mode[slot];
+
+      d_per > 0 && (d_up > 0 || d_down > 0) ? (
+        d_cps = 0;
+        d_per_mode == 0 ? d_cps = d_per / 60;
+        d_per_mode == 1 ? d_cps = d_per;
+        d_per_mode == 2 ? d_cps = 1.0 / d_per;
+
+        band_drift_phase[slot] += d_cps / srate;
+        band_drift_phase[slot] >= 1.0 ? (
+          band_drift_phase[slot] -= 1.0;
+          band_drift_shape[slot] == 2 ? (
+            band_rand_old[slot] = band_rand_new[slot];
+            band_rand_new[slot] = rand(2) - 1;
+          );
+        );
+
+        d_phi   = band_drift_phase[slot];
+        d_shape = band_drift_shape[slot];
+        d_mod   = 0;
+        d_shape == 0 ? d_mod = sin(two_pi * d_phi);
+        d_shape == 1 ? d_mod = 1 - 4 * abs(d_phi - 0.5);
+        d_shape == 2 ? d_mod = band_rand_old[slot] + (band_rand_new[slot] - band_rand_old[slot]) * d_phi;
+
+        d_offset = d_mod >= 0 ? d_mod * d_up : d_mod * d_down;
+
+        t == 0 ? eff_freq   = eff_freq + d_offset;
+        t == 1 ? eff_w_up   = max(eff_w_up + d_offset, 1);
+        t == 2 ? eff_w_down = max(eff_w_down + d_offset, 1);
+        t == 3 ? eff_gain   = eff_gain + d_offset;
+        t == 4 ? eff_pan    = max(min(eff_pan + d_offset, 1), -1);
+      );
+
+      t += 1;
+    );
+
+    eff_gain > -59 ? (
+      b_bw       = eff_w_up + eff_w_down;
+      eff_center = eff_freq + (eff_w_up - eff_w_down) * 0.5;
+      eff_center = max(min(eff_center, srate * 0.45), 1);
+
+      b_Q = max(eff_center / b_bw, 0.1);
+
+      // Gain is now in dB directly. Peaking EQ formula needs A = sqrt(linear_gain) = 10^(dB/40).
+      gain_db   = eff_gain;
+      A         = 10 ^ (gain_db / 40);
+      omega0    = two_pi * eff_center * srate_inv;
+      sin_w     = sin(omega0);
+      cos_w     = cos(omega0);
+      alpha     = sin_w / (2 * b_Q);
+
+      bq_b0 = 1 + alpha * A;
+      bq_b1 = -2 * cos_w;
+      bq_b2 = 1 - alpha * A;
+      bq_a0 = 1 + alpha / A;
+      bq_a1 = -2 * cos_w;
+      bq_a2 = 1 - alpha / A;
+
+      inv_a0 = 1 / bq_a0;
+      b0n    = bq_b0 * inv_a0;
+      b1n    = bq_b1 * inv_a0;
+      b2n    = bq_b2 * inv_a0;
+      a1n    = bq_a1 * inv_a0;
+      a2n    = bq_a2 * inv_a0;
+
+      x_in_L  = serial_L;
+      out_bq_L = b0n * x_in_L
+               + b1n * band_bq_x1_L[i]
+               + b2n * band_bq_x2_L[i]
+               - a1n * band_bq_y1_L[i]
+               - a2n * band_bq_y2_L[i];
+      band_bq_x2_L[i] = band_bq_x1_L[i];
+      band_bq_x1_L[i] = x_in_L;
+      band_bq_y2_L[i] = band_bq_y1_L[i];
+      band_bq_y1_L[i] = out_bq_L;
+      serial_L        = out_bq_L;
+
+      x_in_R  = serial_R;
+      out_bq_R = b0n * x_in_R
+               + b1n * band_bq_x1_R[i]
+               + b2n * band_bq_x2_R[i]
+               - a1n * band_bq_y1_R[i]
+               - a2n * band_bq_y2_R[i];
+      band_bq_x2_R[i] = band_bq_x1_R[i];
+      band_bq_x1_R[i] = x_in_R;
+      band_bq_y2_R[i] = band_bq_y1_R[i];
+      band_bq_y1_R[i] = out_bq_R;
+      serial_R        = out_bq_R;
+    );
+    i += 1;
+  );
+
+  wet_L = serial_L;
+  wet_R = serial_R;
+) : (
+  // === Parallel bandpass mode with cascade ===
+  wet_L = 0;
+  wet_R = 0;
+
+  i = 0;
+  loop(N_BANDS,
+    b_freq_base   = band_freq[i];
+    b_w_up_base   = band_width_up[i];
+    b_w_down_base = band_width_down[i];
+    b_gain_base   = band_gain[i];
+    b_pan_base    = band_pan[i];
+
+    eff_freq   = b_freq_base;
+    eff_w_up   = b_w_up_base;
+    eff_w_down = b_w_down_base;
+    eff_gain   = b_gain_base;
+    eff_pan    = b_pan_base;
+
+    t = 0;
+    loop(N_TARGETS,
+      slot         = i * N_TARGETS + t;
+      d_up         = band_drift_up[slot];
+      d_down       = band_drift_down[slot];
+      d_per        = band_drift_per[slot];
+      d_per_mode   = band_drift_mode[slot];
+
+      d_per > 0 && (d_up > 0 || d_down > 0) ? (
+        d_cps = 0;
+        d_per_mode == 0 ? d_cps = d_per / 60;
+        d_per_mode == 1 ? d_cps = d_per;
+        d_per_mode == 2 ? d_cps = 1.0 / d_per;
+
+        band_drift_phase[slot] += d_cps / srate;
+        band_drift_phase[slot] >= 1.0 ? (
+          band_drift_phase[slot] -= 1.0;
+          band_drift_shape[slot] == 2 ? (
+            band_rand_old[slot] = band_rand_new[slot];
+            band_rand_new[slot] = rand(2) - 1;
+          );
+        );
+
+        d_phi   = band_drift_phase[slot];
+        d_shape = band_drift_shape[slot];
+        d_mod   = 0;
+        d_shape == 0 ? d_mod = sin(two_pi * d_phi);
+        d_shape == 1 ? d_mod = 1 - 4 * abs(d_phi - 0.5);
+        d_shape == 2 ? d_mod = band_rand_old[slot] + (band_rand_new[slot] - band_rand_old[slot]) * d_phi;
+
+        d_offset = d_mod >= 0 ? d_mod * d_up : d_mod * d_down;
+
+        t == 0 ? eff_freq   = eff_freq + d_offset;
+        t == 1 ? eff_w_up   = max(eff_w_up + d_offset, 1);
+        t == 2 ? eff_w_down = max(eff_w_down + d_offset, 1);
+        t == 3 ? eff_gain   = eff_gain + d_offset;
+        t == 4 ? eff_pan    = max(min(eff_pan + d_offset, 1), -1);
+      );
+
+      t += 1;
+    );
+
+    eff_gain > -59 ? (
+      b_bw       = eff_w_up + eff_w_down;
+      eff_center = eff_freq + (eff_w_up - eff_w_down) * 0.5;
+      eff_center = max(min(eff_center, srate * 0.45), 1);
+
+      b_damp = max(min(b_bw / eff_center, 2.0), 0.01);
+      b_coef = min(2 * sin(pi_srate * eff_center), 0.98);
+
+      ord_idx = band_order_idx[i];
+      b_order = 1;
+      ord_idx == 1 ? b_order = 2;
+      ord_idx == 2 ? b_order = 4;
+      ord_idx == 3 ? b_order = 8;
+
+      // Convert dB to linear multiplier for parallel mode.
+      gain_linear = 10 ^ (eff_gain / 20);
+
+      svf_base_L = i * MAX_ORDER * 2;
+      cascade_in_L = in_L;
+      s = 0;
+      loop(b_order,
+        slot_svf = svf_base_L + s * 2;
+        band_svf_L[slot_svf]     += b_coef * band_svf_L[slot_svf + 1];
+        stage_high                = cascade_in_L - band_svf_L[slot_svf] - b_damp * band_svf_L[slot_svf + 1];
+        band_svf_L[slot_svf + 1] += b_coef * stage_high;
+        cascade_in_L              = band_svf_L[slot_svf + 1];
+        s += 1;
+      );
+      b_out_L = cascade_in_L * gain_linear;
+
+      svf_base_R = i * MAX_ORDER * 2;
+      cascade_in_R = in_R;
+      s = 0;
+      loop(b_order,
+        slot_svf = svf_base_R + s * 2;
+        band_svf_R[slot_svf]     += b_coef * band_svf_R[slot_svf + 1];
+        stage_high                = cascade_in_R - band_svf_R[slot_svf] - b_damp * band_svf_R[slot_svf + 1];
+        band_svf_R[slot_svf + 1] += b_coef * stage_high;
+        cascade_in_R              = band_svf_R[slot_svf + 1];
+        s += 1;
+      );
+      b_out_R = cascade_in_R * gain_linear;
+
+      b_left_keep  = eff_pan <= 0 ? 1 : 1 - eff_pan;
+      b_right_keep = eff_pan >= 0 ? 1 : 1 + eff_pan;
+
+      wet_L += b_out_L * b_left_keep;
+      wet_R += b_out_R * b_right_keep;
+    );
+    i += 1;
+  );
+);
+
+out_L = in_L * (1 - wet) + wet_L * wet;
+out_R = in_R * (1 - wet) + wet_R * wet;
+
+spl0 = out_L * vol;
+spl1 = out_R * vol;

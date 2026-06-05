@@ -1,0 +1,166 @@
+desc: Vowel Shaper v6 (lip rounding gates vowel character)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v6 reframes the acoustic model based on a body observation Rozaya
+// made: when their mouth is open, breath just flows out unshaped
+// (no vowel character); when their lips round into the "ooo" shape,
+// THAT'S when the vowel character emerges. The lips aren't just
+// shaping a vowel that's already there — they're the constriction
+// that GENERATES the vowel from the breath flow.
+//
+// Physical model:
+//   - Lip Rounding 0 (open mouth): no constriction, no resonance
+//     engagement. Output = breath input passed through cleanly, no
+//     formant coloring. This matches the "silent breath" feel of
+//     exhaling through an open mouth.
+//   - Lip Rounding > 0 (lips constricted): the constriction excites
+//     the back cavity. Back-cavity resonances (set by Height +
+//     Backness) shape the breath into vowel character. Output is
+//     gradually replaced by vowel-shaped sound as rounding increases.
+//   - Lip Rounding 1 (fully rounded "ooo" lips): full vowel character.
+//     Plus: lip aperture lowpass darkens the radiation (real small
+//     openings don't radiate high frequencies well).
+//
+// Tongue position (Height + Backness) sets WHICH vowel emerges when
+// the lips round. For Rozaya's primary use case ("hih -> hooo"
+// shaped breath): set Height + Backness for /u/-position back-cavity
+// resonance, then automate Lip Rounding with an LFO/envelope.
+// Rounded = vowel; unrounded = breath.
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.85<0.0,1.0,0.01>Vowel Height (back-cavity shape; 0 = open, 1 = close)
+slider3:1.0<0.0,1.0,0.01>Vowel Backness (back-cavity shape; 0 = front, 1 = back)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (gates vowel character; 0 = breath, 1 = vowel)
+slider5:1.0<0.6,1.6,0.01>Voice Size (1 = adult male reference)
+slider6:1.3<0.0,3.0,0.01>F1 Strength (when rounded)
+slider7:1.0<0.0,2.0,0.01>F2 Strength (when rounded)
+slider8:0.5<0.0,2.0,0.01>F3 Strength (when rounded)
+slider9:0.3<0.0,1.0,0.01>Voice tilt (0 = whispered, 1 = voiced character)
+slider10:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+srate_inv = 1.0 / srate;
+pi_srate  = $pi * srate_inv;
+two_pi    = 2.0 * $pi;
+
+// SVF state for three parallel bandpass formant filters.
+f1_low = 0; f1_band = 0;
+f2_low = 0; f2_band = 0;
+f3_low = 0; f3_band = 0;
+
+f1_damp = 0.12;
+f2_damp = 0.067;
+f3_damp = 0.05;
+
+// Source-tilt LP (mimics voiced source spectral slope).
+tilt_corner_hz = 1200;
+tilt_coef      = exp(-2 * $pi * tilt_corner_hz / srate);
+tilt_y         = 0;
+
+// Lip aperture LP — simulates radiation pattern of constricted
+// opening. Open mouth radiates HF efficiently; rounded lips don't.
+// Corner frequency tracks lip rounding: ~10 kHz at open, ~2 kHz at
+// fully rounded.
+aperture_y     = 0;
+
+dc_x = 0; dc_y = 0;
+
+// Four-corner vowel space (adult male reference). Voice Size
+// multiplies at @slider time.
+i_F1  = 270;  i_F2  = 2290; i_F3  = 3010;
+u_F1  = 300;  u_F2  = 870;  u_F3  = 2240;
+ae_F1 = 660;  ae_F2 = 1720; ae_F3 = 2410;
+ah_F1 = 730;  ah_F2 = 1090; ah_F3 = 2440;
+
+@slider
+in_gain    = 10 ^ (slider1 / 20);
+height     = slider2;
+backness   = slider3;
+rounding   = slider4;
+voice_size = slider5;
+f1_amp     = slider6;
+f2_amp     = slider7;
+f3_amp     = slider8;
+tilt_amt   = slider9;
+vol        = slider10;
+
+// Back-cavity formants from Height + Backness (same bilinear math).
+// Note: in this model, these are the resonances of the cavity BEHIND
+// the lips — the cavity that gets excited when lips constrict.
+w_i  = (1 - backness) * height;
+w_u  =      backness  * height;
+w_ae = (1 - backness) * (1 - height);
+w_ah =      backness  * (1 - height);
+
+f1_hz = w_i * i_F1 + w_u * u_F1 + w_ae * ae_F1 + w_ah * ah_F1;
+f2_hz = w_i * i_F2 + w_u * u_F2 + w_ae * ae_F2 + w_ah * ah_F2;
+f3_hz = w_i * i_F3 + w_u * u_F3 + w_ae * ae_F3 + w_ah * ah_F3;
+
+// Voice Size scales the back-cavity resonances.
+f1_hz = f1_hz * voice_size;
+f2_hz = f2_hz * voice_size;
+f3_hz = f3_hz * voice_size;
+
+f1_hz = max(min(f1_hz, srate * 0.45), 50);
+f2_hz = max(min(f2_hz, srate * 0.45), 50);
+f3_hz = max(min(f3_hz, srate * 0.45), 50);
+
+f1_coef = min(2 * sin(pi_srate * f1_hz), 0.98);
+f2_coef = min(2 * sin(pi_srate * f2_hz), 0.98);
+f3_coef = min(2 * sin(pi_srate * f3_hz), 0.98);
+
+// Lip aperture LP corner: open mouth (rounding=0) -> 10 kHz; rounded
+// (rounding=1) -> 2 kHz. Linear in rounding.
+aperture_corner = 10000 - rounding * 8000;
+aperture_corner = max(min(aperture_corner, srate * 0.45), 200);
+aperture_coef   = exp(-two_pi * aperture_corner / srate);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+// Run the formant filters always (so they're warm and ready when
+// rounding engages). Their output only mixes in proportionally to
+// the rounding amount.
+f1_low  += f1_coef * f1_band;
+f1_high  = in_mono - f1_low - f1_damp * f1_band;
+f1_band += f1_coef * f1_high;
+
+f2_low  += f2_coef * f2_band;
+f2_high  = in_mono - f2_low - f2_damp * f2_band;
+f2_band += f2_coef * f2_high;
+
+f3_low  += f3_coef * f3_band;
+f3_high  = in_mono - f3_low - f3_damp * f3_band;
+f3_band += f3_coef * f3_high;
+
+// Klatt parallel sum, alternating signs (only audible when rounded).
+formant_wet = (f1_band * f1_amp) - (f2_band * f2_amp) + (f3_band * f3_amp);
+
+// Voice tilt on the formant output (gives voiced-source character).
+tilt_y = tilt_coef * tilt_y + (1 - tilt_coef) * formant_wet;
+formant_wet = formant_wet + (tilt_y - formant_wet) * tilt_amt;
+
+// === The key change: rounding-gated mix ===
+// At rounding=0: output is dry breath (no formant coloring).
+//                The lips aren't constricting; no resonance.
+// At rounding=1: output is full formant-shaped vowel.
+//                The lips constrict; resonance fully engaged.
+mixed = in_mono * (1 - rounding) + formant_wet * rounding;
+
+// === Lip aperture LP ===
+// Models the radiation pattern of the lip opening. Open lips radiate
+// HF efficiently; rounded lips don't. Applied to the post-mix signal.
+aperture_y = aperture_coef * aperture_y + (1 - aperture_coef) * mixed;
+
+// DC blocker.
+dc_y = aperture_y - dc_x + 0.997 * dc_y;
+dc_x = aperture_y;
+
+out = dc_y * vol * 0.5;
+out = max(min(out, 1.5), -1.5);
+
+spl0 = out;
+spl1 = out;

@@ -1,0 +1,153 @@
+desc: Vowel Shaper v2 (triangle-interpolated formants)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v2 fix: v1's linear Height/Backness mapping didn't simultaneously
+// land all three corner vowels (/i/, /a/, /u/) on their target
+// formant frequencies — it was an approximation that got each close
+// but none exact, so vowels like /a/ landed "close but not quite."
+//
+// v2 uses triangle interpolation through the vowel space:
+//   - /i/ at (Height=1, Backness=0)
+//   - /a/ at (Height=0, any Backness)
+//   - /u/ at (Height=1, Backness=1)
+//
+// Any (Height, Backness) point is a weighted blend of these three
+// corners, using the actual reference F1/F2/F3 values for each.
+// Each corner lands EXACTLY on its target. Interior vowels (/o/,
+// /ɛ/, /ɪ/, /æ/, etc.) interpolate between corners cleanly.
+//
+// Weight formulas (each is the area-coordinate of the point in the
+// triangle relative to that corner):
+//   w_i = Height * (1 - Backness)   -> weight of /i/ corner
+//   w_u = Height * Backness          -> weight of /u/ corner
+//   w_a = 1 - Height                 -> weight of /a/ corner
+//
+// Lip Rounding additionally lowers F2 and F3 of FRONT vowels (where
+// rounding actually changes the vowel — /y/, /ø/). For back vowels,
+// /u/ is already at rounded F2, so Rounding has no further effect.
+//
+// Vowel landings (settings to try):
+//   /a/ father:    H 0,    B any, R 0    (exact)
+//   /u/ boot:      H 1.0,  B 1.0, R 0    (exact)
+//   /i/ beet:      H 1.0,  B 0,   R 0    (exact)
+//   /o/ boat:      H 0.65, B 1.0, R 0
+//   /ʊ/ book:      H 0.85, B 0.9, R 0
+//   /ɔ/ caught:    H 0.4,  B 1.0, R 0
+//   /ʌ/ done:      H 0.3,  B 0.6, R 0
+//   /ɛ/ bed:       H 0.5,  B 0.3, R 0
+//   /æ/ cat:       H 0.15, B 0.25, R 0
+//   /ɪ/ bit:       H 0.65, B 0.15, R 0
+//   /ə/ schwa:     H 0.5,  B 0.5, R 0
+//   /y/ German tu: H 1.0,  B 0,   R 1.0  (rounded /i/)
+//   /ø/ German ö:  H 0.7,  B 0.15, R 1.0 (rounded /e/)
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.0<0.0,1.0,0.01>Vowel Height (0 = open /a/, 1 = close /i/-/u/)
+slider3:0.5<0.0,1.0,0.01>Vowel Backness (0 = front /i/, 1 = back /u/)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (lowers F2/F3 of front vowels)
+slider5:1.0<0.0,2.0,0.01>F1 Strength (low formant — vowel body)
+slider6:0.8<0.0,2.0,0.01>F2 Strength (mid formant — vowel identity)
+slider7:0.5<0.0,2.0,0.01>F3 Strength (high formant — vowel brightness)
+slider8:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+srate_inv = 1.0 / srate;
+pi_srate  = $pi * srate_inv;
+
+// SVF states for three parallel bandpass formant filters.
+f1_low = 0; f1_band = 0;
+f2_low = 0; f2_band = 0;
+f3_low = 0; f3_band = 0;
+
+// Fixed Q values. F1 narrowest (most peaked), F3 widest.
+f1_damp = 0.10;
+f2_damp = 0.067;
+f3_damp = 0.05;
+
+// DC blocker state.
+dc_x = 0; dc_y = 0;
+
+// === Vowel triangle corner formant frequencies ===
+// Adult-male reference values from standard formant synthesis
+// literature. These are EXACT — the triangle interpolation lands
+// each corner vowel on its real formant frequencies.
+i_F1 = 270; i_F2 = 2290; i_F3 = 3010;   // /i/ as in "beet"
+a_F1 = 730; a_F2 = 1090; a_F3 = 2440;   // /a/ as in "father"
+u_F1 = 300; u_F2 = 870;  u_F3 = 2240;   // /u/ as in "boot"
+
+@slider
+in_gain  = 10 ^ (slider1 / 20);
+height   = slider2;
+backness = slider3;
+rounding = slider4;
+f1_amp   = slider5;
+f2_amp   = slider6;
+f3_amp   = slider7;
+vol      = slider8;
+
+// === Triangle interpolation through vowel space ===
+// Weights of the three corners. Each weight is the influence of
+// that corner at the current (Height, Backness) point.
+w_i = height * (1 - backness);
+w_u = height * backness;
+w_a = 1 - height;
+
+// Interpolated formant frequencies. Each is a weighted sum of the
+// corner values, so /i/-corner contribution carries its real F1,
+// F2, F3 — and likewise for /a/ and /u/ corners.
+f1_hz = w_i * i_F1 + w_u * u_F1 + w_a * a_F1;
+f2_hz = w_i * i_F2 + w_u * u_F2 + w_a * a_F2;
+f3_hz = w_i * i_F3 + w_u * u_F3 + w_a * a_F3;
+
+// === Lip rounding adjustment ===
+// Rounding lowers F2 and F3, but ONLY for non-back vowels (where
+// it actually changes the vowel — /y/, /ø/, /œ/). For back vowels,
+// /u/ is already rounded at its corner, so further rounding has no
+// effect. front_amount = 1 - Backness scales the rounding effect.
+front_amount = 1 - backness;
+f2_hz = f2_hz - rounding * front_amount * 300;
+f3_hz = f3_hz - rounding * front_amount * 700;
+
+// Clamp formants to safe range.
+f1_hz = max(min(f1_hz, srate * 0.45), 50);
+f2_hz = max(min(f2_hz, srate * 0.45), 50);
+f3_hz = max(min(f3_hz, srate * 0.45), 50);
+
+// SVF coefficients.
+f1_coef = min(2 * sin(pi_srate * f1_hz), 0.98);
+f2_coef = min(2 * sin(pi_srate * f2_hz), 0.98);
+f3_coef = min(2 * sin(pi_srate * f3_hz), 0.98);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+// F1 bandpass.
+f1_low  += f1_coef * f1_band;
+f1_high  = in_mono - f1_low - f1_damp * f1_band;
+f1_band += f1_coef * f1_high;
+
+// F2 bandpass.
+f2_low  += f2_coef * f2_band;
+f2_high  = in_mono - f2_low - f2_damp * f2_band;
+f2_band += f2_coef * f2_high;
+
+// F3 bandpass.
+f3_low  += f3_coef * f3_band;
+f3_high  = in_mono - f3_low - f3_damp * f3_band;
+f3_band += f3_coef * f3_high;
+
+// Klatt parallel sum, alternating signs.
+formant_out = (f1_band * f1_amp) - (f2_band * f2_amp) + (f3_band * f3_amp);
+
+// DC blocker.
+dc_y = formant_out - dc_x + 0.997 * dc_y;
+dc_x = formant_out;
+
+out = dc_y * vol * 0.5;
+out = max(min(out, 1.5), -1.5);
+
+spl0 = out;
+spl1 = out;

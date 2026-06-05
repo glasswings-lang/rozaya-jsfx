@@ -1,0 +1,149 @@
+desc: Tract Diag Effect v3 (uniform tube + Lip Rounding + Tongue)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v2 confirmed lip rounding alone produces /m/-like character (lips
+// closed at the front of a uniform tube acoustically resembles /m/).
+// Rozaya described real /u/ articulation: back of tongue flexed
+// upward, front of tongue down, jaw open. That's high-back tongue
+// + lip rounding — two articulations combined. v3 adds tongue
+// controls so /u/ becomes achievable in the waveguide.
+//
+// Tongue math borrows from v5's structure (Gaussian-shaped
+// constriction in the tract) with the depth multiplier reduced from
+// 1.35 to 1.0 — same fix as the lip rounding in v2. At height=1
+// the tongue raises to a tdia of 0.5 (deep articulated raise) but
+// doesn't collapse the tract to a hairsbreadth.
+//
+// Slider defaults: Tongue Backness defaults to 0.7 (toward the
+// back) so just turning Tongue Height up should land you in /u/
+// territory immediately — testing Rozaya's body-reported hypothesis.
+//
+// Expected behaviour with breath input:
+//   All zero / defaults              -> uniform-tube /h/ (matches v1)
+//   Height=0.8, Backness=0.7         -> /o/-ish (back-mid raised)
+//   Height=0.8, Backness=0.7, Round=0.5  -> /u/ ("hoooo"!)
+//   Height=0.8, Backness=0.0         -> /i/-ish (high front)
+//   Height=0.8, Backness=0.0, Round=0.5  -> /ü/ (front rounded — the
+//                                              hard vowel English
+//                                              lacks; German "über")
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.9998<0.99,0.99999,0.00001>Damping per scatter step
+slider3:1.5<0.1,3.0,0.05>Rest diameter (uniform baseline)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (0 = open, 1 = fully rounded /u/)
+slider5:5<1,10,1>Lip extent (segments, diagnostic)
+slider6:0.0<0.0,1.0,0.01>Tongue Height (0 = relaxed flat, 1 = raised /high vowel)
+slider7:0.7<0.0,1.0,0.01>Tongue Backness (0 = front /i/-territory, 1 = back /u/-territory)
+slider8:0<0,1,1{No,Yes}>DC blocker on output
+slider9:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+N = 44;
+R = 0; L = 64; JR = 128; JL = 192; diam = 256; area = 320; refl_bank = 384;
+
+glottalReflection = 0.75;
+lipReflection     = -0.85;
+
+i = 0; loop(N, R[i] = 0; L[i] = 0; JR[i] = 0; JL[i] = 0; diam[i] = 1.5; area[i] = 2.25; refl_bank[i] = 0; i += 1; );
+
+damp     = 0.9998;
+in_gain  = 1.0;
+dc_x     = 0;
+dc_y     = 0;
+
+function scatter(gin) local(j, k, w) (
+  JR[0]   = gin + glottalReflection * L[0];
+  JL[N-1] = lipReflection * R[N-1];
+  j = 1;
+  while (j < N) (
+    k = refl_bank[j];
+    w = k * (R[j-1] + L[j]);
+    JR[j]   = R[j-1] - w;
+    JL[j-1] = L[j]   + w;
+    j += 1;
+  );
+  j = 0;
+  while (j < N) (
+    R[j] = JR[j] * damp;
+    L[j] = JL[j] * damp;
+    j += 1;
+  );
+);
+
+@slider
+in_gain   = 10 ^ (slider1 / 20);
+damp      = slider2;
+restDiam  = slider3;
+rounding  = slider4;
+lipExtent = slider5;
+height    = slider6;
+backness  = slider7;
+dc_on     = slider8;
+vol       = slider9;
+
+// === Compute diameter array ===
+// Start from uniform restDiam everywhere.
+i = 0; loop(N, diam[i] = restDiam; i += 1; );
+
+// Tongue constriction (applied first).
+//   tcenter: position along tract where the tongue peaks. v5's
+//            mapping: backness=0 (front) -> tcenter at 0.82*N
+//            (near lips); backness=1 (back) -> tcenter at 0.20*N
+//            (near glottis).
+//   tdia:    diameter at the peak of the constriction. height=0
+//            leaves the tract uniform; height=1 narrows the peak
+//            to restDiam - 1.0 (e.g. 0.5 if restDiam=1.5).
+//   twidth:  span of segments over which the constriction tapers
+//            in (Gaussian-like quadratic). 5.5 segments matches v5.
+tcenter = (0.20 + (1.0 - backness) * 0.62) * N;
+tdia    = restDiam - height * 1.0;
+twidth  = 5.5;
+i = 0;
+loop(N,
+  d = (i - tcenter) / (twidth * 0.5);
+  abs(d) < 1.0 ? (
+    cur = tdia + (restDiam - tdia) * (d * d);
+    diam[i] = min(diam[i], cur);
+  );
+  i += 1;
+);
+
+// Lip rounding (applied after tongue — `min` ensures we only ever
+// narrow, never widen, so the two articulations combine correctly
+// when both are active).
+ldia = restDiam - rounding * 1.0;
+i = N - lipExtent;
+while (i < N) ( diam[i] = min(diam[i], ldia); i += 1; );
+
+// Clamp and compute areas.
+i = 0; loop(N, diam[i] = max(diam[i], 0.0); area[i] = diam[i] * diam[i]; i += 1; );
+
+// Internal reflection coefficients.
+i = 1;
+while (i < N) (
+  (area[i-1] + area[i]) > 0.000001 ?
+    refl_bank[i] = (area[i-1] - area[i]) / (area[i-1] + area[i]) :
+    refl_bank[i] = 0.999;
+  i += 1;
+);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+scatter(in_mono); o1 = R[N-1];
+scatter(in_mono); o2 = R[N-1];
+lipout = (o1 + o2) * 0.5;
+
+dc_on > 0 ? (
+  dc_y = lipout - dc_x + 0.997 * dc_y;
+  dc_x = lipout;
+  out  = dc_y;
+) : (
+  out  = lipout;
+);
+
+spl0 = out * vol;
+spl1 = out * vol;

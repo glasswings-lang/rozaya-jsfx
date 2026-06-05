@@ -1,0 +1,136 @@
+desc: Vowel Shaper v3 (quadrilateral-interpolated formants)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v3 replaces v2's triangle interpolation with quadrilateral
+// interpolation (bilinear over 4 corners). v2 had /a/ at a single
+// corner covering all of Height=0, which collapsed /æ/ (open
+// FRONT, F2=1720) and /ɑ/ (open BACK, F2=1090) into one position.
+// That made front-mid vowels (/æ/, /ɪ/, /ɛ/) land too low in F2
+// because the /a/-corner pulled them toward /ɑ/ values.
+//
+// v3 has four corners with real formant values for each:
+//   /i/ at (Height=1, Backness=0)    -> close front
+//   /u/ at (Height=1, Backness=1)    -> close back (rounded)
+//   /æ/ at (Height=0, Backness=0)    -> open front
+//   /ɑ/ at (Height=0, Backness=1)    -> open back
+//
+// Bilinear interpolation: each weight is the area of the rectangle
+// opposite its corner. Interior vowels (/o/, /ɪ/, /ɛ/, /ʌ/, /ʊ/,
+// etc.) land in their proper acoustic neighborhoods.
+//
+// /ɔ/ (caught) is structurally outside the quadrilateral (its F2
+// is lower than both /u/ and /ɑ/) — in most American dialects it's
+// merged with /ɑ/ anyway, so use that landing for it.
+//
+// Vowel landings:
+//   /i/ beet:   H 1.0,  B 0,   R 0    (exact)
+//   /u/ boot:   H 1.0,  B 1.0, R 0    (exact)
+//   /æ/ cat:    H 0,    B 0,   R 0    (exact, now its own corner)
+//   /ɑ/ ah:     H 0,    B 1.0, R 0    (exact)
+//   /a/ generic: H 0,   B 0.5, R 0    (between /æ/ and /ɑ/)
+//   /o/ boat:   H 0.65, B 1.0, R 0
+//   /ʊ/ book:   H 0.85, B 0.9, R 0
+//   /ʌ/ done:   H 0.35, B 0.65, R 0
+//   /ɛ/ bed:    H 0.45, B 0.3, R 0
+//   /ɪ/ bit:    H 0.7,  B 0.1, R 0
+//   /ə/ schwa:  H 0.5,  B 0.5, R 0
+//   /e/ bait:   H 0.7,  B 0.05, R 0  (Engl /eɪ/ start)
+//   /y/ German tu:  H 1.0, B 0,    R 1.0  (rounded /i/)
+//   /ø/ German ö:   H 0.7, B 0.05, R 1.0  (rounded /e/)
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.0<0.0,1.0,0.01>Vowel Height (0 = open, 1 = close)
+slider3:0.5<0.0,1.0,0.01>Vowel Backness (0 = front, 1 = back)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (lowers F2/F3 of front vowels)
+slider5:1.0<0.0,2.0,0.01>F1 Strength
+slider6:0.8<0.0,2.0,0.01>F2 Strength
+slider7:0.5<0.0,2.0,0.01>F3 Strength
+slider8:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+srate_inv = 1.0 / srate;
+pi_srate  = $pi * srate_inv;
+
+f1_low = 0; f1_band = 0;
+f2_low = 0; f2_band = 0;
+f3_low = 0; f3_band = 0;
+
+f1_damp = 0.10;
+f2_damp = 0.067;
+f3_damp = 0.05;
+
+dc_x = 0; dc_y = 0;
+
+// === Four-corner vowel space ===
+// Adult-male reference values.
+i_F1  = 270;  i_F2  = 2290; i_F3  = 3010;   // /i/ — close front
+u_F1  = 300;  u_F2  = 870;  u_F3  = 2240;   // /u/ — close back
+ae_F1 = 660;  ae_F2 = 1720; ae_F3 = 2410;   // /æ/ — open front
+ah_F1 = 730;  ah_F2 = 1090; ah_F3 = 2440;   // /ɑ/ — open back
+
+@slider
+in_gain  = 10 ^ (slider1 / 20);
+height   = slider2;
+backness = slider3;
+rounding = slider4;
+f1_amp   = slider5;
+f2_amp   = slider6;
+f3_amp   = slider7;
+vol      = slider8;
+
+// === Bilinear interpolation across four corners ===
+// Each weight is the area of the rectangle opposite its corner in
+// the (Height, Backness) unit square.
+w_i  = (1 - backness) * height;
+w_u  =      backness  * height;
+w_ae = (1 - backness) * (1 - height);
+w_ah =      backness  * (1 - height);
+
+f1_hz = w_i * i_F1 + w_u * u_F1 + w_ae * ae_F1 + w_ah * ah_F1;
+f2_hz = w_i * i_F2 + w_u * u_F2 + w_ae * ae_F2 + w_ah * ah_F2;
+f3_hz = w_i * i_F3 + w_u * u_F3 + w_ae * ae_F3 + w_ah * ah_F3;
+
+// === Lip rounding ===
+// Lowers F2 and F3 of front vowels. Back vowels are unaffected
+// because /u/ at the corner is already rounded.
+front_amount = 1 - backness;
+f2_hz = f2_hz - rounding * front_amount * 350;
+f3_hz = f3_hz - rounding * front_amount * 700;
+
+// Clamp formants to safe range.
+f1_hz = max(min(f1_hz, srate * 0.45), 50);
+f2_hz = max(min(f2_hz, srate * 0.45), 50);
+f3_hz = max(min(f3_hz, srate * 0.45), 50);
+
+f1_coef = min(2 * sin(pi_srate * f1_hz), 0.98);
+f2_coef = min(2 * sin(pi_srate * f2_hz), 0.98);
+f3_coef = min(2 * sin(pi_srate * f3_hz), 0.98);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+f1_low  += f1_coef * f1_band;
+f1_high  = in_mono - f1_low - f1_damp * f1_band;
+f1_band += f1_coef * f1_high;
+
+f2_low  += f2_coef * f2_band;
+f2_high  = in_mono - f2_low - f2_damp * f2_band;
+f2_band += f2_coef * f2_high;
+
+f3_low  += f3_coef * f3_band;
+f3_high  = in_mono - f3_low - f3_damp * f3_band;
+f3_band += f3_coef * f3_high;
+
+formant_out = (f1_band * f1_amp) - (f2_band * f2_amp) + (f3_band * f3_amp);
+
+dc_y = formant_out - dc_x + 0.997 * dc_y;
+dc_x = formant_out;
+
+out = dc_y * vol * 0.5;
+out = max(min(out, 1.5), -1.5);
+
+spl0 = out;
+spl1 = out;

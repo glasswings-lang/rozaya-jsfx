@@ -1,0 +1,139 @@
+desc: Vowel Shaper v1 (parallel formant filter, LFO-friendly)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Vowel-shaping effect designed for breath input and LFO-driven
+// vowel sweeps. Takes audio in (typically from Breath Generator),
+// runs it through three parallel resonant bandpass filters (F1,
+// F2, F3) whose center frequencies track a continuous vowel-space
+// position. Output is the Klatt-style parallel sum (alternating
+// signs to prevent inter-formant cancellation).
+//
+// The slider design is intentionally LFO-friendly: every articulation
+// parameter (Height, Backness, Rounding) is a single continuous
+// slider that can be modulated via REAPER automation envelopes
+// like every other rate-bearing plugin in the suite. For the
+// classic "hih -> hoo" morph, automate any of these (or all three
+// together) with a slow sine LFO or sigh-shaped envelope.
+//
+// Sliders -> formant frequencies (adult-male reference values):
+//   Height:   0 (open /a/, F1=730) -> 1 (close /i/-/u/, F1=300)
+//   Backness: 0 (front /i/, F2=2200) -> 1 (back /u/, F2=870)
+//   Rounding: 0 (unrounded) -> 1 (lowers F2 by ~200, F3 by ~100)
+//
+// Vowel landings (approximate slider settings):
+//   Height 0,    Backness 0.6, Rounding 0    -> /a/ (father)
+//   Height 0.85, Backness 0.85, Rounding 0.7 -> /u/ (boot)
+//   Height 0.85, Backness 0,    Rounding 0   -> /i/ (beet)
+//   Height 0.65, Backness 0.75, Rounding 0.4 -> /o/ (boat)
+//   Height 0.5,  Backness 0.3,  Rounding 0   -> /ɛ/ (bed)
+//   Height 0.85, Backness 0,    Rounding 0.7 -> /ü/ (German "über")
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.0<0.0,1.0,0.01>Vowel Height (0 = open /a/, 1 = close /i/-/u/)
+slider3:0.5<0.0,1.0,0.01>Vowel Backness (0 = front /i/, 1 = back /u/)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (0 = unrounded, 1 = rounded)
+slider5:1.0<0.0,2.0,0.01>F1 Strength (low formant — vowel body)
+slider6:0.8<0.0,2.0,0.01>F2 Strength (mid formant — vowel identity)
+slider7:0.5<0.0,2.0,0.01>F3 Strength (high formant — vowel brightness)
+slider8:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+srate_inv = 1.0 / srate;
+pi_srate  = $pi * srate_inv;
+
+// SVF state for three parallel bandpass formant filters.
+f1_low = 0; f1_band = 0;
+f2_low = 0; f2_band = 0;
+f3_low = 0; f3_band = 0;
+
+// SVF damping (1/Q). Fixed Q per formant — typical vowel formant
+// bandwidths: F1 narrowest (most peaked), F3 widest (smoothest).
+// Higher Q = sharper resonance peak = more vowel character but
+// more ringing.
+f1_damp = 0.10;   // Q ~ 10
+f2_damp = 0.067;  // Q ~ 15
+f3_damp = 0.05;   // Q ~ 20
+
+// DC blocker state (final output).
+dc_x = 0; dc_y = 0;
+
+@slider
+in_gain  = 10 ^ (slider1 / 20);
+height   = slider2;
+backness = slider3;
+rounding = slider4;
+f1_amp   = slider5;
+f2_amp   = slider6;
+f3_amp   = slider7;
+vol      = slider8;
+
+// === Vowel-space -> formant frequency mapping ===
+//
+// F1 depends on Height: open vowels have high F1, close vowels
+// have low F1.
+//   F1: 730 (open /a/) -> 300 (close /i/-/u/)
+//
+// F2 depends on Backness and Rounding: front vowels have high
+// F2, back vowels have low F2, rounding shifts F2 down further.
+//   F2 unrounded: 2200 (front /i/) -> 870 (back /u/)
+//   F2 rounded:   subtract 200 Hz from above
+//
+// F3 depends mostly on Backness with a small Rounding shift.
+//   F3 unrounded: 3000 (front) -> 2400 (back)
+//   F3 rounded:   subtract 100 Hz from above
+f1_hz = 730 - height * 430;
+f2_hz = (2200 - backness * 1330) - rounding * 200;
+f3_hz = (3000 - backness * 600)  - rounding * 100;
+
+// Clamp formants to safe range (above audible floor, below Nyquist).
+f1_hz = max(min(f1_hz, srate * 0.45), 50);
+f2_hz = max(min(f2_hz, srate * 0.45), 50);
+f3_hz = max(min(f3_hz, srate * 0.45), 50);
+
+// SVF coefficients. Clamp at 0.98 for stability — SVF goes
+// unstable as coefficient approaches 1.0 (which corresponds to
+// the filter's resonant frequency approaching Nyquist).
+f1_coef = min(2 * sin(pi_srate * f1_hz), 0.98);
+f2_coef = min(2 * sin(pi_srate * f2_hz), 0.98);
+f3_coef = min(2 * sin(pi_srate * f3_hz), 0.98);
+
+@sample
+// Mix stereo input to mono, apply input gain.
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+// === F1 bandpass ===
+f1_low  += f1_coef * f1_band;
+f1_high  = in_mono - f1_low - f1_damp * f1_band;
+f1_band += f1_coef * f1_high;
+
+// === F2 bandpass ===
+f2_low  += f2_coef * f2_band;
+f2_high  = in_mono - f2_low - f2_damp * f2_band;
+f2_band += f2_coef * f2_high;
+
+// === F3 bandpass ===
+f3_low  += f3_coef * f3_band;
+f3_high  = in_mono - f3_low - f3_damp * f3_band;
+f3_band += f3_coef * f3_high;
+
+// === Klatt parallel sum with alternating signs ===
+// Alternating signs (F1 + and F2 - and F3 +) prevents inter-formant
+// cancellation in the spectral troughs between peaks. Each formant
+// is scaled by its strength slider so you can adjust the spectral
+// balance — F1 dominant for warmth, F3 stronger for brightness, etc.
+formant_out = (f1_band * f1_amp) - (f2_band * f2_amp) + (f3_band * f3_amp);
+
+// DC blocker (final output) — high-pass at ~7 Hz to remove any
+// accumulated DC bias from the formant sum.
+dc_y = formant_out - dc_x + 0.997 * dc_y;
+dc_x = formant_out;
+
+// Output with volume + soft clip safety.
+out = dc_y * vol * 0.5;
+out = max(min(out, 1.5), -1.5);
+
+spl0 = out;
+spl1 = out;

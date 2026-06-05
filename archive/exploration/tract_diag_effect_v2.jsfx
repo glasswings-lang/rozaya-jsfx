@@ -1,0 +1,139 @@
+desc: Tract Diag Effect v2 (uniform tube + Lip Rounding)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Bringing articulation back, ONE control at a time, on the proven-
+// good foundation. v2 adds Lip Rounding only. No tongue yet.
+//
+// Lip Rounding math: narrow the last `extent` segments to
+// `restDiam - rounding * 1.0`. So at rounding=0 the lip end is open
+// (matches v1); at rounding=1 the lip diameter is 0.5 (deeply
+// rounded /u/-vowel territory, but air still flows).
+//
+// (v5 used multiplier 1.35, which at rounding=1 closed the lips to
+// 0.15 — physically "lips almost touching," produces near-silence.
+// 1.0 lands the slider's max in the "fully rounded ooo" range
+// instead. Pink Trombone caps continuous lip articulation similarly
+// — closure is a separate mechanism, not the same knob.)
+//
+// Expected behaviour with breath input fed in (Breath Generator -> this):
+//   Rounding=0  -> sounds like v1 (uniform-tube /h/ish breath colour)
+//   Rounding=1  -> the formant character shifts toward "oo" — F1
+//                  drops (lower, deeper sound), F2 drops too (back
+//                  vowel quality). Should be UNMISTAKABLY different
+//                  from rounding=0.
+//
+// If you can clearly hear the rounded-lip "oo" colour at rounding=1
+// — and the transition is smooth as you sweep the slider — v5's
+// articulation math is sound. The v5 audible-change bug then lives
+// elsewhere (probably the radiation+DC chain after the lips, or the
+// way tongue interacts with lip when both are active).
+//
+// If rounding does NOT audibly shift the formant character — or
+// produces only a level change — then the lip-rounding extent
+// parameter (slider5) is the next thing to test. Pink Trombone uses
+// 6 segments as the lip region, not 5; might matter, might not.
+//
+// Diagnostic-only knob: `Lip extent` (slider5) lets you A/B 1-10
+// segments. Default 5 matches v5.
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.9998<0.99,0.99999,0.00001>Damping per scatter step
+slider3:1.5<0.1,3.0,0.05>Rest diameter (uniform baseline)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (0 = open, 1 = closed-lipped "oo")
+slider5:5<1,10,1>Lip extent (segments narrowed, diagnostic)
+slider6:0<0,1,1{No,Yes}>DC blocker on output
+slider7:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+N = 44;
+R = 0; L = 64; JR = 128; JL = 192; diam = 256; area = 320; refl_bank = 384;
+
+glottalReflection = 0.75;
+lipReflection     = -0.85;
+
+i = 0; loop(N, R[i] = 0; L[i] = 0; JR[i] = 0; JL[i] = 0; diam[i] = 1.5; area[i] = 2.25; refl_bank[i] = 0; i += 1; );
+
+damp     = 0.9998;
+in_gain  = 1.0;
+dc_x     = 0;
+dc_y     = 0;
+
+// scatter() is BIT-IDENTICAL to all prior tract builds. Not under
+// test here — the tube already provably rings.
+function scatter(gin) local(j, k, w) (
+  JR[0]   = gin + glottalReflection * L[0];
+  JL[N-1] = lipReflection * R[N-1];
+  j = 1;
+  while (j < N) (
+    k = refl_bank[j];
+    w = k * (R[j-1] + L[j]);
+    JR[j]   = R[j-1] - w;
+    JL[j-1] = L[j]   + w;
+    j += 1;
+  );
+  j = 0;
+  while (j < N) (
+    R[j] = JR[j] * damp;
+    L[j] = JL[j] * damp;
+    j += 1;
+  );
+);
+
+@slider
+in_gain   = 10 ^ (slider1 / 20);
+damp      = slider2;
+restDiam  = slider3;
+rounding  = slider4;
+lipExtent = slider5;
+dc_on     = slider6;
+vol       = slider7;
+
+// === Compute diameter array ===
+// Start from uniform restDiam everywhere, then narrow the last
+// `lipExtent` segments by the lip rounding amount.
+i = 0; loop(N, diam[i] = restDiam; i += 1; );
+
+// Lip narrowing — depth multiplier 1.0 (v5 used 1.35 which closed
+// the lips physically; see header comment). Applied to last
+// `lipExtent` segments.
+ldia = restDiam - rounding * 1.0;
+i = N - lipExtent;
+while (i < N) ( diam[i] = min(diam[i], ldia); i += 1; );
+
+// Clamp diameters to non-negative, compute areas.
+i = 0; loop(N, diam[i] = max(diam[i], 0.0); area[i] = diam[i] * diam[i]; i += 1; );
+
+// === Internal reflection coefficients ===
+// Standard Kelly-Lochbaum: k = (A[i-1] - A[i]) / (A[i-1] + A[i]).
+// Both areas zero -> nearly closed junction (refl = 0.999).
+i = 1;
+while (i < N) (
+  (area[i-1] + area[i]) > 0.000001 ?
+    refl_bank[i] = (area[i-1] - area[i]) / (area[i-1] + area[i]) :
+    refl_bank[i] = 0.999;
+  i += 1;
+);
+
+@sample
+// === Take audio input as the excitation source ===
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+// === 2x-rate scattering ===
+scatter(in_mono); o1 = R[N-1];
+scatter(in_mono); o2 = R[N-1];
+lipout = (o1 + o2) * 0.5;
+
+// === Optional DC blocker ===
+dc_on > 0 ? (
+  dc_y = lipout - dc_x + 0.997 * dc_y;
+  dc_x = lipout;
+  out  = dc_y;
+) : (
+  out  = lipout;
+);
+
+spl0 = out * vol;
+spl1 = out * vol;

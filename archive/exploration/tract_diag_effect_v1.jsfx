@@ -1,0 +1,114 @@
+desc: Tract Diag Effect v1 (uniform tube — audio in, shaped through tract)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Effect-form companion to tract_diag_v1. Same uniform-tube waveguide
+// — same scatter code, same boundary equations, same constants —
+// but instead of generating its own excitation, this plugin TAKES
+// audio input and feeds it into the tract at the glottal end. Stereo
+// input is mixed to mono first (real vocal tracts are mono).
+//
+// Intended workflow:
+//   Track FX chain:  [Breath Generator] -> [Tract Diag Effect]
+//
+// Breath Generator produces shaped breath noise (inhale/exhale
+// envelope, post-filter, stereo width, etc.); this plugin takes
+// that signal and pushes it through the Kelly-Lochbaum waveguide.
+// What comes out the lip end should sound like that breath
+// spectrally COLORED by tube resonances — formant-flavored breath.
+//
+// This is the right question to ask: not "can we make breath from
+// scratch" (Breath Generator already does), but "does the waveguide
+// audibly shape breath when fed into it." If yes, the path to
+// vowel-articulated breath ("hih.hooo") is unlocked — we just need
+// to add tongue/lip diameter controls back ONE AT A TIME, with ear
+// validation each step, on this same proven foundation.
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB) — how hot the breath drives the tract
+slider2:0.9998<0.99,0.99999,0.00001>Damping per scatter step
+slider3:1.5<0.1,3.0,0.05>Tube diameter (uniform; should NOT change formant pitch)
+slider4:0<0,1,1{No,Yes}>DC blocker on output
+slider5:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+N = 44;
+R = 0; L = 64; JR = 128; JL = 192; refl_bank = 256;
+
+glottalReflection = 0.75;
+lipReflection     = -0.85;
+
+i = 0; loop(N, R[i] = 0; L[i] = 0; JR[i] = 0; JL[i] = 0; refl_bank[i] = 0; i += 1; );
+
+damp     = 0.9998;
+in_gain  = 1.0;
+dc_x     = 0;
+dc_y     = 0;
+
+// scatter() is BIT-IDENTICAL to tract_tube_v5 and tract_diag_v1.
+// We're not testing scatter — we're testing whether the proven-good
+// scatter audibly shapes an external audio input.
+function scatter(gin) local(j, k, w) (
+  JR[0]   = gin + glottalReflection * L[0];
+  JL[N-1] = lipReflection * R[N-1];
+  j = 1;
+  while (j < N) (
+    k = refl_bank[j];
+    w = k * (R[j-1] + L[j]);
+    JR[j]   = R[j-1] - w;
+    JL[j-1] = L[j]   + w;
+    j += 1;
+  );
+  j = 0;
+  while (j < N) (
+    R[j] = JR[j] * damp;
+    L[j] = JL[j] * damp;
+    j += 1;
+  );
+);
+
+@slider
+// dB -> linear gain.
+in_gain   = 10 ^ (slider1 / 20);
+damp      = slider2;
+tube_dia  = slider3;
+dc_on     = slider4;
+vol       = slider5;
+
+// Uniform tube — every segment same diameter, every internal
+// reflection coefficient = 0. Wave propagates freely; only glottal
+// and lip boundaries reflect.
+i = 1;
+while (i < N) ( refl_bank[i] = 0; i += 1; );
+
+@sample
+// === Take audio input as the excitation source ===
+// Mix stereo to mono (real tracts are mono physically). The breath
+// you're feeding in already has its envelope, fades, stereo shaping,
+// etc. baked in from Breath Generator — we just want one signal to
+// push through the tube.
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+// === 2x-rate scattering (identical structure to tract_tube_v5) ===
+// Both scatter calls receive the SAME input sample. This matches v5
+// and Pink Trombone's convention: the tract runs at 2x the audio
+// rate; the source is sampled at audio rate.
+scatter(in_mono); o1 = R[N-1];
+scatter(in_mono); o2 = R[N-1];
+lipout = (o1 + o2) * 0.5;
+
+// === Optional DC blocker ===
+// Noise input can accumulate DC bias in the waveguide. The blocker
+// is a first-order high-pass at very low frequency (~7 Hz at 44.1
+// kHz). Toggleable so you can A/B with and without it.
+dc_on > 0 ? (
+  dc_y = lipout - dc_x + 0.997 * dc_y;
+  dc_x = lipout;
+  out  = dc_y;
+) : (
+  out  = lipout;
+);
+
+spl0 = out * vol;
+spl1 = out * vol;

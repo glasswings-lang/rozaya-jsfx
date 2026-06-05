@@ -1,0 +1,194 @@
+desc: Vowel Shaper v7 (lip constriction noise derived from input)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v7 adds the missing physical mechanism that v6 was lacking:
+// turbulence noise GENERATED AT the lip constriction when breath
+// flows through it. The candle-blow / sigh / "hooo" character has
+// this turbulence as a key spectral signature — without it the
+// model sounds like vowel-shaped breath rather than breath-through-
+// rounded-lips.
+//
+// IMPORTANT ARCHITECTURAL PRINCIPLE: the plugin does not generate
+// noise internally. Prior attempts to synthesize constriction noise
+// inside the plugin broke because they bypassed the input chain —
+// internally generated noise doesn't inherit the breath envelope,
+// fades, stereo width, drift, Speed Ramp, etc. from the upstream
+// Breath Generator. The plugin can't be both the noise source AND
+// the filter on that noise, because then there's no source.
+//
+// v7's fix: DERIVE the constriction noise from the input itself.
+// Breath is broadband; it already contains energy in the 4-8 kHz
+// range where lip turbulence actually lives. We bandpass the input
+// at ~5 kHz, scale by lip rounding (so it only emerges when lips
+// constrict) and by a user-controllable strength, and mix it into
+// the output. The constriction noise naturally inherits every
+// property of the breath input — envelope, fades, all of it —
+// because it IS the breath in a different band.
+//
+// Signal flow:
+//   in_mono -> [F1/F2/F3 bandpass] -> formant_wet
+//   in_mono -> [turbulence bandpass ~5kHz] -> turb_band
+//   constriction_noise = turb_band * rounding * turb_strength * gain_comp
+//   mixed = in_mono * (1-rounding) + formant_wet * rounding + constriction_noise
+//   mixed -> [lip aperture LP] -> output
+//
+// The aperture LP applies AFTER the noise mix, so the radiation
+// pattern still darkens with rounding — matching real physics where
+// some constriction noise radiates and some gets attenuated by the
+// small opening.
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.85<0.0,1.0,0.01>Vowel Height (back-cavity shape)
+slider3:1.0<0.0,1.0,0.01>Vowel Backness (back-cavity shape)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (gates vowel character)
+slider5:0.7<0.0,2.0,0.01>Lip Turbulence (constriction noise; scales with rounding)
+slider6:1.0<0.6,1.6,0.01>Voice Size (1 = adult male reference)
+slider7:1.3<0.0,3.0,0.01>F1 Strength
+slider8:1.0<0.0,2.0,0.01>F2 Strength
+slider9:0.5<0.0,2.0,0.01>F3 Strength
+slider10:0.3<0.0,1.0,0.01>Voice tilt
+slider11:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+srate_inv = 1.0 / srate;
+pi_srate  = $pi * srate_inv;
+two_pi    = 2.0 * $pi;
+
+// SVF states for three formant bandpass filters (back-cavity resonance).
+f1_low = 0; f1_band = 0;
+f2_low = 0; f2_band = 0;
+f3_low = 0; f3_band = 0;
+
+f1_damp = 0.12;
+f2_damp = 0.067;
+f3_damp = 0.05;
+
+// SVF state for lip turbulence bandpass (~5 kHz, broad).
+// Q ~3 = wide band, covers the typical turbulence frequency range.
+turb_low  = 0; turb_band = 0;
+turb_freq_hz = 5000;
+turb_damp    = 0.33;
+
+// Source tilt LP (voiced character).
+tilt_corner_hz = 1200;
+tilt_coef      = exp(-2 * $pi * tilt_corner_hz / srate);
+tilt_y         = 0;
+
+// Lip aperture LP (post-mix radiation pattern).
+aperture_y = 0;
+
+dc_x = 0; dc_y = 0;
+
+// Four-corner vowel space.
+i_F1  = 270;  i_F2  = 2290; i_F3  = 3010;
+u_F1  = 300;  u_F2  = 870;  u_F3  = 2240;
+ae_F1 = 660;  ae_F2 = 1720; ae_F3 = 2410;
+ah_F1 = 730;  ah_F2 = 1090; ah_F3 = 2440;
+
+@slider
+in_gain       = 10 ^ (slider1 / 20);
+height        = slider2;
+backness      = slider3;
+rounding      = slider4;
+turb_strength = slider5;
+voice_size    = slider6;
+f1_amp        = slider7;
+f2_amp        = slider8;
+f3_amp        = slider9;
+tilt_amt      = slider10;
+vol           = slider11;
+
+// Bilinear interpolation across four corners.
+w_i  = (1 - backness) * height;
+w_u  =      backness  * height;
+w_ae = (1 - backness) * (1 - height);
+w_ah =      backness  * (1 - height);
+
+f1_hz = w_i * i_F1 + w_u * u_F1 + w_ae * ae_F1 + w_ah * ah_F1;
+f2_hz = w_i * i_F2 + w_u * u_F2 + w_ae * ae_F2 + w_ah * ah_F2;
+f3_hz = w_i * i_F3 + w_u * u_F3 + w_ae * ae_F3 + w_ah * ah_F3;
+
+f1_hz = f1_hz * voice_size;
+f2_hz = f2_hz * voice_size;
+f3_hz = f3_hz * voice_size;
+
+f1_hz = max(min(f1_hz, srate * 0.45), 50);
+f2_hz = max(min(f2_hz, srate * 0.45), 50);
+f3_hz = max(min(f3_hz, srate * 0.45), 50);
+
+f1_coef = min(2 * sin(pi_srate * f1_hz), 0.98);
+f2_coef = min(2 * sin(pi_srate * f2_hz), 0.98);
+f3_coef = min(2 * sin(pi_srate * f3_hz), 0.98);
+
+// Turbulence bandpass coefficient (fixed at 5 kHz).
+turb_coef_freq = min(2 * sin(pi_srate * turb_freq_hz), 0.98);
+
+// Lip aperture LP corner (10 kHz at open, 2 kHz at closed/rounded).
+aperture_corner = 10000 - rounding * 8000;
+aperture_corner = max(min(aperture_corner, srate * 0.45), 200);
+aperture_coef   = exp(-two_pi * aperture_corner / srate);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+// === Back-cavity formant filters ===
+f1_low  += f1_coef * f1_band;
+f1_high  = in_mono - f1_low - f1_damp * f1_band;
+f1_band += f1_coef * f1_high;
+
+f2_low  += f2_coef * f2_band;
+f2_high  = in_mono - f2_low - f2_damp * f2_band;
+f2_band += f2_coef * f2_high;
+
+f3_low  += f3_coef * f3_band;
+f3_high  = in_mono - f3_low - f3_damp * f3_band;
+f3_band += f3_coef * f3_high;
+
+formant_wet = (f1_band * f1_amp) - (f2_band * f2_amp) + (f3_band * f3_amp);
+
+// Voice tilt on the formant output.
+tilt_y = tilt_coef * tilt_y + (1 - tilt_coef) * formant_wet;
+formant_wet = formant_wet + (tilt_y - formant_wet) * tilt_amt;
+
+// === Lip turbulence bandpass ===
+// Extract the ~5 kHz band of the input. This is the band where lip
+// turbulence noise naturally lives — and the input already contains
+// energy here (broadband breath). We're not generating, we're
+// extracting.
+turb_low  += turb_coef_freq * turb_band;
+turb_high  = in_mono - turb_low - turb_damp * turb_band;
+turb_band += turb_coef_freq * turb_high;
+
+// Constriction noise: bandpassed input × rounding × user strength.
+// The 15x scalar compensates for the bandpass attenuation (a typical
+// SVF bandpass at Q ~3 has peak gain ~3 but power across the band
+// is much less; 15x makes the contribution audible without
+// requiring extreme strength settings).
+constriction_noise = turb_band * rounding * turb_strength * 15;
+
+// === Mix: dry (unrounded breath) + wet (vowel-shaped) + constriction noise ===
+// At rounding 0: pure dry input. No vowel, no constriction noise.
+//                Open mouth, just breath.
+// At rounding 1: full vowel character + full constriction noise.
+//                Rounded lips, vowel-shaped breath with lip hiss.
+mixed = in_mono * (1 - rounding) + formant_wet * rounding + constriction_noise;
+
+// === Lip aperture LP (post-mix radiation) ===
+// Applied to the whole mix, including the constriction noise. This
+// matches real physics: the constriction generates noise, but the
+// same small aperture that creates the turbulence also attenuates
+// some of its HF when radiating outward.
+aperture_y = aperture_coef * aperture_y + (1 - aperture_coef) * mixed;
+
+// DC blocker.
+dc_y = aperture_y - dc_x + 0.997 * dc_y;
+dc_x = aperture_y;
+
+out = dc_y * vol * 0.5;
+out = max(min(out, 1.5), -1.5);
+
+spl0 = out;
+spl1 = out;

@@ -1,0 +1,139 @@
+desc: Vowel Shaper v4 (F1-dominant balance for breath input)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// v4 fix: v3's formant balance worked for voiced input but not for
+// breath (noise) input. Voiced vowels naturally have a -12 dB/oct
+// source spectrum that makes F1 dominant in the output; whispered
+// (noise) vowels lack this source tilt, so F1 doesn't naturally
+// dominate. Result in v3: /æ/ sounded like /ɛ/ because F2 (similar
+// in both vowels) was competing with F1 (the distinguishing
+// formant). User couldn't hear the open quality.
+//
+// v4 rebalances:
+//   - F1 strength up (1.6 default vs 1.0 in v3) — F1 now clearly
+//     dominant, which is what gives open vowels their open character
+//   - F3 strength down (0.3 default vs 0.5) — F3 was over-prominent
+//     due to high Q (~20) producing strong narrow peaks
+//   - Adds a spectral tilt LP (6 dB/oct above ~1200 Hz) that mimics
+//     the voiced-source spectral slope. Optional via Tilt slider —
+//     0 = flat (whispered-vowel character), 1 = full tilt (voiced-
+//     vowel character).
+//
+// Same triangle / quadrilateral formant mapping as v3 — the math
+// hasn't changed, just the spectral balance has.
+
+slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider2:0.0<0.0,1.0,0.01>Vowel Height (0 = open, 1 = close)
+slider3:0.5<0.0,1.0,0.01>Vowel Backness (0 = front, 1 = back)
+slider4:0.0<0.0,1.0,0.01>Lip Rounding (lowers F2/F3 of front vowels)
+slider5:1.6<0.0,3.0,0.01>F1 Strength (dominant — vowel openness)
+slider6:0.7<0.0,2.0,0.01>F2 Strength (vowel identity)
+slider7:0.3<0.0,2.0,0.01>F3 Strength (vowel brightness)
+slider8:0.4<0.0,1.0,0.01>Voice tilt (0 = whispered, 1 = voiced character)
+slider9:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+srate_inv = 1.0 / srate;
+pi_srate  = $pi * srate_inv;
+
+f1_low = 0; f1_band = 0;
+f2_low = 0; f2_band = 0;
+f3_low = 0; f3_band = 0;
+
+// SVF damping (1/Q). v4 widens F1 slightly (damp 0.12 vs v3's 0.10)
+// to make its peak less "spotlight" and more "broad presence" —
+// which matches how F1 naturally behaves perceptually.
+f1_damp = 0.12;
+f2_damp = 0.067;
+f3_damp = 0.05;
+
+// Tilt LP (1-pole lowpass at ~1200 Hz). When Voice tilt = 1, this
+// shapes the formant sum spectrum with a -6 dB/oct rolloff above
+// 1200 Hz, mimicking the voiced glottal source's natural spectral
+// slope. When Tilt = 0, it's bypassed (pure whispered character).
+tilt_corner_hz   = 1200;
+tilt_coef        = exp(-2 * $pi * tilt_corner_hz / srate);
+tilt_y           = 0;
+
+dc_x = 0; dc_y = 0;
+
+// Four-corner vowel space (same as v3).
+i_F1  = 270;  i_F2  = 2290; i_F3  = 3010;
+u_F1  = 300;  u_F2  = 870;  u_F3  = 2240;
+ae_F1 = 660;  ae_F2 = 1720; ae_F3 = 2410;
+ah_F1 = 730;  ah_F2 = 1090; ah_F3 = 2440;
+
+@slider
+in_gain  = 10 ^ (slider1 / 20);
+height   = slider2;
+backness = slider3;
+rounding = slider4;
+f1_amp   = slider5;
+f2_amp   = slider6;
+f3_amp   = slider7;
+tilt_amt = slider8;
+vol      = slider9;
+
+// Bilinear interpolation across four corners.
+w_i  = (1 - backness) * height;
+w_u  =      backness  * height;
+w_ae = (1 - backness) * (1 - height);
+w_ah =      backness  * (1 - height);
+
+f1_hz = w_i * i_F1 + w_u * u_F1 + w_ae * ae_F1 + w_ah * ah_F1;
+f2_hz = w_i * i_F2 + w_u * u_F2 + w_ae * ae_F2 + w_ah * ah_F2;
+f3_hz = w_i * i_F3 + w_u * u_F3 + w_ae * ae_F3 + w_ah * ah_F3;
+
+// Lip rounding (front vowels only).
+front_amount = 1 - backness;
+f2_hz = f2_hz - rounding * front_amount * 350;
+f3_hz = f3_hz - rounding * front_amount * 700;
+
+f1_hz = max(min(f1_hz, srate * 0.45), 50);
+f2_hz = max(min(f2_hz, srate * 0.45), 50);
+f3_hz = max(min(f3_hz, srate * 0.45), 50);
+
+f1_coef = min(2 * sin(pi_srate * f1_hz), 0.98);
+f2_coef = min(2 * sin(pi_srate * f2_hz), 0.98);
+f3_coef = min(2 * sin(pi_srate * f3_hz), 0.98);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+// F1 / F2 / F3 bandpass filters.
+f1_low  += f1_coef * f1_band;
+f1_high  = in_mono - f1_low - f1_damp * f1_band;
+f1_band += f1_coef * f1_high;
+
+f2_low  += f2_coef * f2_band;
+f2_high  = in_mono - f2_low - f2_damp * f2_band;
+f2_band += f2_coef * f2_high;
+
+f3_low  += f3_coef * f3_band;
+f3_high  = in_mono - f3_low - f3_damp * f3_band;
+f3_band += f3_coef * f3_high;
+
+// Klatt parallel sum, alternating signs. New weights make F1 the
+// authoritative voice.
+formant_out = (f1_band * f1_amp) - (f2_band * f2_amp) + (f3_band * f3_amp);
+
+// === Voice tilt: -6 dB/oct above 1200 Hz, blended with flat by amount ===
+// One-pole LP filter, then mix with the dry formant sum. At
+// tilt_amt = 0, output = dry (whispered character, all formants
+// equal weight). At tilt_amt = 1, output = LP-filtered (voiced
+// source character, F1 emphasized over F2/F3).
+tilt_y = tilt_coef * tilt_y + (1 - tilt_coef) * formant_out;
+tilted_out = formant_out + (tilt_y - formant_out) * tilt_amt;
+
+// DC blocker.
+dc_y = tilted_out - dc_x + 0.997 * dc_y;
+dc_x = tilted_out;
+
+out = dc_y * vol * 0.5;
+out = max(min(out, 1.5), -1.5);
+
+spl0 = out;
+spl1 = out;
