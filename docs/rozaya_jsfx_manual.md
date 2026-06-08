@@ -412,7 +412,7 @@ Wander shape applied to both sources.
 
 Womb Sound Generator is a multi-layered intrauterine soundscape synthesizer **designed from the baby's perspective inside the womb**. It combines three independently controllable sound sources — Heartbeat, Breath, and Bloodflow — into a single unified output. Each source can be soloed for monitoring and balanced independently. Heart rate variability is modeled across two dimensions — breath-coupled and random — and the bloodflow layer is phase-locked to the heartbeat cycle, producing a coherent physiological simulation rather than independent noise sources running in parallel.
 
-The intrauterine perspective is load-bearing. Baby's hearing is heavily attenuated by amniotic fluid and abdominal tissue acting as a steep lowpass; effectively nothing above ~800 Hz reaches the fetus with any energy. Each layer in this plugin is tuned for that muffled, conducted-through-fluid character — the inhale/exhale filters sit lower than the standalone Breath Generator's defaults, the bloodflow filter sits in the deep-rushing range rather than the arterial-pulse range, and the bloodflow envelope rides on a continuous floor (placental whoosh between beats) rather than dropping to silence. For an external "natural body sound" perspective use the standalone Heartbeat Generator and Breath Generator instead; those plugins are tuned for biological accuracy at the source without the womb-medium attenuation.
+Womb v1 ships with the original breath and bloodflow architectures from the suite's early days. Womb v2 retunes both layers for an intrauterine-listening perspective (muffled lowpass, lower cutoffs, continuous floors, amplitude-modulated bloodflow) — see the Womb v2 section for those v2-specific parameters. Use v1 for projects built on the original sound; v2 is the recommended starting point for new projects.
 
 The plugin generates no audio from an input signal. It is a pure synthesizer and should be placed on an empty FX chain or a track with no audio source.
 
@@ -424,13 +424,7 @@ The plugin generates no audio from an input signal. It is a pure synthesizer and
 The heartbeat engine produces two events per cycle — S1 ("lub") and S2 ("dub") — separated by the systole interval. Each event is synthesized through two parallel resonant filter voices: a "near" voice (prominent, direct) and a "far" voice (slightly detuned, softer). Both voices blend a sine oscillator with white noise as their exciter, pass through a double-cascaded lowpass, and are routed to opposite output channels via an inter-aural delay. The master volume and individual S1/S2 volumes are applied before the three sources are summed.
 
 ### Breath
-The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable resonant lowpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing.
-
-The lowpass topology gives breath its broadband whoosh character. Womb-perspective defaults sit substantially lower than the standalone Breath Generator and at a lower Breath Volume default than other layers: Inhale cutoff at 250 Hz, Exhale at 170 Hz, Breath High-pass at 80 Hz, Post-filter at 500 Hz, and Breath Volume default at 0.5. The standalone Breath Generator uses 800/600 Hz cutoffs for "natural breath at the source." Same DSP, different acoustic target.
-
-The defaults reflect what the literature on intrauterine acoustics actually says: breath is **one of the quieter components** of the fetal sound environment, not the loudest, and its spectral content is dominated by frequencies below ~200 Hz with very little energy above that (Querleu et al. 1989 and subsequent intrauterine recording studies). The dominant components by loudness are maternal vasculature (whoosh of blood through major vessels), maternal GI activity, and maternal cardiac thumps; maternal breath sits below all of those in the mix.
-
-The breath envelope rides on a **continuous floor** of ~0.15 of peak. Pauses (top, bottom) and the fade-in/fade-out tails sit at floor level rather than silence, so the cycle's endpoints have a continuous quiet body-background instead of producing extended gaps every breath. Top pause inherits the inhale filter's character; bottom pause inherits the exhale filter's. Models the aggregate continuous low-level body noise (organ activity, ambient muscle / vessel sound, etc.) that baby hears as a constant background. The floor is hardcoded — could become a slider if there's tuning value in adjusting it.
+The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable lowpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing. (Womb v2 adds a continuous breath floor and lower intrauterine-perspective defaults — see the Womb v2 section for v2-specific breath parameters.)
 
 ### Bloodflow
 The bloodflow engine produces a continuously sweeping filtered noise texture. The filter cutoff is phase-locked to the heartbeat cycle — at each cycle start it sweeps from a low resting frequency up to a high peak frequency (simulating the pressure wave of a heartbeat moving through vessels), holds briefly, then returns to the resting frequency. The sweep tracks heart rate automatically. (Womb v2 uses a different bloodflow architecture — amplitude-modulated noise with a cardiac pressure envelope and continuous floor — better matching real intrauterine vasculature recordings. The frequency-sweep design here stays in Womb v1 for back-compat with projects built on it.)
@@ -491,8 +485,8 @@ Inter-aural delay between the near and far heartbeat voices. Positive values pla
 
 ### Breath
 
-**Breath Volume** `0.0-1.0, default 0.5`
-Overall output level for the breath signal. Default sits at 0.5 (lower than the standalone Breath Generator's mix-level) because intrauterine recordings show breath is one of the quieter components of the fetal sound environment, sitting below maternal vasculature and GI activity in loudness.
+**Breath Volume** `0.0-1.0, default 0.8`
+Overall output level for the breath signal.
 
 **Breath Solo** `Off / Solo`
 Mutes Heartbeat and Bloodflow.
@@ -509,14 +503,14 @@ Length of the exhale phase.
 **Bottom Pause sec** `0.0-5.0 sec, default 1.5`
 Silence between exhale and the next inhale.
 
-**Inhale Frequency Hz** `50-2000 Hz, default 250`
-Cutoff of the lowpass filter applied during the inhale phase. Broadband noise content passes through from below; rolloff above the cutoff. **Womb-tuned**: intrauterine recordings show breath reaches baby with most spectral content below ~200 Hz — the amniotic medium and tissue strip almost everything above that. 250 Hz default sits right at that boundary. For external "natural breath" character (not muffled by the medium), raise to 700-900 Hz, or use the standalone Breath Generator instead.
+**Inhale Frequency Hz** `50-2000 Hz, default 300`
+Center frequency of the lowpass filter applied during the inhale phase. Lower values produce a deeper, body-heavy rush; higher values a brighter, airier sound. Due to sinusoidal frequency-to-coefficient mapping, effective cutoff tracks lower than the displayed value above ~500 Hz.
 
-**Exhale Frequency Hz** `50-2000 Hz, default 170`
-Cutoff of the lowpass filter during the exhale phase. Set lower than inhale for the cavity-colored character of exhalation. **Womb-tuned** — see Inhale Frequency above.
+**Exhale Frequency Hz** `50-2000 Hz, default 180`
+Center frequency of the lowpass filter during the exhale phase. Typically set lower than the inhale frequency for a softer outward breath character.
 
-**Breath High-pass Hz** `20-800 Hz, default 80`
-High-pass filter applied to the noise before the per-phase lowpass. Removes sub-80 Hz rumble. The default is well below the standalone Breath Generator's 200 Hz because the Womb cutoffs sit very low (250/170 Hz); a tighter HP would chop the deep body content that gives womb-breath its character.
+**Breath High-pass Hz** `20-800 Hz, default 150`
+High-pass filter applied to the noise before the inhale/exhale lowpass. Removes low-frequency rumble. Raising this value thins the breath toward an airier hiss.
 
 **Inhale Fade In** `0.0-1.0, default 0.3`
 Proportion of the inhale duration spent fading up from silence.
@@ -588,8 +582,8 @@ Adds a slowly wandering random offset to heart rate. The random target updates a
 
 A lowpass filter applied to the full breath signal after the inhale/exhale synthesis, operating on the mixed breath output.
 
-**Breath Post-filter Hz** `50-4000 Hz, default 500`
-Cutoff frequency of the post-filter. The default sits above the per-phase lowpass cutoffs but provides additional womb-medium attenuation on top. Lowering darkens further toward "deeper inside the womb" character; raising lifts toward "less attenuated" character.
+**Breath Post-filter Hz** `50-4000 Hz, default 600`
+Cutoff frequency of the post-filter. Lowering this darkens the entire breath layer. Acts as a global brightness control independent of the per-phase frequency settings.
 
 **Breath Post-filter Q** `0.5-8.0, default 1.5`
 Resonance of the post-filter. Higher slider values produce lower resonance — this parameter is implemented internally as `1/Q`. Lower slider values produce a more resonant peak at the cutoff frequency.
@@ -694,11 +688,34 @@ What's different from v1:
 - **Heart drift and breath drift are independent.** Real physiology has heart rate variability and respiratory rate variability that drift on their own timescales, not in lockstep. v2 gives heart and breath separate Up/Down/Period sliders rather than sharing a single drift wave across both. This is a deliberate divergence from the suite-wide canonical per-plugin drift (Musical + Slow); other plugins don't have the same physiological constraint.
 - **The v1 "Random HRV Depth" slider is gone.** Random heart-rate wander is now covered by Heart drift in shape=Random mode.
 
-Sliders 1–51 follow Womb v1's layout for Heartbeat, Breath, Breath Post-Filter, Start Delay, Play/Rest Gating, and Speed Ramp — see the [Womb Sound Generator](#womb-sound-generator) section above for those parameters. The differences in v2 are:
+Sliders 1–51 follow Womb v1's layout for Heartbeat, Start Delay, Play/Rest Gating, and Speed Ramp — see the [Womb Sound Generator](#womb-sound-generator) section above for those parameters. The differences in v2 are:
 
 - **Bloodflow architecture** is different in v2 — same slider IDs (29–36), different semantics (amplitude-modulated envelope rather than frequency sweep). See "Bloodflow (v2)" below.
+- **Breath** has different defaults and an added continuous floor in v2 — same slider IDs (14, 20-22, 39), different default values and an extra always-on background. See "Breath (v2)" below.
 - **Breath HRV** sliders 37/38 are removed in favor of explicit Heart drift / RSA / Breath drift controls at the end of the slider range.
 - **Breath-rate-and-drift block** at sliders 52–60 is v2-specific.
+
+### Breath (v2)
+
+v2 retunes the breath layer for an intrauterine-listening perspective: the per-phase filter cutoffs sit substantially lower (Inhale 250 Hz, Exhale 170 Hz vs v1's 300 / 180 — also lower than the standalone Breath Generator's 800 / 600 Hz "natural breath at the source" defaults), and the breath envelope rides on a continuous floor of about 15% of peak rather than dropping to silence during pauses. Both per-phase filters run continuously in v2 (rather than only the currently-active one as in v1) so pauses can output the most-recently-active filter's character at floor level without producing a click on state transitions. Matches what intrauterine recording literature shows: baby hears continuous low-level body noise even between maternal breaths, dominated by content below ~200 Hz.
+
+**Breath Volume default 0.5** (v1: 0.8)
+Lower because intrauterine recordings show breath is one of the quieter components of the fetal sound environment — below maternal vasculature and GI activity in loudness.
+
+**Inhale Frequency Hz default 250** (v1: 300)
+Cutoff sits at the spectral boundary above which the amniotic medium attenuates almost everything.
+
+**Exhale Frequency Hz default 170** (v1: 180)
+Slightly lower than Inhale, same convention as v1.
+
+**Breath High-pass Hz default 80** (v1: 150)
+Lower because the per-phase lowpass cutoffs are lower in v2; a tighter HP would chop the deep-body content.
+
+**Breath Post-filter Hz default 500** (v1: 600)
+Provides additional womb-medium attenuation on top of the per-phase lowpasses.
+
+**Continuous floor** (internal, hardcoded at 0.15 of peak)
+The breath envelope rides on a continuous floor. Pauses (top, bottom) and fade-in / fade-out tails sit at floor level rather than silence so the cycle's endpoints don't produce extended silent gaps. Top pause inherits the inhale filter's character; bottom pause inherits the exhale filter's.
 
 ### Bloodflow (v2)
 
