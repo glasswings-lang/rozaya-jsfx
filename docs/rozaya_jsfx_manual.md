@@ -248,7 +248,9 @@ The plugin generates no audio from an input signal. It is a pure synthesizer and
 
 ## Signal Architecture
 
-Each inhale and exhale phase is produced by passing independent white noise through a state-variable lowpass filter — a separate filter instance per channel. The L and R channels use different noise seeds, so their noise is naturally decorrelated before filtering. The Stereo Width parameter then spreads the filter frequencies slightly apart between channels, widening the image further.
+Each inhale and exhale phase is produced by passing independent white noise through a state-variable resonant bandpass filter — a separate filter instance per channel. The L and R channels use different noise seeds, so their noise is naturally decorrelated before filtering. The Stereo Width parameter then spreads the filter centers slightly apart between channels, widening the image further.
+
+The bandpass topology is the 2026-06-08 rebuild. The earlier design used the SVF's lowpass output with default cutoffs around 144-300 Hz, which produced a dark, narrowband result with no real energy in the 400-1500 Hz range where actual tracheal and bronchial breath sounds live. Switching to the bandpass output of the same SVF, with center frequencies in the 600-800 Hz range, gives the spectrum a soft peak at the center with rolloff above and below — the shape real breath sound has when recorded with a stethoscope on the trachea.
 
 The envelope applied to each phase is a simple amplitude shape — fade in from silence, hold at full level, fade out to silence — with the fade proportions and curve shape set per phase. During the top and bottom pause states, the output is silence.
 
@@ -274,11 +276,11 @@ Silence between the end of exhale and the start of the next inhale. Simulates th
 
 ### Tone
 
-**Inhale Frequency Hz** `50-2000 Hz, default 144`
-Center frequency of the lowpass filter applied during the inhale phase. Controls the tonal brightness of the inhale — lower values produce a deep, body-heavy rush; higher values add more upper-frequency hiss. Note: due to sinusoidal frequency-to-coefficient mapping, the effective cutoff tracks lower than the displayed value at higher settings, increasingly so above ~500 Hz.
+**Inhale Frequency Hz** `50-2000 Hz, default 800`
+Center frequency of the bandpass filter applied during the inhale phase. The bandpass peaks at this frequency with moderate Q (~1.7), so most of the inhale energy sits within roughly ±50% of the center value. Inhale defaults sit higher than exhale to match the sharper-turbulence character of inflow (air entering through the nose/mouth has higher-frequency hiss content than the cavity-colored exhale). Note: due to sinusoidal frequency-to-coefficient mapping, the effective center tracks slightly lower than the displayed value at higher settings, increasingly so above ~1500 Hz.
 
-**Exhale Frequency Hz** `50-2000 Hz, default 96`
-Center frequency of the lowpass filter applied during the exhale phase. Exhale is typically set lower than inhale, giving a slightly darker, softer outward breath. The same frequency mapping caveat applies.
+**Exhale Frequency Hz** `50-2000 Hz, default 600`
+Center frequency of the bandpass filter applied during the exhale phase. Typically set lower than inhale, giving a slightly darker, softer outward breath — the cavity-coloration character of air exiting through a mostly-resonant vocal tract. The same frequency mapping caveat applies.
 
 ---
 
@@ -420,7 +422,9 @@ The plugin generates no audio from an input signal. It is a pure synthesizer and
 The heartbeat engine produces two events per cycle — S1 ("lub") and S2 ("dub") — separated by the systole interval. Each event is synthesized through two parallel resonant filter voices: a "near" voice (prominent, direct) and a "far" voice (slightly detuned, softer). Both voices blend a sine oscillator with white noise as their exciter, pass through a double-cascaded lowpass, and are routed to opposite output channels via an inter-aural delay. The master volume and individual S1/S2 volumes are applied before the three sources are summed.
 
 ### Breath
-The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable lowpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing.
+The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable resonant bandpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing.
+
+The bandpass topology is the 2026-06-08 rebuild. The earlier design used the SVF's lowpass output with default cutoffs around 144-300 Hz, which produced a dark, narrowband result with essentially no energy above 400 Hz — well below the spectral region where actual breath sound lives. Switching to the bandpass output with center frequencies in the 600-800 Hz range matches real tracheal and bronchial breath acoustics.
 
 ### Bloodflow
 The bloodflow engine produces amplitude-modulated filtered noise locked to the heartbeat phase. The noise filter cutoff is fixed; what pulses per beat is loudness. The per-cycle amplitude envelope is anatomically shaped — sharp cosine upstroke during systole, exponential decay through diastole, with a small secondary bump partway through the decay (the dicrotic notch, the audible reflection from aortic-valve closure). Quiet between beats. The envelope tracks heart rate automatically since it shares hb_phase with the heartbeat engine.
@@ -501,14 +505,14 @@ Length of the exhale phase.
 **Bottom Pause sec** `0.0-5.0 sec, default 1.5`
 Silence between exhale and the next inhale.
 
-**Inhale Frequency Hz** `50-2000 Hz, default 144`
-Center frequency of the lowpass filter applied during the inhale phase. Lower values produce a deeper, body-heavy rush; higher values a brighter, airier sound. Due to sinusoidal frequency-to-coefficient mapping, effective cutoff tracks lower than the displayed value above ~500 Hz.
+**Inhale Frequency Hz** `50-2000 Hz, default 800`
+Center frequency of the bandpass filter applied during the inhale phase. The bandpass peaks at this frequency with moderate Q (~1.7); most inhale energy sits within ±50% of center. Inhale defaults sit higher than exhale to match the sharper-turbulence character of inflow. Lower values produce a deeper, body-heavy rush; higher values a brighter, airier hiss. Due to sinusoidal frequency-to-coefficient mapping, effective center tracks slightly lower than displayed above ~1500 Hz.
 
-**Exhale Frequency Hz** `50-2000 Hz, default 96`
-Center frequency of the lowpass filter during the exhale phase. Typically set lower than the inhale frequency for a softer outward breath character.
+**Exhale Frequency Hz** `50-2000 Hz, default 600`
+Center frequency of the bandpass filter during the exhale phase. Typically set lower than inhale for the cavity-colored character of exhalation through the vocal tract.
 
-**Breath High-pass Hz** `20-800 Hz, default 150`
-High-pass filter applied to the noise before the inhale/exhale lowpass. Removes low-frequency rumble. Raising this value thins the breath toward an airier hiss.
+**Breath High-pass Hz** `20-800 Hz, default 200`
+High-pass filter applied to the noise before the per-phase bandpass. Removes sub-200 Hz rumble that the bandpass would otherwise let through its lower skirt. Raising this thins the breath toward an airier hiss.
 
 **Inhale Fade In** `0.0-1.0, default 0.3`
 Proportion of the inhale duration spent fading up from silence.
@@ -578,8 +582,8 @@ Adds a slowly wandering random offset to heart rate. The random target updates a
 
 A lowpass filter applied to the full breath signal after the inhale/exhale synthesis, operating on the mixed breath output.
 
-**Breath Post-filter Hz** `50-4000 Hz, default 600`
-Cutoff frequency of the post-filter. Lowering this darkens the entire breath layer. Acts as a global brightness control independent of the per-phase frequency settings.
+**Breath Post-filter Hz** `50-4000 Hz, default 2000`
+Cutoff frequency of the post-filter. The default sits well above the per-phase bandpass centers, so it acts as a gentle high-end shaper rather than a hard limit on breath brightness. Lowering it darkens the entire breath layer; below ~1000 Hz it starts to noticeably attenuate the per-phase bandpass output and the breath gets muffled.
 
 **Breath Post-filter Q** `0.5-8.0, default 1.5`
 Resonance of the post-filter. Higher slider values produce lower resonance — this parameter is implemented internally as `1/Q`. Lower slider values produce a more resonant peak at the cutoff frequency.
