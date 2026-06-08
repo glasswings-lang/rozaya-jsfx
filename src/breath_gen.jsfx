@@ -424,11 +424,11 @@ nr = (noise_seed2 - 0x80000000) * (1.0 / 2147483648.0);
     in_bp_r += in_f_r * in_hp_r;
 
     slider13 == 0 ? (
-      spl0 = in_bp_l * env * 1.5;
-      spl1 = in_bp_r * env * 1.5;
+      spl0 = in_lp_l * env * 1.5;
+      spl1 = in_lp_r * env * 1.5;
     ) : (
-      spl0 = in_bp_r * env * 1.5;
-      spl1 = in_bp_l * env * 1.5;
+      spl0 = in_lp_r * env * 1.5;
+      spl1 = in_lp_l * env * 1.5;
     );
   ) : (
     // Exhale
@@ -443,11 +443,11 @@ nr = (noise_seed2 - 0x80000000) * (1.0 / 2147483648.0);
     ex_bp_r += ex_f_r * ex_hp_r;
 
     slider13 == 0 ? (
-      spl0 = ex_bp_l * env * 1.5;
-      spl1 = ex_bp_r * env * 1.5;
+      spl0 = ex_lp_l * env * 1.5;
+      spl1 = ex_lp_r * env * 1.5;
     ) : (
-      spl0 = ex_bp_r * env * 1.5;
-      spl1 = ex_bp_l * env * 1.5;
+      spl0 = ex_lp_r * env * 1.5;
+      spl1 = ex_lp_l * env * 1.5;
     );
   );
 );

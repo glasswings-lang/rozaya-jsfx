@@ -248,9 +248,9 @@ The plugin generates no audio from an input signal. It is a pure synthesizer and
 
 ## Signal Architecture
 
-Each inhale and exhale phase is produced by passing independent white noise through a state-variable resonant bandpass filter — a separate filter instance per channel. The L and R channels use different noise seeds, so their noise is naturally decorrelated before filtering. The Stereo Width parameter then spreads the filter centers slightly apart between channels, widening the image further.
+Each inhale and exhale phase is produced by passing independent white noise through a state-variable resonant lowpass filter — a separate filter instance per channel. The L and R channels use different noise seeds, so their noise is naturally decorrelated before filtering. The Stereo Width parameter then spreads the filter cutoffs slightly apart between channels, widening the image further.
 
-The bandpass topology is the 2026-06-08 rebuild. The earlier design used the SVF's lowpass output with default cutoffs around 144-300 Hz, which produced a dark, narrowband result with no real energy in the 400-1500 Hz range where actual tracheal and bronchial breath sounds live. Switching to the bandpass output of the same SVF, with center frequencies in the 600-800 Hz range, gives the spectrum a soft peak at the center with rolloff above and below — the shape real breath sound has when recorded with a stethoscope on the trachea.
+The lowpass topology gives the filtered noise its broadband "whoosh" character — content from DC up to the cutoff, with a slight resonant peak at cutoff. The 2026-06-08 rebuild raised the cutoff defaults from ~144 Hz (the original Breath Generator default) up to 800/600 Hz so the breath has spectral energy in the range where breath actually lives, while keeping the original lowpass topology that gives breath its broadband whoosh.
 
 The envelope applied to each phase is a simple amplitude shape — fade in from silence, hold at full level, fade out to silence — with the fade proportions and curve shape set per phase. During the top and bottom pause states, the output is silence.
 
@@ -277,10 +277,10 @@ Silence between the end of exhale and the start of the next inhale. Simulates th
 ### Tone
 
 **Inhale Frequency Hz** `50-2000 Hz, default 800`
-Center frequency of the bandpass filter applied during the inhale phase. The bandpass peaks at this frequency with moderate Q (~1.7), so most of the inhale energy sits within roughly ±50% of the center value. Inhale defaults sit higher than exhale to match the sharper-turbulence character of inflow (air entering through the nose/mouth has higher-frequency hiss content than the cavity-colored exhale). Note: due to sinusoidal frequency-to-coefficient mapping, the effective center tracks slightly lower than the displayed value at higher settings, increasingly so above ~1500 Hz.
+Cutoff frequency of the lowpass filter applied during the inhale phase. Broadband noise content passes through from below; rolloff above the cutoff with a slight resonant peak at cutoff. Inhale defaults sit higher than exhale to match the sharper-turbulence character of inflow (air entering through the nose/mouth has higher-frequency hiss content than the cavity-colored exhale). Lower values produce a deeper, body-heavy rush; higher values add more upper-frequency hiss. Note: due to sinusoidal frequency-to-coefficient mapping, the effective cutoff tracks lower than the displayed value at higher settings, increasingly so above ~1500 Hz.
 
 **Exhale Frequency Hz** `50-2000 Hz, default 600`
-Center frequency of the bandpass filter applied during the exhale phase. Typically set lower than inhale, giving a slightly darker, softer outward breath — the cavity-coloration character of air exiting through a mostly-resonant vocal tract. The same frequency mapping caveat applies.
+Cutoff frequency of the lowpass filter applied during the exhale phase. Typically set lower than inhale for the cavity-colored character of exhalation. The same frequency mapping caveat applies.
 
 ---
 
@@ -424,9 +424,9 @@ The plugin generates no audio from an input signal. It is a pure synthesizer and
 The heartbeat engine produces two events per cycle — S1 ("lub") and S2 ("dub") — separated by the systole interval. Each event is synthesized through two parallel resonant filter voices: a "near" voice (prominent, direct) and a "far" voice (slightly detuned, softer). Both voices blend a sine oscillator with white noise as their exciter, pass through a double-cascaded lowpass, and are routed to opposite output channels via an inter-aural delay. The master volume and individual S1/S2 volumes are applied before the three sources are summed.
 
 ### Breath
-The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable resonant bandpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing.
+The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable resonant lowpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing.
 
-The bandpass topology is the 2026-06-08 rebuild, but the defaults here are tuned for the **womb-perspective muffling**: Inhale center at 400 Hz, Exhale at 280 Hz, Breath High-pass at 120 Hz, Post-filter at 800 Hz. These sit well below the 800/600 Hz centers the standalone Breath Generator uses — that plugin emits "tracheal breath acoustics as you would hear them at the source," this plugin emits "what baby hears through amniotic fluid and tissue." Same DSP, different acoustic target.
+The lowpass topology gives breath its broadband whoosh character. Womb-perspective defaults sit lower than the standalone Breath Generator: Inhale cutoff at 400 Hz, Exhale at 280 Hz, Breath High-pass at 120 Hz, Post-filter at 800 Hz. The standalone Breath Generator uses 800/600 Hz cutoffs for "natural breath at the source." Same DSP, different acoustic target — this plugin emits "what baby hears through amniotic fluid and tissue."
 
 The breath envelope rides on a **continuous floor** of ~0.15 of peak. Pauses (top, bottom) and the fade-in/fade-out tails sit at floor level rather than silence, so the cycle's endpoints have a continuous quiet body-background instead of producing extended gaps every breath. Top pause inherits the inhale filter's character; bottom pause inherits the exhale filter's. Models the aggregate continuous low-level body noise (organ activity, ambient muscle / vessel sound, etc.) that baby hears as a constant background. The floor is hardcoded — could become a slider if there's tuning value in adjusting it.
 
@@ -510,13 +510,13 @@ Length of the exhale phase.
 Silence between exhale and the next inhale.
 
 **Inhale Frequency Hz** `50-2000 Hz, default 400`
-Center frequency of the bandpass filter applied during the inhale phase. The bandpass peaks at this frequency with moderate Q (~1.7); most inhale energy sits within ±50% of center. Inhale defaults sit slightly higher than exhale to match the sharper-turbulence character of inflow. **Womb-tuned: defaults sit lower than the standalone Breath Generator's 800 Hz** because baby experiences breath through amniotic fluid and tissue, which attenuates everything above a few hundred Hz. For external "natural breath" character (not muffled by the medium), raise to 700-900 Hz.
+Cutoff of the lowpass filter applied during the inhale phase. Broadband noise content passes through from below; rolloff above the cutoff. **Womb-tuned: defaults sit lower than the standalone Breath Generator's 800 Hz** because baby experiences breath through amniotic fluid and tissue, which attenuates everything above a few hundred Hz. For external "natural breath" character (not muffled by the medium), raise to 700-900 Hz.
 
 **Exhale Frequency Hz** `50-2000 Hz, default 280`
-Center frequency of the bandpass filter during the exhale phase. Typically set lower than inhale for the cavity-colored character of exhalation through the vocal tract. **Womb-tuned** — see Inhale Frequency above.
+Cutoff of the lowpass filter during the exhale phase. Typically set lower than inhale for the cavity-colored character of exhalation. **Womb-tuned** — see Inhale Frequency above.
 
 **Breath High-pass Hz** `20-800 Hz, default 120`
-High-pass filter applied to the noise before the per-phase bandpass. Removes sub-120 Hz rumble. The default is lower than the standalone Breath Generator's 200 Hz because the Womb-perspective bandpass sits lower (400/280 Hz) and a tighter HP would clip the lower skirt of the bandpass.
+High-pass filter applied to the noise before the per-phase lowpass. Removes sub-120 Hz rumble. The default is lower than the standalone Breath Generator's 200 Hz because the Womb cutoffs sit lower (400/280 Hz); a tighter HP would chop the lower-frequency content that gives womb-breath its body.
 
 **Inhale Fade In** `0.0-1.0, default 0.3`
 Proportion of the inhale duration spent fading up from silence.

@@ -746,25 +746,28 @@ ex_bp_r += ex_f_r * ex_hp2_r;
 // inhale, bottom pause inherits exhale) so the floor character
 // matches what just played.
 (breath_state == 0) ? (
-  // Inhale active: in_bp character, envelope rides on floor.
+  // Inhale active: lowpass output (broadband below cutoff —
+  // gives the breath its "whoosh" character; a bandpass would
+  // narrow the spectrum to a tonal band, which doesn't sound
+  // like air-rush).
   br_env_raw = apply_fade(breath_phase_pos, slider23, slider24, slider27);
   br_env     = br_floor + (1.0 - br_floor) * br_env_raw;
-  br_l = in_bp_l * br_env * 1.5;
-  br_r = in_bp_r * br_env * 1.5;
+  br_l = in_lp_l * br_env * 1.5;
+  br_r = in_lp_r * br_env * 1.5;
 ) : (breath_state == 1) ? (
-  // Top pause: continue inhale character at floor.
-  br_l = in_bp_l * br_floor * 1.5;
-  br_r = in_bp_r * br_floor * 1.5;
+  // Top pause: continue inhale-lowpass character at floor.
+  br_l = in_lp_l * br_floor * 1.5;
+  br_r = in_lp_r * br_floor * 1.5;
 ) : (breath_state == 2) ? (
-  // Exhale active: ex_bp character.
+  // Exhale active: exhale-lowpass character.
   br_env_raw = apply_fade(breath_phase_pos, slider25, slider26, slider27);
   br_env     = br_floor + (1.0 - br_floor) * br_env_raw;
-  br_l = ex_bp_l * br_env * 1.5;
-  br_r = ex_bp_r * br_env * 1.5;
+  br_l = ex_lp_l * br_env * 1.5;
+  br_r = ex_lp_r * br_env * 1.5;
 ) : (
-  // Bottom pause (state 3): continue exhale character at floor.
-  br_l = ex_bp_l * br_floor * 1.5;
-  br_r = ex_bp_r * br_floor * 1.5;
+  // Bottom pause (state 3): continue exhale-lowpass character at floor.
+  br_l = ex_lp_l * br_floor * 1.5;
+  br_r = ex_lp_r * br_floor * 1.5;
 );
 br_l *= slider14; br_r *= slider14;
 
