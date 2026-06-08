@@ -433,9 +433,9 @@ The defaults reflect what the literature on intrauterine acoustics actually says
 The breath envelope rides on a **continuous floor** of ~0.15 of peak. Pauses (top, bottom) and the fade-in/fade-out tails sit at floor level rather than silence, so the cycle's endpoints have a continuous quiet body-background instead of producing extended gaps every breath. Top pause inherits the inhale filter's character; bottom pause inherits the exhale filter's. Models the aggregate continuous low-level body noise (organ activity, ambient muscle / vessel sound, etc.) that baby hears as a constant background. The floor is hardcoded — could become a slider if there's tuning value in adjusting it.
 
 ### Bloodflow
-The bloodflow engine produces amplitude-modulated filtered noise locked to the heartbeat phase. The noise filter cutoff is fixed; what modulates per beat is loudness. The per-cycle amplitude envelope is anatomically shaped — cosine upstroke during systole, exponential decay through diastole, with a faint secondary bump partway through the decay (the dicrotic notch, mostly inaudible through the womb medium so default low). The envelope rides on a **continuous floor** of ~0.25 of peak — modeling the placental and umbilical whoosh baby hears as a continuous background, with the maternal pulse modulating it UP rather than triggering pulses from silence. The envelope tracks heart rate automatically since it shares hb_phase with the heartbeat engine.
+The bloodflow engine produces amplitude-modulated filtered noise locked to the heartbeat phase. The noise filter cutoff is fixed; what modulates per beat is loudness. The per-cycle amplitude envelope is shaped as **cosine upstroke during systole, cosine decay through diastole** (smooth fall from peak back to floor over the rest of the cycle), with a faint secondary bump partway through the decay (the dicrotic notch, mostly inaudible through the womb medium so default low). The envelope rides on a **continuous floor** of ~0.25 of peak — modeling the placental and umbilical whoosh baby hears as a continuous background, with the maternal pulse modulating it UP rather than triggering pulses from silence. The envelope tracks heart rate automatically since it shares hb_phase with the heartbeat engine.
 
-This is a 2026-06-08 rebuild of the bloodflow layer. The earlier design swept the filter cutoff per beat (low → high → low), which produced a wah-pedal character rather than the continuous-flow-with-pulse character of actual intrauterine blood sound. The floor + amplitude-envelope approach matches what baby actually hears in there: a steady whoosh that gets louder on each maternal beat.
+This is a 2026-06-08 rebuild of the bloodflow layer. The earlier design swept the filter cutoff per beat (low → high → low), which produced a wah-pedal character rather than the continuous-flow-with-pulse character of actual intrauterine blood sound. The floor + amplitude-envelope approach matches what baby actually hears: a steady whoosh that swells on each maternal beat. The cosine decay curve (rather than exponential) matches the smooth-fall character that real intrauterine vasculature recordings show, and matches the curve the pre-rebuild bloodflow used in operator-tuned configs that worked by ear.
 
 ### HRV
 Heart rate variability modulates the heartbeat cycle length in real time using two additive layers. The breath-coupled layer derives its timing from the actual breath engine state — heart rate rises during inhale and falls during exhale. The random layer adds a slow, independently wandering offset. Both affect the heartbeat timing and the bloodflow pulse rate simultaneously, since the bloodflow envelope is locked to the heartbeat phase.
@@ -552,23 +552,26 @@ Overall output level for the bloodflow signal. The internal gain factor is highe
 **Bloodflow Solo** `Off / Solo`
 Mutes Heartbeat and Breath.
 
-**Bloodflow Filter Hz** `20-2000 Hz, default 150`
-Fixed center frequency of the bloodflow noise filter. Womb-tuned default (150 Hz) sits in the deep "throb in the ears" range — what baby hears through the amniotic medium is the low-end whoosh of placental and umbilical flow. Mid-range values (~250-400 Hz) produce more out-of-body arterial-pulse character. The filter does not sweep — per-beat shaping is delivered by amplitude modulation, not frequency modulation.
+**Bloodflow Volume** default 0.7 (was 0.5 in earlier defaults)
+Bumped higher than Breath Volume because the literature on intrauterine acoustics says vasculature is the DOMINANT continuous sound — louder than maternal cardiac thumps, louder than maternal breath. Default mix reflects this hierarchy.
+
+**Bloodflow Filter Hz** `20-2000 Hz, default 250`
+Fixed center frequency of the bloodflow noise filter. Default sits at the upper end of the womb-perspective deep-rumble range. Lower values (~100-150 Hz) push toward sub-bass throb; higher values (~300-400 Hz) brighten toward more arterial character. The filter does not sweep — per-beat shaping is delivered by amplitude modulation.
 
 **Bloodflow Dicrotic Level** `0.0-1.0, default 0.1`
-Strength of the dicrotic notch — the small secondary pulse that follows the main systolic pulse, anatomically from the aortic-valve closing and the pressure wave reflecting back through the arterial tree. The womb medium attenuates the dicrotic notch heavily so the default is low (0.1); raising toward 0.3-0.4 gives it more presence if you want a more articulated double-pulse character. The continuous floor (see below) softens the dicrotic's perceptual prominence further compared to a "silence between beats" envelope.
+Strength of the dicrotic notch — the small secondary pulse that follows the main systolic pulse, anatomically from the aortic-valve closing and the pressure wave reflecting back through the arterial tree. The womb medium attenuates the dicrotic notch heavily so the default is low (0.1); raising toward 0.3-0.4 gives it more presence if you want a more articulated double-pulse character.
 
 **Bloodflow Resonance** `0.0-0.95, default 0.2`
 Filter resonance. Higher values make the filter peak more tonal — the noise gets a more whistly, water-rushing character around the filter Hz. Values above 0.7 can produce self-oscillation artifacts.
 
-**Bloodflow Attack (proportion of cycle)** `0.005-0.5, default 0.08`
-Proportion of each heartbeat cycle the main pulse takes to rise from floor to peak. Default 0.08 is slightly softer than the standalone "in-ear pulse" character (0.05) — the womb attenuates sharp transients, so the perceived upstroke is gentler.
+**Bloodflow Attack (proportion of cycle)** `0.005-0.5, default 0.15`
+Proportion of each heartbeat cycle the main pulse takes to rise from floor to peak (cosine upstroke). Default 0.15 matches the operator's pre-rebuild known-good fade-in setting. Smaller values give sharper attack; larger values soften the onset.
 
-**Bloodflow Decay (proportion of cycle)** `0.05-0.95, default 0.45`
-Proportion of each heartbeat cycle the main pulse decays back toward the continuous floor. The dicrotic bump rides on the tail of this decay, centered ~70% of the way through. If Attack + Decay would exceed 1.0 (cover the entire cycle), both are proportionally normalized to fit. Default 0.45 is longer than the standalone "in-ear pulse" character (0.35) — softer pulse character matches the continuous-flow-with-modulation character baby actually hears.
+**Bloodflow Decay (proportion of cycle)** `0.05-0.95, default 0.85`
+Proportion of each heartbeat cycle the main pulse decays back toward the continuous floor (cosine descent). Default 0.85 covers almost the entire post-attack cycle — the pulse sustains across nearly the whole period, producing the continuous-modulating whoosh character of real intrauterine vasculature rather than a sharper pulse + silence shape. Matches the operator's pre-rebuild fade-out tuning. The dicrotic bump rides on the tail of this decay, centered ~70% of the way through. If Attack + Decay would exceed 1.0, both are proportionally normalized.
 
 **Continuous floor** (internal, not a slider, set to 0.25 of peak)
-The bloodflow envelope rides on a continuous floor of about a quarter of peak — between heartbeats the bloodflow noise doesn't fall to silence, it drops to floor level, modeling the steady placental whoosh that baby hears as a constant background between maternal pulses. Hardcoded for now; could become a slider in a future version if there's tuning value in adjusting it.
+The bloodflow envelope rides on a continuous floor of about a quarter of peak — between maternal heartbeats the bloodflow noise doesn't fall to silence, it drops to floor level. With the default attack+decay = 1.0 the envelope is essentially never at floor for long (the decay reaches it just as the next attack begins); the floor mostly matters when the user reduces Attack+Decay below 1.0 leaving an idle tail. Hardcoded for now; could become a slider if useful.
 
 **Bloodflow Stereo Width** `0.0-1.0, default 0.5`
 Slight L/R offset of the bloodflow filter cutoff so the two channels are decorrelated. At 1.0 the L channel cutoff is approximately 8% higher than R; at 0 both channels share the same cutoff.

@@ -39,13 +39,13 @@ slider27:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade Mode
 slider28:0.5<0.0,1.0,0.01>Breath Stereo Width
 
 // --- BLOODFLOW ---
-slider29:0.5<0.0,1.0,0.01>Bloodflow Volume
+slider29:0.7<0.0,1.0,0.01>Bloodflow Volume
 slider30:0<0,1,1{Off,Solo}>Bloodflow Solo
-slider31:150<20,2000,1>Bloodflow Filter Hz
+slider31:250<20,2000,1>Bloodflow Filter Hz
 slider32:0.1<0,1,0.01>Bloodflow Dicrotic Level
 slider33:0.2<0.0,0.95,0.01>Bloodflow Resonance
-slider34:0.08<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
-slider35:0.45<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
+slider34:0.15<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
+slider35:0.85<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
 slider36:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
 
 // --- HRV ---
@@ -188,11 +188,11 @@ bot_len    = floor(srate * 0.3);
 // --- BLOODFLOW INIT ---
 bf_n3_l = 0; bf_n4_l = 0;
 bf_n3_r = 0; bf_n4_r = 0;
-bf_filter_hz      = 150.0;
+bf_filter_hz      = 250.0;
 bf_dicrotic_level = 0.1;
 bf_res            = 0.2;
-bf_attack         = 0.08;
-bf_decay          = 0.45;
+bf_attack         = 0.15;
+bf_decay          = 0.85;
 bf_stereo_width   = 0.5;
 // Continuous-flow floor: between heartbeats the bloodflow envelope
 // doesn't drop to silence, it drops to this fraction of peak. Models
@@ -795,14 +795,19 @@ br_r = bpf_low_r;
 // pulse is amplitude.
 bf_cycle_pos = hb_phase / max(cycle_len, 1);
 
-// Main pulse: cosine upstroke during systole, exponential decay
+// Main pulse: cosine upstroke during systole, cosine decay
 // during diastole. bf_attack + bf_decay <= 1.0 (clamped in @slider).
+// Cosine decay (smooth fall from peak to 0) matches the curve the
+// pre-rebuild bloodflow sweep used — produces a sustained whoosh
+// character through the decay phase rather than the fast-exp's
+// quick fall + long quiet tail (which the floor was trying to
+// paper over but couldn't make perceptual sense of).
 bf_cycle_pos < bf_attack ? (
   bf_t = bf_cycle_pos / bf_attack;
   bf_env_main = 0.5 - 0.5 * cos(bf_t * $pi);
 ) : bf_cycle_pos < (bf_attack + bf_decay) ? (
   bf_t = (bf_cycle_pos - bf_attack) / bf_decay;
-  bf_env_main = exp(-bf_t * 3.5);
+  bf_env_main = 0.5 + 0.5 * cos(bf_t * $pi);
 ) : (
   bf_env_main = 0;
 );
@@ -847,12 +852,12 @@ bf_n3_r = bf_n3_r + bf_cut_r * (n6 - bf_n3_r + bf_fb_r * (bf_n3_r - bf_n4_r));
 bf_n4_r = bf_n4_r + bf_cut_r * (bf_n3_r - bf_n4_r);
 
 // Amplitude modulation: filtered noise shaped by the pressure
-// envelope. Gain factor is 8 here (bumped from the old 4) because
-// envelope-modulated output has lower RMS than the old continuous-
-// filter design — without the bump the same Volume slider value
-// produced a perceptually quieter result.
-bf_l = bf_n4_l * bf_env * slider29 * 8.0;
-bf_r = bf_n4_r * bf_env * slider29 * 8.0;
+// envelope. Gain factor 12 bumped from earlier 8 because operator
+// reported having to "crank" bloodflow to hear it — research says
+// vasculature is the LOUDEST layer in the womb, so it should be
+// dominant by default rather than under-mixed.
+bf_l = bf_n4_l * bf_env * slider29 * 12.0;
+bf_r = bf_n4_r * bf_env * slider29 * 12.0;
 
 // Bloodflow Play/Rest gate. Counter (pr_bf_beat) advances on each
 // hb_phase wrap above; the gate state is set there too. Here we
