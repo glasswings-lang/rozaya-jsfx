@@ -41,11 +41,11 @@ slider28:0.5<0.0,1.0,0.01>Breath Stereo Width
 // --- BLOODFLOW ---
 slider29:0.5<0.0,1.0,0.01>Bloodflow Volume
 slider30:0<0,1,1{Off,Solo}>Bloodflow Solo
-slider31:150<20,2000,1>Bloodflow Low Frequency Hz
-slider32:600<20,4000,1>Bloodflow High Frequency Hz
+slider31:250<20,2000,1>Bloodflow Filter Hz
+slider32:0.3<0,1,0.01>Bloodflow Dicrotic Level
 slider33:0.2<0.0,0.95,0.01>Bloodflow Resonance
-slider34:0.15<0.0,1.0,0.01>Bloodflow Fade In
-slider35:0.15<0.0,1.0,0.01>Bloodflow Fade Out
+slider34:0.05<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
+slider35:0.35<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
 slider36:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
 
 // --- HRV ---
@@ -181,12 +181,12 @@ bot_len    = floor(srate * 0.3);
 // --- BLOODFLOW INIT ---
 bf_n3_l = 0; bf_n4_l = 0;
 bf_n3_r = 0; bf_n4_r = 0;
-bf_low_hz = 150.0;
-bf_high_hz = 600.0;
-bf_res = 0.2;
-bf_fade_in = 0.15;
-bf_fade_out = 0.15;
-bf_stereo_width = 0.5;
+bf_filter_hz      = 250.0;
+bf_dicrotic_level = 0.3;
+bf_res            = 0.2;
+bf_attack         = 0.05;
+bf_decay          = 0.35;
+bf_stereo_width   = 0.5;
 
 // --- HRV INIT ---
 breath_depth = 0.08;
@@ -341,16 +341,19 @@ ex_f_r = min(2.0 * sin($pi * (slider21 * (1.0 - slider28 * 0.12)) * srate_inv), 
 hp_f   = min(2.0 * sin($pi * slider22 * srate_inv), 0.98);
 
 // Bloodflow
-bf_low_hz  = min(slider31, slider32);
-bf_high_hz = max(slider31, slider32);
-bf_res     = slider33;
-bf_stereo_width = slider36;
+bf_filter_hz      = slider31;
+bf_dicrotic_level = slider32;
+bf_res            = slider33;
+bf_attack         = max(slider34, 0.001);
+bf_decay          = max(slider35, 0.001);
+bf_stereo_width   = slider36;
 
-bf_fade_in  = max(slider34, 0.0001);
-bf_fade_out = max(slider35, 0.0001);
-bf_fade_in + bf_fade_out > 1.0 ? (
-  bf_fade_in  = slider34 / (slider34 + slider35);
-  bf_fade_out = slider35 / (slider34 + slider35);
+// If attack + decay exceed one cycle, normalize so they fit. Defends
+// against user-set extreme values and against old projects whose
+// Fade In + Fade Out sliders summed >1.0 under the old design.
+bf_attack + bf_decay > 1.0 ? (
+  bf_attack = slider34 / (slider34 + slider35);
+  bf_decay  = slider35 / (slider34 + slider35);
 );
 
 // HRV
@@ -749,26 +752,55 @@ bpf_band_r += bpf_f * bpf_high_r;
 br_r = bpf_low_r;
 
 // --- BLOODFLOW ---
-// LFO phase locked directly to heartbeat cycle - 0..1 through the cycle
+// Cardiac pressure envelope locked to heartbeat phase.
+//
+// Real arterial blood-sound is amplitude-modulated noise — sharp
+// upstroke at systole, exponential decay through diastole, with a
+// small secondary bump (the dicrotic notch, from aortic-valve
+// closure reflecting back into the arterial tree), then quiet until
+// the next beat. NOT a frequency sweep, which was the v1 mistake;
+// that sounded like a wah pedal triggered by a heart, not like a
+// pulse. The filter Hz is FIXED now and what shapes the per-beat
+// pulse is amplitude.
 bf_cycle_pos = hb_phase / max(cycle_len, 1);
 
-// Sweep filter envelope: fade in, hold high, fade out, hold low
-bf_cycle_pos < bf_fade_in ? (
-  bf_t = bf_cycle_pos / bf_fade_in;
-  bf_lfo = 0.5 - 0.5 * cos(bf_t * $pi);
-) : bf_cycle_pos < (1.0 - bf_fade_out) ? (
-  bf_lfo = 1.0;
+// Main pulse: cosine upstroke during systole, exponential decay
+// during diastole. bf_attack + bf_decay <= 1.0 (clamped in @slider).
+bf_cycle_pos < bf_attack ? (
+  bf_t = bf_cycle_pos / bf_attack;
+  bf_env_main = 0.5 - 0.5 * cos(bf_t * $pi);
+) : bf_cycle_pos < (bf_attack + bf_decay) ? (
+  bf_t = (bf_cycle_pos - bf_attack) / bf_decay;
+  bf_env_main = exp(-bf_t * 3.5);
 ) : (
-  bf_t = (bf_cycle_pos - (1.0 - bf_fade_out)) / bf_fade_out;
-  bf_lfo = 0.5 + 0.5 * cos(bf_t * $pi);
+  bf_env_main = 0;
 );
 
-// Map lfo to frequency - low at rest, high at peak
-bf_cut_hz = bf_low_hz + (bf_high_hz - bf_low_hz) * bf_lfo;
-bf_cut_l = (bf_cut_hz * (1.0 + bf_stereo_width * 0.08)) * israte2;
-bf_cut_r = (bf_cut_hz * (1.0 - bf_stereo_width * 0.08)) * israte2;
+// Dicrotic bump: small secondary pulse ~70% of the way through the
+// decay phase. Anatomically this is the reflection from aortic-valve
+// closure; perceptually it's what gives the pulse its "thump-tick"
+// character rather than a plain decaying noise burst.
+bf_dicrotic_center     = bf_attack + bf_decay * 0.7;
+bf_dicrotic_half_width = bf_decay * 0.12;
+bf_dicrotic_distance   = abs(bf_cycle_pos - bf_dicrotic_center);
+bf_dicrotic_distance < bf_dicrotic_half_width ? (
+  bf_dt = bf_dicrotic_distance / bf_dicrotic_half_width;
+  bf_env_dicrotic = bf_dicrotic_level * (0.5 + 0.5 * cos(bf_dt * $pi));
+) : (
+  bf_env_dicrotic = 0;
+);
 
-// Cockos resonant lowpass - straight white noise in
+bf_env = bf_env_main + bf_env_dicrotic;
+
+// Fixed-frequency filter. Stereo Width gives a small L/R cutoff
+// offset so the two channels are decorrelated, matching the old
+// design's spatial behavior.
+bf_cut   = bf_filter_hz * israte2;
+bf_cut_l = (bf_cut * (1.0 + bf_stereo_width * 0.08));
+bf_cut_r = (bf_cut * (1.0 - bf_stereo_width * 0.08));
+
+// Cockos resonant lowpass on white noise. With moderate Resonance
+// the filter peaks near cutoff, giving bandpass-like character.
 bf_fb_l = bf_res + bf_res / (1.0 - bf_cut_l);
 bf_n3_l = bf_n3_l + bf_cut_l * (n5 - bf_n3_l + bf_fb_l * (bf_n3_l - bf_n4_l));
 bf_n4_l = bf_n4_l + bf_cut_l * (bf_n3_l - bf_n4_l);
@@ -777,8 +809,13 @@ bf_fb_r = bf_res + bf_res / (1.0 - bf_cut_r);
 bf_n3_r = bf_n3_r + bf_cut_r * (n6 - bf_n3_r + bf_fb_r * (bf_n3_r - bf_n4_r));
 bf_n4_r = bf_n4_r + bf_cut_r * (bf_n3_r - bf_n4_r);
 
-bf_l = bf_n4_l * slider29 * 4.0;
-bf_r = bf_n4_r * slider29 * 4.0;
+// Amplitude modulation: filtered noise shaped by the pressure
+// envelope. Gain factor is 8 here (bumped from the old 4) because
+// envelope-modulated output has lower RMS than the old continuous-
+// filter design — without the bump the same Volume slider value
+// produced a perceptually quieter result.
+bf_l = bf_n4_l * bf_env * slider29 * 8.0;
+bf_r = bf_n4_r * bf_env * slider29 * 8.0;
 
 // Bloodflow Play/Rest gate. Counter (pr_bf_beat) advances on each
 // hb_phase wrap above; the gate state is set there too. Here we
