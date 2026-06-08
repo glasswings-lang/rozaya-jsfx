@@ -28,9 +28,9 @@ slider16:4.0<0.5,20.0,0.1>Inhale Duration sec
 slider17:0.3<0.0,5.0,0.1>Top Pause sec
 slider18:4.0<0.5,20.0,0.1>Exhale Duration sec
 slider19:0.3<0.0,5.0,0.1>Bottom Pause sec
-slider20:800<50,2000,1>Inhale Frequency Hz
-slider21:600<50,2000,1>Exhale Frequency Hz
-slider22:200<20,800,1>Breath High-pass Hz
+slider20:400<50,2000,1>Inhale Frequency Hz
+slider21:280<50,2000,1>Exhale Frequency Hz
+slider22:120<20,800,1>Breath High-pass Hz
 slider23:0.3<0.0,1.0,0.01>Inhale Fade In
 slider24:0.2<0.0,1.0,0.01>Inhale Fade Out
 slider25:0.2<0.0,1.0,0.01>Exhale Fade In
@@ -41,11 +41,11 @@ slider28:0.5<0.0,1.0,0.01>Breath Stereo Width
 // --- BLOODFLOW ---
 slider29:0.5<0.0,1.0,0.01>Bloodflow Volume
 slider30:0<0,1,1{Off,Solo}>Bloodflow Solo
-slider31:250<20,2000,1>Bloodflow Filter Hz
-slider32:0.3<0,1,0.01>Bloodflow Dicrotic Level
+slider31:150<20,2000,1>Bloodflow Filter Hz
+slider32:0.1<0,1,0.01>Bloodflow Dicrotic Level
 slider33:0.2<0.0,0.95,0.01>Bloodflow Resonance
-slider34:0.05<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
-slider35:0.35<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
+slider34:0.08<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
+slider35:0.45<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
 slider36:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
 
 // --- HRV ---
@@ -53,7 +53,7 @@ slider37:0.08<0.0,0.25,0.01>Breath HRV Depth
 slider38:0.02<0.0,0.08,0.005>Random HRV Depth
 
 // --- BREATH POST FILTER ---
-slider39:2000<50,4000,1>Breath Post-filter Hz
+slider39:800<50,4000,1>Breath Post-filter Hz
 slider40:1.5<0.5,8.0,0.1>Breath Post-filter Q
 
 // Sit silent for N heartbeats after playback starts, then begin
@@ -163,14 +163,14 @@ hp_lp_l = 0; hp_lp_r = 0;
 
 bpf_low_l = 0; bpf_band_l = 0;
 bpf_low_r = 0; bpf_band_r = 0;
-bpf_f = min(2.0 * sin($pi * 2000.0 * srate_inv), 0.98);
+bpf_f = min(2.0 * sin($pi * 800.0 * srate_inv), 0.98);
 bpf_q = 0.5;
 
-in_f_l = min(2.0 * sin($pi * 800.0 * srate_inv), 0.98);
-in_f_r = min(2.0 * sin($pi * 760.0 * srate_inv), 0.98);
-ex_f_l = min(2.0 * sin($pi * 600.0 * srate_inv), 0.98);
-ex_f_r = min(2.0 * sin($pi * 560.0 * srate_inv), 0.98);
-hp_f   = min(2.0 * sin($pi * 200.0 * srate_inv), 0.98);
+in_f_l = min(2.0 * sin($pi * 400.0 * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * 380.0 * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * 280.0 * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * 260.0 * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * 120.0 * srate_inv), 0.98);
 breath_lp_q = 0.6;
 
 inhale_len = floor(srate * 4.0);
@@ -181,12 +181,18 @@ bot_len    = floor(srate * 0.3);
 // --- BLOODFLOW INIT ---
 bf_n3_l = 0; bf_n4_l = 0;
 bf_n3_r = 0; bf_n4_r = 0;
-bf_filter_hz      = 250.0;
-bf_dicrotic_level = 0.3;
+bf_filter_hz      = 150.0;
+bf_dicrotic_level = 0.1;
 bf_res            = 0.2;
-bf_attack         = 0.05;
-bf_decay          = 0.35;
+bf_attack         = 0.08;
+bf_decay          = 0.45;
 bf_stereo_width   = 0.5;
+// Continuous-flow floor: between heartbeats the bloodflow envelope
+// doesn't drop to silence, it drops to this fraction of peak. Models
+// the placental / umbilical whoosh that baby hears continuously,
+// modulated UP by the maternal pulse rather than starting from zero
+// each beat. Hardcoded for now; could become a slider later.
+bf_floor          = 0.25;
 
 // --- HRV INIT ---
 breath_depth = 0.08;
@@ -790,7 +796,13 @@ bf_dicrotic_distance < bf_dicrotic_half_width ? (
   bf_env_dicrotic = 0;
 );
 
-bf_env = bf_env_main + bf_env_dicrotic;
+// Combine pulse components and lift onto a continuous floor.
+// Floor models the placental whoosh baby hears as a continuous
+// background; the pulse rides on top, modulating up to peak 1.0.
+// Without the floor we'd get sharp pulses with silence between,
+// which is the "in-ear pulse" character, not the womb character.
+bf_env_pulse = bf_env_main + bf_env_dicrotic;
+bf_env       = bf_floor + (1.0 - bf_floor) * bf_env_pulse;
 
 // Fixed-frequency filter. Stereo Width gives a small L/R cutoff
 // offset so the two channels are decorrelated, matching the old
