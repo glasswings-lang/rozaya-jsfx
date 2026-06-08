@@ -410,7 +410,9 @@ Wander shape applied to both sources.
 
 ## Overview
 
-Womb Sound Generator is a multi-layered intrauterine soundscape synthesizer. It combines three independently controllable sound sources — Heartbeat, Breath, and Bloodflow — into a single unified output. Each source can be soloed for monitoring and balanced independently. Heart rate variability is modeled across two dimensions — breath-coupled and random — and the bloodflow layer is phase-locked to the heartbeat cycle, producing a coherent physiological simulation rather than independent noise sources running in parallel.
+Womb Sound Generator is a multi-layered intrauterine soundscape synthesizer **designed from the baby's perspective inside the womb**. It combines three independently controllable sound sources — Heartbeat, Breath, and Bloodflow — into a single unified output. Each source can be soloed for monitoring and balanced independently. Heart rate variability is modeled across two dimensions — breath-coupled and random — and the bloodflow layer is phase-locked to the heartbeat cycle, producing a coherent physiological simulation rather than independent noise sources running in parallel.
+
+The intrauterine perspective is load-bearing. Baby's hearing is heavily attenuated by amniotic fluid and abdominal tissue acting as a steep lowpass; effectively nothing above ~800 Hz reaches the fetus with any energy. Each layer in this plugin is tuned for that muffled, conducted-through-fluid character — the inhale/exhale filters sit lower than the standalone Breath Generator's defaults, the bloodflow filter sits in the deep-rushing range rather than the arterial-pulse range, and the bloodflow envelope rides on a continuous floor (placental whoosh between beats) rather than dropping to silence. For an external "natural body sound" perspective use the standalone Heartbeat Generator and Breath Generator instead; those plugins are tuned for biological accuracy at the source without the womb-medium attenuation.
 
 The plugin generates no audio from an input signal. It is a pure synthesizer and should be placed on an empty FX chain or a track with no audio source.
 
@@ -424,12 +426,12 @@ The heartbeat engine produces two events per cycle — S1 ("lub") and S2 ("dub")
 ### Breath
 The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable resonant bandpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing.
 
-The bandpass topology is the 2026-06-08 rebuild. The earlier design used the SVF's lowpass output with default cutoffs around 144-300 Hz, which produced a dark, narrowband result with essentially no energy above 400 Hz — well below the spectral region where actual breath sound lives. Switching to the bandpass output with center frequencies in the 600-800 Hz range matches real tracheal and bronchial breath acoustics.
+The bandpass topology is the 2026-06-08 rebuild, but the defaults here are tuned for the **womb-perspective muffling**: Inhale center at 400 Hz, Exhale at 280 Hz, Breath High-pass at 120 Hz, Post-filter at 800 Hz. These sit well below the 800/600 Hz centers the standalone Breath Generator uses — that plugin emits "tracheal breath acoustics as you would hear them at the source," this plugin emits "what baby hears through amniotic fluid and tissue." Same DSP, different acoustic target.
 
 ### Bloodflow
-The bloodflow engine produces amplitude-modulated filtered noise locked to the heartbeat phase. The noise filter cutoff is fixed; what pulses per beat is loudness. The per-cycle amplitude envelope is anatomically shaped — sharp cosine upstroke during systole, exponential decay through diastole, with a small secondary bump partway through the decay (the dicrotic notch, the audible reflection from aortic-valve closure). Quiet between beats. The envelope tracks heart rate automatically since it shares hb_phase with the heartbeat engine.
+The bloodflow engine produces amplitude-modulated filtered noise locked to the heartbeat phase. The noise filter cutoff is fixed; what modulates per beat is loudness. The per-cycle amplitude envelope is anatomically shaped — cosine upstroke during systole, exponential decay through diastole, with a faint secondary bump partway through the decay (the dicrotic notch, mostly inaudible through the womb medium so default low). The envelope rides on a **continuous floor** of ~0.25 of peak — modeling the placental and umbilical whoosh baby hears as a continuous background, with the maternal pulse modulating it UP rather than triggering pulses from silence. The envelope tracks heart rate automatically since it shares hb_phase with the heartbeat engine.
 
-This is a 2026-06-08 rebuild of the bloodflow layer. The earlier design swept the filter cutoff per beat (low → high → low), which produced a wah-pedal character rather than a real pulse. Amplitude modulation with a cardiac pressure envelope is acoustically what blood actually sounds like in body cavities — in the ear when lying down, against a stethoscope, in doppler ultrasound.
+This is a 2026-06-08 rebuild of the bloodflow layer. The earlier design swept the filter cutoff per beat (low → high → low), which produced a wah-pedal character rather than the continuous-flow-with-pulse character of actual intrauterine blood sound. The floor + amplitude-envelope approach matches what baby actually hears in there: a steady whoosh that gets louder on each maternal beat.
 
 ### HRV
 Heart rate variability modulates the heartbeat cycle length in real time using two additive layers. The breath-coupled layer derives its timing from the actual breath engine state — heart rate rises during inhale and falls during exhale. The random layer adds a slow, independently wandering offset. Both affect the heartbeat timing and the bloodflow pulse rate simultaneously, since the bloodflow envelope is locked to the heartbeat phase.
@@ -505,14 +507,14 @@ Length of the exhale phase.
 **Bottom Pause sec** `0.0-5.0 sec, default 1.5`
 Silence between exhale and the next inhale.
 
-**Inhale Frequency Hz** `50-2000 Hz, default 800`
-Center frequency of the bandpass filter applied during the inhale phase. The bandpass peaks at this frequency with moderate Q (~1.7); most inhale energy sits within ±50% of center. Inhale defaults sit higher than exhale to match the sharper-turbulence character of inflow. Lower values produce a deeper, body-heavy rush; higher values a brighter, airier hiss. Due to sinusoidal frequency-to-coefficient mapping, effective center tracks slightly lower than displayed above ~1500 Hz.
+**Inhale Frequency Hz** `50-2000 Hz, default 400`
+Center frequency of the bandpass filter applied during the inhale phase. The bandpass peaks at this frequency with moderate Q (~1.7); most inhale energy sits within ±50% of center. Inhale defaults sit slightly higher than exhale to match the sharper-turbulence character of inflow. **Womb-tuned: defaults sit lower than the standalone Breath Generator's 800 Hz** because baby experiences breath through amniotic fluid and tissue, which attenuates everything above a few hundred Hz. For external "natural breath" character (not muffled by the medium), raise to 700-900 Hz.
 
-**Exhale Frequency Hz** `50-2000 Hz, default 600`
-Center frequency of the bandpass filter during the exhale phase. Typically set lower than inhale for the cavity-colored character of exhalation through the vocal tract.
+**Exhale Frequency Hz** `50-2000 Hz, default 280`
+Center frequency of the bandpass filter during the exhale phase. Typically set lower than inhale for the cavity-colored character of exhalation through the vocal tract. **Womb-tuned** — see Inhale Frequency above.
 
-**Breath High-pass Hz** `20-800 Hz, default 200`
-High-pass filter applied to the noise before the per-phase bandpass. Removes sub-200 Hz rumble that the bandpass would otherwise let through its lower skirt. Raising this thins the breath toward an airier hiss.
+**Breath High-pass Hz** `20-800 Hz, default 120`
+High-pass filter applied to the noise before the per-phase bandpass. Removes sub-120 Hz rumble. The default is lower than the standalone Breath Generator's 200 Hz because the Womb-perspective bandpass sits lower (400/280 Hz) and a tighter HP would clip the lower skirt of the bandpass.
 
 **Inhale Fade In** `0.0-1.0, default 0.3`
 Proportion of the inhale duration spent fading up from silence.
@@ -546,20 +548,23 @@ Overall output level for the bloodflow signal. The internal gain factor is highe
 **Bloodflow Solo** `Off / Solo`
 Mutes Heartbeat and Breath.
 
-**Bloodflow Filter Hz** `20-2000 Hz, default 250`
-Fixed center frequency of the bloodflow noise filter. Low values (under ~150 Hz) produce the deep "throb in the ears" character of lying-down pulsation; mid-range values (~250-400 Hz) produce more arterial-pulse character. The filter does not sweep — per-beat shaping is delivered by amplitude modulation, not frequency modulation.
+**Bloodflow Filter Hz** `20-2000 Hz, default 150`
+Fixed center frequency of the bloodflow noise filter. Womb-tuned default (150 Hz) sits in the deep "throb in the ears" range — what baby hears through the amniotic medium is the low-end whoosh of placental and umbilical flow. Mid-range values (~250-400 Hz) produce more out-of-body arterial-pulse character. The filter does not sweep — per-beat shaping is delivered by amplitude modulation, not frequency modulation.
 
-**Bloodflow Dicrotic Level** `0.0-1.0, default 0.3`
-Strength of the dicrotic notch — the small secondary pulse that follows the main systolic pulse, anatomically from the aortic-valve closing and the pressure wave reflecting back through the arterial tree. At 0 the pulse is a single thump; at 1.0 the secondary pulse is as strong as the main pulse (overly prominent — physiological dicrotic is typically around 0.2–0.4 of main amplitude).
+**Bloodflow Dicrotic Level** `0.0-1.0, default 0.1`
+Strength of the dicrotic notch — the small secondary pulse that follows the main systolic pulse, anatomically from the aortic-valve closing and the pressure wave reflecting back through the arterial tree. The womb medium attenuates the dicrotic notch heavily so the default is low (0.1); raising toward 0.3-0.4 gives it more presence if you want a more articulated double-pulse character. The continuous floor (see below) softens the dicrotic's perceptual prominence further compared to a "silence between beats" envelope.
 
 **Bloodflow Resonance** `0.0-0.95, default 0.2`
 Filter resonance. Higher values make the filter peak more tonal — the noise gets a more whistly, water-rushing character around the filter Hz. Values above 0.7 can produce self-oscillation artifacts.
 
-**Bloodflow Attack (proportion of cycle)** `0.005-0.5, default 0.05`
-Proportion of each heartbeat cycle the main pulse takes to rise from quiet to peak. Small values (~0.03–0.08) match a sharp systolic upstroke and produce a percussive pulse; larger values soften the onset into something more whoosh-like and less impactful.
+**Bloodflow Attack (proportion of cycle)** `0.005-0.5, default 0.08`
+Proportion of each heartbeat cycle the main pulse takes to rise from floor to peak. Default 0.08 is slightly softer than the standalone "in-ear pulse" character (0.05) — the womb attenuates sharp transients, so the perceived upstroke is gentler.
 
-**Bloodflow Decay (proportion of cycle)** `0.05-0.95, default 0.35`
-Proportion of each heartbeat cycle the main pulse decays back toward quiet. The dicrotic bump rides on the tail of this decay, centered ~70% of the way through. If Attack + Decay would exceed 1.0 (cover the entire cycle with no quiet between beats), both are proportionally normalized to fit one cycle.
+**Bloodflow Decay (proportion of cycle)** `0.05-0.95, default 0.45`
+Proportion of each heartbeat cycle the main pulse decays back toward the continuous floor. The dicrotic bump rides on the tail of this decay, centered ~70% of the way through. If Attack + Decay would exceed 1.0 (cover the entire cycle), both are proportionally normalized to fit. Default 0.45 is longer than the standalone "in-ear pulse" character (0.35) — softer pulse character matches the continuous-flow-with-modulation character baby actually hears.
+
+**Continuous floor** (internal, not a slider, set to 0.25 of peak)
+The bloodflow envelope rides on a continuous floor of about a quarter of peak — between heartbeats the bloodflow noise doesn't fall to silence, it drops to floor level, modeling the steady placental whoosh that baby hears as a constant background between maternal pulses. Hardcoded for now; could become a slider in a future version if there's tuning value in adjusting it.
 
 **Bloodflow Stereo Width** `0.0-1.0, default 0.5`
 Slight L/R offset of the bloodflow filter cutoff so the two channels are decorrelated. At 1.0 the L channel cutoff is approximately 8% higher than R; at 0 both channels share the same cutoff.
@@ -582,8 +587,8 @@ Adds a slowly wandering random offset to heart rate. The random target updates a
 
 A lowpass filter applied to the full breath signal after the inhale/exhale synthesis, operating on the mixed breath output.
 
-**Breath Post-filter Hz** `50-4000 Hz, default 2000`
-Cutoff frequency of the post-filter. The default sits well above the per-phase bandpass centers, so it acts as a gentle high-end shaper rather than a hard limit on breath brightness. Lowering it darkens the entire breath layer; below ~1000 Hz it starts to noticeably attenuate the per-phase bandpass output and the breath gets muffled.
+**Breath Post-filter Hz** `50-4000 Hz, default 800`
+Cutoff frequency of the post-filter. The default sits above the per-phase bandpass centers but well below the standalone Breath Generator's 2000 Hz post-filter, contributing additional womb-medium attenuation. Lowering darkens further toward "deeper inside the womb" character; raising lifts toward "less attenuated" character.
 
 **Breath Post-filter Q** `0.5-8.0, default 1.5`
 Resonance of the post-filter. Higher slider values produce lower resonance — this parameter is implemented internally as `1/Q`. Lower slider values produce a more resonant peak at the cutoff frequency.
