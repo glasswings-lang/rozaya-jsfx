@@ -31,9 +31,6 @@
 - [Shepard Scale Generator](#shepard-scale-generator)
 - [Shepard Tone Generator](#shepard-tone-generator)
 
-**Experimental / Test Plugins**
-- [Experimental Drone Synths](#experimental-drone-synths)
-
 ---
 
 # Acknowledgements
@@ -2764,74 +2761,4 @@ Wander shape applied to both sources.
 
 *Shepard Tone Generator is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
-
----
-
-# Experimental Drone Synths
-
-**Designed by Rozaya — Developed with Claude (Anthropic)**
-
----
-
-## Status
-
-The plugins described in this section live in `src/standalone/` and are experimental. They have not been extensively tested and are not held to the same standard as the rest of the suite. They produce sound and are not known to crash, but edge cases, unexpected output levels, and other quirks may remain. They should be loaded at conservative monitoring levels the first time, and any settings worth keeping should be saved as a preset, as these plugins may change or be removed in a future version.
-
-Like the rest of the suite, they are released into the public domain under CC0 and are free to use, study, and modify.
-
----
-
-## Overview
-
-These plugins explore a single question from several directions: how to shape a sound's character by ear, without relying on a visual waveform display. Each plugin is a different approach to that problem, and none is presented as a finished answer — they are kept as a record of the exploration and because they may be useful to others.
-
-All are single-voice mono drones unless noted; a chorus or stereo widener can be chained after them for stereo width. All follow the suite's gentle-by-default convention and load quiet and soft.
-
----
-
-## The Plugins
-
-### Additive Drone
-
-Sixteen sliders, each setting the loudness of one harmonic. A tone is built up from a pure sine by raising individual harmonics. Tested and working as described.
-
-### Harmonic Drone
-
-The same engine as Additive Drone, but pre-loaded to a sawtooth — every harmonic present, each quieter than the last. Harmonics are removed from a rich tone rather than added to a bare one. Tested and working as described.
-
-### Shape Drone
-
-A single Shape slider morphs continuously through sine, triangle, saw, and square. A Symmetry slider tilts the wave; a Brightness slider softens the high end. The saw and square discontinuities are anti-aliased using PolyBLEP. Tested and working as described.
-
-### Point Drone
-
-Eight sliders, each setting the wave's height at one point along the cycle, with the wave drawn as the line segments connecting them. Intended for drawing a waveform by ear, one point at a time. Tested and working as described.
-
-### Feature Drone
-
-A Peak and a Trough are each placed on the wave with a position and a height, and the wave is drawn through them. Suited to triangle-family shapes. Two known quirks: setting both the Peak and Trough heights to the same sign can produce an audible click at the cycle boundary, and the Peak and Trough labels exchange roles if their positions are crossed.
-
-### Feel Drone
-
-Six controls described in perceptual rather than technical terms — Warmth, Brightness, Edge, Hollowness, Body, and Movement — each driving a harmonic recipe internally. One known quirk: Hollowness works by removing even harmonics, so it has no audible effect on its own; another control (Warmth, Body, or Edge) must first place energy in those harmonics. On the default patch this is not an issue.
-
-### Mode Drone
-
-All four approaches above — Feel, Shape, Points, and Additive — combined in one plugin and selected with a Mode control. The inactive modes' sliders are hidden from the REAPER UI but remain available in OSARA's parameter list. It inherits Feel mode's Hollowness behavior and is the most complex plugin of the set.
-
-### Harmonic Sculptor
-
-The most experimental and least tested plugin in the suite. A base wave is chosen, the plugin analyses it into 64 harmonics and loads them, and any harmonic can then be adjusted by ear. Selection uses a two-slider editor (described below), and the selector carries musical-interval labels. Output loudness is normalized automatically. This plugin is unfinished and unverified, and should be test-loaded before being relied on. A companion feature to announce the full harmonic state on a key press was planned but not built. The interval labels become approximate above roughly the 32nd harmonic.
-
----
-
-## The Two-Slider Harmonic Editor (Harmonic Sculptor)
-
-To avoid presenting 64 separate sliders, Harmonic Sculptor uses a selector-and-editor pair: one slider selects which harmonic is being edited, and a second sets its level. Moving the Harmonic Select slider loads the selected harmonic's stored level into the Harmonic Level slider so that it displays correctly.
-
-There is an accessibility limitation that screen-reader users should be aware of. The Harmonic Level slider always announces as "Harmonic Level"; it does not announce which harmonic is being edited, because JSFX cannot change a slider's spoken name at runtime. The Harmonic Select slider does carry interval labels (for example, "H5 +maj3rd (flat)") and announces the musical interval as it moves, but the selected harmonic must be kept in mind when switching to the Level slider. This division is the central unresolved usability problem with the plugin and is the reason it is marked most experimental. A full solution would likely require a VST, which can supply custom spoken text to a screen reader in a way that JSFX cannot.
-
----
-
-*The Experimental Drone Synths are part of the Rozaya JSFX plugin suite. They are not production-tested.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
