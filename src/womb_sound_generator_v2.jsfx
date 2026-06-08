@@ -205,6 +205,13 @@ ex_f_l = min(2.0 * sin($pi * 280.0 * srate_inv), 0.98);
 ex_f_r = min(2.0 * sin($pi * 260.0 * srate_inv), 0.98);
 hp_f   = min(2.0 * sin($pi * 120.0 * srate_inv), 0.98);
 breath_lp_q = 0.6;
+// Breath floor: the breath envelope never drops to zero, only to
+// this fraction of peak. Pauses (top, bottom) and the fade-in /
+// fade-out tails all sit at floor level rather than silence, so
+// the cycle's endpoints have a continuous quiet body-background
+// instead of a total gap. Models the aggregate continuous noise
+// of mom's body that baby always hears (organ activity, etc.).
+br_floor = 0.15;
 
 inhale_len = floor(srate * 4.0);
 top_len    = floor(srate * 0.3);
@@ -816,38 +823,53 @@ pr_br_resting ? (
 
 breath_phase_pos = breath_state_pos / max(breath_state_len - 1, 1);
 
-(breath_state == 1 || breath_state == 3) ? (
-  br_l = 0; br_r = 0;
+// Always run BOTH inhale and exhale filters every sample. This
+// keeps both filters warm so pauses can output the most-recently-
+// active filter's character at floor level without producing a
+// "cold filter" click on state transitions. Small CPU overhead;
+// significantly better continuity.
+hp_lp_l += hp_f * (n3 - hp_lp_l);
+br_hp_l = n3 - hp_lp_l;
+in_lp_l += in_f_l * in_bp_l;
+in_hp2_l = br_hp_l - in_lp_l - breath_lp_q * in_bp_l;
+in_bp_l += in_f_l * in_hp2_l;
+ex_lp_l += ex_f_l * ex_bp_l;
+ex_hp2_l = br_hp_l - ex_lp_l - breath_lp_q * ex_bp_l;
+ex_bp_l += ex_f_l * ex_hp2_l;
+hp_lp_r += hp_f * (n4 - hp_lp_r);
+br_hp_r = n4 - hp_lp_r;
+in_lp_r += in_f_r * in_bp_r;
+in_hp2_r = br_hp_r - in_lp_r - breath_lp_q * in_bp_r;
+in_bp_r += in_f_r * in_hp2_r;
+ex_lp_r += ex_f_r * ex_bp_r;
+ex_hp2_r = br_hp_r - ex_lp_r - breath_lp_q * ex_bp_r;
+ex_bp_r += ex_f_r * ex_hp2_r;
+
+// State-driven output. Active phases lift the envelope from
+// br_floor up to peak and back; pauses sit at br_floor with the
+// previous active phase's filter character (top pause inherits
+// inhale, bottom pause inherits exhale) so the floor character
+// matches what just played.
+(breath_state == 0) ? (
+  // Inhale active: in_bp character, envelope rides on floor.
+  br_env_raw = apply_fade(breath_phase_pos, slider23, slider24, slider27);
+  br_env     = br_floor + (1.0 - br_floor) * br_env_raw;
+  br_l = in_bp_l * br_env * 1.5;
+  br_r = in_bp_r * br_env * 1.5;
+) : (breath_state == 1) ? (
+  // Top pause: continue inhale character at floor.
+  br_l = in_bp_l * br_floor * 1.5;
+  br_r = in_bp_r * br_floor * 1.5;
+) : (breath_state == 2) ? (
+  // Exhale active: ex_bp character.
+  br_env_raw = apply_fade(breath_phase_pos, slider25, slider26, slider27);
+  br_env     = br_floor + (1.0 - br_floor) * br_env_raw;
+  br_l = ex_bp_l * br_env * 1.5;
+  br_r = ex_bp_r * br_env * 1.5;
 ) : (
-  breath_state == 0 ? (
-    br_env = apply_fade(breath_phase_pos, slider23, slider24, slider27);
-    hp_lp_l += hp_f * (n3 - hp_lp_l);
-    br_hp_l = n3 - hp_lp_l;
-    in_lp_l += in_f_l * in_bp_l;
-    in_hp2_l = br_hp_l - in_lp_l - breath_lp_q * in_bp_l;
-    in_bp_l += in_f_l * in_hp2_l;
-    hp_lp_r += hp_f * (n4 - hp_lp_r);
-    br_hp_r = n4 - hp_lp_r;
-    in_lp_r += in_f_r * in_bp_r;
-    in_hp2_r = br_hp_r - in_lp_r - breath_lp_q * in_bp_r;
-    in_bp_r += in_f_r * in_hp2_r;
-    br_l = in_bp_l * br_env * 1.5;
-    br_r = in_bp_r * br_env * 1.5;
-  ) : (
-    br_env = apply_fade(breath_phase_pos, slider25, slider26, slider27);
-    hp_lp_l += hp_f * (n3 - hp_lp_l);
-    br_hp_l = n3 - hp_lp_l;
-    ex_lp_l += ex_f_l * ex_bp_l;
-    ex_hp2_l = br_hp_l - ex_lp_l - breath_lp_q * ex_bp_l;
-    ex_bp_l += ex_f_l * ex_hp2_l;
-    hp_lp_r += hp_f * (n4 - hp_lp_r);
-    br_hp_r = n4 - hp_lp_r;
-    ex_lp_r += ex_f_r * ex_bp_r;
-    ex_hp2_r = br_hp_r - ex_lp_r - breath_lp_q * ex_bp_r;
-    ex_bp_r += ex_f_r * ex_hp2_r;
-    br_l = ex_bp_l * br_env * 1.5;
-    br_r = ex_bp_r * br_env * 1.5;
-  );
+  // Bottom pause (state 3): continue exhale character at floor.
+  br_l = ex_bp_l * br_floor * 1.5;
+  br_r = ex_bp_r * br_floor * 1.5;
 );
 br_l *= slider14; br_r *= slider14;
 
