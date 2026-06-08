@@ -423,10 +423,12 @@ The heartbeat engine produces two events per cycle — S1 ("lub") and S2 ("dub")
 The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable lowpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing.
 
 ### Bloodflow
-The bloodflow engine produces a continuously sweeping filtered noise texture. The filter cutoff is phase-locked to the heartbeat cycle — at each cycle start it sweeps from a low resting frequency up to a high peak frequency (simulating the pressure wave of a heartbeat moving through vessels), holds briefly, then returns to the resting frequency. The sweep tracks heart rate automatically.
+The bloodflow engine produces amplitude-modulated filtered noise locked to the heartbeat phase. The noise filter cutoff is fixed; what pulses per beat is loudness. The per-cycle amplitude envelope is anatomically shaped — sharp cosine upstroke during systole, exponential decay through diastole, with a small secondary bump partway through the decay (the dicrotic notch, the audible reflection from aortic-valve closure). Quiet between beats. The envelope tracks heart rate automatically since it shares hb_phase with the heartbeat engine.
+
+This is a 2026-06-08 rebuild of the bloodflow layer. The earlier design swept the filter cutoff per beat (low → high → low), which produced a wah-pedal character rather than a real pulse. Amplitude modulation with a cardiac pressure envelope is acoustically what blood actually sounds like in body cavities — in the ear when lying down, against a stethoscope, in doppler ultrasound.
 
 ### HRV
-Heart rate variability modulates the heartbeat cycle length in real time using two additive layers. The breath-coupled layer derives its timing from the actual breath engine state — heart rate rises during inhale and falls during exhale. The random layer adds a slow, independently wandering offset. Both affect the heartbeat timing and the bloodflow sweep simultaneously, since the bloodflow LFO is tied to the heartbeat phase.
+Heart rate variability modulates the heartbeat cycle length in real time using two additive layers. The breath-coupled layer derives its timing from the actual breath engine state — heart rate rises during inhale and falls during exhale. The random layer adds a slow, independently wandering offset. Both affect the heartbeat timing and the bloodflow pulse rate simultaneously, since the bloodflow envelope is locked to the heartbeat phase.
 
 ---
 
@@ -435,7 +437,7 @@ Heart rate variability modulates the heartbeat cycle length in real time using t
 ### Global
 
 **BPM** `20-200, default 70`
-Base heart rate in beats per minute. Affects both heartbeat timing and the bloodflow sweep, which is locked to it. Actual BPM fluctuates around this value when HRV is active.
+Base heart rate in beats per minute. Affects both heartbeat timing and the bloodflow pulse rate, which is locked to it. Actual BPM fluctuates around this value when HRV is active.
 
 **Master Stereo Flip** `Normal / Flipped`
 Swaps the left and right output channels. Useful for adjusting anatomical orientation when using headphones — the prominent (near) heartbeat voice is on the left by default. Flipping reverses this for the full mix without changing internal routing.
@@ -535,34 +537,34 @@ Spreads the inhale and exhale filter frequencies between L and R. At 0.0 both ch
 ### Bloodflow
 
 **Bloodflow Volume** `0.0-1.0, default 0.5`
-Overall output level for the bloodflow signal.
+Overall output level for the bloodflow signal. The internal gain factor is higher than in the pre-2026-06-08 design to compensate for the amplitude-modulated envelope having lower RMS than the old continuous-filter shape; the same Volume slider value should land at a similar perceived loudness to before, with more pronounced per-beat pulsing.
 
 **Bloodflow Solo** `Off / Solo`
 Mutes Heartbeat and Breath.
 
-**Bloodflow Low Frequency Hz** `20-2000 Hz, default 20`
-Filter cutoff at the resting state between heartbeats — the floor of the sweep.
+**Bloodflow Filter Hz** `20-2000 Hz, default 250`
+Fixed center frequency of the bloodflow noise filter. Low values (under ~150 Hz) produce the deep "throb in the ears" character of lying-down pulsation; mid-range values (~250-400 Hz) produce more arterial-pulse character. The filter does not sweep — per-beat shaping is delivered by amplitude modulation, not frequency modulation.
 
-**Bloodflow High Frequency Hz** `20-4000 Hz, default 80`
-Filter cutoff at the peak of the sweep, immediately after each heartbeat. If set lower than the Low Frequency value, the two are automatically swapped.
+**Bloodflow Dicrotic Level** `0.0-1.0, default 0.3`
+Strength of the dicrotic notch — the small secondary pulse that follows the main systolic pulse, anatomically from the aortic-valve closing and the pressure wave reflecting back through the arterial tree. At 0 the pulse is a single thump; at 1.0 the secondary pulse is as strong as the main pulse (overly prominent — physiological dicrotic is typically around 0.2–0.4 of main amplitude).
 
 **Bloodflow Resonance** `0.0-0.95, default 0.2`
-Resonance of the sweeping bloodflow filter. Higher values make the sweep more tonal and whistling. Values above 0.7 can produce self-oscillation artifacts.
+Filter resonance. Higher values make the filter peak more tonal — the noise gets a more whistly, water-rushing character around the filter Hz. Values above 0.7 can produce self-oscillation artifacts.
 
-**Bloodflow Fade In** `0.0-1.0, default 0.15`
-Proportion of each heartbeat cycle spent sweeping up from low to high frequency. Shorter values produce a sharper, more percussive onset.
+**Bloodflow Attack (proportion of cycle)** `0.005-0.5, default 0.05`
+Proportion of each heartbeat cycle the main pulse takes to rise from quiet to peak. Small values (~0.03–0.08) match a sharp systolic upstroke and produce a percussive pulse; larger values soften the onset into something more whoosh-like and less impactful.
 
-**Bloodflow Fade Out** `0.0-1.0, default 0.15`
-Proportion of each heartbeat cycle spent returning from high to low frequency. If Fade In + Fade Out exceed 1.0, both are proportionally normalized.
+**Bloodflow Decay (proportion of cycle)** `0.05-0.95, default 0.35`
+Proportion of each heartbeat cycle the main pulse decays back toward quiet. The dicrotic bump rides on the tail of this decay, centered ~70% of the way through. If Attack + Decay would exceed 1.0 (cover the entire cycle with no quiet between beats), both are proportionally normalized to fit one cycle.
 
 **Bloodflow Stereo Width** `0.0-1.0, default 0.5`
-Spreads the bloodflow filter cutoff between L and R. At 1.0 the L channel cutoff is approximately 8% higher than R at any given point in the sweep.
+Slight L/R offset of the bloodflow filter cutoff so the two channels are decorrelated. At 1.0 the L channel cutoff is approximately 8% higher than R; at 0 both channels share the same cutoff.
 
 ---
 
 ### Heart Rate Variability
 
-Both HRV parameters operate additively. They affect the heartbeat timing and, because the bloodflow LFO is phase-locked to the heartbeat, the bloodflow sweep rate as well.
+Both HRV parameters operate additively. They affect the heartbeat timing and, because the bloodflow envelope is phase-locked to the heartbeat, the bloodflow pulse rate as well.
 
 **Breath HRV Depth** `0.0-0.25, default 0.08`
 Depth of breath-coupled heart rate modulation. The HRV modulation in this plugin is derived from the actual breath engine state — not a separate oscillator — so the timing is governed by the Inhale/Exhale/Pause duration settings. Heart rate increases during inhale and decreases during exhale. A value of 0.08 produces approximately ±8% variation around the base BPM.
@@ -586,7 +588,7 @@ Resonance of the post-filter. Higher slider values produce lower resonance — t
 
 **Start Delay (beats)** `0–1000, default 0`
 
-Silent for N heartbeats after playback starts, then the full womb soundscape (heartbeat, breath, bloodflow) begins normally. Beats are counted at the Heartbeat BPM — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. All internal state (heartbeat cycle phase, breath state machine, bloodflow LFO, post-filter buffers) stays frozen during the delay so everything begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
+Silent for N heartbeats after playback starts, then the full womb soundscape (heartbeat, breath, bloodflow) begins normally. Beats are counted at the Heartbeat BPM — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. All internal state (heartbeat cycle phase, breath state machine, bloodflow filter, post-filter buffers) stays frozen during the delay so everything begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
 ### Play / Rest Gating (v2.1) — independent per layer
 
@@ -651,7 +653,7 @@ Wander shape applied to both sources.
 
 ## Usage Notes
 
-- **Bloodflow is phase-locked to the heartbeat.** Changing BPM immediately changes the bloodflow sweep rate. The two cannot be decoupled within this plugin.
+- **Bloodflow is phase-locked to the heartbeat.** Changing BPM immediately changes the bloodflow pulse rate. The two cannot be decoupled within this plugin.
 - **Breath HRV is coupled to the breath engine state.** The HRV timing is determined by the Inhale/Exhale/Pause duration settings, not by a separate rate control. Breath and HRV are genuinely synchronized.
 - **The Breath Post-filter Q slider is inverted** relative to conventional filter labeling — higher slider values produce lower resonance.
 - **Solo is exclusive.** Any active solo mutes the other two sources. Solo sliders are independent booleans and do not stack.
