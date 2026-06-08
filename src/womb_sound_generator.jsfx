@@ -28,9 +28,9 @@ slider16:4.0<0.5,20.0,0.1>Inhale Duration sec
 slider17:0.3<0.0,5.0,0.1>Top Pause sec
 slider18:4.0<0.5,20.0,0.1>Exhale Duration sec
 slider19:0.3<0.0,5.0,0.1>Bottom Pause sec
-slider20:300<50,2000,1>Inhale Frequency Hz
-slider21:180<50,2000,1>Exhale Frequency Hz
-slider22:150<20,800,1>Breath High-pass Hz
+slider20:800<50,2000,1>Inhale Frequency Hz
+slider21:600<50,2000,1>Exhale Frequency Hz
+slider22:200<20,800,1>Breath High-pass Hz
 slider23:0.3<0.0,1.0,0.01>Inhale Fade In
 slider24:0.2<0.0,1.0,0.01>Inhale Fade Out
 slider25:0.2<0.0,1.0,0.01>Exhale Fade In
@@ -53,7 +53,7 @@ slider37:0.08<0.0,0.25,0.01>Breath HRV Depth
 slider38:0.02<0.0,0.08,0.005>Random HRV Depth
 
 // --- BREATH POST FILTER ---
-slider39:600<50,4000,1>Breath Post-filter Hz
+slider39:2000<50,4000,1>Breath Post-filter Hz
 slider40:1.5<0.5,8.0,0.1>Breath Post-filter Q
 
 // Sit silent for N heartbeats after playback starts, then begin
@@ -163,14 +163,14 @@ hp_lp_l = 0; hp_lp_r = 0;
 
 bpf_low_l = 0; bpf_band_l = 0;
 bpf_low_r = 0; bpf_band_r = 0;
-bpf_f = min(2.0 * sin($pi * 600.0 * srate_inv), 0.98);
+bpf_f = min(2.0 * sin($pi * 2000.0 * srate_inv), 0.98);
 bpf_q = 0.5;
 
-in_f_l = min(2.0 * sin($pi * 300.0 * srate_inv), 0.98);
-in_f_r = min(2.0 * sin($pi * 285.0 * srate_inv), 0.98);
-ex_f_l = min(2.0 * sin($pi * 180.0 * srate_inv), 0.98);
-ex_f_r = min(2.0 * sin($pi * 168.0 * srate_inv), 0.98);
-hp_f   = min(2.0 * sin($pi * 150.0 * srate_inv), 0.98);
+in_f_l = min(2.0 * sin($pi * 800.0 * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * 760.0 * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * 600.0 * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * 560.0 * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * 200.0 * srate_inv), 0.98);
 breath_lp_q = 0.6;
 
 inhale_len = floor(srate * 4.0);
@@ -720,8 +720,8 @@ breath_phase_pos = breath_state_pos / max(breath_state_len - 1, 1);
     in_lp_r += in_f_r * in_bp_r;
     in_hp2_r = br_hp_r - in_lp_r - breath_lp_q * in_bp_r;
     in_bp_r += in_f_r * in_hp2_r;
-    br_l = in_lp_l * br_env * 1.5;
-    br_r = in_lp_r * br_env * 1.5;
+    br_l = in_bp_l * br_env * 1.5;
+    br_r = in_bp_r * br_env * 1.5;
   ) : (
     br_env = apply_fade(breath_phase_pos, slider25, slider26, slider27);
     hp_lp_l += hp_f * (n3 - hp_lp_l);
@@ -734,8 +734,8 @@ breath_phase_pos = breath_state_pos / max(breath_state_len - 1, 1);
     ex_lp_r += ex_f_r * ex_bp_r;
     ex_hp2_r = br_hp_r - ex_lp_r - breath_lp_q * ex_bp_r;
     ex_bp_r += ex_f_r * ex_hp2_r;
-    br_l = ex_lp_l * br_env * 1.5;
-    br_r = ex_lp_r * br_env * 1.5;
+    br_l = ex_bp_l * br_env * 1.5;
+    br_r = ex_bp_r * br_env * 1.5;
   );
 );
 br_l *= slider14; br_r *= slider14;
