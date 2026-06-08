@@ -1,0 +1,664 @@
+desc: Polyrhythm Tremolo
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Effect-only sibling to Binaural Polyrhythm Oscillator (polyrhythm_phase).
+// Takes audio input and applies the same polyrhythmic tremolo + pan
+// modulation that polyrhythm_phase applies to its own bundled oscillator.
+//
+// You chain it after any source — Rozaya's own standalone synths, the
+// other JSFX oscillators in this suite, even external samples — and the
+// polyrhythm treatment runs on whatever audio is flowing through. This
+// decouples the "rhythmic gating + spatial placement" from the "what
+// generates the tone" so the source side becomes pluggable.
+//
+// Compared to polyrhythm_phase:
+//   - No oscillator section (you bring your own audio).
+//   - No binaural beat offset (deferred — adding a quality pitch
+//     shifter is its own project; revisit when it's worth it).
+//   - No per-voice semitone offsets (would require pitch shifting the
+//     input; same deferral as binaural).
+//   - No character chain (Tone/Edge/Movement/Body) — chain a dedicated
+//     EQ or saturator after this if you want them.
+//   - Everything ELSE that makes polyrhythm_phase a polyrhythm tool
+//     stays: 8 voices, drift mode + independent mode, per-voice rate
+//     and phase, pan modes, direction & reverse, start delay, play/rest
+//     gating, speed ramp, musical/slow drift sliders.
+//
+// Stereo behavior:
+//   - When Pan is OFF, the input's stereo content is preserved. Each
+//     voice gain-modulates the input as-is and sums into the output.
+//   - When Pan is ON, each voice mono-collapses the input and places
+//     it at the pan position. Input stereo content is sacrificed for
+//     spatial polyrhythm placement — that's the explicit trade.
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+// ===== GLOBAL CONTROLS =====
+slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
+slider2:0<0,2,1{BPM,Seconds,Hz}>Rate Mode
+slider3:60<0.001,1000,0.001>Rate Value (Drift only)
+slider4:100<0,100,0.1>On Duration % of Cycle
+slider5:0<0,100,0.1>Attack % of Cycle
+slider6:100<0,100,0.1>Release % of Cycle
+slider7:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
+slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
+slider9:-6<-60,0,0.1>Depth dB
+
+// ===== PAN =====
+slider10:0<0,1,1{Off,On}>Pan Enabled
+slider11:0<0,3,1{Tremolo,Increment,Spread,Spread Reversed}>Pan Mode
+slider12:100<0,100,0.1>Pan Spread %
+slider13:60<0.001,1000,0.001>Pan Base Rate
+slider14:0<-1000,1000,0.001>Pan Increment per Voice
+
+// ===== VOICE 1 =====
+// Active toggle bypasses voice computation entirely (zero CPU cost
+// when Off). Phase Offset unit follows Rate Mode: BPM = beats,
+// Seconds = seconds, Hz = cycles. Values wrap freely.
+slider15:-6<-60,6,0.1>V1 Gain dB
+slider16:0<-1000,1000,0.001>V1 Drift / Rate
+slider17:0<-1000,1000,0.001>V1 Phase Offset
+slider18:1<0,1,1{Off,On}>V1 Active (Off = no CPU cost)
+
+// ===== VOICE 2 =====
+slider19:-60<-60,6,0.1>V2 Gain dB
+slider20:0<-1000,1000,0.001>V2 Drift / Rate
+slider21:0<-1000,1000,0.001>V2 Phase Offset
+slider22:1<0,1,1{Off,On}>V2 Active (Off = no CPU cost)
+
+// ===== VOICE 3 =====
+slider23:-60<-60,6,0.1>V3 Gain dB
+slider24:0<-1000,1000,0.001>V3 Drift / Rate
+slider25:0<-1000,1000,0.001>V3 Phase Offset
+slider26:0<0,1,1{Off,On}>V3 Active (Off = no CPU cost)
+
+// ===== VOICE 4 =====
+slider27:-60<-60,6,0.1>V4 Gain dB
+slider28:0<-1000,1000,0.001>V4 Drift / Rate
+slider29:0<-1000,1000,0.001>V4 Phase Offset
+slider30:0<0,1,1{Off,On}>V4 Active (Off = no CPU cost)
+
+// ===== VOICE 5 =====
+slider31:-60<-60,6,0.1>V5 Gain dB
+slider32:0<-1000,1000,0.001>V5 Drift / Rate
+slider33:0<-1000,1000,0.001>V5 Phase Offset
+slider34:0<0,1,1{Off,On}>V5 Active (Off = no CPU cost)
+
+// ===== VOICE 6 =====
+slider35:-60<-60,6,0.1>V6 Gain dB
+slider36:0<-1000,1000,0.001>V6 Drift / Rate
+slider37:0<-1000,1000,0.001>V6 Phase Offset
+slider38:0<0,1,1{Off,On}>V6 Active (Off = no CPU cost)
+
+// ===== VOICE 7 =====
+slider39:-60<-60,6,0.1>V7 Gain dB
+slider40:0<-1000,1000,0.001>V7 Drift / Rate
+slider41:0<-1000,1000,0.001>V7 Phase Offset
+slider42:0<0,1,1{Off,On}>V7 Active (Off = no CPU cost)
+
+// ===== VOICE 8 =====
+slider43:-60<-60,6,0.1>V8 Gain dB
+slider44:0<-1000,1000,0.001>V8 Drift / Rate
+slider45:0<-1000,1000,0.001>V8 Phase Offset
+slider46:0<0,1,1{Off,On}>V8 Active (Off = no CPU cost)
+
+// ===== DIRECTION & REVERSE =====
+// Same semantics as polyrhythm_phase. Mirror just drift (not full slot
+// permutation) in single-layer reverse modes; in Both modes the reverse
+// layer's slots 8-15 hold a copy of slots 0-7 with optionally-mirrored
+// drift values. Note: without per-voice pitch in this plugin, "permute"
+// reorders which voice fires at which cadence — but since all voices
+// carry the same input audio, the permute modes mostly differ from
+// Forward via the phase offsets and pan positions that travel with
+// each slot.
+slider47:0<0,4,1{Forward,Reverse — permute,Reverse — time,Both — permute,Both — time}>Direction & Reverse
+
+slider48:0<-1000,1000,0.001>Reverse Drift Offset
+
+// ===== START DELAY =====
+slider49:0<0,1000,0.001>Start Delay
+
+// ===== PLAY / REST GATING =====
+slider50:0<0,1000,1>Play for (cycles)
+slider51:0<0,1000,1>Rest for (cycles)
+
+// ===== SPEED RAMP =====
+slider52:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+slider53:0<0,60,0.1>Speed ramp duration (minutes)
+slider54:0<0,1,1{Off,On}>Speed ramp engage
+
+// ===== DRIFT =====
+slider55:0<0,20,0.1>Musical drift: Up by
+slider56:0<0,20,0.1>Musical drift: Down by
+slider57:8<1,1000,1>Musical drift: Period (cycles)
+slider58:0<0,20,0.1>Slow drift: Up by
+slider59:0<0,20,0.1>Slow drift: Down by
+slider60:5<0.1,60,0.1>Slow drift: Period (minutes)
+slider61:0<0,2,1{Sine,Triangle,Random}>Drift shape
+
+
+@init
+// Conventional REAPER behavior: @init runs on plugin load AND on every
+// transport play. That re-zeros the slot memory below, so stop/play
+// gives a clean restart — voice phases reset, Start Delay re-arms,
+// per-voice Play/Rest counters reset. No `ext_noinit = 1` here.
+
+// Memory layout — 16 slots each. Slots 0-7 are the forward layer;
+// slots 8-15 are the reverse layer (used in Both modes only, stay
+// zeroed otherwise).
+trem_phase       = 0;
+v_gain_smooth    = 16;   // smoothed per-voice tremolo gain (the result of LFO + smoother)
+v_trem_freq      = 32;
+v_active         = 48;
+v_dr             = 64;   // Drift offset (Drift mode) or rate (Independent mode), per voice
+v_gain           = 80;   // Per-voice gain — slider value converted dB→linear
+v_phase_off      = 96;
+v_phase_off_last = 112;
+pan_phase        = 128;
+pan_smooth       = 144;
+v_pan_freq       = 160;
+v_pan_static     = 176;
+v_resting        = 192;
+v_pr_cycle       = 208;
+
+// Initialize 16 slots.
+i = 0;
+loop(16,
+  trem_phase[i]       = 0;
+  v_gain_smooth[i]    = 0;
+  pan_smooth[i]       = 0;
+  v_gain[i]           = 1;
+  v_phase_off[i]      = 0;
+  v_phase_off_last[i] = 0;
+  v_resting[i]        = 0;
+  v_pr_cycle[i]       = 0;
+  i += 1;
+);
+
+// 3 ms one-pole smoother coefficient — prevents clicks at attack/release
+// edges and at the voice-state transitions (rest→play, play→rest).
+smooth = exp(-1 / (srate * 0.003));
+
+// Start delay counter — counts up from 0 each play start until it
+// reaches start_delay_sec, then the voice processing runs normally.
+start_delay_elapsed = 0;
+start_delay_sec     = 0;
+
+// Play/Rest gating state.
+play_for_cycles = 0;
+rest_for_cycles = 0;
+
+// Speed ramp state.
+speed_ramp_engaged_last = 0;
+speed_scale_current     = 1.0;
+speed_scale_start       = 1.0;
+speed_ramp_t            = 0.0;
+
+// Drift state — two independent phase accumulators (musical = scales
+// with Speed Ramp, slow = wall-clock).
+musical_drift_phase       = 0;
+slow_drift_phase          = 0;
+musical_drift_prev_target = 0;
+musical_drift_curr_target = 0;
+slow_drift_prev_target    = 0;
+slow_drift_curr_target    = 0;
+
+function apply_curve(t, shape) (
+  shape == 0 ? t :
+  shape == 1 ? (0.5 - 0.5 * cos(t * $pi)) :
+  shape == 2 ? (log(1 + 9*t) / log(10)) :
+               ((pow(10, t) - 1) / 9)
+);
+
+// LFO envelope used for tremolo. Identical to polyrhythm_phase's
+// calc_lfo — same Attack/Release/On Duration semantics, same curve
+// shapes. Returns 0..1.
+function calc_lfo(ph, on_frac, att_frac, rel_frac, att_shape, rel_shape)
+local(aw, rw, hold_w, re_start, t, result, total) (
+  aw = att_frac;
+  rw = rel_frac;
+  aw + rw > on_frac ? (
+    total = aw + rw;
+    aw = aw / total * on_frac;
+    rw = rw / total * on_frac;
+  );
+  hold_w   = on_frac - aw - rw;
+  re_start = aw + hold_w;
+  ph < aw ? (
+    aw > 0.0001 ? (
+      t = ph / aw;
+      result = apply_curve(t, att_shape);
+    ) : (result = 1);
+  ) :
+  ph < re_start ? (
+    result = 1;
+  ) :
+  ph < on_frac ? (
+    rw > 0.0001 ? (
+      t = 1 - (ph - re_start) / rw;
+      result = apply_curve(t, rel_shape);
+    ) : (result = 0);
+  ) : (
+    result = 0;
+  );
+  result
+);
+
+function rate_to_hz(raw_rate, rmode) (
+  rmode == 0 ? max(raw_rate, 0.001) / 60 :
+  rmode == 1 ? 1 / max(raw_rate, 0.001) :
+               max(raw_rate, 0.001)
+);
+
+
+@slider
+
+trem_mode     = slider1;
+rate_mode     = slider2;
+rate_val      = slider3;
+on_dur_pct    = slider4;
+att_pct       = slider5;
+rel_pct       = slider6;
+att_shape     = slider7;
+rel_shape     = slider8;
+depth_db      = slider9;
+pan_enabled   = slider10;
+pan_mode      = slider11;
+pan_spread    = slider12 / 100.0;
+pan_base_rate = slider13;
+pan_increment = slider14;
+
+v_gain[0] = slider15; v_dr[0] = slider16; v_phase_off[0] = slider17; v_active[0] = slider18;
+v_gain[1] = slider19; v_dr[1] = slider20; v_phase_off[1] = slider21; v_active[1] = slider22;
+v_gain[2] = slider23; v_dr[2] = slider24; v_phase_off[2] = slider25; v_active[2] = slider26;
+v_gain[3] = slider27; v_dr[3] = slider28; v_phase_off[3] = slider29; v_active[3] = slider30;
+v_gain[4] = slider31; v_dr[4] = slider32; v_phase_off[4] = slider33; v_active[4] = slider34;
+v_gain[5] = slider35; v_dr[5] = slider36; v_phase_off[5] = slider37; v_active[5] = slider38;
+v_gain[6] = slider39; v_dr[6] = slider40; v_phase_off[6] = slider41; v_active[6] = slider42;
+v_gain[7] = slider43; v_dr[7] = slider44; v_phase_off[7] = slider45; v_active[7] = slider46;
+
+direction_reverse     = slider47;
+reverse_drift_offset  = slider48;
+slot0_7_permute       = (direction_reverse == 1);
+slot8_15_permute      = (direction_reverse == 3);
+slot0_7_reverse_time  = (direction_reverse == 2);
+slot8_15_reverse_time = (direction_reverse == 4);
+is_both               = (direction_reverse == 3 || direction_reverse == 4);
+n_voices              = is_both ? 16 : 8;
+
+// Start delay — convert user-facing units to seconds based on Rate Mode.
+start_delay_units = slider49;
+rate_mode == 0 ? start_delay_sec = start_delay_units * 60 / max(rate_val, 0.001) :
+rate_mode == 1 ? start_delay_sec = start_delay_units :
+                 start_delay_sec = start_delay_units / max(rate_val, 0.001);
+
+play_for_cycles = slider50;
+rest_for_cycles = slider51;
+
+// Speed ramp engage-edge.
+slider54 && !speed_ramp_engaged_last ? (
+  speed_scale_start = speed_scale_current;
+  speed_ramp_t      = 0.0;
+);
+speed_ramp_engaged_last = slider54;
+
+// Reverse — permute (single layer): mirror per-voice drift V1↔V8,
+// V2↔V7, V3↔V6, V4↔V5.
+slot0_7_permute ? (
+  i = 0;
+  loop(4,
+    j = 7 - i;
+    tmp = v_dr[i]; v_dr[i] = v_dr[j]; v_dr[j] = tmp;
+    i += 1;
+  );
+);
+
+// Both modes: copy slots 0-7 to slots 8-15.
+is_both ? (
+  i = 0;
+  loop(8,
+    v_gain[i + 8]      = v_gain[i];
+    v_dr[i + 8]        = v_dr[i];
+    v_phase_off[i + 8] = v_phase_off[i];
+    v_active[i + 8]    = v_active[i];
+    i += 1;
+  );
+  // Both — permute: mirror drift within reverse layer.
+  slot8_15_permute ? (
+    i = 0;
+    loop(4,
+      k = 8 + i;
+      j = 15 - i;
+      tmp = v_dr[k]; v_dr[k] = v_dr[j]; v_dr[j] = tmp;
+      i += 1;
+    );
+  );
+  // Shift every drift value in reverse layer by the offset.
+  reverse_drift_offset != 0 ? (
+    i = 0;
+    loop(8,
+      v_dr[i + 8] += reverse_drift_offset;
+      i += 1;
+    );
+  );
+);
+
+// Show/hide context-dependent sliders.
+slider_show(slider3, trem_mode == 0);
+slider_show(slider48, is_both);
+slider_show(slider11, pan_enabled);
+slider_show(slider12, pan_enabled);
+slider_show(slider13, pan_enabled && pan_mode == 1);
+slider_show(slider14, pan_enabled && pan_mode == 1);
+
+// Depth dB → linear scaling for the tremolo envelope.
+//   At depth_db = 0  → amount = 1, sc = 0  → gain = 1 (no tremolo).
+//   At depth_db = -6 → amount = 0.5, sc = 0.5*amount → modulates between 0.5 and 1.
+//   At depth_db = -60 → amount ≈ 0, sc ≈ 0 → modulates between ~0 and ~1 (full tremolo).
+amount = pow(2, depth_db / 6);
+sc     = 0.5 * amount;
+amount = 1 - amount;
+
+// Per-voice tremolo frequency + linear gain.
+i = 0;
+loop(n_voices,
+  trem_mode == 0 ? (
+    v_trem_freq[i] = rate_to_hz(rate_val + v_dr[i], rate_mode);
+  ) : (
+    v_trem_freq[i] = rate_to_hz(v_dr[i], rate_mode);
+  );
+  v_gain[i] = pow(10, v_gain[i] / 20.0);
+  i += 1;
+);
+
+// Static pan positions for Spread / Spread Reversed modes.
+total_active = 0;
+i = 0; loop(n_voices, v_active[i] ? total_active += 1; i += 1;);
+
+pan_mode >= 2 ? (
+  rank = 0;
+  i = 0;
+  loop(n_voices,
+    v_active[i] ? (
+      total_active > 1 ? (
+        pos = -1.0 + 2.0 * rank / (total_active - 1);
+      ) : (
+        pos = 0;
+      );
+      pan_mode == 3 ? pos = -pos;
+      v_pan_static[i] = pos;
+      rank += 1;
+    ) : (
+      v_pan_static[i] = 0;
+    );
+    i += 1;
+  );
+);
+
+// Pan frequencies — Increment mode uses Pan Base Rate as foundation.
+i = 0;
+loop(n_voices,
+  pan_mode == 0 ? (
+    v_pan_freq[i] = v_trem_freq[i];
+  ) : (
+    v_pan_freq[i] = rate_to_hz(pan_base_rate + pan_increment * i, rate_mode);
+  );
+  i += 1;
+);
+
+// Envelope shape fractions — passed as-is into calc_lfo, which scales
+// them down internally if att+rel > on_dur. re_start is the trem_phase
+// value at which the release segment begins (needed by the voice loop
+// to detect "this sample is in the release portion of the last cycle
+// before rest" for the Depth-floor-cancel branch).
+on_frac  = on_dur_pct / 100.0;
+att_frac = att_pct    / 100.0;
+rel_frac = rel_pct    / 100.0;
+aw_eff   = att_frac;
+rw_eff   = rel_frac;
+aw_eff + rw_eff > on_frac ? (
+  rt_total = aw_eff + rw_eff;
+  aw_eff   = aw_eff / rt_total * on_frac;
+  rw_eff   = rw_eff / rt_total * on_frac;
+);
+re_start = on_frac - rw_eff;
+
+
+@sample
+
+// ===== SPEED RAMP =====
+slider54 && slider53 > 0 ? (
+  speed_ramp_t += 1.0 / (srate * slider53 * 60);
+  speed_ramp_t = min(speed_ramp_t, 1.0);
+  speed_scale_current = speed_scale_start + (slider52 - speed_scale_start) * speed_ramp_t;
+);
+combined_scale = speed_scale_current;
+
+// ===== DRIFT =====
+musical_drift_up     = slider55;
+musical_drift_down   = slider56;
+musical_drift_period = slider57;
+slow_drift_up        = slider58;
+slow_drift_down      = slider59;
+slow_drift_period    = max(slider60, 0.1);
+drift_shape          = slider61;
+
+rate_val_hz = rate_to_hz(rate_val, rate_mode);
+
+drift_offset_natural = 0;
+
+// Musical drift
+(musical_drift_up > 0 || musical_drift_down > 0) ? (
+  musical_drift_phase += (rate_val_hz * combined_scale) / (musical_drift_period * srate);
+  musical_drift_phase >= 1 ? (
+    musical_drift_phase -= 1;
+    drift_shape == 2 ? (
+      musical_drift_prev_target = musical_drift_curr_target;
+      musical_drift_curr_target = (rand(2) - 1);
+    );
+  );
+
+  drift_shape == 0 ? (
+    musical_shape_val = sin(2 * $pi * musical_drift_phase);
+  ) : drift_shape == 1 ? (
+    musical_shape_val = musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
+                        musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
+                                                     (4 * musical_drift_phase - 4);
+  ) : (
+    musical_shape_val = musical_drift_prev_target +
+                        (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
+  );
+
+  musical_drift_offset = musical_shape_val > 0 ? musical_shape_val * musical_drift_up
+                                         : musical_shape_val * musical_drift_down;
+  drift_offset_natural += musical_drift_offset;
+);
+
+// Slow drift
+(slow_drift_up > 0 || slow_drift_down > 0) ? (
+  slow_drift_phase += 1 / (slow_drift_period * 60 * srate);
+  slow_drift_phase >= 1 ? (
+    slow_drift_phase -= 1;
+    drift_shape == 2 ? (
+      slow_drift_prev_target = slow_drift_curr_target;
+      slow_drift_curr_target = (rand(2) - 1);
+    );
+  );
+
+  drift_shape == 0 ? (
+    slow_shape_val = sin(2 * $pi * slow_drift_phase);
+  ) : drift_shape == 1 ? (
+    slow_shape_val = slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
+                     slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
+                                               (4 * slow_drift_phase - 4);
+  ) : (
+    slow_shape_val = slow_drift_prev_target +
+                     (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
+  );
+
+  slow_drift_offset = slow_shape_val > 0 ? slow_shape_val * slow_drift_up
+                                   : slow_shape_val * slow_drift_down;
+  drift_offset_natural += slow_drift_offset;
+);
+
+drift_hz_delta = 0;
+drift_offset_natural != 0 ? (
+  effective_rate_natural = rate_val + drift_offset_natural;
+  rate_mode == 0 ? effective_rate_natural = max(effective_rate_natural, 10) :
+  rate_mode == 1 ? effective_rate_natural = max(effective_rate_natural, 0.1) :
+                   effective_rate_natural = max(effective_rate_natural, 0.1);
+  drift_hz_delta = rate_to_hz(effective_rate_natural, rate_mode) - rate_val_hz;
+);
+
+// Live phase offset update — fires when an offset slider is moved
+// during playback.
+i = 0;
+loop(n_voices,
+  v_phase_off[i] != v_phase_off_last[i] ? (
+    frac = v_phase_off[i] * v_trem_freq[i];
+    frac = frac - floor(frac);
+    trem_phase[i] = frac > 0 ? 1.0 - frac : 0;
+    v_phase_off_last[i] = v_phase_off[i];
+  );
+  i += 1;
+);
+
+pr_enabled = (play_for_cycles > 0 && rest_for_cycles > 0);
+
+// Capture the input ONCE before the voice loop — the loop reads it
+// per voice. (Without this snapshot, if any voice path accidentally
+// wrote to spl0/spl1 mid-loop, later voices would see a corrupted
+// input. Belt-and-suspenders.)
+in_l_sample = spl0;
+in_r_sample = spl1;
+in_mono = (in_l_sample + in_r_sample) * 0.5;
+
+// ===== START DELAY =====
+start_delay_elapsed < start_delay_sec ? (
+  start_delay_elapsed += 1 / srate;
+  spl0 = 0;
+  spl1 = 0;
+) : (
+
+// ===== VOICE LOOP =====
+out_l = 0;
+out_r = 0;
+
+i = 0;
+loop(n_voices,
+  v_active[i] ? (
+    effective_trem_freq = max(v_trem_freq[i] + drift_hz_delta, 0.001);
+
+    // Per-voice Play/Rest cycle counting.
+    pr_enabled ? (
+      v_pr_cycle[i] += effective_trem_freq * combined_scale / srate;
+      !v_resting[i] ? (
+        v_pr_cycle[i] >= play_for_cycles ? (
+          v_resting[i]  = 1;
+          v_pr_cycle[i] = 0;
+        );
+      ) : (
+        v_pr_cycle[i] >= rest_for_cycles ? (
+          v_resting[i]  = 0;
+          v_pr_cycle[i] = 0;
+        );
+      );
+    );
+
+    // Tremolo phase advance (or reverse).
+    !v_resting[i] ? (
+      voice_reverse_time = (i < 8) ? slot0_7_reverse_time : slot8_15_reverse_time;
+      voice_reverse_time ? (
+        trem_phase[i] -= effective_trem_freq * combined_scale / srate;
+        trem_phase[i] < 0 ? trem_phase[i] += 1;
+      ) : (
+        trem_phase[i] += effective_trem_freq * combined_scale / srate;
+        trem_phase[i] >= 1 ? trem_phase[i] -= 1;
+      );
+    );
+
+    // Target gain — same three-regime structure as polyrhythm_phase:
+    // resting, normal play, and final-cycle release (where the Depth
+    // floor is cancelled so the tail reaches genuine silence before
+    // the rest freeze).
+    v_resting[i] ? (
+      target_gain = 0;
+    ) : (
+      lfo_val = calc_lfo(trem_phase[i], on_frac, att_frac, rel_frac, att_shape, rel_shape);
+      in_last_cycle = pr_enabled && (v_pr_cycle[i] >= play_for_cycles - 1);
+      (in_last_cycle && trem_phase[i] >= re_start) ? (
+        target_gain = lfo_val * (sc + amount);
+      ) : (
+        target_gain = lfo_val * sc + amount;
+      );
+    );
+    v_gain_smooth[i] = v_gain_smooth[i] * smooth + target_gain * (1 - smooth);
+
+    // CPU skip: when resting and decayed near 0, the voice contributes
+    // ~nothing — skip the pan calculation entirely. The gain smoother
+    // above still runs so the catch-up ramp is ready on wake.
+    v_resting[i] && v_gain_smooth[i] < 0.001 ? 0 : (
+
+    // Per-voice gain coefficient (combines tremolo envelope + slider gain).
+    voice_g = v_gain_smooth[i] * v_gain[i];
+
+    pan_enabled ? (
+      // Compute the pan position for this voice.
+      pan_mode < 2 ? (
+        // Tremolo / Increment: oscillating pan LFO.
+        pan_phase[i] += v_pan_freq[i] * combined_scale / srate;
+        pan_phase[i] >= 1 ? pan_phase[i] -= 1;
+        raw_pan = sin(pan_phase[i] * 2 * $pi) * pan_spread;
+      ) : (
+        // Spread / Spread Reversed: static target.
+        raw_pan = v_pan_static[i] * pan_spread;
+      );
+
+      // 10 ms smoother on the pan position — prevents zipper noise
+      // when sweeping pan rapidly.
+      pan_smooth_coeff = exp(-1 / (srate * 0.010));
+      pan_smooth[i] = pan_smooth[i] * pan_smooth_coeff + raw_pan * (1 - pan_smooth_coeff);
+
+      // Equal-power pan from the smoothed position.
+      pan_pos   = (pan_smooth[i] + 1.0) * 0.5;
+      pan_l_mul = cos(pan_pos * $pi * 0.5);
+      pan_r_mul = sin(pan_pos * $pi * 0.5);
+
+      // Mono-collapsed input placed at the voice's pan position. This
+      // sacrifices the input's stereo content in exchange for spatial
+      // polyrhythm placement — the explicit trade you opt into by
+      // enabling Pan.
+      out_l += in_mono * voice_g * pan_l_mul;
+      out_r += in_mono * voice_g * pan_r_mul;
+    ) : (
+      // Pan off: preserve the input's stereo content. Each voice
+      // gain-modulates spl0/spl1 independently and they sum into the
+      // output channels.
+      out_l += in_l_sample * voice_g;
+      out_r += in_r_sample * voice_g;
+    );
+    );  // close fully-silent-skip ternary
+  );
+  i += 1;
+);
+
+// Normalize by the count of active voices (NOT currently audible).
+// total_active is precomputed in @slider and stays constant per the
+// active-toggle settings — a stable divisor means a voice entering
+// rest doesn't make the remaining voices momentarily louder.
+total_active > 0 ? (
+  norm = 1.0 / total_active;
+  spl0 = out_l * norm;
+  spl1 = out_r * norm;
+) : (
+  spl0 = 0;
+  spl1 = 0;
+);
+
+);  // close start-delay else branch
