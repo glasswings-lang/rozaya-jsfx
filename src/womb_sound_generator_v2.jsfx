@@ -22,15 +22,15 @@ slider12:120<60,300,1>S2 Frequency Hz
 slider13:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
 
 // --- BREATH ---
-slider14:0.8<0.0,1.0,0.01>Breath Volume
+slider14:0.5<0.0,1.0,0.01>Breath Volume
 slider15:0<0,1,1{Off,Solo}>Breath Solo
 slider16:4.0<0.5,20.0,0.1>Inhale Duration sec
 slider17:0.3<0.0,5.0,0.1>Top Pause sec
 slider18:4.0<0.5,20.0,0.1>Exhale Duration sec
 slider19:0.3<0.0,5.0,0.1>Bottom Pause sec
-slider20:400<50,2000,1>Inhale Frequency Hz
-slider21:280<50,2000,1>Exhale Frequency Hz
-slider22:120<20,800,1>Breath High-pass Hz
+slider20:250<50,2000,1>Inhale Frequency Hz
+slider21:170<50,2000,1>Exhale Frequency Hz
+slider22:80<20,800,1>Breath High-pass Hz
 slider23:0.3<0.0,1.0,0.01>Inhale Fade In
 slider24:0.2<0.0,1.0,0.01>Inhale Fade Out
 slider25:0.2<0.0,1.0,0.01>Exhale Fade In
@@ -54,7 +54,7 @@ slider36:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
 // than the old depth-knob-over-hidden-algorithm shape.)
 
 // --- BREATH POST FILTER ---
-slider39:800<50,4000,1>Breath Post-filter Hz
+slider39:500<50,4000,1>Breath Post-filter Hz
 slider40:1.5<0.5,8.0,0.1>Breath Post-filter Q
 
 // Sit silent for N heartbeats after playback starts, then begin
@@ -196,14 +196,14 @@ hp_lp_l = 0; hp_lp_r = 0;
 
 bpf_low_l = 0; bpf_band_l = 0;
 bpf_low_r = 0; bpf_band_r = 0;
-bpf_f = min(2.0 * sin($pi * 800.0 * srate_inv), 0.98);
+bpf_f = min(2.0 * sin($pi * 500.0 * srate_inv), 0.98);
 bpf_q = 0.5;
 
-in_f_l = min(2.0 * sin($pi * 400.0 * srate_inv), 0.98);
-in_f_r = min(2.0 * sin($pi * 380.0 * srate_inv), 0.98);
-ex_f_l = min(2.0 * sin($pi * 280.0 * srate_inv), 0.98);
-ex_f_r = min(2.0 * sin($pi * 260.0 * srate_inv), 0.98);
-hp_f   = min(2.0 * sin($pi * 120.0 * srate_inv), 0.98);
+in_f_l = min(2.0 * sin($pi * 250.0 * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * 240.0 * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * 170.0 * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * 160.0 * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * 80.0 * srate_inv), 0.98);
 breath_lp_q = 0.6;
 // Breath floor: the breath envelope never drops to zero, only to
 // this fraction of peak. Pauses (top, bottom) and the fade-in /

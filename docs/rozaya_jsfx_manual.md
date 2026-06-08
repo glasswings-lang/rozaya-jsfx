@@ -426,7 +426,9 @@ The heartbeat engine produces two events per cycle — S1 ("lub") and S2 ("dub")
 ### Breath
 The breath engine runs a four-state cycle: inhale → top pause → exhale → bottom pause. During inhale and exhale, white noise passes through a highpass filter followed by a state-variable resonant lowpass per channel (with slight frequency offsets between L and R for width), then shaped by a fade-in/fade-out envelope. A secondary lowpass post-filter is applied to the full breath signal after mixing.
 
-The lowpass topology gives breath its broadband whoosh character. Womb-perspective defaults sit lower than the standalone Breath Generator: Inhale cutoff at 400 Hz, Exhale at 280 Hz, Breath High-pass at 120 Hz, Post-filter at 800 Hz. The standalone Breath Generator uses 800/600 Hz cutoffs for "natural breath at the source." Same DSP, different acoustic target — this plugin emits "what baby hears through amniotic fluid and tissue."
+The lowpass topology gives breath its broadband whoosh character. Womb-perspective defaults sit substantially lower than the standalone Breath Generator and at a lower Breath Volume default than other layers: Inhale cutoff at 250 Hz, Exhale at 170 Hz, Breath High-pass at 80 Hz, Post-filter at 500 Hz, and Breath Volume default at 0.5. The standalone Breath Generator uses 800/600 Hz cutoffs for "natural breath at the source." Same DSP, different acoustic target.
+
+The defaults reflect what the literature on intrauterine acoustics actually says: breath is **one of the quieter components** of the fetal sound environment, not the loudest, and its spectral content is dominated by frequencies below ~200 Hz with very little energy above that (Querleu et al. 1989 and subsequent intrauterine recording studies). The dominant components by loudness are maternal vasculature (whoosh of blood through major vessels), maternal GI activity, and maternal cardiac thumps; maternal breath sits below all of those in the mix.
 
 The breath envelope rides on a **continuous floor** of ~0.15 of peak. Pauses (top, bottom) and the fade-in/fade-out tails sit at floor level rather than silence, so the cycle's endpoints have a continuous quiet body-background instead of producing extended gaps every breath. Top pause inherits the inhale filter's character; bottom pause inherits the exhale filter's. Models the aggregate continuous low-level body noise (organ activity, ambient muscle / vessel sound, etc.) that baby hears as a constant background. The floor is hardcoded — could become a slider if there's tuning value in adjusting it.
 
@@ -491,8 +493,8 @@ Inter-aural delay between the near and far heartbeat voices. Positive values pla
 
 ### Breath
 
-**Breath Volume** `0.0-1.0, default 0.8`
-Overall output level for the breath signal.
+**Breath Volume** `0.0-1.0, default 0.5`
+Overall output level for the breath signal. Default sits at 0.5 (lower than the standalone Breath Generator's mix-level) because intrauterine recordings show breath is one of the quieter components of the fetal sound environment, sitting below maternal vasculature and GI activity in loudness.
 
 **Breath Solo** `Off / Solo`
 Mutes Heartbeat and Bloodflow.
@@ -509,14 +511,14 @@ Length of the exhale phase.
 **Bottom Pause sec** `0.0-5.0 sec, default 1.5`
 Silence between exhale and the next inhale.
 
-**Inhale Frequency Hz** `50-2000 Hz, default 400`
-Cutoff of the lowpass filter applied during the inhale phase. Broadband noise content passes through from below; rolloff above the cutoff. **Womb-tuned: defaults sit lower than the standalone Breath Generator's 800 Hz** because baby experiences breath through amniotic fluid and tissue, which attenuates everything above a few hundred Hz. For external "natural breath" character (not muffled by the medium), raise to 700-900 Hz.
+**Inhale Frequency Hz** `50-2000 Hz, default 250`
+Cutoff of the lowpass filter applied during the inhale phase. Broadband noise content passes through from below; rolloff above the cutoff. **Womb-tuned**: intrauterine recordings show breath reaches baby with most spectral content below ~200 Hz — the amniotic medium and tissue strip almost everything above that. 250 Hz default sits right at that boundary. For external "natural breath" character (not muffled by the medium), raise to 700-900 Hz, or use the standalone Breath Generator instead.
 
-**Exhale Frequency Hz** `50-2000 Hz, default 280`
-Cutoff of the lowpass filter during the exhale phase. Typically set lower than inhale for the cavity-colored character of exhalation. **Womb-tuned** — see Inhale Frequency above.
+**Exhale Frequency Hz** `50-2000 Hz, default 170`
+Cutoff of the lowpass filter during the exhale phase. Set lower than inhale for the cavity-colored character of exhalation. **Womb-tuned** — see Inhale Frequency above.
 
-**Breath High-pass Hz** `20-800 Hz, default 120`
-High-pass filter applied to the noise before the per-phase lowpass. Removes sub-120 Hz rumble. The default is lower than the standalone Breath Generator's 200 Hz because the Womb cutoffs sit lower (400/280 Hz); a tighter HP would chop the lower-frequency content that gives womb-breath its body.
+**Breath High-pass Hz** `20-800 Hz, default 80`
+High-pass filter applied to the noise before the per-phase lowpass. Removes sub-80 Hz rumble. The default is well below the standalone Breath Generator's 200 Hz because the Womb cutoffs sit very low (250/170 Hz); a tighter HP would chop the deep body content that gives womb-breath its character.
 
 **Inhale Fade In** `0.0-1.0, default 0.3`
 Proportion of the inhale duration spent fading up from silence.
@@ -589,8 +591,8 @@ Adds a slowly wandering random offset to heart rate. The random target updates a
 
 A lowpass filter applied to the full breath signal after the inhale/exhale synthesis, operating on the mixed breath output.
 
-**Breath Post-filter Hz** `50-4000 Hz, default 800`
-Cutoff frequency of the post-filter. The default sits above the per-phase bandpass centers but well below the standalone Breath Generator's 2000 Hz post-filter, contributing additional womb-medium attenuation. Lowering darkens further toward "deeper inside the womb" character; raising lifts toward "less attenuated" character.
+**Breath Post-filter Hz** `50-4000 Hz, default 500`
+Cutoff frequency of the post-filter. The default sits above the per-phase lowpass cutoffs but provides additional womb-medium attenuation on top. Lowering darkens further toward "deeper inside the womb" character; raising lifts toward "less attenuated" character.
 
 **Breath Post-filter Q** `0.5-8.0, default 1.5`
 Resonance of the post-filter. Higher slider values produce lower resonance — this parameter is implemented internally as `1/Q`. Lower slider values produce a more resonant peak at the cutoff frequency.
