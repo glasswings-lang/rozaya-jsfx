@@ -4,8 +4,12 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
 
 ## Layout
 
-- `src/*.jsfx` — plugin source files (one per plugin).
+- `src/*.jsfx` — plugin source files (one per plugin). Some plugins ship parallel versions (`womb_sound_generator.jsfx` + `womb_sound_generator_v2.jsfx`); both are current and supported when that happens.
 - `docs/rozaya_jsfx_manual.md` — user-facing reference for every plugin and its parameters. **Update this whenever you change a slider or add a feature** — modders and players read it instead of the source.
+- `docs/planned-features.md` — design-session capture of in-flight feature work and deferred items. Less authoritative than the manual.
+- `docs/womb-v2-design.md` — Womb v2 architectural rationale.
+- `archive/exploration/` — work that never shipped. Experiments, abandoned approaches, discarded design directions (tract waveguide diagnostics, vowel shapers, the polyrhythm_tremolo decomposition experiment, the standalone drone synths). Preserved as reference, not maintained.
+- `archive/versions/<plugin>/v<N>.jsfx` — prior shipped versions that have since been replaced. Distinct from `exploration/` (which holds never-shipped work). See `archive/versions/README.md` for the convention.
 - `LICENSE` — CC0.
 - `README.md` — top-level overview.
 
