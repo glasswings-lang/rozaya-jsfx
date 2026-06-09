@@ -160,23 +160,22 @@ slider62:0<0,1000,1>Rest for (cycles)
 // Freeze always resumes at the pre-rest position.
 slider63:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
-// Speed ramp: in-plugin slowdown/speedup over time. Scales the
-// glissando sweep rate by a factor multiplier per sample, applied to
-// BOTH the per-voice freq_mul and the Play/Rest cycle counter so the
-// cycle gate stays aligned with the actual sweep. The audible pitch
-// of any given oscillator is NOT scaled — only the rate of the sweep.
+// Speed ramp: signed-delta on Rate Value, expressed in the rate's
+// current unit (BPM if Rate Mode = BPM, seconds if = Seconds, Hz if
+// = Hz). The effective rate value = slider3 + ramp_t * slider64,
+// then converted to Hz the same way slider3 is converted.
 //
-// Shepard Tone keeps the multiplier-factor form (rather than the
-// signed-delta form used by Womb v3 / breath_gen / rhythm-track)
-// because the Rate Value slider spans ~6 orders of magnitude (0.001
-// to 1000 across BPM/Seconds/Hz modes). An additive delta would be
-// awkward across that range — a multiplier ("ramp to half-speed" =
-// 0.5) is unit-agnostic.
+// In BPM mode at 60 BPM, slider64 = -30 ramps the sweep rate from
+// 60 → 30 BPM (slower). In Hz mode at 0.5 Hz, slider64 = -0.25 ramps
+// from 0.5 → 0.25 Hz. In Seconds mode (period units), positive
+// slider64 lengthens the period (slower).
 //
-// Engage is now a freeze/resume gate (NOT a restart edge): while
-// On, ramp_t advances 0->1 over the duration; flipping Off freezes
-// it. Only transport play resets ramp_t.
-slider64:1.0<0.1,4.0,0.01>Speed ramp factor (1.0 = no change)
+// Engage is a freeze/resume gate (NOT a restart edge); only transport
+// play resets ramp_t. Migration from v2.7: slider64 changed from
+// multiplier (0.1-4.0) to signed delta. Old projects' multiplier
+// value is interpreted as a tiny delta — Speed Ramp effectively
+// "off" until reconfigured.
+slider64:0<-1000,1000,0.001>Speed ramp by (in rate's current unit)
 slider65:0<0,60,0.1>Speed ramp duration (minutes)
 slider66:0<0,1,1{Off,On}>Speed ramp engage
 slider67:0<0,60,0.1>Speed ramp start delay (minutes)
@@ -471,11 +470,15 @@ slider66 && slider65 > 0 ? (
   );
 );
 
-// Speed scale factor: ramp from 1.0 toward slider64 over the
-// duration. Used as a multiplier on the sweep rate (in audio path
-// below). No "snapshot at engage" — live edits to slider64 adjust
-// the ramp's target trajectory.
-speed_scale_current = 1.0 + speed_ramp_t * (slider64 - 1.0);
+// Signed-delta Speed Ramp: effective rate value = slider3 + ramp_t *
+// slider64 (both in the rate's current unit). Convert to Hz the same
+// way base_rate_hz is converted from slider3, then express the speed
+// ramp's effect as a multiplicative factor (effective / base) so the
+// existing combined_scale-based audio path keeps working. No
+// "snapshot at engage" — live edits adjust trajectory.
+effective_rate_val  = slider3 + speed_ramp_t * slider64;
+effective_rate_hz   = rate_to_hz(effective_rate_val, rate_mode);
+speed_scale_current = effective_rate_hz / max(base_rate_hz, 0.001);
 
 // Per-plugin drift: musical (cycles with sweep, scales with Speed
 // Ramp) + slow (wall-clock, independent of Speed Ramp). Both feed an

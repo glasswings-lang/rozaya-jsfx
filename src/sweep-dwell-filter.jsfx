@@ -63,23 +63,23 @@ slider24:0<0,1,1{Walk through,Freeze in place}>LFO at rest
 //     act like a hard mute rather than a filter bypass.
 slider25:0<0,1,1{Pass-through,Silence}>Output at rest
 
-// Speed ramp: in-plugin slowdown/speedup over time. Scales the dwell
-// pattern's frequency on top of the four dwell/fade timing sliders.
-// 0.5 = half speed (the whole pattern takes twice as long), 2.0 =
-// double. The existing ~3 ms cut smoother already absorbs clicks
-// from manual dwell-slider tweaks, so no additional rate smoother is
-// needed here — just the ramp.
-// Sweep Dwell keeps the multiplier-factor form (rather than the
-// signed-delta form used by Womb v3 / breath_gen / rhythm-track):
-// the cycle rate varies several orders of magnitude depending on
-// dwell-time settings, so a multiplier is more unit-agnostic.
+// Speed ramp: nested-selector pattern matching Womb v3 / breath_gen.
+// Pick a target (one of the 4 dwell sliders), set a signed `by`
+// amount in seconds; that dwell phase's length ramps from its
+// baseline toward `baseline + by` over the duration. All 4 targets
+// ramp in parallel; the selector just changes which one's amount
+// you're editing. Engage is a freeze/resume gate (NOT a restart
+// edge); only transport play resets ramp_t.
 //
-// Engage is now a freeze/resume gate (NOT a restart edge); only
-// transport play resets ramp_t.
-slider26:1.0<0.1,4.0,0.01>Speed ramp factor (1.0 = no change)
+// Migration from v2.7: slider 26 changed from multiplier (0.1-4.0)
+// to a 4-option target selector. Old projects' multiplier value
+// rounds down to a selector index, and slider 29 (the new `by`)
+// defaults to 0 — so Speed Ramp produces no effect on reload until
+// reconfigured.
+slider26:0<0,3,1{High dwell,Fade down,Low dwell,Fade up}>Speed ramp target
 slider27:0<0,60,0.1>Speed ramp duration (minutes)
 slider28:0<0,1,1{Off,On}>Speed ramp engage
-slider29:0<0,60,0.1>Speed ramp start delay (minutes)
+slider29:0<-60,60,0.001>Speed ramp by (seconds)
 
 // Musical drift: drifts the dwell-pattern period by up to N seconds
 // up and N seconds down, over a cycle measured in dwell patterns.
@@ -97,6 +97,10 @@ slider35:5<0.1,60,0.1>Slow drift: Period (minutes)
 
 // Drift shape applies to BOTH drift sources.
 slider36:0<0,2,1{Sine,Triangle,Random}>Drift shape
+
+// Speed ramp start delay (lives here because slider 29 took the
+// post-engage slot for the new `by` amount).
+slider37:0<0,60,0.1>Speed ramp start delay (minutes)
 
 in_pin:left input
 in_pin:right input
@@ -237,11 +241,16 @@ rest_output_mode  = 0;
 effect_mix        = 1;
 
 // Speed ramp state.
-// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
-// only transport play resets ramp_t.
-speed_scale_current      = 1.0;
-speed_ramp_t             = 0.0;
-speed_ramp_delay_elapsed = 0;
+// Speed Ramp state. Per-target memory bank for 4 dwell amounts.
+// Engage is a freeze/resume gate, not an edge; only transport play
+// resets ramp_t.
+N_SPEED_TARGETS              = 4;
+speed_ramp_target_value_mem  = 4096;
+i = 0;
+loop(N_SPEED_TARGETS, speed_ramp_target_value_mem[i] = 0; i += 1;);
+last_speed_target            = 0;
+speed_ramp_t                 = 0.0;
+speed_ramp_delay_elapsed     = 0;
 
 // Drift state. Two independent drift sources (musical, slow) share
 // the same shape selector. Phases advance per @sample, mod 1. For
@@ -307,6 +316,18 @@ rest_lfo_mode    = slider24;
 rest_output_mode = slider25;
 
 // Speed ramp engage-edge.
+// Speed Ramp target selector save/restore (nested-selector pattern).
+// When the selector changes, save current slider29 to OLD slot, load
+// NEW slot's stored amount into slider29. Otherwise capture live edits.
+sel_speed_target = slider26;
+last_speed_target != sel_speed_target ? (
+  speed_ramp_target_value_mem[last_speed_target] = slider29;
+  slider29 = speed_ramp_target_value_mem[sel_speed_target];
+  slider_automate(slider29);
+  last_speed_target = sel_speed_target;
+) : (
+  speed_ramp_target_value_mem[sel_speed_target] = slider29;
+);
 // No engage-edge detection. Engage is a freeze/resume gate handled
 // in @sample. Only transport play resets ramp_t.
 
@@ -352,13 +373,10 @@ pan_sweep_mode  = slider19;
 pan_sweep_ratio = slider20;
 // ===== PAN BLOCK SAMPLE READ END =====
 
-period = high_secs + fade_down_secs + low_secs + fade_up_secs;
-freq   = 1 / max(period, 0.00001);
-
 // Advance speed_ramp_t while engaged + duration > 0 + past start
 // delay. Engage off freezes ramp_t; engaging on resumes from there.
 slider28 && slider27 > 0 ? (
-  speed_ramp_delay_samples = slider29 * 60 * srate;
+  speed_ramp_delay_samples = slider37 * 60 * srate;
   speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
     speed_ramp_delay_elapsed += 1;
   ) : (
@@ -367,11 +385,25 @@ slider28 && slider27 > 0 ? (
   );
 );
 
-// Speed scale factor: ramp from 1.0 toward slider26 over the duration.
-// Used as a multiplier on freq below. No "snapshot at engage" — live
-// edits to slider26 adjust the ramp's target trajectory.
-speed_scale_current = 1.0 + speed_ramp_t * (slider26 - 1.0);
-combined_scale = speed_scale_current;
+// Per-target Speed Ramp offsets (parallel — all 4 dwells ramp
+// regardless of which target the selector shows). Each offset is
+// ramp_t * stored_amount in seconds. Applied additively to the 4
+// dwell sliders' raw values to produce the effective dwell phase
+// lengths.
+speed_ramp_high_offset      = speed_ramp_t * speed_ramp_target_value_mem[0];
+speed_ramp_fade_down_offset = speed_ramp_t * speed_ramp_target_value_mem[1];
+speed_ramp_low_offset       = speed_ramp_t * speed_ramp_target_value_mem[2];
+speed_ramp_fade_up_offset   = speed_ramp_t * speed_ramp_target_value_mem[3];
+
+high_secs      = max(slider3 + speed_ramp_high_offset,      0.001);
+fade_down_secs = max(slider5 + speed_ramp_fade_down_offset, 0.001);
+low_secs       = max(slider4 + speed_ramp_low_offset,       0.001);
+fade_up_secs   = max(slider7 + speed_ramp_fade_up_offset,   0.001);
+
+period = high_secs + fade_down_secs + low_secs + fade_up_secs;
+freq   = 1 / max(period, 0.00001);
+
+combined_scale = 1.0;
 
 // Drift: two independent sources (musical, slow) shape the dwell
 // period in seconds. Musical drift scales with Speed Ramp (slows
@@ -603,3 +635,10 @@ pan_enabled ? (
 // ===== PAN BLOCK SAMPLE LOGIC END =====
 
 );  // close start-delay else branch
+
+@serialize
+// Persist per-target Speed Ramp dwell amounts (signed deltas in
+// seconds) + last-selected target index. Without this, only the
+// most-recently-edited target's amount survives a project reload.
+file_mem(0, speed_ramp_target_value_mem, N_SPEED_TARGETS);
+file_var(0, last_speed_target);

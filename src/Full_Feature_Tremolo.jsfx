@@ -70,19 +70,22 @@ slider22:0<0,1,1{Walk through,Freeze in place}>LFO at rest
 slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 
 // Speed ramp: in-plugin slowdown/speedup over time. The effective
-// Full Feature Tremolo keeps the multiplier-factor form (rather than
-// the signed-delta form used by Womb v3 / breath_gen / rhythm-track)
-// because the Rate Value slider spans ~6 orders of magnitude across
-// Hz/Seconds/BPM modes (0.001 to 1000). A multiplier is unit-agnostic.
+// Speed ramp: signed-delta on Rate Value, expressed in the rate's
+// current unit (BPM if Rate Mode = BPM, seconds if Seconds, Hz if
+// Hz). Effective rate = slider1 + ramp_t * slider24; converted to
+// Hz the same way the base rate is.
 //
-// tremolo frequency = rate-slider-derived freq × speed_scale_current
-// per sample, so 0.5 = half tremolo rate (slower modulation), 2.0 =
-// double. A ~100 ms smoother sits between the Rate slider and freq
-// so manual Rate tweaks don't click.
+// In BPM/Hz modes negative slider24 = slower. In Seconds mode
+// (period) positive slider24 = slower (longer period).
 //
-// Engage is now a freeze/resume gate (NOT a restart edge); only
-// transport play resets ramp_t.
-slider24:1.0<0.1,4.0,0.01>Speed ramp factor (1.0 = no change)
+// Engage is a freeze/resume gate (NOT a restart edge); only
+// transport play resets ramp_t. A ~100 ms smoother sits between
+// the Rate slider and freq so manual Rate tweaks don't click.
+//
+// Migration from v2.7: slider24 changed from multiplier (0.1-4.0)
+// to signed delta. Old projects' multiplier value interprets as a
+// tiny delta — Speed Ramp effectively "off" until reconfigured.
+slider24:0<-1000,1000,0.001>Speed ramp by (in rate's current unit)
 slider25:0<0,60,0.1>Speed ramp duration (minutes)
 slider26:0<0,1,1{Off,On}>Speed ramp engage
 slider27:0<0,60,0.1>Speed ramp start delay (minutes)
@@ -392,8 +395,7 @@ rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
                  (freq_raw = rate_val / 60);
 
 // Smooth the rate slider so manual tweaks don't click, then advance
-// the speed ramp for the base effective tremolo frequency. Drift
-// offsets are added below.
+// the speed ramp. Drift offsets are added below.
 freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
 
 // Advance speed_ramp_t while engaged + duration > 0 + past start
@@ -408,9 +410,17 @@ slider26 && slider25 > 0 ? (
   );
 );
 
-// Speed scale factor: ramp from 1.0 toward slider24 over the duration.
-// No "snapshot at engage" — live edits to slider24 adjust trajectory.
-speed_scale_current = 1.0 + speed_ramp_t * (slider24 - 1.0);
+// Signed-delta Speed Ramp: effective rate value = slider1 + ramp_t *
+// slider24 (both in the rate's current unit). Convert to Hz the same
+// way freq_raw is computed from slider1 above, then express as a
+// multiplicative factor on freq so the existing combined_scale-based
+// audio path keeps working. No "snapshot at engage" — live edits
+// adjust trajectory.
+effective_rate_val = rate_val + speed_ramp_t * slider24;
+rate_mode == 0 ? (effective_rate_hz = effective_rate_val) :
+rate_mode == 1 ? (effective_rate_hz = 1 / max(effective_rate_val, 0.001)) :
+                 (effective_rate_hz = effective_rate_val / 60);
+speed_scale_current = effective_rate_hz / max(freq_raw, 0.001);
 combined_scale = speed_scale_current;
 freq = freq_smoothed * combined_scale;
 

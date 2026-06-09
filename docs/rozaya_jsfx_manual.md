@@ -2084,16 +2084,24 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 ### Speed Ramp
 
-In-plugin sweep-pattern slowdown/speedup over time, without automation envelopes. Keeps the multiplier-factor form (rather than the signed-delta form used by Womb v3 / breath_gen / rhythm-track) because the cycle rate varies several orders of magnitude depending on dwell-time settings.
+Nested-selector pattern matching Womb v3 / breath_gen. Pick one of the 4 dwell sliders (High dwell / Fade down / Low dwell / Fade up) and set a signed `by` amount in seconds. That dwell phase's length ramps from its baseline toward `baseline + by` over the duration. All 4 targets ramp in parallel; the selector just changes which one you're editing.
 
-**Speed ramp factor (slider 26)** `0.1–4.0, step 0.01, default 1.0`
-Multiplier on the dwell pattern's frequency. **0.5** = the entire pattern (high dwell + fade down + low dwell + fade up) takes twice as long; **2.0** = half the time; **1.0** = no change (safe default).
+**Speed ramp target (slider 26)** `High dwell / Fade down / Low dwell / Fade up, default High dwell`
+The 4-option selector. Switching saves the current slider 29 amount to the old target's memory slot and loads the new target's saved amount. All 4 targets ramp regardless of which one is selected.
 
-**Speed ramp duration (slider 27)** `0–60 minutes, default 0` · **Speed ramp engage (slider 28)** `Off / On, default Off` · **Speed ramp start delay (slider 29)** `0–60 minutes, default 0`
+**Speed ramp duration (slider 27)** `0–60 minutes, default 0` · **Speed ramp engage (slider 28)** `Off / On, default Off`
 
-Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration, and `speed_scale_current = 1.0 + ramp_t × (slider 26 − 1.0)`; while Off, ramp_t freezes wherever it is and resumes from there on re-engage.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes and resumes from there on re-engage.
+
+**Speed ramp by (slider 29)** `-60 to +60 seconds, step 0.001, default 0`
+Signed delta in seconds for the selected dwell phase. **0** = no change. **Negative** = shorten that phase (shorter cycle if that's High/Low dwell; quicker fade if that's a fade phase). **Positive** = lengthen. Example: target High dwell with `by +4` stretches high dwell from 4 sec → 8 sec over the duration; combined with target Low dwell with `by +2`, both phases ramp together as a coordinated wind-down.
+
+**Speed ramp start delay (slider 37)** `0–60 minutes, default 0`
+Wait this many minutes after engage before ramp_t starts advancing. Lives at slider 37 (after the drift block) because slider 29 was claimed by the new `by` amount.
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. The existing ~3 ms cutoff smoother absorbs any per-sample step changes, so manual dwell-slider tweaks remain click-free.
+
+**Migration from v2.7:** slider 26 changed from multiplier (0.1–4.0) to a 4-option selector. Existing projects' multiplier value rounds down to a target index, and slider 29 (the new amount) defaults to 0 — Speed Ramp produces no effect on reload until reconfigured.
 
 ### Drift
 
@@ -2325,20 +2333,22 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 ### Speed Ramp
 
-In-plugin tremolo-rate morph over time. Keeps the multiplier-factor form (rather than the signed-delta form used by Womb v3 / breath_gen / rhythm-track) because the Rate Value slider spans ~6 orders of magnitude across Hz/Seconds/BPM modes (0.001 to 1000).
+In-plugin tremolo-rate morph over time.
 
-**Speed ramp factor (slider 24)** `0.1–4.0, step 0.01, default 1.0`
-Multiplier on the effective tremolo frequency. **0.5** = half tremolo rate (slower modulation cycle); **2.0** = double; **1.0** = no change (safe default).
+**Speed ramp by (slider 24)** `-1000 to +1000, step 0.001, default 0`
+Signed delta added to the Rate Value over the duration. **0** = no change. The delta is in **the rate's currently-displayed unit** — Hz if Rate Mode is Hz, Seconds (period) if Seconds, BPM if BPM. In BPM/Hz modes, negative `by` = slower tremolo; in Seconds mode, positive `by` = slower (longer period).
 
 **Speed ramp duration (slider 25)** `0–60 minutes, default 0` · **Speed ramp engage (slider 26)** `Off / On, default Off` · **Speed ramp start delay (slider 27)** `0–60 minutes, default 0`
 
-Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration, and `speed_scale_current = 1.0 + ramp_t × (slider 24 − 1.0)`; while Off, ramp_t freezes and resumes from there on re-engage.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes and resumes from there on re-engage.
 
-A ~100 ms smoother also sits between the Rate slider and the effective frequency, so manual Rate tweaks don't click.
+A ~100 ms smoother sits between the Rate slider and the effective frequency, so manual Rate tweaks don't click.
 
-The ramp also scales the linked-sweep pan rate (Pan Mode 11), since that mode derives its rate from the tremolo frequency. Pan Sweep modes 9 and 10 have their own independent rate slider and are NOT scaled by the speed ramp.
+The ramp also affects the linked-sweep pan rate (Pan Mode 11), since that mode derives its rate from the tremolo frequency. Pan Sweep modes 9 and 10 have their own independent rate slider and are NOT scaled by the speed ramp.
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes don't.
+
+**Migration from v2.7:** slider 24 changed from a multiplier (0.1–4.0) to a signed delta in rate-units. Old projects' multiplier value will be interpreted as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
 ### Drift
 
@@ -2995,16 +3005,22 @@ For short rests with slow sweep rates the difference between modes is subtle (sm
 
 In-plugin sweep-rate morph over time. Lets you slow the glissando illusion down (or speed it up) without touching automation.
 
-Shepard Tone keeps the multiplier-factor form rather than the signed-delta form used by Womb v3 / breath_gen / rhythm-track. Reason: the Rate Value slider spans ~6 orders of magnitude across BPM / Seconds / Hz modes (0.001 to 1000), making an additive delta awkward to scale across units. A multiplier is unit-agnostic — "ramp to half-speed" = 0.5 works the same whether your rate is in BPM, Seconds, or Hz.
+**Speed ramp by (slider 64)** `-1000 to +1000, step 0.001, default 0`
+Signed delta added to the Rate Value over the duration. **0** = no change (safe default). The delta is interpreted in **the rate's currently-displayed unit** — so:
 
-**Speed ramp factor (slider 64)** `0.1–4.0, step 0.01, default 1.0`
-Multiplier on the sweep rate. **0.5** = sweep takes twice as long to complete; **2.0** = half the time; **1.0** = no change (safe default). The audible pitch of any oscillator is NOT scaled — only the rate at which oscillators sweep through the pitch window. The Play/Rest cycle counter scales with the ramp too, so the cycle gate stays aligned with the actual sweep.
+- If Rate Mode is **BPM** and Rate Value is 60, setting `by -30` ramps the sweep from 60 BPM → 30 BPM (slower).
+- If Rate Mode is **Hz** and Rate Value is 0.5, setting `by -0.25` ramps from 0.5 Hz → 0.25 Hz (slower).
+- If Rate Mode is **Seconds** (period) and Rate Value is 2, setting `by +1` stretches the period from 2 sec → 3 sec (slower).
+
+In BPM and Hz modes, **negative = slower**. In Seconds mode, **positive = slower** (longer period). The audible pitch of any oscillator is NOT scaled — only the rate at which oscillators sweep through the pitch window. The Play/Rest cycle counter scales with the ramp too.
 
 **Speed ramp duration (slider 65)** `0–60 minutes, default 0` · **Speed ramp engage (slider 66)** `Off / On, default Off` · **Speed ramp start delay (slider 67)** `0–60 minutes, default 0`
 
-Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration, and `speed_scale_current = 1.0 + ramp_t × (slider 64 − 1.0)`; while Off, ramp_t freezes wherever it is and resumes from there on re-engage. Start delay waits N minutes after engage before ramp_t actually starts advancing.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes wherever it is and resumes from there on re-engage. Start delay waits N minutes after engage before ramp_t actually starts advancing.
 
-**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes (engage toggle, factor change, anything) don't restart it.
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes don't.
+
+**Migration from v2.7:** slider 64 changed from a multiplier (0.1–4.0) to a signed delta in rate-units. Old projects' multiplier value will be interpreted as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
 ### Drift
 
