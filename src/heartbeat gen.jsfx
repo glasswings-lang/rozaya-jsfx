@@ -35,18 +35,20 @@ slider14:0<0,1000,0.01>Start Delay (beats)
 slider15:0<0,1000,1>Play for (beats)
 slider16:0<0,1000,1>Rest for (beats)
 
-// Speed ramp: in-plugin slowdown/speedup over time. The audio rate
-// equals slider1 (BPM) multiplied by an internal speed_scale that
-// eases from its current value toward slider17 over slider18 minutes
-// when slider19 is On. Flipping slider19 Off freezes the ramp at its
-// current position (does not reset to 1.0); flipping it On again
-// captures the frozen position and ramps fresh toward slider17.
-// A small smoother (~100 ms) sits between slider1 and the audio so
-// manual BPM tweaks don't click either. Resets on every transport
-// stop/start, matching Start Delay + Play/Rest.
-slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+// Speed ramp: nested-selector pattern matching Womb v3. Pick a target
+// (slider17), set a signed delta `by` amount (slider20) in the
+// target's natural unit. All 4 targets ramp in parallel; switching
+// the selector doesn't stop a running ramp. Engage is a freeze/resume
+// gate (NOT a restart edge); only transport play resets ramp_t.
+//
+// Migration from v2.7: slider17 changed from multiplier (0.1-4.0) to
+// integer selector (0-3). Old projects' multiplier value rounds down
+// to a selector index; slider20 (new amount) defaults to 0, so Speed
+// Ramp produces no effect on reload until reconfigured.
+slider17:0<0,3,1{Heart BPM,S1-S2 gap,Breath HRV depth,Random HRV depth}>Speed ramp target
 slider18:0<0,60,0.1>Speed ramp duration (minutes)
 slider19:0<0,1,1{Off,On}>Speed ramp engage
+slider20:0<-400,400,0.01>Speed ramp by
 
 // Per-plugin drift: two independent drift sources (musical + slow)
 // each with up/down amplitudes in BPM and a shape selector shared
@@ -62,6 +64,10 @@ slider24:0<0,20,0.1>Slow drift: Up by
 slider25:0<0,20,0.1>Slow drift: Down by
 slider26:5<0.1,60,0.1>Slow drift: Period (minutes)
 slider27:0<0,2,1{Sine,Triangle,Random}>Drift shape
+
+// Speed ramp start delay (lives here because slider20 took the gap
+// between Speed Ramp and Drift; this one sits after the drift block).
+slider28:0<0,60,0.1>Speed ramp start delay (minutes)
 
 @init
 srate_inv = 1.0 / srate;
@@ -148,17 +154,24 @@ pr_enabled     = 0;
 // rate_smoother_coeff eases bpm_smoothed toward bpm_target with a
 // ~100 ms time constant — short enough to feel responsive on manual
 // tweaks, long enough to bury any per-sample discontinuity.
-// speed_scale_current is the multiplier applied AFTER smoothing, so
-// effective_bpm = bpm_smoothed * speed_scale_current. Seeded from
-// the current BPM slider so the first beat after transport-start
-// isn't smoothed from a stale default.
+// Speed Ramp's BPM offset is ADDED to bpm_smoothed in @sample (not
+// multiplied) so it composes additively with drift. Seeded from the
+// current BPM slider so the first beat after transport-start isn't
+// smoothed from a stale default.
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 bpm_target               = slider1;
 bpm_smoothed             = slider1;
-speed_ramp_engaged_last  = 0;
-speed_scale_current      = 1.0;
-speed_scale_start        = 1.0;
-speed_ramp_t             = 0.0;
+// Speed Ramp state. Per-target memory bank for 4 targets' signed
+// `by` amounts (Heart BPM, S1-S2 gap, Breath HRV depth, Random HRV
+// depth). Engage is a freeze/resume gate, not an edge; only transport
+// play resets ramp_t.
+N_SPEED_TARGETS              = 4;
+speed_ramp_target_value_mem  = 4096;
+i = 0;
+loop(N_SPEED_TARGETS, speed_ramp_target_value_mem[i] = 0; i += 1;);
+last_speed_target            = 0;
+speed_ramp_t                 = 0.0;
+speed_ramp_delay_elapsed     = 0;
 
 // Per-plugin drift state. Two independent sources (musical, slow);
 // each has a phase in [0,1) advancing toward 1 then wrapping. For
@@ -182,11 +195,20 @@ bpm_target = slider1;
 
 // Speed ramp engage-edge: capture the in-flight scale so a re-engage
 // starts a fresh ramp from wherever the previous one left off.
-slider19 && !speed_ramp_engaged_last ? (
-  speed_scale_start = speed_scale_current;
-  speed_ramp_t      = 0.0;
+// Speed Ramp target selector save/restore (nested-selector pattern).
+// When the selector changes, save current slider20 to the OLD slot,
+// load NEW slot's amount into slider20. Otherwise capture live edits.
+sel_speed_target = slider17;
+last_speed_target != sel_speed_target ? (
+  speed_ramp_target_value_mem[last_speed_target] = slider20;
+  slider20 = speed_ramp_target_value_mem[sel_speed_target];
+  slider_automate(slider20);
+  last_speed_target = sel_speed_target;
+) : (
+  speed_ramp_target_value_mem[sel_speed_target] = slider20;
 );
-speed_ramp_engaged_last = slider19;
+// No engage-edge detection. Engage is a freeze/resume gate handled
+// in @sample. Only transport play resets ramp_t.
 
 systole_samples = floor(srate * slider2 * 0.001);
 s1_vol = slider3;
@@ -240,16 +262,35 @@ pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 
 @sample
 
-// Smooth BPM toward slider1's target and advance the speed ramp.
-// Both run regardless of Start Delay — slider movements made during
-// the silent pre-roll still settle by the time audio starts. Once
-// settled, cycle_len_base is the source of truth for beat cadence.
+// Smooth BPM toward slider1's target.
 bpm_smoothed += (bpm_target - bpm_smoothed) * rate_smoother_coeff;
+
+// Advance speed_ramp_t while engaged + duration > 0 + past start
+// delay. Engage off freezes ramp_t; engaging on resumes from there.
 slider19 && slider18 > 0 ? (
-  speed_ramp_t += 1.0 / (srate * slider18 * 60);
-  speed_ramp_t = min(speed_ramp_t, 1.0);
-  speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
+  speed_ramp_delay_samples = slider28 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider18 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+  );
 );
+
+// Per-target Speed Ramp offsets (parallel — all 4 ramp regardless
+// of which target the selector is currently showing). Each target
+// gets ramp_t * stored_amount in its native unit.
+speed_ramp_heart_offset    = speed_ramp_t * speed_ramp_target_value_mem[0]; // BPM
+speed_ramp_systole_offset  = speed_ramp_t * speed_ramp_target_value_mem[1]; // ms
+speed_ramp_breath_offset   = speed_ramp_t * speed_ramp_target_value_mem[2]; // HRV depth
+speed_ramp_rand_hrv_offset = speed_ramp_t * speed_ramp_target_value_mem[3]; // HRV depth
+
+// Effective per-target values (baseline + Speed Ramp offset). These
+// OVERRIDE @slider-set values for the per-sample consumption sites.
+effective_systole_ms = max(slider2 + speed_ramp_systole_offset, 1);
+systole_samples      = floor(srate * effective_systole_ms * 0.001);
+breath_depth         = max(slider12 + speed_ramp_breath_offset,   0);
+rand_hrv_depth       = max(slider13 + speed_ramp_rand_hrv_offset, 0);
 // Per-plugin drift. Two independent additive offsets to BPM:
 //   - Musical drift: period counted in heartbeats, advances at a rate
 //     that scales with Speed Ramp (slower ramp = slower drift). One
@@ -269,7 +310,7 @@ drift_shape          = slider27;
 
 musical_drift_offset = 0;
 (musical_drift_up > 0 || musical_drift_down > 0) ? (
-  musical_phase_inc  = speed_scale_current / (max(musical_drift_period, 1) * max(cycle_len_base, 1));
+  musical_phase_inc  = 1.0 / (max(musical_drift_period, 1) * max(cycle_len_base, 1));
   musical_drift_phase += musical_phase_inc;
   musical_drift_phase >= 1.0 ? (
     musical_drift_phase -= 1.0;
@@ -323,14 +364,16 @@ slow_drift_offset = 0;
 
 // Clamp effective BPM at 10 so an over-aggressive Down by can't
 // drag the heartbeat to a stop or invert it.
-effective_bpm  = max(bpm_smoothed * speed_scale_current + musical_drift_offset + slow_drift_offset, 10.0);
+effective_bpm  = max(bpm_smoothed + speed_ramp_heart_offset + musical_drift_offset + slow_drift_offset, 10.0);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
-// Re-arm Start Delay on every transport stop/start, then gate
-// the whole @sample work — phases stay frozen during the silent
-// window so the heartbeat begins cleanly when the delay elapses.
+// Transport play edge resets EVERYTHING tied to "this play session":
+// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
+// counter. ONLY thing that resets ramp_t — slider changes don't.
 play_state > 0 && last_play_state == 0 ? (
-  start_delay_elapsed = 0;
+  start_delay_elapsed      = 0;
+  speed_ramp_t             = 0.0;
+  speed_ramp_delay_elapsed = 0;
 );
 last_play_state = play_state;
 
@@ -483,3 +526,10 @@ delay_sign == 1 ? (
 );
 
 );  // close start-delay else branch
+
+@serialize
+// Persist per-target Speed Ramp amounts + last-selected target so
+// reloading a project restores all 4 targets' configured deltas,
+// not just whichever was selected at save time.
+file_mem(0, speed_ramp_target_value_mem, N_SPEED_TARGETS);
+file_var(0, last_speed_target);
