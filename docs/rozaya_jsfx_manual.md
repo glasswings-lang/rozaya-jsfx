@@ -339,24 +339,30 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (breath state, period counter, rest timer) and starts fresh from an inhale.
 
-### Speed Ramp (new)
+### Speed Ramp
 
-In-plugin slowdown / speedup over time. Lets you wind breaths down toward sleep tempo (or up toward waking) without needing automation envelopes.
+Nested-selector pattern matching Womb v3. Pick a target — Inhale, Top pause, Exhale, or Bottom pause — and set a signed `by` amount in seconds; that segment's length ramps from its baseline toward `baseline + by` over the duration. All four targets ramp in parallel; the selector just changes which target's `by` you're currently editing.
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0`
-The target multiplier. **0.5** = half speed, so a 4-second inhale becomes ~8 seconds; **2.0** = double speed (4s inhale → ~2s); **1.0** = no change. The multiplier applies to **all four phase durations and the rest period** so the cycle stretches/compresses as a whole — your Play/Rest ratio stays the same.
+**Speed ramp target (slider 17)** `Inhale / Top pause / Exhale / Bottom pause, default Inhale`
+The 4-option selector. Switching saves the current slider 20 amount to the old target's memory slot and loads the new target's saved amount. All 4 targets ramp regardless of which one is selected — selector switching never stops a ramp.
 
-**Speed ramp duration (minutes)** `0–60, default 0`
-How long the ramp takes from start to target. **0** disables the ramp.
+**Speed ramp duration (slider 18)** `0–60 minutes, default 0`
+How long the ramp takes (ramp_t advances 0 → 1 over this many minutes). **0** disables the ramp.
 
-**Speed ramp engage** `Off / On, default Off`
-Off = ramp not advancing. On = ramp advances from its current position toward the target.
+**Speed ramp engage (slider 19)** `Off / On, default Off`
+Freeze/resume gate. When On, ramp_t advances; when Off, it freezes wherever it is and resumes from there on re-engage. Engage does NOT reset the ramp — only transport play does.
 
-**How it behaves.** Off → On captures the current multiplier as the starting point and ramps toward the target over the duration. On → Off freezes the multiplier at its current position — it does NOT snap back to 1.0. Set target = 1.0 and re-engage to return to normal speed.
+**Speed ramp by (slider 20)** `-20 to +20 sec, step 0.1, default 0`
+Signed delta in seconds for the selected target. **0** = no change. **Negative** = shorten that segment (faster breath if Inhale/Exhale; tighter cycle if Top/Bottom). **Positive** = lengthen (slower / more spacious). Examples: Inhale target with `by` +4 ramps inhale from 4 sec → 8 sec over the duration; Bottom Pause target with `by` -0.2 shortens bottom pause toward minimum. Each target stores its own amount independently.
 
-**Filter timbre is unchanged.** The speed ramp scales the state machine's *time*, not the filter coefficients — so a slow breath sounds exactly like a fast breath, just stretched. No re-tuning artifacts.
+**Speed ramp start delay (slider 29)** `0–60 minutes, default 0`
+Wait this many minutes after engage before ramp_t actually starts advancing. Useful for "fall asleep first, then begin the wind-down."
 
-**Transport behavior**: resets to 1.0 on every play press.
+**Migrating from v2.7:** slider 17 changed from a multiplier (0.1–4.0) to a 4-option target selector (0–3 integer). Existing projects loading the new plugin will see slider 17's old multiplier value rounded down to a target index, and slider 20 (the new amount) defaulting to 0 — so Speed Ramp produces no effect on reload until you re-configure. The audio path changed too: Speed Ramp's effect now lives in per-segment length adjustments (additive) rather than as a global rate multiplier, so it composes additively with Drift instead of multiplicatively.
+
+**Filter timbre is unchanged.** Speed Ramp adjusts segment lengths, not filter coefficients — a longer inhale sounds exactly like a normal inhale, just stretched.
+
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes (selector switch, engage toggle, anything) don't restart it.
 
 ### Drift
 
