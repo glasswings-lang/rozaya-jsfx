@@ -2796,13 +2796,20 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Changing Rest mode mid-rest** is handled defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unexpectedly.
 
-### Speed Ramp (new)
+### Speed Ramp
 
-In-plugin tempo morph over time, without automation envelopes.
+In-plugin tempo morph over time, without automation envelopes. Single-target plugin (BPM is the only ramp target), so no selector — slider 52 is directly the signed `by` amount in BPM.
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+**Speed ramp by (BPM) (slider 52)** `-290 to +180, step 0.1, default 0`
+Signed BPM delta. **0** = no change. **Negative** = slow down (`-60` ramps BPM from 120 → 60 over the duration). **Positive** = speed up.
 
-Scales the scale's tempo on top of the BPM slider. **0.5** = notes take twice as long each (half tempo); **2.0** = notes fire twice as fast. Both halves of the Play/Rest gate scale together so the gate stays internally consistent at any speed. Off → On captures the in-flight multiplier; On → Off freezes at the current position. Resets on every play press.
+**Speed ramp duration (slider 53)** `0–60 minutes, default 0` · **Speed ramp engage (slider 54)** `Off / On, default Off` · **Speed ramp start delay (slider 55)** `0–60 minutes, default 0`
+
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, it freezes wherever it is and resumes from there on re-engage. The Freeze-mode Play/Rest rest timer also scales with Speed Ramp so the rest duration tracks the same effective tempo as the play period.
+
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes don't.
+
+**Migration from v2.7:** slider 52 changed from multiplier (0.1–4.0) to signed BPM delta. Old projects' multiplier value gets interpreted as a tiny BPM delta — Speed Ramp effectively "off" until reconfigured.
 
 ### Drift
 
@@ -2968,15 +2975,20 @@ For short rests with slow sweep rates the difference between modes is subtle (sm
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (oscillator positions, rest state, cycle counter) and starts fresh in its play period from cycle 0.
 
-### Speed Ramp (new)
+### Speed Ramp
 
 In-plugin sweep-rate morph over time. Lets you slow the glissando illusion down (or speed it up) without touching automation.
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+Shepard Tone keeps the multiplier-factor form rather than the signed-delta form used by Womb v3 / breath_gen / rhythm-track. Reason: the Rate Value slider spans ~6 orders of magnitude across BPM / Seconds / Hz modes (0.001 to 1000), making an additive delta awkward to scale across units. A multiplier is unit-agnostic — "ramp to half-speed" = 0.5 works the same whether your rate is in BPM, Seconds, or Hz.
 
-Scales the sweep rate on top of the Rate slider. **0.5** = sweep takes twice as long to complete; **2.0** = half the time. The audible pitch of any oscillator is NOT scaled — only the rate at which oscillators sweep through the pitch window. The Play/Rest cycle counter scales with the ramp too, so the cycle gate stays aligned with the actual sweep.
+**Speed ramp factor (slider 64)** `0.1–4.0, step 0.01, default 1.0`
+Multiplier on the sweep rate. **0.5** = sweep takes twice as long to complete; **2.0** = half the time; **1.0** = no change (safe default). The audible pitch of any oscillator is NOT scaled — only the rate at which oscillators sweep through the pitch window. The Play/Rest cycle counter scales with the ramp too, so the cycle gate stays aligned with the actual sweep.
 
-Off → On captures the in-flight multiplier; On → Off freezes at the current position. Set target = 1.0 and re-engage to return. Resets on every play press.
+**Speed ramp duration (slider 65)** `0–60 minutes, default 0` · **Speed ramp engage (slider 66)** `Off / On, default Off` · **Speed ramp start delay (slider 67)** `0–60 minutes, default 0`
+
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration, and `speed_scale_current = 1.0 + ramp_t × (slider 64 − 1.0)`; while Off, ramp_t freezes wherever it is and resumes from there on re-engage. Start delay waits N minutes after engage before ramp_t actually starts advancing.
+
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes (engage toggle, factor change, anything) don't restart it.
 
 ### Drift
 

@@ -161,14 +161,25 @@ slider62:0<0,1000,1>Rest for (cycles)
 slider63:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // Speed ramp: in-plugin slowdown/speedup over time. Scales the
-// glissando sweep rate by speed_scale_current per sample, applied
-// to BOTH the per-voice freq_mul and the Play/Rest cycle counter so
-// the cycle gate stays aligned with the actual sweep. The audible
-// pitch of any given oscillator is NOT scaled — only the rate of
-// the sweep. 0.5 = sweep takes twice as long; 2.0 = half the time.
-slider64:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+// glissando sweep rate by a factor multiplier per sample, applied to
+// BOTH the per-voice freq_mul and the Play/Rest cycle counter so the
+// cycle gate stays aligned with the actual sweep. The audible pitch
+// of any given oscillator is NOT scaled — only the rate of the sweep.
+//
+// Shepard Tone keeps the multiplier-factor form (rather than the
+// signed-delta form used by Womb v3 / breath_gen / rhythm-track)
+// because the Rate Value slider spans ~6 orders of magnitude (0.001
+// to 1000 across BPM/Seconds/Hz modes). An additive delta would be
+// awkward across that range — a multiplier ("ramp to half-speed" =
+// 0.5) is unit-agnostic.
+//
+// Engage is now a freeze/resume gate (NOT a restart edge): while
+// On, ramp_t advances 0->1 over the duration; flipping Off freezes
+// it. Only transport play resets ramp_t.
+slider64:1.0<0.1,4.0,0.01>Speed ramp factor (1.0 = no change)
 slider65:0<0,60,0.1>Speed ramp duration (minutes)
 slider66:0<0,1,1{Off,On}>Speed ramp engage
+slider67:0<0,60,0.1>Speed ramp start delay (minutes)
 
 // Musical drift: cycles with the plugin's own sweep rate (one drift
 // cycle per N glissando cycles). Scales with Speed Ramp — when the
@@ -311,10 +322,11 @@ pr_enabled        = 0;
 rest_mode         = 0;
 
 // Speed ramp state.
-speed_ramp_engaged_last = 0;
-speed_scale_current     = 1.0;
-speed_scale_start       = 1.0;
-speed_ramp_t            = 0.0;
+// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
+// only transport play resets ramp_t.
+speed_scale_current      = 1.0;
+speed_ramp_t             = 0.0;
+speed_ramp_delay_elapsed = 0;
 
 // Per-plugin drift state. Phases advance in @sample; on wrap, Random
 // shape latches a new target for smooth interpolation across the
@@ -430,30 +442,40 @@ pr_enabled = new_pr_enabled;
 rest_mode  = slider63;
 
 // Speed ramp engage-edge.
-slider66 && !speed_ramp_engaged_last ? (
-  speed_scale_start = speed_scale_current;
-  speed_ramp_t      = 0.0;
-);
-speed_ramp_engaged_last = slider66;
+// No engage-edge detection. Engage is a freeze/resume gate handled
+// in @sample. Only transport play resets ramp_t.
 
 
 @sample
 
-// Re-arm Start Delay on every transport stop/start, then gate the
-// tone-generation work — oscillator phases stay frozen during the
-// silent window so the tone begins cleanly when the delay elapses.
+// Transport play edge resets EVERYTHING tied to "this play session":
+// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
+// counter. Each play press starts a fresh ramp from 0. ONLY thing
+// that resets ramp_t — slider changes don't.
 play_state > 0 && last_play_state == 0 ? (
-  start_delay_elapsed = 0;
+  start_delay_elapsed      = 0;
+  speed_ramp_t             = 0.0;
+  speed_ramp_delay_elapsed = 0;
 );
 last_play_state = play_state;
 
-// Advance speed ramp every sample (runs through start delay too —
-// engaging a ramp during pre-roll is partway in when audio starts).
+// Advance speed_ramp_t while engaged + duration > 0 + past start
+// delay. Engage off freezes ramp_t; engaging on resumes from there.
 slider66 && slider65 > 0 ? (
-  speed_ramp_t += 1.0 / (srate * slider65 * 60);
-  speed_ramp_t = min(speed_ramp_t, 1.0);
-  speed_scale_current = speed_scale_start + (slider64 - speed_scale_start) * speed_ramp_t;
+  speed_ramp_delay_samples = slider67 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider65 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+  );
 );
+
+// Speed scale factor: ramp from 1.0 toward slider64 over the
+// duration. Used as a multiplier on the sweep rate (in audio path
+// below). No "snapshot at engage" — live edits to slider64 adjust
+// the ramp's target trajectory.
+speed_scale_current = 1.0 + speed_ramp_t * (slider64 - 1.0);
 
 // Per-plugin drift: musical (cycles with sweep, scales with Speed
 // Ramp) + slow (wall-clock, independent of Speed Ramp). Both feed an
