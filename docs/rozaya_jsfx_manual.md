@@ -2072,15 +2072,18 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
 
-### Speed Ramp (new)
+### Speed Ramp
 
-In-plugin sweep-pattern slowdown/speedup over time, without automation envelopes.
+In-plugin sweep-pattern slowdown/speedup over time, without automation envelopes. Keeps the multiplier-factor form (rather than the signed-delta form used by Womb v3 / breath_gen / rhythm-track) because the cycle rate varies several orders of magnitude depending on dwell-time settings.
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+**Speed ramp factor (slider 26)** `0.1–4.0, step 0.01, default 1.0`
+Multiplier on the dwell pattern's frequency. **0.5** = the entire pattern (high dwell + fade down + low dwell + fade up) takes twice as long; **2.0** = half the time; **1.0** = no change (safe default).
 
-The multiplier scales the whole dwell pattern's frequency. **0.5** = the entire pattern (high dwell + fade down + low dwell + fade up) takes twice as long; **2.0** = half the time. All four timing sliders stay where they are; the ramp is layered on top. Off → On captures the in-flight multiplier; On → Off freezes at the current position.
+**Speed ramp duration (slider 27)** `0–60 minutes, default 0` · **Speed ramp engage (slider 28)** `Off / On, default Off` · **Speed ramp start delay (slider 29)** `0–60 minutes, default 0`
 
-The existing ~3 ms cutoff smoother handles any per-sample step change cleanly, so manual dwell-slider tweaks are already click-free. Resets on every play press.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration, and `speed_scale_current = 1.0 + ramp_t × (slider 26 − 1.0)`; while Off, ramp_t freezes wherever it is and resumes from there on re-engage.
+
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. The existing ~3 ms cutoff smoother absorbs any per-sample step changes, so manual dwell-slider tweaks remain click-free.
 
 ### Drift
 
@@ -2310,19 +2313,22 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything (LFO phases, rest state, cycle counter) and starts fresh in its play period from cycle 0.
 
-### Speed Ramp (new)
+### Speed Ramp
 
-In-plugin tremolo-rate morph over time. Set a target multiplier, set a duration in minutes, flip engage on — the tremolo rate eases toward target without needing automation envelopes.
+In-plugin tremolo-rate morph over time. Keeps the multiplier-factor form (rather than the signed-delta form used by Womb v3 / breath_gen / rhythm-track) because the Rate Value slider spans ~6 orders of magnitude across Hz/Seconds/BPM modes (0.001 to 1000).
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+**Speed ramp factor (slider 24)** `0.1–4.0, step 0.01, default 1.0`
+Multiplier on the effective tremolo frequency. **0.5** = half tremolo rate (slower modulation cycle); **2.0** = double; **1.0** = no change (safe default).
 
-The multiplier scales the effective tremolo frequency on top of the Rate slider. **0.5** = half tremolo rate (slower modulation cycle); **2.0** = double. Off → On captures the current multiplier and ramps fresh toward the target; On → Off freezes at the in-flight value. Set target = 1.0 and re-engage to return.
+**Speed ramp duration (slider 25)** `0–60 minutes, default 0` · **Speed ramp engage (slider 26)** `Off / On, default Off` · **Speed ramp start delay (slider 27)** `0–60 minutes, default 0`
 
-A ~100 ms smoother also sits between the Rate slider and the effective frequency, so manual Rate tweaks no longer click. Always on.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration, and `speed_scale_current = 1.0 + ramp_t × (slider 24 − 1.0)`; while Off, ramp_t freezes and resumes from there on re-engage.
 
-The ramp also scales the linked-sweep pan rate (Pan Mode 11), since that mode derives its rate from the tremolo frequency. Pan Sweep modes 9 and 10 have their own independent rate slider and are NOT scaled by the speed ramp — they stay at whatever Pan Sweep Rate is set to. (Same with Cycle Steps / Pan Glide; those are positional / smoothing controls, not rate.)
+A ~100 ms smoother also sits between the Rate slider and the effective frequency, so manual Rate tweaks don't click.
 
-Resets on every play press.
+The ramp also scales the linked-sweep pan rate (Pan Mode 11), since that mode derives its rate from the tremolo frequency. Pan Sweep modes 9 and 10 have their own independent rate slider and are NOT scaled by the speed ramp.
+
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes don't.
 
 ### Drift
 

@@ -69,9 +69,17 @@ slider25:0<0,1,1{Pass-through,Silence}>Output at rest
 // double. The existing ~3 ms cut smoother already absorbs clicks
 // from manual dwell-slider tweaks, so no additional rate smoother is
 // needed here — just the ramp.
-slider26:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+// Sweep Dwell keeps the multiplier-factor form (rather than the
+// signed-delta form used by Womb v3 / breath_gen / rhythm-track):
+// the cycle rate varies several orders of magnitude depending on
+// dwell-time settings, so a multiplier is more unit-agnostic.
+//
+// Engage is now a freeze/resume gate (NOT a restart edge); only
+// transport play resets ramp_t.
+slider26:1.0<0.1,4.0,0.01>Speed ramp factor (1.0 = no change)
 slider27:0<0,60,0.1>Speed ramp duration (minutes)
 slider28:0<0,1,1{Off,On}>Speed ramp engage
+slider29:0<0,60,0.1>Speed ramp start delay (minutes)
 
 // Musical drift: drifts the dwell-pattern period by up to N seconds
 // up and N seconds down, over a cycle measured in dwell patterns.
@@ -229,10 +237,11 @@ rest_output_mode  = 0;
 effect_mix        = 1;
 
 // Speed ramp state.
-speed_ramp_engaged_last = 0;
-speed_scale_current     = 1.0;
-speed_scale_start       = 1.0;
-speed_ramp_t            = 0.0;
+// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
+// only transport play resets ramp_t.
+speed_scale_current      = 1.0;
+speed_ramp_t             = 0.0;
+speed_ramp_delay_elapsed = 0;
 
 // Drift state. Two independent drift sources (musical, slow) share
 // the same shape selector. Phases advance per @sample, mod 1. For
@@ -298,20 +307,19 @@ rest_lfo_mode    = slider24;
 rest_output_mode = slider25;
 
 // Speed ramp engage-edge.
-slider28 && !speed_ramp_engaged_last ? (
-  speed_scale_start = speed_scale_current;
-  speed_ramp_t      = 0.0;
-);
-speed_ramp_engaged_last = slider28;
+// No engage-edge detection. Engage is a freeze/resume gate handled
+// in @sample. Only transport play resets ramp_t.
 
 
 @sample
 
-// Re-arm Start Delay on every transport stop/start. During the delay
-// window the filter state stays frozen and spl0/spl1 pass through
-// unchanged.
+// Transport play edge resets EVERYTHING tied to "this play session":
+// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
+// counter. ONLY thing that resets ramp_t — slider changes don't.
 play_state > 0 && last_play_state == 0 ? (
-  start_delay_elapsed = 0;
+  start_delay_elapsed      = 0;
+  speed_ramp_t             = 0.0;
+  speed_ramp_delay_elapsed = 0;
 );
 last_play_state = play_state;
 
@@ -347,14 +355,22 @@ pan_sweep_ratio = slider20;
 period = high_secs + fade_down_secs + low_secs + fade_up_secs;
 freq   = 1 / max(period, 0.00001);
 
-// Advance speed ramp and scale freq by the resulting multiplier so
-// the whole dwell pattern stretches/compresses smoothly. The cut
-// smoother below absorbs any per-sample step change.
+// Advance speed_ramp_t while engaged + duration > 0 + past start
+// delay. Engage off freezes ramp_t; engaging on resumes from there.
 slider28 && slider27 > 0 ? (
-  speed_ramp_t += 1.0 / (srate * slider27 * 60);
-  speed_ramp_t = min(speed_ramp_t, 1.0);
-  speed_scale_current = speed_scale_start + (slider26 - speed_scale_start) * speed_ramp_t;
+  speed_ramp_delay_samples = slider29 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider27 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+  );
 );
+
+// Speed scale factor: ramp from 1.0 toward slider26 over the duration.
+// Used as a multiplier on freq below. No "snapshot at engage" — live
+// edits to slider26 adjust the ramp's target trajectory.
+speed_scale_current = 1.0 + speed_ramp_t * (slider26 - 1.0);
 combined_scale = speed_scale_current;
 
 // Drift: two independent sources (musical, slow) shape the dwell

@@ -70,14 +70,22 @@ slider22:0<0,1,1{Walk through,Freeze in place}>LFO at rest
 slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 
 // Speed ramp: in-plugin slowdown/speedup over time. The effective
+// Full Feature Tremolo keeps the multiplier-factor form (rather than
+// the signed-delta form used by Womb v3 / breath_gen / rhythm-track)
+// because the Rate Value slider spans ~6 orders of magnitude across
+// Hz/Seconds/BPM modes (0.001 to 1000). A multiplier is unit-agnostic.
+//
 // tremolo frequency = rate-slider-derived freq × speed_scale_current
 // per sample, so 0.5 = half tremolo rate (slower modulation), 2.0 =
-// double. Designed for sleep/wind-down use without automation. A
-// ~100 ms smoother also sits between the Rate slider and freq so
-// manual Rate tweaks don't click.
-slider24:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+// double. A ~100 ms smoother sits between the Rate slider and freq
+// so manual Rate tweaks don't click.
+//
+// Engage is now a freeze/resume gate (NOT a restart edge); only
+// transport play resets ramp_t.
+slider24:1.0<0.1,4.0,0.01>Speed ramp factor (1.0 = no change)
 slider25:0<0,60,0.1>Speed ramp duration (minutes)
 slider26:0<0,1,1{Off,On}>Speed ramp engage
+slider27:0<0,60,0.1>Speed ramp start delay (minutes)
 
 // Per-plugin drift: two independent drift sources (musical and
 // slow) add wandering offsets to the tremolo rate in the user's
@@ -257,10 +265,11 @@ rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 slider2 == 0 ? (freq_smoothed = slider1) :
 slider2 == 1 ? (freq_smoothed = 1 / max(slider1, 0.001)) :
                (freq_smoothed = slider1 / 60);
-speed_ramp_engaged_last  = 0;
+// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
+// only transport play resets ramp_t.
 speed_scale_current      = 1.0;
-speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
+speed_ramp_delay_elapsed = 0;
 
 // Per-plugin drift state. Phases advance per sample (musical scales
 // with Speed Ramp via freq; slow is wall-clock against srate). The
@@ -332,22 +341,19 @@ pr_enabled       = new_pr_enabled;
 rest_lfo_mode    = slider22;
 rest_output_mode = slider23;
 
-// Speed ramp engage-edge: capture in-flight scale so re-engaging
-// starts a fresh ramp from wherever the previous one left off.
-slider26 && !speed_ramp_engaged_last ? (
-  speed_scale_start = speed_scale_current;
-  speed_ramp_t      = 0.0;
-);
-speed_ramp_engaged_last = slider26;
+// No engage-edge detection. Engage is a freeze/resume gate handled
+// in @sample. Only transport play resets ramp_t.
 
 
 @sample
 
-// Re-arm Start Delay on every transport stop/start. During the delay
-// window all effect-internal state (phase_l/r, gain_l/r, pan phase)
-// stays frozen and spl0/spl1 pass through unchanged.
+// Transport play edge resets EVERYTHING tied to "this play session":
+// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
+// counter. ONLY thing that resets ramp_t — slider changes don't.
 play_state > 0 && last_play_state == 0 ? (
-  start_delay_elapsed = 0;
+  start_delay_elapsed      = 0;
+  speed_ramp_t             = 0.0;
+  speed_ramp_delay_elapsed = 0;
 );
 last_play_state = play_state;
 
@@ -389,11 +395,22 @@ rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
 // the speed ramp for the base effective tremolo frequency. Drift
 // offsets are added below.
 freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
+
+// Advance speed_ramp_t while engaged + duration > 0 + past start
+// delay. Engage off freezes ramp_t; engaging on resumes from there.
 slider26 && slider25 > 0 ? (
-  speed_ramp_t += 1.0 / (srate * slider25 * 60);
-  speed_ramp_t = min(speed_ramp_t, 1.0);
-  speed_scale_current = speed_scale_start + (slider24 - speed_scale_start) * speed_ramp_t;
+  speed_ramp_delay_samples = slider27 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider25 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+  );
 );
+
+// Speed scale factor: ramp from 1.0 toward slider24 over the duration.
+// No "snapshot at engage" — live edits to slider24 adjust trajectory.
+speed_scale_current = 1.0 + speed_ramp_t * (slider24 - 1.0);
 combined_scale = speed_scale_current;
 freq = freq_smoothed * combined_scale;
 
