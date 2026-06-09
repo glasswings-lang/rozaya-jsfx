@@ -2628,15 +2628,20 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (beat phase back to 1.0 for the immediate downbeat, period counter, rest state) and starts fresh from beat 1.
 
-### Speed Ramp (new)
+### Speed Ramp
 
-In-plugin tempo morph over time, without automation envelopes.
+In-plugin tempo morph over time, without automation envelopes. Single-target plugin (Tempo BPM is the only ramp target), so no selector — slider 17 is directly the signed `by` amount in BPM.
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+**Speed ramp by (BPM) (slider 17)** `-270 to +180, step 0.1, default 0`
+Signed BPM delta. **0** = no change (safe default — engaging at 0 produces no effect). **Negative** = slow down (`-60` ramps Tempo from 120 → 60 BPM over the duration). **Positive** = speed up.
 
-Engage = ramp advances from the current multiplier toward target over the duration. **0.5** halves effective tempo (120 BPM → 60), **2.0** doubles it. The Tempo slider stays where it is; the ramp is layered on top. Off → On captures the in-flight multiplier and starts a fresh ramp; On → Off freezes at the current position. Set target = 1.0 and re-engage to return to slider tempo.
+**Speed ramp duration (slider 18)** `0–60 minutes, default 0` · **Speed ramp engage (slider 19)** `Off / On, default Off` · **Speed ramp start delay (slider 20)** `0–60 minutes, default 0`
 
-The accent grid and swing follow effective tempo automatically — the bar still feels right at any speed. Resets to 1.0 on every play press.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, it freezes wherever it is and resumes from there on re-engage. Start delay waits N minutes after engage before ramp_t starts advancing.
+
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes (engage toggle, anything) don't restart it. The accent grid, swing, and drift wave all follow the effective tempo automatically.
+
+**Migration from v2.7:** slider 17 changed from multiplier (0.1–4.0) to signed BPM delta. Existing projects' multiplier value gets interpreted as a tiny BPM delta — effectively Speed Ramp "off" until reconfigured.
 
 ### Drift
 

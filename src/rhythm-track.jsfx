@@ -37,13 +37,20 @@ slider14:0<0,1000,0.01>Start Delay (beats)
 slider15:0<0,1000,1>Play for (beats)
 slider16:0<0,1000,1>Rest for (beats)
 
-// Speed ramp: in-plugin slowdown/speedup. beat_phase advance is
-// scaled by speed_scale_current per sample (was 1/samples_per_beat,
-// now speed_scale_current/samples_per_beat). 0.5 = half speed (BPM
-// effectively halved without changing the slider), 2.0 = double.
-slider17:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+// Speed ramp: signed-delta on Tempo BPM. Single-target plugin (Tempo
+// is the only meaningful rate), so no selector — slider 17 IS the
+// `by` amount in BPM. effective_tempo = slider1 + ramp_t * slider17
+// computed per sample. Engage (slider 19) is a freeze/resume gate
+// (NOT a restart edge); only transport play resets ramp_t.
+//
+// Migration from v2.7: slider 17 changed from multiplier (0.1-4.0)
+// to signed BPM delta (-270 to +180). Old projects' multiplier value
+// gets interpreted as a tiny BPM delta — effectively "no Speed Ramp"
+// until reconfigured. Default 0 = no change (safe on engage).
+slider17:0<-270,180,0.1>Speed ramp by (BPM)
 slider18:0<0,60,0.1>Speed ramp duration (minutes)
 slider19:0<0,1,1{Off,On}>Speed ramp engage
+slider20:0<0,60,0.1>Speed ramp start delay (minutes)
 
 // Musical drift: organic up/down wander on tempo, paced in beats.
 // Scales with Speed Ramp — slow the tempo down, drift slows with it.
@@ -114,10 +121,10 @@ rest_for_beats = 0;
 pr_enabled     = 0;
 
 // Speed ramp state.
-speed_ramp_engaged_last = 0;
-speed_scale_current     = 1.0;
-speed_scale_start       = 1.0;
-speed_ramp_t            = 0.0;
+// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
+// only transport play resets ramp_t.
+speed_ramp_t             = 0.0;
+speed_ramp_delay_elapsed = 0;
 
 // Drift state. Phases advance per sample and wrap [0,1). For Random
 // shape we interpolate between prev_target → curr_target over one
@@ -300,11 +307,8 @@ rest_for_beats = slider16;
 pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 
 // Speed ramp engage-edge.
-slider19 && !speed_ramp_engaged_last ? (
-  speed_scale_start = speed_scale_current;
-  speed_ramp_t      = 0.0;
-);
-speed_ramp_engaged_last = slider19;
+// No engage-edge logic. Engage is a freeze/resume gate handled in
+// @sample. Only transport play resets ramp_t.
 
 strong_len = render_tick(strong_buf, strong_hz, strong_gain, strong_decay, tone_q);
 weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_q);
@@ -318,18 +322,44 @@ loop(timesig,
 
 @sample
 
-// Advance speed ramp every sample, regardless of Start Delay.
+// Transport play edge resets speed_ramp_t (and start-delay counter),
+// so each play press starts a fresh ramp from 0. ONLY thing that
+// resets ramp_t — slider changes don't restart it.
+play_state > 0 && last_play_state == 0 ? (
+  start_delay_elapsed      = 0;
+  speed_ramp_t             = 0.0;
+  speed_ramp_delay_elapsed = 0;
+);
+last_play_state = play_state;
+
+// Advance speed_ramp_t while engaged + duration > 0 + past start delay.
+// Engage off freezes ramp_t; engaging on resumes from there.
 slider19 && slider18 > 0 ? (
-  speed_ramp_t += 1.0 / (srate * slider18 * 60);
-  speed_ramp_t = min(speed_ramp_t, 1.0);
-  speed_scale_current = speed_scale_start + (slider17 - speed_scale_start) * speed_ramp_t;
+  speed_ramp_delay_samples = slider20 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider18 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+  );
 );
 
-combined_scale = speed_scale_current;
+// Speed Ramp's BPM offset (signed delta). Applied additively to
+// effective_tempo below alongside drift offsets. The musical drift
+// wave's period needs to track Speed Ramp so the wave-per-beat
+// relationship stays constant — but using effective_samples_per_beat
+// would be circular (drift modifies it). Use a Speed-Ramp-adjusted
+// samples_per_beat (tempo + speed_ramp_offset, no drift) for the
+// drift wave instead.
+speed_ramp_bpm_offset = speed_ramp_t * slider17;
+sr_adjusted_tempo = max(10, tempo + speed_ramp_bpm_offset);
+sr_adjusted_samples_per_beat = (60.0 / sr_adjusted_tempo) * srate;
 
 // Drift: compute musical + slow offsets in BPM and apply to tempo.
-// Musical drift advances by combined_scale (so it slows with Speed
-// Ramp); slow drift advances by wall-clock. Each phase wraps [0,1).
+// Musical drift's phase advances based on sr_adjusted_samples_per_beat
+// (so the wave's period in beats stays ~constant — wave slows
+// proportionally as Speed Ramp slows the metronome). Slow drift
+// advances by wall-clock. Each phase wraps [0,1).
 musical_drift_up     = slider21;
 musical_drift_down   = slider22;
 musical_drift_period = slider23;
@@ -342,7 +372,7 @@ musical_drift_offset = 0;
 slow_drift_offset    = 0;
 
 (musical_drift_up > 0 || musical_drift_down > 0) ? (
-  musical_drift_phase += combined_scale / (musical_drift_period * samples_per_beat);
+  musical_drift_phase += 1 / (musical_drift_period * sr_adjusted_samples_per_beat);
   musical_drift_phase >= 1.0 ? (
     musical_drift_phase -= 1.0;
     // On wrap, draw a fresh Random target. Shape-agnostic so the
@@ -388,14 +418,11 @@ slow_drift_offset    = 0;
 // Effective tempo with drift, clamped so over-aggressive Down-by
 // can't silence or break the metronome. Recompute samples_per_beat
 // each sample so beat_phase advances at the drifted rate.
-effective_tempo = max(10, tempo + musical_drift_offset + slow_drift_offset);
+effective_tempo = max(10, tempo + musical_drift_offset + slow_drift_offset + speed_ramp_bpm_offset);
 effective_samples_per_beat = (60.0 / effective_tempo) * srate;
 
-// Re-arm Start Delay on each transport stop/start.
-play_state > 0 && last_play_state == 0 ? (
-  start_delay_elapsed = 0;
-);
-last_play_state = play_state;
+// (Transport edge handler is at the top of @sample now — it resets
+// start_delay_elapsed AND speed_ramp_t/delay together.)
 
 // Start Delay gate. During the silent window beat_phase and tick_pos
 // don't advance, so when the delay elapses the metronome begins from
@@ -406,7 +433,7 @@ start_delay_elapsed < start_delay_sec ? (
   spl1 = 0;
 ) : (
 
-beat_phase += combined_scale / effective_samples_per_beat;
+beat_phase += 1 / effective_samples_per_beat;
 
 beat_phase >= 1.0 ? (
   beat_phase -= 1.0;
