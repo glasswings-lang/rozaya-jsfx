@@ -1267,15 +1267,26 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior** is conventional: pressing stop silences the plugin, pressing play re-initializes everything (voice phases, Start Delay counter, per-voice cycle counters, resting flags). Every play press starts a fresh play period from voice cycle 0. Same behavior as without the gate engaged.
 
-### Speed Ramp (new)
+### Speed Ramp
 
-In-plugin slowdown/speedup over time, designed for sleep / wind-down use without automation envelopes.
+In-plugin slowdown/speedup over time. User-facing form: a signed `by` amount on the base Rate Value slider 3 (in the rate's currently-displayed unit). Internally, that delta is converted to a multiplicative ratio that scales **every voice's tremolo + pan + cycle-counter advance** — so the whole polyrhythm stretches or compresses while preserving the rate RELATIONSHIPS between voices.
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+**Speed ramp by (slider 65)** `-1000 to +1000, step 0.001, default 0`
+Signed delta on the base rate (slider 3). **0** = no change. The delta is interpreted in the rate's currently-displayed unit (BPM / Seconds / Hz). Example: at slider 3 = 60 BPM, `by -30` ramps slider 3's effective value from 60 → 30. All voices scale by the same ratio (0.5), so V2's 60.5 ramps to 30.25, etc. The slow beat between them slows proportionally — the polyrhythm feel is preserved.
 
-Scales **every voice's tremolo + pan + cycle-counter advance** by a single multiplier, so the whole polyrhythm stretches or compresses while preserving the rate RELATIONSHIPS between voices. At 0.5, V1 at 60 BPM and V2 at 60.5 BPM both halve to 30 and 30.25 BPM — the slow beat between them slows proportionally too. **Tuning and binaural beat are unaffected** — only the modulation rates scale, not the audible pitch.
+In BPM/Hz modes, negative `by` = slower. In Seconds mode (period), positive `by` = slower (longer period).
 
-Off → On captures the current multiplier and ramps fresh toward target; On → Off freezes at the in-flight position. Set target = 1.0 and re-engage to return to slider speed. Resets on every play press.
+**Independent mode note:** slider 3 isn't used for audio in Independent mode (each voice has its own rate), but it's still used as the reference for `by` interpretation. Set slider 3 to a sensible reference value if you're in Independent mode — the resulting ratio applies to all voices.
+
+**Speed ramp duration (slider 66)** `0–60 minutes, default 0` · **Speed ramp engage (slider 67)** `Off / On, default Off` · **Speed ramp start delay (slider 68)** `0–60 minutes, default 0`
+
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes and resumes from there on re-engage.
+
+**Tuning and binaural beat are unaffected** — only the modulation rates scale, not the audible pitch.
+
+**Transport behavior:** every play press re-initializes everything (voice phases, Speed Ramp progress, etc.). This is the ONLY thing that resets ramp_t — slider changes don't.
+
+**Migration from v2.7:** slider 65 changed from multiplier (0.1–4.0) to signed delta. Old projects' multiplier value interprets as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
 ### Drift
 
@@ -1513,15 +1524,22 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Changing Rest mode mid-rest** is an edge case the code handles defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unpredictably.
 
-### Speed Ramp (new)
+### Speed Ramp
 
-In-plugin melody-tempo morph over time, without automation envelopes.
+In-plugin melody-tempo morph over time, without automation envelopes. User-facing form: a signed `by` amount on the Rate Value slider 2 (in the rate's currently-displayed unit). Internally that delta is converted to a multiplicative ratio that scales the effective dt — so the whole melody timeline stretches or compresses while voice envelope proportions (Attack %, Release %, Note duration) stay intact.
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+**Speed ramp by (slider 67)** `-1000 to +1000, step 0.001, default 0`
+Signed delta added to the Rate Value over the duration. **0** = no change. The delta is in **the rate's currently-displayed unit** — BPM if Rate Mode is BPM, Seconds (period) if Seconds, Hz if Hz. In BPM/Hz modes negative `by` = slower melody; in Seconds mode positive `by` = slower (longer period).
 
-Scales the effective dt (time-per-sample) the sequencer + voice envelopes see. **0.5** = the whole melody plays at half tempo (notes twice as long, glide stretches with them); **2.0** = double tempo. The Rate Value slider and per-voice cycle counts stay where they are; the ramp morphs effective tempo on top.
+**Speed ramp duration (slider 68)** `0–60 minutes, default 0` · **Speed ramp engage (slider 69)** `Off / On, default Off` · **Speed ramp start delay (slider 70)** `0–60 minutes, default 0`
 
-Voice envelope proportions (Attack %, Release %, Note duration) stay intact because they're percentages of the stretched step. Pan modulation also scales, so the whole melody timeline including pan motion morphs as one piece. Resets on every play press.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes and resumes from there on re-engage.
+
+Pan modulation also scales, so the whole melody timeline including pan motion morphs as one piece.
+
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes don't.
+
+**Migration from v2.7:** slider 67 changed from multiplier (0.1–4.0) to signed delta in rate-units. Old projects' multiplier value interprets as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
 ### Drift
 
@@ -1845,17 +1863,24 @@ The two sliders are orthogonal — all four combinations work. Walk + Silence ke
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
 
-### Speed Ramp (new)
+### Speed Ramp
 
-In-plugin sweep-rate morph over time. Set a target multiplier, set a duration in minutes, flip engage on — the filter sweep eases toward target without needing automation envelopes.
+In-plugin sweep-rate morph over time. Set a signed `by` amount in the rate's currently-displayed unit, a duration, flip engage on — the filter sweep eases toward `Rate Value + by` without needing automation envelopes.
 
-**Speed ramp target (multiplier)** `0.1–4.0, default 1.0` · **Speed ramp duration (minutes)** `0–60, default 0` · **Speed ramp engage** `Off / On, default Off`
+**Speed ramp by (slider 29)** `-1000 to +1000, step 0.001, default 0`
+Signed delta added to the Rate Value over the duration. **0** = no change. The delta is in **the rate's currently-displayed unit** — Hz if Rate Mode is Hz, Seconds (period) if Seconds, BPM if BPM. In BPM/Hz modes negative `by` = slower sweep; in Seconds mode positive `by` = slower (longer period).
 
-The multiplier scales the effective sweep frequency on top of the Rate slider. **0.5** = half sweep rate (slower cutoff movement); **2.0** = double. Off → On captures the current multiplier and ramps fresh; On → Off freezes at the in-flight value. Set target = 1.0 and re-engage to return.
+**Speed ramp duration (slider 30)** `0–60 minutes, default 0` · **Speed ramp engage (slider 31)** `Off / On, default Off` · **Speed ramp start delay (slider 32)** `0–60 minutes, default 0`
 
-A ~100 ms smoother sits between the Rate slider and the audio so manual Rate tweaks no longer click.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes and resumes from there on re-engage.
 
-The ramp also scales the Linked Sweep pan mode (12), since that mode derives its rate from the sweep frequency. The two Pan Sweep modes (10, 11) have their own independent rate slider and are NOT scaled. Resets on every play press.
+A ~100 ms smoother sits between the Rate slider and the audio so manual Rate tweaks don't click.
+
+The ramp also affects the Linked Sweep pan mode (12), since that mode derives its rate from the sweep frequency. The two Pan Sweep modes (10, 11) have their own independent rate slider and are NOT affected by the speed ramp.
+
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes don't.
+
+**Migration from v2.7:** slider 29 changed from multiplier (0.1–4.0) to signed delta in rate-units. Old projects' multiplier value interprets as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
 ### Drift
 

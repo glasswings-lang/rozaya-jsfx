@@ -192,18 +192,34 @@ slider62:0<0,1000,0.001>Start Delay
 slider63:0<0,1000,1>Play for (cycles)
 slider64:0<0,1000,1>Rest for (cycles)
 
-// Speed ramp: in-plugin slowdown/speedup over time. Scales every
-// voice's tremolo + pan + per-voice-cycle-counter advance by
-// speed_scale_current per sample, so the entire polyrhythm stretches
-// or compresses while preserving the rate RELATIONSHIPS between
-// voices. 0.5 = whole polyrhythm at half speed (every voice slows
-// proportionally — V1's 60 BPM and V2's 60.5 BPM both halve to 30
-// and 30.25 BPM, preserving the slow beat between them); 2.0 =
-// double. Tuning and binaural beat are unaffected — only the
-// modulation rates scale.
-slider65:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+// Speed ramp: signed-delta on the base Rate Value (slider3), in the
+// rate's currently-displayed unit (BPM if Rate Mode = BPM, Seconds
+// if Seconds, Hz if Hz). Internally the additive delta is converted
+// to a multiplicative ratio (effective_base_hz / base_hz) which then
+// scales every voice's tremolo + pan + per-voice-cycle-counter
+// advance — so the user's "by" reads as an additive delta on the
+// shared base rate, while behind the scenes all voices stay in
+// proportional lockstep (V1's 60 and V2's 60.5 both ramp by -30 in
+// user perception; internally both scale by the same ratio, so the
+// slow beat between them is preserved as a fraction of the new
+// effective rate).
+//
+// Independent mode (no shared base rate): slider3 still acts as the
+// reference for "by" interpretation. Speed Ramp's resulting ratio
+// then applies to each voice's independent rate. Set slider3 to a
+// sensible reference value if you're in Independent mode.
+//
+// Tuning and binaural beat are unaffected — only modulation rates
+// scale. Engage is a freeze/resume gate (NOT a restart edge); only
+// transport play resets ramp_t.
+//
+// Migration from v2.7: slider 65 changed from multiplier (0.1-4.0)
+// to signed delta in rate-units. Old multiplier values interpret as
+// tiny deltas — Speed Ramp effectively "off" until reconfigured.
+slider65:0<-1000,1000,0.001>Speed ramp by (in rate's current unit)
 slider66:0<0,60,0.1>Speed ramp duration (minutes)
 slider67:0<0,1,1{Off,On}>Speed ramp engage
+slider68:0<0,60,0.1>Speed ramp start delay (minutes)
 
 // ===== CHARACTER (global post-effects) =====
 // Four sliders that adjust the character of WHATEVER waveform is
@@ -372,10 +388,11 @@ play_for_cycles = 0;
 rest_for_cycles = 0;
 
 // Speed ramp state.
-speed_ramp_engaged_last = 0;
-speed_scale_current     = 1.0;
-speed_scale_start       = 1.0;
-speed_ramp_t            = 0.0;
+// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
+// only transport play resets ramp_t.
+speed_scale_current      = 1.0;
+speed_ramp_t             = 0.0;
+speed_ramp_delay_elapsed = 0;
 
 // Drift state. Two independent phase accumulators (musical = scales
 // with Speed Ramp, slow = wall-clock). prev/curr targets feed the
@@ -525,11 +542,8 @@ play_for_cycles = slider63;
 rest_for_cycles = slider64;
 
 // Speed ramp engage-edge.
-slider67 && !speed_ramp_engaged_last ? (
-  speed_scale_start = speed_scale_current;
-  speed_ramp_t      = 0.0;
-);
-speed_ramp_engaged_last = slider67;
+// No engage-edge detection. Engage is a freeze/resume gate handled
+// in @sample. Only transport play resets ramp_t.
 
 // Reverse — permute (single layer, option 1): mirror the per-voice
 // drift/rate values V1↔V8, V2↔V7, V3↔V6, V4↔V5. Notes, gains, phase
@@ -763,15 +777,28 @@ re_start = on_frac - rw_eff;
 
 @sample
 
-// Advance speed ramp every sample (runs through Start Delay too).
-// combined_scale multiplies every voice's tremolo + pan + cycle
-// counter advance below, so the whole polyrhythm stretches as one
-// piece and rate RELATIONSHIPS between voices stay intact.
+// Advance speed_ramp_t while engaged + duration > 0 + past start
+// delay. Engage off freezes ramp_t; engaging on resumes from there.
 slider67 && slider66 > 0 ? (
-  speed_ramp_t += 1.0 / (srate * slider66 * 60);
-  speed_ramp_t = min(speed_ramp_t, 1.0);
-  speed_scale_current = speed_scale_start + (slider65 - speed_scale_start) * speed_ramp_t;
+  speed_ramp_delay_samples = slider68 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider66 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+  );
 );
+
+// Signed-delta Speed Ramp on the base rate (slider3), expressed
+// internally as a multiplicative ratio so all voices stay in
+// proportional lockstep. Compute effective base in user's rate unit,
+// convert to Hz the same way as base_rate_hz, then take the ratio.
+// User's mental model: "ramp slider3 from 60 to 30." Audio behavior:
+// "scale every voice's rate by 0.5."
+effective_rate_val = rate_val + speed_ramp_t * slider65;
+effective_rate_hz  = rate_to_hz(effective_rate_val, rate_mode);
+base_rate_hz_ref   = rate_to_hz(rate_val, rate_mode);
+speed_scale_current = effective_rate_hz / max(base_rate_hz_ref, 0.001);
 combined_scale = speed_scale_current;
 
 // ===== DRIFT (per-plugin, built-in) =====

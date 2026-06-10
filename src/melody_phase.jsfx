@@ -167,16 +167,28 @@ slider65:0<0,1000,1>Rest for (steps)
 // the previous voice doesn't ring forever in Legato mode.
 slider66:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
-// Speed ramp: in-plugin slowdown/speedup over time. Scales the
-// effective dt (the per-sample time the sequencer + voice envelopes
-// see) by speed_scale_current, so the whole melody timeline stretches
-// or compresses without touching the Rate Value or per-voice cycle
-// counts. 0.5 = the melody takes twice as long; 2.0 = half the time.
-// Voice envelope proportions (Attack %, Release %, Note duration)
-// stay intact because they're percentages of the stretched step.
-slider67:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+// Speed ramp: signed-delta on the Rate Value (slider2), in the
+// rate's currently-displayed unit (BPM if Rate Mode = BPM, Seconds
+// if Seconds, Hz if Hz). Internally the additive delta is converted
+// to a multiplicative ratio (same mode-aware logic as Drift) which
+// then scales the effective dt — so the whole melody timeline
+// stretches or compresses while voice envelope proportions
+// (Attack %, Release %, Note duration) stay intact.
+//
+// In BPM/Hz modes negative slider67 = slower; in Seconds mode
+// (period) positive slider67 = slower (longer period).
+//
+// Engage is a freeze/resume gate (NOT a restart edge); only
+// transport play resets ramp_t.
+//
+// Migration from v2.7: slider 67 changed from multiplier (0.1-4.0)
+// to signed delta in rate-units. Old projects' multiplier value
+// interprets as a tiny delta — Speed Ramp effectively "off" until
+// reconfigured.
+slider67:0<-1000,1000,0.001>Speed ramp by (in rate's current unit)
 slider68:0<0,60,0.1>Speed ramp duration (minutes)
 slider69:0<0,1,1{Off,On}>Speed ramp engage
+slider70:0<0,60,0.1>Speed ramp start delay (minutes)
 
 // Musical drift (sliders 71-73): adds a slow oscillation to the
 // effective rate, measured in cycles of the global rate. Up by and
@@ -328,10 +340,11 @@ pr_rest_duration_samples = 0;
 pr_frozen_prev_voice     = -1;
 
 // Speed ramp state.
-speed_ramp_engaged_last = 0;
-speed_scale_current     = 1.0;
-speed_scale_start       = 1.0;
-speed_ramp_t            = 0.0;
+// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
+// only transport play resets ramp_t.
+speed_scale_current      = 1.0;
+speed_ramp_t             = 0.0;
+speed_ramp_delay_elapsed = 0;
 
 // Per-plugin drift state. Two independent drift sources (musical
 // scales with Speed Ramp, slow is wall-clock) summed at the rate-
@@ -716,11 +729,8 @@ pr_enabled     = (play_for_steps > 0 && rest_for_steps > 0);
 rest_mode      = slider66;
 
 // Speed ramp engage-edge.
-slider69 && !speed_ramp_engaged_last ? (
-  speed_scale_start = speed_scale_current;
-  speed_ramp_t      = 0.0;
-);
-speed_ramp_engaged_last = slider69;
+// No engage-edge detection. Engage is a freeze/resume gate handled
+// in @sample. Only transport play resets ramp_t.
 
 // Drift cache. Read slider values once per @slider run; @sample
 // reads from these locals so it doesn't pay the slider lookup
@@ -746,11 +756,28 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 // effective tempo (dt is also used for state_elapsed, so scaling
 // here keeps Attack %, Release %, Note duration proportions
 // intact across speed changes).
+// Advance speed_ramp_t while engaged + duration > 0 + past start
+// delay. Engage off freezes ramp_t; engaging on resumes from there.
 slider69 && slider68 > 0 ? (
-  speed_ramp_t += 1.0 / (srate * slider68 * 60);
-  speed_ramp_t = min(speed_ramp_t, 1.0);
-  speed_scale_current = speed_scale_start + (slider67 - speed_scale_start) * speed_ramp_t;
+  speed_ramp_delay_samples = slider70 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider68 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+  );
 );
+
+// Signed-delta Speed Ramp on Rate Value, expressed internally as a
+// multiplicative ratio using the same mode-aware conversion as Drift.
+// User's mental model: "ramp slider2 by N (in its current unit)."
+// Audio behavior: "scale dt by that ratio." Mode-aware so it works
+// in BPM/Sec/Hz uniformly. No "snapshot at engage" — live edits
+// adjust trajectory.
+effective_rate_val_ramp = max(rate_value + speed_ramp_t * slider67, 0.001);
+rate_mode == 1 ?
+  speed_scale_current = rate_value / effective_rate_val_ramp :
+  speed_scale_current = effective_rate_val_ramp / rate_value;
 
 // Musical drift: phase advances at speed_scale_current /
 // (period_cycles × samples_per_primary_cycle) per sample, so it
@@ -827,9 +854,13 @@ rate_mode == 1 ?
 combined_scale = speed_scale_current * drift_mult;
 dt = combined_scale / srate;
 
-// Re-arm Start Delay on each transport stop/start.
+// Transport play edge resets EVERYTHING tied to "this play session":
+// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
+// counter. ONLY thing that resets ramp_t — slider changes don't.
 play_state > 0 && last_play_state == 0 ? (
-  start_delay_elapsed = 0;
+  start_delay_elapsed      = 0;
+  speed_ramp_t             = 0.0;
+  speed_ramp_delay_elapsed = 0;
 );
 last_play_state = play_state;
 

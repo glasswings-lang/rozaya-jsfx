@@ -68,16 +68,28 @@ slider27:0<0,1,1{Walk through,Freeze in place}>LFO at rest
 //     Combines cleanly with either Rest LFO setting.
 slider28:0<0,1,1{Pass-through,Silence}>Output at rest
 
-// Speed ramp: in-plugin sweep-rate slowdown/speedup. The effective
-// sweep frequency = rate-slider-derived freq × speed_scale_current
-// per sample. 0.5 = half sweep rate (slower cutoff movement), 2.0 =
-// double. A ~100 ms smoother on freq removes clicks from manual Rate
+// Speed ramp: signed-delta on Sweep Rate (slider3), in the rate's
+// currently-displayed unit (BPM if Rate Mode = BPM, seconds if
+// Seconds, Hz if Hz). Effective rate = slider3 + ramp_t * slider29.
+// In BPM/Hz modes negative slider29 = slower; in Seconds mode
+// (period) positive slider29 = slower (longer period).
+//
+// A ~100 ms smoother on freq removes clicks from manual Rate
 // adjustment too. Linked Sweep pan mode (12) scales with this since
 // it derives its rate from the sweep frequency; the two pan-sweep
 // modes (10, 11) have their own independent rate and are untouched.
-slider29:1.0<0.1,4.0,0.01>Speed ramp target (multiplier)
+//
+// Engage is a freeze/resume gate (NOT a restart edge); only
+// transport play resets ramp_t.
+//
+// Migration from v2.7: slider 29 changed from multiplier (0.1-4.0)
+// to signed delta in rate-units. Old projects' multiplier value
+// interprets as a tiny delta — Speed Ramp effectively "off" until
+// reconfigured.
+slider29:0<-1000,1000,0.001>Speed ramp by (in rate's current unit)
 slider30:0<0,60,0.1>Speed ramp duration (minutes)
 slider31:0<0,1,1{Off,On}>Speed ramp engage
+slider32:0<0,60,0.1>Speed ramp start delay (minutes)
 
 // Per-plugin drift: two independent drift sources (musical and slow)
 // modulate the effective sweep rate (in Hz) with asymmetric up/down
@@ -250,10 +262,11 @@ rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 slider4 == 0 ? (freq_smoothed = slider3) :
 slider4 == 1 ? (freq_smoothed = 1 / max(slider3, 0.001)) :
                (freq_smoothed = slider3 / 60);
-speed_ramp_engaged_last  = 0;
+// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
+// only transport play resets ramp_t.
 speed_scale_current      = 1.0;
-speed_scale_start        = 1.0;
 speed_ramp_t             = 0.0;
+speed_ramp_delay_elapsed = 0;
 
 // Per-plugin drift state. Phases advance per sample; on each wrap the
 // Random shape latches a new target in [-1, +1] and interpolates from
@@ -330,20 +343,19 @@ rest_lfo_mode    = slider27;
 rest_output_mode = slider28;
 
 // Speed ramp engage-edge.
-slider31 && !speed_ramp_engaged_last ? (
-  speed_scale_start = speed_scale_current;
-  speed_ramp_t      = 0.0;
-);
-speed_ramp_engaged_last = slider31;
+// No engage-edge detection. Engage is a freeze/resume gate handled
+// in @sample. Only transport play resets ramp_t.
 
 
 @sample
 
-// Re-arm Start Delay on every transport stop/start. During the delay
-// window the filter state stays frozen and spl0/spl1 pass through
-// unchanged.
+// Transport play edge resets EVERYTHING tied to "this play session":
+// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
+// counter. ONLY thing that resets ramp_t — slider changes don't.
 play_state > 0 && last_play_state == 0 ? (
-  start_delay_elapsed = 0;
+  start_delay_elapsed      = 0;
+  speed_ramp_t             = 0.0;
+  speed_ramp_delay_elapsed = 0;
 );
 last_play_state = play_state;
 
@@ -386,20 +398,36 @@ rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
 // drift, then derive the effective freq used downstream by the LFO
 // phase advance and the cycle counter.
 freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
+
+// Advance speed_ramp_t while engaged + duration > 0 + past start
+// delay. Engage off freezes ramp_t; engaging on resumes from there.
 slider31 && slider30 > 0 ? (
-  speed_ramp_t += 1.0 / (srate * slider30 * 60);
-  speed_ramp_t = min(speed_ramp_t, 1.0);
-  speed_scale_current = speed_scale_start + (slider29 - speed_scale_start) * speed_ramp_t;
+  speed_ramp_delay_samples = slider32 * 60 * srate;
+  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
+    speed_ramp_delay_elapsed += 1;
+  ) : (
+    speed_ramp_t += 1.0 / (srate * slider30 * 60);
+    speed_ramp_t = min(speed_ramp_t, 1.0);
+  );
 );
 
+// Signed-delta Speed Ramp: effective rate value = rate_val + ramp_t *
+// slider29 (both in rate's current unit). Convert to Hz the same way
+// freq_raw is computed above, then express as a multiplicative factor
+// on freq_smoothed so the existing combined_scale-based audio path
+// keeps working. No "snapshot at engage" — live edits adjust trajectory.
+effective_rate_val = rate_val + speed_ramp_t * slider29;
+rate_mode == 0 ? (effective_rate_hz = effective_rate_val) :
+rate_mode == 1 ? (effective_rate_hz = 1 / max(effective_rate_val, 0.001)) :
+                 (effective_rate_hz = effective_rate_val / 60);
+speed_scale_current = effective_rate_hz / max(freq_raw, 0.001);
+
 // Per-plugin drift. Musical drift's "primary cycle" is one LFO cycle
-// (one full filter sweep), so its period in samples is
-// (musical_drift_period / freq_base) * srate where freq_base is the
-// current Speed-Ramp-scaled sweep frequency. We advance the phase by
-// (speed_scale_current / (musical_drift_period * samples_per_primary_cycle))
-// per sample, which equals (freq_smoothed * speed_scale_current) /
-// (musical_drift_period * srate) per sample — i.e., it scales with
-// Speed Ramp. Slow drift advances on wall clock and ignores Speed Ramp.
+// (one full filter sweep). freq_base is the current Speed-Ramp-scaled
+// sweep frequency; musical drift's phase advance scales with this so
+// the wave's period in LFO cycles stays roughly constant as Speed Ramp
+// slows the metronome. Slow drift advances on wall clock and ignores
+// Speed Ramp.
 freq_base = freq_smoothed * speed_scale_current;
 
 musical_drift_up     = slider33;
