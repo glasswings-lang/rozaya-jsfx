@@ -2879,30 +2879,36 @@ Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0
 
 **Migration from v2.7:** slider 52 changed from multiplier (0.1–4.0) to signed BPM delta. Old projects' multiplier value gets interpreted as a tiny BPM delta — Speed Ramp effectively "off" until reconfigured.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied to the scale's pace on top of Speed Ramp — the rising or descending illusion still works, just with the pace drifting up and down instead of running at one fixed rate. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to any of four targets: BPM, Note Length %, Attack %, or Release %. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-**Musical Period (beats)** `1–256, default 32`
-Period of the musical drift source, measured in scale beats at the current BPM. Scales with Speed Ramp.
+Same pattern as Womb v3's drift and the matching block in Heartbeat / Breath Generator v2.9. Switching the **Drift target** selector saves the current sliders 57-60 into the old target's memory slot, then loads the new target's saved values. All four configurations persist across project save/load.
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center tempo the musical drift wanders at its peak, as a multiplier amplitude.
+For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (beats, paced by the BPM clock), and you express the timescale you want with the period value.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center tempo the musical drift wanders at its trough. Independent from Up by.
+**Drift target** `BPM / Note Length % / Attack % / Release %, default BPM`
+Picks which target's drift configuration sliders 57-60 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift up amount** `0.0–100.0, default 0` (units match target)
+How far above the target's baseline the drift wanders at its peak. Units are BPM for BPM, % for Note Length / Attack / Release. 0 = drift off on the up side. Note that going much above ±20 BPM on the BPM target will sound dramatic — typical musical use is 5–15 BPM.
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift down amount** `0.0–100.0, default 0` (units match target)
+How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift period (beats)** `1–1000, default 8`
+How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Speed Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources.
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Transport behavior (v2.9)
+
+On every transport play press, drift cycle restarts: all 4 targets' phase counters → 0 (drift offset = 0 at the first sample, wanders out from there). Sequencer also resets to first note + clean envelopes + oscillator re-init. Drift CONFIG (up/down/per/shape values per target) is preserved across stop/play and across project save/load. Speed Ramp progress also resets on transport play. This makes renders deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 56-62) was 7 sliders covering BPM only. v2.9 is 5 sliders covering 4 independent targets, reusing slider IDs 56-60; sliders 61 and 62 are no longer declared. Old project values get reinterpreted (selector defaults to BPM; non-zero amounts on sliders 57-58 will produce drift on BPM). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 

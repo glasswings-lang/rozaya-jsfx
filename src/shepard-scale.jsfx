@@ -147,26 +147,35 @@ slider53:0<0,60,0.1>Speed ramp duration (minutes)
 slider54:0<0,1,1{Off,On}>Speed ramp engage
 slider55:0<0,60,0.1>Speed ramp start delay (minutes)
 
-// Musical drift: per-plugin BPM drift scaled by Speed Ramp.
-// Period is measured in beats — one drift cycle spans
-// (Period (cycles)) beats at the current effective tempo.
-// Up by / Down by are in BPM. Default 0 (off).
-slider56:0<0,20,0.1>Musical drift: Up by
-slider57:0<0,20,0.1>Musical drift: Down by
-slider58:8<1,1000,1>Musical drift: Period (cycles)
-
-// Slow drift: per-plugin BPM drift on a wall-clock period.
-// Does NOT scale with Speed Ramp. Up by / Down by in BPM.
-// Default 0 (off).
-slider59:0<0,20,0.1>Slow drift: Up by
-slider60:0<0,20,0.1>Slow drift: Down by
-slider61:5<0.1,60,0.1>Slow drift: Period (minutes)
-
-// Drift shape applies to BOTH drift sources.
-slider62:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Per-target drift: nested-selector pattern matching Womb v3 /
+// breath gen v2.9 / heartbeat v2.9. Pick a target (slider56), then
+// sliders 57-60 hold THAT target's drift config. Switching the
+// selector saves current values to the old target's memory slot and
+// loads the new target's values into the sliders. All 4 targets drift
+// in parallel; the selector just chooses which one you're currently
+// editing. Period unit is beats for all 4 targets (everything is
+// paced by the BPM clock). For slow wall-clock-feel drift, set a
+// long period (~960 beats ≈ 8 min at 120 BPM).
+//
+// Migration from v2.8: the old flat drift block (musical_up/down/
+// period, slow_up/down/period, drift_shape on sliders 56-62) was 7
+// sliders covering BPM only. v2.9 is 5 sliders covering 4 independent
+// targets, reusing slider IDs 56-60; sliders 61 and 62 are no longer
+// declared. Old projects' slider values get reinterpreted (selector
+// defaults to BPM; non-zero amounts on 57-58 will produce drift on
+// BPM). After upgrade, reset drift sliders to defaults if you'd never
+// configured the old flat drift, or reconfigure under the new
+// nested-selector pattern if you had.
+slider56:0<0,3,1{BPM,Note Length %,Attack %,Release %}>Drift target
+slider57:0<0,100,0.1>Drift up amount (units match target)
+slider58:0<0,100,0.1>Drift down amount (units match target)
+slider59:8<1,1000,1>Drift period (beats)
+slider60:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 
 @init
+ext_noinit = 1;   // preserve drift config bank across transport play (drift runtime + state machine still reset on play, see transport edge handler in @sample)
+
 PHI = 1.6180339887;
 NUM_OSC = 12; // max octave layers per note
 
@@ -330,13 +339,43 @@ pr_rest_duration_samples = 0;
 speed_ramp_t             = 0.0;
 speed_ramp_delay_elapsed = 0;
 
-// Per-plugin Drift state.
-musical_drift_phase      = 0;
-slow_drift_phase         = 0;
-musical_drift_prev_target = 0;
-musical_drift_curr_target = 0;
-slow_drift_prev_target    = 0;
-slow_drift_curr_target    = 0;
+// --- v2.9 Drift target memory banks ---
+//
+// 4 targets × 8 fields = 32 slots. Each array is 16-slot-spaced so
+// targets can grow up to 16 later without re-laying-out. Placed at
+// 640 — right after n_env (which ends at 635), no overlap with
+// per-osc / per-note state.
+//
+// Targets:
+//   0 = BPM             (units: BPM)
+//   1 = Note Length %   (units: %, drift sums into slider6 before /100)
+//   2 = Attack %        (units: %, drift sums into slider4 before /100)
+//   3 = Release %       (units: %, drift sums into slider5 before /100)
+N_TARGETS = 4;
+target_drift_up     = 640;
+target_drift_down   = 656;
+target_drift_per    = 672;
+target_drift_shape  = 688;
+target_drift_phase  = 704;
+target_drift_prev   = 720;
+target_drift_curr   = 736;
+target_drift_offset = 752;
+
+i = 0;
+loop(N_TARGETS,
+  target_drift_up[i]     = 0;
+  target_drift_down[i]   = 0;
+  target_drift_per[i]    = 8;
+  target_drift_shape[i]  = 0;
+  target_drift_phase[i]  = 0;
+  target_drift_prev[i]   = 0;
+  target_drift_curr[i]   = 0;
+  target_drift_offset[i] = 0;
+  i += 1;
+);
+
+// Last-selected drift target tracker for save/restore on selector change.
+last_target_select = 0;
 
 
 @slider
@@ -403,16 +442,80 @@ rest_mode      = slider51;
 // No engage-edge detection. Engage is a freeze/resume gate handled
 // in @sample. Only transport play resets ramp_t.
 
+// Drift target selector save/restore (nested-selector pattern).
+// Switching slider56 saves sliders 57-60 into the OLD target's slot,
+// then loads the NEW target's stored config into sliders 57-60.
+// Otherwise captures live edits to the current target's slot. All 4
+// targets drift in parallel from @sample regardless of selection.
+sel_target = slider56;
+sel_up     = slider57;
+sel_down   = slider58;
+sel_per    = slider59;
+sel_shape  = slider60;
+
+last_target_select != sel_target ? (
+  target_drift_up[last_target_select]    = sel_up;
+  target_drift_down[last_target_select]  = sel_down;
+  target_drift_per[last_target_select]   = sel_per;
+  target_drift_shape[last_target_select] = sel_shape;
+
+  slider57 = target_drift_up[sel_target];
+  slider58 = target_drift_down[sel_target];
+  slider59 = target_drift_per[sel_target];
+  slider60 = target_drift_shape[sel_target];
+  slider_automate(slider57);
+  slider_automate(slider58);
+  slider_automate(slider59);
+  slider_automate(slider60);
+
+  last_target_select = sel_target;
+) : (
+  target_drift_up[sel_target]    = sel_up;
+  target_drift_down[sel_target]  = sel_down;
+  target_drift_per[sel_target]   = sel_per;
+  target_drift_shape[sel_target] = sel_shape;
+);
+
 
 @sample
 
-// Transport play edge resets EVERYTHING tied to "this play session":
-// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
-// counter. ONLY thing that resets ramp_t — slider changes don't.
+// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so drift
+// CONFIG bank survives across transport — but everything else needs
+// explicit reset here so renders are deterministic (drift cycle at
+// phase 0, sequencer at first note, envelopes clean, oscillator phases
+// reseeded). Matches breath_gen v2.9 / the suite rule.
 play_state > 0 && last_play_state == 0 ? (
+  // Start Delay + Speed Ramp progress.
   start_delay_elapsed      = 0;
   speed_ramp_t             = 0.0;
   speed_ramp_delay_elapsed = 0;
+
+  // Drift runtime state (NOT the config bank).
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_phase[i]  = 0;
+    target_drift_prev[i]   = 0;
+    target_drift_curr[i]   = 0;
+    target_drift_offset[i] = 0;
+    i += 1;
+  );
+
+  // Sequencer state: back to first note, beat clean.
+  seq_pos   = 0;
+  seq_phase = 0.0;
+
+  // Per-note envelopes back to 0.
+  i = 0;
+  loop(12, n_env[i] = 0; i += 1;);
+
+  // Force oscillator re-init on first sample (rebuilds phases + gains).
+  needs_init = 1;
+
+  // Play/Rest gate state.
+  pr_resting               = 0;
+  pr_step                  = 1;
+  pr_rest_elapsed          = 0;
+  pr_rest_duration_samples = 0;
 );
 last_play_state = play_state;
 
@@ -436,84 +539,58 @@ speed_ramp_bpm_offset = speed_ramp_t * slider52;
 sr_adjusted_bpm       = max(bpm + speed_ramp_bpm_offset, 10);
 sr_adjusted_beat_hz   = sr_adjusted_bpm / 60.0;
 
-// Per-plugin Drift: musical (beat-period, Speed-Ramp-scaled) + slow
-// (wall-clock). Both produce BPM offsets that sum into an effective
-// beat_hz for this sample.
-musical_drift_up     = slider56;
-musical_drift_down   = slider57;
-musical_drift_period = slider58;
-slow_drift_up        = slider59;
-slow_drift_down      = slider60;
-slow_drift_period    = max(slider61, 0.1);
-drift_shape          = slider62;
+// Per-target drift wave computation. 4 targets (0=BPM, 1=Note Length%,
+// 2=Attack%, 3=Release%). Each gets a phase counter advancing per
+// sample at rate 1 / (period_beats * samples_per_speed_ramp_adjusted_beat).
+// All 4 targets share the speed-ramp-adjusted beat as their period
+// reference so drift on BPM doesn't self-modulate its own rate.
+i = 0;
+loop(N_TARGETS,
+  up    = target_drift_up[i];
+  down  = target_drift_down[i];
+  per   = target_drift_per[i];
+  shape = target_drift_shape[i];
 
-musical_drift_offset = 0;
-slow_drift_offset    = 0;
-
-// Musical drift — only run the math if amplitudes are non-zero.
-(musical_drift_up > 0 || musical_drift_down > 0) ? (
-  // Use Speed-Ramp-adjusted beat_hz (drift's own offset omitted to
-  // avoid circular dep) — drift wave's period in beats tracks Speed
-  // Ramp's effect on tempo but ignores its own offset contribution.
-  musical_period_samples = musical_drift_period * srate / max(sr_adjusted_beat_hz, 0.0001);
-  musical_drift_phase += 1 / max(musical_period_samples, 1);
-  musical_drift_phase >= 1 ? (
-    musical_drift_phase -= floor(musical_drift_phase);
-    drift_shape == 2 ? (
-      musical_drift_prev_target = musical_drift_curr_target;
-      musical_drift_curr_target = rand(2) - 1;
+  drift_offset_local = 0;
+  (up > 0 || down > 0) && per > 0 ? (
+    period_samples = max(per * srate / max(sr_adjusted_beat_hz, 0.0001), 1);
+    new_phase = target_drift_phase[i] + 1.0 / period_samples;
+    new_phase >= 1.0 ? (
+      new_phase -= 1.0;
+      shape == 2 ? (
+        target_drift_prev[i] = target_drift_curr[i];
+        target_drift_curr[i] = rand(2) - 1;
+      );
     );
-  );
+    target_drift_phase[i] = new_phase;
 
-  drift_shape == 0 ? (
-    musical_shape_val = sin(2 * $pi * musical_drift_phase);
+    shape == 0 ? (
+      shape_val = sin(2 * $pi * new_phase);
+    ) : shape == 1 ? (
+      shape_val = new_phase < 0.25 ? (4 * new_phase) :
+                  new_phase < 0.75 ? (2 - 4 * new_phase) :
+                                     (4 * new_phase - 4);
+    ) : (
+      shape_val = target_drift_prev[i] +
+        (target_drift_curr[i] - target_drift_prev[i]) * new_phase;
+    );
+    drift_offset_local = shape_val > 0 ? shape_val * up : shape_val * down;
   );
-  drift_shape == 1 ? (
-    musical_shape_val = musical_drift_phase < 0.25 ? (4*musical_drift_phase) :
-                        musical_drift_phase < 0.75 ? (2 - 4*musical_drift_phase) :
-                        (4*musical_drift_phase - 4);
-  );
-  drift_shape == 2 ? (
-    musical_shape_val = musical_drift_prev_target +
-      (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
-  );
-
-  musical_drift_offset = musical_shape_val > 0 ?
-    musical_shape_val * musical_drift_up : musical_shape_val * musical_drift_down;
+  target_drift_offset[i] = drift_offset_local;
+  i += 1;
 );
 
-// Slow drift — wall-clock period, ignores Speed Ramp.
-(slow_drift_up > 0 || slow_drift_down > 0) ? (
-  slow_drift_phase += 1 / (slow_drift_period * 60 * srate);
-  slow_drift_phase >= 1 ? (
-    slow_drift_phase -= floor(slow_drift_phase);
-    drift_shape == 2 ? (
-      slow_drift_prev_target = slow_drift_curr_target;
-      slow_drift_curr_target = rand(2) - 1;
-    );
-  );
-
-  drift_shape == 0 ? (
-    slow_shape_val = sin(2 * $pi * slow_drift_phase);
-  );
-  drift_shape == 1 ? (
-    slow_shape_val = slow_drift_phase < 0.25 ? (4*slow_drift_phase) :
-                     slow_drift_phase < 0.75 ? (2 - 4*slow_drift_phase) :
-                     (4*slow_drift_phase - 4);
-  );
-  drift_shape == 2 ? (
-    slow_shape_val = slow_drift_prev_target +
-      (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
-  );
-
-  slow_drift_offset = slow_shape_val > 0 ?
-    slow_shape_val * slow_drift_up : slow_shape_val * slow_drift_down;
-);
-
-// Effective BPM for this sample (clamped to BPM >= 10). Speed Ramp's
-// signed delta sums in alongside drift offsets — all additive.
-effective_bpm = max(bpm + musical_drift_offset + slow_drift_offset + speed_ramp_bpm_offset, 10);
+// Effective BPM: baseline + BPM drift + Speed Ramp delta, clamped at
+// 10 BPM. Drift offsets for note length / attack / release fold into
+// effective fractional values below.
+effective_bpm = max(bpm + target_drift_offset[0] + speed_ramp_bpm_offset, 10);
 effective_beat_hz = effective_bpm / 60.0;
+
+// Effective note shape parameters: baseline % + drift offset (in %),
+// converted to 0..1 fractions. Clamp to keep envelope math sane.
+effective_note_len_frac = max(0.001, min(1.0, (slider6 + target_drift_offset[1]) / 100.0));
+effective_attack_frac   = max(0,     min(1.0, (slider4 + target_drift_offset[2]) / 100.0));
+effective_release_frac  = max(0,     min(1.0, (slider5 + target_drift_offset[3]) / 100.0));
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
@@ -621,8 +698,8 @@ loop(12,
   // too — the per-note smoother (n_env) handles the natural tail-out of whatever
   // was playing when rest started.
   n == cur && n_active[cur] && (!pr_enabled || !pr_resting) ? (
-    seq_phase < note_len_frac ? (
-      env_target = beat_env(seq_phase / note_len_frac, attack_frac, release_frac);
+    seq_phase < effective_note_len_frac ? (
+      env_target = beat_env(seq_phase / effective_note_len_frac, effective_attack_frac, effective_release_frac);
     ) : (
       env_target = 0;
     );
@@ -667,3 +744,15 @@ spl0 = out_l * norm;
 spl1 = out_r * norm;
 
 );  // close start-delay else branch
+
+@serialize
+// Persist per-target drift configurations. Without this, only the
+// most-recently-edited target's drift slider values survive a project
+// save/load because sliders 57-60 hold whichever target was selected
+// at save time. 4 targets × 4 config fields = 16 values; plus the
+// selector.
+file_mem(0, target_drift_up,    N_TARGETS);
+file_mem(0, target_drift_down,  N_TARGETS);
+file_mem(0, target_drift_per,   N_TARGETS);
+file_mem(0, target_drift_shape, N_TARGETS);
+file_var(0, last_target_select);
