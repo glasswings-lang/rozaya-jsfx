@@ -198,30 +198,38 @@ A small ~100 ms smoother sits between the BPM slider and the audio, so manual BP
 
 **Migration from v2.7:** slider 17 changed from multiplier (0.1–4.0) to a 4-option selector. Existing projects' multiplier value rounds down to a target index, and slider 20 (the new amount) defaults to 0 — so Speed Ramp produces no effect on reload until reconfigured.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied to BPM on top of Speed Ramp. The heartbeat speeds up and slows down a little instead of locking to one fixed rate. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to any of four targets: Heart BPM, S1-S2 gap, Breath HRV depth, or Random HRV depth. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-**Musical Period (heartbeats)** `1–256, default 32`
-Period of the musical drift source, measured in heartbeats of the kin's own cycle. Scales with Speed Ramp — if the heartbeat slows down, this period stretches with it.
+Same pattern as Womb v3's drift and the Speed Ramp block above. The 4 drift targets are intentionally the same set as the 4 Speed Ramp targets and use the same selector indices, so once you've decided "I want to wind down the heart over 30 min and wander the systole gap a bit" you can configure both blocks on the same target indices.
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center BPM the musical drift wanders at its peak, as a multiplier amplitude. 0.1 = up to +10% above the slider BPM.
+Switching the **Drift target** selector saves the current sliders 22-25 into the old target's memory slot, then loads the new target's saved values. All four configurations persist across project save/load.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center BPM the musical drift wanders at its trough. Independent from Up by — asymmetric drift wanders further one direction than the other.
+For slow wall-clock-feel drift, set a long period (~360 heartbeats ≈ 5 min at 72 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (heartbeats), and you express the timescale you want with the period value.
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift target** `Heart BPM / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart BPM`
+Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift up amount** `0.0–50.0, default 0` (units match target)
+How far above the target's baseline the drift wanders at its peak. Units are BPM for Heart BPM, ms for S1-S2 gap, fractional depth (0.0-0.25 range) for Breath HRV depth, fractional depth (0.0-0.08 range) for Random HRV depth. 0 = drift off on the up side.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift down amount** `0.0–50.0, default 0` (units match target)
+How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric biological-feel wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources. Sine is smoothest; Triangle has a defined peak corner; Random wanders smoothly between random targets.
+**Drift period (heartbeats)** `1–1000, default 8`
+How many heartbeats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period unit is the same across all 4 targets because heartbeat rate is the kin's master clock.
+
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Transport behavior (v2.9)
+
+On every transport play press, drift cycle restarts: all 4 targets' phase counters → 0 (drift offset = 0 at the first sample, wanders out from there). Drift CONFIG (up/down/per/shape values per target) is preserved across stop/play and across project save/load. Speed Ramp progress also resets on transport play. This makes renders deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 21-27) was 7 sliders covering Heart BPM only. v2.9 is 5 sliders covering 4 independent targets, reusing slider IDs 21-25; sliders 26 and 27 are no longer declared. Old project values get reinterpreted (selector defaults to Heart BPM; non-zero amounts on sliders 22-23 will produce drift on the Heart BPM target). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 
