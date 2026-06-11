@@ -374,30 +374,39 @@ Wait this many minutes after engage before ramp_t actually starts advancing. Use
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes (selector switch, engage toggle, anything) don't restart it.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied to the breath cycle rate on top of Speed Ramp. Breaths get slightly longer or shorter cycle to cycle instead of all being identical. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to each of the four breath segment durations. Each segment can have its own drift configuration; all four drift in parallel. The selector chooses which segment's drift you're currently editing — the others keep running with their last-saved configuration.
 
-**Musical Period (breaths)** `1–256, default 8`
-Period of the musical drift source, measured in breath cycles. Scales with Speed Ramp.
+Same pattern as Womb v3's drift and Speed Ramp. Switching the **Drift target** selector saves the current sliders 22-25 into the old target's memory slot, then loads the new target's saved values. All four configurations persist across project save/load.
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center cycle rate the musical drift wanders at its peak, as a multiplier amplitude. 0.1 = breaths up to 10% faster at the peak.
+For slow wall-clock-feel drift, set a long period (~100 cycles ≈ 7-10 min at typical breath rates). The old v2.8 "musical vs slow" split is gone — there's a single period unit (breath cycles), and you express the timescale you want with the period value.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center cycle rate the musical drift wanders at its trough. Independent from Up by.
+**Drift target** `Inhale / Top pause / Exhale / Bottom pause, default Inhale`
+Picks which segment's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift up amount (seconds)** `0.0–10.0, default 0`
+How many seconds above the baseline segment length the drift wanders at its peak. 0 = drift off on the up side.
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift down amount (seconds)** `0.0–10.0, default 0`
+How many seconds below the baseline segment length the drift wanders at its trough. Independent from Up amount, so asymmetric wander is supported (biological signals don't drift symmetrically). Either being non-zero activates drift for the target; both 0 = drift off.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift period (breath cycles)** `1–1000, default 8`
+How many breath cycles one full drift wave takes for this target. 8 cycles = wander completes one Sine/Triangle period (or one random-target interpolation) every 8 breaths. Short = jittery, long = barely-perceptible wander.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources.
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up, musical_down, musical_period, slow_up, slow_down, slow_period, drift_shape on sliders 21-27) was 7 sliders covering the whole-breath-cycle period. v2.9 is 5 sliders covering 4 independent targets, reusing slider IDs 21-25; sliders 26 and 27 are no longer declared. Old project values get reinterpreted:
+
+- old slider21 (musical_up, default 0) → new Drift target (selector, defaults to Inhale)
+- old slider22 (musical_down, default 0) → new Drift up amount (defaults 0)
+- old slider23 (musical_period, default 8) → new Drift down amount — interpreted as 8 sec, which will produce strong drift on the Inhale segment
+- old sliders 24–27 → silently discarded or reinterpreted
+
+After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had. The old v2.7 → v2.8 Speed Ramp migration set the precedent of accepting drift / ramp values being reset on upgrade.
 
 ---
 
