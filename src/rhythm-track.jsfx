@@ -281,7 +281,13 @@ function beat_pan(idx) local(n, non_accent, steps, step, pos, flip) (
 
 @slider
 
-tempo        = slider1;
+// NOTE: the variable name `tempo` is RESERVED in JSFX — it's a read-only
+// system variable that returns REAPER's current project tempo. Assigning
+// to `tempo` is silently ignored, which caused effective_tempo to be
+// computed against the project tempo (always ~120 BPM by default) and
+// completely ignore slider1. Renamed to `track_bpm` throughout to avoid
+// the collision. See JSFX docs: https://www.reaper.fm/sdk/js/var.php
+track_bpm    = slider1;
 timesig      = slider2;
 swing        = slider3;
 strong_hz    = slider4;
@@ -295,10 +301,10 @@ pan_spread   = slider11;
 pan_mode     = slider12;
 pan_flip     = slider13;
 
-samples_per_beat = (60.0 / tempo) * srate;
+samples_per_beat = (60.0 / track_bpm) * srate;
 
 // Start Delay — beats at the current Tempo.
-start_delay_sec = slider14 * 60 / max(tempo, 1);
+start_delay_sec = slider14 * 60 / max(track_bpm, 1);
 
 // Play/Rest gate: integer beat counts. Both must be > 0 for the
 // gate to engage; 0 in either slider disables.
@@ -352,7 +358,7 @@ slider19 && slider18 > 0 ? (
 // samples_per_beat (tempo + speed_ramp_offset, no drift) for the
 // drift wave instead.
 speed_ramp_bpm_offset = speed_ramp_t * slider17;
-sr_adjusted_tempo = max(10, tempo + speed_ramp_bpm_offset);
+sr_adjusted_tempo = max(10, track_bpm + speed_ramp_bpm_offset);
 sr_adjusted_samples_per_beat = (60.0 / sr_adjusted_tempo) * srate;
 
 // Drift: compute musical + slow offsets in BPM and apply to tempo.
@@ -418,7 +424,7 @@ slow_drift_offset    = 0;
 // Effective tempo with drift, clamped so over-aggressive Down-by
 // can't silence or break the metronome. Recompute samples_per_beat
 // each sample so beat_phase advances at the drifted rate.
-effective_tempo = max(10, tempo + musical_drift_offset + slow_drift_offset + speed_ramp_bpm_offset);
+effective_tempo = max(10, track_bpm + musical_drift_offset + slow_drift_offset + speed_ramp_bpm_offset);
 effective_samples_per_beat = (60.0 / effective_tempo) * srate;
 
 // (Transport edge handler is at the top of @sample now — it resets
