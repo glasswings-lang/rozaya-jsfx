@@ -682,22 +682,101 @@ slider60 > 0 ? (
   sigh_time_since_last += 1.0 / srate;
 );
 
-// Re-arm Start Delay AND Speed Ramp on every transport stop/start.
+// Transport play edge: fresh start. v3 ships with `ext_noinit = 1` so
+// the drift / Speed Ramp CONFIG banks (per-target up/down/per/shape and
+// per-target amount) survive across transport. But everything else that
+// used to reset via @init re-running needs to be explicitly reset here
+// — otherwise a render starts mid-cycle in whatever state the previous
+// run left, and Sine/Triangle drift gets caught mid-wave on play. Matches
+// the suite-wide rule (breath_gen v2.9 onward): drift configs persist,
+// drift CYCLE state restarts on play, continues across stop, starts
+// fresh on render — like any other synth would.
 //
-// `ext_noinit = 1` at the top of @init preserves memory across transport
-// play (so drift state, RSA, sighs feel continuous). The cost is that
-// state that USED to reset via @init re-running (in v2) no longer
-// resets — Speed Ramp being the obvious one. The fix is to reset
-// per-play "wind-down session" state explicitly here, while leaving
-// "lived" state (drift phases, sigh timer) alone.
+// Persists across transport: drift configs, Speed Ramp configs, last-
+// selected targets, slider-driven smoother targets.
+// Resets here: drift runtime phase, Speed Ramp progress, heartbeat /
+// breath state machines, Play/Rest counters per layer, filter state,
+// HB delay buffer, sigh timer, noise seeds.
 play_state > 0 && last_play_state == 0 ? (
-  start_delay_elapsed = 0;
-  // Speed Ramp resets to its baseline on each transport play — this is
-  // the ONLY place ramp_t resets. Slider changes (including selector
-  // switches and engage toggles) never reset it. Without this transport
-  // reset, ext_noinit would keep ramp_t at its last value across plays.
+  // Start Delay + Speed Ramp progress.
+  start_delay_elapsed      = 0;
   speed_ramp_t             = 0.0;
   speed_ramp_delay_elapsed = 0;
+
+  // Drift runtime state (NOT the config bank). All 7 targets back to
+  // phase 0 so Sine/Triangle drift starts at 0 offset and wanders out;
+  // Random shape's prev/curr clear (next period boundary will rand() a
+  // fresh target, which is non-deterministic per render by design).
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_phase[i]  = 0;
+    target_drift_prev[i]   = 0;
+    target_drift_curr[i]   = 0;
+    target_drift_offset[i] = 0;
+    i += 1;
+  );
+
+  // Breath state machine: fresh inhale.
+  breath_state     = 0;
+  breath_state_pos = 0;
+  breath_state_len = inhale_len;
+
+  // Heartbeat state machine: fresh first beat, ready to fire S1.
+  hb_phase        = 0;
+  s1_active       = 1; s2_active = 0;
+  s1_env          = 1.0; s2_env  = 0;
+  s1_attack_phase = 0; s2_attack_phase = 0;
+
+  // Heartbeat oscillator phases.
+  s1_phase_osc_near = 0; s1_phase_osc_far = 0;
+  s2_phase_osc_near = 0; s2_phase_osc_far = 0;
+
+  // Heartbeat filter states (near + far paths).
+  s1_res_low_near = 0; s1_res_band_near = 0;
+  s2_res_low_near = 0; s2_res_band_near = 0;
+  lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
+  s1_res_low_far = 0; s1_res_band_far = 0;
+  s2_res_low_far = 0; s2_res_band_far = 0;
+  lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
+
+  // HB delay buffer (used for stereo width).
+  memset(0, 0, hb_delay_buf_size);
+  hb_delay_write = 0;
+
+  // Breath filter states (in/ex paths, hp paths, post-filter bpf).
+  in_lp_l = 0; in_bp_l = 0; in_lp_r = 0; in_bp_r = 0;
+  ex_lp_l = 0; ex_bp_l = 0; ex_lp_r = 0; ex_bp_r = 0;
+  hp_lp_l = 0; hp_lp_r = 0;
+  bpf_low_l = 0; bpf_band_l = 0;
+  bpf_low_r = 0; bpf_band_r = 0;
+
+  // Bloodflow filter states.
+  bf_n3_l = 0; bf_n4_l = 0;
+  bf_n3_r = 0; bf_n4_r = 0;
+
+  // Play/Rest per-layer counters: back to beat 0, fully playing.
+  pr_hb_resting    = 0;
+  pr_hb_beat       = 1;
+  this_hb_has_beat = 1;
+  pr_br_resting        = 0;
+  pr_br_breath         = 0;
+  pr_br_rest_elapsed   = 0;
+  pr_bf_resting    = 0;
+  pr_bf_beat       = 0;
+  bf_output_mix    = 1;
+
+  // BPM smoother seeds from current target so the first sample uses
+  // the saved BPM, not 0 (avoids a glide-up from silence).
+  bpm_smoothed = bpm_target;
+
+  // Sigh state: timer back to 0, no sigh in progress.
+  sigh_time_since_last = 0;
+  sigh_active          = 0;
+
+  // Noise seeds: reset to @init defaults so noise texture is
+  // deterministic per play press.
+  ns1 = 12345; ns2 = 67890; ns3 = 54321;
+  ns4 = 11111; ns5 = 22222; ns6 = 33333;
 );
 last_play_state = play_state;
 
