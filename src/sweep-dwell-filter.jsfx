@@ -81,22 +81,49 @@ slider27:0<0,60,0.1>Speed ramp duration (minutes)
 slider28:0<0,1,1{Off,On}>Speed ramp engage
 slider29:0<-60,60,0.001>Speed ramp by (seconds)
 
-// Musical drift: drifts the dwell-pattern period by up to N seconds
-// up and N seconds down, over a cycle measured in dwell patterns.
-// Scales with Speed Ramp (when the pattern slows, musical drift
-// slows with it). 0 in both Up by and Down by disables.
-slider30:0<0,2,0.01>Musical drift: Up by
-slider31:0<0,2,0.01>Musical drift: Down by
-slider32:8<1,1000,1>Musical drift: Period (cycles)
-
-// Slow drift: same shape as musical drift, but measured in wall-clock
-// minutes per drift cycle. Does NOT scale with Speed Ramp.
-slider33:0<0,2,0.01>Slow drift: Up by
-slider34:0<0,2,0.01>Slow drift: Down by
-slider35:5<0.1,60,0.1>Slow drift: Period (minutes)
-
-// Drift shape applies to BOTH drift sources.
-slider36:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Per-target drift: nested-selector pattern matching Womb v3 / the
+// rest of the v2.9 sweep. Pick a target (slider30), then sliders 31-34
+// hold THAT target's drift config. Switching the selector saves
+// current values to the old target's memory slot and loads the new
+// target's values into the sliders. All 6 targets drift in parallel;
+// the selector just chooses which one you're currently editing.
+//
+// Targets:
+//   High dwell      — wanders the high-dwell phase length (seconds).
+//   Fade down       — wanders the fade-down phase length (seconds).
+//   Low dwell       — wanders the low-dwell phase length (seconds).
+//   Fade up         — wanders the fade-up phase length (seconds).
+//   Pan Sweep Rate  — wanders the Pan Sweep Rate (pan modes 10/11 only).
+//   Resonance       — wanders the filter resonance (0-1).
+//
+// The four dwell targets match the Speed Ramp targets above and use
+// the same selector indices — handy for configuring a coordinated
+// drift + ramp on the same dwell phase. Drift on the dwell phases is
+// ADDITIVE in seconds (like the Speed Ramp `by`), composing at the
+// same consumption site.
+//
+// Period unit is dwell patterns (one full High + Fade Down + Low +
+// Fade Up cycle) for ALL targets, scaled by Speed Ramp. For slow
+// wall-clock-feel drift, set a long period.
+//
+// Up/Down amount is in the target's natural unit: seconds for the four
+// dwell phases, the Pan Sweep Rate's unit for Pan Sweep Rate, a 0-1
+// fraction for Resonance. The 0-100 range covers all; Resonance uses
+// the low end (e.g. 0.3).
+//
+// Migration from v2.8: the old flat drift block (musical_up/down/
+// period, slow_up/down/period, drift_shape on sliders 30-36) was 7
+// sliders covering the whole dwell period. v2.9 is 5 sliders covering
+// 6 independent targets, reusing slider IDs 30-34; sliders 35 and 36
+// are no longer declared. Old projects' slider values get reinterpreted
+// (selector defaults to High dwell; non-zero amounts on 31-32 produce
+// drift on the High dwell phase). Reset drift sliders to defaults after
+// upgrade and reconfigure.
+slider30:0<0,5,1{High dwell,Fade down,Low dwell,Fade up,Pan Sweep Rate,Resonance}>Drift target
+slider31:0<0,100,0.01>Drift up amount (units match target)
+slider32:0<0,100,0.01>Drift down amount (units match target)
+slider33:8<1,1000,1>Drift period (cycles)
+slider34:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // Speed ramp start delay (lives here because slider 29 took the
 // post-engage slot for the new `by` amount).
@@ -108,6 +135,8 @@ out_pin:left output
 out_pin:right output
 
 @init
+ext_noinit = 1;   // preserve drift + speed-ramp config banks across transport play (drift runtime + LFO/filter/gate state still reset on play, see transport edge handler in @sample)
+
 phase_l = 0;
 phase_r = 0;
 n3 = n4 = rn3 = rn4 = 0;
@@ -252,15 +281,44 @@ last_speed_target            = 0;
 speed_ramp_t                 = 0.0;
 speed_ramp_delay_elapsed     = 0;
 
-// Drift state. Two independent drift sources (musical, slow) share
-// the same shape selector. Phases advance per @sample, mod 1. For
-// Random shape, prev/curr targets are randomized on each phase wrap.
-musical_drift_phase = 0;
-slow_drift_phase    = 0;
-musical_drift_prev_target = 0;
-musical_drift_curr_target = 0;
-slow_drift_prev_target    = 0;
-slow_drift_curr_target    = 0;
+// --- v2.9 Drift target memory banks ---
+//
+// 6 targets × 8 fields. Each array is 16-slot-spaced so targets can
+// grow to 16 later. Speed ramp bank uses 4 slots at 4096; drift banks
+// start at 4112 to keep the 16-slot alignment.
+//
+// Targets:
+//   0 = High dwell      (units: seconds)
+//   1 = Fade down       (units: seconds)
+//   2 = Low dwell       (units: seconds)
+//   3 = Fade up         (units: seconds)
+//   4 = Pan Sweep Rate  (units: Pan Sweep Rate's unit; modes 10/11 only)
+//   5 = Resonance       (units: 0-1 fraction)
+N_TARGETS = 6;
+target_drift_up     = 4112;
+target_drift_down   = 4128;
+target_drift_per    = 4144;
+target_drift_shape  = 4160;
+target_drift_phase  = 4176;
+target_drift_prev   = 4192;
+target_drift_curr   = 4208;
+target_drift_offset = 4224;
+
+i = 0;
+loop(N_TARGETS,
+  target_drift_up[i]     = 0;
+  target_drift_down[i]   = 0;
+  target_drift_per[i]    = 8;
+  target_drift_shape[i]  = 0;
+  target_drift_phase[i]  = 0;
+  target_drift_prev[i]   = 0;
+  target_drift_curr[i]   = 0;
+  target_drift_offset[i] = 0;
+  i += 1;
+);
+
+// Last-selected drift target tracker for save/restore on selector change.
+last_target_select = 0;
 
 
 @slider
@@ -331,16 +389,79 @@ last_speed_target != sel_speed_target ? (
 // No engage-edge detection. Engage is a freeze/resume gate handled
 // in @sample. Only transport play resets ramp_t.
 
+// Drift target selector save/restore (nested-selector pattern).
+// Switching slider30 saves sliders 31-34 into the OLD target's slot,
+// then loads the NEW target's stored config into sliders 31-34.
+// Otherwise captures live edits to the current target's slot. All 6
+// targets drift in parallel from @sample regardless of selection.
+sel_target = slider30;
+sel_up     = slider31;
+sel_down   = slider32;
+sel_per    = slider33;
+sel_shape  = slider34;
+
+last_target_select != sel_target ? (
+  target_drift_up[last_target_select]    = sel_up;
+  target_drift_down[last_target_select]  = sel_down;
+  target_drift_per[last_target_select]   = sel_per;
+  target_drift_shape[last_target_select] = sel_shape;
+
+  slider31 = target_drift_up[sel_target];
+  slider32 = target_drift_down[sel_target];
+  slider33 = target_drift_per[sel_target];
+  slider34 = target_drift_shape[sel_target];
+  slider_automate(slider31);
+  slider_automate(slider32);
+  slider_automate(slider33);
+  slider_automate(slider34);
+
+  last_target_select = sel_target;
+) : (
+  target_drift_up[sel_target]    = sel_up;
+  target_drift_down[sel_target]  = sel_down;
+  target_drift_per[sel_target]   = sel_per;
+  target_drift_shape[sel_target] = sel_shape;
+);
+
 
 @sample
 
-// Transport play edge resets EVERYTHING tied to "this play session":
-// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
-// counter. ONLY thing that resets ramp_t — slider changes don't.
+// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so the
+// drift + Speed Ramp CONFIG banks survive across transport — but
+// everything else that @init used to reset (since @init no longer
+// re-runs on play) needs explicit reset here so renders are
+// deterministic. Matches breath_gen v2.9 / the suite rule.
 play_state > 0 && last_play_state == 0 ? (
+  // Start Delay + Speed Ramp progress.
   start_delay_elapsed      = 0;
   speed_ramp_t             = 0.0;
   speed_ramp_delay_elapsed = 0;
+
+  // Drift runtime state (NOT the config bank).
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_phase[i]  = 0;
+    target_drift_prev[i]   = 0;
+    target_drift_curr[i]   = 0;
+    target_drift_offset[i] = 0;
+    i += 1;
+  );
+
+  // Dwell LFO phases.
+  phase_l = 0; phase_r = 0;
+
+  // Filter state + cutoff smoothers.
+  n3 = n4 = rn3 = rn4 = 0;
+  cut_smooth_l = cut_smooth_r = 0.1;
+
+  // Pan state.
+  pan_l = 0; pan_l_smooth = 0; pan_cycle_index = 0; pan_cycle_dir = 1;
+  last_phase_l = 0; pan_phase = 0;
+
+  // Play/Rest gate + effect mix.
+  pr_resting        = 0;
+  pr_cycle_progress = 0;
+  effect_mix        = 1;
 );
 last_play_state = play_state;
 
@@ -395,81 +516,71 @@ speed_ramp_fade_down_offset = speed_ramp_t * speed_ramp_target_value_mem[1];
 speed_ramp_low_offset       = speed_ramp_t * speed_ramp_target_value_mem[2];
 speed_ramp_fade_up_offset   = speed_ramp_t * speed_ramp_target_value_mem[3];
 
-high_secs      = max(slider3 + speed_ramp_high_offset,      0.001);
-fade_down_secs = max(slider5 + speed_ramp_fade_down_offset, 0.001);
-low_secs       = max(slider4 + speed_ramp_low_offset,       0.001);
-fade_up_secs   = max(slider7 + speed_ramp_fade_up_offset,   0.001);
+// Speed-ramp-adjusted dwell phases (drift NOT yet applied). Their sum
+// is the stable period reference for the drift wave, so dwell drift
+// doesn't self-modulate the drift rate.
+ref_high = max(slider3 + speed_ramp_high_offset,      0.001);
+ref_fd   = max(slider5 + speed_ramp_fade_down_offset, 0.001);
+ref_low  = max(slider4 + speed_ramp_low_offset,       0.001);
+ref_fu   = max(slider7 + speed_ramp_fade_up_offset,   0.001);
+drift_ref_period = max(ref_high + ref_fd + ref_low + ref_fu, 0.001);
+
+// Per-target drift wave computation. 6 targets (0-3 = the four dwell
+// phases, 4 = Pan Sweep Rate, 5 = Resonance). Each gets a phase counter
+// advancing per sample. Period unit is dwell patterns: one drift cycle
+// spans `per` patterns of drift_ref_period seconds each.
+i = 0;
+loop(N_TARGETS,
+  up    = target_drift_up[i];
+  down  = target_drift_down[i];
+  per   = target_drift_per[i];
+  shape = target_drift_shape[i];
+
+  drift_offset_local = 0;
+  (up > 0 || down > 0) && per > 0 ? (
+    period_samples = max(per * srate * drift_ref_period, 1);
+    new_phase = target_drift_phase[i] + 1.0 / period_samples;
+    new_phase >= 1.0 ? (
+      new_phase -= 1.0;
+      shape == 2 ? (
+        target_drift_prev[i] = target_drift_curr[i];
+        target_drift_curr[i] = rand(2) - 1;
+      );
+    );
+    target_drift_phase[i] = new_phase;
+
+    shape == 0 ? (
+      shape_val = sin(2 * $pi * new_phase);
+    ) : shape == 1 ? (
+      shape_val = new_phase < 0.25 ? (4 * new_phase) :
+                  new_phase < 0.75 ? (2 - 4 * new_phase) :
+                                     (4 * new_phase - 4);
+    ) : (
+      shape_val = target_drift_prev[i] +
+        (target_drift_curr[i] - target_drift_prev[i]) * new_phase;
+    );
+    drift_offset_local = shape_val > 0 ? shape_val * up : shape_val * down;
+  );
+  target_drift_offset[i] = drift_offset_local;
+  i += 1;
+);
+
+// Effective dwell phases: slider + Speed Ramp offset + drift offset
+// (targets 0-3, all additive in seconds). Clamp each to a 1 ms floor.
+high_secs      = max(slider3 + speed_ramp_high_offset      + target_drift_offset[0], 0.001);
+fade_down_secs = max(slider5 + speed_ramp_fade_down_offset + target_drift_offset[1], 0.001);
+low_secs       = max(slider4 + speed_ramp_low_offset       + target_drift_offset[2], 0.001);
+fade_up_secs   = max(slider7 + speed_ramp_fade_up_offset   + target_drift_offset[3], 0.001);
 
 period = high_secs + fade_down_secs + low_secs + fade_up_secs;
 freq   = 1 / max(period, 0.00001);
 
-combined_scale = 1.0;
+// Resonance drift (target 5): clamp to [0, 1] (slider range).
+eff_resonance = max(0, min(1, resonance + target_drift_offset[5]));
 
-// Drift: two independent sources (musical, slow) shape the dwell
-// period in seconds. Musical drift scales with Speed Ramp (slows
-// when the pattern slows); slow drift is wall-clock.
-musical_drift_up     = slider30;
-musical_drift_down   = slider31;
-musical_drift_period = max(slider32, 1);
-slow_drift_up        = slider33;
-slow_drift_down      = slider34;
-slow_drift_period    = max(slider35, 0.1);
-drift_shape          = slider36;
-
-musical_drift_offset = 0;
-(musical_drift_up > 0 || musical_drift_down > 0) ? (
-  // One full musical drift cycle spans musical_drift_period dwell patterns.
-  // samples_per_primary_cycle = srate * period. Phase increment
-  // per sample = combined_scale / (musical_drift_period * srate * period).
-  musical_phase_inc = combined_scale / (musical_drift_period * srate * max(period, 0.00001));
-  musical_drift_phase += musical_phase_inc;
-  musical_drift_phase >= 1 ? (
-    musical_drift_phase -= 1;
-    drift_shape == 2 ? (
-      musical_drift_prev_target = musical_drift_curr_target;
-      musical_drift_curr_target = rand(2) - 1;
-    );
-  );
-  drift_shape == 0 ? (
-    musical_shape_val = sin(2 * $pi * musical_drift_phase);
-  ) : drift_shape == 1 ? (
-    musical_shape_val = musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
-                        musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
-                                                     (4 * musical_drift_phase - 4);
-  ) : (
-    musical_shape_val = musical_drift_prev_target + (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
-  );
-  musical_drift_offset = musical_shape_val > 0 ? musical_shape_val * musical_drift_up : musical_shape_val * musical_drift_down;
-);
-
-slow_drift_offset = 0;
-(slow_drift_up > 0 || slow_drift_down > 0) ? (
-  slow_phase_inc = 1 / (slow_drift_period * 60 * srate);
-  slow_drift_phase += slow_phase_inc;
-  slow_drift_phase >= 1 ? (
-    slow_drift_phase -= 1;
-    drift_shape == 2 ? (
-      slow_drift_prev_target = slow_drift_curr_target;
-      slow_drift_curr_target = rand(2) - 1;
-    );
-  );
-  drift_shape == 0 ? (
-    slow_shape_val = sin(2 * $pi * slow_drift_phase);
-  ) : drift_shape == 1 ? (
-    slow_shape_val = slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
-                     slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
-                                               (4 * slow_drift_phase - 4);
-  ) : (
-    slow_shape_val = slow_drift_prev_target + (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
-  );
-  slow_drift_offset = slow_shape_val > 0 ? slow_shape_val * slow_drift_up : slow_shape_val * slow_drift_down;
-);
-
-// Apply drift to the dwell period (in seconds), then recompute freq.
-// Clamp period to a sensible minimum so over-aggressive Down-by
-// can't silence or break the plugin.
-drifted_period = max(period + musical_drift_offset + slow_drift_offset, 0.1);
-freq = combined_scale / drifted_period;
+// Pan Sweep Rate drift (target 4): fold into the pan sweep value used
+// by pan modes 10/11 below (in the Pan Sweep Rate's own unit).
+eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[4]);
 
 // Smoother coefficient — used for cut_smooth below and effect_mix
 // just below that. Moved up so both can share the same value.
@@ -539,12 +650,12 @@ cut_smooth_r = cut_smooth_r * smooth + cut_target_r * (1 - smooth);
 dry_l = spl0;
 dry_r = spl1;
 
-fb_l = resonance + resonance / (1 - cut_smooth_l);
+fb_l = eff_resonance + eff_resonance / (1 - cut_smooth_l);
 n3   = n3  + cut_smooth_l * (spl0 - n3  + fb_l * (n3  - n4));
 n4   = n4  + cut_smooth_l * (n3   - n4);
 out_l = n4;
 
-fb_r = resonance + resonance / (1 - cut_smooth_r);
+fb_r = eff_resonance + eff_resonance / (1 - cut_smooth_r);
 rn3  = rn3 + cut_smooth_r * (spl1 - rn3 + fb_r * (rn3 - rn4));
 rn4  = rn4 + cut_smooth_r * (rn3  - rn4);
 out_r = rn4;
@@ -584,10 +695,11 @@ pan_enabled ? (
     pan_l = cur_pan;
 
   ) : pan_mode == 10 ? (
-    // Pan Sweep — gate phase advance for Freeze mode.
-    pan_sweep_mode == 0 ? (pan_freq = pan_sweep_val) :
-    pan_sweep_mode == 1 ? (pan_freq = 1 / max(pan_sweep_val, 0.001)) :
-                          (pan_freq = pan_sweep_val / 60);
+    // Pan Sweep — gate phase advance for Freeze mode. eff_pan_sweep_val
+    // carries the Pan Sweep Rate drift offset (target 4).
+    pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val) :
+    pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
+                          (pan_freq = eff_pan_sweep_val / 60);
     !in_frozen_rest ? (
       pan_phase += pan_freq / srate;
       pan_phase >= 1 ? pan_phase -= 1;
@@ -597,9 +709,9 @@ pan_enabled ? (
 
   ) : pan_mode == 11 ? (
     // Pan Sweep Flipped — gate phase advance for Freeze mode.
-    pan_sweep_mode == 0 ? (pan_freq = pan_sweep_val) :
-    pan_sweep_mode == 1 ? (pan_freq = 1 / max(pan_sweep_val, 0.001)) :
-                          (pan_freq = pan_sweep_val / 60);
+    pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val) :
+    pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
+                          (pan_freq = eff_pan_sweep_val / 60);
     !in_frozen_rest ? (
       pan_phase += pan_freq / srate;
       pan_phase >= 1 ? pan_phase -= 1;
@@ -642,3 +754,13 @@ pan_enabled ? (
 // most-recently-edited target's amount survives a project reload.
 file_mem(0, speed_ramp_target_value_mem, N_SPEED_TARGETS);
 file_var(0, last_speed_target);
+
+// Persist per-target drift configurations. Same story: without this,
+// only the most-recently-edited target's drift slider values survive
+// because sliders 31-34 hold whichever target was selected at save
+// time. 6 targets × 4 config fields = 24 values; plus the selector.
+file_mem(0, target_drift_up,    N_TARGETS);
+file_mem(0, target_drift_down,  N_TARGETS);
+file_mem(0, target_drift_per,   N_TARGETS);
+file_mem(0, target_drift_shape, N_TARGETS);
+file_var(0, last_target_select);

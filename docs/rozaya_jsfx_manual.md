@@ -2157,30 +2157,41 @@ Wait this many minutes after engage before ramp_t starts advancing. Lives at sli
 
 **Migration from v2.7:** slider 26 changed from multiplier (0.1–4.0) to a 4-option selector. Existing projects' multiplier value rounds down to a target index, and slider 29 (the new amount) defaults to 0 — Speed Ramp produces no effect on reload until reconfigured.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied to the dwell pattern's overall pace on top of Speed Ramp — high dwells become a little longer or shorter as the drift evolves, instead of being identical every cycle. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to any of six targets: High dwell, Fade down, Low dwell, Fade up, Pan Sweep Rate, or Resonance. Each target can have its own drift configuration; all six drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-**Musical Period (cycles)** `1–256, default 32`
-Period of the musical drift source, measured in dwell cycles (one full high dwell + fade down + low dwell + fade up). Scales with Speed Ramp.
+Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 31-34 into the old target's memory slot, then loads the new target's saved values. All six configurations persist across project save/load.
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center pace the musical drift wanders at its peak, as a multiplier amplitude.
+The four dwell-phase targets are the same set as the Speed Ramp targets and use the same selector indices, so you can configure a coordinated drift + ramp on the same dwell phase. Drift on a dwell phase is **additive in seconds** (like the Speed Ramp `by`) — drift each phase independently and the pattern's shape itself wanders, not just its overall pace.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center pace the musical drift wanders at its trough. Independent from Up by.
+**Drift target** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
+Picks which target's drift configuration sliders 31-34 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift up amount** `0.0–100.0, default 0` (units match target)
+How far above the target's baseline the drift wanders at its peak. Units: seconds for the four dwell phases, the Pan Sweep Rate's own unit for Pan Sweep Rate, a 0-1 fraction for Resonance. 0 = drift off on the up side. Resonance uses the low end of the range (e.g. 0.3).
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift down amount** `0.0–100.0, default 0` (units match target)
+How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift period (cycles)** `1–1000, default 8`
+How many dwell patterns one full drift wave takes for this target. All six targets use dwell patterns as their period unit, scaled by Speed Ramp so the wave-per-pattern relationship stays constant under wind-down.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources.
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Notes
+
+- **Pan Sweep Rate drift only affects pan modes 10 and 11** (Pan Sweep / Pan Sweep Flipped). Linked Sweep follows the dwell-pattern rate, which the dwell-phase targets already move.
+- **Resonance drift is clamped to [0, 1].**
+
+#### Transport behavior (v2.9)
+
+On every transport play press, drift cycle restarts: all six targets' phase counters → 0. Dwell LFO phases, filter state + cutoff smoothers, pan state, and the Play/Rest gate also reset. Drift CONFIG (and the Speed Ramp config bank) is preserved across stop/play and project save/load. Speed Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 30-36) was 7 sliders covering the whole dwell period. v2.9 is 5 sliders covering 6 independent targets, reusing slider IDs 30-34; sliders 35 and 36 are no longer declared (slider 37, Speed ramp start delay, is unchanged). Old project values get reinterpreted (selector defaults to High dwell; non-zero amounts on sliders 31-32 will produce drift on the High dwell phase). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 
