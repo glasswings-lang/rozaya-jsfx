@@ -435,7 +435,18 @@ loop(8,
   drift_mode == 0 ? (
     shep_rate[i] = base_rate_hz * oct_range;
   ) : (
-    shep_rate[i] = rate_to_hz(max(drifts[i], 0.001), rate_mode) * oct_range;
+    // Independent mode: a rate of 0 (or below) means "this voice does
+    // not sweep" — it holds its pitch. The old code clamped via
+    // max(drifts[i], 0.001), which produced a slow creep in BPM/Hz
+    // mode and a wild 1000 Hz sweep in Seconds mode (1/0.001) — so a
+    // voice whose Rate slider read 0 was still moving behind the
+    // scenes. Guard explicitly: rate > 0 sweeps at that rate;
+    // rate <= 0 freezes the voice (shep_rate = 0 → freq_mul = 1).
+    drifts[i] > 0 ? (
+      shep_rate[i] = rate_to_hz(drifts[i], rate_mode) * oct_range;
+    ) : (
+      shep_rate[i] = 0;
+    );
   );
 
   i += 1;
