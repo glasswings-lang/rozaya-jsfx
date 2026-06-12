@@ -2392,30 +2392,41 @@ The ramp also affects the linked-sweep pan rate (Pan Mode 11), since that mode d
 
 **Migration from v2.7:** slider 24 changed from a multiplier (0.1–4.0) to a signed delta in rate-units. Old projects' multiplier value will be interpreted as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied to the tremolo rate on top of Speed Ramp — useful when you want the modulation pulse to feel breathing rather than metronomic. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to any of six targets: Rate Value, Depth dB, Pan Sweep Rate, On Duration %, Attack %, or Release %. Each target can have its own drift configuration; all six drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-**Musical Period (cycles)** `1–256, default 32`
-Period of the musical drift source, measured in tremolo cycles. Scales with Speed Ramp.
+Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 29-32 into the old target's memory slot, then loads the new target's saved values. All six configurations persist across project save/load.
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center rate the musical drift wanders at its peak, as a multiplier amplitude.
+Drift on Depth dB makes the tremolo breathe deeper and shallower over time; drift on On Duration / Attack / Release wanders the *shape* of each pulse rather than its rate. Combine a slow Rate Value drift with a faster Depth drift for a modulation that wanders in both speed and intensity on independent schedules.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center rate the musical drift wanders at its trough. Independent from Up by.
+**Drift target** `Rate Value / Depth dB / Pan Sweep Rate / On Duration % / Attack % / Release %, default Rate Value`
+Picks which target's drift configuration sliders 29-32 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift up amount** `0.0–100.0, default 0` (units match target)
+How far above the target's baseline the drift wanders at its peak. Units are the rate's current unit (BPM / Seconds / Hz) for Rate Value, dB for Depth, the Pan Sweep Rate's own unit for Pan Sweep Rate, percent for the three % targets. 0 = drift off on the up side. Rate / Pan-rate targets in Hz mode use the low end of the range.
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift down amount** `0.0–100.0, default 0` (units match target)
+How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift period (cycles)** `1–1000, default 8`
+How many tremolo cycles one full drift wave takes for this target. All six targets use tremolo cycles as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources.
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Notes
+
+- **Pan Sweep Rate drift only affects pan modes 9 and 10** (Pan Sweep / Pan Sweep Flipped) — the only modes that use the Pan Sweep Rate. In Linked Sweep mode the pan rate follows the tremolo rate, so Rate Value drift already moves it.
+- **Mode-direction asymmetry on the rate targets:** in BPM and Hz modes a positive drift amount speeds up; in Seconds mode (where the rate value is a period) a positive amount lengthens the period and so slows down. Handled automatically by the same rate-unit conversion the Speed Ramp uses.
+
+#### Transport behavior (v2.9)
+
+On every transport play press, drift cycle restarts: all six targets' phase counters → 0 (drift offset = 0 at the first sample). Tremolo LFO phases, gains, pan state, and the Play/Rest gate also reset; the rate smoother re-seeds from the current Rate slider. Drift CONFIG (up/down/per/shape values per target) is preserved across stop/play and across project save/load. Speed Ramp progress also resets on transport play. This makes renders deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 28-34) was 7 sliders covering Rate Value only. v2.9 is 5 sliders covering 6 independent targets, reusing slider IDs 28-32; sliders 33 and 34 are no longer declared. Old project values get reinterpreted (selector defaults to Rate Value; non-zero amounts on sliders 29-30 will produce drift on Rate Value). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 
