@@ -2613,8 +2613,8 @@ Swing is applied by offsetting the beat phase at each cycle boundary, advancing 
 
 ### Timing
 
-**Tempo (BPM)** `30-300 BPM, default 120`
-The tempo of the beat track in beats per minute.
+**Tempo (BPM)** `10-300 BPM, default 120`
+The tempo of the beat track in beats per minute. Range matches Shepard Scale's BPM slider for consistency across the suite's BPM-style rate controls. Internal floors clamp at 10 BPM at every consumption site so a heavy Drift down or Speed Ramp delta can't drive tempo below the slider's stated minimum.
 
 **Beats per bar** `1-20, default 4`
 The number of beats in each bar. Beat index 0 is the strong (accented) beat; all others are weak beats. With a value of 1, every beat is a strong beat.
@@ -2711,30 +2711,38 @@ Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0
 
 **Migration from v2.7:** slider 17 changed from multiplier (0.1–4.0) to signed BPM delta. Existing projects' multiplier value gets interpreted as a tiny BPM delta — effectively Speed Ramp "off" until reconfigured.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied to the tempo on top of Speed Ramp, giving the metronome a slightly human-feeling drift rather than a perfectly fixed click. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to Tempo BPM or Swing amount. Each target can have its own drift configuration; both drift in parallel. The selector chooses which target's drift you're currently editing — the other keeps running with its last-saved configuration.
 
-**Musical Period (beats)** `1–256, default 32`
-Period of the musical drift source, measured in beats at the current Tempo. Scales with Speed Ramp.
+Same pattern as Womb v3's drift and the matching block in Heartbeat / Breath Generator v2.9. Switching the **Drift target** selector saves the current sliders 22-25 into the old target's memory slot, then loads the new target's saved values. Both configurations persist across project save/load.
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center tempo the musical drift wanders at its peak, as a multiplier amplitude.
+For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (beats), and you express the timescale you want with the period value.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center tempo the musical drift wanders at its trough. Independent from Up by.
+Note: Speed Ramp above is single-target (Tempo BPM only), but drift has 2 targets because wandering Swing while the tempo stays put is a useful musical effect on its own — it loosens the groove cycle-to-cycle without changing the beat clock.
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift target** `Tempo BPM / Swing amount, default Tempo BPM`
+Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift up amount** `0.0–50.0, default 0` (units match target)
+How far above the target's baseline the drift wanders at its peak. Units are BPM for Tempo BPM, swing fraction (clamped to ±1.0 at the consumer) for Swing amount. 0 = drift off on the up side.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift down amount** `0.0–50.0, default 0` (units match target)
+How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources.
+**Drift period (beats)** `1–1000, default 8`
+How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Speed Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
+
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Transport behavior (v2.9)
+
+On every transport play press, drift cycle restarts: both targets' phase counters → 0 (drift offset = 0 at the first sample, wanders out from there). Beat clock also resets so the downbeat fires immediately on the first sample after Start Delay. Drift CONFIG (up/down/per/shape values per target) is preserved across stop/play and across project save/load.
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 21-27) was 7 sliders covering Tempo only. v2.9 is 5 sliders covering 2 independent targets, reusing slider IDs 21-25; sliders 26 and 27 are no longer declared. Old project values get reinterpreted (selector defaults to Tempo BPM; non-zero amounts on sliders 22-23 will produce drift on Tempo). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 
