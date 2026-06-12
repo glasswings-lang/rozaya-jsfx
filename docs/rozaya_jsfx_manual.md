@@ -1899,30 +1899,42 @@ The ramp also affects the Linked Sweep pan mode (12), since that mode derives it
 
 **Migration from v2.7:** slider 29 changed from multiplier (0.1–4.0) to signed delta in rate-units. Old projects' multiplier value interprets as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied to the sweep rate on top of Speed Ramp — the cutoff still moves through the same Low and High frequencies, but the pace breathes instead of locking to one rate. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to any of six targets: Sweep Rate, Frequency Low, Frequency High, Pan Sweep Rate, Resonance, or Wet/Dry. Each target can have its own drift configuration; all six drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-**Musical Period (cycles)** `1–256, default 32`
-Period of the musical drift source, measured in LFO cycles of the Rate Value. Scales with Speed Ramp.
+Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 34-37 into the old target's memory slot, then loads the new target's saved values. All six configurations persist across project save/load.
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center sweep rate the musical drift wanders at its peak, as a multiplier amplitude.
+The two Frequency targets are what make this the most evolving of the filter effects: drift Frequency Low on one period and Frequency High on another, and the sweep band itself wanders and breathes — its edges moving independently, the center and width shifting over time. Layer a slow Resonance drift on top and the filter's character moves too.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center sweep rate the musical drift wanders at its trough. Independent from Up by.
+**Drift target** `Sweep Rate / Frequency Low / Frequency High / Pan Sweep Rate / Resonance / Wet/Dry, default Sweep Rate`
+Picks which target's drift configuration sliders 34-37 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift up amount** `0.0–5000.0, default 0` (units match target)
+How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for Sweep Rate, Hz for the two Frequency targets, the Pan Sweep Rate's own unit for Pan Sweep Rate, a 0-1 fraction for Resonance and Wet/Dry. The 0-5000 range spans the frequencies (up to ±5 kHz wander); Resonance and Wet/Dry use the low end (e.g. 0.3), Hz-mode rates use small values. 0 = drift off on the up side.
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift down amount** `0.0–5000.0, default 0` (units match target)
+How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift period (cycles)** `1–1000, default 8`
+How many filter LFO cycles one full drift wave takes for this target. All six targets use LFO cycles as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources.
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Notes
+
+- **Frequency Low/High drift is clamped to [20, 20000] Hz** and the band edges are re-ordered if drift crosses them — so a Low edge drifting above the High edge just swaps which one leads, rather than producing a negative-width band.
+- **Pan Sweep Rate drift only affects pan modes 10 and 11** (Pan Sweep / Pan Sweep Flipped). Linked Sweep follows the filter rate, which Sweep Rate drift already moves.
+- **Resonance and Wet/Dry drift are clamped to [0, 1].**
+
+#### Transport behavior (v2.9)
+
+On every transport play press, drift cycle restarts: all six targets' phase counters → 0. The filter LFO restarts from the configured **LFO Start Phase**, the filter state and cutoff smoothers clear, pan state and the Play/Rest gate reset, and the rate smoother re-seeds from the current Rate slider. Drift CONFIG is preserved across stop/play and project save/load. Speed Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 33-39) was 7 sliders covering Sweep Rate only. v2.9 is 5 sliders covering 6 independent targets, reusing slider IDs 33-37; sliders 38 and 39 are no longer declared. Old project values get reinterpreted (selector defaults to Sweep Rate; non-zero amounts on sliders 34-35 will produce drift on Sweep Rate). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 
