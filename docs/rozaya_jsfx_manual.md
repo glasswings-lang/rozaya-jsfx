@@ -1305,30 +1305,46 @@ Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0
 
 **Migration from v2.7:** slider 65 changed from multiplier (0.1–4.0) to signed delta. Old projects' multiplier value interprets as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied polyrhythm-wide on top of Speed Ramp — every voice's tremolo speeds up and slows down in step, preserving the rate relationships between voices while the underlying pulse breathes. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to any of **13 targets** — the widest drift surface of the oscillator plugins. Each target can have its own drift configuration; all 13 drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-**Musical Period (cycles)** `1–256, default 32`
-Period of the musical drift source, measured in cycles of the global Rate Value. Scales with Speed Ramp.
+The per-voice Rate targets are the expressive heart here: drift each voice's rate independently and the voices wander against each other, which is the essence of polyrhythmic feel — the pattern is never quite the same twice. Base Rate drift is the old behavior (the whole pattern breathes together, rate relationships preserved).
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center rate the musical drift wanders at its peak, as a multiplier amplitude applied to every voice's tremolo together.
+Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 75-78 into the old target's memory slot, then loads the new target's saved values. All 13 configurations persist across project save/load.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center rate the musical drift wanders at its trough. Independent from Up by.
+**Drift target** `13 options, default Base Rate`
+- **Base Rate** — uniform Hz delta to every voice; preserves inter-voice rate relationships (the whole pattern breathes together). The old single drift target.
+- **V1–V8 Rate** — wanders each voice's own rate independently. Voices drift against each other. In Both modes the reverse-layer slot 8+k follows V(k+1)'s drift.
+- **Pan Base Rate** / **Pan Increment** — wander the Increment-mode pan controls (pan base rate and per-voice pan spread). Only affect Increment pan mode.
+- **Binaural Beat** — wanders the L/R frequency offset (the beat frequency itself drifts), applied uniformly to all voices' R channel.
+- **Trem On Duration** — wanders the on-portion of the tremolo cycle (how long each pulse stays open).
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift up amount** `0.0–100.0, default 0` (units match target)
+How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for the rate targets, Hz for Binaural Beat, percent for Trem On Duration. Rate targets in Hz mode use the low end. 0 = drift off on the up side.
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift down amount** `0.0–100.0, default 0` (units match target)
+How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift period (cycles)** `1–1000, default 8`
+How many V1 cycles (the global rate) one full drift wave takes for this target. All 13 targets use V1 cycles as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources.
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Notes
+
+- **Per-voice Rate drift vs. the per-voice Drift/Rate slider.** Each voice already has a static Drift/Rate value (its rate offset in Drift mode, or its rate in Independent mode). The new V1–V8 Rate drift targets add *time-varying wander* on top of that static value — the voice's rate now moves around its set point on a slow schedule.
+- **Pan Base Rate / Pan Increment drift only affect Increment pan mode.** In Tremolo pan mode the pan follows each voice's tremolo rate (already moved by Base Rate / per-voice Rate drift); Spread modes are static positions.
+- **Mode-direction asymmetry on the rate targets:** in BPM and Hz modes a positive drift amount speeds up; in Seconds mode (period) a positive amount slows down.
+
+#### Transport behavior (v2.9)
+
+This plugin previously reset on every transport play because `@init` re-ran. v2.9 sets `ext_noinit = 1` so the drift config bank survives transport — and a comprehensive transport-edge reset now does the same clean restart explicitly: all 13 drift phases → 0, every voice's oscillator / tremolo / pan phases, gains, and Play/Rest counters reset, Start Delay and Speed Ramp reset, and the character chain (Tone / Edge / Movement / Body filter state + the chorus delay buffer) clears. Drift CONFIG is preserved across stop/play and project save/load. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 74-80) was 7 sliders covering Base Rate only. v2.9 is 5 sliders covering 13 independent targets, reusing slider IDs 74-78; sliders 79 and 80 are no longer declared. Old project values get reinterpreted (selector defaults to Base Rate; non-zero amounts on sliders 75-76 will produce drift on Base Rate). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 
