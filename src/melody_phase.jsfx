@@ -194,36 +194,50 @@ slider70:0<0,60,0.1>Speed ramp start delay (minutes)
 // rest of the v2.9 sweep. Pick a target (slider71), then sliders 72-75
 // hold THAT target's drift config. Switching the selector saves
 // current values to the old target's memory slot and loads the new
-// target's values into the sliders. All 10 targets drift in parallel;
+// target's values into the sliders. All 28 targets drift in parallel;
 // the selector just chooses which one you're currently editing.
 //
-// Targets:
-//   Rate Value   — wanders the global melody rate (the old drift
-//                  target). Stretches the whole timeline.
-//   V1-V8 Timing — wanders each voice's own "Next voice in" step
-//                  length (in cycles), so the rhythm itself breathes:
-//                  voices fall a little early or late on their own
-//                  independent schedules.
-//   Pan Rate     — wanders the Pan Base Rate (Tremolo / Increment
-//                  pan modes).
+// Targets — the expressive set that lets a sequence "breathe":
+//   Rate Value     — wanders the global melody rate. Stretches the
+//                    whole timeline (sequencer + envelopes + pan).
+//   V1-V8 Timing   — wanders each voice's "Next voice in" step length
+//                    (cycles), so the rhythm breathes: voices fall a
+//                    little early or late on independent schedules.
+//   Pan Rate       — wanders the Pan Base Rate (Tremolo / Increment).
+//   V1-V8 Gain     — wanders each voice's volume (dB), per-sample, so
+//                    the line swells and recedes — DYNAMICS, the core
+//                    of "breathing." Each voice undulates on its own.
+//   V1-V8 Note dur — wanders each voice's Note duration (cycles),
+//                    ARTICULATION: notes drift between overlapping
+//                    (legato) and separated (staccato). Sampled once
+//                    per note at trigger (a note's length is fixed
+//                    once it starts ringing).
+//   Attack %       — wanders the global attack length (%), sampled per
+//   Release %        note at trigger. Onsets / tails soften+sharpen.
+//
+// Granularity differs by type ON PURPOSE: Rate / Timing / Pan / Gain
+// drift continuously (per sample) — they're rates and levels that
+// should glide. Note dur / Attack / Release are sampled at each note's
+// trigger — they shape an individual note, and that note's envelope
+// shouldn't move mid-ring.
 //
 // Period unit is global rate cycles for ALL targets, scaled by Speed
 // Ramp. For slow wall-clock-feel drift, set a long period.
 //
-// Up/Down amount is in the target's natural unit: the rate's current
-// unit (BPM / Seconds / Hz) for Rate Value and Pan Rate, cycles for
-// the per-voice timing targets. The 0-20 range covers all; dial small
-// values in Seconds / Hz modes.
+// Up/Down amount is in the target's natural unit: rate's current unit
+// (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing +
+// Note dur, dB for Gain, percent for Attack / Release. The 0-20 range
+// covers all; dial small values in Seconds / Hz modes.
 //
 // Migration from v2.8: the old flat drift block (musical_up/down/
 // period, slow_up/down/period, drift_shape on sliders 71-77) was 7
-// sliders covering Rate Value only. v2.9 is 5 sliders covering 10
+// sliders covering Rate Value only. v2.9 is 5 sliders covering 28
 // independent targets, reusing slider IDs 71-75; sliders 76 and 77
 // are no longer declared. Old projects' slider values get reinterpreted
 // (selector defaults to Rate Value; non-zero amounts on 72-73 produce
 // drift on Rate Value). Reset drift sliders to defaults after upgrade
 // and reconfigure.
-slider71:0<0,9,1{Rate Value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan Rate}>Drift target
+slider71:0<0,27,1{Rate Value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan Rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note dur,V2 Note dur,V3 Note dur,V4 Note dur,V5 Note dur,V6 Note dur,V7 Note dur,V8 Note dur,Attack %,Release %}>Drift target
 slider72:0<0,20,0.01>Drift up amount (units match target)
 slider73:0<0,20,0.01>Drift down amount (units match target)
 slider74:8<1,1000,1>Drift period (cycles)
@@ -367,23 +381,29 @@ speed_ramp_delay_elapsed = 0;
 
 // --- v2.9 Drift target memory banks ---
 //
-// 10 targets × 8 fields. Each array is 16-slot-spaced so targets can
-// grow to 16 later. Placed at 512 — above the highest per-voice bank
-// (v_freq_current_r at 336, ending at 351), with a safety gap.
+// 28 targets × 8 fields. Each array is 32-slot-spaced (must exceed the
+// target count, which is why this plugin uses 32 not the 16 the others
+// use — 28 targets would overflow 16-slot arrays into each other).
+// Placed at 512 — above the highest per-voice bank (v_freq_current_r
+// at 336, ending at 351), with a safety gap.
 //
 // Targets:
-//   0      = Rate Value    (units: rate's current unit)
-//   1..8   = V1..V8 Timing  (units: cycles — the "Next voice in" unit)
-//   9      = Pan Rate       (units: rate's current unit)
-N_TARGETS = 10;
+//   0       = Rate Value      (units: rate's current unit)
+//   1..8    = V1..V8 Timing    (units: cycles — "Next voice in")
+//   9       = Pan Rate         (units: rate's current unit)
+//   10..17  = V1..V8 Gain       (units: dB)
+//   18..25  = V1..V8 Note dur   (units: cycles — "Note duration")
+//   26      = Attack %          (units: %)
+//   27      = Release %         (units: %)
+N_TARGETS = 28;
 target_drift_up     = 512;
-target_drift_down   = 528;
-target_drift_per    = 544;
-target_drift_shape  = 560;
-target_drift_phase  = 576;
-target_drift_prev   = 592;
-target_drift_curr   = 608;
-target_drift_offset = 624;
+target_drift_down   = 544;
+target_drift_per    = 576;
+target_drift_shape  = 608;
+target_drift_phase  = 640;
+target_drift_prev   = 672;
+target_drift_curr   = 704;
+target_drift_offset = 736;
 
 i = 0;
 loop(N_TARGETS,
@@ -557,6 +577,32 @@ function trigger_seq_voice(prev_idx) (
   // the glide source setup, and the prev_trigger_freq bookkeeping
   // so all three sites stay in sync.
   v_note_seconds[seq_index] > 0.0001 ? (
+    // Sample this note's expressive drift at trigger time and recompute
+    // its envelope segments. Note duration drift (targets 18-25, in
+    // cycles → seconds via cycle_seconds) wanders how long the note
+    // rings; Attack % (26) / Release % (27) drift wander the onset and
+    // tail. Done ONCE per note here (not per-sample) — a note's length
+    // and envelope shape are fixed for the duration of its ring, which
+    // is the musically-correct granularity for articulation. The
+    // formula mirrors @slider's segment computation, on the drifted
+    // values. The rest-gate above uses BASE v_note_seconds, so a
+    // base-rest voice (Note duration 0) stays a rest regardless of drift.
+    eff_note_sec = max(v_note_seconds[seq_index] + target_drift_offset[18 + seq_index] * cycle_seconds, 0);
+    eff_att_pct  = max(0, min(1, attack_pct  + target_drift_offset[26] * 0.01));
+    eff_rel_pct  = max(0, min(1, release_pct + target_drift_offset[27] * 0.01));
+    att_t = eff_att_pct * eff_note_sec;
+    rel_t = eff_rel_pct * eff_note_sec;
+    att_t + rel_t > eff_note_sec ? (
+      total = att_t + rel_t;
+      total > 0 ? (
+        att_t = att_t / total * eff_note_sec;
+        rel_t = rel_t / total * eff_note_sec;
+      );
+    );
+    v_attack_seconds[seq_index]  = att_t;
+    v_release_seconds[seq_index] = rel_t;
+    v_sustain_seconds[seq_index] = max(0, eff_note_sec - att_t - rel_t);
+
     legato_enabled && prev_idx >= 0 && voice_state[prev_idx] != 0 ? (
       v_envelope[seq_index]     = v_envelope[prev_idx];
       v_env_smoothed[seq_index] = v_env_smoothed[prev_idx];
@@ -1428,7 +1474,14 @@ loop(8,
       // Apply this voice's smoothed envelope, per-voice gain, and
       // master gain. Smoothed (not raw) so attack=0 / release=0
       // transitions don't click.
-      amp = v_env_smoothed[i] * v_gain[i] * master_gain;
+      //
+      // Per-voice Gain drift (targets 10-17): a per-sample dB offset
+      // on this voice, converted to a linear multiplier. This is the
+      // continuous volume swell that makes the line breathe. 1.0 when
+      // no Gain drift is configured for this voice.
+      gain_drift_db = target_drift_offset[10 + i];
+      gain_drift_mul = gain_drift_db != 0 ? db_to_lin(gain_drift_db) : 1;
+      amp = v_env_smoothed[i] * v_gain[i] * gain_drift_mul * master_gain;
 
       // Pan — mirrors Polyrhythm Phase. When enabled, each voice's
       // L and R get separate amplitude multipliers based on the
@@ -1478,7 +1531,7 @@ spl1 = out_r;
 // Persist per-target drift configurations. Without this, only the
 // most-recently-edited target's drift slider values survive a project
 // save/load because sliders 72-75 hold whichever target was selected
-// at save time. 10 targets × 4 config fields = 40 values; plus the
+// at save time. 28 targets × 4 config fields = 112 values; plus the
 // selector.
 file_mem(0, target_drift_up,    N_TARGETS);
 file_mem(0, target_drift_down,  N_TARGETS);
