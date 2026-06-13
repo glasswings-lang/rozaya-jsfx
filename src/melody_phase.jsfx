@@ -190,29 +190,48 @@ slider68:0<0,60,0.1>Speed ramp duration (minutes)
 slider69:0<0,1,1{Off,On}>Speed ramp engage
 slider70:0<0,60,0.1>Speed ramp start delay (minutes)
 
-// Musical drift (sliders 71-73): adds a slow oscillation to the
-// effective rate, measured in cycles of the global rate. Up by and
-// Down by are in the same units as Rate Value (BPM / Seconds / Hz
-// depending on Rate Mode); dial down for Seconds / Hz modes where
-// 20 is a huge swing. Period is how many rate cycles per one drift
-// cycle. Musical drift SCALES with Speed Ramp so it slows when the
-// melody slows.
-slider71:0<0,20,0.1>Musical drift: Up by
-slider72:0<0,20,0.1>Musical drift: Down by
-slider73:8<1,1000,1>Musical drift: Period (cycles)
-
-// Slow drift (sliders 74-76): same shape as musical drift, but the
-// period is wall-clock minutes and it does NOT scale with Speed
-// Ramp. Useful for very long-form wandering on top of the musical
-// drift.
-slider74:0<0,20,0.1>Slow drift: Up by
-slider75:0<0,20,0.1>Slow drift: Down by
-slider76:5<0.1,60,0.1>Slow drift: Period (minutes)
-
-// Drift shape (slider 77): applies to BOTH drift sources.
-slider77:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Per-target drift: nested-selector pattern matching Womb v3 / the
+// rest of the v2.9 sweep. Pick a target (slider71), then sliders 72-75
+// hold THAT target's drift config. Switching the selector saves
+// current values to the old target's memory slot and loads the new
+// target's values into the sliders. All 10 targets drift in parallel;
+// the selector just chooses which one you're currently editing.
+//
+// Targets:
+//   Rate Value   — wanders the global melody rate (the old drift
+//                  target). Stretches the whole timeline.
+//   V1-V8 Timing — wanders each voice's own "Next voice in" step
+//                  length (in cycles), so the rhythm itself breathes:
+//                  voices fall a little early or late on their own
+//                  independent schedules.
+//   Pan Rate     — wanders the Pan Base Rate (Tremolo / Increment
+//                  pan modes).
+//
+// Period unit is global rate cycles for ALL targets, scaled by Speed
+// Ramp. For slow wall-clock-feel drift, set a long period.
+//
+// Up/Down amount is in the target's natural unit: the rate's current
+// unit (BPM / Seconds / Hz) for Rate Value and Pan Rate, cycles for
+// the per-voice timing targets. The 0-20 range covers all; dial small
+// values in Seconds / Hz modes.
+//
+// Migration from v2.8: the old flat drift block (musical_up/down/
+// period, slow_up/down/period, drift_shape on sliders 71-77) was 7
+// sliders covering Rate Value only. v2.9 is 5 sliders covering 10
+// independent targets, reusing slider IDs 71-75; sliders 76 and 77
+// are no longer declared. Old projects' slider values get reinterpreted
+// (selector defaults to Rate Value; non-zero amounts on 72-73 produce
+// drift on Rate Value). Reset drift sliders to defaults after upgrade
+// and reconfigure.
+slider71:0<0,9,1{Rate Value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan Rate}>Drift target
+slider72:0<0,20,0.01>Drift up amount (units match target)
+slider73:0<0,20,0.01>Drift down amount (units match target)
+slider74:8<1,1000,1>Drift period (cycles)
+slider75:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
+ext_noinit = 1;   // preserve drift config bank across transport play (drift runtime + sequencer/voice state still reset on play, see transport edge handler in @sample)
+
 // Memory layout per voice (16 slots each — V0 starts at the
 // labelled base, voice i offsets by i; e.g., V3's osc_phase_l is
 // at osc_phase_l[3] = base + 3).
@@ -346,17 +365,41 @@ speed_scale_current      = 1.0;
 speed_ramp_t             = 0.0;
 speed_ramp_delay_elapsed = 0;
 
-// Per-plugin drift state. Two independent drift sources (musical
-// scales with Speed Ramp, slow is wall-clock) summed at the rate-
-// use site. Random-shape targets are uniform in [-1, +1] and get
-// regenerated each time the phase wraps; the offset interpolates
-// linearly from prev → curr over one drift period.
-musical_drift_phase       = 0;
-slow_drift_phase          = 0;
-musical_drift_prev_target = 0;
-musical_drift_curr_target = 0;
-slow_drift_prev_target    = 0;
-slow_drift_curr_target    = 0;
+// --- v2.9 Drift target memory banks ---
+//
+// 10 targets × 8 fields. Each array is 16-slot-spaced so targets can
+// grow to 16 later. Placed at 512 — above the highest per-voice bank
+// (v_freq_current_r at 336, ending at 351), with a safety gap.
+//
+// Targets:
+//   0      = Rate Value    (units: rate's current unit)
+//   1..8   = V1..V8 Timing  (units: cycles — the "Next voice in" unit)
+//   9      = Pan Rate       (units: rate's current unit)
+N_TARGETS = 10;
+target_drift_up     = 512;
+target_drift_down   = 528;
+target_drift_per    = 544;
+target_drift_shape  = 560;
+target_drift_phase  = 576;
+target_drift_prev   = 592;
+target_drift_curr   = 608;
+target_drift_offset = 624;
+
+i = 0;
+loop(N_TARGETS,
+  target_drift_up[i]     = 0;
+  target_drift_down[i]   = 0;
+  target_drift_per[i]    = 8;
+  target_drift_shape[i]  = 0;
+  target_drift_phase[i]  = 0;
+  target_drift_prev[i]   = 0;
+  target_drift_curr[i]   = 0;
+  target_drift_offset[i] = 0;
+  i += 1;
+);
+
+// Last-selected drift target tracker for save/restore on selector change.
+last_target_select = 0;
 
 // One-pole exponential smoother coefficient for the envelope
 // output. Polyrhythm Phase uses this exact pattern: the raw
@@ -732,20 +775,42 @@ rest_mode      = slider66;
 // No engage-edge detection. Engage is a freeze/resume gate handled
 // in @sample. Only transport play resets ramp_t.
 
-// Drift cache. Read slider values once per @slider run; @sample
-// reads from these locals so it doesn't pay the slider lookup
-// cost per sample.
-musical_drift_up        = slider71;
-musical_drift_down      = slider72;
-musical_drift_period    = max(slider73, 1);
-slow_drift_up           = slider74;
-slow_drift_down         = slider75;
-slow_drift_period_min   = max(slider76, 0.1);
-drift_shape             = slider77;
-musical_drift_enabled   = (musical_drift_up > 0 || musical_drift_down > 0);
-slow_drift_enabled      = (slow_drift_up > 0 || slow_drift_down > 0);
-// Samples per one global rate cycle — the "primary cycle" for
-// musical drift. Recomputed here because cycle_seconds may have
+// Drift target selector save/restore (nested-selector pattern).
+// Switching slider71 saves sliders 72-75 into the OLD target's slot,
+// then loads the NEW target's stored config into sliders 72-75.
+// Otherwise captures live edits to the current target's slot. All 10
+// targets drift in parallel from @sample regardless of selection.
+sel_target = slider71;
+sel_up     = slider72;
+sel_down   = slider73;
+sel_per    = slider74;
+sel_shape  = slider75;
+
+last_target_select != sel_target ? (
+  target_drift_up[last_target_select]    = sel_up;
+  target_drift_down[last_target_select]  = sel_down;
+  target_drift_per[last_target_select]   = sel_per;
+  target_drift_shape[last_target_select] = sel_shape;
+
+  slider72 = target_drift_up[sel_target];
+  slider73 = target_drift_down[sel_target];
+  slider74 = target_drift_per[sel_target];
+  slider75 = target_drift_shape[sel_target];
+  slider_automate(slider72);
+  slider_automate(slider73);
+  slider_automate(slider74);
+  slider_automate(slider75);
+
+  last_target_select = sel_target;
+) : (
+  target_drift_up[sel_target]    = sel_up;
+  target_drift_down[sel_target]  = sel_down;
+  target_drift_per[sel_target]   = sel_per;
+  target_drift_shape[sel_target] = sel_shape;
+);
+
+// Samples per one global rate cycle — the "primary cycle" for the
+// drift wave period. Recomputed here because cycle_seconds may have
 // changed (rate_mode / rate_value sliders).
 samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 
@@ -779,74 +844,53 @@ rate_mode == 1 ?
   speed_scale_current = rate_value / effective_rate_val_ramp :
   speed_scale_current = effective_rate_val_ramp / rate_value;
 
-// Musical drift: phase advances at speed_scale_current /
-// (period_cycles × samples_per_primary_cycle) per sample, so it
-// slows when Speed Ramp slows the rate (one drift cycle still
-// spans the same number of musical cycles regardless of tempo).
-musical_drift_offset = 0;
-musical_drift_enabled ? (
-  musical_drift_phase_prev = musical_drift_phase;
-  musical_drift_phase += speed_scale_current / (musical_drift_period * samples_per_primary_cycle);
-  musical_drift_phase >= 1 ? (
-    musical_drift_phase -= 1;
-    drift_shape == 2 ? (
-      musical_drift_prev_target = musical_drift_curr_target;
-      musical_drift_curr_target = rand(2) - 1;
+// Per-target drift wave computation. 10 targets (0=Rate Value,
+// 1-8=V1-V8 Timing, 9=Pan Rate). Each gets a phase counter advancing
+// per sample at speed_scale_current / (per × samples_per_primary_cycle),
+// so the wave slows with Speed Ramp (one drift cycle still spans `per`
+// rate cycles regardless of tempo). Period unit is global rate cycles
+// for all targets.
+i = 0;
+loop(N_TARGETS,
+  up    = target_drift_up[i];
+  down  = target_drift_down[i];
+  per   = max(target_drift_per[i], 1);
+  shape = target_drift_shape[i];
+
+  drift_offset_local = 0;
+  (up > 0 || down > 0) ? (
+    new_phase = target_drift_phase[i] + speed_scale_current / (per * samples_per_primary_cycle);
+    new_phase >= 1.0 ? (
+      new_phase -= 1.0;
+      shape == 2 ? (
+        target_drift_prev[i] = target_drift_curr[i];
+        target_drift_curr[i] = rand(2) - 1;
+      );
     );
+    target_drift_phase[i] = new_phase;
+
+    shape == 0 ? (
+      shape_val = sin(2 * $pi * new_phase);
+    ) : shape == 1 ? (
+      shape_val = new_phase < 0.25 ? (4 * new_phase) :
+                  new_phase < 0.75 ? (2 - 4 * new_phase) :
+                                     (4 * new_phase - 4);
+    ) : (
+      shape_val = target_drift_prev[i] +
+        (target_drift_curr[i] - target_drift_prev[i]) * new_phase;
+    );
+    drift_offset_local = shape_val > 0 ? shape_val * up : shape_val * down;
   );
-  drift_shape == 0 ? (
-    musical_drift_shape_val = sin(2 * $pi * musical_drift_phase);
-  ) : drift_shape == 1 ? (
-    musical_drift_shape_val =
-      musical_drift_phase < 0.25 ? (4 * musical_drift_phase) :
-      musical_drift_phase < 0.75 ? (2 - 4 * musical_drift_phase) :
-                                   (4 * musical_drift_phase - 4);
-  ) : (
-    musical_drift_shape_val = musical_drift_prev_target + (musical_drift_curr_target - musical_drift_prev_target) * musical_drift_phase;
-  );
-  musical_drift_offset = musical_drift_shape_val > 0 ?
-    musical_drift_shape_val * musical_drift_up :
-    musical_drift_shape_val * musical_drift_down;
+  target_drift_offset[i] = drift_offset_local;
+  i += 1;
 );
 
-// Slow drift: phase advances by 1 / (period_min × 60 × srate) —
-// wall-clock, independent of Speed Ramp.
-slow_drift_offset = 0;
-slow_drift_enabled ? (
-  slow_drift_phase += 1 / (slow_drift_period_min * 60 * srate);
-  slow_drift_phase >= 1 ? (
-    slow_drift_phase -= 1;
-    drift_shape == 2 ? (
-      slow_drift_prev_target = slow_drift_curr_target;
-      slow_drift_curr_target = rand(2) - 1;
-    );
-  );
-  drift_shape == 0 ? (
-    slow_drift_shape_val = sin(2 * $pi * slow_drift_phase);
-  ) : drift_shape == 1 ? (
-    slow_drift_shape_val =
-      slow_drift_phase < 0.25 ? (4 * slow_drift_phase) :
-      slow_drift_phase < 0.75 ? (2 - 4 * slow_drift_phase) :
-                                (4 * slow_drift_phase - 4);
-  ) : (
-    slow_drift_shape_val = slow_drift_prev_target + (slow_drift_curr_target - slow_drift_prev_target) * slow_drift_phase;
-  );
-  slow_drift_offset = slow_drift_shape_val > 0 ?
-    slow_drift_shape_val * slow_drift_up :
-    slow_drift_shape_val * slow_drift_down;
-);
-
-// Apply drift to the effective rate. Drift is in the same units as
-// Rate Value; we convert to a speed multiplier by computing the
-// ratio of the drifted rate to the base rate. Clamp the drifted
-// rate to a sensible minimum so an over-aggressive Down by doesn't
-// silence or break the sequencer. Rate Mode interpretation:
-//   BPM (0):  higher rate_value = faster, so drift_mult = drifted / base
-//   Sec (1):  higher rate_value = slower (seconds per cycle), so
-//             drift_mult = base / drifted (inverted)
-//   Hz  (2):  higher rate_value = faster, same as BPM
-drift_total = musical_drift_offset + slow_drift_offset;
-drifted_rate = max(rate_value + drift_total, 0.001);
+// Rate Value drift (target 0): offset is in the rate's unit; convert
+// to a speed multiplier via the drifted/base ratio (inverted in
+// Seconds mode where higher value = slower). Composes with Speed Ramp
+// into combined_scale, which scales dt — stretching the whole melody
+// timeline while voice envelope proportions stay intact.
+drifted_rate = max(rate_value + target_drift_offset[0], 0.001);
 rate_mode == 1 ?
   drift_mult = rate_value / drifted_rate :
   drift_mult = drifted_rate / rate_value;
@@ -854,13 +898,77 @@ rate_mode == 1 ?
 combined_scale = speed_scale_current * drift_mult;
 dt = combined_scale / srate;
 
-// Transport play edge resets EVERYTHING tied to "this play session":
-// Start Delay counter, Speed Ramp progress, Speed Ramp start-delay
-// counter. ONLY thing that resets ramp_t — slider changes don't.
+// Pan Rate drift (target 9): convert the offset to a multiplier on the
+// per-voice pan LFO frequency (relative to Pan Base Rate). In BPM/Hz
+// modes a positive offset speeds the pan up; in Seconds mode it slows
+// it. 1.0 when no Pan Rate drift is configured.
+pan_rate_mult = 1.0;
+target_drift_offset[9] != 0 ? (
+  base_pan_cyc  = rate_to_cycle_seconds(pan_base_rate, rate_mode);
+  drift_pan_cyc = rate_to_cycle_seconds(max(pan_base_rate + target_drift_offset[9], 0.001), rate_mode);
+  pan_rate_mult = base_pan_cyc / max(drift_pan_cyc, 0.0001);
+);
+
+// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so the
+// drift CONFIG bank survives across transport — but everything else
+// that @init used to reset (since @init no longer re-runs on play)
+// needs explicit reset here so renders are deterministic (sequencer
+// back to the first voice, voices silent, drift cycle at phase 0).
+// Matches breath_gen v2.9 / the suite rule.
 play_state > 0 && last_play_state == 0 ? (
+  // Start Delay + Speed Ramp progress.
   start_delay_elapsed      = 0;
   speed_ramp_t             = 0.0;
   speed_ramp_delay_elapsed = 0;
+
+  // Drift runtime state (NOT the config bank).
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_phase[i]  = 0;
+    target_drift_prev[i]   = 0;
+    target_drift_curr[i]   = 0;
+    target_drift_offset[i] = 0;
+    i += 1;
+  );
+
+  // Per-voice runtime state: silence every voice, clear oscillator +
+  // envelope + pan runtime (config like v_step_seconds / v_gain is
+  // maintained by @slider and left alone).
+  i = 0;
+  loop(8,
+    osc_phase_l[i]      = 0;
+    osc_phase_r[i]      = 0;
+    voice_state[i]      = 0;
+    state_elapsed[i]    = 0;
+    v_envelope[i]       = 0;
+    v_env_smoothed[i]   = 0;
+    pan_phase[i]        = 0;
+    pan_smooth[i]       = 0;
+    v_freq_current_l[i] = v_freq_l[i];
+    v_freq_current_r[i] = v_freq_r[i];
+    i += 1;
+  );
+
+  // Sequencer globals: back to the first voice, not yet started.
+  seq_index          = 0;
+  seq_step_elapsed   = 0;
+  seq_started        = 0;
+  seq_finished       = 0;
+  seq_dir            = 1;
+  bounce_count_total = 0;
+
+  // Glide / portamento bookkeeping.
+  prev_trigger_freq_l = 440;
+  prev_trigger_freq_r = 440;
+  have_prev_trigger   = 0;
+  prev_seq_index      = -1;
+
+  // Play/Rest gate.
+  pr_resting               = 0;
+  pr_step                  = 0;
+  pr_rest_elapsed          = 0;
+  pr_rest_duration_samples = 0;
+  pr_frozen_prev_voice     = -1;
 );
 last_play_state = play_state;
 
@@ -926,7 +1034,11 @@ seq_started == 0 ? (
 seq_started && !seq_finished ? (
   in_frozen_rest = pr_enabled && pr_resting && rest_mode == 1;
   !in_frozen_rest ? seq_step_elapsed += dt;
-  cur_step = v_step_seconds[seq_index];
+  // Per-voice timing drift (targets 1-8): the current voice's step
+  // length wanders by its drift offset (in cycles → seconds via the
+  // base cycle_seconds, matching v_step_seconds' units). Clamped to a
+  // 1 ms floor so a heavy Down-by can't make the step zero/negative.
+  cur_step = max(v_step_seconds[seq_index] + target_drift_offset[1 + seq_index] * cycle_seconds, 0.001);
   seq_step_elapsed >= cur_step ? (
     seq_step_elapsed -= cur_step;
     // === Compute next voice based on Direction mode ===
@@ -1327,8 +1439,9 @@ loop(8,
       // would destroy that.
       pan_enabled ? (
         pan_mode < 2 ? (
-          // Tremolo / Increment: pan position oscillates via LFO
-          pan_phase[i] += v_pan_freq[i] / srate;
+          // Tremolo / Increment: pan position oscillates via LFO.
+          // pan_rate_mult carries the Pan Rate drift (target 9).
+          pan_phase[i] += v_pan_freq[i] * pan_rate_mult / srate;
           pan_phase[i] >= 1 ? pan_phase[i] -= 1;
           raw_pan = sin(pan_phase[i] * 2 * $pi) * pan_spread;
         ) : (
@@ -1360,3 +1473,15 @@ spl0 = out_l;
 spl1 = out_r;
 
 );  // close start-delay else branch
+
+@serialize
+// Persist per-target drift configurations. Without this, only the
+// most-recently-edited target's drift slider values survive a project
+// save/load because sliders 72-75 hold whichever target was selected
+// at save time. 10 targets × 4 config fields = 40 values; plus the
+// selector.
+file_mem(0, target_drift_up,    N_TARGETS);
+file_mem(0, target_drift_down,  N_TARGETS);
+file_mem(0, target_drift_per,   N_TARGETS);
+file_mem(0, target_drift_shape, N_TARGETS);
+file_var(0, last_target_select);

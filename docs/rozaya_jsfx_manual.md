@@ -1558,30 +1558,42 @@ Pan modulation also scales, so the whole melody timeline including pan motion mo
 
 **Migration from v2.7:** slider 67 changed from multiplier (0.1–4.0) to signed delta in rate-units. Old projects' multiplier value interprets as a tiny delta — Speed Ramp effectively "off" until reconfigured.
 
-### Drift
+### Drift (v2.9 nested-selector)
 
-Slow organic wander applied to the melody's effective tempo on top of Speed Ramp — sequencer, voice envelopes, and pan motion all stretch together, like an unforced live player rather than a metronomic loop. See [Per-Plugin Drift](#per-plugin-drift) for the architecture; the seven sliders below configure it for this plugin.
+Slow organic wander applied independently to any of ten targets: the global Rate Value, each of the 8 voices' individual step lengths ("Next voice in"), or the Pan Base Rate. Each target can have its own drift configuration; all ten drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-**Musical Period (cycles)** `1–256, default 32`
-Period of the musical drift source, measured in cycles of the global Rate Value. Scales with Speed Ramp.
+Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 72-75 into the old target's memory slot, then loads the new target's saved values. All ten configurations persist across project save/load.
 
-**Musical Up by** `0.0–1.0, default 0`
-How far above the center tempo the musical drift wanders at its peak, as a multiplier amplitude.
+The per-voice timing targets are the expressive heart of this conversion: drift V1's step a little long and V3's a little short, each on its own period, and the rhythm itself breathes — voices fall slightly early or late against the grid on independent schedules, the way a live player phrases. Rate Value drift stretches the whole timeline together (the old behavior); the per-voice targets wander the spacing *within* it.
 
-**Musical Down by** `0.0–1.0, default 0`
-How far below the center tempo the musical drift wanders at its trough. Independent from Up by.
+**Drift target** `Rate Value / V1 Timing … V8 Timing / Pan Rate, default Rate Value`
+Picks which target's drift configuration sliders 72-75 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Slow Period (minutes)** `0.1–60, default 5`
-Period of the slow drift source, measured in wall-clock minutes. Does NOT scale with Speed Ramp.
+**Drift up amount** `0.0–20.0, default 0` (units match target)
+How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for Rate Value and Pan Rate, cycles for the per-voice timing targets. Dial small values in Seconds / Hz modes. 0 = drift off on the up side.
 
-**Slow Up by** `0.0–1.0, default 0`
-Above-center amplitude for the slow drift source.
+**Drift down amount** `0.0–20.0, default 0` (units match target)
+How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Slow Down by** `0.0–1.0, default 0`
-Below-center amplitude for the slow drift source.
+**Drift period (cycles)** `1–1000, default 8`
+How many global rate cycles one full drift wave takes for this target. All ten targets use rate cycles as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
-**Shape** `Sine / Triangle / Random, default Sine`
-Wander shape applied to both sources.
+**Drift shape** `Sine / Triangle / Random, default Sine`
+Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
+
+#### Notes
+
+- **Per-voice timing drift wanders the step length** ("Next voice in"), not the note duration — so a voice's note still rings for its own Note duration; only *when the next voice takes over* moves. With Walk-mode Play/Rest this composes naturally.
+- **Pan Rate drift only affects the Tremolo and Increment pan modes** (the ones that use Pan Base Rate). Spread / Spread Reversed are static positions and aren't affected.
+- **Mode-direction asymmetry on Rate Value / Pan Rate:** in BPM and Hz modes a positive drift amount speeds up; in Seconds mode (where the value is a period) a positive amount slows down.
+
+#### Transport behavior (v2.9)
+
+On every transport play press, drift cycle restarts: all ten targets' phase counters → 0. The sequencer resets to the first voice (not yet started), every voice goes silent with cleared envelopes / oscillator phases / pan state, glide bookkeeping resets, and the Play/Rest gate resets. Drift CONFIG is preserved across stop/play and project save/load. Speed Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+
+#### Migration from v2.8
+
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 71-77) was 7 sliders covering Rate Value only. v2.9 is 5 sliders covering 10 independent targets, reusing slider IDs 71-75; sliders 76 and 77 are no longer declared. Old project values get reinterpreted (selector defaults to Rate Value; non-zero amounts on sliders 72-73 will produce drift on Rate Value). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ## Usage Notes
 
