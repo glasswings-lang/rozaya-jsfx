@@ -244,7 +244,20 @@ slider74:8<1,1000,1>Drift period (cycles)
 slider75:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
-ext_noinit = 1;   // preserve drift config bank across transport play (drift runtime + sequencer/voice state still reset on play, see transport edge handler in @sample)
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: we let REAPER re-run @init on every transport play
+// (its default), which resets all runtime state for free — sequencer,
+// voices, drift phases, Speed Ramp, Start Delay. This is how REAPER's
+// own stock filters work, and it fixes render-after-stop (the render's
+// transport-play re-runs @init → fresh) without an explicit edge
+// handler. Crucially it does NOT reset on STOP, so a note's release
+// tail rings out naturally instead of being cut to silence (the
+// "crunchy last notes" the v2.9 stop-edge attempt caused).
+//
+// The ONLY thing @init must NOT wipe on a transport-play re-run is the
+// drift CONFIG bank (user's per-target up/down/period/shape). That's
+// guarded by drift_cfg_inited below so it survives across play presses
+// while everything else resets.
 
 // Memory layout per voice (16 slots each — V0 starts at the
 // labelled base, voice i offsets by i; e.g., V3's osc_phase_l is
@@ -342,7 +355,8 @@ bounce_count_total = 0;
 // play start; while it's below start_delay_sec the @sample work is
 // gated and output is silent. start_delay_sec is computed in @slider
 // from the user-facing units; default 0 means no delay.
-last_play_state     = 0;
+// (last_play_state removed in v2.10 Path A — no transport-edge handler
+// anymore; @init re-running on play is the reset.)
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
@@ -405,21 +419,36 @@ target_drift_prev   = 672;
 target_drift_curr   = 704;
 target_drift_offset = 736;
 
+// Drift CONFIG (up/down/period/shape) + selector tracker — initialized
+// ONCE per plugin instance, guarded by drift_cfg_inited so @init
+// re-running on every transport play does NOT wipe the user's drift
+// setup. A fresh instance starts with drift_cfg_inited = 0 (REAPER
+// zeroes memory on instantiation); @serialize restores saved configs
+// on project load.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;
+    target_drift_shape[i] = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  drift_cfg_inited = 1;
+);
+
+// Drift RUNTIME (phase / random-shape targets / computed offset) resets
+// on EVERY @init — i.e. every transport play — so drift restarts from
+// phase 0 each play, continues across stop, and is clean on render.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
   target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-
-// Last-selected drift target tracker for save/restore on selector change.
-last_target_select = 0;
 
 // One-pole exponential smoother coefficient for the envelope
 // output. Polyrhythm Phase uses this exact pattern: the raw
@@ -955,77 +984,10 @@ target_drift_offset[9] != 0 ? (
   pan_rate_mult = base_pan_cyc / max(drift_pan_cyc, 0.0001);
 );
 
-// Transport edge: fresh start. v2.9 uses ext_noinit = 1 so the drift
-// CONFIG bank survives across transport — but everything else that
-// @init used to reset (since @init no longer re-runs on play) needs
-// explicit reset here so renders are deterministic (sequencer back to
-// the first voice, voices silent, drift cycle at phase 0).
-//
-// v2.10 render-state fix (Path B, see docs/v2.9-render-state-bug.md):
-// the reset now fires on BOTH the PLAY edge (0 → playing) AND the STOP
-// edge (playing → 0). v2.9 fired only on the PLAY edge, which left the
-// plugin holding stale mid-sequence state after a stop — so render-
-// after-stop and alt-tab-pause-resume both replayed that stale state.
-// Resetting on stop too means the plugin sits in fresh state while
-// stopped, so a subsequent render or engine-resume starts from V1.
-// (Does NOT fix "render without stopping first" — play_state stays 1
-// throughout, no edge fires. Stop-then-render stays the discipline.)
-((play_state > 0 && last_play_state == 0) || (play_state == 0 && last_play_state > 0)) ? (
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Drift runtime state (NOT the config bank).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // Per-voice runtime state: silence every voice, clear oscillator +
-  // envelope + pan runtime (config like v_step_seconds / v_gain is
-  // maintained by @slider and left alone).
-  i = 0;
-  loop(8,
-    osc_phase_l[i]      = 0;
-    osc_phase_r[i]      = 0;
-    voice_state[i]      = 0;
-    state_elapsed[i]    = 0;
-    v_envelope[i]       = 0;
-    v_env_smoothed[i]   = 0;
-    pan_phase[i]        = 0;
-    pan_smooth[i]       = 0;
-    v_freq_current_l[i] = v_freq_l[i];
-    v_freq_current_r[i] = v_freq_r[i];
-    i += 1;
-  );
-
-  // Sequencer globals: back to the first voice, not yet started.
-  seq_index          = 0;
-  seq_step_elapsed   = 0;
-  seq_started        = 0;
-  seq_finished       = 0;
-  seq_dir            = 1;
-  bounce_count_total = 0;
-
-  // Glide / portamento bookkeeping.
-  prev_trigger_freq_l = 440;
-  prev_trigger_freq_r = 440;
-  have_prev_trigger   = 0;
-  prev_seq_index      = -1;
-
-  // Play/Rest gate.
-  pr_resting               = 0;
-  pr_step                  = 0;
-  pr_rest_elapsed          = 0;
-  pr_rest_duration_samples = 0;
-  pr_frozen_prev_voice     = -1;
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play, which resets all runtime state; the drift config bank
+// is preserved across those re-runs by the drift_cfg_inited guard in
+// @init. See docs/v2.9-render-state-bug.md.)
 
 // Start Delay gate. During the silent window the sequencer state
 // (seq_started, voice envelopes, etc.) doesn't advance, so when the
