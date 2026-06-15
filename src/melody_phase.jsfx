@@ -955,13 +955,22 @@ target_drift_offset[9] != 0 ? (
   pan_rate_mult = base_pan_cyc / max(drift_pan_cyc, 0.0001);
 );
 
-// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so the
-// drift CONFIG bank survives across transport — but everything else
-// that @init used to reset (since @init no longer re-runs on play)
-// needs explicit reset here so renders are deterministic (sequencer
-// back to the first voice, voices silent, drift cycle at phase 0).
-// Matches breath_gen v2.9 / the suite rule.
-play_state > 0 && last_play_state == 0 ? (
+// Transport edge: fresh start. v2.9 uses ext_noinit = 1 so the drift
+// CONFIG bank survives across transport — but everything else that
+// @init used to reset (since @init no longer re-runs on play) needs
+// explicit reset here so renders are deterministic (sequencer back to
+// the first voice, voices silent, drift cycle at phase 0).
+//
+// v2.10 render-state fix (Path B, see docs/v2.9-render-state-bug.md):
+// the reset now fires on BOTH the PLAY edge (0 → playing) AND the STOP
+// edge (playing → 0). v2.9 fired only on the PLAY edge, which left the
+// plugin holding stale mid-sequence state after a stop — so render-
+// after-stop and alt-tab-pause-resume both replayed that stale state.
+// Resetting on stop too means the plugin sits in fresh state while
+// stopped, so a subsequent render or engine-resume starts from V1.
+// (Does NOT fix "render without stopping first" — play_state stays 1
+// throughout, no edge fires. Stop-then-render stays the discipline.)
+((play_state > 0 && last_play_state == 0) || (play_state == 0 && last_play_state > 0)) ? (
   // Start Delay + Speed Ramp progress.
   start_delay_elapsed      = 0;
   speed_ramp_t             = 0.0;
