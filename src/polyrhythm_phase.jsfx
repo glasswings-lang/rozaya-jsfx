@@ -192,31 +192,34 @@ slider62:0<0,1000,0.001>Start Delay
 slider63:0<0,1000,1>Play for (cycles)
 slider64:0<0,1000,1>Rest for (cycles)
 
-// Speed ramp: signed-delta on the base Rate Value (slider3), in the
-// rate's currently-displayed unit (BPM if Rate Mode = BPM, Seconds
-// if Seconds, Hz if Hz). Internally the additive delta is converted
-// to a multiplicative ratio (effective_base_hz / base_hz) which then
-// scales every voice's tremolo + pan + per-voice-cycle-counter
-// advance — so the user's "by" reads as an additive delta on the
-// shared base rate, while behind the scenes all voices stay in
-// proportional lockstep (V1's 60 and V2's 60.5 both ramp by -30 in
-// user perception; internally both scale by the same ratio, so the
-// slow beat between them is preserved as a fraction of the new
-// effective rate).
+// Speed ramp: a one-time ride of a chosen parameter over a duration —
+// the in-plugin stand-in for drawing an automation envelope. v2.10
+// made it multi-target (nested-selector, same 24-target list as Drift):
+// pick a target with the Speed ramp target selector (slider79), set a
+// signed `by` amount (slider65), and over `duration` minutes the target
+// rides from its baseline to baseline + by, then holds. Each target
+// remembers its own `by`; all targets ride in parallel (switching the
+// selector just changes which one you're editing — running ramps keep
+// going). Drift and Speed Ramp compose: each parameter = baseline +
+// drift wander + speed-ramp offset.
 //
-// Independent mode (no shared base rate): slider3 still acts as the
-// reference for "by" interpretation. Speed Ramp's resulting ratio
-// then applies to each voice's independent rate. Set slider3 to a
-// sensible reference value if you're in Independent mode.
+// Base Rate (target 0) rides as a multiplicative RATIO (effective_base
+// / base) so every voice scales in proportional lockstep — V1's 60 and
+// V2's 60.5 both ramp by -30 in user terms; internally both scale by
+// the same factor, preserving the slow beat between them. The other 23
+// targets ride as additive offsets in their own units.
 //
-// Tuning and binaural beat are unaffected — only modulation rates
-// scale. Engage is a freeze/resume gate (NOT a restart edge); only
-// transport play resets ramp_t.
+// `by` is in the target's natural unit: rate unit (BPM/Sec/Hz) for the
+// rate targets, Hz for Binaural, dB for Gain/Depth, % for On Duration /
+// Attack / Release. In BPM/Hz a negative `by` = slower; in Seconds a
+// positive `by` = slower (longer period). Engage is a freeze/resume
+// gate (NOT a restart edge); only transport play resets ramp_t.
 //
-// Migration from v2.7: slider 65 changed from multiplier (0.1-4.0)
-// to signed delta in rate-units. Old multiplier values interpret as
-// tiny deltas — Speed Ramp effectively "off" until reconfigured.
-slider65:0<-1000,1000,0.001>Speed ramp by (in rate's current unit)
+// Migration: v2.7 multiplier → v2.9 single-target signed delta on Base
+// Rate. v2.10 added the target selector (slider79) defaulting to Base
+// Rate, so a v2.9 project's slider65 value keeps riding Base Rate
+// exactly as before — no reconfiguration needed for Speed Ramp.
+slider65:0<-1000,1000,0.001>Speed ramp by (units match target)
 slider66:0<0,60,0.1>Speed ramp duration (minutes)
 slider67:0<0,1,1{Off,On}>Speed ramp engage
 slider68:0<0,60,0.1>Speed ramp start delay (minutes)
@@ -285,28 +288,41 @@ slider73:25<1,99,0.1>Pulse Width % (50 = square)
 //   Pan Increment   — wanders the Increment-mode per-voice pan spread.
 //   Binaural Beat   — wanders the L/R frequency offset (the beat freq).
 //   Trem On Duration— wanders the on-portion of the tremolo cycle.
+//   V1-V8 Gain      — wanders each voice's level (dB), per-sample, so
+//                     the voices swell and recede independently —
+//                     dynamics. (v2.10 expressive add.)
+//   Depth dB        — wanders the tremolo depth (shallower/deeper).
+//   Attack %        — wanders the tremolo attack-shoulder length.
+//   Release %       — wanders the tremolo release-shoulder length.
 //
 // Period unit is V1 cycles (the global rate) for ALL targets, scaled
 // by Speed Ramp. For slow wall-clock-feel drift, set a long period.
 //
 // Up/Down amount is in the target's natural unit: the rate's current
 // unit (BPM / Seconds / Hz) for the rate targets, Hz for Binaural Beat,
-// percent for Trem On Duration. The 0-100 range covers all; rate
-// targets in Hz mode use the low end.
+// dB for the Gain targets + Depth dB, percent for Trem On Duration +
+// Attack/Release. The 0-100 range covers all; rate targets in Hz mode
+// use the low end.
 //
-// Migration from v2.8: the old flat drift block (musical_up/down/
-// period, slow_up/down/period, drift_shape on sliders 74-80) was 7
-// sliders covering Base Rate only. v2.9 is 5 sliders covering 13
-// independent targets, reusing slider IDs 74-78; sliders 79 and 80
-// are no longer declared. Old projects' slider values get reinterpreted
-// (selector defaults to Base Rate; non-zero amounts on 75-76 produce
-// drift on Base Rate). Reset drift sliders to defaults after upgrade
-// and reconfigure.
-slider74:0<0,12,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration}>Drift target
+// Migration: v2.8 flat-drift → v2.9 nested-selector reused IDs 74-78
+// (sliders 79/80 freed). v2.10 grows the target list 13 → 24 (adds the
+// 11 expressive targets) — same five sliders, more options in the
+// selector. The per-target memory bank re-spaced (16 → 32 slots/array)
+// to fit 24 targets, so v2.9 saved drift configs reset on load (the
+// selector still defaults to Base Rate). Reconfigure after upgrading.
+slider74:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Drift target
 slider75:0<0,100,0.01>Drift up amount (units match target)
 slider76:0<0,100,0.01>Drift down amount (units match target)
 slider77:8<1,1000,1>Drift period (cycles)
 slider78:0<0,2,1{Sine,Triangle,Random}>Drift shape
+
+// Speed ramp target selector (v2.10) — picks which of the 24 targets
+// the Speed ramp `by` amount (slider65) currently edits. Same target
+// list as Drift. Defaults to Base Rate so a v2.9 project's single
+// Base-Rate ramp keeps working unchanged. Lives at 79 (a slider ID
+// freed when the v2.8 flat-drift block collapsed); the other four
+// Speed Ramp sliders stay at 65-68.
+slider79:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Speed ramp target
 
 
 @init
@@ -423,12 +439,13 @@ speed_ramp_delay_elapsed = 0;
 // edge detection because @init re-ran on play.
 last_play_state = 0;
 
-// --- v2.9 Drift target memory banks ---
+// --- v2.9/v2.10 Drift target memory banks ---
 //
-// 13 targets × 8 fields. Each array is 16-slot-spaced (13 < 16, so no
-// overflow). Placed at 8512 — immediately above the chorus delay buffer
-// (chorus_buf = 320, size 8192, occupies 320..8511), with the per-voice
-// banks all below 320.
+// 24 targets × 8 fields. Each array is 32-slot-spaced (24 > 16, so the
+// v2.9 16-spacing would overflow — bumped to 32, same as melody). Placed
+// at 8512 — immediately above the chorus delay buffer (chorus_buf = 320,
+// size 8192, occupies 320..8511); the per-voice banks are all below 320.
+// 8 arrays × 32 = 256 slots → 8512..8768.
 //
 // Targets:
 //   0       = Base Rate       (units: rate's current unit) — uniform
@@ -437,15 +454,19 @@ last_play_state = 0;
 //   10      = Pan Increment     (units: rate's current unit)
 //   11      = Binaural Beat     (units: Hz)
 //   12      = Trem On Duration  (units: %)
-N_TARGETS = 13;
+//   13..20  = V1..V8 Gain        (units: dB) — v2.10
+//   21      = Depth dB           (units: dB) — v2.10
+//   22      = Attack %           (units: %)  — v2.10
+//   23      = Release %          (units: %)  — v2.10
+N_TARGETS = 24;
 target_drift_up     = 8512;
-target_drift_down   = 8528;
-target_drift_per    = 8544;
-target_drift_shape  = 8560;
-target_drift_phase  = 8576;
-target_drift_prev   = 8592;
-target_drift_curr   = 8608;
-target_drift_offset = 8624;
+target_drift_down   = 8544;
+target_drift_per    = 8576;
+target_drift_shape  = 8608;
+target_drift_phase  = 8640;
+target_drift_prev   = 8672;
+target_drift_curr   = 8704;
+target_drift_offset = 8736;
 
 i = 0;
 loop(N_TARGETS,
@@ -462,6 +483,15 @@ loop(N_TARGETS,
 
 // Last-selected drift target tracker for save/restore on selector change.
 last_target_select = 0;
+
+// --- v2.10 Speed Ramp per-target "by" bank ---
+// One signed `by` amount per target (24), same target indexing as the
+// drift bank. Placed just above the drift bank (which ends at 8768).
+// CONFIG (persists across transport + save/load like the drift bank).
+speed_ramp_by_mem = 8768;
+i = 0;
+loop(N_TARGETS, speed_ramp_by_mem[i] = 0; i += 1;);
+last_speed_target = 0;
 
 function semitones_to_hz(base_note, center_octave, semitones) (
   tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
@@ -601,6 +631,21 @@ rest_for_cycles = slider64;
 // Speed ramp engage-edge.
 // No engage-edge detection. Engage is a freeze/resume gate handled
 // in @sample. Only transport play resets ramp_t.
+
+// Speed ramp target selector save/restore (v2.10, nested-selector).
+// Switching slider79 saves the current slider65 (`by`) into the OLD
+// target's bank slot, then loads the NEW target's stored `by` into
+// slider65. Otherwise captures live edits to the current target's slot.
+// All targets ride in parallel from @sample regardless of selection.
+sel_speed_target = slider79;
+last_speed_target != sel_speed_target ? (
+  speed_ramp_by_mem[last_speed_target] = slider65;
+  slider65 = speed_ramp_by_mem[sel_speed_target];
+  slider_automate(slider65);
+  last_speed_target = sel_speed_target;
+) : (
+  speed_ramp_by_mem[sel_speed_target] = slider65;
+);
 
 // Drift target selector save/restore (nested-selector pattern).
 // Switching slider74 saves sliders 75-78 into the OLD target's slot,
@@ -931,13 +976,13 @@ slider67 && slider66 > 0 ? (
   );
 );
 
-// Signed-delta Speed Ramp on the base rate (slider3), expressed
-// internally as a multiplicative ratio so all voices stay in
-// proportional lockstep. Compute effective base in user's rate unit,
-// convert to Hz the same way as base_rate_hz, then take the ratio.
-// User's mental model: "ramp slider3 from 60 to 30." Audio behavior:
-// "scale every voice's rate by 0.5."
-effective_rate_val = rate_val + speed_ramp_t * slider65;
+// Base Rate Speed Ramp (target 0): the `by` is the Base Rate slot of
+// the per-target bank (speed_ramp_by_mem[0]) — slider65 mirrors it for
+// the currently-selected target via @slider. Expressed as a
+// multiplicative ratio so all voices stay in proportional lockstep.
+// The other 23 targets ride as additive offsets, folded into
+// target_drift_offset[] just after the drift loop below.
+effective_rate_val = rate_val + speed_ramp_t * speed_ramp_by_mem[0];
 effective_rate_hz  = rate_to_hz(effective_rate_val, rate_mode);
 base_rate_hz_ref   = rate_to_hz(rate_val, rate_mode);
 speed_scale_current = effective_rate_hz / max(base_rate_hz_ref, 0.001);
@@ -992,6 +1037,19 @@ loop(N_TARGETS,
   i += 1;
 );
 
+// Fold the Speed Ramp per-target offset INTO target_drift_offset[] for
+// the 23 additive targets (1..23). speed_ramp_t * by[t] rides each one
+// from its baseline toward baseline+by over the duration. After this,
+// every consumption site that reads target_drift_offset[t] sees drift
+// wander + speed-ramp ride combined — no per-site changes needed.
+// Target 0 (Base Rate) is NOT folded: its Speed Ramp is the ratio
+// (combined_scale, above) and its drift is the uniform Hz delta below.
+i = 1;
+loop(N_TARGETS - 1,
+  target_drift_offset[i] += speed_ramp_t * speed_ramp_by_mem[i];
+  i += 1;
+);
+
 // Base Rate drift (target 0): uniform Hz delta added to every voice's
 // tremolo freq below — preserves inter-voice rate relationships (the
 // whole pattern breathes together). Same natural→Hz conversion the old
@@ -1010,20 +1068,39 @@ target_drift_offset[0] != 0 ? (
 // every voice's R-channel oscillator advance below.
 binaural_drift_hz = target_drift_offset[11];
 
+// --- Global (all-voice) expressive drift, computed once per sample ---
+// These targets are global controls, so their drifted effective values
+// are computed here (not per voice).
+
+// Attack % (target 22) / Release % (target 23) drift: wander the
+// envelope-shoulder fractions. Folded in BEFORE the on-duration
+// normalization so the eff_aw/eff_rw scaling sees the drifted values.
+eff_att_frac = max(0, min(1, att_frac + target_drift_offset[22] * 0.01));
+eff_rel_frac = max(0, min(1, rel_frac + target_drift_offset[23] * 0.01));
+
 // Trem On Duration drift (target 12, in %): wanders the on-portion of
 // the tremolo cycle. Compute the effective on-fraction and the derived
 // release-start point once per sample (on_frac is global — same for all
 // voices). Mirrors @slider's aw_eff/rw_eff/re_start normalization on
-// the drifted on_frac so the depth-cancel branch's re_start check stays
-// correct.
+// the drifted on_frac (using the drifted attack/release) so the
+// depth-cancel branch's re_start check stays correct.
 eff_on_frac = max(0.001, min(1, on_frac + target_drift_offset[12] * 0.01));
-eff_aw = att_frac; eff_rw = rel_frac;
+eff_aw = eff_att_frac; eff_rw = eff_rel_frac;
 eff_aw + eff_rw > eff_on_frac ? (
   eff_rt = eff_aw + eff_rw;
   eff_aw = eff_aw / eff_rt * eff_on_frac;
   eff_rw = eff_rw / eff_rt * eff_on_frac;
 );
 eff_re_start = eff_on_frac - eff_rw;
+
+// Depth dB drift (target 21): wanders the tremolo depth. Recompute the
+// sc / amount pair (the @slider math) from the drifted depth so the
+// target_gain formula below uses the wandered depth. amount is the
+// always-on floor (1 - 2^(depth/6)); sc is the LFO-driven swing.
+eff_depth_db = depth_db + target_drift_offset[21];
+eff_amount   = pow(2, eff_depth_db / 6);
+eff_sc       = 0.5 * eff_amount;
+eff_amount   = 1 - eff_amount;
 
 // Live phase offset update — fires when an offset slider is moved during
 // playback. Runs over n_voices so the reverse layer's slots 8-15 also
@@ -1185,16 +1262,18 @@ loop(n_voices,
     v_resting[i] ? (
       target_gain = 0;
     ) : (
-      // Trem On Duration drift (target 12) folds in via eff_on_frac /
-      // eff_re_start (computed once per sample above). calc_lfo does its
-      // own att/rel-vs-on normalization internally, so passing the
-      // drifted on-fraction is enough for the envelope shape.
-      lfo_val = calc_lfo(trem_phase[i], eff_on_frac, att_frac, rel_frac, att_shape, rel_shape);
+      // Trem On Duration (12) / Attack % (22) / Release % (23) drift
+      // fold in via eff_on_frac / eff_att_frac / eff_rel_frac (computed
+      // once per sample above). Depth dB drift (21) folds in via
+      // eff_sc / eff_amount. calc_lfo does its own att/rel-vs-on
+      // normalization internally, so passing the drifted fractions is
+      // enough for the envelope shape.
+      lfo_val = calc_lfo(trem_phase[i], eff_on_frac, eff_att_frac, eff_rel_frac, att_shape, rel_shape);
       in_last_cycle  = pr_enabled && (v_pr_cycle[i] >= play_for_cycles - 1);
       (in_last_cycle && trem_phase[i] >= eff_re_start) ? (
-        target_gain = lfo_val * (sc + amount);
+        target_gain = lfo_val * (eff_sc + eff_amount);
       ) : (
-        target_gain = lfo_val * sc + amount;
+        target_gain = lfo_val * eff_sc + eff_amount;
       );
     );
     gain_l[i] = gain_l[i] * smooth + target_gain * (1 - smooth);
@@ -1389,6 +1468,19 @@ loop(n_voices,
       osc_r = pu_r * gain_r[i] * v_gain[i];
     );
 
+    // Per-voice Gain drift (targets 13-20): a per-sample dB offset on
+    // this voice's level, applied as a linear multiplier on its output
+    // (matching v_gain's 10^(dB/20) convention). This is the dynamics
+    // swell — voices rise and recede on their own schedules. In Both
+    // modes slot 8+k follows V(k+1) via (i & 7). No-op when this voice
+    // has no Gain drift configured.
+    vg_drift_db = target_drift_offset[13 + (i & 7)];
+    vg_drift_db != 0 ? (
+      vg_mul = pow(10, vg_drift_db / 20);
+      osc_l *= vg_mul;
+      osc_r *= vg_mul;
+    );
+
     pan_enabled ? (
       pan_mode < 2 ? (
         // Tremolo / Increment: oscillating LFO drives raw_pan.
@@ -1545,10 +1637,16 @@ body_active ? (
 // Persist per-target drift configurations. Without this, only the
 // most-recently-edited target's drift slider values survive a project
 // save/load because sliders 75-78 hold whichever target was selected
-// at save time. 13 targets × 4 config fields = 52 values; plus the
+// at save time. 24 targets × 4 config fields = 96 values; plus the
 // selector.
 file_mem(0, target_drift_up,    N_TARGETS);
 file_mem(0, target_drift_down,  N_TARGETS);
 file_mem(0, target_drift_per,   N_TARGETS);
 file_mem(0, target_drift_shape, N_TARGETS);
 file_var(0, last_target_select);
+
+// Per-target Speed Ramp `by` amounts (v2.10) + last-selected target.
+// Same persistence story: without this only the most-recently-edited
+// target's `by` survives a reload. 24 values + the selector.
+file_mem(0, speed_ramp_by_mem, N_TARGETS);
+file_var(0, last_speed_target);

@@ -1284,50 +1284,60 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior** is conventional: pressing stop silences the plugin, pressing play re-initializes everything (voice phases, Start Delay counter, per-voice cycle counters, resting flags). Every play press starts a fresh play period from voice cycle 0. Same behavior as without the gate engaged.
 
-### Speed Ramp
+### Speed Ramp (v2.10 multi-target)
 
-In-plugin slowdown/speedup over time. User-facing form: a signed `by` amount on the base Rate Value slider 3 (in the rate's currently-displayed unit). Internally, that delta is converted to a multiplicative ratio that scales **every voice's tremolo + pan + cycle-counter advance** — so the whole polyrhythm stretches or compresses while preserving the rate RELATIONSHIPS between voices.
+A one-time ride of a chosen parameter over a duration, then it holds — the in-plugin stand-in for drawing an automation envelope. v2.10 made it **multi-target**: the same 24-target list as Drift. Pick a target, set a signed `by`, engage, and that target rides from its baseline to baseline + `by` over the duration. Each target keeps its own `by`; all engaged targets ride in parallel. Drift and Speed Ramp **compose** — a parameter = baseline + drift wander + speed-ramp ride.
+
+This is the complement to Drift: Drift is a *repeating* wander that always returns; Speed Ramp is a *one-time* move that stays. Between them you can replace most automation-envelope use without leaving the plugin.
+
+**Speed ramp target (slider 79)** `24 options, default Base Rate`
+Picks which target the `by` amount edits. Same list as the Drift target selector (Base Rate, V1–V8 Rate, Pan Base Rate, Pan Increment, Binaural Beat, Trem On Duration, V1–V8 Gain, Depth dB, Attack %, Release %). Switching the selector saves the current `by` to the old target and loads the new target's saved `by` — running ramps on other targets keep going.
 
 **Speed ramp by (slider 65)** `-1000 to +1000, step 0.001, default 0`
-Signed delta on the base rate (slider 3). **0** = no change. The delta is interpreted in the rate's currently-displayed unit (BPM / Seconds / Hz). Example: at slider 3 = 60 BPM, `by -30` ramps slider 3's effective value from 60 → 30. All voices scale by the same ratio (0.5), so V2's 60.5 ramps to 30.25, etc. The slow beat between them slows proportionally — the polyrhythm feel is preserved.
+Signed amount for the selected target, in that target's natural unit (rate unit for the rate targets, Hz for Binaural, dB for Gain/Depth, % for On Duration / Attack / Release). **0** = no ride.
 
-In BPM/Hz modes, negative `by` = slower. In Seconds mode (period), positive `by` = slower (longer period).
+- **Base Rate** rides as a multiplicative ratio: at 60 BPM, `by -30` scales every voice by 0.5, so V2's 60.5 → 30.25 — the slow beat between voices is preserved (the original single-target behavior).
+- **The other 23 targets** ride as additive offsets on their own value.
+- In BPM/Hz modes a negative `by` = slower; in Seconds mode a positive `by` = slower (longer period).
 
-**Independent mode note:** slider 3 isn't used for audio in Independent mode (each voice has its own rate), but it's still used as the reference for `by` interpretation. Set slider 3 to a sensible reference value if you're in Independent mode — the resulting ratio applies to all voices.
+**Independent mode note:** slider 3 (base rate) is still the reference for the Base Rate target's `by` interpretation even though it's not used for audio in Independent mode. Per-voice Rate targets ride each voice's own rate directly.
 
 **Speed ramp duration (slider 66)** `0–60 minutes, default 0` · **Speed ramp engage (slider 67)** `Off / On, default Off` · **Speed ramp start delay (slider 68)** `0–60 minutes, default 0`
 
-Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes and resumes from there on re-engage.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off it freezes and resumes from there. One ramp_t / duration / engage / start-delay is shared across all targets — they ride together on the same clock; the per-target `by` is what differs.
 
-**Tuning and binaural beat are unaffected** — only the modulation rates scale, not the audible pitch.
+**Tuning is unaffected** — only modulation rates, levels, and envelope shape ride; the audible oscillator pitch stays put (Binaural Beat is rideable because it's a modulation-domain offset, not the carrier pitch).
 
-**Transport behavior:** every play press re-initializes everything (voice phases, Speed Ramp progress, etc.). This is the ONLY thing that resets ramp_t — slider changes don't.
+**Transport behavior:** every play press resets ramp_t (and the rest of the play-session state). This is the ONLY thing that resets ramp_t — slider changes, including switching the target selector, don't.
 
-**Migration from v2.7:** slider 65 changed from multiplier (0.1–4.0) to signed delta. Old projects' multiplier value interprets as a tiny delta — Speed Ramp effectively "off" until reconfigured.
+**Migration:** v2.7 multiplier → v2.9 single-target signed delta on Base Rate → v2.10 multi-target. The v2.10 target selector (slider 79) defaults to Base Rate, so a v2.9 project's `by` value (slider 65) keeps riding Base Rate exactly as before — Speed Ramp needs no reconfiguration across the v2.9 → v2.10 update (only Drift configs reset, from the bank re-spacing).
 
-### Drift (v2.9 nested-selector)
+### Drift (v2.10 nested-selector)
 
-Slow organic wander applied independently to any of **13 targets** — the widest drift surface of the oscillator plugins. Each target can have its own drift configuration; all 13 drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
+Slow organic wander applied independently to any of **24 targets** — by far the widest drift surface in the suite. Each target can have its own drift configuration; all 24 drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-The per-voice Rate targets are the expressive heart here: drift each voice's rate independently and the voices wander against each other, which is the essence of polyrhythmic feel — the pattern is never quite the same twice. Base Rate drift is the old behavior (the whole pattern breathes together, rate relationships preserved).
+The per-voice Rate targets are the rhythmic heart: drift each voice's rate independently and the voices wander against each other, which is the essence of polyrhythmic feel — the pattern is never quite the same twice. The v2.10 expressive targets (per-voice Gain, Depth, Attack/Release) add the *dynamic* dimension — the pattern can breathe in level and character too, not just timing. Base Rate drift is the original behavior (the whole pattern breathes together, rate relationships preserved).
 
-Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 75-78 into the old target's memory slot, then loads the new target's saved values. All 13 configurations persist across project save/load.
+Same pattern as Womb v3's drift and the rest of the suite. Switching the **Drift target** selector saves the current sliders 75-78 into the old target's memory slot, then loads the new target's saved values. All 24 configurations persist across project save/load.
 
-**Drift target** `13 options, default Base Rate`
-- **Base Rate** — uniform Hz delta to every voice; preserves inter-voice rate relationships (the whole pattern breathes together). The old single drift target.
+**Drift target** `24 options, default Base Rate`
+- **Base Rate** — uniform Hz delta to every voice; preserves inter-voice rate relationships (the whole pattern breathes together). The original single drift target.
 - **V1–V8 Rate** — wanders each voice's own rate independently. Voices drift against each other. In Both modes the reverse-layer slot 8+k follows V(k+1)'s drift.
 - **Pan Base Rate** / **Pan Increment** — wander the Increment-mode pan controls (pan base rate and per-voice pan spread). Only affect Increment pan mode.
 - **Binaural Beat** — wanders the L/R frequency offset (the beat frequency itself drifts), applied uniformly to all voices' R channel.
 - **Trem On Duration** — wanders the on-portion of the tremolo cycle (how long each pulse stays open).
+- **V1–V8 Gain** *(v2.10)* — wanders each voice's level (dB) per-sample, so voices swell and recede independently. This is the dynamics dimension — the single biggest contributor to a pattern that feels alive rather than looping.
+- **Depth dB** *(v2.10)* — wanders the tremolo depth (the pulse gets shallower and deeper over time).
+- **Attack %** / **Release %** *(v2.10)* — wander the tremolo envelope shoulders (onsets and tails soften/sharpen).
 
 **Drift up amount** `0.0–100.0, default 0` (units match target)
-How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for the rate targets, Hz for Binaural Beat, percent for Trem On Duration. Rate targets in Hz mode use the low end. 0 = drift off on the up side.
+How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for the rate targets, Hz for Binaural Beat, dB for the Gain targets and Depth dB, percent for Trem On Duration and Attack/Release. Rate targets in Hz mode use the low end; Gain/Depth dB use modest values (a few dB is a strong swell). 0 = drift off on the up side.
 
 **Drift down amount** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (cycles)** `1–1000, default 8`
-How many V1 cycles (the global rate) one full drift wave takes for this target. All 13 targets use V1 cycles as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
+How many V1 cycles (the global rate) one full drift wave takes for this target. All 24 targets use V1 cycles as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
@@ -1337,14 +1347,16 @@ Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random
 - **Per-voice Rate drift vs. the per-voice Drift/Rate slider.** Each voice already has a static Drift/Rate value (its rate offset in Drift mode, or its rate in Independent mode). The new V1–V8 Rate drift targets add *time-varying wander* on top of that static value — the voice's rate now moves around its set point on a slow schedule.
 - **Pan Base Rate / Pan Increment drift only affect Increment pan mode.** In Tremolo pan mode the pan follows each voice's tremolo rate (already moved by Base Rate / per-voice Rate drift); Spread modes are static positions.
 - **Mode-direction asymmetry on the rate targets:** in BPM and Hz modes a positive drift amount speeds up; in Seconds mode (period) a positive amount slows down.
+- **Per-voice Gain drift is continuous (per-sample), so it's a smooth volume swell.** Depth / Attack / Release drift are global (one wander shared across all voices). Together with per-voice Rate and Gain drift, the same notes can wander in timing AND dynamics on independent schedules — the closest the plugin gets to "an unforced live ensemble."
 
-#### Transport behavior (v2.9)
+#### Transport behavior (v2.9+)
 
-This plugin previously reset on every transport play because `@init` re-ran. v2.9 sets `ext_noinit = 1` so the drift config bank survives transport — and a comprehensive transport-edge reset now does the same clean restart explicitly: all 13 drift phases → 0, every voice's oscillator / tremolo / pan phases, gains, and Play/Rest counters reset, Start Delay and Speed Ramp reset, and the character chain (Tone / Edge / Movement / Body filter state + the chorus delay buffer) clears. Drift CONFIG is preserved across stop/play and project save/load. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+This plugin previously reset on every transport play because `@init` re-ran. v2.9 sets `ext_noinit = 1` so the drift config bank survives transport — and a comprehensive transport-edge reset now does the same clean restart explicitly: all drift phases → 0, every voice's oscillator / tremolo / pan phases, gains, and Play/Rest counters reset, Start Delay and Speed Ramp reset, and the character chain (Tone / Edge / Movement / Body filter state + the chorus delay buffer) clears. Drift CONFIG is preserved across stop/play and project save/load. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
 
-#### Migration from v2.8
+#### Migration
 
-The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 74-80) was 7 sliders covering Base Rate only. v2.9 is 5 sliders covering 13 independent targets, reusing slider IDs 74-78; sliders 79 and 80 are no longer declared. Old project values get reinterpreted (selector defaults to Base Rate; non-zero amounts on sliders 75-76 will produce drift on Base Rate). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
+- **From v2.8:** the old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 74-80) was 7 sliders covering Base Rate only. v2.9 collapsed those to 5 sliders (IDs 74-78; sliders 79-80 freed) covering a nested-selector target list.
+- **From v2.9 to v2.10:** the drift target list grew from 13 to 24 (added per-voice Gain, Depth dB, Attack %, Release %). Same 5 sliders, more selector options. The per-target memory bank was re-spaced (16 → 32 slots per field) to fit 24 targets, so **v2.9 saved drift configs reset on load** — the selector still defaults to Base Rate, so nothing runs away; just reconfigure any drift you'd set up. (Speed Ramp's Base Rate setting is unaffected.)
 
 ---
 
