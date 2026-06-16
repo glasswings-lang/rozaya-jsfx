@@ -326,17 +326,16 @@ slider79:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 R
 
 
 @init
-// v2.9: ext_noinit = 1 so the drift CONFIG bank (per-target up/down/
-// period/shape) survives across transport play — without it, @init
-// re-running on every play would zero the bank and @serialize only
-// restores on project load, so non-selected targets' configs would be
-// lost on stop/play. The cost is that the "clean restart on play" that
-// @init re-running used to give for free is now done explicitly in the
-// transport-edge handler at the top of @sample (voice phases, gains,
-// Play/Rest counters, Start Delay, Speed Ramp, drift runtime, character
-// chain — all reset there). Pre-v2.9 this plugin had no ext_noinit.
-ext_noinit = 1;
-
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: we let REAPER re-run @init on every transport play /
+// render start (its default, how the stock filters work), which resets
+// all runtime state for free — voice phases/gains, Play/Rest counters,
+// Start Delay, Speed Ramp, drift runtime, character chain + chorus
+// buffer. That fixes render-after-stop and alt-tab resume, and a note's
+// release tail rings out naturally (nothing resets on STOP). The ONLY
+// things @init must NOT wipe on a play re-run are the CONFIG banks (drift
+// up/down/period/shape + the Speed Ramp `by` bank); those are guarded by
+// drift_cfg_inited below so they survive across play presses.
 PHI = 1.6180339887;
 
 // Memory layout — 16 slots each
@@ -390,6 +389,10 @@ chorus_buf       = 320;   // 320..8511 (8192 slots)
 chorus_buf_size  = 8192;
 chorus_write_pos = 0;
 chorus_lfo_phase = 0;
+// Clear the delay buffer on every @init (incl. transport-play re-runs)
+// so the wet tail doesn't carry across stop/play — REAPER only zeroes
+// memory at instantiation, not on the re-run.
+memset(chorus_buf, 0, chorus_buf_size);
 
 // Initialize 16 slots — slots 0-7 always used; slots 8-15 hold the
 // reverse layer in Both modes and stay zeroed otherwise.
@@ -434,10 +437,8 @@ speed_scale_current      = 1.0;
 speed_ramp_t             = 0.0;
 speed_ramp_delay_elapsed = 0;
 
-// Transport-edge tracker (added in v2.9 — see the comprehensive
-// transport reset at the top of @sample). Pre-v2.9 there was no
-// edge detection because @init re-ran on play.
-last_play_state = 0;
+// (last_play_state removed in v2.10 Path A — no transport-edge handler
+// anymore; @init re-running on play is the reset.)
 
 // --- v2.9/v2.10 Drift target memory banks ---
 //
@@ -468,30 +469,43 @@ target_drift_prev   = 8672;
 target_drift_curr   = 8704;
 target_drift_offset = 8736;
 
+// Speed Ramp per-target "by" bank base pointer (v2.10) — one signed `by`
+// per target (24), same indexing as the drift bank. Placed just above
+// the drift bank (which ends at 8768). CONFIG, like the drift bank.
+speed_ramp_by_mem = 8768;
+
+// CONFIG banks (drift up/down/period/shape + Speed Ramp `by` + the
+// selector trackers) — initialized ONCE per plugin instance, guarded by
+// drift_cfg_inited so the @init re-run on every transport play does NOT
+// wipe the user's setup (Path A render fix relies on @init re-running).
+// A fresh instance starts with drift_cfg_inited = 0 (REAPER zeroes memory
+// on instantiation); @serialize restores saved configs on project load.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;
+    target_drift_shape[i] = 0;
+    speed_ramp_by_mem[i]  = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  last_speed_target  = 0;
+  drift_cfg_inited   = 1;
+);
+
+// Drift RUNTIME (phase / random-shape targets / computed offset) resets
+// on EVERY @init — i.e. every transport play — so drift restarts from
+// phase 0 each play, continues across stop, and is clean on render.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
   target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-
-// Last-selected drift target tracker for save/restore on selector change.
-last_target_select = 0;
-
-// --- v2.10 Speed Ramp per-target "by" bank ---
-// One signed `by` amount per target (24), same target indexing as the
-// drift bank. Placed just above the drift bank (which ends at 8768).
-// CONFIG (persists across transport + save/load like the drift bank).
-speed_ramp_by_mem = 8768;
-i = 0;
-loop(N_TARGETS, speed_ramp_by_mem[i] = 0; i += 1;);
-last_speed_target = 0;
 
 function semitones_to_hz(base_note, center_octave, semitones) (
   tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
@@ -913,56 +927,11 @@ re_start = on_frac - rw_eff;
 
 @sample
 
-// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so the
-// drift CONFIG bank survives across transport — but everything @init
-// used to reset by re-running on play now resets here, so renders are
-// deterministic and stop/play gives the same clean restart as before.
-// Matches breath_gen v2.9 / the suite rule.
-play_state > 0 && last_play_state == 0 ? (
-  // Per-slot runtime state (NOT config — v_gain / v_freq / v_dr /
-  // v_phase_off / v_active / v_pan_static are set in @slider and left
-  // alone). v_phase_off_last reset to 0 so the @sample live-offset
-  // detector re-applies each voice's phase offset on play (matches the
-  // old @init-zeroes-then-detector-fires behavior).
-  i = 0;
-  loop(16,
-    osc_phase_l[i]      = 0;
-    osc_phase_r[i]      = 0;
-    trem_phase[i]       = 0;
-    gain_l[i]           = 1;
-    gain_r[i]           = 1;
-    pan_smooth[i]       = 0;
-    v_phase_off_last[i] = 0;
-    v_resting[i]        = 0;
-    v_pr_cycle[i]       = 0;
-    i += 1;
-  );
-
-  // Drift runtime state (NOT the config bank).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Character chain state (post-voice-sum DSP) — clear filter memory
-  // and the chorus delay buffer so the wet tail doesn't carry over.
-  tone_lp_l = 0; tone_lp_r = 0;
-  body_x1_l = 0; body_x2_l = 0; body_y1_l = 0; body_y2_l = 0;
-  body_x1_r = 0; body_x2_r = 0; body_y1_r = 0; body_y2_r = 0;
-  chorus_write_pos = 0;
-  chorus_lfo_phase = 0;
-  memset(chorus_buf, 0, chorus_buf_size);
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play, which resets all runtime state — voice slots, drift
+// runtime, Start Delay, Speed Ramp, character chain + chorus buffer; the
+// CONFIG banks are preserved across those re-runs by the drift_cfg_inited
+// guard in @init. See docs/v2.9-render-state-bug.md.)
 
 // Advance speed_ramp_t while engaged + duration > 0 + past start
 // delay. Engage off freezes ramp_t; engaging on resumes from there.
@@ -1634,19 +1603,33 @@ body_active ? (
 );  // close start-delay else branch
 
 @serialize
-// Persist per-target drift configurations. Without this, only the
-// most-recently-edited target's drift slider values survive a project
-// save/load because sliders 75-78 hold whichever target was selected
-// at save time. 24 targets × 4 config fields = 96 values; plus the
-// selector.
-file_mem(0, target_drift_up,    N_TARGETS);
-file_mem(0, target_drift_down,  N_TARGETS);
-file_mem(0, target_drift_per,   N_TARGETS);
-file_mem(0, target_drift_shape, N_TARGETS);
-file_var(0, last_target_select);
-
-// Per-target Speed Ramp `by` amounts (v2.10) + last-selected target.
-// Same persistence story: without this only the most-recently-edited
-// target's `by` survives a reload. 24 values + the selector.
-file_mem(0, speed_ramp_by_mem, N_TARGETS);
-file_var(0, last_speed_target);
+// Persist per-target drift + Speed Ramp configurations. Without this,
+// only the most-recently-edited target's slider values survive a project
+// save/load (sliders 75-78 / 65 hold whichever target was selected at
+// save time).
+//
+// VERSION GUARD (2026-06-15). Polyrhythm's drift target count grew
+// 13 -> 24 (v2.10 expressive drift) and gained the Speed Ramp `by` bank,
+// both without versioning the serialize format — the stream began
+// directly with target_drift_up[0]. Loading a v2.9 project (13-target,
+// 53 floats) with 24-target reads runs the sequential file cursor past
+// each array into the next, scrambling drift across targets and
+// fabricating phantom drift on Base Rate + per-voice Rate + later targets
+// — audible as voices drifting out of time even with no drift configured.
+// We now lead with a count-encoded magic; on load, if it doesn't match
+// this build's value the blob is a different/older format and we leave
+// drift + Speed Ramp at the @init defaults (off), matching the suite's
+// accepted "old drift configs reset, reconfigure" migration policy. A
+// legacy blob's first float is up[0] in [0,20], which can never equal the
+// magic, so v2.9 projects deterministically fall through to defaults.
+drift_ser_magic = 1000000 + N_TARGETS;   // 1000024 for this 24-target build
+file_var(0, drift_ser_magic);
+drift_ser_magic == 1000000 + N_TARGETS ? (
+  file_mem(0, target_drift_up,    N_TARGETS);
+  file_mem(0, target_drift_down,  N_TARGETS);
+  file_mem(0, target_drift_per,   N_TARGETS);
+  file_mem(0, target_drift_shape, N_TARGETS);
+  file_var(0, last_target_select);
+  file_mem(0, speed_ramp_by_mem, N_TARGETS);
+  file_var(0, last_speed_target);
+);
