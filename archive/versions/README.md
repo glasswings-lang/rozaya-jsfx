@@ -29,13 +29,14 @@ could load one of these and have working audio.
 
 ## Distinct from parallel-version plugins in `src/`
 
-Some plugins maintain v1 and v2 as **parallel currently-shipped versions**
-with intentionally different design tradeoffs (e.g. `womb_sound_generator.jsfx`
-and `womb_sound_generator_v2.jsfx` both live in `src/` and both are
-supported). Those are NOT archived — they're current.
+A plugin *can* maintain parallel currently-shipped versions in `src/` when
+they have intentionally different design tradeoffs — those are NOT archived
+while they're current. Once a version is no longer supported, it moves here.
+(Womb was the standing example of parallel versions; as of 2026-06-15 its
+v1 and v2 are archived below and v3 is the sole current Womb.)
 
-This folder is only for "v1 used to ship, v2 replaced it, here's v1 for
-recovery and reference."
+This folder is for "this version used to ship, a successor replaced it,
+here's the old one for recovery and reference."
 
 ## Current contents
 
@@ -43,3 +44,14 @@ recovery and reference."
   the v2 fold-in that merged Play/Rest gating into the main plugin
   (commit `70f0e2e`, May 2026). Pre-fold the gating lived in a separate
   `polyrhythm_phase_loops.jsfx` file; v2 consolidated.
+- `womb_sound_generator/v1.jsfx` — the original Womb Sound Generator.
+- `womb_sound_generator/v2.jsfx` — Womb v2 (RSA + bidirectional HRV +
+  drift redesign). Both superseded by `src/womb_sound_generator_v3.jsfx`
+  (nested-selector drift + periodic sigh + signed-delta Speed Ramp) and
+  archived 2026-06-15 as legacy/frozen — Rozaya's call that v1/v2 are no
+  longer getting updates. Note: both still contain the pre-Park-Miller
+  right-channel PRNG artifact (a faint periodic wobble + DC offset on R,
+  from an LCG multiply overflowing float64's 2^53 integer limit before the
+  bitmask); left unfixed because they're frozen as-shipped. The fix, if
+  ever needed, is the Park-Miller / MINSTD generator now used in the active
+  plugins (see `src/breath_gen.jsfx`).

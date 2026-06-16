@@ -439,11 +439,13 @@ After upgrade, reset drift sliders to defaults if you'd never configured the old
 
 ---
 
+> **⚠️ LEGACY (archived 2026-06-15).** Womb v1 is no longer shipped or updated. The current Womb is **[Womb Sound Generator v3](#womb-sound-generator-v3)**. This section is kept for reference and for loading older projects built on v1; the v1 source now lives in `archive/versions/womb_sound_generator/v1.jsfx`. (It also still carries the right-channel PRNG artifact fixed in the active plugins; left as-is since v1 is frozen.)
+
 ## Overview
 
 Womb Sound Generator is a multi-layered intrauterine soundscape synthesizer **designed from the baby's perspective inside the womb**. It combines three independently controllable sound sources — Heartbeat, Breath, and Bloodflow — into a single unified output. Each source can be soloed for monitoring and balanced independently. Heart rate variability is modeled across two dimensions — breath-coupled and random — and the bloodflow layer is phase-locked to the heartbeat cycle, producing a coherent physiological simulation rather than independent noise sources running in parallel.
 
-Womb v1 ships with the original breath and bloodflow architectures from the suite's early days. Womb v2 retunes both layers for an intrauterine-listening perspective (muffled lowpass, lower cutoffs, continuous floors, amplitude-modulated bloodflow) — see the Womb v2 section for those v2-specific parameters. Use v1 for projects built on the original sound; v2 is the recommended starting point for new projects.
+Womb v1 ships with the original breath and bloodflow architectures from the suite's early days. Womb v2 retuned both layers for an intrauterine-listening perspective; **v3** is the current Womb (nested-selector drift + periodic sigh + signed-delta Speed Ramp). Both v1 and v2 are now legacy/archived — use v3 for new projects.
 
 The plugin generates no audio from an input signal. It is a pure synthesizer and should be placed on an empty FX chain or a track with no audio source.
 
@@ -708,9 +710,11 @@ Wander shape applied to both sources.
 
 ---
 
+> **⚠️ LEGACY (archived 2026-06-15).** Womb v2 is no longer shipped or updated. The current Womb is **[Womb Sound Generator v3](#womb-sound-generator-v3)**, which carries v2's intrauterine retuning forward plus the nested-selector drift, periodic sigh, and signed-delta Speed Ramp. This section is kept for reference and for loading older projects built on v2; the v2 source now lives in `archive/versions/womb_sound_generator/v2.jsfx`. (It also still carries the right-channel PRNG artifact fixed in the active plugins; left as-is since v2 is frozen.)
+
 ## Overview
 
-Womb Sound Generator v2 is a Womb variant with a different breath-rate and HRV/drift architecture. It ships **alongside** the original Womb (both files live in the same plugin folder); choose whichever fits your project. v2 is the recommended version going forward; v1 remains available for projects already built on it.
+Womb Sound Generator v2 is a Womb variant with a different breath-rate and HRV/drift architecture. It was the recommended version before v3; v1 and v2 are now legacy/archived. Use v3 for new projects.
 
 What's different from v1:
 
