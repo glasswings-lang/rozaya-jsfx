@@ -88,7 +88,12 @@ slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
 slider29:0<0,60,0.1>Speed ramp start delay (minutes)
 
 @init
-ext_noinit = 1;   // preserve drift phases across transport play
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, resetting all runtime state for free (state machine, filters,
+// drift runtime, Speed Ramp, Start Delay, noise seeds). Only the drift +
+// Speed Ramp CONFIG banks must survive the re-run; they're guarded by
+// drift_cfg_inited below.
 
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -160,7 +165,8 @@ function apply_fade(pos, fade_in, fade_out, mode) local(raw, t) (
 );
 
 // Start Delay state.
-last_play_state     = 0;
+// (last_play_state removed in v2.10 Path A — no transport-edge handler
+// anymore; @init re-running on play is the reset.)
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
@@ -185,12 +191,8 @@ total_breath_samples = 0;
 // only transport play resets ramp_t.
 N_SPEED_TARGETS              = 4;
 speed_ramp_target_value_mem  = 4096;
-i = 0;
-loop(N_SPEED_TARGETS, speed_ramp_target_value_mem[i] = 0; i += 1;);
-last_speed_target            = 0;
 speed_ramp_t                 = 0.0;
 speed_ramp_delay_elapsed     = 0;
-// (last_play_state already initialized earlier in @init)
 
 // --- v2.9 Drift target memory banks ---
 //
@@ -214,24 +216,39 @@ target_drift_prev   = 4192;
 target_drift_curr   = 4208;
 target_drift_offset = 4224;
 
-// ext_noinit prevents zeroing on transport play, but @init still runs
-// on plugin load — so this initializes a fresh instance. @serialize
+// CONFIG banks (drift up/down/period/shape + the Speed Ramp `by` bank +
+// selector trackers) — initialized ONCE per instance, guarded by
+// drift_cfg_inited so the @init re-run on every transport play (Path A
+// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
 // below restores saved configs on project reload.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_SPEED_TARGETS, speed_ramp_target_value_mem[i] = 0; i += 1;);
+  last_speed_target = 0;
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;
+    target_drift_shape[i] = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  drift_cfg_inited = 1;
+);
+
+// Drift RUNTIME (phase / random-shape targets / computed offset) resets
+// on EVERY @init — i.e. every transport play — restoring the v2.8
+// fresh-play behavior. phase seeded per-target with rand(1) so the four
+// drifts don't all crest together.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
-  target_drift_phase[i]  = rand(1);  // per-target phase offset so drifts don't all land at the same crest
+  target_drift_phase[i]  = rand(1);
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-
-// Last-selected target tracker for save/restore on selector change.
-last_target_select = 0;
 
 @slider
 inhale_len = max(floor(srate * slider1), 1);
@@ -333,55 +350,12 @@ last_target_select != sel_target ? (
 
 @sample
 
-// Transport play edge: fresh start. v2.8 got this for free because
-// @init re-ran on every play press (zeroing all memory). v2.9 uses
-// ext_noinit = 1 so the drift CONFIG bank (up/down/per/shape) survives
-// across transport — but everything else that v2.8 reset needs to be
-// explicitly reset here to preserve that "fresh play press" feel.
-//
-// Persists across transport: drift configs, Speed Ramp configs,
-// last-selected targets, slider-driven smoother values (set by @slider).
-// Resets here: drift runtime phase, Speed Ramp progress, state machine
-// position, Play/Rest counters, filter state, noise seeds.
-play_state > 0 && last_play_state == 0 ? (
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Drift runtime state (NOT the config bank).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // State machine: fresh inhale.
-  breath_state = 0;
-  state_pos    = 0;
-  state_phase  = 0;
-  state_len    = inhale_len;
-
-  // Play/Rest gate: back to beat 0.
-  pr_resting      = 0;
-  pr_breath       = 0;
-  pr_rest_elapsed = 0;
-
-  // Filter state: clear any residual ringing from the last play.
-  in_lp_l = 0; in_bp_l = 0;
-  ex_lp_l = 0; ex_bp_l = 0;
-  in_lp_r = 0; in_bp_r = 0;
-  ex_lp_r = 0; ex_bp_r = 0;
-
-  // Noise seeds: reset to @init defaults so noise texture is
-  // deterministic per play press (matches v2.8).
-  noise_seed  = 12345;
-  noise_seed2 = 67890;
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play / render start, which resets all runtime state — state
+// machine, filters, drift runtime, Speed Ramp, Start Delay, Play/Rest
+// counters, noise seeds; the CONFIG banks are preserved across those
+// re-runs by the drift_cfg_inited guard in @init. See
+// docs/v2.9-render-state-bug.md.)
 
 // Advance speed_ramp_t while engaged + duration > 0 + past start delay.
 // Engage off freezes ramp_t at its current value; engaging on resumes
