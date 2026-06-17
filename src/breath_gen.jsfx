@@ -514,11 +514,24 @@ pr_resting ? (
 // Position within current state as 0..1
 state_phase = state_pos / max(state_len - 1, 1);
 
-// Independent noise per channel - naturally decorrelated stereo
-noise_seed = (noise_seed * 1664525 + 1013904223) & 0xFFFFFFFF;
-nl = (noise_seed - 0x80000000) * (1.0 / 2147483648.0);
-noise_seed2 = (noise_seed2 * 22695477 + 1) & 0xFFFFFFFF;
-nr = (noise_seed2 - 0x80000000) * (1.0 / 2147483648.0);
+// Independent white noise per channel via Park-Miller / MINSTD generators
+// (Lehmer LCG): x = (x * a) mod (2^31 - 1). EEL2 does ALL math in float64,
+// where integers are exact only below 2^53 — so an LCG multiply must keep
+// a * x under that ceiling or it silently rounds. Park-Miller's
+// a * modulus is ~1.0e14 (48271) / 1.5e14 (69621), a ~60-90x margin under
+// 2^53 = 9.0e15, so the multiply is always exact. The original right
+// channel used a power-of-2 LCG with multiplier 22695477, whose product
+// 22695477 * 2^32 = 9.7e16 OVERFLOWED 2^53 — the rounded multiply
+// degenerated the sequence into an audible periodic tone + DC offset on
+// the right channel only. The prime modulus also gives a full period with
+// no low-bit patterning. The two channels use DIFFERENT multipliers
+// (48271 / 69621, both standard MINSTD constants) so they are genuinely
+// independent, not phase-shifted copies of one stream. Seeds must be
+// nonzero in [1, 2^31-2] (set in @init; reset there every play).
+noise_seed  = (noise_seed  * 48271) % 2147483647;
+nl = noise_seed  * (2.0 / 2147483647.0) - 1.0;
+noise_seed2 = (noise_seed2 * 69621) % 2147483647;
+nr = noise_seed2 * (2.0 / 2147483647.0) - 1.0;
 
 // Silence during pauses
 (breath_state == 1 || breath_state == 3) ? (
