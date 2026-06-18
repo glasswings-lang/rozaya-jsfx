@@ -84,7 +84,12 @@ slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
 slider28:0<0,60,0.1>Speed ramp start delay (minutes)
 
 @init
-ext_noinit = 1;   // preserve drift config bank across transport play (drift runtime + state machine still reset on play, see transport edge handler in @sample)
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, resetting all runtime for free (state machine, oscillators,
+// filters, delay buffer, drift runtime, Speed Ramp, Start Delay, noise
+// seeds, BPM smoother). Only the drift + Speed Ramp CONFIG banks must
+// survive the re-run; they're guarded by drift_cfg_inited below.
 
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -151,7 +156,8 @@ noise_seed = 12345;
 noise_seed2 = 67890;
 
 // Start Delay state.
-last_play_state     = 0;
+// (last_play_state removed in v2.10 Path A — no transport-edge handler
+// anymore; @init re-running on play is the reset.)
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
@@ -183,9 +189,6 @@ bpm_smoothed             = slider1;
 // play resets ramp_t.
 N_SPEED_TARGETS              = 4;
 speed_ramp_target_value_mem  = 4096;
-i = 0;
-loop(N_SPEED_TARGETS, speed_ramp_target_value_mem[i] = 0; i += 1;);
-last_speed_target            = 0;
 speed_ramp_t                 = 0.0;
 speed_ramp_delay_elapsed     = 0;
 
@@ -210,21 +213,37 @@ target_drift_prev   = 4192;
 target_drift_curr   = 4208;
 target_drift_offset = 4224;
 
+// CONFIG banks (drift up/down/period/shape + the Speed Ramp `by` bank +
+// selector trackers) — initialized ONCE per instance, guarded by
+// drift_cfg_inited so the @init re-run on every transport play (Path A
+// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
+// below restores saved configs on project reload.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_SPEED_TARGETS, speed_ramp_target_value_mem[i] = 0; i += 1;);
+  last_speed_target = 0;
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;
+    target_drift_shape[i] = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  drift_cfg_inited = 1;
+);
+
+// Drift RUNTIME (phase / random-shape targets / computed offset) resets
+// on EVERY @init — i.e. every transport play — so drift restarts clean.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
-  target_drift_phase[i]  = 0;   // transport play also resets this; @init seeds for first run
+  target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-
-// Last-selected drift target tracker for save/restore on selector change.
-last_target_select = 0;
 
 @slider
 // bpm_target feeds the per-sample smoother; cycle_len_base is now
@@ -415,72 +434,12 @@ rand_hrv_depth       = max(slider13 + speed_ramp_rand_hrv_offset + target_drift_
 effective_bpm  = max(bpm_smoothed + speed_ramp_heart_offset + target_drift_offset[0], 10.0);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
-// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so drift
-// CONFIG bank + Speed Ramp configs survive across transport — but
-// everything else that v2.8's @init re-run used to reset needs to be
-// explicitly reset here so a render starts fresh (drift cycle at
-// phase 0, first heartbeat ready to fire, filters clean, deterministic
-// noise). Matches breath_gen v2.9 and the suite rule.
-play_state > 0 && last_play_state == 0 ? (
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Drift runtime state (NOT the config bank).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // Heartbeat state machine: fresh first beat, S1 primed to fire.
-  phase           = 0;
-  s1_active       = 1; s2_active = 0;
-  s1_env          = 1.0; s2_env  = 0;
-  s1_attack_phase = 0; s2_attack_phase = 0;
-
-  // Oscillator phases.
-  s1_phase_osc_near = 0; s1_phase_osc_far = 0;
-  s2_phase_osc_near = 0; s2_phase_osc_far = 0;
-
-  // Filter state (near + far paths).
-  s1_res_low_near = 0; s1_res_band_near = 0;
-  s2_res_low_near = 0; s2_res_band_near = 0;
-  lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
-  s1_res_low_far = 0; s1_res_band_far = 0;
-  s2_res_low_far = 0; s2_res_band_far = 0;
-  lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
-
-  // Delay buffer (stereo width).
-  memset(0, 0, delay_buf_size);
-  delay_write = 0;
-
-  // Breath HRV + random HRV modulators.
-  breath_phase    = 0.0;
-  rand_hrv        = 0.0;
-  rand_hrv_target = 0.0;
-  rand_hrv_step   = 0;
-
-  // Play/Rest gate: back to beat 1 (matches @init's "S1 pre-fire is
-  // beat 1" semantics).
-  pr_resting = 0;
-  pr_beat    = 1;
-
-  // BPM smoother seeds from current target so first sample uses the
-  // saved BPM, not a stale value.
-  bpm_smoothed = bpm_target;
-
-  // Noise seeds reset to @init defaults so noise texture is
-  // deterministic per play press.
-  noise_seed  = 12345;
-  noise_seed2 = 67890;
-  hrv_seed    = 99999;
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play / render start, which resets all runtime state — state
+// machine, oscillators, filters, delay buffer, drift runtime, Speed Ramp,
+// Start Delay, Play/Rest, BPM smoother (re-seeded from slider1), noise
+// seeds; the CONFIG banks are preserved across those re-runs by the
+// drift_cfg_inited guard in @init. See docs/v2.9-render-state-bug.md.)
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
@@ -536,10 +495,16 @@ phase == systole_samples && (!pr_enabled || !pr_resting) ? (
   s2_attack_phase = 1;
 );
 
-noise_seed = (noise_seed * 1664525 + 1013904223) & 0xFFFFFFFF;
-n = (noise_seed - 0x80000000) * (1.0 / 2147483648.0);
-noise_seed2 = (noise_seed2 * 22695477 + 1) & 0xFFFFFFFF;
-n2 = (noise_seed2 - 0x80000000) * (1.0 / 2147483648.0);
+// White noise per channel via Park-Miller / MINSTD (see CLAUDE.md gotcha
+// "LCG random/noise generators overflow EEL2's 2^53 integer limit"). EEL2
+// rounds an LCG multiply once a*seed exceeds 2^53; the old right-channel
+// multiplier 22695477 overflowed and degenerated into a periodic tone +
+// DC offset on R. Two different multipliers (48271 / 69621) give
+// independent streams; seeds must be nonzero in [1, 2^31-2].
+noise_seed  = (noise_seed  * 48271) % 2147483647;
+n  = noise_seed  * (2.0 / 2147483647.0) - 1.0;
+noise_seed2 = (noise_seed2 * 69621) % 2147483647;
+n2 = noise_seed2 * (2.0 / 2147483647.0) - 1.0;
 
 s1_active ? (
   s1_attack_phase ? (
