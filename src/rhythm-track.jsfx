@@ -80,7 +80,11 @@ slider24:8<1,1000,1>Drift period (beats)
 slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
-ext_noinit = 1;   // preserve drift config bank across transport play (drift runtime + state machine still reset on play, see transport edge handler in @sample)
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, resetting all runtime for free (beat clock, tick state, drift
+// runtime, Speed Ramp, Start Delay, Play/Rest). Only the drift CONFIG
+// bank must survive the re-run; it's guarded by drift_cfg_inited below.
 
 tick_buf_len = 65536;
 
@@ -114,9 +118,10 @@ beat_phase       = 1.0;
 beat_index       = 0;
 
 // Seed track_bpm from slider1 in @init so the first @sample call has
-// a valid BPM available. With ext_noinit = 1, @init only runs on plugin
-// load; this ensures effective_tempo computations have a defined
-// baseline even if @sample touches them before @slider's first run.
+// a valid BPM available. @init re-runs on every transport play (Path A,
+// no ext_noinit), so this re-seeds each play; it ensures effective_tempo
+// computations have a defined baseline even if @sample touches them
+// before @slider's first run.
 // (NOTE: see @slider for the `tempo` vs `track_bpm` naming gotcha.)
 track_bpm        = slider1;
 samples_per_beat = (60.0 / max(slider1, 1)) * srate;
@@ -164,21 +169,32 @@ target_drift_prev   = 131600;
 target_drift_curr   = 131616;
 target_drift_offset = 131632;
 
+// CONFIG bank (drift up/down/period/shape + selector tracker) — guarded
+// by drift_cfg_inited so the @init re-run on every transport play (Path A
+// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
+// restores saved configs on project reload.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;
+    target_drift_shape[i] = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  drift_cfg_inited = 1;
+);
+
+// Drift RUNTIME resets on EVERY @init (every transport play) — phase 0.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
   target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-
-// Last-selected drift target tracker for save/restore on selector change.
-last_target_select = 0;
 
 nx = 1;
 i = 0;
@@ -404,45 +420,12 @@ weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_
 
 @sample
 
-// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so drift
-// CONFIG bank survives across transport — but everything else needs
-// explicit reset here so renders are deterministic (drift cycle at
-// phase 0, first beat ready to fire immediately via beat_phase = 1.0
-// init trick, no leftover tick decay). Matches breath_gen v2.9 / the
-// suite rule.
-play_state > 0 && last_play_state == 0 ? (
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Drift runtime state (NOT the config bank).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // Beat clock: beat_phase = 1.0 so the very first @sample call after
-  // delay fires the downbeat immediately (same trick as @init).
-  beat_phase = 1.0;
-  beat_index = 0;
-
-  // Tick state: nothing playing.
-  tick_playing = 0;
-  tick_pos     = 0;
-  tick_src     = 0;
-  tick_len     = 0;
-  tick_pan     = 0;
-
-  // Play/Rest gate: beat 0, fully playing.
-  pr_resting = 0;
-  pr_beat    = 0;
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play / render start, which resets all runtime state — beat
+// clock (beat_phase = 1.0 trick), tick state, drift runtime, Speed Ramp,
+// Start Delay, Play/Rest; the drift CONFIG bank is preserved across those
+// re-runs by the drift_cfg_inited guard in @init. See
+// docs/v2.9-render-state-bug.md.)
 
 // Advance speed_ramp_t while engaged + duration > 0 + past start delay.
 // Engage off freezes ramp_t; engaging on resumes from there.
