@@ -136,7 +136,13 @@ out_pin:left output
 out_pin:right output
 
 @init
-ext_noinit = 1;   // preserve drift config bank across transport play (drift runtime + LFO/filter/gate state still reset on play, see transport edge handler in @sample)
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, resetting all runtime for free (LFO phases honoring Start Phase,
+// filter state + cutoff smoothers, pan state, rate smoother re-seeded
+// from the slider, drift runtime, Speed Ramp, Start Delay, Play/Rest +
+// effect mix). Only the drift CONFIG bank must survive the re-run; it's
+// guarded by drift_cfg_inited below.
 
 phase_l = 0;
 phase_r = 0;
@@ -319,21 +325,32 @@ target_drift_prev   = 1104;
 target_drift_curr   = 1120;
 target_drift_offset = 1136;
 
+// CONFIG bank (drift up/down/period/shape + selector tracker) — guarded
+// by drift_cfg_inited so the @init re-run on every transport play (Path A
+// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
+// restores saved configs on project reload.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;
+    target_drift_shape[i] = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  drift_cfg_inited = 1;
+);
+
+// Drift RUNTIME resets on EVERY @init (every transport play) — phase 0.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
   target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-
-// Last-selected drift target tracker for save/restore on selector change.
-last_target_select = 0;
 
 
 @slider
@@ -440,54 +457,13 @@ last_target_select != sel_target ? (
 
 @sample
 
-// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so the
-// drift CONFIG bank survives across transport — but everything else
-// that @init used to reset (since @init no longer re-runs on play)
-// needs explicit reset here so renders are deterministic. Matches
-// breath_gen v2.9 / the suite rule.
-play_state > 0 && last_play_state == 0 ? (
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Drift runtime state (NOT the config bank).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // Filter LFO phases — honor the configured LFO Start Phase so the
-  // sweep starts from the same point every play (good for renders).
-  phase_l = slider5 / 360.0;
-  phase_l < 0 ? phase_l += 1;
-  phase_r = phase_l;
-  last_start_phase = slider5;
-
-  // Filter state + cutoff smoothers.
-  n3 = n4 = rn3 = rn4 = 0;
-  cut_smooth_l = cut_smooth_r = 0.1;
-
-  // Pan state.
-  pan_l = 0; pan_l_smooth = 0; pan_cycle_index = 0; pan_cycle_dir = 1;
-  last_phase_l = 0; pan_phase = 0;
-
-  // Play/Rest gate + effect mix.
-  pr_resting        = 0;
-  pr_cycle_progress = 0;
-  effect_mix        = 1;
-
-  // Rate smoother re-seeded from the current slider so the first
-  // sample uses the saved rate, not a smoothed-up-from-0 value.
-  slider4 == 0 ? (freq_smoothed = slider3) :
-  slider4 == 1 ? (freq_smoothed = 1 / max(slider3, 0.001)) :
-                 (freq_smoothed = slider3 / 60);
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play / render start, which resets all runtime state — LFO
+// phases (honoring Start Phase slider5), filter state + cutoff smoothers,
+// pan state, rate smoother (re-seeded from slider3), drift runtime, Speed
+// Ramp, Start Delay, Play/Rest + effect mix; the drift CONFIG bank is
+// preserved across those re-runs by the drift_cfg_inited guard in @init.
+// See docs/v2.9-render-state-bug.md.)
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
