@@ -222,7 +222,12 @@ slider72:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 
 @init
-ext_noinit = 1;   // preserve drift config bank across transport play (drift runtime + oscillator/gate state still reset on play, see transport edge handler in @sample)
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, resetting all runtime for free (oscillator re-placement flag,
+// gate state, drift runtime, Speed Ramp, Start Delay, Play/Rest). Only
+// the drift CONFIG bank must survive the re-run; it's guarded by
+// drift_cfg_inited below.
 
 PHI = 1.6180339887;
 NUM_OSC = 16; // max oscillators per voice
@@ -374,21 +379,32 @@ target_drift_prev   = 656;
 target_drift_curr   = 672;
 target_drift_offset = 688;
 
+// CONFIG bank (drift up/down/period/shape + selector tracker) — guarded
+// by drift_cfg_inited so the @init re-run on every transport play (Path A
+// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
+// restores saved configs on project reload.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;
+    target_drift_shape[i] = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  drift_cfg_inited = 1;
+);
+
+// Drift RUNTIME resets on EVERY @init (every transport play) — phase 0.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
   target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-
-// Last-selected drift target tracker for save/restore on selector change.
-last_target_select = 0;
 
 
 @slider
@@ -542,36 +558,12 @@ last_target_select != sel_target ? (
 
 @sample
 
-// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so drift
-// CONFIG bank survives across transport — but everything else needs
-// explicit reset here so renders are deterministic (drift cycle at
-// phase 0, oscillators re-placed, gate state clean). Matches breath_gen
-// v2.9 / the suite rule.
-play_state > 0 && last_play_state == 0 ? (
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Drift runtime state (NOT the config bank).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // Force oscillator re-placement on the first sample (rebuilds osc
-  // frequencies + phases + gains from the current window).
-  needs_init = 1;
-
-  // Play/Rest gate state.
-  pr_resting        = 0;
-  pr_cycle_progress = 0;
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play / render start, which resets all runtime state —
+// oscillator re-placement flag (needs_init), gate state, drift runtime,
+// Speed Ramp, Start Delay, Play/Rest; the drift CONFIG bank is preserved
+// across those re-runs by the drift_cfg_inited guard in @init. See
+// docs/v2.9-render-state-bug.md.)
 
 // Advance speed_ramp_t while engaged + duration > 0 + past start
 // delay. Engage off freezes ramp_t; engaging on resumes from there.
