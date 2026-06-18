@@ -142,7 +142,13 @@ slider60:0<0,30,0.1>Sigh interval (minutes, 0=off)
 slider61:1.5<1.0,3.0,0.05>Sigh depth multiplier
 
 @init
-ext_noinit = 1;   // preserve memory across transport play (drift state, RSA, sighs)
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, resetting all runtime for free (heartbeat/breath/bloodflow state
+// machines, oscillators, filters, HB delay buffer, drift runtime, Speed
+// Ramp, Start Delay, Play/Rest per layer, BPM smoother, sigh timer, noise
+// seeds). Only the drift + Speed Ramp CONFIG banks must survive the
+// re-run; they're guarded by drift_cfg_inited below.
 
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -250,7 +256,8 @@ function apply_fade(pos, fade_in, fade_out, mode) local(raw, t) (
 );
 
 // Start Delay state.
-last_play_state     = 0;
+// (last_play_state removed in v2.10 Path A — no transport-edge handler
+// anymore; @init re-running on play is the reset.)
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
@@ -291,17 +298,16 @@ bpm_smoothed             = slider1;
 // fine-tuning of one parameter at a time).
 speed_ramp_t             = 0.0;
 speed_ramp_delay_elapsed = 0;
-last_speed_target        = 0;
 
 // Per-target memory bank for stored amounts (signed deltas). Lets the
 // user configure an amount for Heart BPM (e.g. -35), switch the selector
 // to Inhale, configure an amount there (e.g. +4 sec), and have the
 // Heart BPM amount preserved for when they switch back. Same pattern as
 // the drift system. 7 targets × 1 value = 7 slots; free at 8320 (after
-// the drift 16-slot-aligned blocks ending at 8319).
+// the drift 16-slot-aligned blocks ending at 8319). CONFIG — contents
+// initialized in the drift_cfg_inited guard below so they survive the
+// @init re-run on transport play (Path A).
 speed_ramp_target_value_mem = 8320;
-i = 0;
-loop(7, speed_ramp_target_value_mem[i] = 0; i += 1;);
 
 // --- v3 Drift target memory banks ---
 //
@@ -331,24 +337,38 @@ target_drift_offset = 8304;   // [0..6]  computed each sample, consumed by audio
 // Note: ext_noinit prevents zeroing on transport play, but @init still runs
 // on plugin load — so this initializes a fresh instance. @serialize below
 // restores saved configs on project reload.
+// CONFIG banks (drift up/down/period/shape + the Speed Ramp `by` bank +
+// selector trackers) — initialized ONCE per instance, guarded by
+// drift_cfg_inited so the @init re-run on every transport play (Path A
+// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
+// below restores saved configs on project reload.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(7, speed_ramp_target_value_mem[i] = 0; i += 1;);
+  last_speed_target = 0;
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;   // heartbeats (targets 0,1) / breath cycles (2-6)
+    target_drift_shape[i] = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  drift_cfg_inited = 1;
+);
+
+// Drift RUNTIME (phase / random-shape targets / computed offset) resets
+// on EVERY @init — i.e. every transport play — so Sine/Triangle drift
+// restarts at phase 0 (deterministic renders), continues across stop.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
-  target_drift_phase[i]  = rand(1);  // small per-target phase offset so drifts don't all land at the same crest
+  target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-// Default Heart BPM drift period to 8 heartbeats (matches v2 default),
-// Breath segment / RSA period to 8 breath cycles (matches v2 default).
-// (Already set above; explicit defaults match user expectations from v2.)
-
-// Last-selected target tracker for save/restore on selector change.
-last_target_select = 0;
 
 // One-way BPM rescale state.
 last_bpm = slider53;
@@ -682,103 +702,13 @@ slider60 > 0 ? (
   sigh_time_since_last += 1.0 / srate;
 );
 
-// Transport play edge: fresh start. v3 ships with `ext_noinit = 1` so
-// the drift / Speed Ramp CONFIG banks (per-target up/down/per/shape and
-// per-target amount) survive across transport. But everything else that
-// used to reset via @init re-running needs to be explicitly reset here
-// — otherwise a render starts mid-cycle in whatever state the previous
-// run left, and Sine/Triangle drift gets caught mid-wave on play. Matches
-// the suite-wide rule (breath_gen v2.9 onward): drift configs persist,
-// drift CYCLE state restarts on play, continues across stop, starts
-// fresh on render — like any other synth would.
-//
-// Persists across transport: drift configs, Speed Ramp configs, last-
-// selected targets, slider-driven smoother targets.
-// Resets here: drift runtime phase, Speed Ramp progress, heartbeat /
-// breath state machines, Play/Rest counters per layer, filter state,
-// HB delay buffer, sigh timer, noise seeds.
-play_state > 0 && last_play_state == 0 ? (
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Drift runtime state (NOT the config bank). All 7 targets back to
-  // phase 0 so Sine/Triangle drift starts at 0 offset and wanders out;
-  // Random shape's prev/curr clear (next period boundary will rand() a
-  // fresh target, which is non-deterministic per render by design).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // Breath state machine: fresh inhale.
-  breath_state     = 0;
-  breath_state_pos = 0;
-  breath_state_len = inhale_len;
-
-  // Heartbeat state machine: fresh first beat, ready to fire S1.
-  hb_phase        = 0;
-  s1_active       = 1; s2_active = 0;
-  s1_env          = 1.0; s2_env  = 0;
-  s1_attack_phase = 0; s2_attack_phase = 0;
-
-  // Heartbeat oscillator phases.
-  s1_phase_osc_near = 0; s1_phase_osc_far = 0;
-  s2_phase_osc_near = 0; s2_phase_osc_far = 0;
-
-  // Heartbeat filter states (near + far paths).
-  s1_res_low_near = 0; s1_res_band_near = 0;
-  s2_res_low_near = 0; s2_res_band_near = 0;
-  lp_low_near = 0; lp_band_near = 0; lp_low2_near = 0; lp_band2_near = 0;
-  s1_res_low_far = 0; s1_res_band_far = 0;
-  s2_res_low_far = 0; s2_res_band_far = 0;
-  lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
-
-  // HB delay buffer (used for stereo width).
-  memset(0, 0, hb_delay_buf_size);
-  hb_delay_write = 0;
-
-  // Breath filter states (in/ex paths, hp paths, post-filter bpf).
-  in_lp_l = 0; in_bp_l = 0; in_lp_r = 0; in_bp_r = 0;
-  ex_lp_l = 0; ex_bp_l = 0; ex_lp_r = 0; ex_bp_r = 0;
-  hp_lp_l = 0; hp_lp_r = 0;
-  bpf_low_l = 0; bpf_band_l = 0;
-  bpf_low_r = 0; bpf_band_r = 0;
-
-  // Bloodflow filter states.
-  bf_n3_l = 0; bf_n4_l = 0;
-  bf_n3_r = 0; bf_n4_r = 0;
-
-  // Play/Rest per-layer counters: back to beat 0, fully playing.
-  pr_hb_resting    = 0;
-  pr_hb_beat       = 1;
-  this_hb_has_beat = 1;
-  pr_br_resting        = 0;
-  pr_br_breath         = 0;
-  pr_br_rest_elapsed   = 0;
-  pr_bf_resting    = 0;
-  pr_bf_beat       = 0;
-  bf_output_mix    = 1;
-
-  // BPM smoother seeds from current target so the first sample uses
-  // the saved BPM, not 0 (avoids a glide-up from silence).
-  bpm_smoothed = bpm_target;
-
-  // Sigh state: timer back to 0, no sigh in progress.
-  sigh_time_since_last = 0;
-  sigh_active          = 0;
-
-  // Noise seeds: reset to @init defaults so noise texture is
-  // deterministic per play press.
-  ns1 = 12345; ns2 = 67890; ns3 = 54321;
-  ns4 = 11111; ns5 = 22222; ns6 = 33333;
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play / render start, which resets all runtime state — all
+// three layer state machines, oscillators, filters, HB delay buffer,
+// drift runtime (phase 0 → deterministic renders), Speed Ramp, Start
+// Delay, Play/Rest per layer, BPM smoother, sigh timer, noise seeds; the
+// CONFIG banks are preserved across those re-runs by the drift_cfg_inited
+// guard in @init. See docs/v2.9-render-state-bug.md.)
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
@@ -787,18 +717,19 @@ start_delay_elapsed < start_delay_sec ? (
 ) : (
 
 // --- NOISE ---
-ns1 = (ns1 * 1664525 + 1013904223) & 0xFFFFFFFF;
-n1 = (ns1 - 0x80000000) * (1.0 / 2147483648.0);
-ns2 = (ns2 * 22695477 + 1) & 0xFFFFFFFF;
-n2 = (ns2 - 0x80000000) * (1.0 / 2147483648.0);
-ns3 = (ns3 * 1664525 + 1013904223) & 0xFFFFFFFF;
-n3 = (ns3 - 0x80000000) * (1.0 / 2147483648.0);
-ns4 = (ns4 * 22695477 + 1) & 0xFFFFFFFF;
-n4 = (ns4 - 0x80000000) * (1.0 / 2147483648.0);
-ns5 = (ns5 * 1664525 + 1013904223) & 0xFFFFFFFF;
-n5 = (ns5 - 0x80000000) * (1.0 / 2147483648.0);
-ns6 = (ns6 * 22695477 + 1) & 0xFFFFFFFF;
-n6 = (ns6 - 0x80000000) * (1.0 / 2147483648.0);
+// White noise via Park-Miller / MINSTD (see CLAUDE.md gotcha: EEL2 float64
+// rounds an LCG multiply once a*seed exceeds 2^53 — the old 22695477
+// streams ns2/ns4/ns6, one per layer's decorrelated channel, overflowed
+// into a periodic tone + DC offset on R). Three different multipliers
+// (48271 / 69621 / 16807) are spread so each summed output channel
+// (L: n1/n3/n5, R: n2/n4/n6) draws from three independent streams. Seeds
+// (set in @init) are distinct nonzero values in [1, 2^31-2].
+ns1 = (ns1 * 48271) % 2147483647; n1 = ns1 * (2.0 / 2147483647.0) - 1.0;
+ns2 = (ns2 * 69621) % 2147483647; n2 = ns2 * (2.0 / 2147483647.0) - 1.0;
+ns3 = (ns3 * 16807) % 2147483647; n3 = ns3 * (2.0 / 2147483647.0) - 1.0;
+ns4 = (ns4 * 48271) % 2147483647; n4 = ns4 * (2.0 / 2147483647.0) - 1.0;
+ns5 = (ns5 * 69621) % 2147483647; n5 = ns5 * (2.0 / 2147483647.0) - 1.0;
+ns6 = (ns6 * 16807) % 2147483647; n6 = ns6 * (2.0 / 2147483647.0) - 1.0;
 
 // --- HEARTBEAT CYCLE LENGTH ---
 cycle_len = max(cycle_len_base, floor(srate * 60.0 / 200.0));
