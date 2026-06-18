@@ -135,7 +135,12 @@ out_pin:left output
 out_pin:right output
 
 @init
-ext_noinit = 1;   // preserve drift + speed-ramp config banks across transport play (drift runtime + LFO/filter/gate state still reset on play, see transport edge handler in @sample)
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, resetting all runtime for free (dwell LFO phases, filter state +
+// cutoff smoothers, pan state, drift runtime, Speed Ramp, Start Delay,
+// Play/Rest + effect mix). Only the drift + Speed Ramp CONFIG banks must
+// survive the re-run; they're guarded by drift_cfg_inited below.
 
 phase_l = 0;
 phase_r = 0;
@@ -275,9 +280,6 @@ effect_mix        = 1;
 // resets ramp_t.
 N_SPEED_TARGETS              = 4;
 speed_ramp_target_value_mem  = 4096;
-i = 0;
-loop(N_SPEED_TARGETS, speed_ramp_target_value_mem[i] = 0; i += 1;);
-last_speed_target            = 0;
 speed_ramp_t                 = 0.0;
 speed_ramp_delay_elapsed     = 0;
 
@@ -304,21 +306,35 @@ target_drift_prev   = 4192;
 target_drift_curr   = 4208;
 target_drift_offset = 4224;
 
+// CONFIG banks (drift up/down/period/shape + the Speed Ramp `by` bank +
+// selector trackers) — guarded by drift_cfg_inited so the @init re-run on
+// every transport play (Path A render fix, no ext_noinit) does NOT wipe
+// the user's setup. @serialize restores saved configs on project reload.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_SPEED_TARGETS, speed_ramp_target_value_mem[i] = 0; i += 1;);
+  last_speed_target = 0;
+  i = 0;
+  loop(N_TARGETS,
+    target_drift_up[i]    = 0;
+    target_drift_down[i]  = 0;
+    target_drift_per[i]   = 8;
+    target_drift_shape[i] = 0;
+    i += 1;
+  );
+  last_target_select = 0;
+  drift_cfg_inited = 1;
+);
+
+// Drift RUNTIME resets on EVERY @init (every transport play) — phase 0.
 i = 0;
 loop(N_TARGETS,
-  target_drift_up[i]     = 0;
-  target_drift_down[i]   = 0;
-  target_drift_per[i]    = 8;
-  target_drift_shape[i]  = 0;
   target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   i += 1;
 );
-
-// Last-selected drift target tracker for save/restore on selector change.
-last_target_select = 0;
 
 
 @slider
@@ -426,44 +442,12 @@ last_target_select != sel_target ? (
 
 @sample
 
-// Transport play edge: fresh start. v2.9 uses ext_noinit = 1 so the
-// drift + Speed Ramp CONFIG banks survive across transport — but
-// everything else that @init used to reset (since @init no longer
-// re-runs on play) needs explicit reset here so renders are
-// deterministic. Matches breath_gen v2.9 / the suite rule.
-play_state > 0 && last_play_state == 0 ? (
-  // Start Delay + Speed Ramp progress.
-  start_delay_elapsed      = 0;
-  speed_ramp_t             = 0.0;
-  speed_ramp_delay_elapsed = 0;
-
-  // Drift runtime state (NOT the config bank).
-  i = 0;
-  loop(N_TARGETS,
-    target_drift_phase[i]  = 0;
-    target_drift_prev[i]   = 0;
-    target_drift_curr[i]   = 0;
-    target_drift_offset[i] = 0;
-    i += 1;
-  );
-
-  // Dwell LFO phases.
-  phase_l = 0; phase_r = 0;
-
-  // Filter state + cutoff smoothers.
-  n3 = n4 = rn3 = rn4 = 0;
-  cut_smooth_l = cut_smooth_r = 0.1;
-
-  // Pan state.
-  pan_l = 0; pan_l_smooth = 0; pan_cycle_index = 0; pan_cycle_dir = 1;
-  last_phase_l = 0; pan_phase = 0;
-
-  // Play/Rest gate + effect mix.
-  pr_resting        = 0;
-  pr_cycle_progress = 0;
-  effect_mix        = 1;
-);
-last_play_state = play_state;
+// (No transport-edge reset here — Path A. REAPER re-runs @init on every
+// transport play / render start, which resets all runtime state — dwell
+// LFO phases, filter state + cutoff smoothers, pan state, drift runtime,
+// Speed Ramp, Start Delay, Play/Rest + effect mix; the CONFIG banks are
+// preserved across those re-runs by the drift_cfg_inited guard in @init.
+// See docs/v2.9-render-state-bug.md.)
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
