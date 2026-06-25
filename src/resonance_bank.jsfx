@@ -530,3 +530,31 @@ out_R = in_R * (1 - wet) + wet_R * wet;
 
 spl0 = out_L * vol;
 spl1 = out_R * vol;
+
+@serialize
+// Versioned config persistence (added 2026-06-15). resonance_bank shipped
+// (v2.5) with NO @serialize, so per-band setups never survived a project
+// save/load — only the selected band's slider values came back. This adds
+// it: the full 16-band config (per-band params + per-(band,target) drift
+// config) now persists. Lead with a count-encoded magic so future format
+// changes (band or drift-target count) degrade to @init defaults instead
+// of mis-reading a stale blob; projects saved before this had no blob, so
+// they deterministically load as defaults too. Runtime (filter state,
+// drift phase / random-shape state) is NOT serialized — it resets per
+// play in @init.
+res_ser_magic = 1000000 + N_BANDS * 1000 + N_TARGETS;   // 1016005 this build
+file_var(0, res_ser_magic);
+res_ser_magic == 1000000 + N_BANDS * 1000 + N_TARGETS ? (
+  file_mem(0, band_freq,              N_BANDS);
+  file_mem(0, band_gain,              N_BANDS);
+  file_mem(0, band_width_up,          N_BANDS);
+  file_mem(0, band_width_down,        N_BANDS);
+  file_mem(0, band_pan,               N_BANDS);
+  file_mem(0, band_order_idx,         N_BANDS);
+  file_mem(0, band_last_drift_target, N_BANDS);
+  file_mem(0, band_drift_up,    N_BANDS * N_TARGETS);
+  file_mem(0, band_drift_down,  N_BANDS * N_TARGETS);
+  file_mem(0, band_drift_per,   N_BANDS * N_TARGETS);
+  file_mem(0, band_drift_mode,  N_BANDS * N_TARGETS);
+  file_mem(0, band_drift_shape, N_BANDS * N_TARGETS);
+);
