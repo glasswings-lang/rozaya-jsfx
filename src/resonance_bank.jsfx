@@ -65,7 +65,14 @@ slider16:0.5<0,1,0.01>Wet/Dry mix
 slider17:0.5<0,1,0.01>Output Volume
 
 @init
-ext_noinit = 1;
+// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, which resets all RUNTIME for free (SVF/biquad filter state +
+// per-band drift phase). Only the 16-band CONFIG (per-band params + per-
+// (band,target) drift config) must survive the re-run — guarded by
+// cfg_inited below. ext_noinit used to be load-bearing here because the
+// nested selector keeps 15 of 16 bands only in memory (not on sliders);
+// the guard replaces that protection without freezing runtime on render.
 
 srate_inv = 1.0 / srate;
 pi_srate  = $pi * srate_inv;
@@ -111,39 +118,58 @@ band_bq_x2_R = 1360;
 band_bq_y1_R = 1376;
 band_bq_y2_R = 1392;
 
+// CONFIG banks (per-band params + per-(band,target) drift config) —
+// initialized ONCE per instance, guarded by cfg_inited so the @init
+// re-run on every transport play does NOT wipe the user's 16-band setup.
+// @serialize restores saved configs on project load.
+cfg_inited != 1 ? (
+  i = 0;
+  loop(N_BANDS,
+    band_freq[i]              = 500;
+    band_gain[i]              = -60;
+    band_width_up[i]          = 250;
+    band_width_down[i]        = 250;
+    band_pan[i]               = 0;
+    band_order_idx[i]         = 0;
+    band_last_drift_target[i] = 0;
+    t = 0;
+    loop(N_TARGETS,
+      slot = i * N_TARGETS + t;
+      band_drift_up[slot]    = 0;
+      band_drift_down[slot]  = 0;
+      band_drift_per[slot]   = 0;
+      band_drift_mode[slot]  = 2;
+      band_drift_shape[slot] = 0;
+      t += 1;
+    );
+    i += 1;
+  );
+  last_band_select         = -1;
+  last_drift_target_select = -1;
+  cfg_inited = 1;
+);
+
+// RUNTIME — resets on EVERY @init (every transport play / render start)
+// so renders and alt-tab resume start fresh: per-(band,target) drift
+// phase + random-shape state, and SVF/biquad filter state per band. Drift
+// phase is randomized per slot so the bands don't all crest together
+// (matches the original load-time seeding).
 i = 0;
 loop(N_BANDS,
-  band_freq[i]              = 500;
-  band_gain[i]              = -60;
-  band_width_up[i]          = 250;
-  band_width_down[i]        = 250;
-  band_pan[i]               = 0;
-  band_order_idx[i]         = 0;
-  band_last_drift_target[i] = 0;
-
-  // Initialize all 5 drift slots for this band
   t = 0;
   loop(N_TARGETS,
     slot = i * N_TARGETS + t;
-    band_drift_up[slot]    = 0;
-    band_drift_down[slot]  = 0;
-    band_drift_per[slot]   = 0;
-    band_drift_mode[slot]  = 2;
-    band_drift_shape[slot] = 0;
     band_drift_phase[slot] = rand(1);
     band_rand_old[slot]    = rand(2) - 1;
     band_rand_new[slot]    = rand(2) - 1;
     t += 1;
   );
-
-  // Filter states
   j = 0;
   loop(MAX_ORDER * 2,
     band_svf_L[i * MAX_ORDER * 2 + j] = 0;
     band_svf_R[i * MAX_ORDER * 2 + j] = 0;
     j += 1;
   );
-
   band_bq_x1_L[i] = 0;
   band_bq_x2_L[i] = 0;
   band_bq_y1_L[i] = 0;
@@ -154,9 +180,6 @@ loop(N_BANDS,
   band_bq_y2_R[i] = 0;
   i += 1;
 );
-
-last_band_select         = -1;
-last_drift_target_select = -1;
 
 @slider
 in_gain     = 10 ^ (slider1 / 20);
