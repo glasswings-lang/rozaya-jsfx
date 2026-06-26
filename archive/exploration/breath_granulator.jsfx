@@ -1,0 +1,160 @@
+desc: Breath Granulator (sustain / extend)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Turns a short real sound (a breath, a sigh) into one of ANY length.
+// It records the incoming audio into a rolling 10-second buffer, then
+// sprays tiny overlapping fragments ("grains") of it into an endless,
+// smooth, evolving texture. No loop points to find, nothing to see —
+// the grain wander supplies the irregular movement that makes breath
+// feel alive instead of looped.
+//
+// WORKFLOW (all by ear):
+//   1. Freeze OFF. Play your breath through the plugin — it's always
+//      recording the last 10 seconds into the buffer.
+//   2. Flip Freeze ON at a good moment. The buffer is now held.
+//   3. Position scrubs to the part of the breath you want.
+//   4. Speed 0 = hold that spot forever (a drone). Raise Speed to drift
+//      slowly through the whole breath — a 2-second breath stretched
+//      across minutes. Movement adds irregular life. Pitch shifts it
+//      WITHOUT changing the length (the granular superpower).
+//
+// Feed it a clean breath (Zoom H1, or a CC0 clip from freesound).
+
+slider1:0<0,1,1{Off,On}>Freeze
+slider2:50<0,100,0.1>Position (%)
+slider3:0<0,100,0.1>Speed (0 = held ... 100 = realtime)
+slider4:120<10,500,1>Grain size (ms)
+slider5:4<1,8,1>Density (overlap)
+slider6:30<0,100,1>Movement (life)
+slider7:0<-24,24,0.1>Pitch (semitones)
+slider8:100<0,100,1>Dry / Wet (%)
+slider9:0<-24,12,0.1>Output (dB)
+slider10:60<0,100,1>Stereo width
+
+@init
+ext_noinit = 1;            // keep the captured buffer across transport play
+NG = 48;                   // grain voices (headroom so round-robin never cuts a live grain)
+BUFLEN = floor(srate * 10);
+
+buf      = 0;
+g_active = BUFLEN;
+g_pos    = BUFLEN + NG;
+g_inc    = BUFLEN + NG*2;
+g_t      = BUFLEN + NG*3;
+g_len    = BUFLEN + NG*4;
+g_pan    = BUFLEN + NG*5;
+
+i = 0; loop(BUFLEN, buf[i] = 0; i += 1; );
+i = 0; loop(NG, g_active[i] = 0; i += 1; );
+
+write_pos   = 0;
+base_pos    = 0;
+next_grain  = 0;
+spawn_acc   = 0;
+spawn_next  = 1;
+pan_flip    = 1;
+drift_phase = 0;
+last_freeze = 0;
+
+// read the buffer with linear interpolation + wrap
+function readbuf(p) local(i0, i1, fr) (
+  p < 0 ? p += BUFLEN;
+  p >= BUFLEN ? p -= BUFLEN;
+  i0 = floor(p);
+  fr = p - i0;
+  i1 = i0 + 1; i1 >= BUFLEN ? i1 = 0;
+  buf[i0]*(1-fr) + buf[i1]*fr;
+);
+
+@slider
+freeze      = slider1;
+pos01       = slider2 * 0.01;
+speed01     = slider3 * 0.01;
+overlap     = max(1, slider5);
+move01      = slider6 * 0.01;
+pitch_ratio = 2 ^ (slider7 / 12);
+wet         = slider8 * 0.01; dry = 1 - wet;
+out_gain    = 2 ^ (slider9 / 6);
+width01     = slider10 * 0.01;
+
+g_len_samps  = max(8, slider4 * 0.001 * srate);
+spread_samps = move01 * g_len_samps * 4;
+out_norm     = 1 / sqrt(overlap);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5;
+
+// freeze rising edge -> jump to Position
+freeze && !last_freeze ? base_pos = pos01 * BUFLEN;
+last_freeze = freeze;
+
+freeze ? (
+  speed01 > 0 ? (
+    base_pos += speed01;
+    base_pos >= BUFLEN ? base_pos -= BUFLEN;
+  ) : (
+    base_pos = pos01 * BUFLEN;     // held: scrub live with Position
+  );
+) : (
+  buf[write_pos] = in_mono;        // recording: keep filling the buffer
+  write_pos += 1; write_pos >= BUFLEN ? write_pos = 0;
+  base_pos = write_pos - g_len_samps;
+  base_pos < 0 ? base_pos += BUFLEN;
+);
+
+// slow irregular drift of the read centre = life
+drift_phase += 2*$pi*0.05 / srate;
+drift_phase >= 2*$pi ? drift_phase -= 2*$pi;
+drift_off = sin(drift_phase) * move01 * g_len_samps * 6;
+
+// spawn grains ASYNCHRONOUSLY — the gap to the next grain is jittered so
+// the stream has no periodic clock. A fixed rate buzzes/clicks on tonal
+// (synth) sources; this is the fix.
+spawn_acc += 1;
+spawn_acc >= spawn_next ? (
+  spawn_acc = 0;
+  base_interval = max(1, g_len_samps / overlap);
+  spawn_next = base_interval * (0.6 + rand(0.8));          // 0.6x .. 1.4x: async timing
+
+  gi = next_grain; next_grain += 1; next_grain >= NG ? next_grain = 0;
+  g_active[gi] = 1;
+  g_t[gi]      = 0;
+  g_len[gi]    = max(8, g_len_samps * (1 + (rand(1) - 0.5) * move01));   // jittered size
+  startp = base_pos + drift_off + (rand(1) - 0.5) * spread_samps;
+  startp < 0 ? startp += BUFLEN;
+  startp >= BUFLEN ? startp -= BUFLEN;
+  g_pos[gi] = startp;
+  g_inc[gi] = pitch_ratio * (1 + (rand(1) - 0.5) * 0.01 * move01);       // micro-detune cloud
+  // balanced pan: alternate sides each grain so width stays wide but the
+  // stereo CENTRE doesn't wander (random pan = the wavering you heard)
+  pan_flip = -pan_flip;
+  g_pan[gi] = 0.5 + pan_flip * width01 * 0.5 * (0.4 + rand(0.6));
+);
+
+// render all active grains
+outl = 0; outr = 0;
+gi = 0;
+loop(NG,
+  g_active[gi] > 0 ? (
+    len = g_len[gi];
+    w   = 0.5 * (1 - cos(2*$pi*g_t[gi]/len));   // Hann window (no clicks)
+    s   = readbuf(g_pos[gi]) * w;
+    pan = g_pan[gi];
+    outl += s * cos(pan*$pi*0.5);
+    outr += s * sin(pan*$pi*0.5);
+    g_pos[gi] += g_inc[gi];
+    g_pos[gi] >= BUFLEN ? g_pos[gi] -= BUFLEN;
+    g_t[gi] += 1;
+    g_t[gi] >= len ? g_active[gi] = 0;
+  );
+  gi += 1;
+);
+
+outl *= out_norm * out_gain;
+outr *= out_norm * out_gain;
+
+spl0 = spl0*dry + outl*wet;
+spl1 = spl1*dry + outr*wet;

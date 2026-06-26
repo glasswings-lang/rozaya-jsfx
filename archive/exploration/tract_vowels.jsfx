@@ -1,0 +1,123 @@
+desc: Tract Vowels (physical tube, breathed)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// An EFFECT. Feed it breath / noise (e.g. Breath Generator). It runs that
+// air through a PHYSICAL model of a vocal tract — a 44-segment tube where
+// sound waves scatter off the places the tube narrows and widens — and the
+// vowel falls out of the physics. The mouth shapes the air; it doesn't
+// generate sound. No glottal buzz: a whispered vowel literally IS turbulent
+// breath shaped by tract resonances, which is exactly what this does.
+//
+// WHY this and not the tongue model that failed: the waveguide itself was
+// always sound (the bare tube provably rings). What broke last time was the
+// tongue-articulation math producing pathological tube shapes. We skip that
+// entire layer. Instead of "move a tongue and hope a good shape results,"
+// each vowel stores its tube SHAPE directly (a known area profile), picked
+// by name. The broken part is gone; the working part (the scatter) stays.
+//
+// Scatter + boundary math is bit-identical to tract_diag_v1, which was
+// confirmed to ring at the correct formant spacing.
+//
+// === HOW TO TEST ===
+//   Put Breath Generator (or any noise) BEFORE this on the track.
+//   Pick a Vowel by name. You should hear that breath take on the vowel.
+//   The A/B that matters: oo vs ee. Are they clearly different vowels,
+//   and does it feel more ALIVE / more real than the formant version?
+//
+// Diagnostic build: vowel shapes WILL need tuning by ear — if a vowel
+// reads as the wrong vowel, that's me moving the stored shape, not a
+// structural problem. Effort/constriction (the sigh<->tense axis) and
+// shape-morph movement come next, once the vowels land.
+
+slider1:0<0,4,1{oo (hoooo),oh,ah,eh,ee}>Vowel
+slider2:0<-24,24,0.1>Input Gain (dB)
+slider3:0.9998<0.99,0.99999,0.00001>Resonance (0.99 breathy ... 0.99999 ringing)
+slider4:0.5<0.0,1.0,0.01>Output Volume
+
+@init
+N = 44;
+R = 0; L = 64; JR = 128; JL = 192; diam = 256; area = 320; refl_bank = 384; va = 448;
+
+glottalReflection = 0.75;
+lipReflection     = -0.85;
+
+i = 0; loop(N, R[i]=0; L[i]=0; JR[i]=0; JL[i]=0; diam[i]=1.5; area[i]=2.25; refl_bank[i]=0; i+=1; );
+
+damp    = 0.9998;
+in_gain = 1.0;
+dc_x    = 0;
+dc_y    = 0;
+
+// scatter() — bit-identical to tract_diag_v1 (the proven-ringing build).
+function scatter(gin) local(j, k, w) (
+  JR[0]   = gin + glottalReflection * L[0];
+  JL[N-1] = lipReflection * R[N-1];
+  j = 1;
+  while (j < N) (
+    k = refl_bank[j];
+    w = k * (R[j-1] + L[j]);
+    JR[j]   = R[j-1] - w;
+    JL[j-1] = L[j]   + w;
+    j += 1;
+  );
+  j = 0;
+  while (j < N) (
+    R[j] = JR[j] * damp;
+    L[j] = JL[j] * damp;
+    j += 1;
+  );
+);
+
+@slider
+in_gain = 10 ^ (slider2 / 20);
+damp    = slider3;
+vol     = slider4;
+
+// Per-vowel tract SHAPE: 8 diameter anchors from glottis (va[0]) to lips
+// (va[7]). The cavity topology (where the tube is wide vs pinched) is what
+// makes each vowel — e.g. ee has a wide back + tight front-palatal pinch;
+// oo has a mid (velar) pinch + rounded (narrow) lips. Tune by ear.
+slider1==0 ? ( va[0]=1.2; va[1]=2.0; va[2]=2.8; va[3]=0.8; va[4]=2.2; va[5]=2.0; va[6]=1.2; va[7]=0.5; ) :  // oo
+slider1==1 ? ( va[0]=1.0; va[1]=1.0; va[2]=1.5; va[3]=1.2; va[4]=2.0; va[5]=2.2; va[6]=1.5; va[7]=0.7; ) :  // oh
+slider1==2 ? ( va[0]=1.0; va[1]=0.6; va[2]=0.7; va[3]=1.2; va[4]=2.5; va[5]=3.2; va[6]=3.2; va[7]=2.8; ) :  // ah
+slider1==3 ? ( va[0]=1.5; va[1]=1.8; va[2]=2.0; va[3]=2.2; va[4]=2.0; va[5]=1.4; va[6]=1.6; va[7]=1.8; ) :  // eh
+             ( va[0]=2.8; va[1]=3.0; va[2]=3.0; va[3]=2.5; va[4]=1.5; va[5]=0.6; va[6]=1.0; va[7]=1.3; );   // ee
+
+// interpolate the 8 anchors across the 44 segments
+i = 0;
+loop(N,
+  p  = i / (N - 1);
+  ap = p * 7;
+  a0 = min(floor(ap), 6);
+  fr = ap - a0;
+  diam[i] = va[a0] + fr * (va[a0+1] - va[a0]);
+  diam[i] = max(diam[i], 0.1);   // never fully close — we want a sustained vowel
+  area[i] = diam[i] * diam[i];
+  i += 1;
+);
+
+// reflection coefficients from area discontinuities between segments
+i = 1;
+while (i < N) (
+  (area[i-1] + area[i]) > 0.000001 ?
+    refl_bank[i] = (area[i-1] - area[i]) / (area[i-1] + area[i]) :
+    refl_bank[i] = 0.999;
+  i += 1;
+);
+
+@sample
+in_mono = (spl0 + spl1) * 0.5 * in_gain;
+
+scatter(in_mono); o1 = R[N-1];
+scatter(in_mono); o2 = R[N-1];
+lipout = (o1 + o2) * 0.5;
+
+// DC blocker (tube + noise can drift; keep output clean)
+dc_y = lipout - dc_x + 0.997 * dc_y;
+dc_x = lipout;
+
+spl0 = dc_y * vol;
+spl1 = dc_y * vol;

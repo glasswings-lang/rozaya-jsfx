@@ -1,0 +1,128 @@
+desc: Breathed Vowels
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// An EFFECT, not a generator. Feed it breath / noise (e.g. Breath
+// Generator) and it shapes that air into a breathed (whispered/aspirated)
+// vowel. It makes no sound on its own.
+//
+// The whole idea lives in ONE macro: Effort.
+//   relaxed  = end-of-day "hoooo" sigh — soft, broad, warm, open throat.
+//   tense    = horror-movie / stage-whisper — pressed, narrow, bright,
+//              with throat-constriction hiss creeping in.
+// Effort sweeps formant width, spectral tilt, and the constriction peak
+// together, because that tension axis IS the difference your ear hears.
+//
+// Vowel is picked by name (no numbers). Default is "oo" — the hoooo.
+//
+// Diagnostic v1: prove the relaxed sigh lands before adding formant
+// movement and an input warmth-tilt. Defaults sit hard at the relaxed
+// end so the FIRST sound you hear is the right one.
+
+slider1:0<0,4,1{oo (hoooo),oh,ah,eh,ee}>Vowel
+slider2:15<0,100,1>Effort (relaxed sigh ... tense whisper)
+slider3:0<-24,12,0.1>Output (dB)
+slider4:100<0,100,1>Dry / Wet (%)
+slider5:20<0,100,1>Resonance (breathy ... almost a whistle)
+
+@init
+
+// Transposed-direct-form-II biquad, one instance per filter (own state).
+function bq(x) (
+  o = this.b0*x + this.z1;
+  this.z1 = this.b1*x - this.a1*o + this.z2;
+  this.z2 = this.b2*x - this.a2*o;
+  o;
+);
+
+// RBJ bandpass (0 dB peak). Leaves normalized coeffs in cb*/ca* globals.
+function calc_bpf(freq, q) local(w0, cw, sw, al, ia0) (
+  w0 = 2*$pi*freq/srate;
+  cw = cos(w0); sw = sin(w0);
+  al = sw/(2*q);
+  ia0 = 1/(1+al);
+  cb0 = al*ia0;
+  cb1 = 0;
+  cb2 = -al*ia0;
+  ca1 = -2*cw*ia0;
+  ca2 = (1-al)*ia0;
+);
+
+@slider
+
+eff = slider2*0.01;
+out_gain = 2 ^ (slider3/6);   // dB -> linear (6 dB doubling)
+wet = slider4*0.01;
+dry = 1 - wet;
+
+// Vowel -> three parallel formants (F1/F2/F3 in Hz). Neutral-ish values;
+// tune by ear. F1 = height/openness, F2 = backness, F3 = colour.
+slider1==0 ? ( f1=320;  f2=700;  f3=2400 ) :   // oo  (the hoooo) - low & back
+slider1==1 ? ( f1=500;  f2=950;  f3=2550 ) :   // oh  - more open, F1+F2 up
+slider1==2 ? ( f1=730;  f2=1200; f3=2600 ) :   // ah  - open, F1 high
+slider1==3 ? ( f1=550;  f2=1900; f3=2550 ) :   // eh  - front, F2 high
+             ( f1=320;  f2=2400; f3=3100 );    // ee  - close & front, F2 highest
+
+// EFFORT MACRO ------------------------------------------------------------
+// Resonance owns the formant Q now (decoupled from Effort), with a range
+// that reaches near-self-oscillation so the hooo can be pushed toward a
+// whistle and backed off. Low = broad/breathy; high = narrow, screaming,
+// almost a whistle. Squared curve so the useful zone spreads out.
+res = slider5 * 0.01;
+qf  = 3.0 + res*res * 200.0;
+
+// spectral tilt: warmth must NOT cut the formants. Relaxed cutoff floored
+// well above F3 (~3 kHz) so all three formants survive; it only tames the
+// breathy hiss above them. Tense opens it bright.
+fc = 5500 + eff*(16000 - 5500);
+fc = min(fc, srate*0.45);
+lp_a = 1 - exp(-2*$pi*fc/srate);
+
+// throat-constriction hiss: silent when relaxed, grows toward the tense end
+camt = eff*eff*0.6;
+// -------------------------------------------------------------------------
+
+// formant coeffs (L and R share coeffs, keep independent state)
+calc_bpf(f1, qf);
+f1l.b0=cb0; f1l.b1=cb1; f1l.b2=cb2; f1l.a1=ca1; f1l.a2=ca2;
+f1r.b0=cb0; f1r.b1=cb1; f1r.b2=cb2; f1r.a1=ca1; f1r.a2=ca2;
+
+calc_bpf(f2, qf);
+f2l.b0=cb0; f2l.b1=cb1; f2l.b2=cb2; f2l.a1=ca1; f2l.a2=ca2;
+f2r.b0=cb0; f2r.b1=cb1; f2r.b2=cb2; f2r.a1=ca1; f2r.a2=ca2;
+
+calc_bpf(f3, qf);
+f3l.b0=cb0; f3l.b1=cb1; f3l.b2=cb2; f3l.a1=ca1; f3l.a2=ca2;
+f3r.b0=cb0; f3r.b1=cb1; f3r.b2=cb2; f3r.a1=ca1; f3r.a2=ca2;
+
+calc_bpf(3000, 3.5);
+cpl.b0=cb0; cpl.b1=cb1; cpl.b2=cb2; cpl.a1=ca1; cpl.a2=ca2;
+cpr.b0=cb0; cpr.b1=cb1; cpr.b2=cb2; cpr.a1=ca1; cpr.a2=ca2;
+
+// parallel formant gains, alternating signs to avoid inter-formant notches
+g1 = 1.0; g2 = -0.85; g3 = 0.7;
+
+@sample
+
+inl = spl0;
+inr = spl1;
+
+// parallel formant bank
+wl = g1*f1l.bq(inl) + g2*f2l.bq(inl) + g3*f3l.bq(inl);
+wr = g1*f1r.bq(inr) + g2*f2r.bq(inr) + g3*f3r.bq(inr);
+
+// throat-constriction hiss (only audible toward the tense end)
+wl += camt * cpl.bq(inl);
+wr += camt * cpr.bq(inr);
+
+// warmth tilt (one-pole lowpass; cutoff rises with Effort)
+lp_l += lp_a*(wl - lp_l); wl = lp_l;
+lp_r += lp_a*(wr - lp_r); wr = lp_r;
+
+wl *= out_gain;
+wr *= out_gain;
+
+spl0 = inl*dry + wl*wet;
+spl1 = inr*dry + wr*wet;

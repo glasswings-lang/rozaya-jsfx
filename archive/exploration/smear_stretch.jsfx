@@ -1,0 +1,176 @@
+desc: Smear Stretch (spectral, breathed)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// A spectral time-stretcher in the Paulstretch style: it extends a sound
+// to ANY length with no choppiness, because it works in the frequency
+// domain instead of laying down grains. For each overlapping window it
+// takes the FFT, keeps the magnitudes, RANDOMIZES the phases, and inverse-
+// FFTs back. Randomized phase = glassy smear with no transients to chop;
+// randomized INDEPENDENTLY per channel = a wide, STABLE stereo image (no
+// wavering, by construction).
+//
+// This is an ORIGINAL implementation of the Paulstretch *method* (the
+// algorithm is public-domain and not copyrightable), written from scratch
+// in JSFX. No GPL code used, so it stays CC0 like the rest of the suite.
+//
+// WORKFLOW (same shape as the granulator):
+//   1. Freeze OFF. Play your breath through it (records last ~12 s).
+//   2. Freeze ON at a good moment. The buffer is held.
+//   3. Position picks where in the breath to sit.
+//   4. Stretch sets the length: 1 = realtime-ish, high = very long / nearly
+//      frozen glassy drone. Smoothness sets the smear character. Movement
+//      lets it wander slowly through the breath for life.
+//
+// Feed it breath/noise/synth. NOTE: this is the heaviest plugin here and
+// has not been ear-tested yet — if it's silent or garbled, see the failure
+// notes I gave you and tell me which one.
+
+slider1:0<0,1,1{Off,On}>Freeze
+slider2:50<0,100,0.1>Position (%)
+slider3:20<1,100,0.1>Stretch (x longer)
+slider4:1<0,2,1{Medium,Smooth,Glassy}>Smoothness
+slider5:15<0,100,1>Movement (life)
+slider6:100<0,100,1>Dry / Wet (%)
+slider7:0<-24,12,0.1>Output (dB)
+
+@init
+ext_noinit = 1;
+MAXF   = 16384;
+FFTBUF = 0;                 // 0..32767  (single 65536 block, FFT-safe)
+WIN    = 2 * MAXF;          // 32768..49151  window table
+INLEN  = floor(srate * 12);
+inbufL  = 65536;
+inbufR  = inbufL + INLEN;
+OLEN    = MAXF * 4;         // output overlap-add ring length
+outbufL = inbufR + INLEN;
+outbufR = outbufL + OLEN;
+
+// one-time clear (ext_noinit keeps it across transport)
+i = 0; loop(INLEN, inbufL[i]=0; inbufR[i]=0; i+=1; );
+i = 0; loop(OLEN,  outbufL[i]=0; outbufR[i]=0; i+=1; );
+
+fftsize     = 0;           // forces @slider to build window + size on first run
+hop         = 0;
+in_write    = 0;
+in_read     = 0;
+rec_count   = 0;
+out_write   = 0;
+out_read    = 0;
+frame_acc   = 0;
+last_freeze = 0;
+
+// Paulstretch window: (1 - x^2)^1.25 over x in [-1, 1]
+function build_window(n) local(j, x) (
+  j = 0;
+  loop(n,
+    x = (2*j / (n-1)) - 1;
+    WIN[j] = pow(1 - x*x, 1.25);
+    j += 1;
+  );
+);
+
+// one analysis/synthesis frame for one channel:
+// window -> FFT -> keep magnitudes, random phases -> IFFT -> window -> OLA
+function process_chan(inb, outb, ip) local(j, k, kk, re, im, mag, ph, c, s, n, idx, ob) (
+  n = fftsize;
+  j = 0;
+  loop(n,
+    idx = ip + j; idx >= REGN ? idx -= REGN;
+    FFTBUF[2*j]   = inb[idx] * WIN[j];
+    FFTBUF[2*j+1] = 0;
+    j += 1;
+  );
+  fft(FFTBUF, n);
+  fft_permute(FFTBUF, n);   // JSFX fft() returns bins PERMUTED; reorder to natural
+  // randomize phase but keep conjugate symmetry so the IFFT stays real
+  k = 1;
+  while (k < n/2) (
+    re = FFTBUF[2*k]; im = FFTBUF[2*k+1];
+    mag = sqrt(re*re + im*im);
+    ph = rand(2*$pi); c = cos(ph); s = sin(ph);
+    FFTBUF[2*k]   = mag*c;  FFTBUF[2*k+1]   = mag*s;
+    kk = n - k;
+    FFTBUF[2*kk]  = mag*c;  FFTBUF[2*kk+1]  = -mag*s;
+    k += 1;
+  );
+  FFTBUF[0] = abs(FFTBUF[0]); FFTBUF[1]   = 0;   // DC real
+  FFTBUF[n] = abs(FFTBUF[n]); FFTBUF[n+1] = 0;   // Nyquist real
+  fft_ipermute(FFTBUF, n);  // back to permuted order for the inverse
+  ifft(FFTBUF, n);
+  j = 0;
+  loop(n,
+    ob = out_write + j; ob >= OLEN ? ob -= OLEN;
+    outb[ob] += (FFTBUF[2*j] / n) * WIN[j];
+    j += 1;
+  );
+);
+
+@slider
+freeze   = slider1;
+pos01    = slider2 * 0.01;
+stretch  = max(1, slider3);
+move01   = slider5 * 0.01;
+wet      = slider6 * 0.01; dry = 1 - wet;
+out_gain = 2 ^ (slider7 / 6);
+
+newsize = slider4 == 0 ? 4096 : slider4 == 1 ? 8192 : 16384;
+newsize != fftsize ? (
+  fftsize = newsize;
+  hop = fftsize / 2;
+  build_window(fftsize);
+  i = 0; loop(OLEN, outbufL[i]=0; outbufR[i]=0; i+=1; );
+  out_write = fftsize;
+  out_read  = 0;
+  frame_acc = 0;
+);
+
+@sample
+// recorded region we're allowed to read from (avoid reading silence)
+REGN = max(fftsize, min(rec_count, INLEN));
+
+// freeze rising edge -> seek to Position
+freeze && !last_freeze ? in_read = pos01 * REGN;
+last_freeze = freeze;
+
+!freeze ? (
+  inbufL[in_write] = spl0;
+  inbufR[in_write] = spl1;
+  in_write += 1; in_write >= INLEN ? in_write = 0;
+  rec_count < INLEN ? rec_count += 1;
+);
+
+// produce a frame every hop samples
+frame_acc += 1;
+frame_acc >= hop ? (
+  frame_acc -= hop;
+
+  freeze ? (
+    ipos = in_read;
+  ) : (
+    ipos = in_write - fftsize; ipos < 0 ? ipos += INLEN;
+  );
+  ip = floor(ipos); ip >= REGN ? ip -= REGN; ip < 0 ? ip += REGN;
+
+  process_chan(inbufL, outbufL, ip);
+  process_chan(inbufR, outbufR, ip);
+
+  out_write += hop; out_write >= OLEN ? out_write -= OLEN;
+
+  freeze ? (
+    in_read += hop / stretch + move01 * (rand(1) - 0.5) * hop * 0.5;
+    in_read >= REGN ? in_read -= REGN;
+    in_read < 0 ? in_read += REGN;
+  );
+);
+
+// read the overlap-add ring, then clear what we read
+l = outbufL[out_read]; r = outbufR[out_read];
+outbufL[out_read] = 0; outbufR[out_read] = 0;
+out_read += 1; out_read >= OLEN ? out_read -= OLEN;
+
+l *= out_gain; r *= out_gain;
+spl0 = spl0*dry + l*wet;
+spl1 = spl1*dry + r*wet;
