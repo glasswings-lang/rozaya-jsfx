@@ -17,6 +17,7 @@
 - [Womb Sound Generator v3](#womb-sound-generator-v3)
 - [Polyrhythm Phase](#polyrhythm-phase)
 - [Melody Phase](#melody-phase)
+- [Harmonic Sculptor](#harmonic-sculptor)
 
 **Universal Features**
 - [Per-Plugin Drift](#per-plugin-drift)
@@ -26,6 +27,9 @@
 - [Sweep Dwell Filter](#sweep-dwell-filter)
 - [Full Feature Tremolo](#full-feature-tremolo)
 - [Resonance Bank](#resonance-bank)
+
+**Samplers**
+- [Sustain Looper](#sustain-looper)
 
 **Utilities**
 - [Rhythm Track](#rhythm-track)
@@ -1667,6 +1671,94 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 ---
 
+# Harmonic Sculptor
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+---
+
+## Overview
+
+Harmonic Sculptor is an additive synthesizer. It builds its sound from up to 64 individual sine harmonics of a single fundamental and lets you set the level of each one by ear. Pick a base wave and the plugin analyses it into its 64 harmonics and loads those as your starting point ("stamp this wave, then sculpt"); from there you push and pull individual harmonics to shape the timbre.
+
+It is the suite's primary tool for *designing source material*. Sculpt a timbre — including vowel-like tones, by emphasising the harmonics that fall near a vowel's formants — then render it to a WAV and feed it to the Sustain Looper for an endlessly sustained pad (see "The render-and-loop pipeline" in the Sustain Looper section).
+
+The output is band-limited by construction — any harmonic above half the sample rate is simply not played — so it never aliases, even at high fundamentals.
+
+---
+
+## Signal Architecture
+
+### Additive engine
+
+Each of the 64 harmonics is a pure sine oscillator at an integer multiple of the Fundamental (harmonic 1 = the fundamental, harmonic 2 = one octave up, and so on). Each harmonic has its own target level (what you set) and a smoothed current level (what is actually playing), so level changes and base-wave reloads never click.
+
+### Base-wave analysis
+
+Choosing a Base Wave renders one cycle of that wave and measures the magnitude of each of its 64 harmonics (a single-bin DFT per harmonic), loading those magnitudes as the starting recipe. The twelve base waves match the suite's other oscillator plugins' waveform set, so a sculpted Saw starts from the same harmonic content as a Saw elsewhere in the suite. Re-choosing a base wave reloads its recipe, discarding manual edits.
+
+### Constant-loudness normalization
+
+With Normalize on (default), the plugin scales the whole spectrum so the playing set of harmonics hits a fixed target loudness, recomputed as you sculpt. Pulling a harmonic out raises the gain to compensate, so the overall level stays roughly constant and only the *character* changes, not the volume. Boost is capped at +12 dB so a near-silent spectrum cannot blast.
+
+### Stereo
+
+Left and right play the same harmonics at the same levels but with decorrelated per-harmonic phases. Phase does not affect the timbre of a steady tone, so this produces genuine diffuse stereo width rather than a lateralized offset, and the decorrelation is bounded so it stays mono-compatible (no harmonic cancels in a mono sum).
+
+---
+
+## Parameters
+
+### Base wave
+
+**Base Wave (load recipe)** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine, default Saw`
+Choosing one analyses it into the 64 harmonics and loads them as your starting point. Re-choosing reloads the recipe and discards manual edits — "stamp this wave, then sculpt." Waveform definitions match the suite's other oscillator plugins.
+
+### Harmonic editor (two-slider selector)
+
+**Harmonic Select** `H1 … H64`
+Picks WHICH harmonic you are editing. Each value names the musical interval that harmonic lands on above the fundamental (e.g. "H5 +maj3rd (flat)") rather than a bare number — many upper harmonics drift away from equal temperament, and that drift is where a wave's character lives. Moving Harmonic Select snaps the Harmonic Level slider to show the selected harmonic's current level.
+
+**Harmonic Level dB (of selected)** `-60 to +12, default 0`
+Sets the level of the currently-selected harmonic; -60 dB is off. Move Harmonic Select, then adjust Harmonic Level and it writes back into that harmonic.
+
+> **Screen-reader note:** the Level slider always reads as "Harmonic Level" — it does NOT announce which harmonic number you are on (JSFX cannot relabel a slider live). Keep track of the Harmonic Select value; that is the one you are editing.
+
+### Global
+
+**Fundamental Hz** `20 to 2000, default 110`
+Pitch of harmonic 1. Every harmonic is an integer multiple of this.
+
+**Master Gain dB** `-60 to 0, default -12`
+Final output level, applied on top of normalization.
+
+**Normalize loudness** `Off / On, default On`
+Keeps overall loudness roughly constant as you sculpt (see Signal Architecture). Off plays the raw, un-leveled sum — educational, but it can get loud when many harmonics stack (Master Gain still applies as a safety).
+
+**Attack (sec)** `0 to 10, default 0.5`
+Time for harmonics to fade up to their levels (e.g. on transport start). 0 = instant.
+
+**Release (sec)** `0 to 10, default 1.5`
+Time for harmonics to fade down when their level is lowered or they pass above the Nyquist ceiling.
+
+---
+
+## Usage Notes
+
+- **It is a sound-design tool, not a played instrument.** There is no MIDI input — it generates one sustained tone at the Fundamental. The intended use is: design a timbre, render it, loop it.
+- **Make vowels by ear.** At a fixed Fundamental, boost the harmonics that land near a vowel's formant regions until the tone reads as "aah", "ooh", and so on. Because formants sit at fixed frequencies, which harmonics you boost depends on the Fundamental — so sculpt the vowel at the pitch you intend to use it.
+- **The render-and-loop pipeline.** Sculpt → render to a WAV in the samples folder → load into Sustain Looper → sustain forever, optionally with ensemble. This is the suite's route to sustained vocal/choir pads. Rendering also freezes the CPU cost: you pay for the additive engine once, then looper playback is cheap.
+- **Band-limited and clean.** Harmonics above half the sample rate are dropped, so sculpted saws/squares never alias and are cleaner than phase-generated ones, even at high fundamentals.
+- **Stereo width is built in** (decorrelated per-harmonic phase). You do not need a chorus after it for width, though you can still add one for movement.
+
+---
+
+*Harmonic Sculptor is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic)*
+
+
+---
+
 # Per-Plugin Drift
 
 **Designed by Rozaya — Developed with Claude (Anthropic)**
@@ -2668,6 +2760,86 @@ Wander waveform. Sine is smooth continuous wander; Triangle has linear ramps wit
 ---
 
 *Resonance Bank is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic)*
+
+
+---
+
+# Sustain Looper
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+---
+
+## Overview
+
+Sustain Looper turns a section of a loaded sound into an endless, seamless pad — the sampler "sustain loop" (choir pads, string pads, sustained breath) made accessible. It loads a WAV directly (no live recording, no transport timing), loops a chosen region with a crossfade that hides the seam, and can stack a detuned ensemble for lushness and width.
+
+The crossfade is the accessibility win. A normal sampler loop needs its loop points matched precisely — by eye, on a waveform — or it clicks. The crossfade smears the seam so the loop points do NOT have to match: set the region roughly by ear, then raise the crossfade until the repeat is seamless. No waveform, no hunting.
+
+It outputs the loop only (its audio input is ignored). Drop it on a track and run the transport (or arm the track and monitor) for it to sound.
+
+---
+
+## Loading samples
+
+Put `.wav` files in REAPER's resource folder under `Data\glasswings_samples\`, then pick one from the Sample dropdown (it reads as a list in a screen reader, like any other option slider).
+
+**Use WAV.** JSFX reliably reads WAV and OGG; FLAC and MP3 are not guaranteed. Keep loop-sources short — seconds, not minutes. A JSFX instance holds roughly 80 seconds of 48 kHz stereo audio by default, and a loop source only needs a few seconds of steady sustain anyway. (Keep your big finished renders as FLAC; just don't try to load them here.)
+
+---
+
+## Signal Architecture
+
+### Crossfade loop
+
+A read head plays the chosen region and wraps back to its start. Near the end of the region it crossfades into the material *just before* the start, so the wrap is continuous in the source — seamless regardless of where the loop points fall. A larger crossfade hides more.
+
+### Detuned ensemble
+
+With Voices above 0, additional copies of the loop play at once — each a different amount sharp and flat (fanned across the Spread range, slowly drifting on independent LFOs) and panned across the stereo field. They beat against the main voice the way a choir or string section does. It is true detune (no delay), so there is no comb-filter coloration, and it masks any residual loop repetition. Voices = 0 is a single clean loop.
+
+---
+
+## Parameters
+
+**Sample** `dropdown of WAVs in Data\glasswings_samples\`
+The loaded sound. See "Loading samples."
+
+**Loop position (%)** `0 to 100, default 50`
+Where in the file the loop sits — 0 = start, 100 = end. Scrub to the part you want to sustain (a steady held stretch, not a swell).
+
+**Loop length (ms)** `5 to 4000, default 500`
+Size of the looped chunk. Small lengths become a tone; longer lengths sustain a fuller slice as a pad.
+
+**Crossfade (% of loop)** `0 to 100, default 40`
+How much of the loop end crossfades into the start. Raise until the seam is inaudible. Broadband sources (breath) need very little; tonal sources need more.
+
+**Pitch (semitones)** `-24 to +24, default 0`
+Transposes playback, tape-style (pitch and formants move together). The file's own sample rate is auto-corrected so it plays at its true pitch at 0.
+
+**Output (dB)** `-24 to +12, default 0`
+Final output level.
+
+**Voices (ensemble)** `0 to 12, default 6`
+Number of detuned ensemble voices stacked on the loop. 0 = a single clean loop; higher = a thicker section.
+
+**Spread (detune amount)** `0 to 100, default 50`
+How far the ensemble voices detune apart and drift. Low = tight and subtle; high = wide and lush (very high goes warbly).
+
+---
+
+## Usage Notes
+
+- **Loop steady material.** The loop is invisible when the region has nothing distinctive happening — a held, steady sustain. If the source has vibrato or a swell baked in, looping a chunk repeats that wiggle obviously. Loop the held middle and add movement at playback with the ensemble instead.
+- **Crossfade is your loop-point substitute.** You never place exact loop points. Set position and length roughly by ear, then raise Crossfade until the seam disappears.
+- **Broadband sources are easiest.** Breath and noise loop seamlessly with almost no crossfade, because noise has no repeating events. Pure tones are the hardest, and want the ensemble for life.
+- **The render-and-loop pipeline.** Pair it with Harmonic Sculptor (or noise through Resonance Bank for breath): design a timbre → render to a WAV in the samples folder → load here → sustain. Pitch-shifting one vowel sample also slides it through neighbouring vowels (the formants move with the pitch), so a few base samples cover a continuum.
+- **Transport must be moving** for it to sound — it is a generator, and REAPER only runs it while audio is flowing. Loop the transport, or arm the track and monitor.
+
+---
+
+*Sustain Looper is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
 
 
