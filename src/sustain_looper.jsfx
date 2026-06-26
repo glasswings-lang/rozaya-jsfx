@@ -1,0 +1,137 @@
+desc: Sustain Looper (loads a sample, clean crossfade loop + ensemble)
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Loads a WAV directly and loops a section of it FOREVER, cleanly, in the
+// original timbre — the sampler "sustain loop" (choir/string pads) made
+// ACCESSIBLE. No live capture, no freeze timing: pick the file from the
+// dropdown and it's loaded. A crossfade hides the loop seam, so loop points
+// do NOT have to be matched by eye — set the region by ear, raise the
+// crossfade until the repeat is seamless.
+//
+// ENSEMBLE: Voices stacks N detuned copies of the loop (a real section,
+// not a chorus), each a different amount sharp/flat and drifting on slow
+// LFOs, spread across the stereo field. Spread sets how detuned/lush. It's
+// true detune (no delay, no comb) so it beats like a choir, and it masks
+// any residual loop repetition. Voices = 0 -> pure clean single loop.
+//
+// SETUP: put .wav files in REAPER's resource folder under
+//   Data\glasswings_samples\   then pick from the "Sample" dropdown.
+//
+// USE: pick a Sample, press play. Loop a STEADY sustained stretch (the held
+// middle, not a swell). Crossfade up till seamless. Voices/Spread to taste.
+// Outputs the loop only. Run the transport (or arm+monitor) so it sounds.
+
+slider1:/glasswings_samples:none:Sample
+slider2:50<0,100,0.1>Loop position (%)
+slider3:500<5,4000,1>Loop length (ms)
+slider4:40<0,100,1>Crossfade (% of loop)
+slider5:0<-24,24,0.1>Pitch (semitones)
+slider6:0<-24,12,0.1>Output (dB)
+slider7:6<0,12,1>Voices (ensemble)
+slider8:50<0,100,1>Spread (detune amount)
+
+@init
+ext_noinit = 1;
+rv  = 0;            // ensemble voice read positions (up to 12)
+smp = 64;           // sample buffer (above the voice-position slots)
+lslider1 = -1;
+nframes = 0;
+nch = 0;
+file_sr = 0;
+r = 0;
+glfo = 0.0;
+
+// read frame p (fractional) of channel ch from the interleaved sample buffer
+function rdc(p, ch) local(i0, i1, fr) (
+  nframes < 2 ? 0 : (
+    p < 0 ? p += nframes;
+    p >= nframes ? p -= nframes;
+    i0 = floor(p); fr = p - i0;
+    i1 = i0 + 1; i1 >= nframes ? i1 -= nframes;
+    smp[i0*nch + ch]*(1-fr) + smp[i1*nch + ch]*fr;
+  );
+);
+
+// one crossfaded loop read at position pos, channel ch (uses S,E,X,L)
+function lr(pos, ch) local(f) (
+  pos >= (E - X) ? (
+    f = (pos - (E - X)) / X;
+    rdc(pos, ch)*(1-f) + rdc(pos - L, ch)*f;
+  ) : (
+    rdc(pos, ch);
+  );
+);
+
+@slider
+fidx = slider1 | 0;
+fidx != lslider1 ? (
+  lslider1 = fidx;
+  nframes = 0; nch = 0; file_sr = 0;
+  fh = file_open(slider1);
+  fh > 0 ? (
+    file_riff(fh, nch, file_sr);
+    nch > 0 ? (
+      nframes = file_avail(fh) / nch;
+      file_mem(fh, smp, nframes * nch);
+    );
+    file_close(fh);
+  );
+);
+
+pos01    = slider2 * 0.01;
+loop_req = max(32, slider3 * 0.001 * srate);
+xf01     = slider4 * 0.01;
+sr_ratio = (file_sr > 0) ? file_sr / srate : 1;
+pitch_ratio = 2 ^ (slider5 / 12) * sr_ratio;
+out_gain = 2 ^ (slider6 / 6);
+nv       = slider7 | 0;
+spreadamt = slider8 * 0.01;
+chR = nch > 1 ? 1 : 0;
+
+@sample
+nframes >= 64 ? (
+  REGN = nframes;
+  X = xf01 * loop_req * 0.5; X = max(X, 4);
+  L = min(loop_req, REGN - X - 16); L = max(L, 32);
+  X = min(X, L*0.5 - 1); X = max(X, 1);
+  usable = REGN - L - X; usable < 0 ? usable = 0;
+  S = X + pos01 * usable;
+  E = S + L;
+  (r < S || r >= E) ? r = S;
+
+  oL = lr(r, 0);
+  oR = lr(r, chR);
+  r += pitch_ratio;
+  r >= E ? r -= L;
+
+  // --- detuned ensemble: N voices fanned in pitch + stereo ---
+  nv > 0 ? (
+    spread_cents = 3 + spreadamt*22;   // pitch fan, +/- this many cents
+    wander = spreadamt*6;              // slow detune drift
+    sumL = 0; sumR = 0;
+    vi = 0;
+    loop(nv,
+      (rv[vi] < S || rv[vi] >= E) ? rv[vi] = S + (vi/nv)*L;   // staggered start
+      cents = (nv>1 ? (vi/(nv-1) - 0.5)*2 : 0)*spread_cents + wander*sin(glfo + vi*0.7);
+      det = 2 ^ (cents/1200);
+      sL = lr(rv[vi], 0); sR = lr(rv[vi], chR);
+      pan = nv>1 ? vi/(nv-1) : 0.5;
+      sumL += sL*cos(pan*$pi*0.5);
+      sumR += sR*sin(pan*$pi*0.5);
+      rv[vi] += pitch_ratio*det; rv[vi] >= E ? rv[vi] -= L;
+      vi += 1;
+    );
+    norm = 0.9 / sqrt(nv);
+    oL = oL*0.6 + sumL*norm;
+    oR = oR*0.6 + sumR*norm;
+    glfo += 2*$pi*0.13/srate; glfo >= 2*$pi ? glfo -= 2*$pi;
+  );
+
+  spl0 = oL * out_gain;
+  spl1 = oR * out_gain;
+) : (
+  spl0 = 0; spl1 = 0;
+);
