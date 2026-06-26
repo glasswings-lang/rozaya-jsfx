@@ -81,17 +81,17 @@ modes' sliders are hidden from the REAPER UI but remain available in
 OSARA's parameter list. It inherits Feel mode's Hollowness behavior
 and is the most complex plugin of the set.
 
-### Harmonic Sculptor
+### Harmonic Sculptor — GRADUATED to the suite (2026-06-26)
 
-The most experimental and least tested plugin in the set. A base wave
-is chosen, the plugin analyses it into 64 harmonics and loads them,
-and any harmonic can then be adjusted by ear. Selection uses a
-two-slider editor (described below), and the selector carries
-musical-interval labels. Output loudness is normalized automatically.
-This plugin was unfinished and unverified at archive time. A companion
-feature to announce the full harmonic state on a key press was planned
-but not built. The interval labels become approximate above roughly
-the 32nd harmonic.
+Harmonic Sculptor was finished, bug-swept, made stereo (decorrelated
+per-harmonic phase), and moved out of this archive into `src/` as a
+first-class suite plugin. It is the additive-synthesis front end of the
+render-and-loop workflow: sculpt a timbre by ear → render to a WAV →
+load it in the Sustain Looper for an endlessly sustained pad. See the
+main user manual for its documentation. The two-slider editor and
+interval-label notes below describe it as it was here and still apply.
+(The interval labels become approximate above roughly the 32nd
+harmonic.)
 
 ## The Two-Slider Harmonic Editor (Harmonic Sculptor)
 
@@ -113,11 +113,12 @@ with the plugin and is the reason it is marked most experimental.
 
 ## Stereo limitation across the set
 
-7 of the 8 plugins ship as dual-mono — the same signal on both
-channels, with no per-channel processing. Only `additive_drone.jsfx`
-produces true stereo. This is one of the things that prevented the
-set from being promoted to first-class status alongside the rest of
-the suite.
+The plugins remaining here ship as dual-mono — the same signal on both
+channels, with no per-channel processing — except `additive_drone.jsfx`,
+which produces true stereo. This dual-mono limitation is one of the
+things that kept the set in exploration. (Harmonic Sculptor, which has
+since graduated to the suite, was given true stereo as part of that
+promotion.)
 
 ---
 

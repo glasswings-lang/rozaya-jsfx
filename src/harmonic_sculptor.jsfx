@@ -1,5 +1,4 @@
 desc: Harmonic Sculptor
-options:gmem=rozaya_harmonic_sculptor
 // Designed by Rozaya, developed with Claude (Anthropic)
 //
 // This work is dedicated to the public domain under CC0 1.0 Universal.
@@ -85,10 +84,11 @@ PHI         = 1.6180339887;
 ANALYZE_LEN = 1024;   // samples per cycle used for harmonic analysis
 
 // Memory banks
-harm_amp   = 0;    //   0..63   linear target amplitude per harmonic (edited)
-harm_phase = 64;   //  64..127  oscillator phase per harmonic
-harm_cur   = 128;  // 128..191  smoothed current amplitude per harmonic
-render_buf = 256;  // 256..1279 scratch buffer for one rendered cycle
+harm_amp     = 0;    //   0..63   linear target amplitude per harmonic (edited)
+harm_phase   = 64;   //  64..127  L oscillator phase per harmonic
+harm_cur     = 128;  // 128..191  smoothed current amplitude per harmonic
+harm_phase_r = 192;  // 192..255  R oscillator phase per harmonic (stereo)
+render_buf   = 256;  // 256..1279 scratch buffer for one rendered cycle
 
 // Selector / change tracking
 last_base   = -1;   // forces an analysis on first @slider
@@ -102,14 +102,25 @@ master_cur      = 0;
 attack_coeff  = 0;
 release_coeff = 0;
 
-// Zero per-harmonic playback state. @init re-runs on transport play,
-// so each play press starts clean and the attack ramps up from silence.
+// Per-harmonic playback state. Phases are randomized, INDEPENDENTLY per
+// channel (R offset from L by a bounded amount), so the output is genuinely
+// stereo: decorrelated L/R phase = diffuse width, not a lateralized offset,
+// and the bound keeps it mono-compatible (no harmonic can cancel in a mono
+// sum). Phase doesn't affect the timbre of a steady tone, so this is free
+// width. harm_cur starts at 0 so the attack ramps up from silence.
 i = 0;
 loop(N_HARM,
-  harm_phase[i] = 0;
-  harm_cur[i]   = 0;
+  harm_phase[i]   = rand(1);
+  harm_phase_r[i] = harm_phase[i] + (rand(1) - 0.5) * 0.7;  // +/-0.35 cycle: width, mono-safe
+  harm_phase_r[i] >= 1 ? harm_phase_r[i] -= 1;
+  harm_phase_r[i] <  0 ? harm_phase_r[i] += 1;
+  harm_cur[i]     = 0;
   i += 1;
 );
+
+// One-pole smoothing coeff for norm/master gains (constant — was being
+// recomputed every sample before; moved here).
+gsm = exp(-1 / (srate * 0.005));
 
 // ---- render_wave(wf, ph): one sample of base wave `wf` at phase `ph`
 // (0..1). Mirrors polyrhythm_phase's waveform formulas so the analysed
@@ -253,11 +264,10 @@ slider8 > 0 ? (release_coeff = exp(-1 / (srate * slider8))) : (release_coeff = 0
 // Smooth the normalization gain and master toward their targets so
 // sculpting / level changes don't click (these are set per-@slider, which
 // would otherwise step). A fixed ~5 ms smoothing is plenty.
-gsm = exp(-1 / (srate * 0.005));
 norm_gain_cur = norm_gain_cur * gsm + norm_gain_target * (1 - gsm);
 master_cur    = master_cur    * gsm + master_lin       * (1 - gsm);
 
-out = 0;
+outL = 0; outR = 0;
 nyq = srate * 0.45;
 
 i = 0;
@@ -265,9 +275,9 @@ loop(N_HARM,
   n   = i + 1;
   hz  = fundamental * n;
 
-  // Skip harmonics above the Nyquist-safe ceiling — that's what keeps the
-  // output alias-free at any pitch. Their amplitude smoother also relaxes
-  // to 0 so they don't pop back in if the fundamental later drops.
+  // Skip harmonics above the Nyquist-safe ceiling — keeps output alias-free
+  // at any pitch. Their amplitude smoother also relaxes to 0 so they don't
+  // pop back in if the fundamental later drops.
   hz < nyq ? (
     target = harm_amp[i];
     // Attack/release smoothing on each harmonic's amplitude.
@@ -278,23 +288,26 @@ loop(N_HARM,
     );
 
     (target <= 0 && harm_cur[i] < 0.000001) ? (
-      harm_phase[i] = 0;
+      harm_phase[i]   = 0;
+      harm_phase_r[i] = 0;
     ) : (
-      harm_phase[i] += hz / srate;
-      harm_phase[i] >= 1 ? harm_phase[i] -= 1;
-      out += sin(harm_phase[i] * 2 * $pi) * harm_cur[i];
+      harm_phase[i]   += hz / srate; harm_phase[i]   >= 1 ? harm_phase[i]   -= 1;
+      harm_phase_r[i] += hz / srate; harm_phase_r[i] >= 1 ? harm_phase_r[i] -= 1;
+      outL += sin(harm_phase[i]   * 2 * $pi) * harm_cur[i];
+      outR += sin(harm_phase_r[i] * 2 * $pi) * harm_cur[i];
     );
   ) : (
-    harm_cur[i]   = 0;
-    harm_phase[i] = 0;
+    harm_cur[i]     = 0;
+    harm_phase[i]   = 0;
+    harm_phase_r[i] = 0;
   );
 
   i += 1;
 );
 
-out = out * norm_gain_cur * master_cur;
+gm = norm_gain_cur * master_cur;
 
-// Mono output — both channels identical. Add a chorus/widener after this
-// plugin if you want stereo motion.
-spl0 = out;
-spl1 = out;
+// Stereo: same harmonics, decorrelated L/R phase -> diffuse width without
+// lateralization, mono-compatible. (Was mono before.)
+spl0 = outL * gm;
+spl1 = outR * gm;
