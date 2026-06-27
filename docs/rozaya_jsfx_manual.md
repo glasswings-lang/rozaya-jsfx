@@ -1711,7 +1711,7 @@ Left and right play the same harmonics at the same levels but with decorrelated 
 
 ### Base wave
 
-**Base Wave (load recipe)** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine, default Saw`
+**Base Wave (load recipe)** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine / Square / Pulse, default Saw`
 Choosing one analyses it into the 64 harmonics and loads them as your starting point. Re-choosing reloads the recipe and discards manual edits — "stamp this wave, then sculpt." Waveform definitions match the suite's other oscillator plugins.
 
 ### Harmonic editor (two-slider selector)
@@ -1741,6 +1741,12 @@ Time for harmonics to fade up to their levels (e.g. on transport start). 0 = ins
 **Release (sec)** `0 to 10, default 1.5`
 Time for harmonics to fade down when their level is lowered or they pass above the Nyquist ceiling.
 
+**Output mode** `Mono / Stereo, default Stereo`
+Mono sends one channel to both outputs (identical L/R). Stereo gives diffuse width via decorrelated per-harmonic phase (see Signal Architecture). Mono is handy when you want a centred source, or when rendering material that the Sustain Looper's ensemble will widen anyway.
+
+**Pulse width % (Pulse wave only)** `5 to 95, default 25`
+Duty cycle of the Pulse base wave — 50% is a square, narrower is thinner and more nasal. Changing it re-stamps the Pulse recipe (like re-choosing a base wave, so it discards manual harmonic edits). Hidden, and without effect, unless the Base Wave is Pulse.
+
 ---
 
 ## Usage Notes
@@ -1749,7 +1755,7 @@ Time for harmonics to fade down when their level is lowered or they pass above t
 - **Make vowels by ear.** At a fixed Fundamental, boost the harmonics that land near a vowel's formant regions until the tone reads as "aah", "ooh", and so on. Because formants sit at fixed frequencies, which harmonics you boost depends on the Fundamental — so sculpt the vowel at the pitch you intend to use it.
 - **The render-and-loop pipeline.** Sculpt → render to a WAV in the samples folder → load into Sustain Looper → sustain forever, optionally with ensemble. This is the suite's route to sustained vocal/choir pads. Rendering also freezes the CPU cost: you pay for the additive engine once, then looper playback is cheap.
 - **Band-limited and clean.** Harmonics above half the sample rate are dropped, so sculpted saws/squares never alias and are cleaner than phase-generated ones, even at high fundamentals.
-- **Stereo width is built in** (decorrelated per-harmonic phase). You do not need a chorus after it for width, though you can still add one for movement.
+- **Stereo is switchable** via Output mode — Stereo gives built-in diffuse width (decorrelated per-harmonic phase), Mono collapses to a centred single channel. You do not need a chorus after it for width in Stereo, though you can still add one for movement.
 
 ---
 
