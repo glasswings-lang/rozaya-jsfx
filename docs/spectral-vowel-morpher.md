@@ -55,7 +55,7 @@ armed + monitored). Render to commit a result.
 
 **Character & tone**
 - **Texture** (0 voice .. 100 wash) — the crossfade above.
-- **Window size (ms)** — *synthesis grain length* for the wash: short =
+- **Wash grain (ms)** — *synthesis grain length* for the wash: short =
   rougher/grainier, long = glassier/smoother. Cheap to change and **safe to
   automate** — it no longer re-analyzes (that's decoupled to a fixed analysis
   window + Capture point), so it won't drop out under an envelope.
@@ -96,7 +96,7 @@ rate**:
 | 96 kHz | ~0.34 s |
 | 192 kHz | ~0.17 s |
 
-The analysis window is a **fixed ~170 ms** (decoupled from Window size), and
+The analysis window is a **fixed ~170 ms** (decoupled from Wash grain), and
 Capture point slides that fixed window through the grab. It defaults to
 **earliest** because of reaction latency: by the time you hear a vowel and press,
 it's already a beat in the past (near the start of the grab); the press-moment
@@ -135,12 +135,12 @@ tends to catch the breathy release.
   | Control | Automate? | Why |
   |---|---|---|
   | Texture, Morph, Pitch, Spread, levels, Stereo width, Low cut, Denoise | ✅ yes | applied per-sample/per-grain, no re-analysis |
-  | Window size | ✅ yes | rebuilds only the cheap synthesis grain (no re-FFT, no buffer clear) |
+  | Wash grain | ✅ yes | rebuilds only the cheap synthesis grain (no re-FFT, no buffer clear) |
   | Capture point | ❌ no | re-analyzes (FFT + pitch-detect); set it once by ear |
   | Capture / Capture slot | ❌ no | momentary action / selector, not continuous |
 
 - **Capture point is debounced** — a by-ear scrub recomputes only when it settles,
-  so it doesn't stutter while you move it. (Window size is *not* debounced — it's
+  so it doesn't stutter while you move it. (Wash grain is *not* debounced — it's
   cheap enough to update every block.)
 - **High sample rates shorten the grab** (table above) — the capture look-back
   and Capture-point range halve at 96 k, quarter at 192 k.

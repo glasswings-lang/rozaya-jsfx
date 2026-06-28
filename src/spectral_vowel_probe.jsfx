@@ -16,7 +16,7 @@ desc: Spectral Vowel Probe (PROTOTYPE) - voice<->wash capture morpher
 //
 //   Capture point = where in the grab to analyze (0 = earliest .. 100 = at press)
 //   Texture       = 0 voice (harmonic) .. 100 wash (phase-randomized)
-//   Window size   = short = rough/grainy, long = glassy/smooth (wash character)
+//   Wash grain   = short = rough/grainy, long = glassy/smooth (wash character)
 //   Spread        = spectral blur (Hz);  Audition = monitor focused slot / morph
 //   Auto-morph    = Off / Sweep (back+forth) / Glide once (slot 1->last)
 // =====================================================================
@@ -27,7 +27,7 @@ slider3:0<0,100,1>Capture point (earliest .. at press)
 slider4:0<-60,12,0.1>Input level (dry, dB)
 slider5:0<-60,12,0.1>Voice level (dB)
 slider6:50<0,100,1>Texture (0 voice, 100 wash)
-slider7:150<5,680,1>Window size (ms)
+slider7:150<5,680,1>Wash grain (ms)
 slider8:0<0,150,0.5>Spread (Hz)
 slider9:0<-24,24,0.1>Pitch (semitones)
 slider10:50<0,100,1>Stereo width
@@ -48,9 +48,9 @@ ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 4; MAXFFT = 32768; INRING = 65536;
 FFTSIZE = 32768; NBINS = 16385;
-// WA = analysis window length, FIXED and decoupled from Window size. The capture
-// analysis (heavy: FFT + YIN) happens at WA; Window size only rebuilds the cheap
-// synthesis grain. That makes Window size safe to AUTOMATE (no re-FFT, no buffer
+// WA = analysis window length, FIXED and decoupled from Wash grain. The capture
+// analysis (heavy: FFT + YIN) happens at WA; Wash grain only rebuilds the cheap
+// synthesis grain. That makes Wash grain safe to AUTOMATE (no re-FFT, no buffer
 // clear -> no dropouts), and Capture point scrubs this WA-length window in the grab.
 WA = 8192;   // ~170 ms @ 48k: good spectral resolution, leaves ~0.5 s scrub range
 // ACCLEN must exceed the LONGEST grain (W up to MAXFFT) plus a hop, or a long
@@ -60,7 +60,7 @@ ACCLEN = 65536;
 fftwork   = 0;          // 2 * FFTSIZE
 inbuf     = 100000;     // live input ring (INRING)
 window    = 200000;     // Hann of length WA (analysis -- fixed, built once)
-synwin    = 240000;     // sqrt-Hann of length W (synthesis grain = Window size)
+synwin    = 240000;     // sqrt-Hann of length W (synthesis grain = Wash grain)
 accL      = 300000;     // ACCLEN
 accR      = 400000;     // ACCLEN
 mtmp      = 500000;     // NBINS
@@ -92,8 +92,8 @@ slots_inited == 0 ? (
   have = 0; n_used = 0;
 );
 // runtime state
-cap_last = 0; inpos = 0; last_wsamp = -1; last_cappoint = -1;
-win_dirty = 0; cap_dirty = 0; settle = 0;   // debounce for analysis-param recompute
+cap_last = 0; inpos = 0; last_gsamp = -1; last_cappoint = -1;
+cap_dirty = 0; settle = 0;   // debounce for Capture-point re-analysis
 rms_smooth = 0;   // slow auto-gain state (stable loudness, no per-grain pump)
 cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
 texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
@@ -109,7 +109,7 @@ function grab_raw(slot) local(i, idx, base) (
 );
 
 // FFT WA samples of a slot's raw, Hann-windowed, zero-padded to FFTSIZE. Uses the
-// FIXED analysis window WA (not the synthesis grain W), so Window size never
+// FIXED analysis window WA (not the synthesis grain W), so Wash grain never
 // triggers this. Capture point picks WHERE in the ~0.68 s grab to look: 0 =
 // earliest (the sustained vowel, since you react a beat after hearing it) .. 1 =
 // the press-moment.
@@ -241,8 +241,8 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   );
 );
 
-// Rebuild ONLY the synthesis grain window (sqrt-Hann, length W = Window size).
-// CHEAP: no FFT, no YIN, no accumulator clear -- so Window size can be dragged
+// Rebuild ONLY the synthesis grain window (sqrt-Hann, length W = Wash grain).
+// CHEAP: no FFT, no YIN, no accumulator clear -- so Wash grain can be dragged
 // or AUTOMATED without dropouts (old-length grains finish as new ones start).
 function build_synwin(wlen) local(i) (
   wlen = max(64, min(MAXFFT, floor(wlen)));
@@ -265,7 +265,7 @@ voice_gain    = slider5 <= -60 ? 0 : pow(10, slider5/20);
 texture       = slider6 * 0.01;                              // 0 voice .. 1 wash
 hlevel        = cos(texture * PI * 0.5);                     // equal-power crossfade
 wlevel        = sin(texture * PI * 0.5);
-win_ms        = slider7;
+grain_ms        = slider7;
 spread_hz     = slider8;
 pitch_ratio   = pow(2.0, slider9/12);
 stereo_width  = slider10;
@@ -284,19 +284,19 @@ slider_show(slider16, automorph_mode > 0.5);
 // (captures themselves are NOT touched). With ext_noinit, @init no longer does
 // this on play, so it's explicit here.
 ((play_state == 1 || play_state == 5) && (last_ps != 1 && last_ps != 5)) ? (
-  build_synwin(floor(win_ms * srate / 1000));
+  build_synwin(floor(grain_ms * srate / 1000));
   clear_accum();
   inpos = 0; rms_smooth = 0; morph_phase = 0;
-  last_wsamp = floor(win_ms * srate / 1000); last_cappoint = cap_point01;
+  last_gsamp = floor(grain_ms * srate / 1000); last_cappoint = cap_point01;
   cap_dirty = 0;
   si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
 );
 last_ps = play_state;
 
-// Window size -> CHEAP: rebuild only the synthesis grain, immediately, every
+// Wash grain -> CHEAP: rebuild only the synthesis grain, immediately, every
 // block if it's moving. No re-analysis, no clear -> safe to automate, no drops.
-wsamp = floor(win_ms * srate / 1000);
-wsamp != last_wsamp ? ( last_wsamp = wsamp; build_synwin(wsamp); );
+gsamp = floor(grain_ms * srate / 1000);
+gsamp != last_gsamp ? ( last_gsamp = gsamp; build_synwin(gsamp); );
 
 // Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub recomputes
 // only when it settles. Also fires on load (last_cappoint = -1), restoring the
