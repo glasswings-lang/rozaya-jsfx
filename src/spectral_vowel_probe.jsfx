@@ -1,0 +1,383 @@
+desc: Spectral Vowel Probe (PROTOTYPE) - voice<->wash capture morpher
+// =====================================================================
+// Capture-based vocal instrument. Feeds on LIVE audio playing into it (drag a
+// WAV onto the track, or send another track in -- the proper REAPER way).
+// Capture a moment into a slot; it's analyzed two ways at once:
+//   * harmonic (voice) -- pitch-detected additive resynth: keeps the vowel
+//   * spectral (wash)   -- PaulStretch-style phase randomization: breathy bed
+// TEXTURE crossfades between them (0 = voice, 100 = wash). Capture up to 4
+// slots and MORPH between them. Captures persist across save/reopen.
+//
+// USE: put audio on the track. Input level up / Voice down -> you hear source.
+// When you hear the moment, hit Capture. (Then sweep CAPTURE POINT by ear to
+// land exactly on the vowel -- it re-analyzes live, compensating for the
+// fraction of a second between hearing and pressing.) Pull Input down, Voice
+// up, set Texture, and Morph between slots.
+//
+//   Capture point = where in the grab to analyze (0 = earliest .. 100 = at press)
+//   Texture       = 0 voice (harmonic) .. 100 wash (phase-randomized)
+//   Window size   = short = rough/grainy, long = glassy/smooth (wash character)
+//   Spread        = spectral blur (Hz);  Audition = monitor focused slot / morph
+//   Auto-morph    = Off / Sweep (back+forth) / Glide once (slot 1->last)
+// =====================================================================
+
+slider1:1<1,4,1>Capture slot
+slider2:0<0,1,1{Off,Capture now}>Capture spectrum
+slider3:0<0,100,1>Capture point (earliest .. at press)
+slider4:0<-60,12,0.1>Input level (dry, dB)
+slider5:0<-60,12,0.1>Voice level (dB)
+slider6:50<0,100,1>Texture (0 voice, 100 wash)
+slider7:150<5,680,1>Window size (ms)
+slider8:0<0,150,0.5>Spread (Hz)
+slider9:0<-24,24,0.1>Pitch (semitones)
+slider10:50<0,100,1>Stereo width
+slider11:0<0,500,1>Low cut (Hz)
+slider12:0<0,100,0.1>Denoise
+slider13:1<0,1,1{Focused slot,Morph}>Audition
+slider14:0<0,100,0.1>Morph (across captured slots)
+slider15:0<0,2,1{Off,Sweep (back+forth),Glide once}>Auto-morph
+slider16:20<1,600,0.5>Auto-morph time (sec)
+
+@init
+// ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
+// memory) survive transport stop/play -- the whole point of a capture-based
+// instrument. RUNTIME state (accumulators, positions, smoother) is reset
+// explicitly on the transport play-edge in @block instead, so playback still
+// restarts cleanly (and renders correctly) without wiping the captures.
+ext_noinit = 1;
+TWOPI = 6.283185307179586; PI = 3.141592653589793;
+NSLOTS = 4; MAXFFT = 32768; INRING = 65536;
+FFTSIZE = 32768; NBINS = 16385;
+// ACCLEN must exceed the LONGEST grain (W up to MAXFFT) plus a hop, or a long
+// grain wraps the circular accumulator onto the read pointer (audible at the
+// top of the Window-size range). 2*MAXFFT is comfortable headroom.
+ACCLEN = 65536;
+fftwork   = 0;          // 2 * FFTSIZE
+inbuf     = 100000;     // live input ring (INRING)
+window    = 200000;     // Hann of length W (analysis)
+synwin    = 240000;     // sqrt-Hann of length W (synthesis, constant-power OLA)
+accL      = 300000;     // ACCLEN
+accR      = 400000;     // ACCLEN
+mtmp      = 500000;     // NBINS
+curmag    = 520000;     // NBINS
+phase     = 540000;     // NBINS
+doff      = 560000;     // NBINS
+grainbuf  = 600000;     // MAXFFT
+slotmag   = 700000;     // NSLOTS * NBINS  (65540)
+slotraw   = 800000;     // NSLOTS * MAXFFT (131072)
+slot_norm = 950000;     // NSLOTS  (spectral-wash peak normalization)
+// --- harmonic (voice) engine storage ---
+NHARM = 64; WHARM = 3072;          // 64 harmonics; ~64 ms YIN analysis window
+slot_harm  = 1000000;   // NSLOTS * NHARM  captured harmonic magnitudes
+slot_f0    = 1001000;   // NSLOTS  detected fundamentals (Hz)
+slot_hnorm = 1001100;   // NSLOTS  harmonic peak normalization
+hph        = 1001200;   // NHARM   resynth phase accumulators (voice A)
+hphB       = 1001300;   // NHARM   resynth phase accumulators (voice B)
+anbuf      = 1010000;   // WHARM   mono analysis frame
+yin_df     = 1020000;   // WHARM   YIN difference function
+yin_cmnd   = 1030000;   // WHARM   YIN cumulative-mean-normalized difference
+// captured slots persist across transport play (one-time init)
+slots_inited == 0 ? (
+  slots_inited = 1;
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; i += 1; );
+  i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
+  // have / n_used live in this ONE-TIME guard so captures survive transport
+  // play (@init re-runs on every play; if these were reset there, a capture
+  // made in one play would be orphaned on the next).
+  have = 0; n_used = 0;
+);
+// runtime state
+cap_last = 0; inpos = 0; last_wsamp = -1; last_cappoint = -1;
+win_dirty = 0; cap_dirty = 0; settle = 0;   // debounce for analysis-param recompute
+rms_smooth = 0;   // slow auto-gain state (stable loudness, no per-grain pump)
+cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
+texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
+i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; i += 1; );
+morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
+
+// grab the most recent MAXFFT input samples into a slot's raw store
+function grab_raw(slot) local(i, idx, base) (
+  base = slot*MAXFFT;
+  i = 0;
+  loop(MAXFFT, idx = inpos - MAXFFT + i; idx < 0 ? idx += INRING; slotraw[base+i] = inbuf[idx]; i += 1; );
+);
+
+// FFT W samples of a slot's raw, Hann-windowed, zero-padded to FFTSIZE. Capture
+// point picks WHERE in the ~0.68 s grab to look: 0 = earliest (the sustained
+// vowel, since you react a beat after hearing it) .. 1 = the press-moment.
+function compute_spectrum(slot) local(i, re, im, mx, rbase, mbase) (
+  rbase = slot*MAXFFT + floor(cap_point01 * (MAXFFT - W)); mbase = slot*NBINS;
+  i = 0; loop(W, fftwork[2*i] = slotraw[rbase+i]*window[i]; fftwork[2*i+1] = 0; i += 1; );
+  i = W; loop(FFTSIZE - W, fftwork[2*i] = 0; fftwork[2*i+1] = 0; i += 1; );
+  fft(fftwork, FFTSIZE); fft_permute(fftwork, FFTSIZE);
+  mx = 0; i = 0;
+  loop(NBINS,
+    re = fftwork[2*i]; im = fftwork[2*i+1];
+    slotmag[mbase+i] = sqrt(re*re + im*im);
+    slotmag[mbase+i] > mx ? mx = slotmag[mbase+i];
+    i += 1;
+  );
+  slot_norm[slot] = mx > 0 ? mx : 1;
+);
+
+// YIN-lite pitch detect (+ subharmonic octave fix) then 64 harmonic magnitudes
+// (direct DFT). VOICE end of the Texture knob -- harmonics at the exact detected
+// f0 avoid the bin-drift that wrecks phase-coherent resynth from a frozen frame.
+function analyze_harm(slot) local(base, ci, almin, almax, tmax, tau, ii, d, dd, run, thr, res, cand, lockon, best, pa, pb, pc, pden, psh, f0d, hn, hf, kk, re, im, ang, hannv, mag, mx, boff) (
+  base = slot*MAXFFT + floor(cap_point01 * (MAXFFT - WHARM));   // same point as the wash
+  ci = 0; loop(WHARM, anbuf[ci] = slotraw[base+ci]; ci += 1; );
+  almin = floor(srate/600); almax = ceil(srate/70); tmax = min(2*almax, WHARM-1);
+  tau = 1;
+  loop(tmax, d = 0; ii = 0; loop(WHARM - tmax, dd = anbuf[ii] - anbuf[ii+tau]; d += dd*dd; ii += 1; ); yin_df[tau] = d; tau += 1; );
+  yin_cmnd[0] = 1; run = 0; tau = 1;
+  loop(tmax, run += yin_df[tau]; yin_cmnd[tau] = yin_df[tau]*tau/(run+0.000001); tau += 1; );
+  thr = 0.15; res = -1; cand = -1; lockon = 0; tau = almin;
+  loop(almax - almin,
+    res < 0 ? ( lockon == 0 ? ( yin_cmnd[tau] < thr ? ( lockon = 1; cand = tau; ); )
+                            : ( yin_cmnd[tau] < yin_cmnd[cand] ? ( cand = tau; ) : ( res = cand; ); ); );
+    tau += 1;
+  );
+  (res < 0 && lockon == 1) ? res = cand;
+  res < 0 ? ( best = 1000000000; tau = almin; loop(almax - almin, yin_cmnd[tau] < best ? ( best = yin_cmnd[tau]; res = tau; ); tau += 1; ); );
+  loop(3, (2*res <= tmax && yin_cmnd[2*res] < 0.25 && yin_cmnd[2*res] < 1.15*yin_cmnd[res]) ? res = 2*res; );
+  (res > 1 && res < tmax) ? ( pa = yin_cmnd[res-1]; pb = yin_cmnd[res]; pc = yin_cmnd[res+1]; pden = pa-2*pb+pc; psh = (pden!=0)?0.5*(pa-pc)/pden:0; ) : ( psh = 0; );
+  f0d = srate/(res+psh);
+  (f0d > 20 && f0d < srate*0.5) ? (
+    boff = slot*NHARM; mx = 0; hn = 1;
+    loop(NHARM,
+      hf = hn*f0d;
+      hf < srate*0.5 ? (
+        re = 0; im = 0; kk = 0;
+        loop(WHARM, hannv = 0.5 - 0.5*cos(TWOPI*kk/(WHARM-1)); ang = TWOPI*hf*kk/srate; re += anbuf[kk]*hannv*cos(ang); im -= anbuf[kk]*hannv*sin(ang); kk += 1; );
+        mag = sqrt(re*re + im*im);
+      ) : ( mag = 0; );
+      slot_harm[boff + (hn-1)] = mag; mag > mx ? mx = mag; hn += 1;
+    );
+    slot_f0[slot] = f0d; slot_hnorm[slot] = mx > 0 ? mx : 1;
+  );
+);
+
+function capture(slot) (
+  grab_raw(slot);
+  compute_spectrum(slot);   // wash (spectral) analysis
+  analyze_harm(slot);       // voice (harmonic) analysis -- same captured frame
+  have = 1;
+  (slot + 1) > n_used ? n_used = slot + 1;
+);
+
+function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir) (
+  woff = stereo_width * 0.01 * PI;
+  // Build a Hermitian-symmetric spectrum so ifft() returns a REAL signal:
+  // fill bins 0..N/2 from the magnitude data, mirror them as conjugates.
+  i = 0;
+  loop(FFTSIZE/2 + 1,
+    srcb = i / pitch_ratio;
+    (srcb >= 0 && srcb < NBINS - 1) ? ( b0 = floor(srcb); fr = srcb - b0; m = curmag[b0]*(1-fr) + curmag[b0+1]*fr; ) : ( m = 0; );
+    ph = phase[i] + (useR ? woff*doff[i] : 0);
+    re = m * cos(ph); im = m * sin(ph);
+    fftwork[2*i] = re; fftwork[2*i+1] = im;
+    (i > 0 && i < FFTSIZE/2) ? ( mir = FFTSIZE - i; fftwork[2*mir] = re; fftwork[2*mir+1] = -im; );
+    i += 1;
+  );
+  fftwork[1] = 0;                       // DC imaginary = 0
+  fftwork[2*(FFTSIZE/2)+1] = 0;         // Nyquist imaginary = 0
+  fft_ipermute(fftwork, FFTSIZE);
+  ifft(fftwork, FFTSIZE);
+);
+
+function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw) (
+  // slot selection (vsi/vsj/vmfr) is computed once per sample in @sample so the
+  // wash and the harmonic voice always agree on which slot(s) they're playing.
+  si = vsi; sj = vsj; mfr = vmfr;
+  ni = slot_norm[si]; ni <= 0 ? ni = 1;
+  nj = slot_norm[sj]; nj <= 0 ? nj = 1;
+  bi = si*NBINS; bj = sj*NBINS;
+  i = 0;
+  loop(NBINS, mtmp[i] = (1-mfr)*(slotmag[bi+i]/ni) + mfr*(slotmag[bj+i]/nj); i += 1; );
+  sp = floor(spread_hz * FFTSIZE / srate);
+  i = 0;
+  loop(NBINS,
+    sp <= 0 ? ( curmag[i] = mtmp[i]; ) : (
+      sumv = 0; cnt = 0; j = -sp;
+      loop(2*sp + 1, bj2 = i + j; (bj2 >= 0 && bj2 < NBINS) ? ( sumv += mtmp[bj2]; cnt += 1; ); j += 1; );
+      curmag[i] = sumv / cnt;
+    );
+    i += 1;
+  );
+  pk = 0; i = 0; loop(NBINS, curmag[i] > pk ? pk = curmag[i]; i += 1; );
+  thr = denoise_amt * 0.01 * 0.1 * pk;
+  cutbin = floor(lowcut_hz * FFTSIZE / srate);
+  i = 0;
+  loop(NBINS,
+    i < cutbin ? ( curmag[i] = 0; ) : ( curmag[i] = max(0, curmag[i] - thr); );
+    i += 1;
+  );
+  i = 0; loop(NBINS, phase[i] = rand(1)*TWOPI; i += 1; );
+  build_spectrum(0);
+  rms = 0; i = 0; loop(W, sv = fftwork[2*i]; grainbuf[i] = sv; rms += sv*sv; i += 1; );
+  rms = sqrt(rms / W);
+  // Slow auto-gain: smooth the grain RMS across grains so loudness is stable and
+  // does NOT pump per grain. With the sqrt-Hann constant-power window below,
+  // overlapping random-phase grains sum to steady power. Target ~0.07 grain RMS
+  // -> ~0.1 output RMS (-20 dBFS). Freeze the smoother on silent grains (empty
+  // slot) so switching back doesn't blip loud.
+  rms > 0.0000001 ? ( rms_smooth <= 0 ? rms_smooth = rms : rms_smooth += 0.02 * (rms - rms_smooth); );
+  gnorm = rms_smooth > 0.0000001 ? (0.07 / rms_smooth) : 0;
+  build_spectrum(1);
+  i = 0;
+  loop(W,
+    aw = accpos + i; aw >= ACCLEN ? aw -= ACCLEN;
+    accL[aw] += grainbuf[i]   * gnorm * synwin[i];
+    accR[aw] += fftwork[2*i]  * gnorm * synwin[i];
+    i += 1;
+  );
+);
+
+// window = Hann (analysis); synwin = sqrt-Hann (synthesis, constant-power OLA).
+// Does NOT clear the accumulator, so changing Window size mid-play doesn't drop
+// the wash out -- old-length grains finish as new-length ones start.
+function build_windows(wlen) local(i) (
+  wlen = max(64, min(MAXFFT, floor(wlen)));
+  W = wlen; HOP = max(1, floor(W / 4));
+  i = 0; loop(W, window[i] = 0.5 - 0.5*cos(TWOPI*i/(W-1)); synwin[i] = sqrt(window[i]); i += 1; );
+);
+function clear_accum() local(i) (
+  i = 0; loop(ACCLEN, accL[i] = 0; accR[i] = 0; i += 1; );
+  accpos = 0; hopcount = 0;
+);
+
+@slider
+// Every slider read into a named global here; nothing downstream references a
+// sliderN directly, so the layout can be reordered without desyncing the engine.
+cap_slot      = max(0, min(NSLOTS-1, slider1 - 1));
+cap_trig      = slider2;
+cap_point01   = slider3 * 0.01;
+dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
+voice_gain    = slider5 <= -60 ? 0 : pow(10, slider5/20);
+texture       = slider6 * 0.01;                              // 0 voice .. 1 wash
+hlevel        = cos(texture * PI * 0.5);                     // equal-power crossfade
+wlevel        = sin(texture * PI * 0.5);
+win_ms        = slider7;
+spread_hz     = slider8;
+pitch_ratio   = pow(2.0, slider9/12);
+stereo_width  = slider10;
+lowcut_hz     = slider11;
+denoise_amt   = slider12;
+audition_mode = slider13;                                   // 0 focused slot, 1 morph
+morph01       = slider14 * 0.01;
+automorph_mode = slider15;
+auto_time     = max(0.1, slider16);
+automorph_mode != last_automode ? ( last_automode = automorph_mode; morph_phase = 0; );
+slider_show(slider16, automorph_mode > 0.5);
+
+@block
+// Transport play-edge: full immediate setup -- rebuild window, clear the
+// accumulator, reset runtime, and re-derive both engines from the persisted raw
+// (captures themselves are NOT touched). With ext_noinit, @init no longer does
+// this on play, so it's explicit here.
+((play_state == 1 || play_state == 5) && (last_ps != 1 && last_ps != 5)) ? (
+  build_windows(floor(win_ms * srate / 1000));
+  clear_accum();
+  inpos = 0; rms_smooth = 0; morph_phase = 0;
+  last_wsamp = floor(win_ms * srate / 1000); last_cappoint = cap_point01;
+  win_dirty = 0; cap_dirty = 0;
+  si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
+);
+last_ps = play_state;
+
+// Window size / Capture point changed -> DEBOUNCE the heavy re-analysis so
+// dragging a slider doesn't stutter: recompute only once the value settles.
+// Window size re-derives only the WASH (harmonic analysis is window-independent);
+// Capture point re-derives both. Also fires on load (last_wsamp = -1), restoring
+// the engines from the slotraw @serialize brought back, and lets you sweep
+// Capture point by ear to land on the vowel without re-capturing.
+wsamp = floor(win_ms * srate / 1000);
+wsamp != last_wsamp ? ( last_wsamp = wsamp; win_dirty = 1; settle = 0; );
+cap_point01 != last_cappoint ? ( last_cappoint = cap_point01; cap_dirty = 1; settle = 0; );
+(win_dirty || cap_dirty) ? (
+  settle += 1;
+  settle >= 4 ? (
+    win_dirty ? build_windows(wsamp);
+    si2 = 0; loop(n_used, compute_spectrum(si2); cap_dirty ? analyze_harm(si2); si2 += 1; );
+    win_dirty = 0; cap_dirty = 0;
+  );
+);
+
+(cap_trig > 0.5 && cap_last <= 0.5) ? ( capture(cap_slot); );
+cap_last = cap_trig;
+
+@sample
+inbuf[inpos] = (spl0 + spl1) * 0.5;
+inpos += 1; inpos >= INRING ? inpos = 0;
+
+automorph_mode > 0.5 ? (
+  morph_phase += 1 / (srate * auto_time);
+  automorph_mode == 1 ? (
+    morph_phase >= 2 ? morph_phase -= 2;
+    eff_morph01 = morph_phase <= 1 ? morph_phase : 2 - morph_phase;
+  ) : (
+    morph_phase > 1 ? morph_phase = 1;
+    eff_morph01 = morph_phase;
+  );
+) : ( eff_morph01 = morph01; );
+
+// Shared slot selection -- BOTH engines read vsi/vsj/vmfr so they always agree.
+audition_mode < 0.5 ? (
+  // Focused-slot monitor: play exactly the capture slot, ignore morph.
+  vsi = cap_slot; vsj = cap_slot; vmfr = 0;
+) : (
+  vnu = n_used < 1 ? 1 : n_used;
+  vmp = eff_morph01 * (vnu - 1);
+  vsi = floor(vmp); vmfr = vmp - vsi;
+  vsi >= vnu - 1 ? ( vsi = vnu - 1; vmfr = 0; );
+  vsj = vsi < vnu - 1 ? vsi + 1 : vsi;
+);
+
+dryL = spl0 * dry_gain; dryR = spl1 * dry_gain;
+
+// --- wash (spectral) engine: read overlap-add accumulator, refill per hop ---
+wL = accL[accpos]; accL[accpos] = 0;
+wR = accR[accpos]; accR[accpos] = 0;
+accpos += 1; accpos >= ACCLEN ? accpos = 0;
+hopcount += 1;
+hopcount >= HOP ? ( hopcount = 0; have > 0 ? gen_grain(); );
+
+// --- harmonic (voice) engine: TWO voices, each at its OWN captured pitch,
+// crossfaded by morph -> no portamento glide between slot pitches (A fades out
+// at its pitch while B fades in at its pitch). When not morphing (vsi==vsj,
+// vmfr==0) only voice A sounds.
+fA = slot_f0[vsi] * pitch_ratio; normA = slot_hnorm[vsi]; normA <= 0 ? normA = 1;
+fB = slot_f0[vsj] * pitch_ratio; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1;
+bA = vsi*NHARM; bB = vsj*NHARM;
+vvA = 0; vvB = 0; vn = 0;
+loop(NHARM,
+  ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*sin(hph[vn]); );
+  hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI;
+  ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*sin(hphB[vn]); );
+  hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI;
+  vn += 1;
+);
+hV = ((1-vmfr)*vvA + vmfr*vvB) * 0.08;   // ~match the wash's ~0.1 RMS
+
+// --- crossfade voice <-> wash (equal-power), gate on having a capture ---
+have > 0 ? (
+  voutL = hlevel*hV + wlevel*wL;
+  voutR = hlevel*hV + wlevel*wR;
+) : ( voutL = 0; voutR = 0; );
+voutL *= voice_gain; voutR *= voice_gain;
+
+spl0 = dryL + voutL;
+spl1 = dryR + voutR;
+
+@serialize
+// Persist captures across project save/reopen. Save only the RAW audio (source
+// of truth) + counts; wash spectrum and harmonic analysis re-derive from slotraw
+// on the first @block after load. Magic leads the stream so an old/absent blob
+// degrades to "no captures" instead of scrambling state (CLAUDE.md gotcha).
+ser_magic = 7700001;
+file_var(0, ser_magic);
+ser_magic == 7700001 ? (
+  file_var(0, have);
+  file_var(0, n_used);
+  file_mem(0, slotraw, NSLOTS*MAXFFT);
+);
