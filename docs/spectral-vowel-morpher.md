@@ -46,7 +46,8 @@ armed + monitored). Render to commit a result.
 - **Capture slot** (1–4) — which slot the next Capture writes to / Audition monitors.
 - **Capture** (Off / Capture now) — grab the current moment into the slot.
 - **Capture point** (earliest .. at press) — *where in the captured ~0.68 s to
-  analyze* (see "How capture works"). Re-analyzes live, no re-capture needed.
+  analyze* (see "How capture works"). Re-analyzes live (no re-capture); it's a
+  **set-once / by-ear** control — heavy to recompute, so **don't automate it**.
 
 **Levels**
 - **Input level (dry)** — the source passed straight through. −60 dB = silent.
@@ -54,8 +55,10 @@ armed + monitored). Render to commit a result.
 
 **Character & tone**
 - **Texture** (0 voice .. 100 wash) — the crossfade above.
-- **Window size (ms)** — wash grain length: short = rougher/grainier, long =
-  glassier/smoother. Also widens the analyzed slice (see Capture point).
+- **Window size (ms)** — *synthesis grain length* for the wash: short =
+  rougher/grainier, long = glassier/smoother. Cheap to change and **safe to
+  automate** — it no longer re-analyzes (that's decoupled to a fixed analysis
+  window + Capture point), so it won't drop out under an envelope.
 - **Spread (Hz)** — blurs the spectrum across frequency: diffuses a narrow
   capture into a wider noise bed.
 - **Pitch (semitones)** — transpose. Tape-style: formants move with pitch, so one
@@ -93,11 +96,11 @@ rate**:
 | 96 kHz | ~0.34 s |
 | 192 kHz | ~0.17 s |
 
-Capture point defaults to **earliest** because of reaction latency: by the time
-you hear a vowel and press, it's already a beat in the past (near the start of
-the grab); the press-moment tends to catch the breathy release. A **longer
-Window size** makes the analyzed slice wider, leaving Capture point less room to
-travel; a short Window gives a narrower slice and more scrub range.
+The analysis window is a **fixed ~170 ms** (decoupled from Window size), and
+Capture point slides that fixed window through the grab. It defaults to
+**earliest** because of reaction latency: by the time you hear a vowel and press,
+it's already a beat in the past (near the start of the grab); the press-moment
+tends to catch the breathy release.
 
 ## Use cases / tips
 
@@ -127,9 +130,18 @@ travel; a short Window gives a narrower slice and more scrub range.
 - **Captures persist** across save/reopen (`@serialize` stores the raw audio;
   both engines re-derive on load). Cost: ~512 KB per instance baked into the
   `.RPP` — several instances make a multi-MB project file.
-- **Re-analysis is debounced** — dragging Window size / Capture point recomputes
-  once you settle, not on every step (so it doesn't stutter). Window size
-  re-derives only the wash; Capture point re-derives both engines.
+- **What's safe to automate:**
+
+  | Control | Automate? | Why |
+  |---|---|---|
+  | Texture, Morph, Pitch, Spread, levels, Stereo width, Low cut, Denoise | ✅ yes | applied per-sample/per-grain, no re-analysis |
+  | Window size | ✅ yes | rebuilds only the cheap synthesis grain (no re-FFT, no buffer clear) |
+  | Capture point | ❌ no | re-analyzes (FFT + pitch-detect); set it once by ear |
+  | Capture / Capture slot | ❌ no | momentary action / selector, not continuous |
+
+- **Capture point is debounced** — a by-ear scrub recomputes only when it settles,
+  so it doesn't stutter while you move it. (Window size is *not* debounced — it's
+  cheap enough to update every block.)
 - **High sample rates shorten the grab** (table above) — the capture look-back
   and Capture-point range halve at 96 k, quarter at 192 k.
 - **The harmonic (voice) engine is mono.** Width is a wash-end quality.

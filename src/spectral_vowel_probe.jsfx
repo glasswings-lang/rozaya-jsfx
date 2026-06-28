@@ -48,14 +48,19 @@ ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 4; MAXFFT = 32768; INRING = 65536;
 FFTSIZE = 32768; NBINS = 16385;
+// WA = analysis window length, FIXED and decoupled from Window size. The capture
+// analysis (heavy: FFT + YIN) happens at WA; Window size only rebuilds the cheap
+// synthesis grain. That makes Window size safe to AUTOMATE (no re-FFT, no buffer
+// clear -> no dropouts), and Capture point scrubs this WA-length window in the grab.
+WA = 8192;   // ~170 ms @ 48k: good spectral resolution, leaves ~0.5 s scrub range
 // ACCLEN must exceed the LONGEST grain (W up to MAXFFT) plus a hop, or a long
 // grain wraps the circular accumulator onto the read pointer (audible at the
 // top of the Window-size range). 2*MAXFFT is comfortable headroom.
 ACCLEN = 65536;
 fftwork   = 0;          // 2 * FFTSIZE
 inbuf     = 100000;     // live input ring (INRING)
-window    = 200000;     // Hann of length W (analysis)
-synwin    = 240000;     // sqrt-Hann of length W (synthesis, constant-power OLA)
+window    = 200000;     // Hann of length WA (analysis -- fixed, built once)
+synwin    = 240000;     // sqrt-Hann of length W (synthesis grain = Window size)
 accL      = 300000;     // ACCLEN
 accR      = 400000;     // ACCLEN
 mtmp      = 500000;     // NBINS
@@ -93,6 +98,7 @@ rms_smooth = 0;   // slow auto-gain state (stable loudness, no per-grain pump)
 cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
 texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
 i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; i += 1; );
+i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 
 // grab the most recent MAXFFT input samples into a slot's raw store
@@ -102,13 +108,15 @@ function grab_raw(slot) local(i, idx, base) (
   loop(MAXFFT, idx = inpos - MAXFFT + i; idx < 0 ? idx += INRING; slotraw[base+i] = inbuf[idx]; i += 1; );
 );
 
-// FFT W samples of a slot's raw, Hann-windowed, zero-padded to FFTSIZE. Capture
-// point picks WHERE in the ~0.68 s grab to look: 0 = earliest (the sustained
-// vowel, since you react a beat after hearing it) .. 1 = the press-moment.
+// FFT WA samples of a slot's raw, Hann-windowed, zero-padded to FFTSIZE. Uses the
+// FIXED analysis window WA (not the synthesis grain W), so Window size never
+// triggers this. Capture point picks WHERE in the ~0.68 s grab to look: 0 =
+// earliest (the sustained vowel, since you react a beat after hearing it) .. 1 =
+// the press-moment.
 function compute_spectrum(slot) local(i, re, im, mx, rbase, mbase) (
-  rbase = slot*MAXFFT + floor(cap_point01 * (MAXFFT - W)); mbase = slot*NBINS;
-  i = 0; loop(W, fftwork[2*i] = slotraw[rbase+i]*window[i]; fftwork[2*i+1] = 0; i += 1; );
-  i = W; loop(FFTSIZE - W, fftwork[2*i] = 0; fftwork[2*i+1] = 0; i += 1; );
+  rbase = slot*MAXFFT + floor(cap_point01 * (MAXFFT - WA)); mbase = slot*NBINS;
+  i = 0; loop(WA, fftwork[2*i] = slotraw[rbase+i]*window[i]; fftwork[2*i+1] = 0; i += 1; );
+  i = WA; loop(FFTSIZE - WA, fftwork[2*i] = 0; fftwork[2*i+1] = 0; i += 1; );
   fft(fftwork, FFTSIZE); fft_permute(fftwork, FFTSIZE);
   mx = 0; i = 0;
   loop(NBINS,
@@ -233,13 +241,13 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   );
 );
 
-// window = Hann (analysis); synwin = sqrt-Hann (synthesis, constant-power OLA).
-// Does NOT clear the accumulator, so changing Window size mid-play doesn't drop
-// the wash out -- old-length grains finish as new-length ones start.
-function build_windows(wlen) local(i) (
+// Rebuild ONLY the synthesis grain window (sqrt-Hann, length W = Window size).
+// CHEAP: no FFT, no YIN, no accumulator clear -- so Window size can be dragged
+// or AUTOMATED without dropouts (old-length grains finish as new ones start).
+function build_synwin(wlen) local(i) (
   wlen = max(64, min(MAXFFT, floor(wlen)));
   W = wlen; HOP = max(1, floor(W / 4));
-  i = 0; loop(W, window[i] = 0.5 - 0.5*cos(TWOPI*i/(W-1)); synwin[i] = sqrt(window[i]); i += 1; );
+  i = 0; loop(W, synwin[i] = sqrt(0.5 - 0.5*cos(TWOPI*i/(W-1))); i += 1; );
 );
 function clear_accum() local(i) (
   i = 0; loop(ACCLEN, accL[i] = 0; accR[i] = 0; i += 1; );
@@ -276,30 +284,29 @@ slider_show(slider16, automorph_mode > 0.5);
 // (captures themselves are NOT touched). With ext_noinit, @init no longer does
 // this on play, so it's explicit here.
 ((play_state == 1 || play_state == 5) && (last_ps != 1 && last_ps != 5)) ? (
-  build_windows(floor(win_ms * srate / 1000));
+  build_synwin(floor(win_ms * srate / 1000));
   clear_accum();
   inpos = 0; rms_smooth = 0; morph_phase = 0;
   last_wsamp = floor(win_ms * srate / 1000); last_cappoint = cap_point01;
-  win_dirty = 0; cap_dirty = 0;
+  cap_dirty = 0;
   si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
 );
 last_ps = play_state;
 
-// Window size / Capture point changed -> DEBOUNCE the heavy re-analysis so
-// dragging a slider doesn't stutter: recompute only once the value settles.
-// Window size re-derives only the WASH (harmonic analysis is window-independent);
-// Capture point re-derives both. Also fires on load (last_wsamp = -1), restoring
-// the engines from the slotraw @serialize brought back, and lets you sweep
-// Capture point by ear to land on the vowel without re-capturing.
+// Window size -> CHEAP: rebuild only the synthesis grain, immediately, every
+// block if it's moving. No re-analysis, no clear -> safe to automate, no drops.
 wsamp = floor(win_ms * srate / 1000);
-wsamp != last_wsamp ? ( last_wsamp = wsamp; win_dirty = 1; settle = 0; );
+wsamp != last_wsamp ? ( last_wsamp = wsamp; build_synwin(wsamp); );
+
+// Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub recomputes
+// only when it settles. Also fires on load (last_cappoint = -1), restoring the
+// engines from the slotraw @serialize brought back. NOT an automation target.
 cap_point01 != last_cappoint ? ( last_cappoint = cap_point01; cap_dirty = 1; settle = 0; );
-(win_dirty || cap_dirty) ? (
+cap_dirty ? (
   settle += 1;
   settle >= 4 ? (
-    win_dirty ? build_windows(wsamp);
-    si2 = 0; loop(n_used, compute_spectrum(si2); cap_dirty ? analyze_harm(si2); si2 += 1; );
-    win_dirty = 0; cap_dirty = 0;
+    si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
+    cap_dirty = 0;
   );
 );
 
