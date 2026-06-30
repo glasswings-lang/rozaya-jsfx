@@ -30,6 +30,7 @@
 
 **Samplers**
 - [Sustain Looper](#sustain-looper)
+- [Spectral Vowel Morpher](#spectral-vowel-morpher)
 
 **Utilities**
 - [Rhythm Track](#rhythm-track)
@@ -2846,6 +2847,112 @@ How far the ensemble voices detune apart and drift. Low = tight and subtle; high
 ---
 
 *Sustain Looper is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic)*
+
+
+---
+
+# Spectral Vowel Morpher
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+---
+
+## Overview
+
+A capture-based instrument. You play audio into it, capture a few moments, and it resynthesizes them — as a recognizable voice, an evolving wash, or any blend between — and morphs between the captured moments. It is built for sustaining and looping vocal material, but it freezes any source.
+
+Unlike Sustain Looper (which loops a region of a *loaded* file), the Morpher feeds on **live audio playing into it** — drop a WAV on the track or send another track in, play it, and hit Capture when you hear a moment you want. Captures persist across project save and reopen.
+
+It is a generator: it only sounds with the transport rolling (or the track armed and monitored).
+
+---
+
+## Signal Architecture
+
+Every capture is analyzed two ways at once, and the **Texture** knob crossfades between them.
+
+### Voice (harmonic) — Texture 0
+
+Detects the pitch and rebuilds the sound from 64 harmonics placed at the exact fundamental. Phase-coherent, so it keeps the vowel and pitch cleanly — a sustained vowel or choir. It reproduces only the *harmonic* part, so it has no breath or air, and it only makes sense on clearly pitched material.
+
+### Wash (spectral) — Texture 100
+
+PaulStretch-style phase randomization: it keeps the magnitude spectrum and discards phase, turning every partial into a narrow noise band. Smooth, breathy, evolving — it turns any source into texture. On a voice it deliberately reads as softly "denoised" (that is the operation, not a fault) — ideal for pads and beds.
+
+### Capture
+
+Capture grabs the most recent ~0.68 seconds of input (a fixed sample count, so the *duration* shrinks at higher sample rates) and stores that whole window. The analysis looks at one slice inside it, positioned by **Capture point**. Both engines re-derive from the stored raw audio, so you can re-analyze (sweep Capture point, change the wash grain) without re-capturing, and the captures survive a project reload.
+
+---
+
+## Parameters
+
+**Capture slot** `1 to 4, default 1`
+Which of the four slots the next Capture writes to, and which slot Audition monitors in Focused mode.
+
+**Capture spectrum** `Off / Capture now`
+Grab the current moment into the selected slot.
+
+**Capture point** `0 to 100, default 0`
+*Where* in the captured ~0.68 s to analyze — 0 = earliest, 100 = the instant you pressed. Defaults to earliest because, by the time you react and press, the sound is already a beat in the past; the press-moment tends to catch the breathy release. Re-analyzes live, so sweep it by ear to land on the vowel. Set-once — not an automation target (it re-runs the full analysis).
+
+**Input level (dry, dB)** `-60 to +12, default 0`
+The source passed straight through. −60 = silent.
+
+**Voice level (dB)** `-60 to +12, default 0`
+The resynthesized output. −60 = silent.
+
+**Texture** `0 to 100, default 50`
+Crossfades 0 = Voice (harmonic, keeps the vowel) to 100 = Wash (spectral, breathy bed). The middle layers both — vowel plus air.
+
+**Wash grain (ms)** `5 to 680, default 150`
+The wash's grain length: short = rougher and grainier, long = glassier and smoother. Affects only the wash; cheap and safe to automate.
+
+**Spread (Hz)** `0 to 150, default 0`
+Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
+
+**Pitch (semitones)** `-24 to +24, default 0`
+Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."
+
+**Stereo width** `0 to 100, default 50`
+Decorrelates the wash across the stereo field (mono-safe). The voice engine itself is mono.
+
+**Low cut (Hz)** `0 to 500, default 0`
+Removes low rumble from the resynth.
+
+**Denoise** `0 to 100, default 0`
+Spectral subtraction — raise to thin toward the strongest partials (more tonal, more gated).
+
+**Audition** `Focused slot / Morph, default Morph`
+*Focused slot* plays exactly the Capture-slot, ignoring Morph (so you can hear each grab as you build it). *Morph* plays the morph blend.
+
+**Morph** `0 to 100, default 0`
+Crossfades across the captured slots. Pitch-preserving — each slot plays at its own pitch, so there is no portamento glide.
+
+**Auto-morph** `Off / Sweep / Glide once, default Off`
+In-plugin morph motion — Sweep = endless back-and-forth, Glide once = slot 1 to the last, one time.
+
+**Auto-morph time (sec)** `1 to 600, default 20`
+Duration of one auto-morph pass.
+
+---
+
+## Usage Notes
+
+- **The capture workflow.** Put audio on the track, Input level up and Voice level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment.
+- **The voice end needs pitched material.** Texture 0 only sings on clearly pitched sources (a sustained vowel, organ, bowed note). On unpitched material it produces a tone — use the wash end (or the middle) there instead.
+- **Vowel + breath is the middle.** The pure voice end has no breath; the pure wash end has breath but de-voices. A blend around Texture 30–50 gives the vowel plus air.
+- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels, Stereo width, Low cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary).
+- **Source-agnostic.** It freezes anything — synths, field recordings, strings, cymbals, even a whole mix via a track send. The wash texturizes any source.
+- **Captures persist** across save and reopen (the raw audio is stored in the project; both engines rebuild on load).
+- **Transport must be moving** for it to sound — it is a generator. Loop the transport, or arm the track and monitor.
+
+See [`docs/spectral-vowel-morpher.md`](spectral-vowel-morpher.md) for deeper design notes and advanced techniques.
+
+---
+
+*Spectral Vowel Morpher is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
 
 
