@@ -145,6 +145,46 @@ Same as polyrhythm and melody.
 
 ---
 
+## Spectral Vowel Morpher — render-speed optimization (deferred)
+
+**Status:** deferred. Pure performance; **no audible or behavioral change intended.** Pick this up only if render speed with this plugin becomes annoying — it's CPU-heavy by design. Diagnosed 2026-06-30 while investigating why single-piece renders that stacked 3 instances of this plugin crawled (near/below realtime).
+
+### Where the cost is
+
+Two continuous costs, both real, multiplied by however many instances are stacked:
+
+1. **Per-sample additive voice engine (`@sample`).** The `loop(NHARM, …)` (NHARM = 64) calls `sin()` **twice per harmonic** — voice A (`sin(hph[vn])`) and voice B (`sin(hphB[vn])`) — so ~128 `sin()` per output sample, ≈ 6 M sines/sec **per instance**, continuously while audio plays. This is the dominant ongoing cost and the best target.
+2. **Wash FFTs (`gen_grain` → `build_spectrum`).** `build_spectrum()` runs **twice per grain** (L = `build_spectrum(0)`, R = `build_spectrum(1)`), each ending in `ifft(FFTSIZE = 32768)`. At Wash grain 150 ms / 48 k, HOP ≈ W/4 ≈ 1800 → ~27 grains/sec → ~54 × 32768-pt iFFTs/sec, plus the NBINS (16385) morph/spread/denoise/random-phase loops around each.
+
+Also a one-time spike at every render start: the `@block` play-edge re-runs `compute_spectrum` + `analyze_harm` (a 32 k FFT + YIN) for every used slot.
+
+### Primary fix: wavetable the voice oscillators
+
+Replace the `sin()` calls in the `@sample` `NHARM` loop with a precomputed sine **wavetable** + linear interpolation. **Keep the phase accumulators (`hph[]`, `hphB[]`) and the increment math exactly as-is** — only the evaluation of `sin(phase)` changes.
+
+Sketch (pure eel2, no new sliders, no dependencies):
+- `@init`: allocate a table and fill one period plus a guard sample — `TBL = 8192; i = 0; loop(TBL+1, sintab[i] = sin(TWOPI*i/TBL); i += 1;);`
+- In the loop, replace `sin(hph[vn])` with: `ph = hph[vn]; fidx = ph*(TBL/TWOPI); i0 = floor(fidx); fr = fidx - i0; s = sintab[i0]*(1-fr) + sintab[i0+1]*fr;` (same for `hphB[vn]`). The accumulators already wrap to [0, TWOPI), so the guard sample at `sintab[TBL]` covers `i0 = TBL-1`.
+
+**Why it's audio-safe (the analysis that settled it):**
+- **No pitch change.** Frequency is set by the phase *increment* (`hph[vn] += TWOPI*(vn+1)*fA/srate`), which we don't touch. The table only shapes each sine, so every harmonic stays locked to its exact `(vn+1)*f0` — no detune, no drift, no inharmonic content.
+- **Only error is waveshape fidelity** → faint harmonic distortion + noise floor ~−80 to −100 dB with a decent table + linear interp. That energy is **harmonically locked** (distortion of harmonic n lands on 2n, 3n… = harmonics of the same f0 already present), so it can't create "weird"/inharmonic frequencies — just an inaudible whisper on tones already there, especially invisible under random-phase wash.
+- **No compounding.** The additive engine is open-loop (sum of independent oscillators, no feedback), so per-sample error stays bounded — it can't ripple/snowball up the spectrum.
+- If ever paranoid: bigger table or cubic interp → immeasurable error. Plain linear is already inaudible here.
+
+**Why NOT a recursive oscillator** (the obvious "even cheaper" route): it has feedback (a recurrence), so amplitude/phase can **drift and accumulate** — exactly the ripple-and-compound failure mode the wavetable avoids — and the per-sample frequency changes here (Pitch slider + morph between two f0s) make recursive coefficient updates awkward. Wavetable is the safe pick.
+
+### Secondary (lower priority, touch with care): the wash's double iFFT
+
+`build_spectrum` runs a full 32 k iFFT per channel; the only L/R difference is the per-bin phase offset (`woff*doff[i]`, the decorrelated stereo wash). That decorrelation **is the point** of the stereo image — don't naively collapse it. There may be a cheaper way to derive R, but it's risky; the per-sample voice fix above is the bigger, safer win. Do that first, re-measure, then decide if this is even needed.
+
+### Conventions
+- No new sliders, no slider-ID changes (internal only) → existing projects open unchanged.
+- Mind the eel2 case-insensitivity trap (CLAUDE.md): don't name the table var or any local a case-variant of a global it writes.
+- CC0 / original implementation: a sine wavetable is bog-standard original work; nothing to copy.
+
+---
+
 ## Deferred for separate planning
 
 Mentioned in the design session but explicitly deferred to keep current scope manageable:
