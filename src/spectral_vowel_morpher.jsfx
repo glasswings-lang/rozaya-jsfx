@@ -1,4 +1,4 @@
-desc: Spectral Vowel Probe (PROTOTYPE) - voice<->wash capture morpher
+desc: Spectral Vowel Morpher - voice<->wash capture instrument
 // =====================================================================
 // Capture-based vocal instrument. Feeds on LIVE audio playing into it (drag a
 // WAV onto the track, or send another track in -- the proper REAPER way).

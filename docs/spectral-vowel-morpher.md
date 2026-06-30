@@ -1,7 +1,7 @@
 # Spectral Vowel Morpher
 
-Prototype: `src/spectral_vowel_probe.jsfx`. (Folds into `rozaya_jsfx_manual.md`
-when it graduates / gets a final name.)
+Source: `src/spectral_vowel_morpher.jsfx`. (Fold into `rozaya_jsfx_manual.md`
+alongside the other plugins.)
 
 A **capture-based instrument**. You play audio into it, capture a few moments,
 and it resynthesizes them — either as a recognizable voice, an evolving wash, or
