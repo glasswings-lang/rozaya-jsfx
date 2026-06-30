@@ -92,7 +92,7 @@ slots_inited == 0 ? (
   have = 0; n_used = 0;
 );
 // runtime state
-cap_last = 0; inpos = 0; last_gsamp = -1; last_cappoint = -1;
+cap_last = 0; first_slider = 1; inpos = 0; last_gsamp = -1; last_cappoint = -1;
 cap_dirty = 0; settle = 0;   // debounce for Capture-point re-analysis
 rms_smooth = 0;   // slow auto-gain state (stable loudness, no per-grain pump)
 cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
@@ -258,7 +258,7 @@ function clear_accum() local(i) (
 // Every slider read into a named global here; nothing downstream references a
 // sliderN directly, so the layout can be reordered without desyncing the engine.
 cap_slot      = max(0, min(NSLOTS-1, slider1 - 1));
-cap_trig      = slider2;
+cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0; );  // first @slider after load: sync cap_last so a saved-ON Capture-now never fires a silent capture on reload
 cap_point01   = slider3 * 0.01;
 dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
 voice_gain    = slider5 <= -60 ? 0 : pow(10, slider5/20);
@@ -310,7 +310,7 @@ cap_dirty ? (
   );
 );
 
-(cap_trig > 0.5 && cap_last <= 0.5) ? ( capture(cap_slot); );
+(cap_trig > 0.5 && cap_last <= 0.5) ? ( capture(cap_slot); slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
 cap_last = cap_trig;
 
 @sample

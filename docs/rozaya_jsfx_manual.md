@@ -2892,7 +2892,9 @@ Capture grabs the most recent ~0.68 seconds of input (a fixed sample count, so t
 Which of the four slots the next Capture writes to, and which slot Audition monitors in Focused mode.
 
 **Capture spectrum** `Off / Capture now`
-Grab the current moment into the selected slot.
+Grab the current moment into the selected slot. It captures *whatever audio is reaching the track at that instant* — so if you fire it while nothing is playing (transport stopped, or no source feeding the track), you'll bank an **empty slot**, and the morph will fade to silence whenever it reaches that slot.
+
+**Capture now disarms itself after each capture** — it returns to Off the moment it fires, so you can never leave it armed by accident. A reloaded project always opens with it parked Off and can't silently re-fire over one of your slots on load. (If a slot ever goes unexpectedly silent and the morph fades out when it reaches it, the cause was almost always Capture left armed; this behavior is what prevents it.)
 
 **Capture point** `0 to 100, default 0`
 *Where* in the captured ~0.68 s to analyze — 0 = earliest, 100 = the instant you pressed. Defaults to earliest because, by the time you react and press, the sound is already a beat in the past; the press-moment tends to catch the breathy release. Re-analyzes live, so sweep it by ear to land on the vowel. Set-once — not an automation target (it re-runs the full analysis).
