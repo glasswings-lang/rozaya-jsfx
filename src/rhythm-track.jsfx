@@ -37,47 +37,41 @@ slider14:0<0,1000,0.01>Start Delay (beats)
 slider15:0<0,1000,1>Play for (beats)
 slider16:0<0,1000,1>Rest for (beats)
 
-// Speed ramp: signed-delta on Tempo BPM. Single-target plugin (Tempo
-// is the only meaningful rate), so no selector — slider 17 IS the
-// `by` amount in BPM. effective_tempo = slider1 + ramp_t * slider17
-// computed per sample. Engage (slider 19) is a freeze/resume gate
+// Speed ramp: signed-delta, nested-selector (brought to Drift parity in
+// the automation-replacement sweep, see docs/planned-features.md). Ships
+// in v2.14. Pick a target (slider17), then slider18 is the `by` amount for
+// THAT target; both targets ramp in parallel and the selector only chooses
+// which one slider18 is editing. Engage (slider20) is a freeze/resume gate
 // (NOT a restart edge); only transport play resets ramp_t.
 //
-// Migration from v2.7: slider 17 changed from multiplier (0.1-4.0)
-// to signed BPM delta (-270 to +180). Old projects' multiplier value
-// gets interpreted as a tiny BPM delta — effectively "no Speed Ramp"
-// until reconfigured. Default 0 = no change (safe on engage).
-slider17:0<-270,180,0.1>Speed ramp by (BPM)
-slider18:0<0,60,0.1>Speed ramp duration (minutes)
-slider19:0<0,1,1{Off,On}>Speed ramp engage
-slider20:0<0,60,0.1>Speed ramp start delay (minutes)
+// The Speed ramp target selector is slider17 (top of this block) so that in
+// the UI / NVDA parameter order it reads ABOVE the by/duration/engage
+// controls it governs. Achieving that meant renumbering the Speed Ramp +
+// Drift blocks (REAPER orders sliders by ID, not file position), so the old
+// single-target IDs 17-20 shifted — existing Rhythm Track projects reset
+// their Speed Ramp + Drift configs on upgrade (both are off-by-default; the
+// metronome sound on sliders 1-16 is untouched). Re-add the instance for
+// clean defaults, or reconfigure. See the manual's migration note.
+slider17:0<0,1,1{Tempo BPM,Swing amount}>Speed ramp target
+slider18:0<-300,300,0.1>Speed ramp by (units match target)
+slider19:0<0,60,0.1>Speed ramp duration (minutes)
+slider20:0<0,1,1{Off,On}>Speed ramp engage
+slider21:0<0,60,0.1>Speed ramp start delay (minutes)
 
 // Per-target drift: nested-selector pattern matching Womb v3 /
-// breath gen v2.9 / heartbeat v2.9. Pick a target (slider21), then
-// sliders 22-25 hold THAT target's drift config. Switching the
-// selector saves current values to the old target's memory slot and
-// loads the new target's values into the sliders. Both targets drift
-// in parallel; the selector just chooses which one you're currently
-// editing. Period unit is beats for both targets. For slow wall-clock
-// feel, set a long period (~960 beats ≈ 8 min at 120 BPM).
-//
-// Note: Speed Ramp above is single-target (Tempo BPM only) because
-// that's the only meaningful long-form wind-down here. Drift has 2
-// targets because wandering Swing while the tempo stays put is a
-// useful musical effect (it loosens the groove cycle-to-cycle).
-//
-// Migration from v2.8: the old flat drift block (musical_up/down/
-// period, slow_up/down/period, drift_shape on sliders 21-27) was 7
-// sliders covering Tempo only. v2.9 is 5 sliders covering 2 independent
-// targets, reusing slider IDs 21-25; sliders 26 and 27 are no longer
-// declared. Old projects' slider values get reinterpreted (selector
-// defaults to Tempo BPM, sliders 22-23 become up/down BPM amounts).
-// Reset drift sliders to defaults after upgrade and reconfigure.
-slider21:0<0,1,1{Tempo BPM,Swing amount}>Drift target
-slider22:0<0,50,0.1>Drift up amount (units match target)
-slider23:0<0,50,0.1>Drift down amount (units match target)
-slider24:8<1,1000,1>Drift period (beats)
-slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// breath gen / heartbeat. Pick a target (slider22), then sliders 23-26
+// hold THAT target's drift config. Switching the selector saves current
+// values to the old target's memory slot and loads the new target's values
+// into the sliders. Both targets drift in parallel; the selector just
+// chooses which one you're currently editing. Period unit is beats for both
+// targets. For slow wall-clock feel, set a long period (~960 beats ≈ 8 min
+// at 120 BPM). (Drift IDs shifted +1 from the old 21-25 layout in the v2.14
+// reorg above — same reset story.)
+slider22:0<0,1,1{Tempo BPM,Swing amount}>Drift target
+slider23:0<0,50,0.1>Drift up amount (units match target)
+slider24:0<0,50,0.1>Drift down amount (units match target)
+slider25:8<1,1000,1>Drift period (beats)
+slider26:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -169,10 +163,16 @@ target_drift_prev   = 131600;
 target_drift_curr   = 131616;
 target_drift_offset = 131632;
 
-// CONFIG bank (drift up/down/period/shape + selector tracker) — guarded
-// by drift_cfg_inited so the @init re-run on every transport play (Path A
-// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
-// restores saved configs on project reload.
+// Speed ramp per-target `by` bank (v2.14). One value per target, mirroring
+// the drift banks. 16-slot-spaced after target_drift_offset (131632) at
+// 131648. CONFIG (survives transport re-run), so it lives under the same
+// guard as the drift config below.
+speed_ramp_by_mem   = 131648;
+
+// CONFIG banks (drift up/down/period/shape + speed-ramp `by` + selector
+// trackers) — guarded by drift_cfg_inited so the @init re-run on every
+// transport play (Path A render fix, no ext_noinit) does NOT wipe the
+// user's setup. @serialize restores saved configs on project reload.
 drift_cfg_inited != 1 ? (
   i = 0;
   loop(N_TARGETS,
@@ -180,9 +180,11 @@ drift_cfg_inited != 1 ? (
     target_drift_down[i]  = 0;
     target_drift_per[i]   = 8;
     target_drift_shape[i] = 0;
+    speed_ramp_by_mem[i]  = 0;
     i += 1;
   );
   last_target_select = 0;
+  last_sr_target     = 0;
   drift_cfg_inited = 1;
 );
 
@@ -377,15 +379,15 @@ pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 // @sample. Only transport play resets ramp_t.
 
 // Drift target selector save/restore (nested-selector pattern).
-// Switching slider21 saves sliders 22-25 into the OLD target's slot,
-// then loads the NEW target's stored config into sliders 22-25.
+// Switching slider22 saves sliders 23-26 into the OLD target's slot,
+// then loads the NEW target's stored config into sliders 23-26.
 // Otherwise captures live edits to the current target's slot. Both
 // targets drift in parallel from @sample regardless of selection.
-sel_target = slider21;
-sel_up     = slider22;
-sel_down   = slider23;
-sel_per    = slider24;
-sel_shape  = slider25;
+sel_target = slider22;
+sel_up     = slider23;
+sel_down   = slider24;
+sel_per    = slider25;
+sel_shape  = slider26;
 
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
@@ -393,14 +395,14 @@ last_target_select != sel_target ? (
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
 
-  slider22 = target_drift_up[sel_target];
-  slider23 = target_drift_down[sel_target];
-  slider24 = target_drift_per[sel_target];
-  slider25 = target_drift_shape[sel_target];
-  slider_automate(slider22);
+  slider23 = target_drift_up[sel_target];
+  slider24 = target_drift_down[sel_target];
+  slider25 = target_drift_per[sel_target];
+  slider26 = target_drift_shape[sel_target];
   slider_automate(slider23);
   slider_automate(slider24);
   slider_automate(slider25);
+  slider_automate(slider26);
 
   last_target_select = sel_target;
 ) : (
@@ -408,6 +410,23 @@ last_target_select != sel_target ? (
   target_drift_down[sel_target]  = sel_down;
   target_drift_per[sel_target]   = sel_per;
   target_drift_shape[sel_target] = sel_shape;
+);
+
+// Speed ramp target selector save/restore (nested-selector, mirrors the
+// drift block above). slider17 is the target; slider18 the per-target `by`.
+// Switching slider17 saves slider18 into the OLD target's slot, then loads
+// the NEW target's stored `by` into slider18. Otherwise captures live edits
+// to the current target's slot. Both targets ramp in parallel from @sample.
+sr_sel_target = slider17;
+sr_sel_by     = slider18;
+
+last_sr_target != sr_sel_target ? (
+  speed_ramp_by_mem[last_sr_target] = sr_sel_by;
+  slider18 = speed_ramp_by_mem[sr_sel_target];
+  slider_automate(slider18);
+  last_sr_target = sr_sel_target;
+) : (
+  speed_ramp_by_mem[sr_sel_target] = sr_sel_by;
 );
 
 strong_len = render_tick(strong_buf, strong_hz, strong_gain, strong_decay, tone_q);
@@ -429,25 +448,27 @@ weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_
 
 // Advance speed_ramp_t while engaged + duration > 0 + past start delay.
 // Engage off freezes ramp_t; engaging on resumes from there.
-slider19 && slider18 > 0 ? (
-  speed_ramp_delay_samples = slider20 * 60 * srate;
+slider20 && slider19 > 0 ? (
+  speed_ramp_delay_samples = slider21 * 60 * srate;
   speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
     speed_ramp_delay_elapsed += 1;
   ) : (
-    speed_ramp_t += 1.0 / (srate * slider18 * 60);
+    speed_ramp_t += 1.0 / (srate * slider19 * 60);
     speed_ramp_t = min(speed_ramp_t, 1.0);
   );
 );
 
-// Speed Ramp's BPM offset (signed delta). Applied additively to
-// effective_tempo below alongside drift offsets. The drift wave's
-// period needs to track Speed Ramp so the wave-per-beat relationship
-// stays constant — but using effective_samples_per_beat would be
-// circular (Tempo drift modifies it). Use a Speed-Ramp-adjusted
-// samples_per_beat (track_bpm + speed_ramp_offset, no drift) as the
-// stable reference for the drift wave's period.
-speed_ramp_bpm_offset = speed_ramp_t * slider17;
-sr_adjusted_tempo = max(10, track_bpm + speed_ramp_bpm_offset);
+// Per-target Speed Ramp offsets (signed delta × ramp position). Both
+// targets ramp in parallel; index 0 = Tempo BPM, 1 = Swing amount.
+// Applied additively at each consumption site below, alongside drift.
+// The drift wave's period needs to track Speed Ramp so the wave-per-beat
+// relationship stays constant — but using effective_samples_per_beat would
+// be circular (Tempo drift modifies it). Use a Speed-Ramp-adjusted
+// samples_per_beat (track_bpm + Tempo ramp, no drift) as the stable
+// reference for the drift wave's period.
+speed_ramp_offset_tempo = speed_ramp_t * speed_ramp_by_mem[0];
+speed_ramp_offset_swing = speed_ramp_t * speed_ramp_by_mem[1];
+sr_adjusted_tempo = max(10, track_bpm + speed_ramp_offset_tempo);
 sr_adjusted_samples_per_beat = (60.0 / sr_adjusted_tempo) * srate;
 
 // Per-target drift wave computation. 2 targets (0=Tempo BPM,
@@ -494,12 +515,12 @@ loop(N_TARGETS,
 // Effective tempo with drift + Speed Ramp, clamped at 10 BPM (matches
 // slider1's minimum) so over-aggressive Down amounts can't silence
 // or invert the metronome.
-effective_tempo = max(10, track_bpm + target_drift_offset[0] + speed_ramp_bpm_offset);
+effective_tempo = max(10, track_bpm + target_drift_offset[0] + speed_ramp_offset_tempo);
 effective_samples_per_beat = (60.0 / effective_tempo) * srate;
 
-// Effective swing: baseline + Swing drift, clamped to [-1, +1] so
-// drift can't drive swing outside the meaningful range.
-current_swing = max(-1.0, min(1.0, swing + target_drift_offset[1]));
+// Effective swing: baseline + Swing drift + Swing Speed Ramp, clamped to
+// [-1, +1] so neither can drive swing outside the meaningful range.
+current_swing = max(-1.0, min(1.0, swing + target_drift_offset[1] + speed_ramp_offset_swing));
 
 // Start Delay gate. During the silent window beat_phase and tick_pos
 // don't advance, so when the delay elapses the metronome begins from
@@ -563,13 +584,28 @@ spl1 = out * sin(pan_pos * $pi * 0.5);
 );  // close start-delay else branch
 
 @serialize
-// Persist per-target drift configurations. Without this, only the
-// most-recently-edited target's drift slider values survive a project
-// save/load because sliders 22-25 hold whichever target was selected
-// at save time. 2 targets × 4 config fields = 8 values; plus the
-// selector.
-file_mem(0, target_drift_up,    N_TARGETS);
-file_mem(0, target_drift_down,  N_TARGETS);
-file_mem(0, target_drift_per,   N_TARGETS);
-file_mem(0, target_drift_shape, N_TARGETS);
-file_var(0, last_target_select);
+// Persist per-target drift AND speed-ramp configurations. Without this,
+// only the most-recently-edited target's values survive a save/load
+// because the sliders hold whichever target was selected at save time.
+//
+// VERSION-GUARDED (CLAUDE.md @serialize gotcha): the stream grew in v2.14
+// (added the speed-ramp per-target `by` bank + its selector tracker), so
+// it now leads with a magic marker. Old (v2.9-v2.13) blobs have a drift
+// value as their first word, won't match the magic, and fall through to
+// the @init defaults — old drift configs reset on upgrade. (The v2.14
+// Speed Ramp/Drift renumber also reset the slider values themselves, so
+// existing Rhythm Track Speed Ramp + Drift settings need re-entry after
+// upgrade regardless — see the slider block's reorg note.) Magic =
+// 2000000 + N_TARGETS: well above any plausible first-field value and
+// float32-exact (< 2^24).
+sr_magic = 2000000 + N_TARGETS;
+file_var(0, sr_magic);
+sr_magic == 2000000 + N_TARGETS ? (
+  file_mem(0, target_drift_up,    N_TARGETS);
+  file_mem(0, target_drift_down,  N_TARGETS);
+  file_mem(0, target_drift_per,   N_TARGETS);
+  file_mem(0, target_drift_shape, N_TARGETS);
+  file_var(0, last_target_select);
+  file_mem(0, speed_ramp_by_mem,  N_TARGETS);
+  file_var(0, last_sr_target);
+);
