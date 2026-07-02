@@ -69,65 +69,65 @@ slider22:0<0,1,1{Walk through,Freeze in place}>LFO at rest
 //     with either Rest LFO setting.
 slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 
-// Speed ramp: in-plugin slowdown/speedup over time. The effective
-// Speed ramp: signed-delta on Rate Value, expressed in the rate's
-// current unit (BPM if Rate Mode = BPM, seconds if Seconds, Hz if
-// Hz). Effective rate = slider1 + ramp_t * slider24; converted to
-// Hz the same way the base rate is.
+// Speed ramp: signed-delta, nested-selector (brought to Drift parity in
+// the automation-replacement sweep, see docs/planned-features.md). Ships in
+// v2.14. Pick a target (slider24), then slider25 is the `by` amount for THAT
+// target; all 6 targets ramp in parallel and the selector only chooses which
+// one slider25 is editing. Same 6 targets as Drift (Rate Value, Depth dB,
+// Pan Sweep Rate, On Duration %, Attack %, Release %). Engage (slider27) is a
+// freeze/resume gate (NOT a restart edge); only transport play resets ramp_t.
+// A ~100 ms smoother sits between the Rate slider and freq so manual Rate
+// tweaks don't click.
 //
-// In BPM/Hz modes negative slider24 = slower. In Seconds mode
-// (period) positive slider24 = slower (longer period).
+// Units per target match Drift. For the rate-type targets (Rate Value, Pan
+// Sweep Rate) mode-direction is handled the same way drift does it — in
+// BPM/Hz modes negative `by` = slower, in Seconds mode positive `by` = slower
+// (longer period). Depth is dB, the three % targets are percentage points.
 //
-// Engage is a freeze/resume gate (NOT a restart edge); only
-// transport play resets ramp_t. A ~100 ms smoother sits between
-// the Rate slider and freq so manual Rate tweaks don't click.
-//
-// Migration from v2.7: slider24 changed from multiplier (0.1-4.0)
-// to signed delta. Old projects' multiplier value interprets as a
-// tiny delta — Speed Ramp effectively "off" until reconfigured.
-slider24:0<-1000,1000,0.001>Speed ramp by (in rate's current unit)
-slider25:0<0,60,0.1>Speed ramp duration (minutes)
-slider26:0<0,1,1{Off,On}>Speed ramp engage
-slider27:0<0,60,0.1>Speed ramp start delay (minutes)
+// The Speed ramp target selector is slider24 (top of this block) so that in
+// the UI / NVDA parameter order it reads ABOVE the by/duration/engage
+// controls it governs. Achieving that meant renumbering the Speed Ramp +
+// Drift blocks (REAPER orders sliders by ID, not file position): Speed Ramp
+// is now 24-28, Drift is 29-33. Existing Tremolo projects reset their Speed
+// Ramp + Drift configs on upgrade (both off-by-default; the tremolo sound on
+// sliders 1-23 is untouched). Re-add the instance for clean defaults, or
+// reconfigure. See the manual's migration note.
+slider24:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Speed ramp target
+slider25:0<-1000,1000,0.001>Speed ramp by (units match target)
+slider26:0<0,60,0.1>Speed ramp duration (minutes)
+slider27:0<0,1,1{Off,On}>Speed ramp engage
+slider28:0<0,60,0.1>Speed ramp start delay (minutes)
 
-// Per-target drift: nested-selector pattern matching Womb v3 / the
-// rest of the v2.9 sweep. Pick a target (slider28), then sliders 29-32
-// hold THAT target's drift config. Switching the selector saves
-// current values to the old target's memory slot and loads the new
-// target's values into the sliders. All 6 targets drift in parallel;
-// the selector just chooses which one you're currently editing.
+// Per-target drift: nested-selector pattern matching Womb v3 / the rest of
+// the sweep. Pick a target (slider29), then sliders 30-33 hold THAT target's
+// drift config. Switching the selector saves current values to the old
+// target's memory slot and loads the new target's values into the sliders.
+// All 6 targets drift in parallel; the selector just chooses which one you're
+// currently editing.
 //
 // Targets:
-//   Rate Value      — wanders the tremolo rate (the old drift target).
+//   Rate Value      — wanders the tremolo rate.
 //   Depth dB        — wanders the modulation depth.
 //   Pan Sweep Rate  — wanders the Pan Sweep Rate (pan modes 9/10 only).
 //   On Duration %   — wanders the on-portion of each cycle.
 //   Attack %        — wanders the attack ramp length.
 //   Release %       — wanders the release ramp length.
 //
-// Period unit is tremolo cycles for ALL targets, scaled by Speed Ramp
-// (so the wave-per-cycle relationship stays constant under wind-down).
-// For slow wall-clock-feel drift, set a long period.
+// Period unit is tremolo cycles for ALL targets, scaled by Speed Ramp (so the
+// wave-per-cycle relationship stays constant under wind-down). For slow
+// wall-clock-feel drift, set a long period.
 //
-// Up/Down amount is in the target's natural unit: the rate's current
-// unit (BPM / Seconds / Hz) for Rate Value, dB for Depth, the Pan
-// Sweep Rate's unit for Pan Sweep Rate, percent for the three %
-// targets. The 0-100 range covers all of them; rate/pan-rate targets
-// in Hz mode use the low end.
-//
-// Migration from v2.8: the old flat drift block (musical_up/down/
-// period, slow_up/down/period, drift_shape on sliders 28-34) was 7
-// sliders covering Rate Value only. v2.9 is 5 sliders covering 6
-// independent targets, reusing slider IDs 28-32; sliders 33 and 34
-// are no longer declared. Old projects' slider values get reinterpreted
-// (selector defaults to Rate Value; non-zero amounts on 29-30 produce
-// drift on Rate Value). Reset drift sliders to defaults after upgrade
-// and reconfigure.
-slider28:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Drift target
-slider29:0<0,100,0.01>Drift up amount (units match target)
-slider30:0<0,100,0.01>Drift down amount (units match target)
-slider31:8<1,1000,1>Drift period (cycles)
-slider32:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Up/Down amount is in the target's natural unit: the rate's current unit
+// (BPM / Seconds / Hz) for Rate Value, dB for Depth, the Pan Sweep Rate's
+// unit for Pan Sweep Rate, percent for the three % targets. The 0-100 range
+// covers all of them; rate/pan-rate targets in Hz mode use the low end.
+// (Drift IDs shifted +1 from the old 28-32 layout in the v2.14 reorg above —
+// same reset story.)
+slider29:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Drift target
+slider30:0<0,100,0.01>Drift up amount (units match target)
+slider31:0<0,100,0.01>Drift down amount (units match target)
+slider32:8<1,1000,1>Drift period (cycles)
+slider33:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -297,11 +297,12 @@ rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 slider2 == 0 ? (freq_smoothed = slider1) :
 slider2 == 1 ? (freq_smoothed = 1 / max(slider1, 0.001)) :
                (freq_smoothed = slider1 / 60);
-// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
-// only transport play resets ramp_t.
+// Speed Ramp state. Engage (global) is a freeze/resume gate, not an edge;
+// only transport play resets the per-target ramp clocks. As of v2.14 the
+// ramp is PER-TARGET (own by/duration/start-delay/clock per target; banks
+// below). speed_scale_current is the Rate-Value ramp factor (recomputed each
+// sample).
 speed_scale_current      = 1.0;
-speed_ramp_t             = 0.0;
-speed_ramp_delay_elapsed = 0;
 
 // --- v2.9 Drift target memory banks ---
 //
@@ -326,10 +327,20 @@ target_drift_prev   = 1104;
 target_drift_curr   = 1120;
 target_drift_offset = 1136;
 
-// CONFIG bank (drift up/down/period/shape + selector tracker) — guarded
-// by drift_cfg_inited so the @init re-run on every transport play (Path A
-// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
-// restores saved configs on project reload.
+// Speed ramp per-target banks (v2.14). Mirror the drift banks; 16-slot-spaced
+// after target_drift_offset (1136). `by` / duration / start-delay are CONFIG
+// (survive transport, restored by @serialize); ramp_t / delay_elapsed are
+// RUNTIME (reset every @init / transport play).
+speed_ramp_by_mem            = 1152;  // signed delta per target (CONFIG)
+speed_ramp_dur_mem           = 1168;  // duration minutes per target (CONFIG)
+speed_ramp_delay_mem         = 1184;  // start-delay minutes per target (CONFIG)
+speed_ramp_ramp_t_mem        = 1200;  // ramp progress 0..1 per target (RUNTIME)
+speed_ramp_delay_elapsed_mem = 1216;  // delay sample counter per target (RUNTIME)
+
+// CONFIG banks (drift up/down/period/shape + speed-ramp by/duration/start-delay
+// + selector trackers) — guarded by drift_cfg_inited so the @init re-run on
+// every transport play (Path A render fix, no ext_noinit) does NOT wipe the
+// user's setup. @serialize restores saved configs on project reload.
 drift_cfg_inited != 1 ? (
   i = 0;
   loop(N_TARGETS,
@@ -337,19 +348,25 @@ drift_cfg_inited != 1 ? (
     target_drift_down[i]  = 0;
     target_drift_per[i]   = 8;
     target_drift_shape[i] = 0;
+    speed_ramp_by_mem[i]    = 0;
+    speed_ramp_dur_mem[i]   = 0;
+    speed_ramp_delay_mem[i] = 0;
     i += 1;
   );
   last_target_select = 0;
+  last_sr_target     = 0;
   drift_cfg_inited = 1;
 );
 
-// Drift RUNTIME resets on EVERY @init (every transport play) — phase 0.
+// Drift + speed-ramp RUNTIME resets on EVERY @init (every transport play).
 i = 0;
 loop(N_TARGETS,
   target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
+  speed_ramp_ramp_t_mem[i]        = 0;
+  speed_ramp_delay_elapsed_mem[i] = 0;
   i += 1;
 );
 
@@ -416,15 +433,15 @@ rest_output_mode = slider23;
 // in @sample. Only transport play resets ramp_t.
 
 // Drift target selector save/restore (nested-selector pattern).
-// Switching slider28 saves sliders 29-32 into the OLD target's slot,
-// then loads the NEW target's stored config into sliders 29-32.
+// Switching slider29 saves sliders 30-33 into the OLD target's slot,
+// then loads the NEW target's stored config into sliders 30-33.
 // Otherwise captures live edits to the current target's slot. All 6
 // targets drift in parallel from @sample regardless of selection.
-sel_target = slider28;
-sel_up     = slider29;
-sel_down   = slider30;
-sel_per    = slider31;
-sel_shape  = slider32;
+sel_target = slider29;
+sel_up     = slider30;
+sel_down   = slider31;
+sel_per    = slider32;
+sel_shape  = slider33;
 
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
@@ -432,14 +449,14 @@ last_target_select != sel_target ? (
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
 
-  slider29 = target_drift_up[sel_target];
-  slider30 = target_drift_down[sel_target];
-  slider31 = target_drift_per[sel_target];
-  slider32 = target_drift_shape[sel_target];
-  slider_automate(slider29);
+  slider30 = target_drift_up[sel_target];
+  slider31 = target_drift_down[sel_target];
+  slider32 = target_drift_per[sel_target];
+  slider33 = target_drift_shape[sel_target];
   slider_automate(slider30);
   slider_automate(slider31);
   slider_automate(slider32);
+  slider_automate(slider33);
 
   last_target_select = sel_target;
 ) : (
@@ -447,6 +464,35 @@ last_target_select != sel_target ? (
   target_drift_down[sel_target]  = sel_down;
   target_drift_per[sel_target]   = sel_per;
   target_drift_shape[sel_target] = sel_shape;
+);
+
+// Speed ramp target selector save/restore (nested-selector, mirrors the drift
+// block above). slider24 = target; slider25 = per-target `by`; slider26 =
+// per-target duration; slider28 = per-target start delay (all three per-target
+// as of v2.14). slider27 (engage) stays GLOBAL. Switching slider24 saves the
+// three per-target sliders into the OLD target's slots, then loads the NEW
+// target's stored values. Otherwise captures live edits. All targets ramp in
+// parallel from @sample, each on its own duration/delay clock.
+sr_sel_target = slider24;
+sr_sel_by     = slider25;
+sr_sel_dur    = slider26;
+sr_sel_delay  = slider28;
+
+last_sr_target != sr_sel_target ? (
+  speed_ramp_by_mem[last_sr_target]    = sr_sel_by;
+  speed_ramp_dur_mem[last_sr_target]   = sr_sel_dur;
+  speed_ramp_delay_mem[last_sr_target] = sr_sel_delay;
+  slider25 = speed_ramp_by_mem[sr_sel_target];
+  slider26 = speed_ramp_dur_mem[sr_sel_target];
+  slider28 = speed_ramp_delay_mem[sr_sel_target];
+  slider_automate(slider25);
+  slider_automate(slider26);
+  slider_automate(slider28);
+  last_sr_target = sr_sel_target;
+) : (
+  speed_ramp_by_mem[sr_sel_target]    = sr_sel_by;
+  speed_ramp_dur_mem[sr_sel_target]   = sr_sel_dur;
+  speed_ramp_delay_mem[sr_sel_target] = sr_sel_delay;
 );
 
 
@@ -496,25 +542,37 @@ rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
 // the speed ramp. Drift offsets are added below.
 freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
 
-// Advance speed_ramp_t while engaged + duration > 0 + past start
-// delay. Engage off freezes ramp_t; engaging on resumes from there.
-slider26 && slider25 > 0 ? (
-  speed_ramp_delay_samples = slider27 * 60 * srate;
-  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
-    speed_ramp_delay_elapsed += 1;
-  ) : (
-    speed_ramp_t += 1.0 / (srate * slider25 * 60);
-    speed_ramp_t = min(speed_ramp_t, 1.0);
+// Advance each target's own ramp clock (v2.14 per-target timeline). Engage
+// (slider27, GLOBAL) is the freeze/resume gate: while On, each target whose
+// duration > 0 advances its own ramp_t 0->1 over its own duration, after its
+// own start delay; while Off, all clocks freeze and resume. Only transport
+// play (via @init) resets them.
+slider27 ? (
+  i = 0;
+  loop(N_TARGETS,
+    speed_ramp_dur_mem[i] > 0 ? (
+      sr_delay_samples = speed_ramp_delay_mem[i] * 60 * srate;
+      speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
+        speed_ramp_delay_elapsed_mem[i] += 1;
+      ) : (
+        speed_ramp_ramp_t_mem[i] += 1.0 / (srate * speed_ramp_dur_mem[i] * 60);
+        speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+      );
+    );
+    i += 1;
   );
 );
 
-// Signed-delta Speed Ramp: effective rate value = slider1 + ramp_t *
-// slider24 (both in the rate's current unit). Convert to Hz the same
-// way freq_raw is computed from slider1 above, then express as a
-// multiplicative factor on freq so the existing combined_scale-based
-// audio path keeps working. No "snapshot at engage" — live edits
-// adjust trajectory.
-effective_rate_val = rate_val + speed_ramp_t * slider24;
+// Each target's live ramp offset is speed_ramp_ramp_t_mem[t] *
+// speed_ramp_by_mem[t], applied at that target's consumption site alongside
+// the matching drift offset.
+//
+// Rate Value (target 0): effective rate value = slider1 + ramp offset (in
+// the rate's current unit). Convert to Hz the same way freq_raw is computed
+// above, then express as a multiplicative factor on freq so the existing
+// combined_scale-based audio path keeps working. No "snapshot at engage" —
+// live edits adjust trajectory.
+effective_rate_val = rate_val + speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
 rate_mode == 0 ? (effective_rate_hz = effective_rate_val) :
 rate_mode == 1 ? (effective_rate_hz = 1 / max(effective_rate_val, 0.001)) :
                  (effective_rate_hz = effective_rate_val / 60);
@@ -585,22 +643,22 @@ rate_drift_user != 0 ? (
 freq = max(freq + rate_drift_hz, 0.001);
 // ===== DRIFT BLOCK END =====
 
-// Depth dB drift (target 1): fold into depth, then compute amount/sc.
-// Clamp to the slider's range (-60..0 dB).
-eff_depth = max(-60, min(0, depth + target_drift_offset[1]));
+// Depth dB drift + Speed Ramp (target 1): fold into depth, then compute
+// amount/sc. Clamp to the slider's range (-60..0 dB).
+eff_depth = max(-60, min(0, depth + target_drift_offset[1] + speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1]));
 amount = 2 ^ (eff_depth / 6);
 sc     = 0.5 * amount;
 amount = 1 - amount;
 
-// On Duration / Attack / Release drift (targets 3, 4, 5): fold into
-// the per-cycle fractions, clamped to [0, 100] %.
-eff_dur_pct = max(0, min(100, dur_pct + target_drift_offset[3]));
-eff_att_pct = max(0, min(100, att_pct + target_drift_offset[4]));
-eff_rel_pct = max(0, min(100, rel_pct + target_drift_offset[5]));
+// On Duration / Attack / Release drift + Speed Ramp (targets 3, 4, 5): fold
+// into the per-cycle fractions, clamped to [0, 100] %.
+eff_dur_pct = max(0, min(100, dur_pct + target_drift_offset[3] + speed_ramp_ramp_t_mem[3] * speed_ramp_by_mem[3]));
+eff_att_pct = max(0, min(100, att_pct + target_drift_offset[4] + speed_ramp_ramp_t_mem[4] * speed_ramp_by_mem[4]));
+eff_rel_pct = max(0, min(100, rel_pct + target_drift_offset[5] + speed_ramp_ramp_t_mem[5] * speed_ramp_by_mem[5]));
 
-// Pan Sweep Rate drift (target 2): fold into the pan sweep value used
-// by pan modes 9/10 below (in the Pan Sweep Rate's own unit).
-eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[2]);
+// Pan Sweep Rate drift + Speed Ramp (target 2): fold into the pan sweep
+// value used by pan modes 9/10 below (in the Pan Sweep Rate's own unit).
+eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[2] + speed_ramp_ramp_t_mem[2] * speed_ramp_by_mem[2]);
 
 period   = 1 / max(freq, 0.00001);
 on_secs  = (eff_dur_pct / 100.0) * period;
@@ -759,13 +817,44 @@ pan_enabled ? (
 );  // close start-delay else branch
 
 @serialize
-// Persist per-target drift configurations. Without this, only the
-// most-recently-edited target's drift slider values survive a project
-// save/load because sliders 29-32 hold whichever target was selected
-// at save time. 6 targets × 4 config fields = 24 values; plus the
-// selector.
-file_mem(0, target_drift_up,    N_TARGETS);
-file_mem(0, target_drift_down,  N_TARGETS);
-file_mem(0, target_drift_per,   N_TARGETS);
-file_mem(0, target_drift_shape, N_TARGETS);
-file_var(0, last_target_select);
+// Persist per-target drift AND speed-ramp configurations. Without this,
+// only the most-recently-edited target's values survive a save/load because
+// the sliders hold whichever target was selected at save time.
+//
+// VERSION-GUARDED (CLAUDE.md @serialize gotcha): leads with a magic marker so
+// format changes degrade to defaults instead of scrambling. Magic bumped to
+// 2100000 + N_TARGETS in v2.14 when Speed Ramp went PER-TARGET timeline (added
+// the duration + start-delay banks); an older 2000000-base blob won't match
+// and falls through to @init defaults (drift + ramp reset — acceptable, this
+// is pre-release). Marker is well above any plausible first-field value and
+// float32-exact (< 2^24).
+sr_magic = 2100000 + N_TARGETS;
+file_var(0, sr_magic);
+sr_magic == 2100000 + N_TARGETS ? (
+  file_mem(0, target_drift_up,     N_TARGETS);
+  file_mem(0, target_drift_down,   N_TARGETS);
+  file_mem(0, target_drift_per,    N_TARGETS);
+  file_mem(0, target_drift_shape,  N_TARGETS);
+  file_var(0, last_target_select);
+  file_mem(0, speed_ramp_by_mem,    N_TARGETS);
+  file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
+  file_mem(0, speed_ramp_delay_mem, N_TARGETS);
+  file_var(0, last_sr_target);
+
+  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
+  // on WRITE (save/undo) it is < 0. @serialize is the only section guaranteed
+  // to run on both load AND duplicate, so it re-establishes the bank<->slider
+  // invariant here: force the visible config sliders to match the restored
+  // bank for the restored selectors, correcting any transient @slider clobber
+  // (which would otherwise zero whichever target was selected on the copy).
+  file_avail(0) >= 0 ? (
+    slider25 = speed_ramp_by_mem[last_sr_target];        // Speed ramp `by`
+    slider26 = speed_ramp_dur_mem[last_sr_target];       // Speed ramp duration
+    slider28 = speed_ramp_delay_mem[last_sr_target];     // Speed ramp start delay
+    slider30 = target_drift_up[last_target_select];      // Drift up
+    slider31 = target_drift_down[last_target_select];    // Drift down
+    slider32 = target_drift_per[last_target_select];     // Drift period
+    slider33 = target_drift_shape[last_target_select];   // Drift shape
+    sliderchange(-1);
+  );
+);
