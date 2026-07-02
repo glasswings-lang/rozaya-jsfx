@@ -280,3 +280,74 @@ Add a **"Random"** option to Auto-morph (`slider15`, currently Off / Sweep / Gli
 - The user "types into a box" — just Notepad's, not the plugin's — sidestepping the string-slider wall entirely. Bonus: the kin_bridge can also inject a pattern live.
 
 Same family as Polyrhythm Phase's per-voice sequencing. All three compose into a capture "sampler/sequencer," dyscalculia-clean: Random needs no numbers; the file-pattern is typed in an accessible editor, never dialed on a slider.
+
+---
+
+## Automation-replacement sweep — Drift + Speed Ramp reach *everything adjustable* (captured 2026-07-02)
+
+**Why this exists.** Drift + Speed Ramp are the in-plugin substitute for REAPER automation — Rozaya is blind and can't drive automation envelopes through OSARA (see `project-kin-bridge-reaper-live-control`). The test that names this sweep: *"will this replace automation?"* — for every plugin, can Drift (repeating wander) + Speed Ramp (one-time ride) reach every parameter you'd realistically want to move over the course of a piece? Today the answer is **no** in three specific ways. Trigger: building a real session, Rozaya wanted **breaths-per-minute** as a Drift *and* Speed Ramp target in Womb v3 and it wasn't there — you can ramp the four breath segments individually but not the breath *rate* as one felt control.
+
+**The audit (2026-07-02).** Current target coverage across the suite:
+
+| Plugin | Drift targets | Speed Ramp targets | Gap |
+|---|---|---|---|
+| Womb v3 | 7 | 7 | timbre (already spec'd above, "Womb v3 — expand Drift + Speed Ramp target lists"); **no breaths-per-minute aggregate** |
+| Breath Gen | 4 segments | 4 segments | **no breaths-per-minute aggregate**; no breath timbre (vol / filter) |
+| Heartbeat | 4 | 4 | no heart timbre (S1/S2 freq·decay, vol, width) |
+| Rhythm Track | 2 (Tempo, Swing) | **1 (BPM only)** | Speed Ramp missing Swing |
+| Shepard Scale | 4 | **1 (BPM only)** | Speed Ramp missing Note Len / Attack / Release |
+| Shepard Tone | 11 | **1 (Rate only)** | Speed Ramp missing 10 |
+| Full Feature Tremolo | 6 | **1 (Rate only)** | Speed Ramp missing 5 |
+| Full Feature Sweeping Filter | 6 | **1 (Rate only)** | Speed Ramp missing 5 (Freq Low/High, Reso, Wet/Dry, Pan) |
+| Sweep Dwell Filter | 6 | 4 | Speed Ramp missing Pan Sweep Rate, Resonance |
+| Polyrhythm Phase | 24 | 24 | parity ✓ |
+| Melody Phase | 28 | **1 (Rate only)** | Speed Ramp missing 27 |
+| Resonance Bank | 5 (per band) | **none** | no Speed Ramp at all |
+
+Root cause of the biggest column of gaps: the **2026-06-12 nested-selector drift sweep** upgraded every plugin's *Drift* to multi-target, but *Speed Ramp* was mostly left at the single-target shape from the earlier (2026-05-30) Speed Ramp sweep. So on 6 plugins you can *wander* a parameter but can't *ride it down once* — and the one-time ride is the wind-down move that most directly replaces an automation envelope.
+
+### Three jobs
+
+**Job A — Speed Ramp → Drift parity (the bulk of the win, lowest risk).**
+Port the nested-selector pattern to Speed Ramp on the 6 single-target plugins (Melody, Shepard Tone, Shepard Scale, Tremolo, Sweeping Filter, Rhythm Track), and give Resonance Bank a Speed Ramp for the first time. Reuse each plugin's *existing Drift target list verbatim* — Drift already proved the per-target consumption math and the additive-vs-ratio audio-path split (CLAUDE.md, drift sweep banner), so Speed Ramp just needs the same target enum, a per-target `by` memory bank, and the offset folded in at the same consumption sites Drift already uses. This is mechanical and category-tested.
+- **Slider shape per plugin (matches Womb v3):** `Speed ramp target` (selector, enum range `(0,N,1)` = Drift's list) + `Speed ramp by` (signed delta, units match target) + `Speed ramp duration (minutes)` + `Speed ramp engage {Off,On}` + `Speed ramp start delay (minutes)`. Where a single-target Speed Ramp already has some of these, keep the IDs and only *add* the selector + per-target bank (slider IDs are primary keys — never renumber; append the selector at the end).
+- **Resonance Bank** is the one that gains the whole 5-slider block from scratch, per-band like its Drift (outer band selector already exists; Speed Ramp's target selector is the inner one, same nesting as Drift).
+- **Engage = freeze/resume gate, transport-only restart** — the settled semantics from the suite Speed Ramp sweep. No engage-edge detection.
+
+**Job B — breaths-per-minute aggregate target (the trigger; a new *kind* of target).**
+Breath rate isn't one slider — it's the four segment durations (Inhale, Top pause, Exhale, Bottom pause). A breaths-per-minute Drift/Ramp target is a **proportional multiplier across all four segments in lockstep**, preserving I:E ratios — *exactly the sigh-mechanism math Womb v3 already ships*, and the same category as Polyrhythm's "Base Rate" (one control scaling all 8 voices via an internal ratio). So it's a **ratio-based aggregate**, precedent-backed.
+- **Append** it to both the Drift and Speed Ramp target lists (index 7+ on Womb v3, index 4+ on Breath Gen) — never insert mid-list (preserves existing per-index configs on load).
+- Sits *alongside* the individual-segment targets, not replacing them: you can ramp the whole breath rate down **and** drift one segment independently. They compose at the consumption site.
+- **Consumption math:** the target produces a breath-rate scale `s` (from the signed BPM delta → ratio, like polyrhythm/melody's ratio targets). Each segment's effective duration becomes `(base_segment + per-segment_drift_offset) / s` (longer period = slower rate). Compose with sigh multiplier and any Speed Ramp on the same target the usual way.
+- **UX:** "Speed ramp by −4 breaths/min," signed delta in the natural unit. In BPM-style terms negative = slower (intuitive), matching the suite's mode-direction convention. Distinct from the existing one-way **Breaths per minute rescale slider** (which stays as-is — it's a setup tool that rescales the four sliders once; the new target is live modulation of the rate). Document the two side by side so they don't read as duplicates.
+- Applies to **Womb v3 and Breath Generator** (both have the four-segment breath model). Heartbeat has no breath segments — n/a there.
+
+**Job C — timbre / level targets.**
+So a dysregulated→resting descent can *darken* natively, not just slow down — removes the `kin_render.lua` asterisk (see `project-womb-nervous-system-states`, `project-kin-bridge-reaper-live-control`).
+- **Womb v3** — already fully spec'd above under "Womb v3 — expand Drift + Speed Ramp target lists" (~18 core timbre additions across heart / breath / bloodflow). Fold that entry into this sweep; do it in the same Womb pass as Job B.
+- **Heartbeat Generator** — the standalone-sibling equivalent: S1/S2 frequency, S1/S2 decay, HB master volume, stereo width (mirror whatever Womb's heart layer exposes).
+- **Breath Generator** — breath volume + breath filter params, mirroring Womb's breath-timbre set.
+- Effects (Tremolo / Sweeping Filter / Sweep Dwell / Resonance Bank) largely already expose their "timbre" params (filter freq, resonance, depth, wet/dry) *as Drift targets* — Job A brings those to Speed Ramp automatically. Check each for any adjustable param still absent from both lists and append if a real use case wants it.
+
+### Proposed ordering
+
+1. **Womb v3 + Breath Generator** — breaths-per-minute aggregate (Job B) on both, plus Womb timbre (Job C, already spec'd), plus Breath timbre. Closes the exact wall Rozaya hit. *(Rozaya's chosen order: write this plan first, then do "the easy part" — so the mechanical Job A batch may actually run before or interleaved with this; confirm at start of the coding session.)*
+2. **Speed Ramp → multi-target parity (Job A)** across Melody, Shepard Tone, Shepard Scale, Tremolo, Sweeping Filter, Rhythm Track; + Resonance Bank gains Speed Ramp. The mechanical, highest-hole-count batch.
+3. **Heartbeat timbre targets (Job C tail).**
+
+### Conventions / gotchas that bite this specific sweep
+
+- **Version the `@serialize` stream on EVERY plugin touched.** Both the per-target Drift bank *and* the new per-target Speed Ramp `by` bank change size here. Lead each with the count-encoded magic marker so old project blobs fall through to defaults instead of scrambling (CLAUDE.md `@serialize` gotcha — this is the highest-risk part of the sweep). A mismatched blob fabricates phantom drift/ramp the user never configured.
+- **Append-only target order** on Womb v3 / Breath Gen (and anywhere a list grows) — existing indices keep their meaning on load. New targets go at the end of the enum.
+- **Layout convention (DECIDED 2026-07-02, Rozaya's call): selector-first, renumber accepted.** The Speed Ramp *target selector* must read ABOVE the by/duration/engage controls it governs — in the plugin UI and, critically, in NVDA's parameter-list order (a selector that comes *after* the value it governs is confusing to navigate by ear). REAPER orders sliders by ID, not file position, so achieving this means **renumbering** the Speed Ramp (and usually the adjacent Drift) block into a clean contiguous group with the selector at the lowest ID. This overrides the usual "append at END / never renumber" habit **for this sweep only** — it's a deliberate, one-time, release-boundary renumber, not an accidental mid-list insert. Cost per plugin: existing projects reset their Speed Ramp + Drift configs on upgrade (both off-by-default; the plugin's *sound* sliders are untouched). The `@serialize` version-guard already forces a drift reset anyway, so the marginal cost is small. Standard fix for users: re-add the instance for clean defaults. Document the renumber in each plugin's manual migration note. *(Prior habit, now superseded for this sweep: "add the selector at the END, don't renumber" — that produced the bad NVDA order Rozaya flagged on Rhythm Track.)*
+- **Additive vs ratio audio-path split** carries over from the drift sweep unchanged: rate targets in ratio-path plugins (Shepard Tone, Tremolo, Sweeping Filter, Melody, Polyrhythm, and the new breaths-per-minute aggregate) convert the additive `by` to an internal multiplicative ratio; additive-on-value targets add in native units at the use site.
+- **Nested-selector save/restore** in `@slider`: on selector change, save current visible slider values into the OLD target's bank slot, then load the NEW target's — the well-tested Womb v3 / Resonance Bank pattern. All targets ramp/drift in parallel; the selector only chooses which one is being *edited*, never which one is *running* (the bug Rozaya caught in Womb v3 — switching the selector must not stop a running ramp).
+- **Cheap by design:** slider count stays at 5 per system (selector + 4) regardless of target count. Only the enum range and per-target memory banks grow. So this is almost entirely internal work, few new sliders.
+- **Manual:** update each plugin's Drift + Speed Ramp target lists in `docs/rozaya_jsfx_manual.md`; document breaths-per-minute vs the one-way rescale slider explicitly.
+
+### Progress log (this is the sweep's running changelog; user-facing notes go in the v2.14 GitHub release when cut)
+
+- **Rhythm Track — DONE, ear-tested ✓ (2026-07-02, uncommitted).** Job A. Speed Ramp went single-target (Tempo BPM) → nested-selector reaching both Drift targets (Tempo BPM + Swing amount). Added per-target `speed_ramp_by_mem` bank + nested-selector save/restore; per-target offsets applied at the tempo and swing consumption sites; `@serialize` given a version-guard magic (`2000000 + N_TARGETS`) — it previously had none, so this also closes a pre-existing scramble gap. **Reorganized + renumbered per the selector-first convention above:** Speed Ramp is now sliders 17–21 (target / by / duration / engage / start-delay), Drift is 22–26 (target / up / down / period / shape). Both ramps confirmed working by ear (Tempo + Swing, parallel, selector-switch doesn't stop a running ramp). Manual updated (new slider numbers, migration note, and a swing-unit clarification — see next line). **Ships in v2.14.**
+  - *Swing-unit clarity fix (same pass):* Rozaya flagged that "Speed ramp by … units match target" was meaningless when the target is Swing (a bare ±300 range with no felt referent). Not a gap in her knowledge — a labeling gap on our side. The Swing target's `by`/up/down are in the same **swing fraction** as the base Swing slider (−1…+1; 0 = straight, ±1 = full triplet shuffle; grounded in REAPER's −100…+100% swing convention). Manual now spells this out for both the Speed Ramp and Drift Swing target. (Candidate for the dyscalculia sweep later: express Swing in felt/percentage terms rather than a bare −1…1 number.)
+
+**Cadence:** one commit per plugin (manual section bundled), ear-tested by Rozaya before/at commit — the same rhythm as the drift and Speed Ramp sweeps. Not tagged/released until the whole sweep is ear-validated.
