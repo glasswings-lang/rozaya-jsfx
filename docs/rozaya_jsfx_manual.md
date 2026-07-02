@@ -3440,48 +3440,51 @@ For short rests with slow sweep rates the difference between modes is subtle (sm
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (oscillator positions, rest state, cycle counter) and starts fresh in its play period from cycle 0.
 
-### Speed Ramp
+### Speed Ramp (v2.14 nested-selector)
 
-In-plugin sweep-rate morph over time. Lets you slow the glissando illusion down (or speed it up) without touching automation.
+In-plugin one-time morph over time, without automation. As of v2.14 Speed Ramp is nested-selector (same shape as Drift) and reaches the **same eleven targets as Drift** — the global Rate Value, each of the 8 voices' sweep rates, Fade In %, and Fade Out %. All eleven ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Speed ramp by (slider 64)** `-1000 to +1000, step 0.001, default 0`
-Signed delta added to the Rate Value over the duration. **0** = no change (safe default). The delta is interpreted in **the rate's currently-displayed unit** — so:
+**Speed ramp target (slider 64)** `Rate Value / V1 Rate … V8 Rate / Fade In % / Fade Out %, default Rate Value`
+Picks which target the `by` amount applies to. Switching the selector saves slider 65 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Speed Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-- If Rate Mode is **BPM** and Rate Value is 60, setting `by -30` ramps the sweep from 60 BPM → 30 BPM (slower).
-- If Rate Mode is **Hz** and Rate Value is 0.5, setting `by -0.25` ramps from 0.5 Hz → 0.25 Hz (slower).
-- If Rate Mode is **Seconds** (period) and Rate Value is 2, setting `by +1` stretches the period from 2 sec → 3 sec (slower).
+**Speed ramp by (slider 65)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
+Signed delta in the selected target's own unit, applied over the duration. **0** = no change (safe default). For the rate targets (Rate Value + per-voice) the delta is in **the rate's currently-displayed unit**:
 
-In BPM and Hz modes, **negative = slower**. In Seconds mode, **positive = slower** (longer period). The audible pitch of any oscillator is NOT scaled — only the rate at which oscillators sweep through the pitch window. The Play/Rest cycle counter scales with the ramp too.
+- Rate Mode **BPM**, Rate Value 60, `by -30` → ramps 60 BPM → 30 BPM (slower).
+- Rate Mode **Hz**, Rate Value 0.5, `by -0.25` → ramps 0.5 Hz → 0.25 Hz (slower).
+- Rate Mode **Seconds** (period), Rate Value 2, `by +1` → stretches 2 sec → 3 sec (slower).
 
-**Speed ramp duration (slider 65)** `0–60 minutes, default 0` · **Speed ramp engage (slider 66)** `Off / On, default Off` · **Speed ramp start delay (slider 67)** `0–60 minutes, default 0`
+So in **BPM and Hz modes, negative = slower**; in **Seconds mode, positive = slower** (longer period) — the same mode-direction rule as Drift, because the offset is added in the native unit before conversion. For **Fade In / Out** targets the delta is in percentage points. The audible pitch of any oscillator is NOT scaled — only the sweep rate. The Play/Rest cycle counter scales with the Rate Value ramp too.
+
+**Speed ramp duration (slider 66)** `0–60 minutes, default 0` · **Speed ramp engage (slider 67)** `Off / On, default Off` · **Speed ramp start delay (slider 68)** `0–60 minutes, default 0`
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes wherever it is and resumes from there on re-engage. Start delay waits N minutes after engage before ramp_t actually starts advancing.
 
-**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes don't.
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes (engage toggle, selector switch, anything) don't.
 
-**Migration from v2.7:** slider 64 changed from a multiplier (0.1–4.0) to a signed delta in rate-units. Old projects' multiplier value will be interpreted as a tiny delta — Speed Ramp effectively "off" until reconfigured.
+**Migration to v2.14 (reorganization + renumber):** Speed Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Speed Ramp block (now sliders 64–68) and the Drift block (now sliders 69–73). **Existing Shepard Tone projects lose their Speed Ramp and Drift settings on upgrade** — both are off-by-default, and the tone sound itself (sliders 1–63) is untouched. Re-add the plugin instance for clean defaults, or re-enter your Speed Ramp / Drift settings. *(Older history: pre-v2.14 Speed Ramp was single-target Rate Value on slider 64; and pre-v2.8 it was a multiplier 0.1–4.0.)*
 
 ### Drift (v2.9 nested-selector)
 
 Slow organic wander applied independently to any of eleven targets: the global Rate Value, each of the 8 voices' individual sweep rates, Fade In %, or Fade Out %. Each target can have its own drift configuration; all eleven drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-Same pattern as Womb v3's drift and the rest of the v2.9 sweep, scaled up to the largest target list in the suite. Switching the **Drift target** selector saves the current sliders 69-72 into the old target's memory slot, then loads the new target's saved values. All eleven configurations persist across project save/load.
+Same pattern as Womb v3's drift and the rest of the sweep, scaled up to the largest target list in the suite (shared with Speed Ramp as of v2.14). Switching the **Drift target** selector saves the current sliders 70-73 into the old target's memory slot, then loads the new target's saved values. All eleven configurations persist across project save/load.
 
 The per-voice rate targets are what make this plugin's drift special: with **Independent** drift mode and a different drift configuration on each voice, every voice wanders its own sweep rate on its own schedule — the voices breathe against each other, drifting in and out of phase. This is the continuous-glissando analogue of Polyrhythm Phase's per-voice character.
 
-**Drift target** `Rate Value / V1 Rate … V8 Rate / Fade In % / Fade Out %, default Rate Value`
-Picks which target's drift configuration sliders 69-72 reflect. Switching the selector saves and loads automatically — no live edits are lost.
+**Drift target (slider 69)** `Rate Value / V1 Rate … V8 Rate / Fade In % / Fade Out %, default Rate Value`
+Picks which target's drift configuration sliders 70-73 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount** `0.0–100.0, default 0` (units match target)
+**Drift up amount (slider 70)** `0.0–100.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are the rate's current unit (BPM / Seconds / Hz) for Rate Value and per-voice targets, percent for Fade In/Out. The 0-100 range covers Fade fully and BPM-mode rate drift; in **Hz mode** you'll use the low end (e.g. 0.1-0.5), in **Seconds mode** small period offsets. 0 = drift off on the up side.
 
-**Drift down amount** `0.0–100.0, default 0` (units match target)
+**Drift down amount (slider 71)** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (cycles)** `1–1000, default 8`
+**Drift period (slider 72, cycles)** `1–1000, default 8`
 How many glissando cycles one full drift wave takes for this target. All eleven targets use glissando cycles (paced by the global Rate Value clock) as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
-**Drift shape** `Sine / Triangle / Random, default Sine`
+**Drift shape (slider 73)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### How rate drift composes (internal note)

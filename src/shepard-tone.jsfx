@@ -160,65 +160,66 @@ slider62:0<0,1000,1>Rest for (cycles)
 // Freeze always resumes at the pre-rest position.
 slider63:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
-// Speed ramp: signed-delta on Rate Value, expressed in the rate's
-// current unit (BPM if Rate Mode = BPM, seconds if = Seconds, Hz if
-// = Hz). The effective rate value = slider3 + ramp_t * slider64,
-// then converted to Hz the same way slider3 is converted.
+// Speed ramp: signed-delta, nested-selector (brought to Drift parity in
+// the automation-replacement sweep, see docs/planned-features.md). Ships
+// in v2.14. Pick a target (slider64), then slider65 is the `by` amount for
+// THAT target; all 11 targets ramp in parallel and the selector only chooses
+// which one slider65 is editing. Same 11 targets as Drift (Rate Value,
+// V1-V8 Rate, Fade In %, Fade Out %). Engage (slider67) is a freeze/resume
+// gate (NOT a restart edge); only transport play resets ramp_t.
 //
-// In BPM mode at 60 BPM, slider64 = -30 ramps the sweep rate from
-// 60 → 30 BPM (slower). In Hz mode at 0.5 Hz, slider64 = -0.25 ramps
-// from 0.5 → 0.25 Hz. In Seconds mode (period units), positive
-// slider64 lengthens the period (slower).
+// Units per target match Drift: the rate's current unit (BPM / Seconds / Hz)
+// for Rate Value + per-voice rates, percent for the Fades. Mode-direction is
+// handled the same way drift does it — the `by` is added in the native unit
+// BEFORE rate_to_hz, so in Seconds mode a positive `by` lengthens the period
+// (slower) while in BPM/Hz mode a positive `by` speeds up. In BPM mode at
+// 60 BPM, Rate Value `by` = -30 ramps the sweep 60 → 30 BPM.
 //
-// Engage is a freeze/resume gate (NOT a restart edge); only transport
-// play resets ramp_t. Migration from v2.7: slider64 changed from
-// multiplier (0.1-4.0) to signed delta. Old projects' multiplier
-// value is interpreted as a tiny delta — Speed Ramp effectively
-// "off" until reconfigured.
-slider64:0<-1000,1000,0.001>Speed ramp by (in rate's current unit)
-slider65:0<0,60,0.1>Speed ramp duration (minutes)
-slider66:0<0,1,1{Off,On}>Speed ramp engage
-slider67:0<0,60,0.1>Speed ramp start delay (minutes)
+// The Speed ramp target selector is slider64 (top of this block) so that in
+// the UI / NVDA parameter order it reads ABOVE the by/duration/engage
+// controls it governs. Achieving that meant renumbering the Speed Ramp +
+// Drift blocks (REAPER orders sliders by ID, not file position): Speed Ramp
+// is now 64-68, Drift is 69-73. Existing Shepard Tone projects reset their
+// Speed Ramp + Drift configs on upgrade (both off-by-default; the tone sound
+// on sliders 1-63 is untouched). Re-add the instance for clean defaults, or
+// reconfigure. See the manual's migration note.
+slider64:0<0,10,1{Rate Value,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Fade In %,Fade Out %}>Speed ramp target
+slider65:0<-1000,1000,0.001>Speed ramp by (units match target)
+slider66:0<0,60,0.1>Speed ramp duration (minutes)
+slider67:0<0,1,1{Off,On}>Speed ramp engage
+slider68:0<0,60,0.1>Speed ramp start delay (minutes)
 
-// Per-target drift: nested-selector pattern matching Womb v3 / the
-// rest of the v2.9 sweep. Pick a target (slider68), then sliders 69-72
-// hold THAT target's drift config. Switching the selector saves
-// current values to the old target's memory slot and loads the new
-// target's values into the sliders. All 11 targets drift in parallel;
-// the selector just chooses which one you're currently editing.
+// Per-target drift: nested-selector pattern matching Womb v3 / the rest of
+// the sweep. Pick a target (slider69), then sliders 70-73 hold THAT target's
+// drift config. Switching the selector saves current values to the old
+// target's memory slot and loads the new target's values into the sliders.
+// All 11 targets drift in parallel; the selector just chooses which one
+// you're currently editing.
 //
 // Targets:
-//   Rate Value  — wanders the master sweep rate (all voices, like the
-//                 old musical drift). Multiplicative on base_rate_hz.
-//   V1-V8 Rate  — wanders each voice's own sweep rate independently.
-//                 In Synced mode the reference is Rate Value; in
-//                 Independent mode it's that voice's Drift/Rate slider.
+//   Rate Value  — wanders the master sweep rate (all voices). Multiplicative
+//                 on base_rate_hz.
+//   V1-V8 Rate  — wanders each voice's own sweep rate independently. In
+//                 Synced mode the reference is Rate Value; in Independent
+//                 mode it's that voice's Drift/Rate slider.
 //   Fade In %   — wanders the window fade-in fraction.
 //   Fade Out %  — wanders the window fade-out fraction.
 //
-// Period unit is glissando cycles (scaled by Speed Ramp) for ALL
-// targets — including Fade %, which is paced by the sweep clock. For
-// slow wall-clock-feel drift, set a long period.
+// Period unit is glissando cycles (scaled by Speed Ramp) for ALL targets —
+// including Fade %, which is paced by the sweep clock. For slow wall-clock-
+// feel drift, set a long period.
 //
-// Up/Down amount is in the target's natural unit: the rate's current
-// unit (BPM / Seconds / Hz) for Rate Value + per-voice targets, and
-// percent for Fade In/Out. The 0-100 range covers Fade fully and BPM-
-// mode rate drift; in Hz mode you'll use the low end (e.g. 0.1-0.5),
-// in Seconds mode small period offsets.
-//
-// Migration from v2.8: the old flat drift block (musical_up/down/
-// period, slow_up/down/period, drift_shape on sliders 68-74) was 7
-// sliders covering Rate Value only. v2.9 is 5 sliders covering 11
-// independent targets, reusing slider IDs 68-72; sliders 73 and 74
-// are no longer declared. Old projects' slider values get reinterpreted
-// (selector defaults to Rate Value; non-zero amounts on 69-70 produce
-// drift on Rate Value). Reset drift sliders to defaults after upgrade
-// and reconfigure.
-slider68:0<0,10,1{Rate Value,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Fade In %,Fade Out %}>Drift target
-slider69:0<0,100,0.01>Drift up amount (units match target)
-slider70:0<0,100,0.01>Drift down amount (units match target)
-slider71:8<1,1000,1>Drift period (cycles)
-slider72:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Up/Down amount is in the target's natural unit: the rate's current unit
+// (BPM / Seconds / Hz) for Rate Value + per-voice targets, and percent for
+// Fade In/Out. The 0-100 range covers Fade fully and BPM-mode rate drift; in
+// Hz mode you'll use the low end (e.g. 0.1-0.5), in Seconds mode small period
+// offsets. (Drift IDs shifted +1 from the old 68-72 layout in the v2.14 reorg
+// above — same reset story.)
+slider69:0<0,10,1{Rate Value,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Fade In %,Fade Out %}>Drift target
+slider70:0<0,100,0.01>Drift up amount (units match target)
+slider71:0<0,100,0.01>Drift down amount (units match target)
+slider72:8<1,1000,1>Drift period (cycles)
+slider73:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 
 @init
@@ -379,10 +380,15 @@ target_drift_prev   = 656;
 target_drift_curr   = 672;
 target_drift_offset = 688;
 
-// CONFIG bank (drift up/down/period/shape + selector tracker) — guarded
-// by drift_cfg_inited so the @init re-run on every transport play (Path A
-// render fix, no ext_noinit) does NOT wipe the user's setup. @serialize
-// restores saved configs on project reload.
+// Speed ramp per-target `by` bank (v2.14). One value per target, mirroring
+// the drift banks. 16-slot-spaced after target_drift_offset (688) at 704.
+// CONFIG (survives transport re-run), guarded with the drift config below.
+speed_ramp_by_mem   = 704;
+
+// CONFIG banks (drift up/down/period/shape + speed-ramp `by` + selector
+// trackers) — guarded by drift_cfg_inited so the @init re-run on every
+// transport play (Path A render fix, no ext_noinit) does NOT wipe the
+// user's setup. @serialize restores saved configs on project reload.
 drift_cfg_inited != 1 ? (
   i = 0;
   loop(N_TARGETS,
@@ -390,9 +396,11 @@ drift_cfg_inited != 1 ? (
     target_drift_down[i]  = 0;
     target_drift_per[i]   = 8;
     target_drift_shape[i] = 0;
+    speed_ramp_by_mem[i]  = 0;
     i += 1;
   );
   last_target_select = 0;
+  last_sr_target     = 0;
   drift_cfg_inited = 1;
 );
 
@@ -522,15 +530,15 @@ rest_mode  = slider63;
 // in @sample. Only transport play resets ramp_t.
 
 // Drift target selector save/restore (nested-selector pattern).
-// Switching slider68 saves sliders 69-72 into the OLD target's slot,
-// then loads the NEW target's stored config into sliders 69-72.
+// Switching slider69 saves sliders 70-73 into the OLD target's slot,
+// then loads the NEW target's stored config into sliders 70-73.
 // Otherwise captures live edits to the current target's slot. All 11
 // targets drift in parallel from @sample regardless of selection.
-sel_target = slider68;
-sel_up     = slider69;
-sel_down   = slider70;
-sel_per    = slider71;
-sel_shape  = slider72;
+sel_target = slider69;
+sel_up     = slider70;
+sel_down   = slider71;
+sel_per    = slider72;
+sel_shape  = slider73;
 
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
@@ -538,14 +546,14 @@ last_target_select != sel_target ? (
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
 
-  slider69 = target_drift_up[sel_target];
-  slider70 = target_drift_down[sel_target];
-  slider71 = target_drift_per[sel_target];
-  slider72 = target_drift_shape[sel_target];
-  slider_automate(slider69);
+  slider70 = target_drift_up[sel_target];
+  slider71 = target_drift_down[sel_target];
+  slider72 = target_drift_per[sel_target];
+  slider73 = target_drift_shape[sel_target];
   slider_automate(slider70);
   slider_automate(slider71);
   slider_automate(slider72);
+  slider_automate(slider73);
 
   last_target_select = sel_target;
 ) : (
@@ -553,6 +561,23 @@ last_target_select != sel_target ? (
   target_drift_down[sel_target]  = sel_down;
   target_drift_per[sel_target]   = sel_per;
   target_drift_shape[sel_target] = sel_shape;
+);
+
+// Speed ramp target selector save/restore (nested-selector, mirrors the
+// drift block above). slider64 is the target; slider65 the per-target `by`.
+// Switching slider64 saves slider65 into the OLD target's slot, then loads
+// the NEW target's stored `by` into slider65. Otherwise captures live edits.
+// All 11 targets ramp in parallel from @sample regardless of selection.
+sr_sel_target = slider64;
+sr_sel_by     = slider65;
+
+last_sr_target != sr_sel_target ? (
+  speed_ramp_by_mem[last_sr_target] = sr_sel_by;
+  slider65 = speed_ramp_by_mem[sr_sel_target];
+  slider_automate(slider65);
+  last_sr_target = sr_sel_target;
+) : (
+  speed_ramp_by_mem[sr_sel_target] = sr_sel_by;
 );
 
 
@@ -567,23 +592,28 @@ last_target_select != sel_target ? (
 
 // Advance speed_ramp_t while engaged + duration > 0 + past start
 // delay. Engage off freezes ramp_t; engaging on resumes from there.
-slider66 && slider65 > 0 ? (
-  speed_ramp_delay_samples = slider67 * 60 * srate;
+slider67 && slider66 > 0 ? (
+  speed_ramp_delay_samples = slider68 * 60 * srate;
   speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
     speed_ramp_delay_elapsed += 1;
   ) : (
-    speed_ramp_t += 1.0 / (srate * slider65 * 60);
+    speed_ramp_t += 1.0 / (srate * slider66 * 60);
     speed_ramp_t = min(speed_ramp_t, 1.0);
   );
 );
 
-// Signed-delta Speed Ramp: effective rate value = slider3 + ramp_t *
-// slider64 (both in the rate's current unit). Convert to Hz the same
-// way base_rate_hz is converted from slider3, then express the speed
-// ramp's effect as a multiplicative factor (effective / base) so the
-// existing combined_scale-based audio path keeps working. No
+// Speed Ramp is now multi-target (v2.14), nested-selector like Drift, same
+// 11 targets. Each target's signed `by` lives in speed_ramp_by_mem[t]; the
+// live ramp offset is speed_ramp_t * speed_ramp_by_mem[t], applied at that
+// target's consumption site alongside the matching drift offset. Rate-type
+// targets (Rate Value + per-voice) add the offset in the native rate unit
+// BEFORE rate_to_hz, so BPM/Hz/Seconds mode-direction is handled for free.
+//
+// Rate Value (target 0): effective rate value = slider3 + ramp offset,
+// converted to Hz and expressed as a multiplicative factor (effective /
+// base) so the existing combined_scale-based audio path keeps working. No
 // "snapshot at engage" — live edits adjust trajectory.
-effective_rate_val  = slider3 + speed_ramp_t * slider64;
+effective_rate_val  = slider3 + speed_ramp_t * speed_ramp_by_mem[0];
 effective_rate_hz   = rate_to_hz(effective_rate_val, rate_mode);
 speed_scale_current = effective_rate_hz / max(base_rate_hz, 0.001);
 
@@ -638,11 +668,11 @@ loop(N_TARGETS,
 rate_value_drift_mult = rate_to_hz(rate_val + target_drift_offset[0], rate_mode) / max(base_rate_hz, 0.001);
 combined_scale = speed_scale_current * rate_value_drift_mult;
 
-// Fade In / Out drift (targets 9, 10) → effective fade fractions for
-// this sample, clamped to [0,1] and renormalized if they'd sum past 1
-// (same guard as @slider's static fractions).
-eff_fade_in_frac  = max(0, min(1, (fade_in_pct  + target_drift_offset[9])  / 100.0));
-eff_fade_out_frac = max(0, min(1, (fade_out_pct + target_drift_offset[10]) / 100.0));
+// Fade In / Out drift + Speed Ramp (targets 9, 10) → effective fade
+// fractions for this sample, clamped to [0,1] and renormalized if they'd
+// sum past 1 (same guard as @slider's static fractions).
+eff_fade_in_frac  = max(0, min(1, (fade_in_pct  + target_drift_offset[9]  + speed_ramp_t * speed_ramp_by_mem[9])  / 100.0));
+eff_fade_out_frac = max(0, min(1, (fade_out_pct + target_drift_offset[10] + speed_ramp_t * speed_ramp_by_mem[10]) / 100.0));
 eff_fade_in_frac + eff_fade_out_frac > 1.0 ? (
   tf = eff_fade_in_frac + eff_fade_out_frac;
   eff_fade_in_frac  /= tf;
@@ -720,14 +750,15 @@ loop(8,
   v_active[i] ? (
     active_count += 1;
 
-    // Per-voice rate drift (targets 1-8). Offset is in the rate's
-    // current unit, relative to the voice's OWN reference rate: Rate
+    // Per-voice rate drift + Speed Ramp (targets 1-8). Offset is in the
+    // rate's current unit, relative to the voice's OWN reference rate: Rate
     // Value in Synced mode, the voice's Drift/Rate slider in Independent
-    // mode. Converted to a multiplier via the rate_to_hz ratio so
-    // mode-direction asymmetry is handled. 1.0 when this voice has no
-    // rate drift configured. Composes multiplicatively with the global
-    // combined_scale (which carries Speed Ramp + Rate Value drift).
-    voff = target_drift_offset[1 + i];
+    // mode. Drift and Speed Ramp offsets add in that native unit, then the
+    // sum is converted to a multiplier via the rate_to_hz ratio so
+    // mode-direction asymmetry is handled. 1.0 when this voice has no rate
+    // drift OR ramp configured. Composes multiplicatively with the global
+    // combined_scale (which carries the Rate Value drift + ramp).
+    voff = target_drift_offset[1 + i] + speed_ramp_t * speed_ramp_by_mem[1 + i];
     voff != 0 ? (
       vbase = drift_mode == 0 ? rate_val : max(drifts[i], 0.001);
       v_rate_mult = rate_to_hz(vbase + voff, rate_mode) / max(rate_to_hz(vbase, rate_mode), 0.0001);
@@ -809,16 +840,30 @@ active_count > 0 ? (
 
 
 @serialize
-// Persist per-target drift configurations. Without this, only the
-// most-recently-edited target's drift slider values survive a project
-// save/load because sliders 69-72 hold whichever target was selected
-// at save time. 11 targets × 4 config fields = 44 values; plus the
-// selector.
-file_mem(0, target_drift_up,    N_TARGETS);
-file_mem(0, target_drift_down,  N_TARGETS);
-file_mem(0, target_drift_per,   N_TARGETS);
-file_mem(0, target_drift_shape, N_TARGETS);
-file_var(0, last_target_select);
+// Persist per-target drift AND speed-ramp configurations. Without this,
+// only the most-recently-edited target's values survive a save/load because
+// the sliders hold whichever target was selected at save time.
+//
+// VERSION-GUARDED (CLAUDE.md @serialize gotcha): the stream grew in v2.14
+// (added the speed-ramp per-target `by` bank + its selector tracker), so it
+// now leads with a magic marker. Old (v2.9-v2.13) blobs have a drift value
+// as their first word, won't match the magic, and fall through to the @init
+// defaults — old drift configs reset on upgrade. (The v2.14 Speed Ramp/Drift
+// renumber also reset the slider values themselves, so existing Shepard Tone
+// Speed Ramp + Drift settings need re-entry after upgrade regardless — see
+// the slider block's reorg note.) Magic = 2000000 + N_TARGETS: well above any
+// plausible first-field value and float32-exact (< 2^24).
+sr_magic = 2000000 + N_TARGETS;
+file_var(0, sr_magic);
+sr_magic == 2000000 + N_TARGETS ? (
+  file_mem(0, target_drift_up,    N_TARGETS);
+  file_mem(0, target_drift_down,  N_TARGETS);
+  file_mem(0, target_drift_per,   N_TARGETS);
+  file_mem(0, target_drift_shape, N_TARGETS);
+  file_var(0, last_target_select);
+  file_mem(0, speed_ramp_by_mem,  N_TARGETS);
+  file_var(0, last_sr_target);
+);
 
 
 @gfx 0 0
