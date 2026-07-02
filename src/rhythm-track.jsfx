@@ -608,4 +608,19 @@ sr_magic == 2000000 + N_TARGETS ? (
   file_var(0, last_target_select);
   file_mem(0, speed_ramp_by_mem,  N_TARGETS);
   file_var(0, last_sr_target);
+
+  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
+  // on WRITE (save/undo) it is < 0. @serialize is the only section guaranteed
+  // to run on both load AND duplicate, so it re-establishes the bank<->slider
+  // invariant here: force the visible config sliders to match the restored
+  // bank for the restored selectors, correcting any transient @slider clobber
+  // (which would otherwise zero whichever target was selected on the copy).
+  file_avail(0) >= 0 ? (
+    slider18 = speed_ramp_by_mem[last_sr_target];       // Speed ramp `by`
+    slider23 = target_drift_up[last_target_select];     // Drift up
+    slider24 = target_drift_down[last_target_select];   // Drift down
+    slider25 = target_drift_per[last_target_select];    // Drift period
+    slider26 = target_drift_shape[last_target_select];  // Drift shape
+    sliderchange(-1);
+  );
 );

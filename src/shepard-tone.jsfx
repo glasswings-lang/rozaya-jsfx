@@ -863,6 +863,26 @@ sr_magic == 2000000 + N_TARGETS ? (
   file_var(0, last_target_select);
   file_mem(0, speed_ramp_by_mem,  N_TARGETS);
   file_var(0, last_sr_target);
+
+  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate), file_avail(0) >= 0;
+  // on WRITE (save/undo) it is < 0. @serialize is the ONLY section guaranteed
+  // to run on both load AND duplicate (on duplicate @init may not re-run at
+  // all — memory is copied), so it is the authoritative place to re-establish
+  // the bank<->slider invariant. The hazard: @slider's nested-selector "load"
+  // branch can run while the bank is momentarily empty and write
+  // slider = bank[selected] = 0, which then propagates back into the bank,
+  // zeroing whichever target was selected. Here, right after restoring the
+  // banks, we force the visible config sliders to match the restored bank for
+  // the restored selectors, so any transient @slider clobber is corrected and
+  // the invariant "visible slider == bank[selected]" holds again.
+  file_avail(0) >= 0 ? (
+    slider65 = speed_ramp_by_mem[last_sr_target];       // Speed ramp `by`
+    slider70 = target_drift_up[last_target_select];     // Drift up
+    slider71 = target_drift_down[last_target_select];   // Drift down
+    slider72 = target_drift_per[last_target_select];    // Drift period
+    slider73 = target_drift_shape[last_target_select];  // Drift shape
+    sliderchange(-1);  // refresh the UI display for the sliders set above
+  );
 );
 
 
