@@ -145,9 +145,9 @@ Same as polyrhythm and melody.
 
 ---
 
-## Spectral Vowel Morpher — render-speed optimization (deferred)
+## Spectral Vowel Morpher — render-speed optimization (LANDED 2026-07-01)
 
-**Status:** deferred. Pure performance; **no audible or behavioral change intended.** Pick this up only if render speed with this plugin becomes annoying — it's CPU-heavy by design. Diagnosed 2026-06-30 while investigating why single-piece renders that stacked 3 instances of this plugin crawled (near/below realtime).
+**Status:** ✅ **LANDED 2026-07-01** (commit `793eebc`, pushed). The Primary fix below — wavetable the voice oscillators — shipped into `src/spectral_vowel_morpher.jsfx`. Internal only: **no sliders, no @serialize change, so existing projects open unchanged and just render faster.** Ear-verified by Rozaya as perceptually identical via an A/B (a `_wt` test build swapped into a byte-clone of a real project). The Secondary iFFT idea below was NOT needed and stays optional. Plan preserved for reference. Original diagnosis (2026-06-30): renders stacking 3 instances crawled near/below realtime; the per-sample `sin()` cost was the cause, and the wavetable removed it.
 
 ### Where the cost is
 
@@ -204,3 +204,56 @@ Mentioned in the design session but explicitly deferred to keep current scope ma
 - **Per-plugin Start delay** could be implementable as a small shared pattern if multiple plugins gain it later (the deferred ones included).
 - **Bounce-variant labels** (Melody Phase Direction) read straight off the 6-option slider — no conditional hiding needed, the only invalid combinations are absent from the option list. Same principle as the collapsed Direction & Reverse slider on polyrhythm_phase.
 - **Reverse Drift Offset** is visible in all modes including Forward (where it does nothing). Hiding it only when Direction = Forward is fine too if it feels cleaner during implementation — the existing `slider_show()` pattern handles the conditional cleanly.
+
+---
+
+## Harmonic Sculptor (captured 2026-07-01, live-jam session)
+
+Two directions surfaced while playing the Sculptor live (via the kin_bridge live-control tool). Rozaya asked these be written down here rather than left as ephemeral task chips.
+
+### 1. Note / semitone tuning (dyscalculia-accessibility)
+
+Let the Fundamental be set by musical note, not only Hz. Currently `slider4 "Fundamental Hz"` (20–2000). Picking "A2" is far easier than dialing "110.00 Hz" — a direct fit for the dyscalculia sweep (never make the user produce a number; see `docs/dyscalculia-accessibility-sweep.md`).
+
+- Borrow the proven pattern from `polyrhythm_phase.jsfx`: Base Note (C..B enum) + Center Octave + Tuning Reference Hz (default 440) deriving the frequency.
+- Add new sliders at the END only (slider IDs are primary keys — never renumber). Add a Tuning mode toggle (Hz / Note), Base Note, Octave, Tuning Reference; `slider_show()` to hide the irrelevant set per mode. Keep the existing Fundamental Hz slider working so old projects don't break.
+
+### 2. Vowel / formant mode (additive formant synthesis)
+
+**Discovery this session:** the Sculptor, using ONLY its additive harmonics (resonance bank fully bypassed), produced a convincing, GENTLE vowel — "a nice relaxed ah" — by weighting harmonics that land near a voice's formants. Rozaya: "I didn't know we could get *this* with just harmonics or I would have put more effort into that plugin." This is notably gentler than the resonance-bank formant approach (no sharp resonant peaks, no drift-beating, no head-pressure), so it may be a better path for the voice / breathed-vowel goals than the real-time filter approaches that hit dead ends (Klatt / Pink-Trombone — see `archive/exploration/`).
+
+Proven recipe (fundamental 165 Hz): base = pure Sine → set harmonics to a **−12 dB/oct** modal-voice rolloff (H_n = −12·log2(n): 0, −12, −19, −24, −28, −31, −34, −36…) → boost the harmonics nearest the target formants, and CUT the between-formant harmonics into deep valleys (the valleys carry vowel identity as much as the peaks). Peterson-Barney adult-male vowels: /ah/ F1 710 F2 1100 F3 2540; /ɔ oh/ 590 / 880; /u ooh/ 300 / 870; /i ee/ 270 / 2290 / 3010. A saw source (−6 dB/oct) is too bright/fatiguing.
+
+**Ceiling hit live:** at a single low fundamental with sparse harmonics, ah↔ooh morphs read only as subtle tints, not clear vowel changes. The feature that breaks through:
+
+- **Vowel selector** (ah/eh/ee/oh/oo…) that auto-weights the harmonics for the current fundamental — no hand-editing 64 levels.
+- **Pitch-tracking formants** — the key one: recompute which harmonics to emphasize as the fundamental changes, so formants stay fixed in Hz across pitch. That's the difference between "synth" and "a voice that can sing different notes" (a real "ah" keeps its shape whether sung low or high).
+- **Vowel-morph** control interpolating formant positions. An INTERNAL morph slider also sidesteps a limitation found this session: the plugin exposes only ONE "selected harmonic level" param externally, so nothing outside can move multiple harmonics simultaneously.
+- Optional spectral-tilt control (−6 bright / −12 modal / −18 breathy) + breathy mode (filtered noise).
+- Hook to load a REAL voice's measured harmonics (ties to `spectral_vowel_morpher.jsfx` live-capture + the proven vowel-harmonic-resynthesis workflow).
+
+---
+
+## Womb v3 — expand Drift + Speed Ramp target lists (captured 2026-07-01)
+
+**Motivation.** Discovered while building the nervous-system-states journey (see `docs/womb-nervous-system-states.md` + memory `project-womb-nervous-system-states`): the built-in Drift and Speed Ramp only reach 7 targets (Heart BPM, S1-S2 gap, Inhale, Top pause, Exhale, Bottom pause, RSA depth), so **timbre can't evolve across the journey** using the plugin's own tools — you can slow the breath but not *darken* it, so a dysregulated→resting descent still needs external automation (`kin_render.lua`) for the timbre half. Rozaya's call: add far more targets so drift + ramp reach **everything adjustable**, making full journeys native and renderable with no external automation. "Is it a lot of targets? Yes. Is it worth it? Also yes."
+
+**Cheap by design.** The nested-selector pattern means slider count stays at 5 per system (selector + up/down/period/shape for drift; selector + by/duration/engage/start-delay for ramp) no matter how many targets. Only the selector enum range `(0,N,1)` and the per-target memory banks grow. So this is almost entirely internal work, not new sliders.
+
+**Proposed target additions (append to BOTH Drift and Speed Ramp, same list).** Keep existing indices 0-6 exactly as they are; **append new targets at the END** (7+) so existing project configs keep their meaning (same rule as slider IDs — never insert mid-list).
+
+- *Heart timbre/level:* HB Master Volume, Brightness, S1 Frequency, S2 Frequency, S1 Decay, S2 Decay, HB Stereo Width (opt: S1 Vol, S2 Vol)
+- *Breath timbre/level (the "breath brightness" ask):* Breath Volume, Inhale Frequency, Exhale Frequency, Breath High-pass, Breath Post-filter Hz, Breath Post-filter Q, Breath Stereo Width (opt: the 4 fades)
+- *Bloodflow:* Bloodflow Volume, Bloodflow Filter Hz, Bloodflow Resonance, Bloodflow Dicrotic, Bloodflow Stereo Width (opt: BF Attack, BF Decay)
+
+That's ~18 core additions (~25 targets total), more if the optionals go in.
+
+**Implementation notes / gotchas (from CLAUDE.md):**
+- **Version the `@serialize` stream.** Expanding the per-target memory banks changes how many values are serialized. MUST lead the stream with the count-encoded magic marker so old project blobs fall through to defaults instead of scrambling (see the `@serialize` gotcha in CLAUDE.md). This applies to BOTH the drift config bank and the speed-ramp per-target `by` bank.
+- **Append-only target order** preserves existing (0-6) configs on load.
+- Consumption sites: each new target's drift-offset / ramp-offset gets added at that parameter's use site (`effective_X = base + drift_offset[t] + speed_ramp_offset[t]`), same shape as the existing 7.
+- Memory bank sizing: bump the per-field array spacing / bank base to fit ~25 targets (16-slot-aligned per field, plenty of room above 8192).
+- Period units per target: rate-ish targets in cycles/beats; timbre targets can drift in their native unit over breath/heart cycles (document per target in the manual).
+- Manual: update the Womb v3 Drift + Speed Ramp sections with the full target list.
+
+**Payoff.** With this, the full dysregulated→activated-coherent→resting journey — heart rate, breath timing AND breath brightness, bloodflow, heart timbre, all of it — is a single armed Speed Ramp (or drift config) that plays live and renders offline, no `kin_render`/envelope step needed. It also removes the "automation-only" asterisk noted in `project-kin-bridge-reaper-live-control`.
