@@ -81,6 +81,12 @@ hphB       = 1001300;   // NHARM   resynth phase accumulators (voice B)
 anbuf      = 1010000;   // WHARM   mono analysis frame
 yin_df     = 1020000;   // WHARM   YIN difference function
 yin_cmnd   = 1030000;   // WHARM   YIN cumulative-mean-normalized difference
+// --- sine wavetable (render-speed optimization): the voice engine's per-sample
+// sin() calls become a table lookup. Internal only -- no sliders, no pitch or
+// behavior change (frequency is set by the phase INCREMENT, which is untouched). ---
+WTBL = 8192; WTSCALE = WTBL / TWOPI;
+sintab     = 1040000;   // WTBL+1  (one sine period + a guard sample for interp)
+i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
@@ -253,6 +259,16 @@ function clear_accum() local(i) (
   i = 0; loop(ACCLEN, accL[i] = 0; accR[i] = 0; i += 1; );
   accpos = 0; hopcount = 0;
 );
+// wavetable sine: linear-interpolated lookup of one precomputed period. Only the
+// sin() EVALUATION changes; phase accumulators/increments are untouched, so every
+// harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
+// accumulators wrap to [0, TWOPI), so fidx lands in [0, WTBL) and the guard sample
+// at sintab[WTBL] covers i0 = WTBL-1.
+function wtsin(ph) local(fidx, i0, fr) (
+  fidx = ph * WTSCALE;
+  i0 = floor(fidx); fr = fidx - i0;
+  sintab[i0]*(1-fr) + sintab[i0+1]*fr;
+);
 
 @slider
 // Every slider read into a named global here; nothing downstream references a
@@ -358,9 +374,9 @@ fB = slot_f0[vsj] * pitch_ratio; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1
 bA = vsi*NHARM; bB = vsj*NHARM;
 vvA = 0; vvB = 0; vn = 0;
 loop(NHARM,
-  ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*sin(hph[vn]); );
+  ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*wtsin(hph[vn]); );
   hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI;
-  ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*sin(hphB[vn]); );
+  ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*wtsin(hphB[vn]); );
   hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI;
   vn += 1;
 );
