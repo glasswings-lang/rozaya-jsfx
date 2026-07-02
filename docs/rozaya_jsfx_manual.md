@@ -3252,42 +3252,45 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Changing Rest mode mid-rest** is handled defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unexpectedly.
 
-### Speed Ramp
+### Speed Ramp (v2.14 nested-selector)
 
-In-plugin tempo morph over time, without automation envelopes. Single-target plugin (BPM is the only ramp target), so no selector — slider 52 is directly the signed `by` amount in BPM.
+In-plugin one-time morph over time, without automation envelopes. As of v2.14 Speed Ramp is nested-selector (same shape as Drift) and reaches the **same four targets as Drift** — BPM, Note Length %, Attack %, Release %. All four ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Speed ramp by (BPM) (slider 52)** `-290 to +180, step 0.1, default 0`
-Signed BPM delta. **0** = no change. **Negative** = slow down (`-60` ramps BPM from 120 → 60 over the duration). **Positive** = speed up.
+**Speed ramp target (slider 52)** `BPM / Note Length % / Attack % / Release %, default BPM`
+Picks which target the `by` amount applies to. Switching the selector saves slider 53 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Speed Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-**Speed ramp duration (slider 53)** `0–60 minutes, default 0` · **Speed ramp engage (slider 54)** `Off / On, default Off` · **Speed ramp start delay (slider 55)** `0–60 minutes, default 0`
+**Speed ramp by (slider 53)** `-300 to +300, step 0.1, default 0` (units match the selected target)
+Signed delta in the selected target's own unit. **0** = no change (safe default). For **BPM** the delta is in BPM (`-60` ramps 120 → 60 over the duration); for **Note Length / Attack / Release** it's in percentage points. The wide ±300 range is headroom shared across targets — only the target's own sensible span is meaningful (e.g. a note-length ramp beyond ±100 is clamped).
 
-Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, it freezes wherever it is and resumes from there on re-engage. The Freeze-mode Play/Rest rest timer also scales with Speed Ramp so the rest duration tracks the same effective tempo as the play period.
+**Speed ramp duration (slider 54)** `0–60 minutes, default 0` · **Speed ramp engage (slider 55)** `Off / On, default Off` · **Speed ramp start delay (slider 56)** `0–60 minutes, default 0`
 
-**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes don't.
+Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, it freezes wherever it is and resumes from there on re-engage. The Freeze-mode Play/Rest rest timer also scales with the BPM ramp so the rest duration tracks the same effective tempo as the play period.
 
-**Migration from v2.7:** slider 52 changed from multiplier (0.1–4.0) to signed BPM delta. Old projects' multiplier value gets interpreted as a tiny BPM delta — Speed Ramp effectively "off" until reconfigured.
+**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes (engage toggle, selector switch, anything) don't.
+
+**Migration to v2.14 (reorganization + renumber):** Speed Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Speed Ramp block (now sliders 52–56) and the Drift block (now sliders 57–61). **Existing Shepard Scale projects lose their Speed Ramp and Drift settings on upgrade** — both are off-by-default, and the scale sound itself (sliders 1–51) is untouched. Re-add the plugin instance for clean defaults, or re-enter your Speed Ramp / Drift settings. *(Older history: pre-v2.14 Speed Ramp was single-target BPM on slider 52; and pre-v2.8 it was a multiplier 0.1–4.0.)*
 
 ### Drift (v2.9 nested-selector)
 
 Slow organic wander applied independently to any of four targets: BPM, Note Length %, Attack %, or Release %. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-Same pattern as Womb v3's drift and the matching block in Heartbeat / Breath Generator v2.9. Switching the **Drift target** selector saves the current sliders 57-60 into the old target's memory slot, then loads the new target's saved values. All four configurations persist across project save/load.
+Same pattern as Womb v3's drift and the matching block in Heartbeat / Breath Generator. Switching the **Drift target** selector saves the current sliders 58-61 into the old target's memory slot, then loads the new target's saved values. All four configurations persist across project save/load.
 
 For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (beats, paced by the BPM clock), and you express the timescale you want with the period value.
 
-**Drift target** `BPM / Note Length % / Attack % / Release %, default BPM`
-Picks which target's drift configuration sliders 57-60 reflect. Switching the selector saves and loads automatically — no live edits are lost.
+**Drift target (slider 57)** `BPM / Note Length % / Attack % / Release %, default BPM`
+Picks which target's drift configuration sliders 58-61 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount** `0.0–100.0, default 0` (units match target)
+**Drift up amount (slider 58)** `0.0–100.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are BPM for BPM, % for Note Length / Attack / Release. 0 = drift off on the up side. Note that going much above ±20 BPM on the BPM target will sound dramatic — typical musical use is 5–15 BPM.
 
-**Drift down amount** `0.0–100.0, default 0` (units match target)
+**Drift down amount (slider 59)** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (beats)** `1–1000, default 8`
+**Drift period (slider 60, beats)** `1–1000, default 8`
 How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Speed Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
-**Drift shape** `Sine / Triangle / Random, default Sine`
+**Drift shape (slider 61)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Transport behavior (v2.9)
