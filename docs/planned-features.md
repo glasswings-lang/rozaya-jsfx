@@ -257,3 +257,26 @@ That's ~18 core additions (~25 targets total), more if the optionals go in.
 - Manual: update the Womb v3 Drift + Speed Ramp sections with the full target list.
 
 **Payoff.** With this, the full dysregulated→activated-coherent→resting journey — heart rate, breath timing AND breath brightness, bloodflow, heart timbre, all of it — is a single armed Speed Ramp (or drift config) that plays live and renders offline, no `kin_render`/envelope step needed. It also removes the "automation-only" asterisk noted in `project-kin-bridge-reaper-live-control`.
+
+---
+
+## Spectral Vowel Morpher — more capture slots + slot randomization / patterns (captured 2026-07-01)
+
+**Motivation.** Rozaya hit the 4-slot (`NSLOTS`) ceiling while working — captured several points from one source, layered a heartbeat under them, and is stacking duplicate tracks to keep the morph from getting repetitive. Wants more variation from ONE instance, plus an accessible way to sequence/randomize which capture plays.
+
+### 1. More capture slots
+`NSLOTS` is a constant (currently 4). Raising it to 8 or 16 costs only memory (16 slots = `NSLOTS*MAXFFT` = 16×32768 ≈ 524 k slots, well within the ~8 M default). `slider1` "Capture slot" range becomes 1–N.
+- **Version the `@serialize` stream** (CLAUDE.md gotcha): the blob saves `NSLOTS*MAXFFT`, so changing `NSLOTS` changes its size. It already leads with a magic (`7700001`) — extend that to encode the slot count so an OLD 4-slot project loads its four into the first four slots instead of scrambling.
+- Re-space the high-memory offsets that scale with `NSLOTS` (`slotmag`, `slotraw`, `slot_harm`, `slot_f0`, `slot_hnorm`, `slot_norm`) so they don't overlap at the larger count.
+
+### 2. Random slot mode (probably the actual fix for "too repeat-y")
+Add a **"Random"** option to Auto-morph (`slider15`, currently Off / Sweep / Glide once). On a clock (a rate slider), jump the shared `vsi`/`vsj` slot selection to a random slot instead of smoothly sweeping. 2–3 sliders total (mode + rate + optional smoothing/amount). Gives evolving variation from a single instance with **no pattern to type** — the accessible default, and likely what removes the need to stack tracks. Reuse the existing shared `vsi/vsj/vmfr` so voice + wash stay in agreement.
+
+### 3. Slot patterns via a TEXT FILE (accessible arbitrary sequences)
+**The accessibility wall (confirmed):** JSFX sliders are numeric / enum only — there is no text-string slider — and an `@gfx` text box has NO accessibility tree, so NVDA can't see it and it never appears in the parameter list. Typing a pattern *into the plugin* is off the table for a screen-reader user.
+**The sideways fix — read the pattern from a `.txt` file.** JSFX can read text files (`file_open` + `file_string`), and a file-picker slider (`sliderN:/folder:default:Name`, the Sustain Looper idiom) IS NVDA-navigable.
+- Pattern lives in a `.txt` (e.g. `1 3 2 4 1 1 3`) the user types in **Notepad** (fully accessible) and drops in a patterns folder.
+- Plugin file-picks it; on change, read + parse the slot indices into an array; step through them on the clock (`0` = rest/hold).
+- The user "types into a box" — just Notepad's, not the plugin's — sidestepping the string-slider wall entirely. Bonus: the kin_bridge can also inject a pattern live.
+
+Same family as Polyrhythm Phase's per-voice sequencing. All three compose into a capture "sampler/sequencer," dyscalculia-clean: Random needs no numbers; the file-pattern is typed in an accessible editor, never dialed on a slider.
