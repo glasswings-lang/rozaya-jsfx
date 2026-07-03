@@ -780,17 +780,18 @@ loop(8,
   v_active[i] ? (
     active_count += 1;
 
-    // Per-voice rate drift + Speed Ramp (targets 1-8). Offset is in the
-    // rate's current unit, relative to the voice's OWN reference rate: Rate
-    // Value in Synced mode, the voice's Drift/Rate slider in Independent
-    // mode. Drift and Speed Ramp offsets add in that native unit, then the
-    // sum is converted to a multiplier via the rate_to_hz ratio so
-    // mode-direction asymmetry is handled. 1.0 when this voice has no rate
-    // drift OR ramp configured. Composes multiplicatively with the global
-    // combined_scale (which carries the Rate Value drift + ramp).
+    // Per-voice drift + Speed Ramp offset (targets 1-8). This offset is
+    // MODE-AWARE, matching what the per-voice slider itself controls:
+    //   Independent mode → the voice's own RATE (offset applied here as a
+    //     rate multiplier on shep_rate[i], via the rate_to_hz ratio so
+    //     BPM/Hz/Seconds mode-direction is handled).
+    //   Synced mode → the voice's CENTS detune (all voices share the global
+    //     sweep rate, so the offset must NOT touch rate — that would break
+    //     sync and behave like Independent mode. It's applied as cents in the
+    //     detune block below instead; keep the rate multiplier at unity here).
     voff = target_drift_offset[1 + i] + speed_ramp_ramp_t_mem[1 + i] * speed_ramp_by_mem[1 + i];
-    voff != 0 ? (
-      vbase = drift_mode == 0 ? rate_val : max(drifts[i], 0.001);
+    (drift_mode == 1 && voff != 0) ? (
+      vbase = max(drifts[i], 0.001);
       v_rate_mult = rate_to_hz(vbase + voff, rate_mode) / max(rate_to_hz(vbase, rate_mode), 0.0001);
     ) : (
       v_rate_mult = 1.0;
@@ -820,9 +821,12 @@ loop(8,
         );
       );
 
-      // Drift detune (synced mode only — cents offset)
+      // Per-voice detune (synced mode only — cents). The per-voice drift +
+      // Speed Ramp offset (voff) IS a cents wander in synced mode, so add it
+      // to the static slider cents here. (In Independent mode voff drives rate
+      // above and there is no cents detune.)
       drift_mode == 0 ? (
-        freq_l = osc_freq[oi] * pow(2, drifts[i] / 1200.0);
+        freq_l = osc_freq[oi] * pow(2, (drifts[i] + voff) / 1200.0);
       ) : (
         freq_l = osc_freq[oi];
       );

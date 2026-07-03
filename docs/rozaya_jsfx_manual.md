@@ -3476,7 +3476,9 @@ Slow organic wander applied independently to any of eleven targets: the global R
 
 Same pattern as Womb v3's drift and the rest of the sweep, scaled up to the largest target list in the suite (shared with Speed Ramp as of v2.14). Switching the **Drift target** selector saves the current sliders 70-73 into the old target's memory slot, then loads the new target's saved values. All eleven configurations persist across project save/load.
 
-The per-voice rate targets are what make this plugin's drift special: with **Independent** drift mode and a different drift configuration on each voice, every voice wanders its own sweep rate on its own schedule — the voices breathe against each other, drifting in and out of phase. This is the continuous-glissando analogue of Polyrhythm Phase's per-voice character.
+The per-voice targets are what make this plugin's drift special: with **Independent** drift mode and a different drift configuration on each voice, every voice wanders its own sweep rate on its own schedule — the voices breathe against each other, drifting in and out of phase. This is the continuous-glissando analogue of Polyrhythm Phase's per-voice character.
+
+**The per-voice targets are mode-aware** (both Drift and Speed Ramp), matching what the per-voice slider itself controls: in **Independent** mode a per-voice target wanders that voice's **rate**; in **Synced** mode it wanders that voice's **cents detune** (pitch), leaving the shared sweep rate locked so sync is preserved. (Before v2.14 they always acted on rate, which broke sync when used in Synced mode.)
 
 **Drift target (slider 69)** `Rate Value / V1 Rate … V8 Rate / Fade In % / Fade Out %, default Rate Value`
 Picks which target's drift configuration sliders 70-73 reflect. Switching the selector saves and loads automatically — no live edits are lost.
