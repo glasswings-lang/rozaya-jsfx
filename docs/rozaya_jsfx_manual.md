@@ -998,11 +998,13 @@ If you want the v2-style "whole womb winds down together" feel where everything 
 
   Each target stores its own amount, so configuring an amount for Heart BPM, switching to Inhale, configuring there, and switching back to Heart BPM brings back the original Heart BPM amount.
 
-- **slider 50 — Speed ramp duration (minutes)** — how long the ramp takes. Range 0-60 minutes. 0 means no ramping (the ramp is effectively disabled).
+- **slider 50 — Speed ramp duration (minutes)** — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Range 0-60 minutes; 0 = that target doesn't ramp. Each target has its own duration (saved/loaded by the selector, like `by`).
 
-- **slider 51 — Speed ramp engage** — Off/On. Acts as a freeze/resume gate: when On, ramp progress advances; when Off, ramp progress freezes wherever it is and resumes from there when you flip On again. Engage does NOT reset the ramp — the only thing that does is transport play (so each play press starts a fresh ramp from 0). This means you can switch the target selector mid-ramp without affecting the running ramp, and you can adjust other sliders without the ramp restarting.
+- **slider 51 — Speed ramp engage** — Off/On, **global**: one switch arms every configured target, each riding its own duration after its own start delay. Freeze/resume gate: when On, each target's clock advances; when Off, all freeze and resume on re-engage. Engage does NOT reset the ramps — only transport play does (each play press starts fresh from 0). You can switch the selector mid-ramp without affecting any running ramp.
 
-- **slider 52 — Speed ramp start delay (minutes)** — wait this many minutes after engage before the ramp actually starts. Range 0-60. Useful for "let me fall asleep for 10 minutes, then begin the wind-down."
+- **slider 52 — Speed ramp start delay (minutes)** — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving. Range 0-60. Stagger targets by giving them different start delays (e.g. Heart BPM starts at 0, breath brightness at minute 10). Useful for "let me fall asleep first, then begin the wind-down."
+
+As of v2.14 the ramp is **fully per-target**: `by`, duration, and start delay are all per-target, so different targets can wind down over different timelines from a single engage — the coordinated multi-parameter wind-down that makes the nervous-system journey renderable natively.
 
 #### How ramp_t works
 
@@ -1307,9 +1309,9 @@ Signed amount for the selected target, in that target's natural unit (rate unit 
 
 **Independent mode note:** slider 3 (base rate) is still the reference for the Base Rate target's `by` interpretation even though it's not used for audio in Independent mode. Per-voice Rate targets ride each voice's own rate directly.
 
-**Speed ramp duration (slider 66)** `0–60 minutes, default 0` · **Speed ramp engage (slider 67)** `Off / On, default Off` · **Speed ramp start delay (slider 68)** `0–60 minutes, default 0`
+**Speed ramp duration (slider 66)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Speed ramp start delay (slider 68)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves. · **Speed ramp engage (slider 67)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
 
-Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off it freezes and resumes from there. One ramp_t / duration / engage / start-delay is shared across all targets — they ride together on the same clock; the per-target `by` is what differs.
+Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off all freeze and resume on re-engage. As of v2.14 each target has its **own** duration and start delay (previously one clock was shared) — so different targets can wind down over different timelines from a single engage.
 
 **Tuning is unaffected** — only modulation rates, levels, and envelope shape ride; the audible oscillator pitch stays put (Binaural Beat is rideable because it's a modulation-domain offset, not the carrier pitch).
 
@@ -2293,15 +2295,14 @@ Nested-selector pattern matching Womb v3 / breath_gen. Pick one of the 4 dwell s
 **Speed ramp target (slider 26)** `High dwell / Fade down / Low dwell / Fade up, default High dwell`
 The 4-option selector. Switching saves the current slider 29 amount to the old target's memory slot and loads the new target's saved amount. All 4 targets ramp regardless of which one is selected.
 
-**Speed ramp duration (slider 27)** `0–60 minutes, default 0` · **Speed ramp engage (slider 28)** `Off / On, default Off`
+**Speed ramp duration (slider 27)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Speed ramp engage (slider 28)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
-Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes and resumes from there on re-engage.
+Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off all freeze and resume on re-engage. As of v2.14 each target has its own duration + start delay (previously shared) — different dwell phases can ramp on different timelines from one engage.
 
 **Speed ramp by (slider 29)** `-60 to +60 seconds, step 0.001, default 0`
 Signed delta in seconds for the selected dwell phase. **0** = no change. **Negative** = shorten that phase (shorter cycle if that's High/Low dwell; quicker fade if that's a fade phase). **Positive** = lengthen. Example: target High dwell with `by +4` stretches high dwell from 4 sec → 8 sec over the duration; combined with target Low dwell with `by +2`, both phases ramp together as a coordinated wind-down.
 
-**Speed ramp start delay (slider 37)** `0–60 minutes, default 0`
-Wait this many minutes after engage before ramp_t starts advancing. Lives at slider 37 (after the drift block) because slider 29 was claimed by the new `by` amount.
+**Speed ramp start delay (slider 37)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. Lives at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. The existing ~3 ms cutoff smoother absorbs any per-sample step changes, so manual dwell-slider tweaks remain click-free.
 
