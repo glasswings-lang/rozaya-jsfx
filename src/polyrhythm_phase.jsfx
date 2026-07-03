@@ -430,12 +430,12 @@ start_delay_sec     = 0;
 play_for_cycles = 0;
 rest_for_cycles = 0;
 
-// Speed ramp state.
-// Speed Ramp state. Engage is a freeze/resume gate, not an edge;
-// only transport play resets ramp_t.
+// Speed Ramp state. Engage (global) is a freeze/resume gate, not an edge;
+// only transport play resets the per-target ramp clocks. As of v2.14 the ramp
+// is PER-TARGET (own by/duration/start-delay/clock per target; banks below).
+// speed_scale_current is the Base-Rate ramp factor (target 0), recomputed each
+// sample.
 speed_scale_current      = 1.0;
-speed_ramp_t             = 0.0;
-speed_ramp_delay_elapsed = 0;
 
 // (last_play_state removed in v2.10 Path A — no transport-edge handler
 // anymore; @init re-running on play is the reset.)
@@ -474,12 +474,20 @@ target_drift_offset = 8736;
 // the drift bank (which ends at 8768). CONFIG, like the drift bank.
 speed_ramp_by_mem = 8768;
 
-// CONFIG banks (drift up/down/period/shape + Speed Ramp `by` + the
-// selector trackers) — initialized ONCE per plugin instance, guarded by
-// drift_cfg_inited so the @init re-run on every transport play does NOT
-// wipe the user's setup (Path A render fix relies on @init re-running).
-// A fresh instance starts with drift_cfg_inited = 0 (REAPER zeroes memory
-// on instantiation); @serialize restores saved configs on project load.
+// Speed ramp per-target timeline banks (v2.14). 32-slot-spaced (24 targets
+// exceed 16) above the `by` bank. duration + start-delay are CONFIG (survive
+// transport, restored by @serialize); ramp_t + delay_elapsed are RUNTIME.
+speed_ramp_dur_mem           = 8800;  // duration minutes per target (CONFIG)
+speed_ramp_delay_mem         = 8832;  // start-delay minutes per target (CONFIG)
+speed_ramp_ramp_t_mem        = 8864;  // ramp progress 0..1 per target (RUNTIME)
+speed_ramp_delay_elapsed_mem = 8896;  // delay sample counter per target (RUNTIME)
+
+// CONFIG banks (drift up/down/period/shape + Speed Ramp by/duration/start-delay
+// + the selector trackers) — initialized ONCE per plugin instance, guarded by
+// drift_cfg_inited so the @init re-run on every transport play does NOT wipe
+// the user's setup (Path A render fix relies on @init re-running). A fresh
+// instance starts with drift_cfg_inited = 0 (REAPER zeroes memory on
+// instantiation); @serialize restores saved configs on project load.
 drift_cfg_inited != 1 ? (
   i = 0;
   loop(N_TARGETS,
@@ -487,7 +495,9 @@ drift_cfg_inited != 1 ? (
     target_drift_down[i]  = 0;
     target_drift_per[i]   = 8;
     target_drift_shape[i] = 0;
-    speed_ramp_by_mem[i]  = 0;
+    speed_ramp_by_mem[i]    = 0;
+    speed_ramp_dur_mem[i]   = 0;
+    speed_ramp_delay_mem[i] = 0;
     i += 1;
   );
   last_target_select = 0;
@@ -495,11 +505,13 @@ drift_cfg_inited != 1 ? (
   drift_cfg_inited   = 1;
 );
 
-// Drift RUNTIME (phase / random-shape targets / computed offset) resets
-// on EVERY @init — i.e. every transport play — so drift restarts from
-// phase 0 each play, continues across stop, and is clean on render.
+// Drift + speed-ramp RUNTIME (phase / random-shape / computed offset / ramp
+// clocks) resets on EVERY @init — i.e. every transport play — so drift + ramp
+// restart from 0 each play, continue across stop, clean on render.
 i = 0;
 loop(N_TARGETS,
+  speed_ramp_ramp_t_mem[i]        = 0;
+  speed_ramp_delay_elapsed_mem[i] = 0;
   target_drift_phase[i]  = 0;
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
@@ -647,18 +659,28 @@ rest_for_cycles = slider64;
 // in @sample. Only transport play resets ramp_t.
 
 // Speed ramp target selector save/restore (v2.10, nested-selector).
-// Switching slider79 saves the current slider65 (`by`) into the OLD
-// target's bank slot, then loads the NEW target's stored `by` into
-// slider65. Otherwise captures live edits to the current target's slot.
-// All targets ride in parallel from @sample regardless of selection.
+// slider79 = target; slider65 = per-target `by`; slider66 = per-target
+// duration; slider68 = per-target start delay (all three per-target as of
+// v2.14). slider67 (engage) stays GLOBAL. Switching slider79 saves the three
+// per-target sliders into the OLD target's bank slots, then loads the NEW
+// target's stored values. Otherwise captures live edits. All targets ride in
+// parallel from @sample, each on its own duration/delay clock.
 sel_speed_target = slider79;
 last_speed_target != sel_speed_target ? (
-  speed_ramp_by_mem[last_speed_target] = slider65;
+  speed_ramp_by_mem[last_speed_target]    = slider65;
+  speed_ramp_dur_mem[last_speed_target]   = slider66;
+  speed_ramp_delay_mem[last_speed_target] = slider68;
   slider65 = speed_ramp_by_mem[sel_speed_target];
+  slider66 = speed_ramp_dur_mem[sel_speed_target];
+  slider68 = speed_ramp_delay_mem[sel_speed_target];
   slider_automate(slider65);
+  slider_automate(slider66);
+  slider_automate(slider68);
   last_speed_target = sel_speed_target;
 ) : (
-  speed_ramp_by_mem[sel_speed_target] = slider65;
+  speed_ramp_by_mem[sel_speed_target]    = slider65;
+  speed_ramp_dur_mem[sel_speed_target]   = slider66;
+  speed_ramp_delay_mem[sel_speed_target] = slider68;
 );
 
 // Drift target selector save/restore (nested-selector pattern).
@@ -933,15 +955,24 @@ re_start = on_frac - rw_eff;
 // CONFIG banks are preserved across those re-runs by the drift_cfg_inited
 // guard in @init. See docs/v2.9-render-state-bug.md.)
 
-// Advance speed_ramp_t while engaged + duration > 0 + past start
-// delay. Engage off freezes ramp_t; engaging on resumes from there.
-slider67 && slider66 > 0 ? (
-  speed_ramp_delay_samples = slider68 * 60 * srate;
-  speed_ramp_delay_elapsed < speed_ramp_delay_samples ? (
-    speed_ramp_delay_elapsed += 1;
-  ) : (
-    speed_ramp_t += 1.0 / (srate * slider66 * 60);
-    speed_ramp_t = min(speed_ramp_t, 1.0);
+// Advance each target's own ramp clock (v2.14 per-target timeline). Engage
+// (slider67, GLOBAL) is the freeze/resume gate: while On, each target whose
+// duration > 0 advances its own ramp_t 0->1 over its own duration, after its
+// own start delay; while Off, all clocks freeze and resume. Only transport
+// play (via @init) resets them.
+slider67 ? (
+  i = 0;
+  loop(N_TARGETS,
+    speed_ramp_dur_mem[i] > 0 ? (
+      sr_delay_samples = speed_ramp_delay_mem[i] * 60 * srate;
+      speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
+        speed_ramp_delay_elapsed_mem[i] += 1;
+      ) : (
+        speed_ramp_ramp_t_mem[i] += 1.0 / (srate * speed_ramp_dur_mem[i] * 60);
+        speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+      );
+    );
+    i += 1;
   );
 );
 
@@ -951,7 +982,7 @@ slider67 && slider66 > 0 ? (
 // multiplicative ratio so all voices stay in proportional lockstep.
 // The other 23 targets ride as additive offsets, folded into
 // target_drift_offset[] just after the drift loop below.
-effective_rate_val = rate_val + speed_ramp_t * speed_ramp_by_mem[0];
+effective_rate_val = rate_val + speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
 effective_rate_hz  = rate_to_hz(effective_rate_val, rate_mode);
 base_rate_hz_ref   = rate_to_hz(rate_val, rate_mode);
 speed_scale_current = effective_rate_hz / max(base_rate_hz_ref, 0.001);
@@ -1007,7 +1038,7 @@ loop(N_TARGETS,
 );
 
 // Fold the Speed Ramp per-target offset INTO target_drift_offset[] for
-// the 23 additive targets (1..23). speed_ramp_t * by[t] rides each one
+// the 23 additive targets (1..23). ramp_t[t] * by[t] rides each one
 // from its baseline toward baseline+by over the duration. After this,
 // every consumption site that reads target_drift_offset[t] sees drift
 // wander + speed-ramp ride combined — no per-site changes needed.
@@ -1015,7 +1046,7 @@ loop(N_TARGETS,
 // (combined_scale, above) and its drift is the uniform Hz delta below.
 i = 1;
 loop(N_TARGETS - 1,
-  target_drift_offset[i] += speed_ramp_t * speed_ramp_by_mem[i];
+  target_drift_offset[i] += speed_ramp_ramp_t_mem[i] * speed_ramp_by_mem[i];
   i += 1;
 );
 
@@ -1622,14 +1653,36 @@ body_active ? (
 // accepted "old drift configs reset, reconfigure" migration policy. A
 // legacy blob's first float is up[0] in [0,20], which can never equal the
 // magic, so v2.9 projects deterministically fall through to defaults.
-drift_ser_magic = 1000000 + N_TARGETS;   // 1000024 for this 24-target build
+// Magic bumped 1000000 -> 2100000 + N_TARGETS in v2.14 when Speed Ramp went
+// PER-TARGET timeline (added the duration + start-delay banks). Older
+// (1000000-base) blobs won't match and fall through to @init defaults — drift +
+// ramp reset on upgrade (accepted; pre-release). Marker is float32-exact.
+drift_ser_magic = 2100000 + N_TARGETS;   // 2100024 for this 24-target build
 file_var(0, drift_ser_magic);
-drift_ser_magic == 1000000 + N_TARGETS ? (
+drift_ser_magic == 2100000 + N_TARGETS ? (
   file_mem(0, target_drift_up,    N_TARGETS);
   file_mem(0, target_drift_down,  N_TARGETS);
   file_mem(0, target_drift_per,   N_TARGETS);
   file_mem(0, target_drift_shape, N_TARGETS);
   file_var(0, last_target_select);
-  file_mem(0, speed_ramp_by_mem, N_TARGETS);
+  file_mem(0, speed_ramp_by_mem,    N_TARGETS);
+  file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
+  file_mem(0, speed_ramp_delay_mem, N_TARGETS);
   file_var(0, last_speed_target);
+
+  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
+  // on WRITE it is < 0. @serialize is the only section guaranteed to run on
+  // both load AND duplicate, so it re-establishes the bank<->slider invariant:
+  // force the visible config sliders to match the restored banks for the
+  // restored selectors, correcting any transient @slider clobber.
+  file_avail(0) >= 0 ? (
+    slider65 = speed_ramp_by_mem[last_speed_target];    // Speed ramp `by`
+    slider66 = speed_ramp_dur_mem[last_speed_target];   // Speed ramp duration
+    slider68 = speed_ramp_delay_mem[last_speed_target]; // Speed ramp start delay
+    slider75 = target_drift_up[last_target_select];     // Drift up
+    slider76 = target_drift_down[last_target_select];   // Drift down
+    slider77 = target_drift_per[last_target_select];    // Drift period
+    slider78 = target_drift_shape[last_target_select];  // Drift shape
+    sliderchange(-1);
+  );
 );
