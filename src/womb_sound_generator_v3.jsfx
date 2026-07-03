@@ -109,8 +109,8 @@ slider47:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // the pulse wave) so there's no bloodflow target — see CLAUDE.md for
 // the design point on whether bloodflow should ever be an independent
 // layer.
-slider48:0<0,7,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min}>Speed ramp target
-slider49:0<-300,300,0.1>Speed ramp by
+slider48:0<0,9,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Speed ramp target
+slider49:0<-2000,2000,0.1>Speed ramp by
 slider50:0<0,60,0.1>Speed ramp duration (minutes)
 slider51:0<0,1,1{Off,On}>Speed ramp engage
 slider52:0<0,60,0.1>Speed ramp start delay (minutes)
@@ -128,9 +128,9 @@ slider53:0<0,30,0.1>Breaths per minute (0=off; rescales durations 16-19)
 // Switching the selector saves the current values to the old target's
 // memory slot and loads the new target's values into the sliders.
 // All seven targets' drifts run in parallel.
-slider54:0<0,7,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min}>Drift target
-slider55:0<0,50,0.1>Drift up amount (units match target)
-slider56:0<0,50,0.1>Drift down amount (units match target)
+slider54:0<0,9,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Drift target
+slider55:0<0,2000,0.1>Drift up amount (units match target)
+slider56:0<0,2000,0.1>Drift down amount (units match target)
 slider57:8<1,1000,1>Drift period (heartbeats or breath cycles)
 slider58:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
@@ -340,7 +340,9 @@ speed_ramp_delay_elapsed_mem = 8384;  // delay sample counter per target (RUNTIM
 //   6 = RSA depth (Heart with breath BPM peak-to-peak)
 //   7 = Breaths/min (aggregate — scales all four breath segments in
 //       lockstep, preserving I:E ratio; units = breaths per minute, signed)
-N_TARGETS = 8;
+//   8 = Inhale Freq (breath-noise filter cutoff for the inhale, Hz)
+//   9 = Exhale Freq (breath-noise filter cutoff for the exhale, Hz)
+N_TARGETS = 10;
 target_drift_up     = 8192;   // [0..6]  configured amount, units match target
 target_drift_down   = 8208;   // [0..6]
 target_drift_per    = 8224;   // [0..6]  in heartbeats (targets 0,1) or breath cycles (2-6)
@@ -590,6 +592,17 @@ last_target_select != sel_target ? (
   target_drift_shape[sel_target] = sel_shape;
 );
 
+// Breath-frequency target activity flag (v2.14 Job C — breath frequencies).
+// True when Inhale Freq (target 8) or Exhale Freq (target 9) has any Drift or
+// Speed Ramp configured. Gates the per-sample breath-filter-coeff recompute in
+// @sample so the common case (no breath-freq target) keeps the coeffs cached
+// here and pays nothing. When a freq target is un-configured, this @slider
+// re-run also resets in_f_l/r + ex_f_l/r back to their base (below).
+breath_freq_active = (target_drift_up[8] > 0 || target_drift_down[8] > 0 ||
+                      target_drift_up[9] > 0 || target_drift_down[9] > 0 ||
+                      speed_ramp_target_value_mem[8] != 0 ||
+                      speed_ramp_target_value_mem[9] != 0);
+
 @sample
 
 // Smooth BPM toward bpm_target.
@@ -635,6 +648,8 @@ speed_ramp_exhale_offset  = speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_m
 speed_ramp_bot_offset     = speed_ramp_ramp_t_mem[5] * speed_ramp_target_value_mem[5];
 speed_ramp_rsa_offset     = speed_ramp_ramp_t_mem[6] * speed_ramp_target_value_mem[6];
 speed_ramp_bpm_offset     = speed_ramp_ramp_t_mem[7] * speed_ramp_target_value_mem[7];
+speed_ramp_in_freq_offset = speed_ramp_ramp_t_mem[8] * speed_ramp_target_value_mem[8];
+speed_ramp_ex_freq_offset = speed_ramp_ramp_t_mem[9] * speed_ramp_target_value_mem[9];
 
 // --- v3 Per-target Drift wave computation ---
 //
@@ -732,6 +747,22 @@ inhale_len = max(floor(srate * effective_inhale_sec), 1);
 top_len    = max(floor(srate * effective_top_sec), 1);
 exhale_len = max(floor(srate * effective_exhale_sec), 1);
 bot_len    = max(floor(srate * effective_bot_sec), 1);
+
+// Breath-frequency Drift + Speed Ramp (targets 8, 9). When configured, the
+// inhale/exhale breath-noise filter cutoffs (in_f_l/r, ex_f_l/r — cached in
+// @slider) are recomputed per sample from the effective frequency (base slider
+// + drift offset + ramp offset), so the breath brightens/darkens live. Same
+// formula + stereo-width spread as the @slider base computation, on the drifted
+// value. Gated by breath_freq_active so unused instances keep the cached coeffs
+// and pay nothing. Clamped to 20 Hz so a big negative offset can't invert sin().
+breath_freq_active ? (
+  eff_in_freq = max(slider20 + target_drift_offset[8] + speed_ramp_in_freq_offset, 20);
+  eff_ex_freq = max(slider21 + target_drift_offset[9] + speed_ramp_ex_freq_offset, 20);
+  in_f_l = min(2.0 * sin($pi * (eff_in_freq * (1.0 + slider28 * 0.15)) * srate_inv), 0.98);
+  in_f_r = min(2.0 * sin($pi * (eff_in_freq * (1.0 - slider28 * 0.15)) * srate_inv), 0.98);
+  ex_f_l = min(2.0 * sin($pi * (eff_ex_freq * (1.0 + slider28 * 0.12)) * srate_inv), 0.98);
+  ex_f_r = min(2.0 * sin($pi * (eff_ex_freq * (1.0 - slider28 * 0.12)) * srate_inv), 0.98);
+);
 
 // Note: the sigh multiplier (slider61) is NOT applied here. It's
 // applied at state transitions where breath_state_len is set —
