@@ -36,19 +36,27 @@ slider15:0<0,1000,1>Play for (beats)
 slider16:0<0,1000,1>Rest for (beats)
 
 // Speed ramp: nested-selector pattern matching Womb v3. Pick a target
-// (slider17), set a signed delta `by` amount (slider20) in the
-// target's natural unit. All 4 targets ramp in parallel; switching
-// the selector doesn't stop a running ramp. Engage is a freeze/resume
-// gate (NOT a restart edge); only transport play resets ramp_t.
+// (slider29), set a signed delta `by` amount (slider30) in the target's
+// natural unit; per-target duration (31) + start delay (33); global engage
+// (32). All 4 targets ramp in parallel, each on its own clock; switching the
+// selector doesn't stop a running ramp. Engage is a freeze/resume gate (NOT a
+// restart edge); only transport play resets the ramp clocks. (v2.14 reorg:
+// the block was renumbered to a contiguous selector-first group 29-33.)
 //
 // Migration from v2.7: slider17 changed from multiplier (0.1-4.0) to
 // integer selector (0-3). Old projects' multiplier value rounds down
 // to a selector index; slider20 (new amount) defaults to 0, so Speed
 // Ramp produces no effect on reload until reconfigured.
-slider17:0<0,3,1{Heart BPM,S1-S2 gap,Breath HRV depth,Random HRV depth}>Speed ramp target
-slider18:0<0,60,0.1>Speed ramp duration (minutes)
-slider19:0<0,1,1{Off,On}>Speed ramp engage
-slider20:0<-400,400,0.01>Speed ramp by
+// v2.14 REORG: the Speed Ramp block is renumbered into a contiguous
+// selector-first group (target 29, by 30, duration 31, engage 32, start-delay
+// 33) so the controls tab together — previously `by` sat after engage and
+// start-delay was stranded at slider28. Old IDs 17-20 + 28 are now unused;
+// Speed Ramp configs reset on this upgrade (magic already bumped). Declared
+// here for context; REAPER orders by ID so they appear grouped at 29-33.
+slider29:0<0,3,1{Heart BPM,S1-S2 gap,Breath HRV depth,Random HRV depth}>Speed ramp target
+slider30:0<-400,400,0.01>Speed ramp by
+slider31:0<0,60,0.1>Speed ramp duration (minutes)
+slider32:0<0,1,1{Off,On}>Speed ramp engage
 
 // Per-target drift: nested-selector pattern matching Womb v3 / breath
 // gen v2.9. Pick a target (slider21), then sliders 22-25 hold THAT
@@ -79,9 +87,9 @@ slider23:0<0,50,0.1>Drift down amount (units match target)
 slider24:8<1,1000,1>Drift period (heartbeats)
 slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
-// Speed ramp start delay (lives here because slider20 took the gap
-// between Speed Ramp and Drift; this one sits after the drift block).
-slider28:0<0,60,0.1>Speed ramp start delay (minutes)
+// Speed ramp start delay — part of the v2.14 selector-first block (appears at
+// 33 in the UI, right after engage/32).
+slider33:0<0,60,0.1>Speed ramp start delay (minutes)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -271,28 +279,28 @@ loop(N_TARGETS,
 // value, so we don't compute it here anymore.
 bpm_target = slider1;
 
-// Speed Ramp target selector save/restore (nested-selector pattern). slider17
-// = target; slider20 = per-target `by`; slider18 = per-target duration;
-// slider28 = per-target start delay (all three per-target as of v2.14).
-// slider19 (engage) stays GLOBAL. When the selector changes, save the three
+// Speed Ramp target selector save/restore (nested-selector pattern). slider29
+// = target; slider30 = per-target `by`; slider31 = per-target duration;
+// slider33 = per-target start delay (all three per-target as of v2.14).
+// slider32 (engage) stays GLOBAL. When the selector changes, save the three
 // per-target sliders to the OLD slot, load the NEW slot's values. Otherwise
 // capture live edits. All targets ramp in parallel, each on its own clock.
-sel_speed_target = slider17;
+sel_speed_target = slider29;
 last_speed_target != sel_speed_target ? (
-  speed_ramp_target_value_mem[last_speed_target] = slider20;
-  speed_ramp_dur_mem[last_speed_target]          = slider18;
-  speed_ramp_delay_mem[last_speed_target]        = slider28;
-  slider20 = speed_ramp_target_value_mem[sel_speed_target];
-  slider18 = speed_ramp_dur_mem[sel_speed_target];
-  slider28 = speed_ramp_delay_mem[sel_speed_target];
-  slider_automate(slider20);
-  slider_automate(slider18);
-  slider_automate(slider28);
+  speed_ramp_target_value_mem[last_speed_target] = slider30;
+  speed_ramp_dur_mem[last_speed_target]          = slider31;
+  speed_ramp_delay_mem[last_speed_target]        = slider33;
+  slider30 = speed_ramp_target_value_mem[sel_speed_target];
+  slider31 = speed_ramp_dur_mem[sel_speed_target];
+  slider33 = speed_ramp_delay_mem[sel_speed_target];
+  slider_automate(slider30);
+  slider_automate(slider31);
+  slider_automate(slider33);
   last_speed_target = sel_speed_target;
 ) : (
-  speed_ramp_target_value_mem[sel_speed_target] = slider20;
-  speed_ramp_dur_mem[sel_speed_target]          = slider18;
-  speed_ramp_delay_mem[sel_speed_target]        = slider28;
+  speed_ramp_target_value_mem[sel_speed_target] = slider30;
+  speed_ramp_dur_mem[sel_speed_target]          = slider31;
+  speed_ramp_delay_mem[sel_speed_target]        = slider33;
 );
 // No engage-edge detection. Engage is a freeze/resume gate handled
 // in @sample. Only transport play resets ramp_t.
@@ -387,11 +395,11 @@ pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 bpm_smoothed += (bpm_target - bpm_smoothed) * rate_smoother_coeff;
 
 // Advance each target's own ramp clock (v2.14 per-target timeline). Engage
-// (slider19, GLOBAL) is the freeze/resume gate: while On, each target whose
+// (slider32, GLOBAL) is the freeze/resume gate: while On, each target whose
 // duration > 0 advances its own ramp_t 0->1 over its own duration, after its
 // own start delay; while Off, all clocks freeze and resume. Only transport
 // play (via @init) resets them.
-slider19 ? (
+slider32 ? (
   i = 0;
   loop(N_SPEED_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
@@ -664,9 +672,9 @@ sr_magic == 2100000 + N_TARGETS ? (
   // the restored selectors, correcting any transient @slider clobber (which
   // would otherwise zero whichever target was selected on the copy).
   file_avail(0) >= 0 ? (
-    slider20 = speed_ramp_target_value_mem[last_speed_target]; // Speed ramp `by`
-    slider18 = speed_ramp_dur_mem[last_speed_target];          // Speed ramp duration
-    slider28 = speed_ramp_delay_mem[last_speed_target];        // Speed ramp start delay
+    slider30 = speed_ramp_target_value_mem[last_speed_target]; // Speed ramp `by`
+    slider31 = speed_ramp_dur_mem[last_speed_target];          // Speed ramp duration
+    slider33 = speed_ramp_delay_mem[last_speed_target];        // Speed ramp start delay
     slider22 = target_drift_up[last_target_select];            // Drift up
     slider23 = target_drift_down[last_target_select];          // Drift down
     slider24 = target_drift_per[last_target_select];           // Drift period
