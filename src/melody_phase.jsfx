@@ -1526,4 +1526,20 @@ drift_ser_magic == 1000000 + N_TARGETS ? (
   file_mem(0, target_drift_per,   N_TARGETS);
   file_mem(0, target_drift_shape, N_TARGETS);
   file_var(0, last_target_select);
+
+  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
+  // on WRITE it is < 0. @serialize is the only section guaranteed to run on
+  // both load AND duplicate, so it re-establishes the drift bank<->slider
+  // invariant here: force the visible drift config sliders (72-75) to match
+  // the restored bank for the restored selector, correcting the transient
+  // @slider clobber that would otherwise zero whichever drift target was
+  // selected on the copy. (Melody's Speed Ramp is single-target, so only the
+  // drift selector is affected.) Adds no data to the stream — format unchanged.
+  file_avail(0) >= 0 ? (
+    slider72 = target_drift_up[last_target_select];     // Drift up
+    slider73 = target_drift_down[last_target_select];   // Drift down
+    slider74 = target_drift_per[last_target_select];    // Drift period
+    slider75 = target_drift_shape[last_target_select];  // Drift shape
+    sliderchange(-1);
+  );
 );
