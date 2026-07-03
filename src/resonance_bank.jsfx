@@ -557,4 +557,33 @@ res_ser_magic == 1000000 + N_BANDS * 1000 + N_TARGETS ? (
   file_mem(0, band_drift_per,   N_BANDS * N_TARGETS);
   file_mem(0, band_drift_mode,  N_BANDS * N_TARGETS);
   file_mem(0, band_drift_shape, N_BANDS * N_TARGETS);
+
+  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
+  // on WRITE it is < 0. @serialize is the only section guaranteed to run on
+  // both load AND duplicate, so it re-establishes the bank<->slider invariant.
+  // This plugin has TWO nested selectors (band + drift-target), so on read we
+  // force BOTH the per-band config sliders (3-8) for the selected band AND the
+  // drift config sliders (10-14) for that band's remembered drift target back
+  // to their restored bank values, and sync the last_* trackers so the next
+  // @slider capture writes the correct values (not a transient clobbered 0).
+  file_avail(0) >= 0 ? (
+    rb_band = slider2;
+    slider3 = band_freq[rb_band];
+    slider4 = band_width_up[rb_band];
+    slider5 = band_width_down[rb_band];
+    slider6 = band_gain[rb_band];
+    slider7 = band_pan[rb_band];
+    slider8 = band_order_idx[rb_band];
+    rb_dt   = band_last_drift_target[rb_band];
+    slider9 = rb_dt;
+    rb_slot = rb_band * N_TARGETS + rb_dt;
+    slider10 = band_drift_up[rb_slot];
+    slider11 = band_drift_down[rb_slot];
+    slider12 = band_drift_per[rb_slot];
+    slider13 = band_drift_mode[rb_slot];
+    slider14 = band_drift_shape[rb_slot];
+    last_band_select         = rb_band;
+    last_drift_target_select = rb_dt;
+    sliderchange(-1);
+  );
 );
