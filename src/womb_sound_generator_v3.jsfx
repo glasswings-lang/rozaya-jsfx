@@ -109,13 +109,18 @@ slider47:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // the pulse wave) so there's no bloodflow target — see CLAUDE.md for
 // the design point on whether bloodflow should ever be an independent
 // layer.
-slider48:0<0,6,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth}>Speed ramp target
+slider48:0<0,7,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min}>Speed ramp target
 slider49:0<-300,300,0.1>Speed ramp by
 slider50:0<0,60,0.1>Speed ramp duration (minutes)
 slider51:0<0,1,1{Off,On}>Speed ramp engage
 slider52:0<0,60,0.1>Speed ramp start delay (minutes)
 
-// Breaths per minute: one-way rescale tool for the four breath durations.
+// Breaths per minute: one-way SETUP rescale tool for the four breath
+// durations — it rewrites sliders 16-19 once, preserving their I:E ratio,
+// then reads 0 again. Distinct from the live "Breaths/min" Drift + Speed
+// Ramp TARGET (added v2.14), which modulates the breath rate over time
+// without touching the sliders. Use this to dial in a starting rate; use
+// the target to wander or wind it down while playing.
 slider53:0<0,30,0.1>Breaths per minute (0=off; rescales durations 16-19)
 
 // === Drift (nested-selector pattern, see header) ===
@@ -123,7 +128,7 @@ slider53:0<0,30,0.1>Breaths per minute (0=off; rescales durations 16-19)
 // Switching the selector saves the current values to the old target's
 // memory slot and loads the new target's values into the sliders.
 // All seven targets' drifts run in parallel.
-slider54:0<0,6,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth}>Drift target
+slider54:0<0,7,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min}>Drift target
 slider55:0<0,50,0.1>Drift up amount (units match target)
 slider56:0<0,50,0.1>Drift down amount (units match target)
 slider57:8<1,1000,1>Drift period (heartbeats or breath cycles)
@@ -333,7 +338,9 @@ speed_ramp_delay_elapsed_mem = 8384;  // delay sample counter per target (RUNTIM
 //   4 = Exhale Duration
 //   5 = Bottom Pause
 //   6 = RSA depth (Heart with breath BPM peak-to-peak)
-N_TARGETS = 7;
+//   7 = Breaths/min (aggregate — scales all four breath segments in
+//       lockstep, preserving I:E ratio; units = breaths per minute, signed)
+N_TARGETS = 8;
 target_drift_up     = 8192;   // [0..6]  configured amount, units match target
 target_drift_down   = 8208;   // [0..6]
 target_drift_per    = 8224;   // [0..6]  in heartbeats (targets 0,1) or breath cycles (2-6)
@@ -354,7 +361,7 @@ target_drift_offset = 8304;   // [0..6]  computed each sample, consumed by audio
 // below restores saved configs on project reload.
 drift_cfg_inited != 1 ? (
   i = 0;
-  loop(7,
+  loop(N_TARGETS,
     speed_ramp_target_value_mem[i] = 0;
     speed_ramp_dur_mem[i]          = 0;
     speed_ramp_delay_mem[i]        = 0;
@@ -377,7 +384,7 @@ drift_cfg_inited != 1 ? (
 // ramp clocks) resets on EVERY @init — i.e. every transport play — so
 // Sine/Triangle drift restarts at phase 0 (deterministic renders).
 i = 0;
-loop(7,
+loop(N_TARGETS,
   speed_ramp_ramp_t_mem[i]        = 0;
   speed_ramp_delay_elapsed_mem[i] = 0;
   i += 1;
@@ -595,7 +602,7 @@ bpm_smoothed += (bpm_target - bpm_smoothed) * rate_smoother_coeff;
 // play (via @init) resets them.
 slider51 ? (
   i = 0;
-  loop(7,
+  loop(N_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
       sr_delay_samples = speed_ramp_delay_mem[i] * 60 * srate;
       speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
@@ -627,6 +634,7 @@ speed_ramp_top_offset     = speed_ramp_ramp_t_mem[3] * speed_ramp_target_value_m
 speed_ramp_exhale_offset  = speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_mem[4];
 speed_ramp_bot_offset     = speed_ramp_ramp_t_mem[5] * speed_ramp_target_value_mem[5];
 speed_ramp_rsa_offset     = speed_ramp_ramp_t_mem[6] * speed_ramp_target_value_mem[6];
+speed_ramp_bpm_offset     = speed_ramp_ramp_t_mem[7] * speed_ramp_target_value_mem[7];
 
 // --- v3 Per-target Drift wave computation ---
 //
@@ -701,13 +709,25 @@ cycle_len_base = floor(srate * 60.0 / effective_bpm);
 effective_systole_ms = max(slider5 + target_drift_offset[1] + speed_ramp_systole_offset, 1);
 systole_samples      = floor(srate * effective_systole_ms * 0.001);
 
-// Apply breath segment drifts (targets 2-5) + Speed Ramp offsets.
-// Drift wanders each segment cycle-to-cycle; Speed Ramp adds a one-way
-// movement toward the target value over the configured duration.
-effective_inhale_sec = max(slider16 + target_drift_offset[2] + speed_ramp_inhale_offset, 0.1);
-effective_top_sec    = max(slider17 + target_drift_offset[3] + speed_ramp_top_offset,    0);
-effective_exhale_sec = max(slider18 + target_drift_offset[4] + speed_ramp_exhale_offset, 0.1);
-effective_bot_sec    = max(slider19 + target_drift_offset[5] + speed_ramp_bot_offset,    0);
+// Breaths/min aggregate (target 7): a proportional scale across ALL four
+// segments in lockstep, preserving the I:E ratio — the ratio-based
+// aggregate spec'd for Job B. Combined breath-rate delta (drift + Speed
+// Ramp, in breaths/min) shifts the whole breath rate; each segment's
+// effective duration is then divided by the scale (faster rate = shorter
+// segments). Composes with the per-segment drift + ramp offsets below.
+base_breath_total = max(slider16 + slider17 + slider18 + slider19, 0.001);
+base_breath_rate  = 60 / base_breath_total;
+breath_rate_delta = target_drift_offset[7] + speed_ramp_bpm_offset;
+breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_breath_rate;
+
+// Apply breath segment drifts (targets 2-5) + Speed Ramp offsets, then the
+// Breaths/min aggregate scale. Drift wanders each segment cycle-to-cycle;
+// Speed Ramp adds a one-way movement over the configured duration; the
+// aggregate scales the whole breath rate.
+effective_inhale_sec = max((slider16 + target_drift_offset[2] + speed_ramp_inhale_offset) / breath_rate_scale, 0.1);
+effective_top_sec    = max((slider17 + target_drift_offset[3] + speed_ramp_top_offset)    / breath_rate_scale, 0);
+effective_exhale_sec = max((slider18 + target_drift_offset[4] + speed_ramp_exhale_offset) / breath_rate_scale, 0.1);
+effective_bot_sec    = max((slider19 + target_drift_offset[5] + speed_ramp_bot_offset)    / breath_rate_scale, 0);
 inhale_len = max(floor(srate * effective_inhale_sec), 1);
 top_len    = max(floor(srate * effective_top_sec), 1);
 exhale_len = max(floor(srate * effective_exhale_sec), 1);
@@ -1078,9 +1098,9 @@ sr_magic == 2100000 + N_TARGETS ? (
   file_mem(0, target_drift_per,   N_TARGETS);
   file_mem(0, target_drift_shape, N_TARGETS);
   file_var(0, last_target_select);
-  file_mem(0, speed_ramp_target_value_mem, 7);
-  file_mem(0, speed_ramp_dur_mem,          7);
-  file_mem(0, speed_ramp_delay_mem,        7);
+  file_mem(0, speed_ramp_target_value_mem, N_TARGETS);
+  file_mem(0, speed_ramp_dur_mem,          N_TARGETS);
+  file_mem(0, speed_ramp_delay_mem,        N_TARGETS);
   file_var(0, last_speed_target);
 
   // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
