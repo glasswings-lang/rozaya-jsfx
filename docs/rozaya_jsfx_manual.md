@@ -176,7 +176,7 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 ### Speed Ramp
 
-Nested-selector pattern matching Womb v3. Pick one of 4 targets (Heart BPM, S1-S2 gap, Breath HRV depth, Random HRV depth) on slider 17, then set a signed `by` amount on slider 20. All 4 targets ramp in parallel; the selector just changes which one you're editing.
+Nested-selector pattern matching Womb v3. Pick one of 4 targets (Heart BPM, S1-S2 gap, Breath HRV depth, Random HRV depth) on slider 29, then set a signed `by` amount on slider 30. All 4 targets ramp in parallel; the selector just changes which one you're editing.
 
 *(v2.14 reorg: the Speed Ramp block is now a contiguous selector-first group at sliders **29–33** — target 29, by 30, duration 31, engage 32, start-delay 33 — so it tabs together. Old IDs 17–20 + 28 are retired; Speed Ramp configs reset on upgrade.)*
 
@@ -202,7 +202,7 @@ A small ~100 ms smoother sits between the BPM slider and the audio, so manual BP
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge — the ONLY thing that resets ramp progress. Slider changes (selector switch, engage toggle, anything) don't restart it.
 
-**Migration from v2.7:** slider 17 changed from multiplier (0.1–4.0) to a 4-option selector. Existing projects' multiplier value rounds down to a target index, and slider 20 (the new amount) defaults to 0 — so Speed Ramp produces no effect on reload until reconfigured.
+**Migration history.** *v2.7:* the old single "Speed ramp" multiplier (0.1–4.0) on slider 17 became a target selector with a signed `by` amount (additive, not a multiplier). *v2.14:* the whole block was renumbered into the contiguous selector-first group at sliders **29–33** (old IDs 17–20 + 28 retired). Speed Ramp configs reset to defaults on upgrade — reconfigure after loading.
 
 ### Drift (v2.9 nested-selector)
 
@@ -285,13 +285,13 @@ The envelope applied to each phase is a simple amplitude shape — fade in from 
 **Inhale Duration (sec)** `0.5-20.0 sec, default 4.0`
 Length of the inhale phase. The breath cycle advances through inhale → top pause → exhale → bottom pause in sequence, then loops. Changing this value mid-cycle takes effect at the next state transition; if the new duration is shorter than the current position, the position is immediately clamped to the end of the state.
 
-**Top Pause (sec)** `0.0-5.0 sec, default 0.5`
+**Top Pause (sec)** `0.0-5.0 sec, default 0.3`
 Silence between the end of inhale and the start of exhale. Simulates the natural breath hold at the top of a breath. Set to 0 for an immediate inhale-to-exhale transition.
 
 **Exhale Duration (sec)** `0.5-20.0 sec, default 4.0`
 Length of the exhale phase.
 
-**Bottom Pause (sec)** `0.0-5.0 sec, default 1.5`
+**Bottom Pause (sec)** `0.0-5.0 sec, default 0.3`
 Silence between the end of exhale and the start of the next inhale. Simulates the natural rest at the bottom of a breath. Set to 0 for an immediate exhale-to-inhale transition.
 
 ---
