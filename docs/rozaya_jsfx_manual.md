@@ -366,19 +366,16 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 Nested-selector pattern matching Womb v3. Pick a target — Inhale, Top pause, Exhale, or Bottom pause — and set a signed `by` amount in seconds; that segment's length ramps from its baseline toward `baseline + by` over the duration. All four targets ramp in parallel; the selector just changes which target's `by` you're currently editing.
 
 **Speed ramp target (slider 17)** `Inhale / Top pause / Exhale / Bottom pause, default Inhale`
-The 4-option selector. Switching saves the current slider 20 amount to the old target's memory slot and loads the new target's saved amount. All 4 targets ramp regardless of which one is selected — selector switching never stops a ramp.
+The 4-option selector. Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 4 targets ramp regardless of which one is selected — selector switching never stops a ramp.
 
-**Speed ramp duration (slider 18)** `0–60 minutes, default 0`
-How long the ramp takes (ramp_t advances 0 → 1 over this many minutes). **0** disables the ramp.
+**Speed ramp duration (slider 18)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 doesn't ramp.
 
-**Speed ramp engage (slider 19)** `Off / On, default Off`
-Freeze/resume gate. When On, ramp_t advances; when Off, it freezes wherever it is and resumes from there on re-engage. Engage does NOT reset the ramp — only transport play does.
+**Speed ramp engage (slider 19)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay. Freeze/resume gate — while On each target's clock advances; while Off all freeze and resume on re-engage. Engage does NOT reset the ramps — only transport play does.
 
 **Speed ramp by (slider 20)** `-20 to +20 sec, step 0.1, default 0`
 Signed delta in seconds for the selected target. **0** = no change. **Negative** = shorten that segment (faster breath if Inhale/Exhale; tighter cycle if Top/Bottom). **Positive** = lengthen (slower / more spacious). Examples: Inhale target with `by` +4 ramps inhale from 4 sec → 8 sec over the duration; Bottom Pause target with `by` -0.2 shortens bottom pause toward minimum. Each target stores its own amount independently.
 
-**Speed ramp start delay (slider 29)** `0–60 minutes, default 0`
-Wait this many minutes after engage before ramp_t actually starts advancing. Useful for "fall asleep first, then begin the wind-down."
+**Speed ramp start delay (slider 29)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. Useful for "fall asleep first, then begin the wind-down."
 
 **Migrating from v2.7:** slider 17 changed from a multiplier (0.1–4.0) to a 4-option target selector (0–3 integer). Existing projects loading the new plugin will see slider 17's old multiplier value rounded down to a target index, and slider 20 (the new amount) defaulting to 0 — so Speed Ramp produces no effect on reload until you re-configure. The audio path changed too: Speed Ramp's effect now lives in per-segment length adjustments (additive) rather than as a global rate multiplier, so it composes additively with Drift instead of multiplicatively.
 
