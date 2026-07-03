@@ -76,10 +76,10 @@ slider25:0<0,1,1{Pass-through,Silence}>Output at rest
 // rounds down to a selector index, and slider 29 (the new `by`)
 // defaults to 0 — so Speed Ramp produces no effect on reload until
 // reconfigured.
-slider26:0<0,3,1{High dwell,Fade down,Low dwell,Fade up}>Speed ramp target
+slider26:0<0,5,1{High dwell,Fade down,Low dwell,Fade up,Pan Sweep Rate,Resonance}>Speed ramp target
 slider27:0<0,60,0.1>Speed ramp duration (minutes)
 slider28:0<0,1,1{Off,On}>Speed ramp engage
-slider29:0<-60,60,0.001>Speed ramp by (seconds)
+slider29:0<-60,60,0.001>Speed ramp by (units match target)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / the
 // rest of the v2.9 sweep. Pick a target (slider30), then sliders 31-34
@@ -278,7 +278,7 @@ effect_mix        = 1;
 // Speed Ramp state. Engage (global) is a freeze/resume gate; only transport
 // play resets the per-target ramp clocks. As of v2.14 the ramp is PER-TARGET:
 // each target has its own `by`, duration, start delay, and progress clock.
-N_SPEED_TARGETS              = 4;
+N_SPEED_TARGETS              = 6;   // v2.14: extended 4 -> 6 to match drift (added Pan Sweep Rate, Resonance)
 speed_ramp_target_value_mem  = 4096;  // signed `by` per target (CONFIG)
 
 // --- v2.9 Drift target memory banks ---
@@ -592,12 +592,12 @@ fade_up_secs   = max(slider7 + speed_ramp_fade_up_offset   + target_drift_offset
 period = high_secs + fade_down_secs + low_secs + fade_up_secs;
 freq   = 1 / max(period, 0.00001);
 
-// Resonance drift (target 5): clamp to [0, 1] (slider range).
-eff_resonance = max(0, min(1, resonance + target_drift_offset[5]));
+// Resonance drift + Speed Ramp (target 5): clamp to [0, 1] (slider range).
+eff_resonance = max(0, min(1, resonance + target_drift_offset[5] + speed_ramp_ramp_t_mem[5] * speed_ramp_target_value_mem[5]));
 
-// Pan Sweep Rate drift (target 4): fold into the pan sweep value used
-// by pan modes 10/11 below (in the Pan Sweep Rate's own unit).
-eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[4]);
+// Pan Sweep Rate drift + Speed Ramp (target 4): fold into the pan sweep value
+// used by pan modes 10/11 below (in the Pan Sweep Rate's own unit).
+eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[4] + speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_mem[4]);
 
 // Smoother coefficient — used for cut_smooth below and effect_mix
 // just below that. Moved up so both can share the same value.
@@ -769,14 +769,15 @@ pan_enabled ? (
 // Persist per-target Speed Ramp (by / duration / start-delay) + drift configs
 // so reload restores all targets, not just whichever was selected at save.
 //
-// VERSION-GUARDED (CLAUDE.md @serialize gotcha; NEW in v2.14 — sweep-dwell's
-// stream was previously unversioned). Magic = 2100000 + N_TARGETS marks the
-// per-target-timeline format. Older (unversioned) blobs won't match and fall
-// through to @init defaults — drift + ramp reset on upgrade (accepted;
+// VERSION-GUARDED (CLAUDE.md @serialize gotcha; NEW in v2.14). Magic base
+// bumped to 2200000 when the Speed Ramp target count grew 4 -> 6 (added Pan
+// Sweep Rate + Resonance), which changed the serialized SR-bank size. Older
+// blobs (unversioned, or the 2100000 per-target-timeline build) won't match
+// and fall through to @init defaults — drift + ramp reset (accepted;
 // pre-release). Marker is float32-exact.
-sr_magic = 2100000 + N_TARGETS;
+sr_magic = 2200000 + N_TARGETS;
 file_var(0, sr_magic);
-sr_magic == 2100000 + N_TARGETS ? (
+sr_magic == 2200000 + N_TARGETS ? (
   file_mem(0, speed_ramp_target_value_mem, N_SPEED_TARGETS);
   file_mem(0, speed_ramp_dur_mem,          N_SPEED_TARGETS);
   file_mem(0, speed_ramp_delay_mem,        N_SPEED_TARGETS);
