@@ -179,11 +179,11 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 Nested-selector pattern matching Womb v3. Pick one of 4 targets (Heart BPM, S1-S2 gap, Breath HRV depth, Random HRV depth) on slider 17, then set a signed `by` amount on slider 20. All 4 targets ramp in parallel; the selector just changes which one you're editing.
 
 **Speed ramp target (slider 17)** `Heart BPM / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart BPM`
-The 4-option selector. Switching saves the current slider 20 amount to the old target's memory slot and loads the new target's saved amount. All 4 targets ramp regardless of which one is selected.
+The 4-option selector. Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 4 targets ramp regardless of which one is selected.
 
-**Speed ramp duration (slider 18)** `0–60 minutes, default 0` · **Speed ramp engage (slider 19)** `Off / On, default Off`
+**Speed ramp duration (slider 18)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Speed ramp engage (slider 19)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
-Engage is a freeze/resume gate (NOT a restart edge): while On, ramp_t advances 0 → 1 over the duration; while Off, ramp_t freezes wherever it is and resumes from there on re-engage. Only transport play resets the ramp.
+Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage. Only transport play resets the ramps.
 
 **Speed ramp by (slider 20)** `-400 to +400, step 0.01, default 0`
 Signed delta in the selected target's natural unit. **0** = no change. Examples:
@@ -194,8 +194,7 @@ Signed delta in the selected target's natural unit. **0** = no change. Examples:
 
 Slider range is intentionally wide (-400 to +400) to span every target's natural range. Step is 0.01 to give fine control on the HRV targets (which have natural step 0.005-0.01). For BPM/ms targets you'd type a coarser value (e.g. -35 for BPM); for HRV targets you'd type something like 0.05.
 
-**Speed ramp start delay (slider 28)** `0–60 minutes, default 0`
-Wait this many minutes after engage before ramp_t starts advancing. Lives at slider 28 (after the drift block) because the gap at slider 20 went to the new `by` slider.
+**Speed ramp start delay (slider 28)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Lives at slider 28 (after the drift block) because the gap at slider 20 went to the `by` slider. Saved/loaded per target by the selector, like `by` and duration.
 
 A small ~100 ms smoother sits between the BPM slider and the audio, so manual BPM tweaks don't click. This is always on.
 

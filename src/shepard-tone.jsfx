@@ -183,7 +183,7 @@ slider63:0<0,1,1{Walk through,Freeze in place}>Rest mode
 // Speed Ramp + Drift configs on upgrade (both off-by-default; the tone sound
 // on sliders 1-63 is untouched). Re-add the instance for clean defaults, or
 // reconfigure. See the manual's migration note.
-slider64:0<0,10,1{Rate Value,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Fade In %,Fade Out %}>Speed ramp target
+slider64:0<0,10,1{Rate Value,V1 Rate/Cents,V2 Rate/Cents,V3 Rate/Cents,V4 Rate/Cents,V5 Rate/Cents,V6 Rate/Cents,V7 Rate/Cents,V8 Rate/Cents,Fade In %,Fade Out %}>Speed ramp target
 slider65:0<-1000,1000,0.001>Speed ramp by (units match target)
 slider66:0<0,60,0.1>Speed ramp duration (minutes)
 slider67:0<0,1,1{Off,On}>Speed ramp engage
@@ -215,7 +215,7 @@ slider68:0<0,60,0.1>Speed ramp start delay (minutes)
 // Hz mode you'll use the low end (e.g. 0.1-0.5), in Seconds mode small period
 // offsets. (Drift IDs shifted +1 from the old 68-72 layout in the v2.14 reorg
 // above — same reset story.)
-slider69:0<0,10,1{Rate Value,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Fade In %,Fade Out %}>Drift target
+slider69:0<0,10,1{Rate Value,V1 Rate/Cents,V2 Rate/Cents,V3 Rate/Cents,V4 Rate/Cents,V5 Rate/Cents,V6 Rate/Cents,V7 Rate/Cents,V8 Rate/Cents,Fade In %,Fade Out %}>Drift target
 slider70:0<0,100,0.01>Drift up amount (units match target)
 slider71:0<0,100,0.01>Drift down amount (units match target)
 slider72:8<1,1000,1>Drift period (cycles)
