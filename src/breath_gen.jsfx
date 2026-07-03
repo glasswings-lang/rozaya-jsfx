@@ -56,7 +56,7 @@ slider16:0<0,1000,1>Rest for (breaths)
 // stranded at slider29. Old IDs 17-20 + 29 are now unused; Speed Ramp configs
 // reset on this upgrade (magic already bumped). REAPER orders by ID, so they
 // appear grouped at 30-34.
-slider30:0<0,3,1{Inhale,Top pause,Exhale,Bottom pause}>Speed ramp target
+slider30:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Speed ramp target
 slider31:0<-20,20,0.1>Speed ramp by
 slider32:0<0,60,0.1>Speed ramp duration (minutes)
 slider33:0<0,1,1{Off,On}>Speed ramp engage
@@ -81,7 +81,7 @@ slider33:0<0,1,1{Off,On}>Speed ramp engage
 // sliders to defaults after upgrade and reconfigure if you'd used the
 // old block. Sliders 26 and 27 are no longer declared — their old
 // values are silently discarded on project load.
-slider21:0<0,3,1{Inhale,Top pause,Exhale,Bottom pause}>Drift target
+slider21:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Drift target
 slider22:0<0,10,0.1>Drift up amount (seconds)
 slider23:0<0,10,0.1>Drift down amount (seconds)
 slider24:8<1,1000,1>Drift period (breath cycles)
@@ -196,7 +196,7 @@ total_breath_samples = 0;
 // Engage (global) is a freeze/resume gate; only transport play resets the
 // per-target ramp clocks. As of v2.14 the ramp is PER-TARGET: each target has
 // its own `by`, duration, start delay, and progress clock (banks below).
-N_SPEED_TARGETS              = 4;
+N_SPEED_TARGETS              = 5;
 speed_ramp_target_value_mem  = 4096;  // signed `by` per target (CONFIG)
 
 // --- v2.9 Drift target memory banks ---
@@ -211,7 +211,9 @@ speed_ramp_target_value_mem  = 4096;  // signed `by` per target (CONFIG)
 //   1 = Top Pause
 //   2 = Exhale Duration
 //   3 = Bottom Pause
-N_TARGETS = 4;
+//   4 = Breaths/min (aggregate — scales all four segments in lockstep,
+//       preserving I:E ratio; units = breaths per minute, signed)
+N_TARGETS = 5;
 target_drift_up     = 4112;
 target_drift_down   = 4128;
 target_drift_per    = 4144;
@@ -409,13 +411,15 @@ slider33 ? (
   );
 );
 
-// Per-target Speed Ramp offsets (parallel — all 4 ramp regardless of which
+// Per-target Speed Ramp offsets (parallel — all 5 ramp regardless of which
 // target the selector is currently showing). Each target gets its own
-// `ramp_t * stored_amount` in its native unit (seconds for breath segments).
+// `ramp_t * stored_amount` in its native unit (seconds for breath segments;
+// breaths/min for the aggregate target 4).
 speed_ramp_inhale_offset = speed_ramp_ramp_t_mem[0] * speed_ramp_target_value_mem[0];
 speed_ramp_top_offset    = speed_ramp_ramp_t_mem[1] * speed_ramp_target_value_mem[1];
 speed_ramp_exhale_offset = speed_ramp_ramp_t_mem[2] * speed_ramp_target_value_mem[2];
 speed_ramp_bot_offset    = speed_ramp_ramp_t_mem[3] * speed_ramp_target_value_mem[3];
+speed_ramp_bpm_offset    = speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_mem[4];
 
 // Per-target drift wave computation. Each of 4 targets gets a phase
 // counter advancing per sample at rate 1 / (period_cycles * one_cycle_samples).
@@ -461,14 +465,25 @@ loop(N_TARGETS,
   i += 1;
 );
 
+// Breaths/min aggregate (target 4): a proportional scale across ALL four
+// segments in lockstep, preserving the I:E ratio (the Job B ratio-aggregate).
+// Combined breath-rate delta (drift + Speed Ramp, in breaths/min) shifts the
+// whole breath rate; each segment is divided by the scale (faster rate =
+// shorter segments). Composes with the per-segment drift + ramp offsets.
+base_breath_total = max(slider1 + slider2 + slider3 + slider4, 0.001);
+base_breath_rate  = 60 / base_breath_total;
+breath_rate_delta = target_drift_offset[4] + speed_ramp_bpm_offset;
+breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_breath_rate;
+
 // Effective per-segment lengths: baseline (from slider) + Speed Ramp
-// offset + per-target drift offset. These OVERWRITE the @slider-set
-// values each sample so that both Speed Ramp's continuous progress and
-// drift wander are reflected in segment length at every sample.
-inhale_len = max(floor(srate * max(slider1 + speed_ramp_inhale_offset + target_drift_offset[0], 0.1)), 1);
-top_len    = max(floor(srate * max(slider2 + speed_ramp_top_offset    + target_drift_offset[1], 0  )), 1);
-exhale_len = max(floor(srate * max(slider3 + speed_ramp_exhale_offset + target_drift_offset[2], 0.1)), 1);
-bot_len    = max(floor(srate * max(slider4 + speed_ramp_bot_offset    + target_drift_offset[3], 0  )), 1);
+// offset + per-target drift offset, then the Breaths/min aggregate scale.
+// These OVERWRITE the @slider-set values each sample so that Speed Ramp's
+// continuous progress, drift wander, and rate aggregate are all reflected
+// in segment length at every sample.
+inhale_len = max(floor(srate * max((slider1 + speed_ramp_inhale_offset + target_drift_offset[0]) / breath_rate_scale, 0.1)), 1);
+top_len    = max(floor(srate * max((slider2 + speed_ramp_top_offset    + target_drift_offset[1]) / breath_rate_scale, 0  )), 1);
+exhale_len = max(floor(srate * max((slider3 + speed_ramp_exhale_offset + target_drift_offset[2]) / breath_rate_scale, 0.1)), 1);
+bot_len    = max(floor(srate * max((slider4 + speed_ramp_bot_offset    + target_drift_offset[3]) / breath_rate_scale, 0  )), 1);
 total_breath_samples = inhale_len + top_len + exhale_len + bot_len;
 
 // (Path A: @init re-runs on transport play and resets all runtime —

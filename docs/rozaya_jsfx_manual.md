@@ -365,12 +365,12 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 ### Speed Ramp
 
-Nested-selector pattern matching Womb v3. Pick a target — Inhale, Top pause, Exhale, or Bottom pause — and set a signed `by` amount in seconds; that segment's length ramps from its baseline toward `baseline + by` over the duration. All four targets ramp in parallel; the selector just changes which target's `by` you're currently editing.
+Nested-selector pattern matching Womb v3. Pick a target — Inhale, Top pause, Exhale, Bottom pause, or Breaths/min — and set a signed `by` amount (seconds for the four segments, breaths/min for the aggregate); that target ramps from its baseline toward `baseline + by` over the duration. All five targets ramp in parallel; the selector just changes which target's `by` you're currently editing.
 
 *(v2.14 reorg: the Speed Ramp block is now a contiguous selector-first group at sliders **30–34** — target 30, by 31, duration 32, engage 33, start-delay 34. Old IDs 17–20 + 29 are retired; Speed Ramp configs reset on upgrade.)*
 
-**Speed ramp target (slider 30)** `Inhale / Top pause / Exhale / Bottom pause, default Inhale`
-The 4-option selector. Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 4 targets ramp regardless of which one is selected — selector switching never stops a ramp.
+**Speed ramp target (slider 30)** `Inhale / Top pause / Exhale / Bottom pause / Breaths/min, default Inhale`
+The 5-option selector (v2.14 adds **Breaths/min**). Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 5 targets ramp regardless of which one is selected — selector switching never stops a ramp. The **Breaths/min** target is a proportional scale across all four segments in lockstep (preserving the I:E ratio), in breaths per minute — the whole-breath-rate wind-down, distinct from the per-segment targets it composes with. Its `by` is read as breaths/min rather than seconds (negative = slower breath).
 
 **Speed ramp duration (slider 32)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 doesn't ramp.
 
@@ -381,7 +381,7 @@ Signed delta in seconds for the selected target. **0** = no change. **Negative**
 
 **Speed ramp start delay (slider 34)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Part of the contiguous 30–34 block. Useful for "fall asleep first, then begin the wind-down."
 
-**Migrating from v2.7:** slider 17 changed from a multiplier (0.1–4.0) to a 4-option target selector (0–3 integer). Existing projects loading the new plugin will see slider 17's old multiplier value rounded down to a target index, and slider 20 (the new amount) defaulting to 0 — so Speed Ramp produces no effect on reload until you re-configure. The audio path changed too: Speed Ramp's effect now lives in per-segment length adjustments (additive) rather than as a global rate multiplier, so it composes additively with Drift instead of multiplicatively.
+**Migration history.** *v2.7:* the old single "Speed ramp" multiplier (0.1–4.0) became a target selector, and the audio path changed to per-segment length adjustments (additive) — so Speed Ramp composes additively with Drift instead of multiplicatively. *v2.14:* the block was renumbered into the contiguous selector-first group at sliders **30–34** (old IDs 17–20 + 29 retired), and the **Breaths/min** aggregate target was added. Speed Ramp configs reset to defaults on upgrade — reconfigure after loading.
 
 **Filter timbre is unchanged.** Speed Ramp adjusts segment lengths, not filter coefficients — a longer inhale sounds exactly like a normal inhale, just stretched.
 
@@ -395,8 +395,8 @@ Same pattern as Womb v3's drift and Speed Ramp. Switching the **Drift target** s
 
 For slow wall-clock-feel drift, set a long period (~100 cycles ≈ 7-10 min at typical breath rates). The old v2.8 "musical vs slow" split is gone — there's a single period unit (breath cycles), and you express the timescale you want with the period value.
 
-**Drift target** `Inhale / Top pause / Exhale / Bottom pause, default Inhale`
-Picks which segment's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost.
+**Drift target** `Inhale / Top pause / Exhale / Bottom pause / Breaths/min, default Inhale`
+Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost. The **Breaths/min** target (v2.14) wanders the whole breath rate (all four segments in lockstep, I:E preserved) in breaths/min, rather than one segment in seconds.
 
 **Drift up amount (seconds)** `0.0–10.0, default 0`
 How many seconds above the baseline segment length the drift wanders at its peak. 0 = drift off on the up side.
