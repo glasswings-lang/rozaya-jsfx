@@ -5,7 +5,7 @@ desc: Spectral Vowel Morpher - voice<->wash capture instrument
 // Capture a moment into a slot; it's analyzed two ways at once:
 //   * harmonic (voice) -- pitch-detected additive resynth: keeps the vowel
 //   * spectral (wash)   -- PaulStretch-style phase randomization: breathy bed
-// TEXTURE crossfades between them (0 = voice, 100 = wash). Capture up to 4
+// TEXTURE crossfades between them (0 = voice, 100 = wash). Capture up to 8
 // slots and MORPH between them. Captures persist across save/reopen.
 //
 // USE: put audio on the track. Input level up / Voice down -> you hear source.
@@ -18,10 +18,10 @@ desc: Spectral Vowel Morpher - voice<->wash capture instrument
 //   Texture       = 0 voice (harmonic) .. 100 wash (phase-randomized)
 //   Wash grain   = short = rough/grainy, long = glassy/smooth (wash character)
 //   Spread        = spectral blur (Hz);  Audition = monitor focused slot / morph
-//   Auto-morph    = Off / Sweep (back+forth) / Glide once (slot 1->last)
+//   Auto-morph    = Off / Sweep (back+forth) / Glide once (slot 1->last) / Drift (random wander)
 // =====================================================================
 
-slider1:1<1,4,1>Capture slot
+slider1:1<1,8,1>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture spectrum
 slider3:0<0,100,1>Capture point (earliest .. at press)
 slider4:0<-60,12,0.1>Input level (dry, dB)
@@ -35,7 +35,7 @@ slider11:0<0,500,1>Low cut (Hz)
 slider12:0<0,100,0.1>Denoise
 slider13:1<0,1,1{Focused slot,Morph}>Audition
 slider14:0<0,100,0.1>Morph (across captured slots)
-slider15:0<0,2,1{Off,Sweep (back+forth),Glide once}>Auto-morph
+slider15:0<0,3,1{Off,Sweep (back+forth),Glide once,Drift (random)}>Auto-morph
 slider16:20<1,600,0.5>Auto-morph time (sec)
 
 @init
@@ -46,7 +46,7 @@ slider16:20<1,600,0.5>Auto-morph time (sec)
 // restarts cleanly (and renders correctly) without wiping the captures.
 ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
-NSLOTS = 4; MAXFFT = 32768; INRING = 65536;
+NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
 FFTSIZE = 32768; NBINS = 16385;
 // WA = analysis window length, FIXED and decoupled from Wash grain. The capture
 // analysis (heavy: FFT + YIN) happens at WA; Wash grain only rebuilds the cheap
@@ -57,35 +57,45 @@ WA = 8192;   // ~170 ms @ 48k: good spectral resolution, leaves ~0.5 s scrub ran
 // grain wraps the circular accumulator onto the read pointer (audible at the
 // top of the Window-size range). 2*MAXFFT is comfortable headroom.
 ACCLEN = 65536;
-fftwork   = 0;          // 2 * FFTSIZE
-inbuf     = 100000;     // live input ring (INRING)
-window    = 200000;     // Hann of length WA (analysis -- fixed, built once)
-synwin    = 240000;     // sqrt-Hann of length W (synthesis grain = Wash grain)
-accL      = 300000;     // ACCLEN
-accR      = 400000;     // ACCLEN
-mtmp      = 500000;     // NBINS
-curmag    = 520000;     // NBINS
-phase     = 540000;     // NBINS
-doff      = 560000;     // NBINS
-grainbuf  = 600000;     // MAXFFT
-slotmag   = 700000;     // NSLOTS * NBINS  (65540)
-slotraw   = 800000;     // NSLOTS * MAXFFT (131072)
-slot_norm = 950000;     // NSLOTS  (spectral-wash peak normalization)
-// --- harmonic (voice) engine storage ---
 NHARM = 64; WHARM = 3072;          // 64 harmonics; ~64 ms YIN analysis window
-slot_harm  = 1000000;   // NSLOTS * NHARM  captured harmonic magnitudes
-slot_f0    = 1001000;   // NSLOTS  detected fundamentals (Hz)
-slot_hnorm = 1001100;   // NSLOTS  harmonic peak normalization
-hph        = 1001200;   // NHARM   resynth phase accumulators (voice A)
-hphB       = 1001300;   // NHARM   resynth phase accumulators (voice B)
-anbuf      = 1010000;   // WHARM   mono analysis frame
-yin_df     = 1020000;   // WHARM   YIN difference function
-yin_cmnd   = 1030000;   // WHARM   YIN cumulative-mean-normalized difference
+WTBL = 8192; WTSCALE = WTBL / TWOPI;
+
+// ---------------------------------------------------------------------------
+// Memory map: a RUNNING allocator, not hand-picked addresses. Every buffer is
+// sized from the constants above, so NSLOTS (or any window size) can change
+// without hand-editing offsets. The old fixed-address map collided the moment
+// NSLOTS went past 4 (slotraw ran straight into slot_norm) -- this cannot.
+// ---------------------------------------------------------------------------
+freemem = 0;
+fftwork   = freemem; freemem += 2*FFTSIZE;    // FFT scratch (interleaved re/im)
+inbuf     = freemem; freemem += INRING;        // live input ring
+window    = freemem; freemem += WA;            // Hann of length WA (fixed analysis window)
+synwin    = freemem; freemem += MAXFFT;        // sqrt-Hann synthesis grain (length W = Wash grain)
+accL      = freemem; freemem += ACCLEN;        // overlap-add accumulator L
+accR      = freemem; freemem += ACCLEN;        // overlap-add accumulator R
+mtmp      = freemem; freemem += NBINS;
+curmag    = freemem; freemem += NBINS;
+phase     = freemem; freemem += NBINS;
+doff      = freemem; freemem += NBINS;         // per-bin stereo decorrelation offsets
+grainbuf  = freemem; freemem += MAXFFT;
+// --- per-slot capture stores (ALL sized by NSLOTS -- this is what makes the
+//     slot count a free dial) ---
+slotmag   = freemem; freemem += NSLOTS*NBINS;  // wash (spectral) magnitudes
+slotraw   = freemem; freemem += NSLOTS*MAXFFT; // raw captured audio (source of truth)
+slot_norm = freemem; freemem += NSLOTS;        // wash peak normalization
+slot_harm = freemem; freemem += NSLOTS*NHARM;  // voice harmonic magnitudes
+slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
+slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
+// --- harmonic (voice) engine scratch ---
+hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A)
+hphB      = freemem; freemem += NHARM;         // resynth phase accumulators (voice B)
+anbuf     = freemem; freemem += WHARM;         // mono analysis frame
+yin_df    = freemem; freemem += WHARM;         // YIN difference function
+yin_cmnd  = freemem; freemem += WHARM;         // YIN cumulative-mean-normalized difference
 // --- sine wavetable (render-speed optimization): the voice engine's per-sample
 // sin() calls become a table lookup. Internal only -- no sliders, no pitch or
 // behavior change (frequency is set by the phase INCREMENT, which is untouched). ---
-WTBL = 8192; WTSCALE = WTBL / TWOPI;
-sintab     = 1040000;   // WTBL+1  (one sine period + a guard sample for interp)
+sintab    = freemem; freemem += WTBL+2;        // one sine period + a guard sample for interp
 i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
@@ -98,14 +108,20 @@ slots_inited == 0 ? (
   have = 0; n_used = 0;
 );
 // runtime state
-cap_last = 0; first_slider = 1; inpos = 0; last_gsamp = -1; last_cappoint = -1;
+cap_last = 0; first_slider = 1; inpos = 0; last_gsamp = -1; last_cappoint = 0;
 cap_dirty = 0; settle = 0;   // debounce for Capture-point re-analysis
+// Captured spectra re-derive LAZILY -- only when actually stale (a fresh project
+// load, or a capture-point scrub), never on an ordinary stop/play. In the normal
+// capture-then-play flow nothing re-derives at all. Starts stale on load
+// (@serialize restores the raw audio but not the analysis derived from it).
+analysis_valid = 0;
 rms_smooth = 0;   // slow auto-gain state (stable loudness, no per-grain pump)
 cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
 texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
 i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; i += 1; );
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
+drift_target = 0;   // Drift-mode random walk target (Auto-morph = Drift)
 
 // grab the most recent MAXFFT input samples into a slot's raw store
 function grab_raw(slot) local(i, idx, base) (
@@ -291,21 +307,35 @@ audition_mode = slider13;                                   // 0 focused slot, 1
 morph01       = slider14 * 0.01;
 automorph_mode = slider15;
 auto_time     = max(0.1, slider16);
-automorph_mode != last_automode ? ( last_automode = automorph_mode; morph_phase = 0; );
+automorph_mode != last_automode ? ( last_automode = automorph_mode; morph_phase = 0; drift_target = rand(1); );
 slider_show(slider16, automorph_mode > 0.5);
 
 @block
-// Transport play-edge: full immediate setup -- rebuild window, clear the
-// accumulator, reset runtime, and re-derive both engines from the persisted raw
-// (captures themselves are NOT touched). With ext_noinit, @init no longer does
-// this on play, so it's explicit here.
+// Transport play-edge: immediate runtime setup -- rebuild window, clear the
+// accumulator, reset runtime (captures themselves are NOT touched). With
+// ext_noinit, @init no longer does this on play, so it's explicit here. The
+// heavy spectrum/harmonic re-derive is NO LONGER done unconditionally here --
+// it happens only when the analysis is actually stale, which is what stops the
+// every-play crackle.
 ((play_state == 1 || play_state == 5) && (last_ps != 1 && last_ps != 5)) ? (
   build_synwin(floor(grain_ms * srate / 1000));
   clear_accum();
   inpos = 0; rms_smooth = 0; morph_phase = 0;
   last_gsamp = floor(grain_ms * srate / 1000); last_cappoint = cap_point01;
   cap_dirty = 0;
-  si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
+  // Re-derive ONLY if the analysis is actually stale. In the normal
+  // capture-then-play flow the spectra are already valid, so this does NOTHING
+  // -- that is what kills the "crackle every time I hit play" (the old code
+  // re-analyzed every slot on every play-edge, N heavy FFT+YIN passes crammed
+  // into one block). When it IS stale -- a cold project load that hasn't been
+  // scrubbed yet, including an offline render from cold -- derive in full here.
+  // At the play-edge the accumulator was just cleared (no grains yet), so this
+  // lump lands in the silent onset; and offline render has no real-time deadline
+  // anyway, so it guarantees the render starts correct from sample zero.
+  analysis_valid == 0 ? (
+    si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
+    analysis_valid = 1;
+  );
 );
 last_ps = play_state;
 
@@ -314,15 +344,20 @@ last_ps = play_state;
 gsamp = floor(grain_ms * srate / 1000);
 gsamp != last_gsamp ? ( last_gsamp = gsamp; build_synwin(gsamp); );
 
-// Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub recomputes
-// only when it settles. Also fires on load (last_cappoint = -1), restoring the
-// engines from the slotraw @serialize brought back. NOT an automation target.
+// Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub re-derives
+// once, when it settles, in one lump. (Fresh load is handled at the play-edge
+// above -- analysis_valid starts 0 in @init.) NOT an automation target.
 cap_point01 != last_cappoint ? ( last_cappoint = cap_point01; cap_dirty = 1; settle = 0; );
 cap_dirty ? (
   settle += 1;
+  // On settle, re-derive all captured slots in ONE pass (debounced, so a by-ear
+  // scrub recomputes once when it stops moving). Deliberately a single lump, not
+  // sliced across blocks: one brief glitch during the scrub beats several smaller
+  // glitches smeared into the audio you're listening to. Marks the analysis fresh
+  // so the play-edge above won't redo it.
   settle >= 4 ? (
     si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
-    cap_dirty = 0;
+    analysis_valid = 1; cap_dirty = 0;
   );
 );
 
@@ -334,13 +369,26 @@ inbuf[inpos] = (spl0 + spl1) * 0.5;
 inpos += 1; inpos >= INRING ? inpos = 0;
 
 automorph_mode > 0.5 ? (
-  morph_phase += 1 / (srate * auto_time);
   automorph_mode == 1 ? (
+    // Sweep: triangle wander, morph runs 0 -> 1 -> 0 forever.
+    morph_phase += 1 / (srate * auto_time);
     morph_phase >= 2 ? morph_phase -= 2;
     eff_morph01 = morph_phase <= 1 ? morph_phase : 2 - morph_phase;
-  ) : (
+  ) : automorph_mode == 2 ? (
+    // Glide once: ramp 0 -> 1 and hold at the last slot.
+    morph_phase += 1 / (srate * auto_time);
     morph_phase > 1 ? morph_phase = 1;
     eff_morph01 = morph_phase;
+  ) : (
+    // Drift (random): ease the morph position toward a random target at the
+    // Auto-morph time rate; on arrival, pick a new random target across the
+    // captured slots. Constant speed -> legs vary in length -> an unrepeating,
+    // organic wander. It only moves WHERE the morph sits (never introduces a new
+    // pitch), so it is exactly as clash-safe as sliding Morph by hand.
+    drate = 1 / (srate * auto_time);
+    dd = drift_target - eff_morph01;
+    abs(dd) <= drate ? ( eff_morph01 = drift_target; drift_target = rand(1); )
+                     : ( eff_morph01 += dd > 0 ? drate : -drate; );
   );
 ) : ( eff_morph01 = morph01; );
 
@@ -402,5 +450,11 @@ file_var(0, ser_magic);
 ser_magic == 7700001 ? (
   file_var(0, have);
   file_var(0, n_used);
-  file_mem(0, slotraw, NSLOTS*MAXFFT);
+  // Save/restore only the slots actually captured (n_used * MAXFFT), not the
+  // full NSLOTS store -- so raising the slot count doesn't bloat the project
+  // file with empty slots, and it scales with what's really in use. Backward
+  // compatible: an old save that stored the full 4-slot block still restores
+  // its captures (file_mem reads only n_used*MAXFFT, the leading slots, and
+  // stops -- the trailing bytes were always empty tail slots anyway).
+  file_mem(0, slotraw, n_used*MAXFFT);
 );

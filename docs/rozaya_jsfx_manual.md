@@ -2908,8 +2908,8 @@ Capture grabs the most recent ~0.68 seconds of input (a fixed sample count, so t
 
 ## Parameters
 
-**Capture slot** `1 to 4, default 1`
-Which of the four slots the next Capture writes to, and which slot Audition monitors in Focused mode.
+**Capture slot** `1 to 8, default 1`
+Which of the eight slots the next Capture writes to, and which slot Audition monitors in Focused mode.
 
 **Capture spectrum** `Off / Capture now`
 Grab the current moment into the selected slot. It captures *whatever audio is reaching the track at that instant* — so if you fire it while nothing is playing (transport stopped, or no source feeding the track), you'll bank an **empty slot**, and the morph will fade to silence whenever it reaches that slot.
@@ -2952,11 +2952,11 @@ Spectral subtraction — raise to thin toward the strongest partials (more tonal
 **Morph** `0 to 100, default 0`
 Crossfades across the captured slots. Pitch-preserving — each slot plays at its own pitch, so there is no portamento glide.
 
-**Auto-morph** `Off / Sweep / Glide once, default Off`
-In-plugin morph motion — Sweep = endless back-and-forth, Glide once = slot 1 to the last, one time.
+**Auto-morph** `Off / Sweep / Glide once / Drift, default Off`
+In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Drift = wanders to a random slot, eases into it, then picks a new target and moves on — an unrepeating, organic wander. Drift only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches.
 
 **Auto-morph time (sec)** `1 to 600, default 20`
-Duration of one auto-morph pass.
+How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Drift it's the pace of the wander (the time a full-range move would take — each random leg is shorter in proportion to how far it travels).
 
 ---
 

@@ -43,7 +43,7 @@ armed + monitored). Render to commit a result.
 ## Sliders
 
 **Capture**
-- **Capture slot** (1–4) — which slot the next Capture writes to / Audition monitors.
+- **Capture slot** (1–8) — which slot the next Capture writes to / Audition monitors.
 - **Capture** (Off / Capture now) — grab the current moment into the slot.
 - **Capture point** (earliest .. at press) — *where in the captured ~0.68 s to
   analyze* (see "How capture works"). Re-analyzes live (no re-capture); it's a
@@ -74,9 +74,13 @@ armed + monitored). Render to commit a result.
   morph blend.
 - **Morph** (0–100) — crossfade across captured slots (pitch-preserving: each
   slot plays at its own pitch, no portamento).
-- **Auto-morph** (Off / Sweep / Glide once) — in-plugin morph motion (Sweep =
-  endless back-and-forth, Glide once = slot 1 → last one time).
-- **Auto-morph time (sec)** — duration of one auto-morph pass.
+- **Auto-morph** (Off / Sweep / Glide once / Drift) — in-plugin morph motion.
+  Sweep = endless back-and-forth; Glide once = slot 1 → last, one time; Drift =
+  wanders to a random slot, eases there, then picks a new one — an unrepeating,
+  organic drift (only moves *where* the morph sits, so it's as clash-safe as
+  moving Morph by hand).
+- **Auto-morph time (sec)** — how fast the motion moves (for Drift, the pace of
+  the wander — the time a full-range move would take).
 
 ## How capture works (and the ~0.68 s number)
 
