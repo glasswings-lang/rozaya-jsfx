@@ -2953,10 +2953,10 @@ Spectral subtraction — raise to thin toward the strongest partials (more tonal
 Crossfades across the captured slots. Pitch-preserving — each slot plays at its own pitch, so there is no portamento glide.
 
 **Auto-morph** `Off / Sweep / Glide once / Drift, default Off`
-In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Drift = wanders to a random slot, eases into it, then picks a new target and moves on — an unrepeating, organic wander. Drift only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches.
+In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Drift = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. One full pass takes one Auto-morph time, so each slot gets an equal share of it — same timing and same gentle crossfades as Sweep, just shuffled (and a different order each time you open the project). Drift only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches.
 
 **Auto-morph time (sec)** `1 to 600, default 20`
-How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Drift it's the pace of the wander (the time a full-range move would take — each random leg is shorter in proportion to how far it travels).
+How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Drift it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow drift.
 
 ---
 

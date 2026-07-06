@@ -102,6 +102,7 @@ yin_cmnd  = freemem; freemem += WHARM;         // YIN cumulative-mean-normalized
 // sin() calls become a table lookup. Internal only -- no sliders, no pitch or
 // behavior change (frequency is set by the phase INCREMENT, which is untouched). ---
 sintab    = freemem; freemem += WTBL+2;        // one sine period + a guard sample for interp
+driftbag  = freemem; freemem += NSLOTS;        // Drift shuffle-bag (even random slot coverage)
 i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
@@ -128,7 +129,13 @@ i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hp
 voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
-drift_target = 0;   // Drift-mode random walk target (Auto-morph = Drift)
+cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
+bag_pos = 999; last_slot = 0; drift_primed = 0;    // Drift shuffle-bag state (primed lazily in @sample)
+// Scramble the RNG per load: EEL rand() otherwise replays the SAME sequence
+// every session, so Drift would wander the identical path each time you open the
+// project. Advance it a sub-second-time-dependent number of steps so each load
+// starts somewhere different. One-time, bounded, ~free.
+_tp = time_precise(); i = 0; loop(floor(1 + (_tp - floor(_tp)) * 500), rand(1); i += 1; );
 
 // grab the most recent MAXFFT input samples into a slot's raw store
 function grab_raw(slot) local(i, idx, base) (
@@ -293,6 +300,22 @@ function wtsin(ph) local(fidx, i0, fr) (
   sintab[i0]*(1-fr) + sintab[i0+1]*fr;
 );
 
+// Fisher-Yates shuffle of the first n_used slot indices into driftbag. Drift
+// draws its next slot from this bag, so it visits every captured slot exactly
+// once per cycle (even coverage, random order) rather than a memoryless walk
+// that clusters in the middle. Avoids an immediate repeat across the reshuffle
+// seam (if the new first slot equals the one just visited, swap it back one).
+function shuffle_bag() local(i, j, t) (
+  i = 0; loop(n_used, driftbag[i] = i; i += 1; );
+  i = n_used - 1;
+  loop(n_used - 1,
+    j = floor(rand(i + 1));
+    t = driftbag[i]; driftbag[i] = driftbag[j]; driftbag[j] = t;
+    i -= 1;
+  );
+  (n_used > 1 && driftbag[0] == last_slot) ? ( t = driftbag[0]; driftbag[0] = driftbag[1]; driftbag[1] = t; );
+);
+
 @slider
 // Every slider read into a named global here; nothing downstream references a
 // sliderN directly, so the layout can be reordered without desyncing the engine.
@@ -315,7 +338,10 @@ audition_mode = slider13;                                   // 0 focused slot, 1
 morph01       = slider14 * 0.01;
 automorph_mode = slider15;
 auto_time     = max(0.1, slider16);
-automorph_mode != last_automode ? ( last_automode = automorph_mode; morph_phase = 0; drift_target = rand(1); );
+automorph_mode != last_automode ? (
+  last_automode = automorph_mode; morph_phase = 0;
+  drift_primed = 0;   // force Drift to (re)build its shuffle bag on the next sample
+);
 slider_show(slider16, automorph_mode > 0.5);
 
 @block
@@ -388,15 +414,31 @@ automorph_mode > 0.5 ? (
     morph_phase > 1 ? morph_phase = 1;
     eff_morph01 = morph_phase;
   ) : (
-    // Drift (random): ease the morph position toward a random target at the
-    // Auto-morph time rate; on arrival, pick a new random target across the
-    // captured slots. Constant speed -> legs vary in length -> an unrepeating,
-    // organic wander. It only moves WHERE the morph sits (never introduces a new
-    // pitch), so it is exactly as clash-safe as sliding Morph by hand.
-    drate = 1 / (srate * auto_time);
-    dd = drift_target - eff_morph01;
-    abs(dd) <= drate ? ( eff_morph01 = drift_target; drift_target = rand(1); )
-                     : ( eff_morph01 += dd > 0 ? drate : -drate; );
+    // Drift = Sweep in shuffled order, crossfading DIRECTLY between consecutive
+    // slots (never routing through the in-between ones). Advance the crossfade
+    // cur_slot -> nxt_slot; when it completes, cur becomes nxt and we pull the
+    // next slot from the shuffle bag (reshuffle once we've been through them all).
+    // Each leg = auto_time/n_used, so one full pass = auto_time, each slot an
+    // equal share. Direct A->B means every leg is the same single crossfade
+    // regardless of which slots -> no whoosh, nothing in the middle to over-dwell.
+    n_used < 2 ? ( cur_slot = 0; nxt_slot = 0; xfade = 0; ) : (
+      // Lazily build the shuffle bag the first sample Drift actually runs with a
+      // valid capture set -- NOT on mode entry, because on a reload that can fire
+      // before the captures finish loading (n_used still 0), which stuck cur==nxt
+      // on slot 0. Doing it here means n_used is always real.
+      drift_primed != 1 ? (
+        last_slot = -1; shuffle_bag(); bag_pos = 0;
+        cur_slot = driftbag[bag_pos]; bag_pos += 1;
+        nxt_slot = driftbag[bag_pos]; bag_pos += 1;
+        xfade = 0; drift_primed = 1;
+      );
+      xfade += 1 / max(1, auto_time * srate / n_used);
+      xfade >= 1 ? (
+        cur_slot = nxt_slot; xfade = 0;
+        bag_pos >= n_used ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );   // through them all -> reshuffle
+        nxt_slot = driftbag[bag_pos]; bag_pos += 1;
+      );
+    );
   );
 ) : ( eff_morph01 = morph01; );
 
@@ -404,7 +446,13 @@ automorph_mode > 0.5 ? (
 audition_mode < 0.5 ? (
   // Focused-slot monitor: play exactly the capture slot, ignore morph.
   vsi = cap_slot; vsj = cap_slot; vmfr = 0;
+) : automorph_mode == 3 ? (
+  // Drift: DIRECT crossfade between the two consecutive shuffled slots (not a
+  // position on the slot line), so it steps straight from one to the next.
+  vsi = cur_slot; vsj = nxt_slot; vmfr = xfade;
 ) : (
+  // Manual morph / Sweep / Glide: a position along the fixed slot line, blending
+  // the two adjacent slots it sits between.
   vnu = n_used < 1 ? 1 : n_used;
   vmp = eff_morph01 * (vnu - 1);
   vsi = floor(vmp); vmfr = vmp - vsi;

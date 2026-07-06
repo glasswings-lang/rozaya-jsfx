@@ -80,11 +80,12 @@ armed + monitored). Render to commit a result.
   slot plays at its own pitch, no portamento).
 - **Auto-morph** (Off / Sweep / Glide once / Drift) — in-plugin morph motion.
   Sweep = endless back-and-forth; Glide once = slot 1 → last, one time; Drift =
-  wanders to a random slot, eases there, then picks a new one — an unrepeating,
-  organic drift (only moves *where* the morph sits, so it's as clash-safe as
-  moving Morph by hand).
-- **Auto-morph time (sec)** — how fast the motion moves (for Drift, the pace of
-  the wander — the time a full-range move would take).
+  like Sweep but in random order: glides through all your slots visiting each
+  once, then reshuffles and goes again (different order each session). Same
+  gentle crossfades as Sweep. Only moves *where* the morph sits, so it's as
+  clash-safe as moving Morph by hand.
+- **Auto-morph time (sec)** — how fast the motion moves (for Drift, the duration
+  of one full pass through all your slots — each slot gets an equal share).
 
 ## How capture works (and the ~0.68 s number)
 
