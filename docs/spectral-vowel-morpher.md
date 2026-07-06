@@ -63,7 +63,11 @@ armed + monitored). Render to commit a result.
   capture into a wider noise bed.
 - **Pitch (semitones)** — transpose. Tape-style: formants move with pitch, so one
   capture covers a range of "body sizes." Drives both engines.
-- **Stereo width** — decorrelates L/R in the wash for width (mono-safe).
+- **Stereo width** — spreads *both* engines: decorrelates L/R phase in the wash
+  (mono-safe), and detunes a right-channel copy of the voice (up to ~14 cents),
+  so the voice gets real width plus a de-robot shimmer. 0 = mono voice
+  (unchanged from old projects); voice detune is skipped when the voice is
+  inaudible (full wash).
 - **Low cut (Hz)** — removes low rumble from the resynth.
 - **Denoise** — spectral subtraction: thins toward the strongest partials (more
   tonal / gated as you raise it).

@@ -2938,7 +2938,7 @@ Blurs the spectrum across frequency — diffuses a narrow capture into a wider n
 Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."
 
 **Stereo width** `0 to 100, default 50`
-Decorrelates the wash across the stereo field (mono-safe). The voice engine itself is mono.
+Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phase (mono-safe). In the voice it runs a slightly-detuned copy on the right channel (up to ~14 cents at 100), so the two sides beat slowly against each other — real width plus a shimmer that softens the robotic edge of the pure harmonics. At 0 the voice is exactly mono (unchanged from older projects). The detuned voice is only computed when the voice is actually audible (Texture below full wash), so living on the wash costs nothing.
 
 **Low cut (Hz)** `0 to 500, default 0`
 Removes low rumble from the resynth.

@@ -59,6 +59,10 @@ WA = 8192;   // ~170 ms @ 48k: good spectral resolution, leaves ~0.5 s scrub ran
 ACCLEN = 65536;
 NHARM = 64; WHARM = 3072;          // 64 harmonics; ~64 ms YIN analysis window
 WTBL = 8192; WTSCALE = WTBL / TWOPI;
+// Voice stereo width: at full Stereo width the right-channel voice runs +-0.8%
+// (~14 cents) detuned from the left, so L/R beat slowly -> width + de-robot
+// shimmer. Tune by ear; bigger = wider/chorus-ier, smaller = tighter.
+VOICE_DETUNE_MAX = 0.008;
 
 // ---------------------------------------------------------------------------
 // Memory map: a RUNNING allocator, not hand-picked addresses. Every buffer is
@@ -87,8 +91,10 @@ slot_harm = freemem; freemem += NSLOTS*NHARM;  // voice harmonic magnitudes
 slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
 slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
 // --- harmonic (voice) engine scratch ---
-hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A)
-hphB      = freemem; freemem += NHARM;         // resynth phase accumulators (voice B)
+hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
+hphB      = freemem; freemem += NHARM;         // resynth phase accumulators (voice B, left)
+hphR      = freemem; freemem += NHARM;         // voice A, right channel (detuned for width)
+hphBR     = freemem; freemem += NHARM;         // voice B, right channel (detuned for width)
 anbuf     = freemem; freemem += WHARM;         // mono analysis frame
 yin_df    = freemem; freemem += WHARM;         // YIN difference function
 yin_cmnd  = freemem; freemem += WHARM;         // YIN cumulative-mean-normalized difference
@@ -118,7 +124,8 @@ analysis_valid = 0;
 rms_smooth = 0;   // slow auto-gain state (stable loudness, no per-grain pump)
 cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
 texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
-i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; i += 1; );
+i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hph[i]; hphBR[i] = hphB[i]; i += 1; );
+voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_target = 0;   // Drift-mode random walk target (Auto-morph = Drift)
@@ -301,6 +308,7 @@ grain_ms        = slider7;
 spread_hz     = slider8;
 pitch_ratio   = pow(2.0, slider9/12);
 stereo_width  = slider10;
+voice_detune  = stereo_width * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
 lowcut_hz     = slider11;
 denoise_amt   = slider12;
 audition_mode = slider13;                                   // 0 focused slot, 1 morph
@@ -413,27 +421,58 @@ accpos += 1; accpos >= ACCLEN ? accpos = 0;
 hopcount += 1;
 hopcount >= HOP ? ( hopcount = 0; have > 0 ? gen_grain(); );
 
-// --- harmonic (voice) engine: TWO voices, each at its OWN captured pitch,
-// crossfaded by morph -> no portamento glide between slot pitches (A fades out
-// at its pitch while B fades in at its pitch). When not morphing (vsi==vsj,
-// vmfr==0) only voice A sounds.
-fA = slot_f0[vsi] * pitch_ratio; normA = slot_hnorm[vsi]; normA <= 0 ? normA = 1;
-fB = slot_f0[vsj] * pitch_ratio; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1;
-bA = vsi*NHARM; bB = vsj*NHARM;
-vvA = 0; vvB = 0; vn = 0;
-loop(NHARM,
-  ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*wtsin(hph[vn]); );
-  hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI;
-  ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*wtsin(hphB[vn]); );
-  hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI;
-  vn += 1;
-);
-hV = ((1-vmfr)*vvA + vmfr*vvB) * 0.08;   // ~match the wash's ~0.1 RMS
+// --- harmonic (voice) engine: TWO morph voices (vsi/vsj), each at its OWN
+// captured pitch, crossfaded by morph. Now STEREO: when Stereo width (->
+// voice_detune) > 0 the right channel runs a slightly-detuned copy, so L/R beat
+// slowly -> real width + a shimmer that softens the robotic edge of pure
+// additive harmonics. At width 0 it's the exact original mono path. Skipped
+// entirely when the voice is inaudible (Texture at full wash, hlevel ~ 0) --
+// that reclaims the whole per-sample harmonic loop when you live on the wash.
+(hlevel > 0.0001 && have > 0) ? (
+  fA = slot_f0[vsi] * pitch_ratio; normA = slot_hnorm[vsi]; normA <= 0 ? normA = 1;
+  fB = slot_f0[vsj] * pitch_ratio; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1;
+  bA = vsi*NHARM; bB = vsj*NHARM;
+  voice_detune > 0 ? (
+    // Stereo: left slightly flat, right slightly sharp (symmetric, so the
+    // perceived pitch centre is unchanged). Separate R phase banks (hphR/hphBR)
+    // run at the detuned frequency and drift against the L banks = width.
+    fAL = fA*(1-voice_detune); fAR = fA*(1+voice_detune);
+    fBL = fB*(1-voice_detune); fBR = fB*(1+voice_detune);
+    vvAL = 0; vvAR = 0; vvBL = 0; vvBR = 0; vn = 0;
+    loop(NHARM,
+      hmA = slot_harm[bA+vn]/normA;
+      ((vn+1)*fAL) < srate*0.5 ? ( vvAL += hmA*wtsin(hph[vn]);  );
+      ((vn+1)*fAR) < srate*0.5 ? ( vvAR += hmA*wtsin(hphR[vn]); );
+      hph[vn]  += TWOPI*(vn+1)*fAL/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI;
+      hphR[vn] += TWOPI*(vn+1)*fAR/srate; hphR[vn] >= TWOPI ? hphR[vn] -= TWOPI;
+      hmB = slot_harm[bB+vn]/normB;
+      ((vn+1)*fBL) < srate*0.5 ? ( vvBL += hmB*wtsin(hphB[vn]);  );
+      ((vn+1)*fBR) < srate*0.5 ? ( vvBR += hmB*wtsin(hphBR[vn]); );
+      hphB[vn]  += TWOPI*(vn+1)*fBL/srate; hphB[vn]  >= TWOPI ? hphB[vn]  -= TWOPI;
+      hphBR[vn] += TWOPI*(vn+1)*fBR/srate; hphBR[vn] >= TWOPI ? hphBR[vn] -= TWOPI;
+      vn += 1;
+    );
+    hVL = ((1-vmfr)*vvAL + vmfr*vvBL) * 0.08;   // ~match the wash's ~0.1 RMS
+    hVR = ((1-vmfr)*vvAR + vmfr*vvBR) * 0.08;
+  ) : (
+    // Mono (Stereo width 0): the exact original single-bank path, L = R.
+    vvA = 0; vvB = 0; vn = 0;
+    loop(NHARM,
+      ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*wtsin(hph[vn]); );
+      hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI;
+      ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*wtsin(hphB[vn]); );
+      hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI;
+      vn += 1;
+    );
+    hVL = ((1-vmfr)*vvA + vmfr*vvB) * 0.08;
+    hVR = hVL;
+  );
+) : ( hVL = 0; hVR = 0; );
 
 // --- crossfade voice <-> wash (equal-power), gate on having a capture ---
 have > 0 ? (
-  voutL = hlevel*hV + wlevel*wL;
-  voutR = hlevel*hV + wlevel*wR;
+  voutL = hlevel*hVL + wlevel*wL;
+  voutR = hlevel*hVR + wlevel*wR;
 ) : ( voutL = 0; voutR = 0; );
 voutL *= voice_gain; voutR *= voice_gain;
 
