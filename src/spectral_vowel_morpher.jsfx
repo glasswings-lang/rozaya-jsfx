@@ -175,6 +175,7 @@ i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hp
 voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
+drift_was_playing = 0; drift_last_pos = 0;   // Drift transport-reset edge/position state
 cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
 bag_pos = 999; last_slot = 0; drift_primed = 0;    // Drift shuffle-bag state (primed lazily in @sample)
 // Scramble the RNG per load: EEL rand() otherwise replays the SAME sequence
@@ -445,13 +446,8 @@ eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_
   inpos = 0; rms_smooth = 0; morph_phase = 0;
   last_gsamp = floor(grain_ms * srate / 1000); last_cappoint = cap_point01;
   cap_dirty = 0;
-  // Drift RUNTIME resets on the play-edge (config is preserved) — restart at
-  // phase 0 on play, like the rest of the suite. Captures are NOT touched.
-  di = 0; loop(N_TARGETS,
-    target_drift_phase[di] = 0; target_drift_prev[di] = 0;
-    target_drift_curr[di]  = 0; target_drift_offset[di] = 0;
-    di += 1;
-  );
+  // (Drift reset is handled by its own transport block below — it must also
+  //  catch loop-wraps / rewinds, which this capture-engine play-edge does not.)
   // Re-derive ONLY if the analysis is actually stale. In the normal
   // capture-then-play flow the spectra are already valid, so this does NOTHING
   // -- that is what kills the "crackle every time I hit play" (the old code
@@ -467,6 +463,25 @@ eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_
   );
 );
 last_ps = play_state;
+
+// --- Drift transport reset. Restart every drift wander from the beginning of
+//     its cycle whenever the transport BEGINS a play pass: a fresh Start, a
+//     loop-wrap, OR a rewind (play_position jumping backwards). Uses its own
+//     edge/position state so it never depends on the capture engine's play-edge
+//     above (which only catches stop->play, not a loop repeat). This is what
+//     makes a looped ambient piece drift the same way on every pass. ---
+drift_now_playing = (play_state == 1 || play_state == 5);
+drift_now_playing ? (
+  (drift_was_playing == 0 || play_position < drift_last_pos - 0.05) ? (
+    di = 0; loop(N_TARGETS,
+      target_drift_phase[di]  = 0; target_drift_prev[di]  = 0;
+      target_drift_curr[di]   = 0; target_drift_offset[di] = 0;
+      di += 1;
+    );
+  );
+  drift_last_pos = play_position;
+);
+drift_was_playing = drift_now_playing;
 
 // Wash grain -> CHEAP: rebuild only the synthesis grain, immediately, every
 // block if it's moving. No re-analysis, no clear -> safe to automate, no drops.

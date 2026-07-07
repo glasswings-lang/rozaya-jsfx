@@ -2974,7 +2974,7 @@ How long one full wander takes, in real seconds (this instrument has no tempo, s
 **Drift shape** `Sine / Triangle / Random, default Sine`
 The path of the wander. Sine = smooth continuous sway; Triangle = straight ramps up and down with turnarounds; Random = drifts smoothly toward a new random spot each period (still smooth, just unpredictable in direction).
 
-Drift restarts from the start of its wander each time you press play, and keeps going across stop. It's separate from Auto-morph (which moves *which* slots you're between): Drift moves the *parameters*, so the two compose — Shuffle through your captures while Texture and Low cut slowly breathe underneath.
+Drift restarts from the start of its wander whenever a play pass begins — pressing play, a loop repeating, or jumping the playhead back to the start — so a looped piece drifts the same way every pass. It keeps running across a stop. It's separate from Auto-morph (which moves *which* slots you're between): Drift moves the *parameters*, so the two compose — Shuffle through your captures while Texture and Low cut slowly breathe underneath.
 
 ---
 
