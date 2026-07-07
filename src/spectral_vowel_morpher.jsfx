@@ -51,6 +51,11 @@ slider18:0<0,300,0.1>Drift up amount (units match target)
 slider19:0<0,300,0.1>Drift down amount (units match target)
 slider20:30<1,600,0.5>Drift period (seconds)
 slider21:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Restart on play = drift jumps to the start of its cycle when the transport
+// begins (so multiple tracks reset together and stay in sync). Free-running =
+// drift ignores the transport and evolves continuously (loop under/over an
+// unbroken drift). A loop repeat is never a restart in either mode.
+slider22:0<0,1,1{Restart on play,Free-running}>Drift restart
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -175,7 +180,7 @@ i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hp
 voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
-drift_was_playing = 0; drift_last_pos = 0;   // Drift transport-reset edge/position state
+drift_was_playing = 0;   // Drift restart-on-play edge state
 cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
 bag_pos = 999; last_slot = 0; drift_primed = 0;    // Drift shuffle-bag state (primed lazily in @sample)
 // Scramble the RNG per load: EEL rand() otherwise replays the SAME sequence
@@ -432,6 +437,7 @@ i = 0; loop(N_TARGETS,
 );
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
+drift_restart_free = slider22;   // 0 = restart on play (sync), 1 = free-running
 
 @block
 // Transport play-edge: immediate runtime setup -- rebuild window, clear the
@@ -464,22 +470,21 @@ eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_
 );
 last_ps = play_state;
 
-// --- Drift transport reset. Restart every drift wander from the beginning of
-//     its cycle whenever the transport BEGINS a play pass: a fresh Start, a
-//     loop-wrap, OR a rewind (play_position jumping backwards). Uses its own
-//     edge/position state so it never depends on the capture engine's play-edge
-//     above (which only catches stop->play, not a loop repeat). This is what
-//     makes a looped ambient piece drift the same way on every pass. ---
+// --- Drift restart (Drift restart slider). "Restart on play" (default): drift
+//     jumps to the start of its cycle the moment the transport begins playing
+//     from a stop, so multiple tracks reset TOGETHER and their drifts stay in
+//     sync (no clashy out-of-phase pitch motion). "Free-running": the transport
+//     is ignored and drift evolves continuously — for a loop playing under/over
+//     an unbroken drift, or any continuously-evolving texture. A loop repeat is
+//     deliberately NOT a restart in either mode (drift flows straight across
+//     loop boundaries); own edge state, independent of the capture play-edge. ---
 drift_now_playing = (play_state == 1 || play_state == 5);
-drift_now_playing ? (
-  (drift_was_playing == 0 || play_position < drift_last_pos - 0.05) ? (
-    di = 0; loop(N_TARGETS,
-      target_drift_phase[di]  = 0; target_drift_prev[di]  = 0;
-      target_drift_curr[di]   = 0; target_drift_offset[di] = 0;
-      di += 1;
-    );
+(drift_restart_free == 0 && drift_now_playing && drift_was_playing == 0) ? (
+  di = 0; loop(N_TARGETS,
+    target_drift_phase[di]  = 0; target_drift_prev[di]  = 0;
+    target_drift_curr[di]   = 0; target_drift_offset[di] = 0;
+    di += 1;
   );
-  drift_last_pos = play_position;
 );
 drift_was_playing = drift_now_playing;
 
