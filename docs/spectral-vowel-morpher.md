@@ -91,6 +91,11 @@ armed + monitored). Render to commit a result.
   in-plugin automation replacement: pick a parameter (Texture, Spread, Pitch,
   Stereo width, Low cut, Voice level) and it wanders on its own over a wall-clock
   period. All targets drift in parallel. See the manual for the full rundown.
+- **Ramp** (target selector + by + duration + start delay + engage) — the suite's
+  "Speed Ramp" under an honest name (no rate here, so it rides a value). A
+  one-time slow glide of a parameter over N minutes — the sleep wind-down (ride
+  Texture voice→wash, or Voice level to silence). Same targets as Drift; stacks
+  with it (base + drift wander + ramp ride).
 
 ## How capture works (and the ~0.68 s number)
 
