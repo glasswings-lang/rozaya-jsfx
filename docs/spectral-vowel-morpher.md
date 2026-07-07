@@ -78,14 +78,19 @@ armed + monitored). Render to commit a result.
   morph blend.
 - **Morph** (0–100) — crossfade across captured slots (pitch-preserving: each
   slot plays at its own pitch, no portamento).
-- **Auto-morph** (Off / Sweep / Glide once / Drift) — in-plugin morph motion.
-  Sweep = endless back-and-forth; Glide once = slot 1 → last, one time; Drift =
+- **Auto-morph** (Off / Sweep / Glide once / Shuffle) — in-plugin morph motion.
+  Sweep = endless back-and-forth; Glide once = slot 1 → last, one time; Shuffle =
   like Sweep but in random order: glides through all your slots visiting each
   once, then reshuffles and goes again (different order each session). Same
   gentle crossfades as Sweep. Only moves *where* the morph sits, so it's as
-  clash-safe as moving Morph by hand.
-- **Auto-morph time (sec)** — how fast the motion moves (for Drift, the duration
+  clash-safe as moving Morph by hand. (Renamed from "Drift" to avoid clashing
+  with the suite-wide Drift feature — parameter wander — added later.)
+- **Auto-morph time (sec)** — how fast the motion moves (for Shuffle, the duration
   of one full pass through all your slots — each slot gets an equal share).
+- **Drift** (target selector + up/down amount + period + shape) — the suite-wide
+  in-plugin automation replacement: pick a parameter (Texture, Spread, Pitch,
+  Stereo width, Low cut, Voice level) and it wanders on its own over a wall-clock
+  period. All targets drift in parallel. See the manual for the full rundown.
 
 ## How capture works (and the ~0.68 s number)
 
@@ -128,7 +133,7 @@ tends to catch the breathy release.
 - **Render-and-loop** — render the morph/drone to a WAV and loop it (suite
   pipeline).
 - **4-point morph path** — capture four contrasting moments, Auto-morph "Glide
-  once" for a one-shot sweep or "Sweep" for endless drift.
+  once" for a one-shot sweep or "Sweep" for endless back-and-forth motion.
 - **Capture point as a scrub** — hunt transitional timbres inside the 0.68 s grab,
   not just latency compensation.
 
