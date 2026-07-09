@@ -7,8 +7,9 @@ Each plugin has its **own page** here. The plugins install one file at a time
 the same way: **grab the plugin you want, read its page, done.** You never have
 to wade through docs for plugins you don't have.
 
-Machinery shared across plugins (Drift, and — soon — Speed Ramp, Pan Modes,
-Rate Mode, Start Delay, Play/Rest) lives once in **[Shared Systems](shared-systems.md)**.
+Each page is self-contained: it covers that plugin's own controls, including
+how shared features like Drift and Speed Ramp behave *for that plugin*. There's
+nothing else to open.
 
 ---
 
@@ -48,10 +49,6 @@ Rate Mode, Start Delay, Play/Rest) lives once in **[Shared Systems](shared-syste
 | Rhythm Track | `rhythm-track.jsfx` | [rhythm-track.md](rhythm-track.md) |
 | Shepard Scale Generator | `shepard-scale.jsfx` | [shepard-scale.md](shepard-scale.md) |
 | Shepard Tone Generator | `shepard-tone.jsfx` | [shepard-tone.md](shepard-tone.md) |
-
-### Universal features
-
-- **[Shared Systems](shared-systems.md)** — Drift (+ shared machinery being consolidated here).
 
 ---
 

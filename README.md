@@ -28,9 +28,6 @@ A collection of audio synthesis and effect plugins for [REAPER](https://www.reap
 Full parameter reference and usage notes — **one page per plugin**, so you can
 read just the plugin you installed: [docs/plugins/](docs/plugins/README.md)
 
-Shared machinery (Drift, etc.) is documented once in
-[docs/plugins/shared-systems.md](docs/plugins/shared-systems.md).
-
 ## Installation
 
 1. Copy the `.jsfx` files from `src/` into your REAPER `Effects` folder (or a subfolder of it).

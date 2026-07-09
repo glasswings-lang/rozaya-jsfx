@@ -5,9 +5,6 @@ installed instead of the whole suite at once.
 
 ➡ **Start here: [docs/plugins/](plugins/README.md)**
 
-Shared machinery (Drift, and more being consolidated) lives in
-[docs/plugins/shared-systems.md](plugins/shared-systems.md).
-
 ---
 
 *This file used to hold the full combined manual. It was split into per-plugin
