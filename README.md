@@ -25,7 +25,11 @@ A collection of audio synthesis and effect plugins for [REAPER](https://www.reap
 
 ## Documentation
 
-Full parameter reference and usage notes: [docs/rozaya_jsfx_manual.md](docs/rozaya_jsfx_manual.md)
+Full parameter reference and usage notes — **one page per plugin**, so you can
+read just the plugin you installed: [docs/plugins/](docs/plugins/README.md)
+
+Shared machinery (Drift, etc.) is documented once in
+[docs/plugins/shared-systems.md](docs/plugins/shared-systems.md).
 
 ## Installation
 
