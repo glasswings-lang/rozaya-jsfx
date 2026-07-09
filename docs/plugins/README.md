@@ -36,6 +36,7 @@ nothing else to open.
 | Full Feature Tremolo | `Full_Feature_Tremolo.jsfx` | [tremolo.md](tremolo.md) |
 | Resonance Bank | `resonance_bank.jsfx` | [resonance-bank.md](resonance-bank.md) |
 | Stereo Phaser | `stereo-phaser.jsfx` | [stereo-phaser.md](stereo-phaser.md) |
+| Bubbler | `bubbler.jsfx` | [bubbler.md](bubbler.md) |
 
 ### Samplers
 

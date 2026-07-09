@@ -1,0 +1,148 @@
+desc: Bubbler
+//tags: bubble bubbles water granular pitch texture submerge
+//
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// Bubbles whatever you feed it. Each bubble GRABS A SHORT GRAIN of your sound
+// and resamples it UPWARD over its life: a droplet made of your material, thrown
+// to a random transposition and chirping up as it fades. Scatter your sound into
+// rising pitched bubbles.
+//   - Transpose / Pitch spread set where each grain lands (random per bubble).
+//   - Rise is how far it climbs over the grain (the bubble chirp).
+// Dry/Wet blends the bubbled signal back against the original.
+//
+// Each voice loops its captured grain with a two-tap triangular crossfade, so a
+// bubble sustains the full envelope and completes its full rise at ANY pitch
+// (no running out of grain). Linear interpolation; a soft-clip bounds the wet
+// output to ±1 so it can't spike into REAPER's auto-mute.
+//
+// POLYPHONIC: 16 voices per channel, each with its own captured grain; a new
+// bubble takes the quietest voice. Effect, NOT a generator — needs input.
+
+slider1:6<0.2,40,0.1>Bubble rate (per second)
+slider2:70<0,100,1>Timing randomness %
+slider3:12<-36,36,1>Transpose (semitones)
+slider4:7<0,24,1>Pitch spread (semitones)
+slider5:12<0,36,1>Rise (semitones)
+slider6:150<5,1000,1>Bubble length (ms)
+slider7:80<0,100,1>Stereo width %
+slider8:100<0,100,1>Dry/Wet %
+slider9:0<-24,12,0.1>Output (dB)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+NV = 16;                         // voices per channel
+GC = ceil(srate * 0.3);          // grain length = history length (300 ms)
+HALF = GC * 0.5;                 // second crossfade tap offset
+histL = 0;      histR = GC;                       // per-channel input history (circular)
+grainL = 2 * GC;                                  // NV captured grains, GC each
+grainR = 2 * GC + NV * GC;
+sc = 2 * GC + 2 * NV * GC;                        // per-voice scalar arrays (NV each)
+eL = sc;         rposL = sc + NV;    ratioL = sc + 2*NV;  ageL = sc + 3*NV;
+eR = sc + 4*NV;  rposR = sc + 5*NV;  ratioR = sc + 6*NV;  ageR = sc + 7*NV;
+memset(0, 0, sc + 8 * NV);
+wpos = 0;
+seedL = 1103527590;
+seedR = 1234567891;
+timerL = 0;  timerR = 0;
+FADE = 128;                      // ~2.7 ms onset fade
+
+@slider
+rate      = max(slider1, 0.01);
+jitter    = slider2 * 0.01;
+transpose = slider3;
+spreadSemi= slider4;
+riseSemi  = slider5;
+decayCoef = exp(-4 / (srate * max(slider6,1) * 0.001));   // env ~ -34 dB at the set length
+width     = slider7 * 0.01;
+wetmix    = slider8 * 0.01;
+outlev    = 2 ^ (slider9 / 6);
+meanIntv  = srate / rate;
+
+@sample
+dryL = spl0;
+dryR = spl1;
+histL[wpos] = dryL;
+histR[wpos] = dryR;
+
+// ---- LEFT ----
+timerL <= 0 ? (
+  seedL = (seedL * 48271) % 2147483647; rp = seedL / 2147483647;
+  seedL = (seedL * 48271) % 2147483647; rt = seedL / 2147483647;
+  vsel = 0; vmin = eL[0]; j = 1;
+  loop(NV - 1, eL[j] < vmin ? (vmin = eL[j]; vsel = j); j += 1;);
+  start = (wpos + 1) % GC; n1 = GC - start;
+  memcpy(grainL + vsel * GC, histL + start, n1);
+  memcpy(grainL + vsel * GC + n1, histL, start);
+  ratioL[vsel] = 2 ^ ((transpose + spreadSemi * (rp * 2 - 1)) / 12);
+  rposL[vsel] = 0; eL[vsel] = 1; ageL[vsel] = 0;
+  timerL = max(meanIntv * (1 + jitter * (rt * 2 - 1)), 1);
+);
+timerL -= 1;
+sumL = 0; j = 0;
+loop(NV,
+  eL[j] > 0.02 ? (
+    ev = eL[j]; rp2 = rposL[j]; gb = grainL + j * GC; x = rp2 / GC;
+    ipA = rp2 | 0; frA = rp2 - ipA; ipA1 = ipA + 1; ipA1 >= GC ? ipA1 -= GC;
+    sA = gb[ipA] * (1 - frA) + gb[ipA1] * frA;
+    wA = x < 0.5 ? 2 * x : 2 * (1 - x);
+    tb = rp2 + HALF; tb >= GC ? tb -= GC;
+    ipB = tb | 0; frB = tb - ipB; ipB1 = ipB + 1; ipB1 >= GC ? ipB1 -= GC;
+    sB = gb[ipB] * (1 - frB) + gb[ipB1] * frB;
+    xb = x + 0.5; xb >= 1 ? xb -= 1; wB = xb < 0.5 ? 2 * xb : 2 * (1 - xb);
+    sumL += (sA * wA + sB * wB) * ev * min(ageL[j] / FADE, 1);
+    rp2 += ratioL[j] * 2 ^ (riseSemi * (1 - ev) / 12); rp2 >= GC ? rp2 -= GC;
+    rposL[j] = rp2; ageL[j] += 1; eL[j] = ev * decayCoef;
+  );
+  j += 1;
+);
+
+// ---- RIGHT ----
+timerR <= 0 ? (
+  seedR = (seedR * 69621) % 2147483647; rp = seedR / 2147483647;
+  seedR = (seedR * 69621) % 2147483647; rt = seedR / 2147483647;
+  vsel = 0; vmin = eR[0]; j = 1;
+  loop(NV - 1, eR[j] < vmin ? (vmin = eR[j]; vsel = j); j += 1;);
+  start = (wpos + 1) % GC; n1 = GC - start;
+  memcpy(grainR + vsel * GC, histR + start, n1);
+  memcpy(grainR + vsel * GC + n1, histR, start);
+  ratioR[vsel] = 2 ^ ((transpose + spreadSemi * (rp * 2 - 1)) / 12);
+  rposR[vsel] = 0; eR[vsel] = 1; ageR[vsel] = 0;
+  timerR = max(meanIntv * (1 + jitter * (rt * 2 - 1)), 1);
+);
+timerR -= 1;
+sumR = 0; j = 0;
+loop(NV,
+  eR[j] > 0.02 ? (
+    ev = eR[j]; rp2 = rposR[j]; gb = grainR + j * GC; x = rp2 / GC;
+    ipA = rp2 | 0; frA = rp2 - ipA; ipA1 = ipA + 1; ipA1 >= GC ? ipA1 -= GC;
+    sA = gb[ipA] * (1 - frA) + gb[ipA1] * frA;
+    wA = x < 0.5 ? 2 * x : 2 * (1 - x);
+    tb = rp2 + HALF; tb >= GC ? tb -= GC;
+    ipB = tb | 0; frB = tb - ipB; ipB1 = ipB + 1; ipB1 >= GC ? ipB1 -= GC;
+    sB = gb[ipB] * (1 - frB) + gb[ipB1] * frB;
+    xb = x + 0.5; xb >= 1 ? xb -= 1; wB = xb < 0.5 ? 2 * xb : 2 * (1 - xb);
+    sumR += (sA * wA + sB * wB) * ev * min(ageR[j] / FADE, 1);
+    rp2 += ratioR[j] * 2 ^ (riseSemi * (1 - ev) / 12); rp2 >= GC ? rp2 -= GC;
+    rposR[j] = rp2; ageR[j] += 1; eR[j] = ev * decayCoef;
+  );
+  j += 1;
+);
+
+// ---- stereo width, soft-clip safety, dry/wet, output ----
+wmono = (sumL + sumR) * 0.5;
+wetL = wmono + width * (sumL - wmono);
+wetR = wmono + width * (sumR - wmono);
+wetL = wetL / sqrt(1 + wetL * wetL);
+wetR = wetR / sqrt(1 + wetR * wetR);
+spl0 = dryL * (1 - wetmix) + wetL * outlev * wetmix;
+spl1 = dryR * (1 - wetmix) + wetR * outlev * wetmix;
+
+wpos = (wpos + 1) % GC;

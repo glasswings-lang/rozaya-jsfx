@@ -46,6 +46,7 @@ Each event blends two voices, set by the **Tone vs Noise** knob: a **noise** bur
 
 ## Usage Notes
 
+- **Dapple is for noise / broadband texture** — it generates its bubbles from internal noise. To bubble a *tonal* source you feed in (a pad, voice, drone, sustained tone), use its sibling **[Bubbler](bubbler.md)** instead — an effect that scatters your input into rising pitched droplets. The two are tuned for opposite material; crossing them (noise into Bubbler, or a pure tone into Dapple) gets janky.
 - **Droplets / cave:** Tone ~80, Rise ~50, Pitch ~120–200, low rate, high Timing randomness, longish Bubble length.
 - **Babbling brook:** Tone ~30–40, high rate, high Pitch spread — mostly gurgle with a sparkle of plink.
 - **Full dappled mix:** Tone ~50–60, moderate everything.

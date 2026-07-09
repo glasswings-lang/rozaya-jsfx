@@ -19,6 +19,7 @@ A collection of audio synthesis and effect plugins for [REAPER](https://www.reap
 - `Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation` — amplitude modulation with shaped envelope and pan system
 - `Resonance Bank` — 16-band parallel-bandpass or serial-peaking-EQ effect with per-band multi-target drift modulation and cascade rolloff. Vowel-flavored breath shaping, dynamic windscapes, evolving noise textures
 - `Stereo Phaser` — swept-allpass phaser with stereo spread and feedback; 2–64 stages (classic phaser through dense sound-design "curtain")
+- `Bubbler` — granular "bubble" effect: scatters a tonal input into rising pitched droplets made of your own sound (pitch down for underwater). Sibling to Dapple, for tonal sources
 
 **Utilities**
 - `Rhythm Track` — synthesized metronome with swing and pan distribution
