@@ -17,6 +17,11 @@ desc: Dapple
 // The Tone-vs-Noise knob blends them: all noise = gurgle bed, all tone = plinky
 // droplets, in between = the dappled mix.
 //
+// GENERATOR or EFFECT: by default it generates from internal noise. Turn up
+// "Excite from input" and the noise voice is driven by the audio on the track
+// instead — feed it a noisescape / broadband texture and it bubbles THAT.
+// (For tonal sources use the sibling Bubbler; Dapple's engine wants broadband.)
+//
 // POLYPHONIC: 32 independent voices per channel, so overlapping bubbles ring
 // out on their own voices instead of cutting each other off. A new bubble takes
 // the quietest voice, so it never truncates one that's still audibly ringing.
@@ -36,6 +41,7 @@ slider7:40<0,100,1>Rise %
 slider8:80<0,100,1>Stereo width %
 slider9:0<-24,12,0.1>Output (dB)
 slider10:50<0,100,1>Tone vs Noise % (0=noise, 100=tone plink)
+slider11:0<0,100,1>Excite from input % (0=internal noise, 100=input)
 
 in_pin:left input
 in_pin:right input
@@ -66,11 +72,15 @@ rise      = slider7 * 0.01;
 width     = slider8 * 0.01;
 outlev    = 2 ^ (slider9 / 6);
 tone      = slider10 * 0.01;         // 0 = noise voice, 1 = tonal plink
+inp       = slider11 * 0.01;         // 0 = internal noise, 1 = excite noise voice from input
 meanIntv  = srate / rate;            // avg samples between bubbles
 
 @sample
+dryL = spl0;
+dryR = spl1;
 // ============ LEFT ============
 seedL = (seedL * 48271) % 2147483647; noiseL = (seedL / 2147483647) * 2 - 1;
+exciteL = (1 - inp) * noiseL + inp * dryL;    // internal noise, input, or a blend
 timerL <= 0 ? (
   seedL = (seedL * 48271) % 2147483647; rp = seedL / 2147483647;   // pitch roll
   seedL = (seedL * 48271) % 2147483647; rt = seedL / 2147483647;   // timing roll
@@ -94,7 +104,7 @@ loop(NV,
   fc = min(pf, srate * 0.1);
   cut = 2 * sin($pi * fc / srate);
   fb = res + res / (1 - cut);
-  n3L[j] = n3L[j] + cut * (noiseL * ev - n3L[j] + fb * (n3L[j] - n4L[j]));
+  n3L[j] = n3L[j] + cut * (exciteL * ev - n3L[j] + fb * (n3L[j] - n4L[j]));
   n4L[j] = n4L[j] + cut * (n3L[j] - n4L[j]);
   // tonal voice: sine at pf, chirping up
   phL[j] += 2 * $pi * min(pf, srate * 0.45) / srate;
@@ -107,6 +117,7 @@ loop(NV,
 
 // ============ RIGHT ============
 seedR = (seedR * 69621) % 2147483647; noiseR = (seedR / 2147483647) * 2 - 1;
+exciteR = (1 - inp) * noiseR + inp * dryR;
 timerR <= 0 ? (
   seedR = (seedR * 69621) % 2147483647; rp = seedR / 2147483647;
   seedR = (seedR * 69621) % 2147483647; rt = seedR / 2147483647;
@@ -129,7 +140,7 @@ loop(NV,
   fc = min(pf, srate * 0.1);
   cut = 2 * sin($pi * fc / srate);
   fb = res + res / (1 - cut);
-  n3R[j] = n3R[j] + cut * (noiseR * ev - n3R[j] + fb * (n3R[j] - n4R[j]));
+  n3R[j] = n3R[j] + cut * (exciteR * ev - n3R[j] + fb * (n3R[j] - n4R[j]));
   n4R[j] = n4R[j] + cut * (n3R[j] - n4R[j]);
   phR[j] += 2 * $pi * min(pf, srate * 0.45) / srate;
   phR[j] >= 2*$pi ? phR[j] -= 2*$pi;
@@ -141,5 +152,13 @@ loop(NV,
 
 // ============ stereo width + output (added to input so it layers) ============
 mono = (sumL + sumR) * 0.5;
-spl0 += (mono + width * (sumL - mono)) * outlev;
-spl1 += (mono + width * (sumR - mono)) * outlev;
+bubL = (mono + width * (sumL - mono)) * outlev;
+bubR = (mono + width * (sumR - mono)) * outlev;
+// safety soft-clip only when exciting from input (protects against a loud/tonal
+// source resonating the noise voice); pure-generator mode is left untouched
+inp > 0 ? (
+  bubL = bubL / sqrt(1 + bubL * bubL);
+  bubR = bubR / sqrt(1 + bubR * bubR);
+);
+spl0 += bubL;
+spl1 += bubR;

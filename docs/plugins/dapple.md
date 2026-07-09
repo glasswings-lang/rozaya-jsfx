@@ -12,6 +12,8 @@ It began as an attempt to synthesize water and never quite got there — it beca
 
 Each event blends two voices, set by the **Tone vs Noise** knob: a **noise** burst through a resonant lowpass (fizz, gurgle, steam) and a clean **sine** that chirps upward (a bright droplet "plink" — bubbles are little resonators that rise in pitch as they collapse, the tonal approach to water synthesis after Andy Farnell / Minnaert).
 
+**Generator or effect.** By default Dapple generates from internal noise. Turn up **Excite from input** and its noise voice is driven by the audio on the track instead — feed it a noisescape or any broadband texture and it bubbles *that*. (For *tonal* sources, use [Bubbler](bubbler.md); Dapple's engine wants broadband material.)
+
 ## Signal Architecture
 
 - **Random events.** A timer fires bubbles at the set rate, with adjustable timing randomness (irregular spacing is what makes it read as natural rather than metronomic). Each event picks a new random low pitch within the spread.
@@ -44,9 +46,12 @@ Each event blends two voices, set by the **Tone vs Noise** knob: a **noise** bur
 
 **Tone vs Noise %** `0–100, default 50` — blend between the two voices. 0 = noise gurgle bed, 100 = pure sine plinks, in between = the dappled mix.
 
+**Excite from input %** `0–100, default 0` — where the noise voice gets its excitation. 0 = internal noise (pure generator, the default). Up = the audio on the track drives the noise voice instead, so it bubbles *your* sound (feed it a noisescape/broadband texture). A safety clamp keeps it bounded if a hot or tonal source is fed in. Only affects the noise voice; the tonal voice stays synthetic.
+
 ## Usage Notes
 
-- **Dapple is for noise / broadband texture** — it generates its bubbles from internal noise. To bubble a *tonal* source you feed in (a pad, voice, drone, sustained tone), use its sibling **[Bubbler](bubbler.md)** instead — an effect that scatters your input into rising pitched droplets. The two are tuned for opposite material; crossing them (noise into Bubbler, or a pure tone into Dapple) gets janky.
+- **Dapple is for noise / broadband texture.** It generates from internal noise by default, and with **Excite from input** it can bubble a *noise / broadband source you feed it* (a noisescape, wind, breath, cymbals, hiss). To bubble a *tonal* source (pad, voice, drone, sustained tone), use its sibling **[Bubbler](bubbler.md)** instead — a granular effect that transposes your input into rising droplets. The two are tuned for opposite material; crossing them (a pure tone into Dapple, or noise into Bubbler) gets janky.
+- **Bubble a noisescape:** set Excite from input to 100, Tone vs Noise low (so the input-driven noise voice dominates), and dial Pitch / Resonance to taste — the resonant droplets pick up the character of whatever broadband texture you feed it.
 - **Droplets / cave:** Tone ~80, Rise ~50, Pitch ~120–200, low rate, high Timing randomness, longish Bubble length.
 - **Babbling brook:** Tone ~30–40, high rate, high Pitch spread — mostly gurgle with a sparkle of plink.
 - **Full dappled mix:** Tone ~50–60, moderate everything.
