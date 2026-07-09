@@ -25,6 +25,7 @@ nothing else to open.
 | Polyrhythm Phase | `polyrhythm_phase.jsfx` | [polyrhythm-phase.md](polyrhythm-phase.md) |
 | Melody Phase | `melody_phase.jsfx` | [melody-phase.md](melody-phase.md) |
 | Harmonic Sculptor | `harmonic_sculptor.jsfx` | [harmonic-sculptor.md](harmonic-sculptor.md) |
+| Dapple | `dapple.jsfx` | [dapple.md](dapple.md) |
 
 ### Effects
 
@@ -34,6 +35,7 @@ nothing else to open.
 | Sweep Dwell Filter | `sweep-dwell-filter.jsfx` | [sweep-dwell-filter.md](sweep-dwell-filter.md) |
 | Full Feature Tremolo | `Full_Feature_Tremolo.jsfx` | [tremolo.md](tremolo.md) |
 | Resonance Bank | `resonance_bank.jsfx` | [resonance-bank.md](resonance-bank.md) |
+| Stereo Phaser | `stereo-phaser.jsfx` | [stereo-phaser.md](stereo-phaser.md) |
 
 ### Samplers
 

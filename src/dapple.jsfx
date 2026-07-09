@@ -1,0 +1,144 @@
+desc: Dapple
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// A scattered-droplet texture generator. Random pitched events pop on irregular
+// timing, each ringing and chirping upward as it fades, piling up into a
+// pointillist wash — somewhere between rain on glass, plinking droplets and a
+// resonant fizz. (It set out to synthesize water, never got there, and became
+// its own thing.) Each event blends two voices:
+//   - NOISE: a noise burst through a resonant lowpass — fizz, gurgle, steam.
+//   - TONE:  a clean sine that chirps upward — a bright "plink" (little
+//            resonators rise in pitch as they collapse; the tonal approach to
+//            water synthesis, after Andy Farnell / Minnaert).
+// The Tone-vs-Noise knob blends them: all noise = gurgle bed, all tone = plinky
+// droplets, in between = the dappled mix.
+//
+// POLYPHONIC: 32 independent voices per channel, so overlapping bubbles ring
+// out on their own voices instead of cutting each other off. A new bubble takes
+// the quietest voice, so it never truncates one that's still audibly ringing.
+// Two independent channels give natural stereo. Adds to whatever's on the track
+// so it layers; put it on an empty track for bubbles alone.
+//
+// Resonant lowpass is the Cockos state-variable topology (standard JSFX);
+// noise is Park-Miller (MINSTD), one independent stream per channel.
+
+slider1:6<0.2,40,0.1>Bubble rate (per second)
+slider2:70<0,100,1>Timing randomness %
+slider3:150<40,1500,1>Pitch (Hz)
+slider4:50<0,100,1>Pitch spread %
+slider5:0.85<0,0.97,0.01>Resonance (noise voice)
+slider6:120<5,1000,1>Bubble length (ms)
+slider7:40<0,100,1>Rise %
+slider8:80<0,100,1>Stereo width %
+slider9:0<-24,12,0.1>Output (dB)
+slider10:50<0,100,1>Tone vs Noise % (0=noise, 100=tone plink)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+// Path A: no ext_noinit, so @init re-runs on transport play and reseeds.
+NV = 32;                     // voices per channel
+// Park-Miller seeds (nonzero, < 2^31-1), different per channel.
+seedL = 1103527590;
+seedR = 1234567891;
+timerL = 0;  timerR = 0;     // samples until next bubble
+// per-voice state arrays (32 slots each): env, base pitch, SVF n3, SVF n4, sine phase
+eL = 0;    p0L = 32;   n3L = 64;    n4L = 96;    phL = 128;   // left  0..159
+eR = 160;  p0R = 192;  n3R = 224;   n4R = 256;   phR = 288;   // right 160..319
+memset(0, 0, 320);
+SINE_LEVEL = 0.3;            // tonal-voice level, roughly matched to the noise voice
+
+@slider
+rate      = max(slider1, 0.01);
+jitter    = slider2 * 0.01;
+basePitch = slider3;
+spreadOct = slider4 * 0.01 * 3;      // up to 3 octaves of random pitch
+res       = min(slider5, 0.97);
+decayCoef = exp(-1 / (srate * max(slider6,1) * 0.001));
+rise      = slider7 * 0.01;
+width     = slider8 * 0.01;
+outlev    = 2 ^ (slider9 / 6);
+tone      = slider10 * 0.01;         // 0 = noise voice, 1 = tonal plink
+meanIntv  = srate / rate;            // avg samples between bubbles
+
+@sample
+// ============ LEFT ============
+seedL = (seedL * 48271) % 2147483647; noiseL = (seedL / 2147483647) * 2 - 1;
+timerL <= 0 ? (
+  seedL = (seedL * 48271) % 2147483647; rp = seedL / 2147483647;   // pitch roll
+  seedL = (seedL * 48271) % 2147483647; rt = seedL / 2147483647;   // timing roll
+  vsel = 0; vmin = abs(n3L[0]) + abs(n4L[0]); j = 1;
+  loop(NV - 1,
+    e2 = abs(n3L[j]) + abs(n4L[j]);
+    e2 < vmin ? (vmin = e2; vsel = j);
+    j += 1;
+  );
+  np = basePitch * 2 ^ (spreadOct * (rp * 2 - 1));
+  p0L[vsel] = max(20, min(np, srate * 0.1));
+  eL[vsel] = 1; n3L[vsel] = 0; n4L[vsel] = 0; phL[vsel] = 0;
+  timerL = max(meanIntv * (1 + jitter * (rt * 2 - 1)), 1);
+);
+timerL -= 1;
+sumL = 0; j = 0;
+loop(NV,
+  ev = eL[j];
+  pf = p0L[j] * (1 + rise * (1 - ev) * 4);      // pitch rises as the bubble fades
+  // noise voice: resonant lowpass swept by pf
+  fc = min(pf, srate * 0.1);
+  cut = 2 * sin($pi * fc / srate);
+  fb = res + res / (1 - cut);
+  n3L[j] = n3L[j] + cut * (noiseL * ev - n3L[j] + fb * (n3L[j] - n4L[j]));
+  n4L[j] = n4L[j] + cut * (n3L[j] - n4L[j]);
+  // tonal voice: sine at pf, chirping up
+  phL[j] += 2 * $pi * min(pf, srate * 0.45) / srate;
+  phL[j] >= 2*$pi ? phL[j] -= 2*$pi;
+  toneV = sin(phL[j]) * ev * SINE_LEVEL;
+  sumL += (1 - tone) * n4L[j] + tone * toneV;
+  eL[j] = ev * decayCoef;
+  j += 1;
+);
+
+// ============ RIGHT ============
+seedR = (seedR * 69621) % 2147483647; noiseR = (seedR / 2147483647) * 2 - 1;
+timerR <= 0 ? (
+  seedR = (seedR * 69621) % 2147483647; rp = seedR / 2147483647;
+  seedR = (seedR * 69621) % 2147483647; rt = seedR / 2147483647;
+  vsel = 0; vmin = abs(n3R[0]) + abs(n4R[0]); j = 1;
+  loop(NV - 1,
+    e2 = abs(n3R[j]) + abs(n4R[j]);
+    e2 < vmin ? (vmin = e2; vsel = j);
+    j += 1;
+  );
+  np = basePitch * 2 ^ (spreadOct * (rp * 2 - 1));
+  p0R[vsel] = max(20, min(np, srate * 0.1));
+  eR[vsel] = 1; n3R[vsel] = 0; n4R[vsel] = 0; phR[vsel] = 0;
+  timerR = max(meanIntv * (1 + jitter * (rt * 2 - 1)), 1);
+);
+timerR -= 1;
+sumR = 0; j = 0;
+loop(NV,
+  ev = eR[j];
+  pf = p0R[j] * (1 + rise * (1 - ev) * 4);
+  fc = min(pf, srate * 0.1);
+  cut = 2 * sin($pi * fc / srate);
+  fb = res + res / (1 - cut);
+  n3R[j] = n3R[j] + cut * (noiseR * ev - n3R[j] + fb * (n3R[j] - n4R[j]));
+  n4R[j] = n4R[j] + cut * (n3R[j] - n4R[j]);
+  phR[j] += 2 * $pi * min(pf, srate * 0.45) / srate;
+  phR[j] >= 2*$pi ? phR[j] -= 2*$pi;
+  toneV = sin(phR[j]) * ev * SINE_LEVEL;
+  sumR += (1 - tone) * n4R[j] + tone * toneV;
+  eR[j] = ev * decayCoef;
+  j += 1;
+);
+
+// ============ stereo width + output (added to input so it layers) ============
+mono = (sumL + sumR) * 0.5;
+spl0 += (mono + width * (sumL - mono)) * outlev;
+spl1 += (mono + width * (sumR - mono)) * outlev;

@@ -1,0 +1,100 @@
+desc: Stereo Phaser
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+// A classic swept-allpass phaser. A chain of first-order allpass filters is
+// swept by an LFO; summing the swept signal with the dry input creates moving
+// notches in the spectrum (the "whoosh"). Feedback deepens and resonates them.
+// Stereo comes from an LFO phase offset between the channels, so the sweep
+// swirls across the field instead of moving in lockstep.
+//
+// Allpass topology follows Cockos' stock "4-Tap Phaser" (LGPL) — reimplemented
+// here, generalised to a selectable number of stages and a stereo spread.
+//
+// HEADS-UP — REAPER auto-mute with stacked copies: one instance is safe at any
+// setting. But if you put SEVERAL identical copies on one track with very high
+// Feedback, their sweeps stay phase-locked (each starts its LFO at the same
+// point) so the resonant peaks line up and multiply in series — the level can
+// spike hard enough that REAPER auto-mutes the track to protect your speakers.
+// If that happens: drop Feedback (~0.5 is safe), OR vary the Rate / Range
+// between the copies so they drift apart instead of reinforcing, OR put a
+// limiter after them. It's specifically the stacked-AND-identical-AND-hot case.
+
+slider1:0.3<0.01,10,0.01>Rate Hz
+slider2:300<40,20000,1>Range Min Hz
+slider3:1500<40,20000,1>Range Max Hz
+slider4:0.6<0,0.95,0.01>Feedback
+slider5:6<2,64,2>Stages
+slider6:90<0,180,1>Stereo Spread (degrees)
+slider7:0.5<0,1,0.01>Wet/Dry Mix
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+// Path A render convention: NO ext_noinit, so REAPER re-runs @init on every
+// transport play / render start and resets all runtime for free.
+lfoPhase = 0;
+// paired allpass state (y and x history), 64 stages max, per channel.
+// Each array holds 64 slots, so the four never overlap.
+lyL = 0;    lxL = 64;    // left
+lyR = 128;  lxR = 192;   // right
+memset(0, 0, 256);
+
+@slider
+rate      = slider1;
+rangeMin  = min(slider2, slider3);
+rangeMax  = max(slider2, slider3);
+fb        = slider4;
+stages    = slider5;
+spreadRad = slider6 * $pi / 180;
+wet       = slider7;
+dry       = 1 - wet;
+
+// LFO sweeps the allpass corner between the two range edges. Working in the
+// stock's normalised-frequency domain (d = 2*fc/srate) so coef=(1-d)/(1+d)
+// places the phase transition at the audible sweep frequency.
+dmin = 2 * rangeMin / srate;
+dmax = 2 * rangeMax / srate;
+dsc  = abs(dmax - dmin) * 0.5;
+dmin = min(dmin, dmax);
+lfoInc = 2 * $pi * rate / srate;
+
+@sample
+// per-channel swept coefficient (right channel offset by Stereo Spread)
+dL = dmin + dsc * (sin(lfoPhase) + 1);
+dR = dmin + dsc * (sin(lfoPhase + spreadRad) + 1);
+lfoPhase += lfoInc;
+lfoPhase >= 2*$pi ? lfoPhase -= 2*$pi;
+coefL = (1 - dL) / (1 + dL);
+coefR = (1 - dR) / (1 + dR);
+
+// --- left allpass chain: y = coef*(y_prev + x) - x_prev ---
+x = spl0 + fbL * fb;
+i = 0;
+loop(stages,
+  ny = coefL * (lyL[i] + x) - lxL[i];
+  lxL[i] = x;
+  lyL[i] = ny;
+  x = ny;
+  i += 1;
+);
+fbL = x;
+spl0 = dry * spl0 + wet * x;
+
+// --- right allpass chain ---
+x = spl1 + fbR * fb;
+i = 0;
+loop(stages,
+  ny = coefR * (lyR[i] + x) - lxR[i];
+  lxR[i] = x;
+  lyR[i] = ny;
+  x = ny;
+  i += 1;
+);
+fbR = x;
+spl1 = dry * spl1 + wet * x;

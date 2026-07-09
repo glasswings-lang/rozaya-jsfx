@@ -1,0 +1,59 @@
+# Dapple
+
+**Designed by Rozaya — Developed with Claude (Anthropic)**
+
+---
+
+## Overview
+
+A scattered-droplet texture **generator**. It makes its own sound — no input needed — from random pitched events that pop on irregular timing, each ringing and chirping upward as it fades, piling up into a pointillist wash. It lands somewhere between rain on glass, plinking droplets, and a resonant fizz.
+
+It began as an attempt to synthesize water and never quite got there — it became its own thing instead, which is why it's called Dapple rather than "Water."
+
+Each event blends two voices, set by the **Tone vs Noise** knob: a **noise** burst through a resonant lowpass (fizz, gurgle, steam) and a clean **sine** that chirps upward (a bright droplet "plink" — bubbles are little resonators that rise in pitch as they collapse, the tonal approach to water synthesis after Andy Farnell / Minnaert).
+
+## Signal Architecture
+
+- **Random events.** A timer fires bubbles at the set rate, with adjustable timing randomness (irregular spacing is what makes it read as natural rather than metronomic). Each event picks a new random low pitch within the spread.
+- **Polyphonic — 32 voices per channel.** Each event takes its own voice, so overlapping bubbles ring out independently instead of cutting each other off. A new event grabs the *quietest* voice, so it never truncates one that's still audibly ringing.
+- **Per-event pitch rise.** As a bubble's amplitude envelope decays, its pitch sweeps upward — the collapsing-bubble chirp. This drives both voices.
+- **Noise voice.** Noise (Park-Miller, independent per channel) gated by the envelope, through a resonant state-variable lowpass tuned to the (rising) pitch. Its ring-out comes from the filter resonance.
+- **Tonal voice.** A sine oscillator at the (rising) pitch, enveloped — the clean plink.
+- **Stereo.** Two fully independent event streams (L/R), blended toward mono by the Stereo width control.
+- **Output** adds to whatever's on the track, so it layers over existing audio; put it on an empty track for the texture alone.
+
+## Parameters
+
+**Bubble rate (per second)** `0.2–40, default 6` — average events per second. Low = distinct drips; high = they overlap into a continuous gurgle.
+
+**Timing randomness %** `0–100, default 70` — spacing irregularity. 0 = metronomic; high = naturally scattered.
+
+**Pitch (Hz)** `40–1500, default 150` — base resonant pitch. Low = big slow bubbles; higher = small fizzy ones.
+
+**Pitch spread %** `0–100, default 50` — how far each event's pitch varies from the base (up to ±3 octaves). 0 = all one pitch; up = watery variety.
+
+**Resonance (noise voice)** `0–0.97, default 0.85` — ring/tone of the noise voice. Low = soft filtered blips; high = pingy, near-singing. (Only affects the noise voice; the tonal voice is a clean sine.)
+
+**Bubble length (ms)** `5–1000, default 120` — envelope decay; how long each event rings.
+
+**Rise %** `0–100, default 40` — how far each event's pitch sweeps upward as it fades. This is the chirp — the tonal voice needs some Rise to sound like a drop rather than a static beep.
+
+**Stereo width %** `0–100, default 80` — 0 = mono, 100 = fully independent L/R streams.
+
+**Output (dB)** `-24 to +12, default 0` — level. Dense settings stack up loud; pull this down if it distorts.
+
+**Tone vs Noise %** `0–100, default 50` — blend between the two voices. 0 = noise gurgle bed, 100 = pure sine plinks, in between = the dappled mix.
+
+## Usage Notes
+
+- **Droplets / cave:** Tone ~80, Rise ~50, Pitch ~120–200, low rate, high Timing randomness, longish Bubble length.
+- **Babbling brook:** Tone ~30–40, high rate, high Pitch spread — mostly gurgle with a sparkle of plink.
+- **Full dappled mix:** Tone ~50–60, moderate everything.
+- **It's a generator, not an effect** — it needs no input and adds its sound on top of the track. Empty track = texture alone; track with audio = that audio *plus* the texture layered over it.
+- **Dense = loud.** Pushing rate and length way up stacks many voices; if it distorts, lower Output. It stays stable — it's a level thing, not a blow-up.
+- The tonal voice needs some **Rise** to chirp; with Rise at 0 it's a static tone.
+
+---
+
+*Dapple is part of the Rozaya JSFX plugin suite.*
+*Designed by Rozaya — Developed with Claude (Anthropic).*
