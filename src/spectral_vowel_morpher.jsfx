@@ -713,7 +713,15 @@ wL = accL[accpos]; accL[accpos] = 0;
 wR = accR[accpos]; accR[accpos] = 0;
 accpos += 1; accpos >= ACCLEN ? accpos = 0;
 hopcount += 1;
-hopcount >= HOP ? ( hopcount = 0; have > 0 ? gen_grain(); );
+// Skip grain synthesis (gen_grain is HEAVY: two FFTSIZE iFFTs) when the wash is
+// inaudible -- the mirror of the voice engine's "skip when Texture is full wash"
+// guard below. At Texture 0 (pure voice) wlevel is 0, so wL*wlevel contributes
+// nothing anyway; building grains for it was pure wasted CPU -- a real per-grain
+// FFT load that could tip a busy project into occasional real-time dropouts
+// (the "crackle on every slot, non-clipping" symptom). The accumulator still
+// drains via the read-and-clear above, so raising Texture off 0 fades the wash
+// back in cleanly over ~one grain. Output is bit-identical while muted.
+hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); );
 
 // --- harmonic (voice) engine: TWO morph voices (vsi/vsj), each at its OWN
 // captured pitch, crossfaded by morph. Now STEREO: when Stereo width (->
