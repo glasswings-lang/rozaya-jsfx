@@ -16,24 +16,32 @@ desc: Womb Voice
 //
 // A lowpass can't make something stereo — a mono voice stays a point in
 // the centre. Width has to be MANUFACTURED by making the two channels
-// different. Here that's done the honest, controllable way: the Left and
-// Right chains are fully independent, each with its own cutoff and
-// resonance. The WIDTH is the DIFFERENCE between the two cutoffs — pull
-// them apart for more width, together for mono. Because the channels
-// differ only in their spectral rolloff (no phase/delay offset), a mono
-// sum just averages the two rolloffs: no comb-notch cancellation, safe on
-// a single speaker / HomePod / phone.
-//
-// Independent channels also mean each cutoff and each resonance can later
-// become its own Drift / Speed Ramp target — so the width itself can
-// wander and ramp, not just sit static.
+// different. The Left and Right chains are fully independent, each with
+// its own cutoff and resonance. The WIDTH is the DIFFERENCE between the
+// two cutoffs — pull them apart for more width, together for mono.
+// Because the channels differ only in spectral rolloff (no phase/delay
+// offset), a mono sum just averages the two rolloffs: no comb-notch
+// cancellation, safe on a single speaker / HomePod / phone.
 //
 // === Slope ===
 //
-// Each SVF lowpass stage is -12 dB/oct; the Slope selector cascades 1-4
-// of them for -12 / -24 / -36 / -48 dB/oct character. Steeper = more muffled,
-// closer to the womb's real ~30 dB rolloff above 1 kHz. Shared across
-// both channels (it's a discrete character choice, not a drift target).
+// Each SVF lowpass stage is -12 dB/oct; Slope cascades 1-4 of them for
+// -12 / -24 / -36 / -48 dB/oct. Steeper = more muffled. Shared across
+// both channels (a discrete character choice, not a drift target).
+//
+// === Drift + Speed Ramp (per channel) ===
+//
+// The two cutoffs are independent Drift and Speed Ramp targets, so the
+// muffle can MOVE — a living womb, not a static EQ:
+//   * Drift = a slow perpetual wander on each cutoff. Give the two
+//     channels slightly different periods and the stereo width itself
+//     breathes. (nested-selector pattern: one target selector + shared
+//     up/down/period/shape; both targets drift in parallel.)
+//   * Speed Ramp = a one-time signed ride on each cutoff over N minutes.
+//     A positive `by` on both = the voice slowly CLEARING (the muffle
+//     opening as the baby "grows"); negative = deepening/darkening.
+// Resonance is not yet a drift target (its 0-1 unit scale won't share
+// the Hz amount slider cleanly) — cutoff movement is the living element.
 //
 // Pair with: Womb (heartbeat/breath bed underneath), Bubbler / Dapple
 // (fluid texture).
@@ -45,27 +53,203 @@ slider4:0.15<0,1,0.01>Right resonance
 slider5:0<0,3,1>{-12,-24,-36,-48}Slope (dB/oct)
 slider6:0<-24,12,0.5>Output (dB)
 
+// --- Drift (nested selector) ---
+slider7:0<0,1,1{Left cutoff,Right cutoff}>Drift target
+slider8:0<0,1000,1>Drift up (Hz)
+slider9:0<0,1000,1>Drift down (Hz)
+slider10:20<1,600,0.1>Drift period (seconds)
+slider11:0<0,2,1{Sine,Triangle,Random}>Drift shape
+
+// --- Speed Ramp (nested selector; signed delta) ---
+slider12:0<0,1,1{Left cutoff,Right cutoff}>Speed ramp target
+slider13:0<-1000,1000,1>Speed ramp by (Hz)
+slider14:0<0,60,0.1>Speed ramp duration (minutes)
+slider15:0<0,1,1{Off,On}>Speed ramp engage
+slider16:0<0,60,0.1>Speed ramp start delay (minutes)
+
 @init
-// Chamberlin SVF state: up to 4 cascaded stages per channel,
-// 2 vars (low, band) each. L uses slots 0-7, R uses slots 8-15.
+// NO ext_noinit: REAPER re-runs @init on every transport play / render
+// start, which resets all RUNTIME state (filter memory, drift phases,
+// ramp clocks). CONFIG banks are guarded by drift_cfg_inited so those
+// re-runs do NOT wipe the user's drift/ramp setup (Path A render fix).
+// @serialize restores CONFIG across project save/load.
+
+N_TARGETS = 2;
+
+// Chamberlin SVF state: up to 4 cascaded stages per channel, 2 vars
+// (low, band) each. L uses slots 0-7, R uses slots 8-15. Reset every
+// @init (fresh filter start on play — normal).
 sv_L = 0;
 sv_R = 8;
 memset(0, 0, 16);
 
+// Per-target banks (16-slot-spaced for growth), based at 4096.
+speed_ramp_by_mem            = 4096;   // signed `by` per target (CONFIG)
+speed_ramp_dur_mem           = 4112;   // duration minutes per target (CONFIG)
+speed_ramp_delay_mem         = 4128;   // start-delay minutes per target (CONFIG)
+speed_ramp_ramp_t_mem        = 4144;   // ramp progress 0..1 per target (RUNTIME)
+speed_ramp_delay_elapsed_mem = 4160;   // delay sample counter per target (RUNTIME)
+drift_up_mem                 = 4176;   // CONFIG
+drift_down_mem               = 4192;   // CONFIG
+drift_per_mem                = 4208;   // CONFIG (period in seconds)
+drift_shape_mem              = 4224;   // CONFIG
+drift_phase_mem              = 4240;   // RUNTIME
+drift_prev_mem               = 4256;   // RUNTIME (Random shape)
+drift_curr_mem               = 4272;   // RUNTIME (Random shape)
+drift_offset_mem             = 4288;   // RUNTIME (computed Hz offset per target)
+
+// CONFIG defaults — one-time only, so transport re-runs of @init don't
+// wipe user setup. @serialize overwrites these on project reload.
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_TARGETS,
+    speed_ramp_by_mem[i]    = 0;
+    speed_ramp_dur_mem[i]   = 0;
+    speed_ramp_delay_mem[i] = 0;
+    drift_up_mem[i]         = 0;
+    drift_down_mem[i]       = 0;
+    drift_per_mem[i]        = 20;
+    drift_shape_mem[i]      = 0;
+    i += 1;
+  );
+  drift_cfg_inited = 1;
+);
+
+// RUNTIME reset on EVERY @init (i.e. every transport play). Phases seeded
+// with rand so the two drifts don't crest together.
+i = 0;
+loop(N_TARGETS,
+  speed_ramp_ramp_t_mem[i]        = 0;
+  speed_ramp_delay_elapsed_mem[i] = 0;
+  drift_phase_mem[i]  = rand(1);
+  drift_prev_mem[i]   = 0;
+  drift_curr_mem[i]   = 0;
+  drift_offset_mem[i] = 0;
+  i += 1;
+);
+
 @slider
-// Chamberlin SVF coefficients (same idiom as resonance_bank).
-// f = 2*sin(pi*fc/srate) sets the cutoff; q = 1/Q sets resonance
-// (q high = broad/gentle, q low = peaky). res 0..1 -> q 2..0.1.
-fL = 2 * sin($pi * slider1 / srate);
-fR = 2 * sin($pi * slider2 / srate);
+// Static per-channel character (resonance not drifted -> set here, persists
+// across transport since @init doesn't touch these).
 qL = 2 - 1.9 * slider3;
 qR = 2 - 1.9 * slider4;
 n_stages = slider5 + 1;   // 1..4 cascaded stages
 out_gain = 10 ^ (slider6 / 20);
 
+// Speed Ramp target selector save/restore. slider12 = target; slider13 =
+// per-target `by`; slider14 = per-target duration; slider16 = per-target
+// start delay. slider15 (engage) stays GLOBAL.
+sel_speed_target = slider12;
+last_speed_target != sel_speed_target ? (
+  speed_ramp_by_mem[last_speed_target]    = slider13;
+  speed_ramp_dur_mem[last_speed_target]   = slider14;
+  speed_ramp_delay_mem[last_speed_target] = slider16;
+  slider13 = speed_ramp_by_mem[sel_speed_target];
+  slider14 = speed_ramp_dur_mem[sel_speed_target];
+  slider16 = speed_ramp_delay_mem[sel_speed_target];
+  slider_automate(slider13);
+  slider_automate(slider14);
+  slider_automate(slider16);
+  last_speed_target = sel_speed_target;
+) : (
+  speed_ramp_by_mem[sel_speed_target]    = slider13;
+  speed_ramp_dur_mem[sel_speed_target]   = slider14;
+  speed_ramp_delay_mem[sel_speed_target] = slider16;
+);
+
+// Drift target selector save/restore (same nested-selector pattern).
+sel_target = slider7;
+last_target_select != sel_target ? (
+  drift_up_mem[last_target_select]    = slider8;
+  drift_down_mem[last_target_select]  = slider9;
+  drift_per_mem[last_target_select]   = slider10;
+  drift_shape_mem[last_target_select] = slider11;
+  slider8  = drift_up_mem[sel_target];
+  slider9  = drift_down_mem[sel_target];
+  slider10 = drift_per_mem[sel_target];
+  slider11 = drift_shape_mem[sel_target];
+  slider_automate(slider8);
+  slider_automate(slider9);
+  slider_automate(slider10);
+  slider_automate(slider11);
+  last_target_select = sel_target;
+) : (
+  drift_up_mem[sel_target]    = slider8;
+  drift_down_mem[sel_target]  = slider9;
+  drift_per_mem[sel_target]   = slider10;
+  drift_shape_mem[sel_target] = slider11;
+);
+
 @sample
 // mono-sum the source (handles dual-mono or single-sided mono cleanly)
 mono_in = (spl0 + spl1) * 0.5;
+
+// --- Advance each target's own ramp clock. Engage (slider15) is a
+//     freeze/resume gate: while Off, ramp_t holds; only transport play
+//     (via @init) resets it. Each target waits its own start-delay, then
+//     advances its own ramp_t 0->1 over its own duration. ---
+slider15 ? (
+  i = 0;
+  loop(N_TARGETS,
+    speed_ramp_dur_mem[i] > 0 ? (
+      sr_delay_samples = speed_ramp_delay_mem[i] * 60 * srate;
+      speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
+        speed_ramp_delay_elapsed_mem[i] += 1;
+      ) : (
+        speed_ramp_ramp_t_mem[i] += 1.0 / (srate * speed_ramp_dur_mem[i] * 60);
+        speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+      );
+    );
+    i += 1;
+  );
+);
+ramp_off_l = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
+ramp_off_r = speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1];
+
+// --- Per-target drift wave. Each target's phase advances per sample at
+//     1 / (period_seconds * srate); offset (Hz) = shape * (up or down). ---
+i = 0;
+loop(N_TARGETS,
+  up    = drift_up_mem[i];
+  down  = drift_down_mem[i];
+  per   = drift_per_mem[i];
+  shape = drift_shape_mem[i];
+
+  drift_offset_local = 0;
+  (up > 0 || down > 0) && per > 0 ? (
+    period_samples = max(per * srate, 1);
+    new_phase = drift_phase_mem[i] + 1.0 / period_samples;
+    new_phase >= 1.0 ? (
+      new_phase -= 1.0;
+      shape == 2 ? (
+        drift_prev_mem[i] = drift_curr_mem[i];
+        drift_curr_mem[i] = rand(2) - 1;
+      );
+    );
+    drift_phase_mem[i] = new_phase;
+
+    shape == 0 ? (
+      shape_val = sin(2 * $pi * new_phase);
+    ) : shape == 1 ? (
+      shape_val = new_phase < 0.25 ? (4 * new_phase) :
+                  new_phase < 0.75 ? (2 - 4 * new_phase) :
+                                     (4 * new_phase - 4);
+    ) : (
+      shape_val = drift_prev_mem[i] +
+        (drift_curr_mem[i] - drift_prev_mem[i]) * new_phase;
+    );
+    drift_offset_local = shape_val > 0 ? shape_val * up : shape_val * down;
+  );
+  drift_offset_mem[i] = drift_offset_local;
+  i += 1;
+);
+
+// --- Effective cutoffs = baseline + drift + ramp, clamped to a safe
+//     range, then the SVF coefficient recomputed per sample. ---
+eff_l = max(20, min(slider1 + drift_offset_mem[0] + ramp_off_l, srate * 0.45));
+eff_r = max(20, min(slider2 + drift_offset_mem[1] + ramp_off_r, srate * 0.45));
+fL = 2 * sin($pi * eff_l / srate);
+fR = 2 * sin($pi * eff_r / srate);
 
 // --- Left chain: n_stages lowpass stages in series ---
 in_L = mono_in;
@@ -75,7 +259,7 @@ loop(n_stages,
   sv_L[idx]     += fL * sv_L[idx + 1];
   hi             = in_L - sv_L[idx] - qL * sv_L[idx + 1];
   sv_L[idx + 1] += fL * hi;
-  in_L           = sv_L[idx];      // lowpass out feeds next stage
+  in_L           = sv_L[idx];
   s += 1;
 );
 
@@ -93,3 +277,39 @@ loop(n_stages,
 
 spl0 = in_L * out_gain;
 spl1 = in_R * out_gain;
+
+@serialize
+// Persist per-target Speed Ramp (by / duration / start-delay) + drift
+// configs so reload restores BOTH targets, not just whichever was selected
+// at save. Version-guarded (CLAUDE.md @serialize gotcha): magic encodes the
+// target count so a format change degrades to @init defaults, not garbage.
+wv_magic = 3100000 + N_TARGETS;
+file_var(0, wv_magic);
+wv_magic == 3100000 + N_TARGETS ? (
+  file_mem(0, speed_ramp_by_mem,    N_TARGETS);
+  file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
+  file_mem(0, speed_ramp_delay_mem, N_TARGETS);
+  file_var(0, last_speed_target);
+  file_mem(0, drift_up_mem,    N_TARGETS);
+  file_mem(0, drift_down_mem,  N_TARGETS);
+  file_mem(0, drift_per_mem,   N_TARGETS);
+  file_mem(0, drift_shape_mem, N_TARGETS);
+  file_var(0, last_target_select);
+
+  // TRACK-DUPLICATE FIX. On READ (load/duplicate) file_avail(0) >= 0; on
+  // WRITE it is < 0. @serialize is the only section guaranteed to run on
+  // both load AND duplicate, so it re-establishes the bank<->slider
+  // invariant: force the visible config sliders to match the restored
+  // banks for the restored selectors, correcting any transient @slider
+  // clobber. (sliderchange, NOT slider_automate — no automation write.)
+  file_avail(0) >= 0 ? (
+    slider13 = speed_ramp_by_mem[last_speed_target];
+    slider14 = speed_ramp_dur_mem[last_speed_target];
+    slider16 = speed_ramp_delay_mem[last_speed_target];
+    slider8  = drift_up_mem[last_target_select];
+    slider9  = drift_down_mem[last_target_select];
+    slider10 = drift_per_mem[last_target_select];
+    slider11 = drift_shape_mem[last_target_select];
+    sliderchange(-1);
+  );
+);
