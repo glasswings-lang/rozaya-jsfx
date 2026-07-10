@@ -31,17 +31,20 @@ desc: Womb Voice
 //
 // === Drift + Speed Ramp (per channel) ===
 //
-// The two cutoffs are independent Drift and Speed Ramp targets, so the
-// muffle can MOVE — a living womb, not a static EQ:
-//   * Drift = a slow perpetual wander on each cutoff. Give the two
-//     channels slightly different periods and the stereo width itself
-//     breathes. (nested-selector pattern: one target selector + shared
-//     up/down/period/shape; both targets drift in parallel.)
-//   * Speed Ramp = a one-time signed ride on each cutoff over N minutes.
-//     A positive `by` on both = the voice slowly CLEARING (the muffle
-//     opening as the baby "grows"); negative = deepening/darkening.
-// Resonance is not yet a drift target (its 0-1 unit scale won't share
-// the Hz amount slider cleanly) — cutoff movement is the living element.
+// All four per-channel params — both cutoffs AND both resonances — are
+// independent Drift and Speed Ramp targets, so the muffle can MOVE:
+// a living womb, not a static EQ.
+//   * Drift = a slow perpetual wander on a target. Give the two channels
+//     slightly different periods and the stereo width itself breathes.
+//   * Speed Ramp = a one-time signed ride on a target over N minutes.
+//     Positive `by` on both cutoffs = the voice slowly CLEARING (the
+//     muffle opening as the baby "grows"); negative = deepening.
+// Nested-selector pattern: one target selector + shared up/down/period/
+// shape sliders; ALL targets drift in parallel, the selector just picks
+// which one you're editing. The amount is in the TARGET'S native unit —
+// Hz for cutoff, 0-1 for resonance ("units match target", the suite
+// convention; you tune it by ear). Cutoff uses the big end of the amount
+// range, resonance the 0-1 end.
 //
 // Pair with: Womb (heartbeat/breath bed underneath), Bubbler / Dapple
 // (fluid texture).
@@ -54,15 +57,15 @@ slider5:0<0,3,1>{-12,-24,-36,-48}Slope (dB/oct)
 slider6:0<-24,12,0.5>Output (dB)
 
 // --- Drift (nested selector) ---
-slider7:0<0,1,1{Left cutoff,Right cutoff}>Drift target
-slider8:0<0,1000,1>Drift up (Hz)
-slider9:0<0,1000,1>Drift down (Hz)
+slider7:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Drift target
+slider8:0<0,1000,0.1>Drift up amount (units match target)
+slider9:0<0,1000,0.1>Drift down amount (units match target)
 slider10:20<1,600,0.1>Drift period (seconds)
 slider11:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // --- Speed Ramp (nested selector; signed delta) ---
-slider12:0<0,1,1{Left cutoff,Right cutoff}>Speed ramp target
-slider13:0<-1000,1000,1>Speed ramp by (Hz)
+slider12:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Speed ramp target
+slider13:0<-1000,1000,0.1>Speed ramp by (units match target)
 slider14:0<0,60,0.1>Speed ramp duration (minutes)
 slider15:0<0,1,1{Off,On}>Speed ramp engage
 slider16:0<0,60,0.1>Speed ramp start delay (minutes)
@@ -74,7 +77,7 @@ slider16:0<0,60,0.1>Speed ramp start delay (minutes)
 // re-runs do NOT wipe the user's drift/ramp setup (Path A render fix).
 // @serialize restores CONFIG across project save/load.
 
-N_TARGETS = 2;
+N_TARGETS = 4;   // Left cutoff, Right cutoff, Left resonance, Right resonance
 
 // Chamberlin SVF state: up to 4 cascaded stages per channel, 2 vars
 // (low, band) each. L uses slots 0-7, R uses slots 8-15. Reset every
@@ -129,12 +132,9 @@ loop(N_TARGETS,
 );
 
 @slider
-// Static per-channel character (resonance not drifted -> set here, persists
-// across transport since @init doesn't touch these).
-qL = 2 - 1.9 * slider3;
-qR = 2 - 1.9 * slider4;
 n_stages = slider5 + 1;   // 1..4 cascaded stages
 out_gain = 10 ^ (slider6 / 20);
+// (qL/qR are computed per-sample in @sample now — resonance drifts/ramps too.)
 
 // Speed Ramp target selector save/restore. slider12 = target; slider13 =
 // per-target `by`; slider14 = per-target duration; slider16 = per-target
@@ -203,8 +203,8 @@ slider15 ? (
     i += 1;
   );
 );
-ramp_off_l = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
-ramp_off_r = speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1];
+// (ramp offset per target = ramp_t * by; computed inline below with the
+//  effective values, all 4 targets in parallel.)
 
 // --- Per-target drift wave. Each target's phase advances per sample at
 //     1 / (period_seconds * srate); offset (Hz) = shape * (up or down). ---
@@ -244,12 +244,26 @@ loop(N_TARGETS,
   i += 1;
 );
 
-// --- Effective cutoffs = baseline + drift + ramp, clamped to a safe
-//     range, then the SVF coefficient recomputed per sample. ---
-eff_l = max(20, min(slider1 + drift_offset_mem[0] + ramp_off_l, srate * 0.45));
-eff_r = max(20, min(slider2 + drift_offset_mem[1] + ramp_off_r, srate * 0.45));
-fL = 2 * sin($pi * eff_l / srate);
-fR = 2 * sin($pi * eff_r / srate);
+// --- Effective params = baseline + drift + ramp, per sample. Targets:
+//     0 = L cutoff (Hz), 1 = R cutoff (Hz), 2 = L resonance (0-1),
+//     3 = R resonance (0-1). Cutoffs clamped to a safe range and turned
+//     into SVF f coefficients; resonances clamped 0-1 and turned into
+//     SVF q damping (q = 2 - 1.9*res). All recomputed per sample so
+//     drift/ramp actually move. ---
+ramp0 = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
+ramp1 = speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1];
+ramp2 = speed_ramp_ramp_t_mem[2] * speed_ramp_by_mem[2];
+ramp3 = speed_ramp_ramp_t_mem[3] * speed_ramp_by_mem[3];
+
+eff_l_cut = max(20, min(slider1 + drift_offset_mem[0] + ramp0, srate * 0.45));
+eff_r_cut = max(20, min(slider2 + drift_offset_mem[1] + ramp1, srate * 0.45));
+eff_l_res = max(0,  min(slider3 + drift_offset_mem[2] + ramp2, 1));
+eff_r_res = max(0,  min(slider4 + drift_offset_mem[3] + ramp3, 1));
+
+fL = 2 * sin($pi * eff_l_cut / srate);
+fR = 2 * sin($pi * eff_r_cut / srate);
+qL = 2 - 1.9 * eff_l_res;
+qR = 2 - 1.9 * eff_r_res;
 
 // --- Left chain: n_stages lowpass stages in series ---
 in_L = mono_in;

@@ -206,6 +206,29 @@ user's.
 
 ---
 
+## Open decision — "units match target" vs normalized %
+
+The suite's nested-selector Drift/Speed-Ramp lets one amount slider serve many
+targets. When those targets have **different units** (resonance_bank: Hz + dB +
+pan; melody_phase: 28 incl. gain dB, durations, %), the shipped convention is a
+single slider labelled **"(units match target)"** — the number is read in the
+selected target's native unit, so *the same value means a different thing per
+selector*. On paper that's the hidden-context trap this doc warns about. In
+practice it holds up because **drift is tuned by ear** (nudge the amount until the
+wander feels right; the nominal unit barely matters) — and a blind user can't read
+an absolute "= 400 Hz" readout anyway.
+
+The alternative: make the amount **normalized (0-100%)** and let each plugin scale
+it to the target's own range internally (`cutoff → amount% × 1000 Hz`, `resonance
+→ amount% × 0.5`, …). Pro: one consistent meaning everywhere, and the machine does
+the unit math (the core principle). Con: the amount becomes **relative, not
+absolute** — you lose "Drift up 200 Hz" (a number that means what it says).
+
+**Decision: deferred, suite-wide.** Not worth forking one plugin over — whatever we
+pick, apply it to every nested-selector at once. For now new plugins **follow the
+"units match target" convention** for consistency (womb_voice does). Revisit as
+part of the sweep. (Raised 2026-07-09 while adding resonance targets to womb_voice.)
+
 ## Audit checklist (per plugin)
 
 For every slider, flag it if it forces any of:
