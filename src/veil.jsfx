@@ -1,10 +1,10 @@
-desc: Womb Voice
+desc: Veil
 // Designed by Rozaya, developed with Claude (Anthropic)
 //
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 //
-//tags: womb voice muffle muffled underwater lowpass prenatal fetal in-utero stereo
+//tags: veil womb voice muffle muffled underwater lowpass prenatal fetal in-utero stereo
 //
 // Muffles a MONO voice the way the womb does — a steep lowpass around
 // ~500 Hz, "like speech from behind a heavy curtain." (Real prenatal
