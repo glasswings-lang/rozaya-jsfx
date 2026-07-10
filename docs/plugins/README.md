@@ -37,6 +37,7 @@ nothing else to open.
 | Resonance Bank | `resonance_bank.jsfx` | [resonance-bank.md](resonance-bank.md) |
 | Stereo Phaser | `stereo-phaser.jsfx` | [stereo-phaser.md](stereo-phaser.md) |
 | Bubbler | `bubbler.jsfx` | [bubbler.md](bubbler.md) |
+| Veil | `veil.jsfx` | [veil.md](veil.md) |
 
 ### Samplers
 
