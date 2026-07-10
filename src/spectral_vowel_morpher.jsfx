@@ -18,14 +18,14 @@ desc: Spectral Vowel Morpher - voice<->wash capture instrument
 //   Texture       = 0 voice (harmonic) .. 100 wash (phase-randomized)
 //   Wash grain   = short = rough/grainy, long = glassy/smooth (wash character)
 //   Spread        = spectral blur (Hz);  Audition = monitor focused slot / morph
-//   Auto-morph    = Off / Sweep (back+forth) / Glide once (slot 1->last) / Shuffle (random-order wander)
+//   Auto-morph    = Off / Sweep (back+forth) / Glide once (first->last slot) / Shuffle (random-order wander)
 //   Drift         = suite-wide automation replacement: pick a parameter, and it
 //                   wanders on its own (up/down amounts + a wall-clock period),
 //                   so a mouse-free / screen-reader user gets evolving motion
 //                   without drawing REAPER automation. All targets drift at once.
 // =====================================================================
 
-slider1:1<1,8,1>Capture slot
+slider1:0<0,7,1>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture spectrum
 slider3:0<0,100,1>Capture point (earliest .. at press)
 slider4:0<-60,12,0.1>Input level (dry, dB)
@@ -394,7 +394,7 @@ function shuffle_bag() local(i, j, t) (
 @slider
 // Every slider read into a named global here; nothing downstream references a
 // sliderN directly, so the layout can be reordered without desyncing the engine.
-cap_slot      = max(0, min(NSLOTS-1, slider1 - 1));
+cap_slot      = max(0, min(NSLOTS-1, slider1));
 cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0; );  // first @slider after load: sync cap_last so a saved-ON Capture-now never fires a silent capture on reload
 cap_point01   = slider3 * 0.01;
 dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
