@@ -1,0 +1,95 @@
+desc: Womb Voice
+// Designed by Rozaya, developed with Claude (Anthropic)
+//
+// This work is dedicated to the public domain under CC0 1.0 Universal.
+// https://creativecommons.org/publicdomain/zero/1.0/
+//
+//tags: womb voice muffle muffled underwater lowpass prenatal fetal in-utero stereo
+//
+// Muffles a MONO voice the way the womb does — a steep lowpass around
+// ~500 Hz, "like speech from behind a heavy curtain." (Real prenatal
+// hearing: tissue + fluid attenuate everything above ~600 Hz; researchers
+// mimic it with a ~400 Hz lowpass, and newborns actually PREFER that
+// filtered version of the mother's voice.)
+//
+// === Stereo from a mono source ===
+//
+// A lowpass can't make something stereo — a mono voice stays a point in
+// the centre. Width has to be MANUFACTURED by making the two channels
+// different. Here that's done the honest, controllable way: the Left and
+// Right chains are fully independent, each with its own cutoff and
+// resonance. The WIDTH is the DIFFERENCE between the two cutoffs — pull
+// them apart for more width, together for mono. Because the channels
+// differ only in their spectral rolloff (no phase/delay offset), a mono
+// sum just averages the two rolloffs: no comb-notch cancellation, safe on
+// a single speaker / HomePod / phone.
+//
+// Independent channels also mean each cutoff and each resonance can later
+// become its own Drift / Speed Ramp target — so the width itself can
+// wander and ramp, not just sit static.
+//
+// === Slope ===
+//
+// Each SVF lowpass stage is -12 dB/oct; the Slope selector cascades 1-4
+// of them for -12 / -24 / -36 / -48 dB/oct character. Steeper = more muffled,
+// closer to the womb's real ~30 dB rolloff above 1 kHz. Shared across
+// both channels (it's a discrete character choice, not a drift target).
+//
+// Pair with: Womb (heartbeat/breath bed underneath), Bubbler / Dapple
+// (fluid texture).
+
+slider1:480<100,2000,1>Left cutoff (Hz)
+slider2:520<100,2000,1>Right cutoff (Hz)
+slider3:0.15<0,1,0.01>Left resonance
+slider4:0.15<0,1,0.01>Right resonance
+slider5:0<0,3,1>{-12,-24,-36,-48}Slope (dB/oct)
+slider6:0<-24,12,0.5>Output (dB)
+
+@init
+// Chamberlin SVF state: up to 4 cascaded stages per channel,
+// 2 vars (low, band) each. L uses slots 0-7, R uses slots 8-15.
+sv_L = 0;
+sv_R = 8;
+memset(0, 0, 16);
+
+@slider
+// Chamberlin SVF coefficients (same idiom as resonance_bank).
+// f = 2*sin(pi*fc/srate) sets the cutoff; q = 1/Q sets resonance
+// (q high = broad/gentle, q low = peaky). res 0..1 -> q 2..0.1.
+fL = 2 * sin($pi * slider1 / srate);
+fR = 2 * sin($pi * slider2 / srate);
+qL = 2 - 1.9 * slider3;
+qR = 2 - 1.9 * slider4;
+n_stages = slider5 + 1;   // 1..4 cascaded stages
+out_gain = 10 ^ (slider6 / 20);
+
+@sample
+// mono-sum the source (handles dual-mono or single-sided mono cleanly)
+mono_in = (spl0 + spl1) * 0.5;
+
+// --- Left chain: n_stages lowpass stages in series ---
+in_L = mono_in;
+s = 0;
+loop(n_stages,
+  idx = s * 2;
+  sv_L[idx]     += fL * sv_L[idx + 1];
+  hi             = in_L - sv_L[idx] - qL * sv_L[idx + 1];
+  sv_L[idx + 1] += fL * hi;
+  in_L           = sv_L[idx];      // lowpass out feeds next stage
+  s += 1;
+);
+
+// --- Right chain: independent cutoff + resonance, shared slope ---
+in_R = mono_in;
+s = 0;
+loop(n_stages,
+  idx = s * 2;
+  sv_R[idx]     += fR * sv_R[idx + 1];
+  hi             = in_R - sv_R[idx] - qR * sv_R[idx + 1];
+  sv_R[idx + 1] += fR * hi;
+  in_R           = sv_R[idx];
+  s += 1;
+);
+
+spl0 = in_L * out_gain;
+spl1 = in_R * out_gain;
