@@ -386,3 +386,39 @@ So a dysregulated→resting descent can *darken* natively, not just slow down �
 - **Track-duplicate bug in the nested-selector pattern — FOUND + FIXED (2026-07-02, ear/duplicate-tested ✓ on Shepard Tone).** Rozaya found that duplicating a track ZEROES whichever target the Speed Ramp had selected on the copy (non-selected targets survive). Root cause + fix are now a CLAUDE.md gotcha ("The nested-selector pattern … silently ZEROES the selected target on track duplicate"). Short version: slider values and `@serialize` memory restore via two independent paths in unguaranteed order, and on duplicate `@init` may not re-run; `@slider`'s load-branch clobbers the selected slider (→0) while the bank is momentarily empty, and `slider_automate` makes it stick. Fixes tried and rejected: `@init` flag (never runs on duplicate), adopt-on-first-`@slider` (consumed by an early pre-restore `@slider`). **The working fix:** in `@serialize`, on read (`file_avail(0) >= 0`), after restoring the banks, force the visible config sliders back to `bank[selected]` for each nested selector and call `sliderchange(-1)`. `@serialize` is the only section guaranteed to run on both load and duplicate, so it's authoritative. **Applied to:** shepard-tone (reference, tested), shepard-scale, rhythm-track, Full_Feature_Tremolo, full-feature-sweeping-filter (both their Speed Ramp *and* Drift selectors, in one `file_avail` block). **STILL TO DO — pre-existing latent bug in every OTHER nested-selector plugin's Drift (shipped since v2.9) + Polyrhythm/Womb v3/Heartbeat/Breath/Sweep-Dwell multi-target Speed Ramp + Resonance Bank's per-band nested drift:** breath_gen, heartbeat, sweep-dwell-filter, womb_sound_generator_v3, melody_phase (drift only — its SR is single-target), polyrhythm_phase, resonance_bank. Same one-block fix per plugin; resonance_bank's per-band nesting needs care (the visible config depends on BOTH the band selector and the inner drift-target selector).
 
 **Cadence:** one commit per plugin (manual section bundled), ear-tested by Rozaya before/at commit — the same rhythm as the drift and Speed Ramp sweeps. Not tagged/released until the whole sweep is ear-validated.
+
+### Plugins the sweep audit MISSED because they didn't exist yet (flagged 2026-07-10 by Rozaya)
+
+The 2026-07-02 audit table above lists 12 plugins. It was written before the v2.16 batch (stereo-phaser, dapple, bubbler) and never revisited the v2.11 sample tools. So **five plugins have NO Drift and NO Speed Ramp at all** — they were never in the sweep's scope:
+
+| Plugin | Type | Should have Drift/Ramp? | Natural targets |
+|---|---|---|---|
+| **stereo-phaser** | effect (v2.16) | **Yes — prime candidate** | LFO Rate, Stereo spread, Feedback, Depth, min/max freq |
+| **dapple** | generator (v2.16) | **Yes** | Bubble rate, Pitch, Pitch spread, Resonance, Rise %, Tone-vs-Noise, Output |
+| **bubbler** | granular effect (v2.16) | **Yes** | event/bubble rate, Transpose, transpose spread, resonance/grain params, Output |
+| **sustain_looper** | sample looper (v2.11) | Plausible, lower priority | Pitch/detune, Ensemble spread, Level, Crossfade |
+| **harmonic_sculptor** | render-source design tool (v2.11) | **Judgment call** — it's a freeze-a-timbre-then-render tool, not a live ambient player; drift may not fit its workflow (though it's used in live-jam per the 2026-07-01 note). Decide with Rozaya. |
+
+**stereo-phaser, dapple, and bubbler are the clear gap** — they're real-time ambient plugins exactly like the ones already covered, and the automation-replacement rationale ("Rozaya can't drive OSARA automation") applies identically. Each needs the standard nested-selector Drift + per-target-timeline Speed Ramp package (selector-first layout, `@serialize` version-guard, track-duplicate fix, manual). Same mechanical work as Job A. Reuse the reference implementations (shepard-tone for ratio-path, shepard-scale for additive). Note these are still on the v2.16 line, so a fresh `@serialize` version guard is safe (no legacy blob to protect for these params — they never had them).
+
+**Do this as its own small sweep** (3 clear plugins + 2 to decide on), one commit + ear-test each, folded into whatever the next release tag is.
+
+## Loop-slot player — "sustain looper × morpher slots" (feasibility, captured 2026-07-10)
+
+**Rozaya's question:** a plugin that plays LOOPS the way the morpher handles capture slots — slot-style randomness, multiple loops at once — borrowing from both Sustain Looper (WAV loading, crossfade-loop, ensemble) and Spectral Vowel Morpher (multi-slot store, shuffle-bag, auto-morph/drift between slots).
+
+**Feasibility: high.** Every building block already ships in the suite; this is a *recombination*, not new DSP.
+
+- **Multi-loop storage** — the morpher's per-slot memory pattern (`slotraw[NSLOTS*LEN]`, running-allocator memory map) but filled from WAVs via Sustain Looper's file-selector idiom (`sliderN:/glasswings_samples/…`, `file_open`/`file_riff`/`file_mem`, reload only when `sliderN|0` changes). N file-selector slots, each pre-loaded at init.
+- **Slot randomness** — lift the morpher's `shuffle_bag` + auto-morph modes **verbatim in spirit**: Off / Sweep / Glide once / Shuffle (random-order, even coverage, no immediate repeat). That's "handle loops the way slots are handled."
+- **Seamless switching** — pre-load ALL slots at init, then randomize among *already-loaded* buffers so switching is a click-free equal-power crossfade (morpher's direct A→B crossfade, or Sustain Looper's crossfade-loop machinery). Only changing which *file* occupies a slot has a load hitch — so keep the slot set fixed during play, randomize selection/pitch/timing freely.
+- **Extra randomness dimensions** (the "randomness, basically") — random pitch/detune per pick (Dapple's Pitch spread), random start offset into the loop, random dwell before the next switch. All cheap per-event RNG (Park-Miller, per the LCG gotcha).
+- **Ensemble + Drift/Ramp** fall in for free — Sustain Looper's true-detune voices per slot; the suite Drift/Ramp system on switch-rate / pitch / level / crossfade-time.
+
+**Two shapes to pick between:**
+1. **Multi-slot loop player** (recommended) — N fixed file-selector slots, shuffle/morph/drift/crossfade between them. Cleanest; a direct "Sustain Looper that holds several loops and wanders between them."
+2. **Folder-shuffle player** — point at a folder, randomly pull files each cycle. More generative but needs double-buffered background loading to switch files without a hitch (JSFX loads are load-time, not real-time) — meaningfully harder; option 1 gets ~90% of the feel with none of the loading risk.
+
+**Constraints:** memory budget (~80 s stereo default, 32 M = ~5.5 min via `options:maxmem`) means *short* loops — fine for the intended use. WAV/OGG only (FLAC/MP3 unreliable — see CLAUDE.md sample-loading gotcha). Loop STEADY material or the loop seam telegraphs (Sustain Looper's lesson).
+
+**Verdict:** a genuinely new, coherent plugin that's mostly assembly of proven parts. Good candidate for a focused build session. Open question for Rozaya: option 1 vs 2, and how many slots (morpher settled on 8).
