@@ -28,14 +28,14 @@ PaulStretch-style phase randomization: it keeps the magnitude spectrum and disca
 
 ### Capture
 
-Capture grabs the most recent ~0.68 seconds of input (a fixed sample count, so the *duration* shrinks at higher sample rates) and stores that whole window. The analysis looks at one slice inside it, positioned by **Capture point**. Both engines re-derive from the stored raw audio, so you can re-analyze (sweep Capture point, change the wash grain) without re-capturing, and the captures survive a project reload.
+Capture grabs the most recent ~0.68 seconds of input (a fixed sample count, so the *duration* shrinks at higher sample rates) and stores that whole window. The analysis looks at one slice inside it, positioned by **Capture point** — and each slot remembers its own Capture point, so you tune every capture to its own moment independently. Both engines re-derive from the stored raw audio, so you can re-analyze (sweep Capture point, change the wash grain) without re-capturing, and the captures survive a project reload.
 
 ---
 
 ## Parameters
 
 **Capture slot** `1 to 8, default 1`
-Which of the eight slots the next Capture writes to, and which slot Audition monitors in Focused mode.
+Which of the eight slots the next Capture writes to, which slot Audition monitors in Focused mode, and — since each slot has its own **Capture point** — which slot's saved point the Capture point slider shows and edits. Switching slots swaps the Capture point display to that slot's stored value.
 
 **Capture spectrum** `Off / Capture now`
 Grab the current moment into the selected slot. It captures *whatever audio is reaching the track at that instant* — so if you fire it while nothing is playing (transport stopped, or no source feeding the track), you'll bank an **empty slot**, and the morph will fade to silence whenever it reaches that slot.
@@ -134,7 +134,7 @@ Arms every configured target at once. While On, each rides its own duration from
 
 ## Usage Notes
 
-- **The capture workflow.** Put audio on the track, Input level up and Voice level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment.
+- **The capture workflow.** Put audio on the track, Input level up and Voice level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment — and because each slot keeps its own point, you can go slot by slot and tune every capture to its own vowel without disturbing the ones you already set.
 - **The voice end needs pitched material.** Texture 0 only sings on clearly pitched sources (a sustained vowel, organ, bowed note). On unpitched material it produces a tone — use the wash end (or the middle) there instead.
 - **Vowel + breath is the middle.** The pure voice end has no breath; the pure wash end has breath but de-voices. A blend around Texture 30–50 gives the vowel plus air.
 - **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels, Stereo width, Low cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Six of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, Voice level — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
