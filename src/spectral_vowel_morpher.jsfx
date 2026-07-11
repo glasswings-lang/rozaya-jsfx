@@ -14,7 +14,10 @@ desc: Spectral Vowel Morpher - voice<->wash capture instrument
 // fraction of a second between hearing and pressing.) Pull Input down, Voice
 // up, set Texture, and Morph between slots.
 //
-//   Capture point = where in the grab to analyze (0 = earliest .. 100 = at press)
+//   Capture point = where in the grab to analyze (0 = earliest .. 100 = at press).
+//                   PER SLOT: each slot remembers its own point, so scrubbing one
+//                   slot never retunes the others. Switching Capture slot shows
+//                   that slot's saved point.
 //   Texture       = 0 voice (harmonic) .. 100 wash (phase-randomized)
 //   Wash grain   = short = rough/grainy, long = glassy/smooth (wash character)
 //   Spread        = spectral blur (Hz);  Audition = monitor focused slot / morph
@@ -27,7 +30,7 @@ desc: Spectral Vowel Morpher - voice<->wash capture instrument
 
 slider1:0<0,7,1>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture spectrum
-slider3:0<0,100,1>Capture point (earliest .. at press)
+slider3:0<0,100,1>Capture point (per slot: earliest .. at press)
 slider4:0<-60,12,0.1>Input level (dry, dB)
 slider5:0<-60,12,0.1>Voice level (dB)
 slider6:50<0,100,1>Texture (0 voice, 100 wash)
@@ -120,6 +123,7 @@ slot_norm = freemem; freemem += NSLOTS;        // wash peak normalization
 slot_harm = freemem; freemem += NSLOTS*NHARM;  // voice harmonic magnitudes
 slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
 slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
+slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 // --- harmonic (voice) engine scratch ---
 hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
 hphB      = freemem; freemem += NHARM;         // resynth phase accumulators (voice B, left)
@@ -155,7 +159,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; i += 1; );
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -177,6 +181,7 @@ slots_inited == 0 ? (
   );
   last_target_select = 0;
   last_ramp_target   = 0;
+  last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
 );
 // Drift RUNTIME state (phase/prev/curr/offset) is reset here on load AND on the
 // transport play-edge in @block, so drift restarts at phase 0 on every play
@@ -225,7 +230,7 @@ function grab_raw(slot) local(i, idx, base) (
 // earliest (the sustained vowel, since you react a beat after hearing it) .. 1 =
 // the press-moment.
 function compute_spectrum(slot) local(i, re, im, mx, rbase, mbase) (
-  rbase = slot*MAXFFT + floor(cap_point01 * (MAXFFT - WA)); mbase = slot*NBINS;
+  rbase = slot*MAXFFT + floor(slot_cappoint[slot] * (MAXFFT - WA)); mbase = slot*NBINS;   // per-slot capture point
   i = 0; loop(WA, fftwork[2*i] = slotraw[rbase+i]*window[i]; fftwork[2*i+1] = 0; i += 1; );
   i = WA; loop(FFTSIZE - WA, fftwork[2*i] = 0; fftwork[2*i+1] = 0; i += 1; );
   fft(fftwork, FFTSIZE); fft_permute(fftwork, FFTSIZE);
@@ -243,7 +248,7 @@ function compute_spectrum(slot) local(i, re, im, mx, rbase, mbase) (
 // (direct DFT). VOICE end of the Texture knob -- harmonics at the exact detected
 // f0 avoid the bin-drift that wrecks phase-coherent resynth from a frozen frame.
 function analyze_harm(slot) local(base, ci, almin, almax, tmax, tau, ii, d, dd, run, thr, res, cand, lockon, best, pa, pb, pc, pden, psh, f0d, hn, hf, kk, re, im, ang, hannv, mag, mx, boff) (
-  base = slot*MAXFFT + floor(cap_point01 * (MAXFFT - WHARM));   // same point as the wash
+  base = slot*MAXFFT + floor(slot_cappoint[slot] * (MAXFFT - WHARM));   // same per-slot point as the wash
   ci = 0; loop(WHARM, anbuf[ci] = slotraw[base+ci]; ci += 1; );
   almin = floor(srate/600); almax = ceil(srate/70); tmax = min(2*almax, WHARM-1);
   tau = 1;
@@ -278,6 +283,7 @@ function analyze_harm(slot) local(base, ci, almin, almax, tmax, tau, ii, d, dd, 
 
 function capture(slot) (
   grab_raw(slot);
+  slot_cappoint[slot] = cap_point01;   // stamp this slot with the current capture point; scrubbing later re-tunes only this slot
   compute_spectrum(slot);   // wash (spectral) analysis
   analyze_harm(slot);       // voice (harmonic) analysis -- same captured frame
   have = 1;
@@ -396,6 +402,21 @@ function shuffle_bag() local(i, j, t) (
 // sliderN directly, so the layout can be reordered without desyncing the engine.
 cap_slot      = max(0, min(NSLOTS-1, slider1));
 cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0; );  // first @slider after load: sync cap_last so a saved-ON Capture-now never fires a silent capture on reload
+// --- Per-slot Capture point (nested-selector, like Drift/Ramp targets). The
+//     Capture-point slider is now PER SLOT: switching Capture slot saves the
+//     old slot's point and loads the new slot's stored point into slider3, so
+//     each slot keeps its own by-ear tuning. Editing slider3 writes the current
+//     slot. Suppress the @block re-derive on a pure slot-switch (each slot is
+//     already analyzed at its own point) by syncing last_cappoint. ---
+last_cap_slot != cap_slot ? (
+  slot_cappoint[last_cap_slot] = slider3 * 0.01;   // save the slot we're leaving
+  slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering
+  slider_automate(slider3);
+  last_cap_slot = cap_slot;
+  last_cappoint = slot_cappoint[cap_slot];          // no re-derive on switch: slot already analyzed at this point
+) : (
+  slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
+);
 cap_point01   = slider3 * 0.01;
 dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
 voice_db_base = slider5;                                    // base for Voice level drift
@@ -563,8 +584,18 @@ cap_dirty ? (
   // glitches smeared into the audio you're listening to. Marks the analysis fresh
   // so the play-edge above won't redo it.
   settle >= 4 ? (
-    si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
-    analysis_valid = 1; cap_dirty = 0;
+    analysis_valid == 0 ? (
+      // Cold project load scrubbed before the first play: nothing is derived
+      // yet, so derive ALL captured slots -- each at its OWN stored point.
+      si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
+      analysis_valid = 1;
+    ) : (
+      // Warm: only the focused slot's capture point moved (per-slot now), so
+      // re-derive JUST that slot -- scrubbing one slot no longer retunes the
+      // others (the bug this fix addresses).
+      compute_spectrum(cap_slot); analyze_harm(cap_slot);
+    );
+    cap_dirty = 0;
   );
 );
 
@@ -817,6 +848,22 @@ ser_magic == 7700001 ? (
   file_mem(0, ramp_delay_mem, N_TARGETS);
   file_var(0, last_ramp_target);
 
+  // --- Per-slot Capture point, appended after Ramp (EOF-safe append; no magic
+  //     bump, same as Drift/Ramp were added). MIGRATION for projects saved
+  //     before this field: they have no bytes here, so the read runs past EOF
+  //     and REAPER leaves slot_cappoint unchanged. We detect that on READ with a
+  //     sentinel dropped into slot 0 just before the read -- if it survives, the
+  //     field was absent, so we seed every slot from the OLD global capture point
+  //     (slider3). Pre-fix, all slots were analyzed at that one point, so this
+  //     reproduces the old sound exactly. On WRITE (file_avail < 0) the sentinel
+  //     is never set, so the real values are saved. ---
+  file_avail(0) >= 0 ? ( slot_cappoint[0] = -999; );
+  file_mem(0, slot_cappoint, NSLOTS);
+  (file_avail(0) >= 0 && slot_cappoint[0] == -999) ? (
+    seed_cp = slider3 * 0.01;
+    scp = 0; loop(NSLOTS, slot_cappoint[scp] = seed_cp; scp += 1; );
+  );
+
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
   // duplicate) file_avail(0) >= 0; on WRITE (save / undo) it's < 0. @serialize
   // is the one section guaranteed to run on both load AND duplicate, so after
@@ -832,6 +879,12 @@ ser_magic == 7700001 ? (
     slider24 = ramp_by_mem[last_ramp_target];
     slider25 = ramp_dur_mem[last_ramp_target];
     slider26 = ramp_delay_mem[last_ramp_target];
+    // Per-slot Capture point: force slider3 to the restored slot's stored point,
+    // and sync last_cap_slot so the first @slider doesn't mistake load for a
+    // slot-switch (which would save the visible point into the wrong slot).
+    cps = max(0, min(NSLOTS-1, slider1));
+    last_cap_slot = cps;
+    slider3 = slot_cappoint[cps] * 100;
     sliderchange(-1);
   );
 );
