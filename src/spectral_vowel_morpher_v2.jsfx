@@ -347,12 +347,28 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   i = 0;
   loop(NBINS, mtmp[i] = (1-mfr)*(slotmag[bi+i]/ni) + mfr*(slotmag[bj+i]/nj); i += 1; );
   sp = floor(eff_spread_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
+  // Spread is a box blur across frequency bins. It used to re-add every
+  // neighbour from scratch for each bin, so its cost grew with the width -- at
+  // Spread 100 Hz that is more work than both iFFTs of the grain combined, and
+  // it was the single most expensive thing in a wash-heavy project.
+  //
+  // Same result, computed as a RUNNING TOTAL: entering bin i, add the neighbour
+  // that came into range and subtract the one that left. Cost no longer depends
+  // on the width at all -- Spread 150 costs what Spread 1 costs. The window is
+  // clipped at both ends and divided by its real width, exactly as the counted
+  // version did, so edge bins are averaged over the same neighbours as before.
   i = 0;
+  sp > 0 ? (
+    // seed the window for bin 0: [0 .. sp]
+    sumv = 0; cnt = 0; j = 0;
+    loop(min(sp, NBINS - 1) + 1, sumv += mtmp[j]; cnt += 1; j += 1; );
+  );
   loop(NBINS,
     sp <= 0 ? ( curmag[i] = mtmp[i]; ) : (
-      sumv = 0; cnt = 0; j = -sp;
-      loop(2*sp + 1, bj2 = i + j; (bj2 >= 0 && bj2 < NBINS) ? ( sumv += mtmp[bj2]; cnt += 1; ); j += 1; );
       curmag[i] = sumv / cnt;
+      // slide to bin i+1: gain (i+1+sp) if it exists, drop (i-sp) if it existed
+      bj2 = i + 1 + sp; bj2 < NBINS ? ( sumv += mtmp[bj2]; cnt += 1; );
+      bj2 = i - sp;     bj2 >= 0    ? ( sumv -= mtmp[bj2]; cnt -= 1; );
     );
     i += 1;
   );
@@ -537,6 +553,20 @@ lowcut_hz     = slider12;
 denoise_amt   = slider13;
 audition_mode = slider14;                                   // 0 focused slot, 1 morph
 morph01       = slider15 * 0.01;
+// A v1 project just loaded: its single global settings become every slot's
+// settings, which is effectively what they already were. Runs once.
+seed_slots_from_sliders == 1 ? (
+  seed_slots_from_sliders = 0;
+  ss = 0;
+  loop(NSLOTS,
+    slot_voicedb[ss] = slider6;  slot_texture[ss] = slider7 * 0.01;
+    slot_spread[ss]  = slider9;  slot_pitch[ss]   = slider10;
+    slot_width[ss]   = slider11; slot_lowcut[ss]  = slider12;
+    slot_denoise[ss] = slider13;
+    ss += 1;
+  );
+);
+
 automorph_mode = slider16;
 automorph_mode != last_automode ? (
   last_automode = automorph_mode; morph_phase = 0;
@@ -955,9 +985,19 @@ spl1 = dryR + voutR;
 // of truth) + counts; wash spectrum and harmonic analysis re-derive from slotraw
 // on the first @block after load. Magic leads the stream so an old/absent blob
 // degrades to "no captures" instead of scrambling state (CLAUDE.md gotcha).
-ser_magic = 7700001;
+// v2 widened the Drift/Ramp banks (6 targets -> 9) and added per-slot banks, so
+// its stream is NOT the v1 layout. The magic is bumped to say so, and the v1
+// value is still accepted and READ IN ITS OWN SHAPE -- otherwise a v1 project
+// opened in v2 would read 9 values where 6 were written, dragging every array
+// after it out of alignment and scrambling everything past the captures.
+//
+// This is what lets an existing project move to v2 with its recordings intact:
+// copy the project, point it at v2, and the captures survive.
+ser_magic = 7700002;
 file_var(0, ser_magic);
-ser_magic == 7700001 ? (
+(ser_magic == 7700002 || ser_magic == 7700001) ? (
+  ser_v1 = ser_magic == 7700001;
+  n_ser_targets = ser_v1 ? 6 : N_TARGETS;
   file_var(0, have);
   file_var(0, n_used);
   // Save/restore only the slots actually captured (n_used * MAXFFT), not the
@@ -973,17 +1013,17 @@ ser_magic == 7700001 ? (
   //     reads run past EOF, and REAPER leaves the destination unchanged on a
   //     short read -- so old projects keep their captures and get default drift.
   //     Inserting mid-stream would misalign; appending is EOF-safe. ---
-  file_mem(0, target_drift_up,    N_TARGETS);
-  file_mem(0, target_drift_down,  N_TARGETS);
-  file_mem(0, target_drift_per,   N_TARGETS);
-  file_mem(0, target_drift_shape, N_TARGETS);
+  file_mem(0, target_drift_up,    n_ser_targets);
+  file_mem(0, target_drift_down,  n_ser_targets);
+  file_mem(0, target_drift_per,   n_ser_targets);
+  file_mem(0, target_drift_shape, n_ser_targets);
   file_var(0, last_target_select);
 
   // --- Ramp config, appended after Drift. EOF-safe: a pre-Ramp project (drift
   //     only, or captures only) reads past EOF here and keeps default ramp. ---
-  file_mem(0, ramp_by_mem,    N_TARGETS);
-  file_mem(0, ramp_dur_mem,   N_TARGETS);
-  file_mem(0, ramp_delay_mem, N_TARGETS);
+  file_mem(0, ramp_by_mem,    n_ser_targets);
+  file_mem(0, ramp_dur_mem,   n_ser_targets);
+  file_mem(0, ramp_delay_mem, n_ser_targets);
   file_var(0, last_ramp_target);
 
   // --- Per-slot Capture point, appended after Ramp (EOF-safe append; no magic
@@ -1002,11 +1042,27 @@ ser_magic == 7700001 ? (
     scp = 0; loop(NSLOTS, slot_cappoint[scp] = seed_cp; scp += 1; );
   );
 
+  // A v1 blob ends after Capture point. Seed the banks v2 added, and ask
+  // @slider to fill the per-slot parameter banks from the visible sliders on its
+  // next run -- under v1 those WERE a single global applied to every slot, so
+  // copying them across all slots reproduces exactly how the project sounded.
+  // Deferred to @slider because load order between the two sections is not
+  // guaranteed and the slider values may not have arrived yet.
+  (file_avail(0) >= 0 && ser_v1) ? (
+    sv1 = 0; loop(NSLOTS, slot_linger[sv1] = 4; sv1 += 1; );
+    sv1 = 6; loop(N_TARGETS - 6,
+      target_drift_up[sv1] = 0; target_drift_down[sv1] = 0;
+      target_drift_per[sv1] = 30; target_drift_shape[sv1] = 0;
+      ramp_by_mem[sv1] = 0; ramp_dur_mem[sv1] = 0; ramp_delay_mem[sv1] = 0;
+      sv1 += 1; );
+    seed_slots_from_sliders = 1;
+  );
+
   // --- Per-slot dwell, appended after Capture point. Same EOF-safe shape: a
   //     project saved before dwell existed has no bytes here, so the read runs
   //     past EOF and the sentinel survives -> seed every slot to even (1), which
   //     is exactly how those projects already sound. ---
-  file_avail(0) >= 0 ? ( slot_linger[0] = -999; );
+  ser_v1 ? 0 : ( file_avail(0) >= 0 ? ( slot_linger[0] = -999; ) );
   file_mem(0, slot_linger, NSLOTS);
   (file_avail(0) >= 0 && slot_linger[0] == -999) ? (
     sdw = 0; loop(NSLOTS, slot_linger[sdw] = 4; sdw += 1; );
