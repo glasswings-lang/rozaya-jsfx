@@ -23,6 +23,7 @@ nothing else to open.
 | Breath Generator | `breath_gen.jsfx` | [breath-generator.md](breath-generator.md) |
 | Womb Sound Generator | `womb_sound_generator_v3.jsfx` | [womb.md](womb.md) |
 | Polyrhythm Phase | `polyrhythm_phase.jsfx` | [polyrhythm-phase.md](polyrhythm-phase.md) |
+| Polyrhythm Phase (Note Names) | `polyrhythm_notes.jsfx` | [polyrhythm-notes.md](polyrhythm-notes.md) |
 | Melody Phase | `melody_phase.jsfx` | [melody-phase.md](melody-phase.md) |
 | Harmonic Sculptor | `harmonic_sculptor.jsfx` | [harmonic-sculptor.md](harmonic-sculptor.md) |
 | Dapple | `dapple.jsfx` | [dapple.md](dapple.md) |
