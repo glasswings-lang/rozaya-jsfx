@@ -182,6 +182,33 @@ decides how it is split.
 Independent per slot: a slow silence-slot with a long hold can sit between two
 short sound-slots with fast crossfades, or whatever shape actually fits.
 
+**Slot mute (Off / On)** `default Off`
+When **On**, this slot is skipped by Sweep, Glide, and Shuffle. The morph
+crossfades from the previous unmuted slot directly to the next unmuted slot,
+with no fade to or from this one in between.
+
+*Per slot*, edited the same way as everything else in this group: select the
+slot via **Capture slot**, then toggle the mute.
+
+**Focused slot mode ignores mute.** If you point at a muted slot in Focused
+mode, you still hear it — Focused is "audition this specific slot no matter
+what." So mute affects the *morph sequence*, not what a slot IS.
+
+The canonical use is a captured silence slot between two audio slots. In the
+original Morpher, a silence slot in the middle of the sequence meant every
+crossfade had to traverse silence — which read as abrupt fade-outs and
+fade-ins rather than a morph, because you cannot gradually fade INTO nothing.
+Mute the silence slot and Sweep/Glide/Shuffle skip it entirely, giving you
+sound-to-sound crossfades. The silence capture stays in the plugin's memory
+and remains audible via Focused mode if you want to render it as a stem.
+
+Also useful when you've captured five slots but only want a morph across three
+of them today: mute the two you don't want in the sequence.
+
+Edge cases: if every slot is muted, the morph is silent. If exactly one is
+active, it plays solo (no morph, since there's nothing to morph between).
+Both fall out of the sequencer naturally.
+
 ### Drift (in-plugin automation)
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.

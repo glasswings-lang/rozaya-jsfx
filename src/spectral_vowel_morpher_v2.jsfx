@@ -96,6 +96,16 @@ slider26:0<0,60,0.1>Ramp duration (minutes)
 slider27:0<0,60,0.1>Ramp start delay (minutes)
 slider28:0<0,1,1{Off,On}>Ramp engage
 
+// --- Slot mute: PER SLOT, appended at slider29 (slider IDs are primary keys
+//     now, so this stays at the end). When On, the slot is skipped in Sweep /
+//     Glide / Shuffle -- the morph moves directly to the next unmuted slot,
+//     with no crossfade to nothing in between. Focused mode ignores mute (it
+//     always plays the slot you point at, that's what Focused is for). Set
+//     once per slot via the Capture slot selector; a captured silence slot
+//     between two audio slots is the canonical use, so the morph fades sound
+//     to sound rather than sound to silence to sound. ---
+slider29:0<0,1,1{Off,On}>Slot mute (per slot: skip in morph)
+
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
 // memory) survive transport stop/play -- the whole point of a capture-based
@@ -161,6 +171,8 @@ slot_lowcut   = freemem; freemem += NSLOTS;   // PER-SLOT lowcut_hz
 slot_denoise  = freemem; freemem += NSLOTS;   // PER-SLOT denoise_amt
 slot_linger   = freemem; freemem += NSLOTS;      // PER-SLOT step time in SECONDS (time to leave this slot)
 slot_xfade    = freemem; freemem += NSLOTS;      // PER-SLOT crossfade length in SECONDS; hold = linger - xfade
+slot_mute     = freemem; freemem += NSLOTS;      // PER-SLOT mute flag (0/1); muted slots are skipped in Sweep / Glide / Shuffle
+active_slots  = freemem; freemem += NSLOTS;      // indices of unmuted slots (0..n_used-1 minus muted ones); rebuilt every @block
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 // --- harmonic (voice) engine scratch ---
 hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
@@ -197,7 +209,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_xfade[i] = 4; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_xfade[i] = 4; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -480,15 +492,42 @@ function wtsin(ph) local(fidx, i0, fr) (
 // once per cycle (even coverage, random order) rather than a memoryless walk
 // that clusters in the middle. Avoids an immediate repeat across the reshuffle
 // seam (if the new first slot equals the one just visited, swap it back one).
+// Recompute the list of active (unmuted) slot indices. Called every @block
+// (cheap: max 8 iterations) and after any capture, so mute toggles land
+// immediately. n_active is the count; active_slots[0..n_active-1] are the
+// indices. When 0 slots are active, morph goes silent; when 1, it plays that
+// slot solo; when 2+, the sequencer walks the active list.
+function rebuild_active_slots() local(i) (
+  n_active = 0;
+  i = 0;
+  loop(n_used,
+    slot_mute[i] < 0.5 ? (
+      active_slots[n_active] = i;
+      n_active += 1;
+    );
+    i += 1;
+  );
+);
+
+// Position of `slot` in the active list, or -1 if not present. Used by Sweep
+// to find where cur_slot sits so it can walk to the next active neighbour.
+function active_pos(slot) local(i, pos) (
+  pos = -1;
+  i = 0;
+  loop(n_active, active_slots[i] == slot ? pos = i; i += 1; );
+  pos;
+);
+
 function shuffle_bag() local(i, j, t) (
-  i = 0; loop(n_used, driftbag[i] = i; i += 1; );
-  i = n_used - 1;
-  loop(n_used - 1,
+  // Shuffle only the ACTIVE (unmuted) slot indices, not raw 0..n_used.
+  i = 0; loop(n_active, driftbag[i] = active_slots[i]; i += 1; );
+  i = n_active - 1;
+  loop(n_active - 1,
     j = floor(rand(i + 1));
     t = driftbag[i]; driftbag[i] = driftbag[j]; driftbag[j] = t;
     i -= 1;
   );
-  (n_used > 1 && driftbag[0] == last_slot) ? ( t = driftbag[0]; driftbag[0] = driftbag[1]; driftbag[1] = t; );
+  (n_active > 1 && driftbag[0] == last_slot) ? ( t = driftbag[0]; driftbag[0] = driftbag[1]; driftbag[1] = t; );
 );
 
 // Seed the grain window and its FFT size here rather than relying on @block
@@ -530,8 +569,10 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
   slot_denoise[last_cap_slot] = slider14;
   slot_linger[last_cap_slot] = slider4;            // linger banks with the slot too
   slot_xfade[last_cap_slot]  = slider5;           // crossfade too
+  slot_mute[last_cap_slot]   = slider29 > 0.5 ? 1 : 0;   // and mute
   slider4 = slot_linger[cap_slot];
   slider5 = slot_xfade[cap_slot];
+  slider29 = slot_mute[cap_slot] > 0.5 ? 1 : 0;
   slider7 = slot_voicedb[cap_slot];
   slider8 = slot_texture[cap_slot] * 100;
   slider10 = slot_spread[cap_slot];
@@ -550,6 +591,7 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
   slot_linger[cap_slot] = slider4;                 // and a live linger edit
   slot_xfade[cap_slot]  = slider5;                // and a live crossfade edit
+  slot_mute[cap_slot]   = slider29 > 0.5 ? 1 : 0; // and a live mute edit
   // a live edit of any per-slot value stamps the slot it belongs to
   slot_voicedb[cap_slot] = slider7;
   slot_texture[cap_slot] = slider8 * 0.01;
@@ -736,6 +778,7 @@ seed_slots_from_sliders == 1 ? (
   loop(NSLOTS,
     slot_linger[ss]  = slider4;
     slot_xfade[ss]   = slider5;
+    slot_mute[ss]    = slider29 > 0.5 ? 1 : 0;
     slot_voicedb[ss] = slider7;  slot_texture[ss] = slider8 * 0.01;
     slot_spread[ss]  = slider10;  slot_pitch[ss]   = slider11;
     slot_width[ss]   = slider12; slot_lowcut[ss]  = slider13;
@@ -745,6 +788,7 @@ seed_slots_from_sliders == 1 ? (
 );
 
 gsamp != last_gsamp ? ( last_gsamp = gsamp; build_synwin(gsamp); );
+rebuild_active_slots();   // cheap (max NSLOTS iterations); picks up mute toggles and new captures
 
 // Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub re-derives
 // once, when it settles, in one lump. (Fresh load is handled at the play-edge
@@ -843,7 +887,11 @@ ri = 0; loop(N_TARGETS, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; 
 // steps different lengths; Shuffle already worked this way, so this unifies
 // them rather than adding a third behaviour.
 automorph_mode > 0.5 ? (
-  n_used < 2 ? ( cur_slot = 0; nxt_slot = 0; xfade = 0; ) : (
+  // Degenerate cases: no active slots at all -> silent pair; one active ->
+  // that one solo. The n_active < 2 branch was previously "n_used < 2", but
+  // with mute the effective count is n_active.
+  n_active < 1 ? ( cur_slot = 0; nxt_slot = 0; xfade = 0; ) :
+  n_active < 2 ? ( cur_slot = active_slots[0]; nxt_slot = cur_slot; xfade = 0; ) : (
     automorph_mode == 3 ? (
       // Shuffle: order comes from the bag. Primed lazily -- NOT on mode entry,
       // because on reload that can fire before the captures finish loading
@@ -855,14 +903,16 @@ automorph_mode > 0.5 ? (
         xfade = 0; drift_primed = 1;
       );
     ) : (
-      // Sweep and Glide: straight along the slot line.
+      // Sweep and Glide: straight along the ACTIVE slot list.
       auto_primed != 1 ? (
-        cur_slot = 0; nxt_slot = 1; sweep_dir = 1; xfade = 0; auto_primed = 1;
+        cur_slot = active_slots[0]; nxt_slot = active_slots[1];
+        sweep_dir = 1; xfade = 0; auto_primed = 1;
       );
     );
 
     // Glide once holds on the final slot; everything else keeps moving.
-    (automorph_mode == 2 && cur_slot >= n_used - 1) ? (
+    // Glide ends when we arrive at the last ACTIVE slot (was: n_used-1).
+    (automorph_mode == 2 && cur_slot == active_slots[n_active - 1]) ? (
       xfade = 0; nxt_slot = cur_slot;
     ) : (
       // Slot linger = HOLD + CROSSFADE. Sit on cur_slot with xfade pinned at 0
@@ -881,16 +931,20 @@ automorph_mode > 0.5 ? (
       leg_elapsed >= leg_len ? (
         cur_slot = nxt_slot; xfade = 0; leg_elapsed = 0;
         automorph_mode == 3 ? (
-          bag_pos >= n_used ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );   // through them all -> reshuffle
+          bag_pos >= n_active ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );   // through them all -> reshuffle
           nxt_slot = driftbag[bag_pos]; bag_pos += 1;
         ) : (
-          // Sweep bounces at either end. Glide reaches here exactly once, on
-          // arrival at the last slot, and the hold branch above catches it on
-          // the following sample -- with xfade at 0 the crossfade sits fully on
-          // cur_slot throughout, so the momentary nxt_slot is never heard.
-          (sweep_dir > 0 && cur_slot >= n_used - 1) ? sweep_dir = -1;
-          (sweep_dir < 0 && cur_slot <= 0) ? sweep_dir = 1;
-          nxt_slot = max(0, min(n_used - 1, cur_slot + sweep_dir));
+          // Sweep bounces at either end of the ACTIVE slot list. Glide
+          // reaches here exactly once, on arrival at the last active slot,
+          // and the hold branch above catches it on the following sample --
+          // with xfade at 0 the crossfade sits fully on cur_slot, so the
+          // momentary nxt_slot is never heard.
+          cur_pos = active_pos(cur_slot);
+          cur_pos < 0 ? cur_pos = 0;   // cur got muted mid-play: snap to start
+          (sweep_dir > 0 && cur_pos >= n_active - 1) ? sweep_dir = -1;
+          (sweep_dir < 0 && cur_pos <= 0) ? sweep_dir = 1;
+          nxt_pos = max(0, min(n_active - 1, cur_pos + sweep_dir));
+          nxt_slot = active_slots[nxt_pos];
         );
       );
     );
@@ -1105,7 +1159,7 @@ file_var(0, ser_magic);
   // Deferred to @slider because load order between the two sections is not
   // guaranteed and the slider values may not have arrived yet.
   (file_avail(0) >= 0 && ser_v1) ? (
-    sv1 = 0; loop(NSLOTS, slot_linger[sv1] = 4; slot_xfade[sv1] = 4; sv1 += 1; );
+    sv1 = 0; loop(NSLOTS, slot_linger[sv1] = 4; slot_xfade[sv1] = 4; slot_mute[sv1] = 0; sv1 += 1; );
     sv1 = 6; loop(N_TARGETS - 6,
       target_drift_up[sv1] = 0; target_drift_down[sv1] = 0;
       target_drift_per[sv1] = 30; target_drift_shape[sv1] = 0;
@@ -1132,6 +1186,15 @@ file_var(0, ser_magic);
   file_mem(0, slot_xfade, NSLOTS);
   (file_avail(0) >= 0 && slot_xfade[0] == -999) ? (
     sxf = 0; loop(NSLOTS, slot_xfade[sxf] = slot_linger[sxf]; sxf += 1; );
+  );
+
+  // Slot mute: appended after Slot crossfade. EOF-safe -- a project saved
+  // before mute existed leaves the sentinel untouched, and we default every
+  // slot to unmuted (0), which is the pre-feature behaviour.
+  file_avail(0) >= 0 ? ( slot_mute[0] = -999; );
+  file_mem(0, slot_mute, NSLOTS);
+  (file_avail(0) >= 0 && slot_mute[0] == -999) ? (
+    sm = 0; loop(NSLOTS, slot_mute[sm] = 0; sm += 1; );
   );
 
   // --- Per-slot parameter banks, appended. Same sentinel migration as the
@@ -1208,6 +1271,7 @@ file_var(0, ser_magic);
     ser_v1 ? 0 : (
       slider4 = slot_linger[cps];
     slider5 = slot_xfade[cps];
+    slider29 = slot_mute[cps] > 0.5 ? 1 : 0;
       slider7 = slot_voicedb[cps];
       slider8 = slot_texture[cps] * 100;
       slider10 = slot_spread[cps];

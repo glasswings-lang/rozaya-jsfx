@@ -42,6 +42,7 @@ JS1 = "glasswings/spectral_vowel_morpher.jsfx"
 JS2 = "glasswings/spectral_vowel_morpher_v2.jsfx"
 LINGER = "Slot linger"
 XFADE = "Slot crossfade"               # v2-only, added after v1; seed = linger
+MUTE = "Slot mute"                     # v2-only; seed = 0 (unmuted), preserves v1 sound
 DROPPED = "Auto-morph time (sec)"      # v1-only: becomes the per-slot linger
 V1_MAGIC = 7700001.0
 
@@ -154,6 +155,10 @@ def main():
                 # like v1 (pure crossfade, no hold). The user then lowers this
                 # per slot to introduce a hold period.
                 values.append(linger)
+            elif label.startswith(MUTE):
+                # Seed unmuted so a converted v1 project morphs across every
+                # captured slot exactly as it did before mute existed.
+                values.append(0)
             else:
                 sys.exit("no v1 source for v2 slider %d (%s)" % (k, label))
 
