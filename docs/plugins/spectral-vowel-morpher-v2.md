@@ -109,6 +109,37 @@ In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 t
 **Auto-morph time (sec)** `1 to 600, default 20`
 How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Shuffle it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow motion.
 
+**Auto-morph time means** `Whole pass / Each step, default Whole pass`
+How to read the Auto-morph time number.
+
+- **Whole pass** — the original meaning: that many seconds for the *entire*
+  journey across your slots. Capturing another slot therefore makes every step
+  *faster*, because the same total gets divided more ways. With exactly two
+  slots "whole pass" and "one step" are the same thing, which is why this only
+  surprises you once you capture a third.
+- **Each step** — the number is the time for *one* step. Adding a slot makes the
+  cycle longer instead of quicker. This is what you want for pacing work: a
+  breath does not speed up because you gave it more stages.
+
+Left on **Whole pass** by default, so existing projects are unchanged.
+
+**Slot dwell %** `10 to 500, default 100`
+Per slot: how long the step *leaving* this slot takes, relative to the others.
+100 is even — the previous behaviour. 200 makes that step twice as long as an
+even one; 50 makes it half.
+
+Like **Capture point**, this belongs to whichever **Capture slot** is selected —
+select a slot, set its dwell, select another, set that one. Each slot remembers
+its own, and they save with the project.
+
+This is what makes an uneven cycle possible. A real breath is not symmetrical:
+the out-breath is usually longer than the in-breath, and a hold is longer than
+either. With dwell you set those proportions directly instead of accepting an
+even walk. Combined with **Each step**, the Auto-morph time becomes the length
+of a single even step and each slot's dwell scales its own.
+
+Works in all three Auto-morph modes.
+
 ### Drift (in-plugin automation)
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.

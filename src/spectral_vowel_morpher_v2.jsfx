@@ -69,6 +69,22 @@ slider24:0<-300,300,0.1>Ramp by (units match target)
 slider25:0<0,60,0.1>Ramp duration (minutes)
 slider26:0<0,60,0.1>Ramp start delay (minutes)
 slider27:0<0,1,1{Off,On}>Ramp engage
+// --- Auto-morph shaping. Appended at the END (slider IDs are primary keys --
+//     never renumber existing ones). Both default to the previous behaviour,
+//     so an existing project is unchanged until one is touched. ---
+//
+// Auto-morph time means: the original reading is "how long the WHOLE pass
+// takes", so capturing another slot made every step FASTER -- the cycle length
+// stayed put and got divided more ways. That surprises everyone, and it is
+// wrong for pacing work (a breath does not get quicker because you gave it more
+// stages). "Each step" reads the same number as the time for ONE step, so
+// adding a slot lengthens the cycle instead of compressing it.
+slider28:0<0,1,1{Whole pass,Each step}>Auto-morph time means
+// Slot dwell: PER SLOT, edited for whichever Capture slot is selected -- the
+// same nested-selector shape as the per-slot Capture point above. It scales the
+// time of the step LEAVING this slot, so "how long does this one last before
+// moving on". 100 = even, the previous behaviour. Whole numbers by design.
+slider29:100<10,500,1>Slot dwell % (per slot: time on the step leaving it)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -123,6 +139,8 @@ slot_norm = freemem; freemem += NSLOTS;        // wash peak normalization
 slot_harm = freemem; freemem += NSLOTS*NHARM;  // voice harmonic magnitudes
 slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
 slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
+slot_dwell    = freemem; freemem += NSLOTS;      // PER-SLOT dwell weight (1 = even); scales the step leaving each slot
+dwell_cum     = freemem; freemem += NSLOTS + 1;  // cumulative dwell weights, rebuilt per block
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 // --- harmonic (voice) engine scratch ---
 hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
@@ -159,7 +177,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_dwell[i] = 1; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -365,6 +383,42 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
 // Rebuild ONLY the synthesis grain window (sqrt-Hann, length W = Wash grain).
 // CHEAP: no FFT, no YIN, no accumulator clear -- so Wash grain can be dragged
 // or AUTOMATED without dropouts (old-length grains finish as new ones start).
+// --- Per-slot dwell -------------------------------------------------------
+// The auto-morph modes walk a position along the slot line at a constant rate,
+// so every step takes the same time. Dwell bends that: each step is given a
+// share of the pass proportional to the dwell of the slot it LEAVES, and the
+// linear phase is remapped through those shares. Slot count and dwell values
+// change rarely, so the cumulative table is rebuilt per block, not per sample.
+//
+// dwell_total is also the pass length in "even steps" -- at all-100 it equals
+// the step count, so the timing below reduces exactly to the old behaviour.
+function rebuild_dwell() local(k, legs) (
+  legs = max(1, n_used - 1);
+  dwell_cum[0] = 0; k = 0;
+  loop(legs, dwell_cum[k+1] = dwell_cum[k] + max(0.01, slot_dwell[k]); k += 1; );
+  dwell_total = max(0.0001, dwell_cum[legs]);
+  dwell_legs = legs;
+  // Shuffle needs its OWN total: it wraps, so it walks n_used legs where Sweep
+  // walks n_used-1. Normalizing it against dwell_total would have quietly
+  // retimed Shuffle even with every dwell left even.
+  dwell_sum_all = 0; k = 0;
+  loop(max(1, n_used), dwell_sum_all += max(0.01, slot_dwell[k]); k += 1; );
+  dwell_sum_all = max(0.0001, dwell_sum_all);
+);
+// Map a linear 0..1 phase onto the dwell-weighted slot line, 0..1 out. Returns
+// the input unchanged when the weights are even, so the neutral case is exact.
+function dwell_warp(p) local(k, tgt, w, lo) (
+  p = max(0, min(1, p));
+  dwell_legs < 2 ? ( p ) : (
+    tgt = p * dwell_total;
+    k = 0;
+    loop(dwell_legs - 1, dwell_cum[k+1] <= tgt ? k += 1; );
+    lo = dwell_cum[k];
+    w = max(0.0001, dwell_cum[k+1] - lo);
+    (k + (tgt - lo) / w) / dwell_legs;
+  );
+);
+
 // GFFT: the synthesis FFT is sized TO THE GRAIN, not fixed at FFTSIZE.
 //
 // A grain of W samples cannot carry more spectral detail than W supports, so
@@ -438,6 +492,13 @@ function shuffle_bag() local(i, j, t) (
 // inherited from initialization order.
 build_synwin(max(64, floor(150 * srate / 1000)));
 
+// Seed the dwell table here rather than waiting for the first @block. It is
+// rebuilt there anyway, but dwell_total is a divisor in the auto-morph timing,
+// and leaving it at 0 for even one block would sprint the morph on a project
+// that loads with "Each step" already selected.
+rebuild_dwell();
+
+
 @slider
 // Every slider read into a named global here; nothing downstream references a
 // sliderN directly, so the layout can be reordered without desyncing the engine.
@@ -449,7 +510,11 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
 //     each slot keeps its own by-ear tuning. Editing slider3 writes the current
 //     slot. Suppress the @block re-derive on a pure slot-switch (each slot is
 //     already analyzed at its own point) by syncing last_cappoint. ---
+automorph_per_step = slider28 > 0.5;
+
 last_cap_slot != cap_slot ? (
+  slot_dwell[last_cap_slot] = slider29 * 0.01;     // dwell banks with the slot too
+  slider29 = slot_dwell[cap_slot] * 100;
   slot_cappoint[last_cap_slot] = slider3 * 0.01;   // save the slot we're leaving
   slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering
   slider_automate(slider3);
@@ -457,6 +522,7 @@ last_cap_slot != cap_slot ? (
   last_cappoint = slot_cappoint[cap_slot];          // no re-derive on switch: slot already analyzed at this point
 ) : (
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
+  slot_dwell[cap_slot] = slider29 * 0.01;           // and a live dwell edit
 );
 cap_point01   = slider3 * 0.01;
 dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
@@ -612,6 +678,7 @@ drift_was_playing = drift_now_playing;
 // block if it's moving. No re-analysis, no clear -> safe to automate, no drops.
 gsamp = floor(grain_ms * srate / 1000);
 gsamp != last_gsamp ? ( last_gsamp = gsamp; build_synwin(gsamp); );
+rebuild_dwell();   // cheap; slot count / dwell change rarely but freely
 
 // Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub re-derives
 // once, when it settles, in one lump. (Fresh load is handled at the play-edge
@@ -723,14 +790,19 @@ mod_active[5] ? (   // Voice level (dB)
 automorph_mode > 0.5 ? (
   automorph_mode == 1 ? (
     // Sweep: triangle wander, morph runs 0 -> 1 -> 0 forever.
-    morph_phase += 1 / (srate * auto_time);
+    // pass_secs: "Whole pass" keeps the original reading (one traverse = the set
+    // time, however many slots). "Each step" reads it per step, so the traverse
+    // grows with the slot count and with dwell instead of being divided up.
+    pass_secs = automorph_per_step ? auto_time * dwell_total : auto_time;
+    morph_phase += 1 / (srate * max(0.001, pass_secs));
     morph_phase >= 2 ? morph_phase -= 2;
-    eff_morph01 = morph_phase <= 1 ? morph_phase : 2 - morph_phase;
+    eff_morph01 = dwell_warp(morph_phase <= 1 ? morph_phase : 2 - morph_phase);
   ) : automorph_mode == 2 ? (
     // Glide once: ramp 0 -> 1 and hold at the last slot.
-    morph_phase += 1 / (srate * auto_time);
+    pass_secs = automorph_per_step ? auto_time * dwell_total : auto_time;
+    morph_phase += 1 / (srate * max(0.001, pass_secs));
     morph_phase > 1 ? morph_phase = 1;
-    eff_morph01 = morph_phase;
+    eff_morph01 = dwell_warp(morph_phase);
   ) : (
     // Drift = Sweep in shuffled order, crossfading DIRECTLY between consecutive
     // slots (never routing through the in-between ones). Advance the crossfade
@@ -750,7 +822,14 @@ automorph_mode > 0.5 ? (
         nxt_slot = driftbag[bag_pos]; bag_pos += 1;
         xfade = 0; drift_primed = 1;
       );
-      xfade += 1 / max(1, auto_time * srate / n_used);
+      // Leg length follows the slot being LEFT, matching the other modes. In
+      // "Whole pass" the legs still share one pass, so dwell only redistributes
+      // time; in "Each step" the set time IS one leg, scaled by its dwell.
+      leg_secs = automorph_per_step ?
+        auto_time * max(0.01, slot_dwell[cur_slot]) :
+        auto_time * max(0.01, slot_dwell[cur_slot]) / dwell_sum_all;
+      xfade += 1 / max(1, leg_secs * srate);
+
       xfade >= 1 ? (
         cur_slot = nxt_slot; xfade = 0;
         bag_pos >= n_used ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );   // through them all -> reshuffle
@@ -905,6 +984,16 @@ ser_magic == 7700001 ? (
     scp = 0; loop(NSLOTS, slot_cappoint[scp] = seed_cp; scp += 1; );
   );
 
+  // --- Per-slot dwell, appended after Capture point. Same EOF-safe shape: a
+  //     project saved before dwell existed has no bytes here, so the read runs
+  //     past EOF and the sentinel survives -> seed every slot to even (1), which
+  //     is exactly how those projects already sound. ---
+  file_avail(0) >= 0 ? ( slot_dwell[0] = -999; );
+  file_mem(0, slot_dwell, NSLOTS);
+  (file_avail(0) >= 0 && slot_dwell[0] == -999) ? (
+    sdw = 0; loop(NSLOTS, slot_dwell[sdw] = 1; sdw += 1; );
+  );
+
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
   // duplicate) file_avail(0) >= 0; on WRITE (save / undo) it's < 0. @serialize
   // is the one section guaranteed to run on both load AND duplicate, so after
@@ -926,6 +1015,7 @@ ser_magic == 7700001 ? (
     cps = max(0, min(NSLOTS-1, slider1));
     last_cap_slot = cps;
     slider3 = slot_cappoint[cps] * 100;
+    slider29 = slot_dwell[cps] * 100;
     sliderchange(-1);
   );
 );
