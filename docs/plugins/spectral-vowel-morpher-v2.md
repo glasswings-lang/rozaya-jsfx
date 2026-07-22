@@ -93,14 +93,22 @@ smoother. Affects only the wash; cheap and safe to automate. The unit is
 **milliseconds**, so 300 is about a third of a second per grain — not a fraction
 of one.
 
-**CPU is roughly flat across the whole range in v2.** In the original the
-synthesis FFT was a fixed size no matter how short the grain, while grains fire
-on a hop of a quarter of the grain length — so shortening the grain multiplied
-the work without making any individual grain cheaper, and the bottom of the
-range dropped out on most machines (evenly-spaced gaps, which is real-time
-underrun rather than a windowing artifact). v2 sizes the FFT to the grain, which
-is all a grain can carry anyway: short grains fire often but each is small, long
-grains are large but rare, and the two cancel.
+**Known limitation: short Wash grain still produces evenly-spaced crackling.**
+v2 changed the synthesis FFT to size itself to the grain (instead of always
+using the maximum size), on the theory that shorter grains were fixing
+constant-cost FFTs many times per second and that was what caused the
+dropouts. That theory was tested by ear and the crackle *did not go away*.
+Which means either the CPU-per-grain wasn't the bottleneck, or something
+else about grain boundaries at short lengths is producing the clicks. Real
+diagnosis is a next-session task; do not trust "short grain works now" —
+if you need short grain, expect crackle until this is properly fixed. The
+FFT-sizing change itself is kept because it does reduce CPU on wash-heavy
+projects even if it did not solve the crackle problem.
+
+The Spread control is separately faster than before regardless — the
+running-sum optimisation is mathematically equivalent to the original, and
+verified numerically. That is a real perf win. But it does not touch the
+short-grain crackle.
 
 **Spread (Hz)** `0 to 150, default 0`
 Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
