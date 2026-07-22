@@ -63,7 +63,7 @@ slider16:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. Added at the END of the range
 //     (slider IDs are primary keys — never renumber existing ones). ---
-slider17:0<0,5,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level}>Drift target
+slider17:0<0,8,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level}>Drift target
 slider18:0<0,300,0.1>Drift up amount (units match target)
 slider19:0<0,300,0.1>Drift down amount (units match target)
 slider20:30<1,600,0.5>Drift period (seconds)
@@ -78,7 +78,7 @@ slider22:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider23:0<0,5,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level}>Ramp target
+slider23:0<0,8,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level}>Ramp target
 slider24:0<-300,300,0.1>Ramp by (units match target)
 slider25:0<0,60,0.1>Ramp duration (minutes)
 slider26:0<0,60,0.1>Ramp start delay (minutes)
@@ -93,7 +93,10 @@ slider27:0<0,1,1{Off,On}>Ramp engage
 ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
-N_TARGETS = 6;   // Drift targets: Texture, Spread, Pitch, Stereo width, Low cut, Voice level
+N_TARGETS = 9;   // Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Denoise, Morph, Input level
+// Wash grain is deliberately NOT a target: it rebuilds a window rather than
+// scaling a value, so it is driven from @block and cannot read a per-sample
+// drift offset the way the others do.
 FFTSIZE = 32768; NBINS = 16385;
 // WA = analysis window length, FIXED and decoupled from Wash grain. The capture
 // analysis (heavy: FFT + YIN) happens at WA; Wash grain only rebuilds the cheap
@@ -137,6 +140,13 @@ slot_norm = freemem; freemem += NSLOTS;        // wash peak normalization
 slot_harm = freemem; freemem += NSLOTS*NHARM;  // voice harmonic magnitudes
 slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
 slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
+slot_voicedb  = freemem; freemem += NSLOTS;   // PER-SLOT voice_db_base
+slot_texture  = freemem; freemem += NSLOTS;   // PER-SLOT texture
+slot_spread   = freemem; freemem += NSLOTS;   // PER-SLOT spread_hz
+slot_pitch    = freemem; freemem += NSLOTS;   // PER-SLOT pitch_semi
+slot_width    = freemem; freemem += NSLOTS;   // PER-SLOT stereo_width
+slot_lowcut   = freemem; freemem += NSLOTS;   // PER-SLOT lowcut_hz
+slot_denoise  = freemem; freemem += NSLOTS;   // PER-SLOT denoise_amt
 slot_linger   = freemem; freemem += NSLOTS;      // PER-SLOT step time in SECONDS (time to leave this slot)
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 // --- harmonic (voice) engine scratch ---
@@ -174,7 +184,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -347,7 +357,7 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
     i += 1;
   );
   pk = 0; i = 0; loop(NBINS, curmag[i] > pk ? pk = curmag[i]; i += 1; );
-  thr = denoise_amt * 0.01 * 0.1 * pk;
+  thr = eff_denoise * 0.01 * 0.1 * pk;
   cutbin = floor(eff_lowcut_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
   i = 0;
   loop(NBINS,
@@ -398,6 +408,9 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
 //
 // GR is the source->target bin stride. The captured spectra stay on the fixed
 // FFTSIZE analysis grid; only synthesis resolution adapts.
+// Crossfade one per-slot value the same way the spectra are crossfaded.
+function sblend(arr, i, j, f) ( arr[i] * (1 - f) + arr[j] * f );
+
 function build_synwin(wlen) local(i) (
   wlen = max(64, min(MAXFFT, floor(wlen)));
   W = wlen; HOP = max(1, floor(W / 4));
@@ -465,8 +478,25 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
 //     slot. Suppress the @block re-derive on a pure slot-switch (each slot is
 //     already analyzed at its own point) by syncing last_cappoint. ---
 last_cap_slot != cap_slot ? (
+  // Every per-slot value banks with the slot, same as Capture point does.
+  slot_voicedb[last_cap_slot] = slider6;
+  slot_texture[last_cap_slot] = slider7 * 0.01;
+  slot_spread[last_cap_slot] = slider9;
+  slot_pitch[last_cap_slot] = slider10;
+  slot_width[last_cap_slot] = slider11;
+  slot_lowcut[last_cap_slot] = slider12;
+  slot_denoise[last_cap_slot] = slider13;
   slot_linger[last_cap_slot] = slider4;            // linger banks with the slot too
   slider4 = slot_linger[cap_slot];
+  slider6 = slot_voicedb[cap_slot];
+  slider7 = slot_texture[cap_slot] * 100;
+  slider9 = slot_spread[cap_slot];
+  slider10 = slot_pitch[cap_slot];
+  slider11 = slot_width[cap_slot];
+  slider12 = slot_lowcut[cap_slot];
+  slider13 = slot_denoise[cap_slot];
+  sliderchange(-1);   // refresh the displayed values; NOT slider_automate
+
   slot_cappoint[last_cap_slot] = slider3 * 0.01;   // save the slot we're leaving
   slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering
   slider_automate(slider3);
@@ -475,8 +505,18 @@ last_cap_slot != cap_slot ? (
 ) : (
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
   slot_linger[cap_slot] = slider4;                 // and a live linger edit
+  // a live edit of any per-slot value stamps the slot it belongs to
+  slot_voicedb[cap_slot] = slider6;
+  slot_texture[cap_slot] = slider7 * 0.01;
+  slot_spread[cap_slot] = slider9;
+  slot_pitch[cap_slot] = slider10;
+  slot_width[cap_slot] = slider11;
+  slot_lowcut[cap_slot] = slider12;
+  slot_denoise[cap_slot] = slider13;
+
 );
 cap_point01   = slider3 * 0.01;
+dry_db_base   = slider5;                                    // base for Input level drift
 dry_gain      = slider5 <= -60 ? 0 : pow(10, slider5/20);   // -60 = true silence
 voice_db_base = slider6;                                    // base for Voice level drift
 voice_gain    = slider6 <= -60 ? 0 : pow(10, slider6/20);
@@ -490,6 +530,10 @@ pitch_ratio   = pow(2.0, slider10/12);
 stereo_width  = slider11;
 voice_detune  = stereo_width * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
 lowcut_hz     = slider12;
+// denoise_amt / pitch_semi / voice_db_base / spread_hz / lowcut_hz /
+// stereo_width are written here but no longer read: the effective values come
+// from the per-slot banks in @sample. Kept so the @slider path still seeds a
+// sane hlevel/wlevel before the first sample runs.
 denoise_amt   = slider13;
 audition_mode = slider14;                                   // 0 focused slot, 1 morph
 morph01       = slider15 * 0.01;
@@ -721,28 +765,6 @@ ramp_engaged ? (
 );
 ri = 0; loop(N_TARGETS, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; ri += 1; );
 
-// Effective (base + Drift wander + Ramp ride) values, clamped to each param's
-// real range. A derived global (hlevel/wlevel, pitch_ratio, voice_gain,
-// voice_detune) is only overwritten when its target is being modulated at all,
-// so a plugin with no Drift and no Ramp is bit-identical to before.
-mo0 = target_drift_offset[0] + ramp_offset_mem[0];
-mod_active[0] ? (   // Texture: internal 0..1, offset is in 0-100 Texture units
-  eff_tex = max(0, min(1, texture + mo0 * 0.01));
-  hlevel = cos(eff_tex * PI * 0.5); wlevel = sin(eff_tex * PI * 0.5);
-);
-eff_spread_hz    = max(0,  min(150, spread_hz    + (mod_active[1] ? target_drift_offset[1] + ramp_offset_mem[1] : 0)));
-mod_active[2] ? (   // Pitch (semitones)
-  eff_semi = max(-24, min(24, pitch_semi + target_drift_offset[2] + ramp_offset_mem[2]));
-  pitch_ratio = pow(2.0, eff_semi/12);
-);
-eff_stereo_width = max(0,  min(100, stereo_width + (mod_active[3] ? target_drift_offset[3] + ramp_offset_mem[3] : 0)));
-mod_active[3] ? ( voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX; );
-eff_lowcut_hz    = max(0,  min(500, lowcut_hz    + (mod_active[4] ? target_drift_offset[4] + ramp_offset_mem[4] : 0)));
-mod_active[5] ? (   // Voice level (dB)
-  eff_vdb = max(-60, min(12, voice_db_base + target_drift_offset[5] + ramp_offset_mem[5]));
-  voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
-);
-
 // Every auto-morph mode now walks slot to slot, holding each leg for the
 // linger of the slot it is LEAVING. Sweep and Glide used to slide a position
 // along the slot line at a fixed rate, which structurally could not give two
@@ -808,6 +830,49 @@ audition_mode < 0.5 ? (
   vsi = floor(vmp); vmfr = vmp - vsi;
   vsi >= vnu - 1 ? ( vsi = vnu - 1; vmfr = 0; );
   vsj = vsi < vnu - 1 ? vsi + 1 : vsi;
+);
+
+// Effective values = the two current slots' settings crossfaded by the same
+// morph fraction that crossfades their spectra, THEN Drift wander and Ramp ride
+// added on top. This has to sit AFTER the slot choice above, because the base
+// is no longer a global -- it moves as the morph moves.
+//
+// Auditioning a focused slot pins vsi = vsj, so a slot is always heard with
+// exactly its own settings; there is no blended state to confuse it with.
+sb_i = vsi; sb_j = vsj; sb_f = vmfr;
+eff_tex = max(0, min(1, sblend(slot_texture, sb_i, sb_j, sb_f)
+                        + (target_drift_offset[0] + ramp_offset_mem[0]) * 0.01));
+hlevel = cos(eff_tex * PI * 0.5); wlevel = sin(eff_tex * PI * 0.5);
+
+eff_spread_hz = max(0, min(150, sblend(slot_spread, sb_i, sb_j, sb_f)
+                                + target_drift_offset[1] + ramp_offset_mem[1]));
+
+eff_semi = max(-24, min(24, sblend(slot_pitch, sb_i, sb_j, sb_f)
+                            + target_drift_offset[2] + ramp_offset_mem[2]));
+pitch_ratio = pow(2.0, eff_semi/12);
+
+eff_stereo_width = max(0, min(100, sblend(slot_width, sb_i, sb_j, sb_f)
+                                   + target_drift_offset[3] + ramp_offset_mem[3]));
+voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX;
+
+eff_lowcut_hz = max(0, min(500, sblend(slot_lowcut, sb_i, sb_j, sb_f)
+                                + target_drift_offset[4] + ramp_offset_mem[4]));
+
+eff_vdb = max(-60, min(12, sblend(slot_voicedb, sb_i, sb_j, sb_f)
+                           + target_drift_offset[5] + ramp_offset_mem[5]));
+voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
+
+eff_denoise = max(0, min(100, sblend(slot_denoise, sb_i, sb_j, sb_f)
+                              + target_drift_offset[6] + ramp_offset_mem[6]));
+
+// Morph and Input level are global, but newly reachable by Drift / Ramp.
+mod_active[7] ? (
+  eff_morph01 = max(0, min(1, eff_morph01
+                   + (target_drift_offset[7] + ramp_offset_mem[7]) * 0.01));
+);
+mod_active[8] ? (
+  eff_dry_db = max(-60, min(12, dry_db_base + target_drift_offset[8] + ramp_offset_mem[8]));
+  dry_gain = eff_dry_db <= -60 ? 0 : pow(10, eff_dry_db/20);
 );
 
 dryL = spl0 * dry_gain; dryR = spl1 * dry_gain;
@@ -947,6 +1012,44 @@ ser_magic == 7700001 ? (
     sdw = 0; loop(NSLOTS, slot_linger[sdw] = 4; sdw += 1; );
   );
 
+  // --- Per-slot parameter banks, appended. Same sentinel migration as the
+  //     per-slot Capture point: absent bytes leave the seeded defaults. ---
+  file_avail(0) >= 0 ? ( slot_voicedb[0] = -999 );
+  file_mem(0, slot_voicedb, NSLOTS);
+  (file_avail(0) >= 0 && slot_voicedb[0] == -999) ? (
+    sps = 0; loop(NSLOTS, slot_voicedb[sps] = 0.0; sps += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_texture[0] = -999 );
+  file_mem(0, slot_texture, NSLOTS);
+  (file_avail(0) >= 0 && slot_texture[0] == -999) ? (
+    sps = 0; loop(NSLOTS, slot_texture[sps] = 0.5; sps += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_spread[0] = -999 );
+  file_mem(0, slot_spread, NSLOTS);
+  (file_avail(0) >= 0 && slot_spread[0] == -999) ? (
+    sps = 0; loop(NSLOTS, slot_spread[sps] = 0.0; sps += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_pitch[0] = -999 );
+  file_mem(0, slot_pitch, NSLOTS);
+  (file_avail(0) >= 0 && slot_pitch[0] == -999) ? (
+    sps = 0; loop(NSLOTS, slot_pitch[sps] = 0.0; sps += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_width[0] = -999 );
+  file_mem(0, slot_width, NSLOTS);
+  (file_avail(0) >= 0 && slot_width[0] == -999) ? (
+    sps = 0; loop(NSLOTS, slot_width[sps] = 50.0; sps += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_lowcut[0] = -999 );
+  file_mem(0, slot_lowcut, NSLOTS);
+  (file_avail(0) >= 0 && slot_lowcut[0] == -999) ? (
+    sps = 0; loop(NSLOTS, slot_lowcut[sps] = 0.0; sps += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_denoise[0] = -999 );
+  file_mem(0, slot_denoise, NSLOTS);
+  (file_avail(0) >= 0 && slot_denoise[0] == -999) ? (
+    sps = 0; loop(NSLOTS, slot_denoise[sps] = 0.0; sps += 1; );
+  );
+
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
   // duplicate) file_avail(0) >= 0; on WRITE (save / undo) it's < 0. @serialize
   // is the one section guaranteed to run on both load AND duplicate, so after
@@ -969,6 +1072,14 @@ ser_magic == 7700001 ? (
     last_cap_slot = cps;
     slider3 = slot_cappoint[cps] * 100;
     slider4 = slot_linger[cps];
+    slider6 = slot_voicedb[cps];
+    slider7 = slot_texture[cps] * 100;
+    slider9 = slot_spread[cps];
+    slider10 = slot_pitch[cps];
+    slider11 = slot_width[cps];
+    slider12 = slot_lowcut[cps];
+    slider13 = slot_denoise[cps];
+
     sliderchange(-1);
   );
 );

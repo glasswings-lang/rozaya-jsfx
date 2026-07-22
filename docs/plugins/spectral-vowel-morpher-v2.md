@@ -17,9 +17,17 @@
 > cycle longer instead of squeezing the existing steps, and — the point of it —
 > the steps can differ from each other.
 >
+> **3. Every setting that describes a capture is per slot.** Voice level,
+> Texture, Spread, Pitch, Stereo width, Low cut and Denoise all belong to the
+> selected slot rather than being one global setting flattening every capture.
+> The morph crossfades them along with the spectra, so moving between two slots
+> moves between their settings too. Input level stays global (the dry signal is
+> the track's, not a capture's), and so does Wash grain (it rebuilds a window
+> rather than scaling a value, so it cannot be crossfaded per grain).
+>
 > Controls are also grouped by what they belong to rather than by when they were
-> added, so **Slot linger** sits beside **Capture point**: both belong to
-> whichever slot is selected.
+> added, so everything owned by the selected slot — **Capture point**, **Slot
+> linger**, and the seven above — is reached through **Capture slot**.
 
 ---
 
@@ -72,8 +80,12 @@ The source passed straight through. −60 = silent.
 **Voice level (dB)** `-60 to +12, default 0`
 The resynthesized output. −60 = silent.
 
+*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
+
 **Texture** `0 to 100, default 50`
 Crossfades 0 = Voice (harmonic, keeps the vowel) to 100 = Wash (spectral, breathy bed). The middle layers both — vowel plus air.
+
+*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
 **Wash grain (ms)** `5 to 680, default 150`
 The wash's grain length: short = rougher and grainier, long = glassier and
@@ -93,17 +105,27 @@ grains are large but rare, and the two cancel.
 **Spread (Hz)** `0 to 150, default 0`
 Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
 
+*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
+
 **Pitch (semitones)** `-24 to +24, default 0`
 Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."
+
+*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
 **Stereo width** `0 to 100, default 50`
 Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phase (mono-safe). In the voice it runs a slightly-detuned copy on the right channel (up to ~14 cents at 100), so the two sides beat slowly against each other — real width plus a shimmer that softens the robotic edge of the pure harmonics. At 0 the voice is exactly mono (unchanged from older projects). The detuned voice is only computed when the voice is actually audible (Texture below full wash), so living on the wash costs nothing.
 
+*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
+
 **Low cut (Hz)** `0 to 500, default 0`
 Removes low rumble from the resynth.
 
+*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
+
 **Denoise** `0 to 100, default 0`
 Spectral subtraction — raise to thin toward the strongest partials (more tonal, more gated).
+
+*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
 **Audition** `Focused slot / Morph, default Morph`
 *Focused slot* plays exactly the Capture-slot, ignoring Morph (so you can hear each grab as you build it). *Morph* plays the morph blend.
@@ -186,7 +208,7 @@ Arms every configured target at once. While On, each rides its own duration from
 - **The capture workflow.** Put audio on the track, Input level up and Voice level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment — and because each slot keeps its own point, you can go slot by slot and tune every capture to its own vowel without disturbing the ones you already set.
 - **The voice end needs pitched material.** Texture 0 only sings on clearly pitched sources (a sustained vowel, organ, bowed note). On unpitched material it produces a tone — use the wash end (or the middle) there instead.
 - **Vowel + breath is the middle.** The pure voice end has no breath; the pure wash end has breath but de-voices. A blend around Texture 30–50 gives the vowel plus air.
-- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels, Stereo width, Low cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Six of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, Voice level — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
+- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels, Stereo width, Low cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Nine of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Denoise, Morph and Input level — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
 - **Source-agnostic.** It freezes anything — synths, field recordings, strings, cymbals, even a whole mix via a track send. The wash texturizes any source.
 - **Captures persist** across save and reopen (the raw audio is stored in the project; both engines rebuild on load).
 - **Transport must be moving** for it to sound — it is a generator. Loop the transport, or arm the track and monitor.
