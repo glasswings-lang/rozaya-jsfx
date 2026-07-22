@@ -235,7 +235,11 @@ i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analy
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
 cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
-bag_pos = 999; last_slot = 0; drift_primed = 0; auto_primed = 0; sweep_dir = 1;    // Drift shuffle-bag state (primed lazily in @sample)
+bag_pos = 999; last_slot = 0; drift_primed = 0; auto_primed = 0; sweep_dir = 1;   // walk + shuffle-bag state (primed lazily in @sample)
+// Fresh instance: every slot starts as whatever is on screen. Without this only
+// the slot selected when a slider was last touched would carry the visible
+// settings, and the others would sit at hard-coded defaults.
+seed_slots_from_sliders = 1;
 // Scramble the RNG per load: EEL rand() otherwise replays the SAME sequence
 // every session, so Drift would wander the identical path each time you open the
 // project. Advance it a sub-second-time-dependent number of steps so each load
@@ -553,20 +557,6 @@ lowcut_hz     = slider12;
 denoise_amt   = slider13;
 audition_mode = slider14;                                   // 0 focused slot, 1 morph
 morph01       = slider15 * 0.01;
-// A v1 project just loaded: its single global settings become every slot's
-// settings, which is effectively what they already were. Runs once.
-seed_slots_from_sliders == 1 ? (
-  seed_slots_from_sliders = 0;
-  ss = 0;
-  loop(NSLOTS,
-    slot_voicedb[ss] = slider6;  slot_texture[ss] = slider7 * 0.01;
-    slot_spread[ss]  = slider9;  slot_pitch[ss]   = slider10;
-    slot_width[ss]   = slider11; slot_lowcut[ss]  = slider12;
-    slot_denoise[ss] = slider13;
-    ss += 1;
-  );
-);
-
 automorph_mode = slider16;
 automorph_mode != last_automode ? (
   last_automode = automorph_mode; morph_phase = 0;
@@ -708,6 +698,26 @@ drift_was_playing = drift_now_playing;
 // Wash grain -> CHEAP: rebuild only the synthesis grain, immediately, every
 // block if it's moving. No re-analysis, no clear -> safe to automate, no drops.
 gsamp = floor(grain_ms * srate / 1000);
+// Seed every slot's parameter bank from the visible sliders. Consumed HERE and
+// not in @slider: on load REAPER applies the slider line and runs @slider BEFORE
+// feeding the serialize blob, so a flag raised during @serialize was set after
+// its only reader had already run and was never acted on -- every slot kept its
+// @init defaults, which meant Texture 50 on a project built at 100 and Pitch 0
+// on tracks written at -6 and -18. @block is the first section guaranteed to run
+// after both, so the flag is always seen.
+seed_slots_from_sliders == 1 ? (
+  seed_slots_from_sliders = 0;
+  ss = 0;
+  loop(NSLOTS,
+    slot_linger[ss]  = slider4;
+    slot_voicedb[ss] = slider6;  slot_texture[ss] = slider7 * 0.01;
+    slot_spread[ss]  = slider9;  slot_pitch[ss]   = slider10;
+    slot_width[ss]   = slider11; slot_lowcut[ss]  = slider12;
+    slot_denoise[ss] = slider13;
+    ss += 1;
+  );
+);
+
 gsamp != last_gsamp ? ( last_gsamp = gsamp; build_synwin(gsamp); );
 
 // Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub re-derives
@@ -737,7 +747,13 @@ cap_dirty ? (
   );
 );
 
-(cap_trig > 0.5 && cap_last <= 0.5) ? ( capture(cap_slot); slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
+(cap_trig > 0.5 && cap_last <= 0.5) ? ( capture(cap_slot);
+  // a new capture takes the settings you were listening through
+  slot_voicedb[cap_slot] = slider6;  slot_texture[cap_slot] = slider7 * 0.01;
+  slot_spread[cap_slot]  = slider9;  slot_pitch[cap_slot]   = slider10;
+  slot_width[cap_slot]   = slider11; slot_lowcut[cap_slot]  = slider12;
+  slot_denoise[cap_slot] = slider13;
+  slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
 cap_last = cap_trig;
 
 @sample
@@ -997,6 +1013,8 @@ ser_magic = 7700002;
 file_var(0, ser_magic);
 (ser_magic == 7700002 || ser_magic == 7700001) ? (
   ser_v1 = ser_magic == 7700001;
+  // A v2 blob's banks are authoritative -- cancel the fresh-instance seed.
+  (file_avail(0) >= 0 && !ser_v1) ? ( seed_slots_from_sliders = 0; );
   n_ser_targets = ser_v1 ? 6 : N_TARGETS;
   file_var(0, have);
   file_var(0, n_used);
