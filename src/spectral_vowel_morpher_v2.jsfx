@@ -490,6 +490,9 @@ build_synwin(max(64, floor(150 * srate / 1000)));
 // Every slider read into a named global here; nothing downstream references a
 // sliderN directly, so the layout can be reordered without desyncing the engine.
 cap_slot      = max(0, min(NSLOTS-1, slider1));
+// Keep the flag's value: the slot-switch test below needs to know this is the
+// first @slider after a load, and the line that consumes it runs before that.
+is_first_slider = first_slider;
 cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0; );  // first @slider after load: sync cap_last so a saved-ON Capture-now never fires a silent capture on reload
 // --- Per-slot Capture point (nested-selector, like Drift/Ramp targets). The
 //     Capture-point slider is now PER SLOT: switching Capture slot saves the
@@ -497,7 +500,13 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
 //     each slot keeps its own by-ear tuning. Editing slider3 writes the current
 //     slot. Suppress the @block re-derive on a pure slot-switch (each slot is
 //     already analyzed at its own point) by syncing last_cappoint. ---
-last_cap_slot != cap_slot ? (
+// The first @slider after a load is NOT a slot switch, however it looks. A
+// project saved with Capture slot 3 arrives with last_cap_slot still 0 from
+// @init, and treating that as a switch loads slot 3's banks over the sliders --
+// which on a v1 project are empty defaults, so the project's real Texture,
+// Denoise and Pitch were destroyed before anything could read them. The values
+// on screen are what the project saved; take them as given and stamp the slot.
+(last_cap_slot != cap_slot && !is_first_slider) ? (
   // Every per-slot value banks with the slot, same as Capture point does.
   slot_voicedb[last_cap_slot] = slider6;
   slot_texture[last_cap_slot] = slider7 * 0.01;
@@ -533,7 +542,7 @@ last_cap_slot != cap_slot ? (
   slot_width[cap_slot] = slider11;
   slot_lowcut[cap_slot] = slider12;
   slot_denoise[cap_slot] = slider13;
-
+  last_cap_slot = cap_slot;   // also syncs the first-load case above
 );
 cap_point01   = slider3 * 0.01;
 dry_db_base   = slider5;                                    // base for Input level drift
@@ -1145,14 +1154,28 @@ file_var(0, ser_magic);
     cps = max(0, min(NSLOTS-1, slider1));
     last_cap_slot = cps;
     slider3 = slot_cappoint[cps] * 100;
-    slider4 = slot_linger[cps];
-    slider6 = slot_voicedb[cps];
-    slider7 = slot_texture[cps] * 100;
-    slider9 = slot_spread[cps];
-    slider10 = slot_pitch[cps];
-    slider11 = slot_width[cps];
-    slider12 = slot_lowcut[cps];
-    slider13 = slot_denoise[cps];
+    // The per-slot banks are only authoritative when they were actually READ.
+    //
+    // On a v1 project they have NOT been filled yet -- v1 stored no per-slot
+    // data, and the seed from the visible sliders is deferred to @block because
+    // @slider has already run by this point. Forcing the sliders from them here
+    // wrote the @init defaults straight over the project's real values: Texture
+    // became 50 on a project saved at 100, Denoise 0 against 25, Pitch 0 against
+    // -5.5. @block then seeded the banks from those clobbered sliders, so the
+    // whole instance collapsed to defaults with only the captures surviving.
+    //
+    // For a v1 load the SLIDERS are the source of truth and must be left alone;
+    // for a v2 load the banks are, and the sliders follow them as before.
+    ser_v1 ? 0 : (
+      slider4 = slot_linger[cps];
+      slider6 = slot_voicedb[cps];
+      slider7 = slot_texture[cps] * 100;
+      slider9 = slot_spread[cps];
+      slider10 = slot_pitch[cps];
+      slider11 = slot_width[cps];
+      slider12 = slot_lowcut[cps];
+      slider13 = slot_denoise[cps];
+    );
 
     sliderchange(-1);
   );
