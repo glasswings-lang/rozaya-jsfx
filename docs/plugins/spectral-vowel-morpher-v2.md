@@ -136,94 +136,86 @@ Crossfades across the captured slots. Pitch-preserving — each slot plays at it
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. Every mode is timed the same way: each step lasts the **Slot linger** of the slot it is leaving, so a pass is however long its steps add up to — same gentle crossfades throughout, just a different order (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
-**Slot linger (sec)** `0.1 to 300, default 4`
-How long the step *leaving this slot* takes, in seconds. That is the whole rule.
+**Slot linger (sec)** `0 to 300, default 4`
+**Pure hold time** for this slot — how long you hear it alone, at 100%, before
+its crossfade to the next slot begins. **The number you type is the number of
+seconds.** No arithmetic to figure out, no ratios of anything.
 
 Like **Capture point**, it belongs to whichever **Capture slot** is selected:
 pick a slot, set its linger, pick the next, set that one. Each slot remembers
 its own and they save with the project.
 
-There is no global morph time in v2. A cycle is just its steps added together,
-so nothing is divided and nothing is a proportion of anything — you say how long
-each step is and that is what it is.
-
-This is what makes an uneven cycle possible. A real breath is not symmetrical:
-the out-breath is usually longer than the in-breath, and a hold is longer than
-either. Set slot 1 to four seconds and slot 2 to six, and moving away from slot
-1 takes four while moving away from slot 2 takes six. No single shared number
-could ever express that.
+There is no global morph time. A cycle is just its steps added together — each
+slot contributes `linger + crossfade` seconds. Set linger 4 on every slot and
+each will hold for 4 seconds. Set linger 4 on one and 8 on another and their
+holds differ, which is what an uneven cycle (like a real breath) needs.
 
 Works in all three Auto-morph modes. In **Sweep**, which walks out and back,
-each slot's linger applies whenever you leave it — so the return trip is timed
-by the slots it is leaving, not a mirror of the way out.
+each slot's linger applies whenever it is the current slot.
 
-**Slot crossfade (sec)** `0 to 300, default 4`
-How much of **Slot linger** is a crossfade *into the next slot*. The rest is a
-**hold** on this slot — the sound sits there, unmoving, until the crossfade
-begins.
+**Setting Slot linger to 0** means "no hold, all crossfade" — the whole leg
+is the crossfade to the next slot. This matches the original Morpher's
+continuous-morph behaviour and is right for evolving textures where the sound
+never really settles.
 
-*Per slot*, edited the same way as Slot linger: the value you see belongs to
-whichever **Capture slot** is selected.
+**Slot crossfade (sec)** `0 to 300, default 1`
+The fade from this slot to the next slot, added **on top** of the linger. Total
+time on this slot's leg is `linger + crossfade`.
 
-The whole step still takes exactly **Slot linger** seconds. Slot crossfade only
-decides how it is split.
+*Per slot*, edited the same way as Slot linger: belongs to whichever **Capture
+slot** is selected.
 
-- **Crossfade equals linger** (the default) — the entire step is a continuous
-  crossfade, with no hold. This is how the original Morpher worked and is the
-  right choice for evolving textures where the sound never really settles.
-- **Crossfade less than linger** — the slot is held for `linger − crossfade`
-  seconds, then a `crossfade`-second fade to the next slot. For breath,
-  spoken phrases, or anything where each slot is a *recognisable moment*
-  rather than a stop on a continuous morph, this is what you want.
-- **Crossfade equals zero** — a hard cut at the end of the hold.
-- **Crossfade greater than linger** — silently clamped to the linger. A value
-  larger than makes sense just means "all crossfade".
+- **Crossfade 0** — hard cut from this slot to the next at the end of the hold.
+  Works cleanly when captures have soft edges of their own (like breath); can
+  click if edges are sharp.
+- **Crossfade small (0.5–2s)** — smooth transition without dominating. Natural
+  for breath, spoken phrases, or anything where each slot should be recognisable
+  as itself.
+- **Crossfade large** — long, gradual crossfade. When combined with `linger 0`
+  this reproduces the original Morpher's continuous-morph feel.
 
-Independent per slot: a slow silence-slot with a long hold can sit between two
-short sound-slots with fast crossfades, or whatever shape actually fits.
+Independent per slot: silence-slots with a long hold can sit between two short
+sound-slots with brief fades, or any other shape.
 
 ### Where does a slot "begin"?
 
-This is the part that trips people up (including everyone who's designed this
-plugin), because there are three different answers depending on what you mean.
-For a concrete case — slot 0 with `linger 10, crossfade 3`, then slot 1:
+Three plausible answers depending on what you mean. For a concrete case — slot 0
+with `linger 4, crossfade 2`, then slot 1:
 
 ```
-time:     0              7           10                17          20
-          |------ hold --|-- fade ---|------ hold -----|-- fade ---|
-what:     pure slot 0    slot 0→1    pure slot 1       slot 1→2
+time:     0                 4          6                 10        12
+          |------ hold ------|-- fade -|------ hold ------|-- fade |
+what:     pure slot 0        slot 0→1  pure slot 1        slot 1→2
 ```
 
 Three "beginnings" of slot 1:
 
-1. **When you first hear slot 1** — time 7. Slot 1 fades in over 3 seconds
-   while slot 0 fades out. Both are audible during those 3 seconds.
-2. **When slot 1 is fully alone, no blend** — time 10. Slot 0's crossfade
-   has completed and slot 1 is at 100%.
-3. **When slot 1's own linger starts counting** — also time 10. Its hold
-   runs 10→17, then its own crossfade 17→20.
+1. **When you first hear slot 1** — time 4. Slot 1 fades in over 2 seconds
+   while slot 0 fades out. Both are audible during those 2 seconds.
+2. **When slot 1 is fully alone, no blend** — time 6. Slot 0's crossfade has
+   completed and slot 1 is at 100%.
+3. **When slot 1's own linger starts counting** — also time 6. Its hold runs
+   6→10, then its own crossfade 10→12.
 
-The rule underneath: **each slot's linger is the interval from *"I am at
-100% alone"* to *"the next slot is at 100% alone."*** That interval splits
-into hold-first, fade-at-end. The crossfade at the boundary between two
-slots **belongs entirely to the earlier slot's linger.** Slot 1 doesn't have
-an "inbound fade" of its own — slot 1's own crossfade is only its *outbound*
-fade to slot 2.
+The rule underneath: **each slot contributes `linger + crossfade` seconds to
+the cycle. Linger is pure hold; crossfade is the transition out.** The crossfade
+at the boundary between two slots **belongs entirely to the earlier slot** —
+slot 1 doesn't have an "inbound fade" of its own; slot 1's own crossfade is
+only its *outbound* fade to slot 2.
 
 The mental shortcut: **the fade lives between two slots and belongs to the
-earlier one.** If you want to know "how do I get *out* of slot 3," you look
-at slot 3's crossfade. If you want to know "how do I get *into* slot 3," you
-look at slot 2's crossfade. Never slot 3's — from slot 3's view, "getting in"
-was slot 2's problem.
+earlier one.** How do you get *out* of slot 3? Look at slot 3's crossfade. How
+do you get *into* slot 3? Look at slot 2's crossfade. Never slot 3's — from
+slot 3's view, "getting in" was slot 2's problem.
 
-**Practical implication for setting linger and crossfade for a specific
-audible effect:**
+**Practical implication:**
 
-- To hear pure slot 3 for 8 seconds, then have it transition over 2 seconds
-  to slot 4: set slot 3's `linger 10, crossfade 2`.
+- To hear slot 3 alone for 8 seconds, then have it transition over 2 seconds
+  to slot 4: set slot 3's `linger 8, crossfade 2`.
+- Total time from "slot 3 at 100%" to "slot 4 at 100%" = 8 + 2 = 10 seconds.
 - Slot 4's timing is decided by slot 4's own linger and crossfade,
-  independently. Slot 4's "hearability" begins during slot 3's crossfade
-  regardless of what slot 4 is set to.
+  independently. Slot 4 starts fading in during slot 3's crossfade regardless
+  of what slot 4 is set to.
 
 **Slot mute (Off / On)** `default Off`
 When **On**, this slot is skipped by Sweep, Glide, and Shuffle. The morph
@@ -290,6 +282,28 @@ capture cost you nothing extra to configure. In v2, per-slot control is the
 feature, but the cost is that empty-feeling slots (silence, near-silence,
 placeholder captures) need their non-audio parameters set deliberately, or
 you'll hear those parameters *animating* on you during transitions.
+
+### The silence slot's crossfade does work for the slot after it
+
+One more thing worth naming out loud. **A silent slot's own Slot crossfade
+still matters, even though silence itself needs no fading** — because it
+governs how the NEXT slot's audio appears.
+
+Concretely: audio slot → silence → audio slot. The first audio slot's
+crossfade decides how the sound melts away *into* the silence. The silence
+slot's crossfade decides how the next audio slot appears *out of* the
+silence. Setting the silent slot's crossfade to 0 gives you a hard-arrival
+next-audio, which usually sounds like an abrupt sudden appearance even
+though the audio itself is fading in from zero — because the transition
+window is too short for your ear to register as "arriving."
+
+Practical rule: **a silence slot between two audio slots wants a crossfade
+of at least the same length as the audio slots' crossfades**, or a little
+longer, so the arrival feels as gradual as the departure. This is the "the
+fade belongs to the earlier slot" rule made concrete — you might not think
+of a silence slot's crossfade as doing anything (its own audio has nothing
+to fade), but it's the only control that shapes how the next sound gets
+in.
 
 ### Drift (in-plugin automation)
 

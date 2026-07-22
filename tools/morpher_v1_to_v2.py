@@ -149,11 +149,13 @@ def main():
             if label in by_label:
                 values.append(v1[by_label[label]])
             elif label.startswith(LINGER):
-                values.append(linger)
+                # Under Option B: linger is pure hold. v1 had no hold (whole leg
+                # was crossfade), so linger = 0 for v1-fidelity migration.
+                values.append(0)
             elif label.startswith(XFADE):
-                # Seed to match linger so a converted v1 project sounds exactly
-                # like v1 (pure crossfade, no hold). The user then lowers this
-                # per slot to introduce a hold period.
+                # Crossfade is the full v1 leg time -- all fade, no hold, which
+                # matches how v1 sounded. User introduces hold per slot by
+                # raising slot linger above 0.
                 values.append(linger)
             elif label.startswith(MUTE):
                 # Seed unmuted so a converted v1 project morphs across every

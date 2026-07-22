@@ -43,22 +43,23 @@ slider3:0<0,100,1>Capture point (per slot: earliest .. at press)
 // same nested-selector shape as the per-slot Capture point above, and placed
 // next to it so everything belonging to the selected slot sits together.
 //
-// It is the time, IN SECONDS, of the step that LEAVES this slot. There is no
-// global morph time: the cycle is simply its steps added up, so adding a slot
-// makes the cycle longer rather than squeezing the existing steps, and each
-// step can differ. That is what an uneven cycle needs -- a breath out is not
-// the length of a breath in, and no single shared number can say so.
-slider4:4<0.1,300,0.1>Slot linger (sec) (per slot: how long the step leaving it takes)
+// It is the PURE HOLD TIME for this slot, in seconds -- how long you hear this
+// slot alone before its crossfade to the next slot begins. Slot crossfade
+// (below) adds fade time ON TOP of this: total time on the slot = linger +
+// crossfade. That means the number you type IS what you hear: linger 4 = 4
+// seconds of hearing this slot alone. No arithmetic to figure out hold from
+// some other value.
+//
+// linger 0 means "no hold, all crossfade" (matches the original Morpher's
+// continuous-morph behaviour when paired with a non-zero crossfade).
+slider4:4<0,300,0.1>Slot linger (sec) (per slot: pure hold time you hear this slot alone)
 
-// --- Slot crossfade: PER SLOT, placed beside Slot linger where it belongs
-//     (renumbered into position -- see the "renumbered twice" note above).
-//     The fraction of Slot linger that is a crossfade to the next slot; the
-//     rest is a hold on this slot. Clamped to Slot linger at run time, so a
-//     value larger than the linger just means "all crossfade" (the original
-//     behaviour). Default matches Slot linger's default, so an unedited
-//     instance sounds exactly as it did before this control existed; hold
-//     appears only when the user lowers it. ---
-slider5:4<0,300,0.1>Slot crossfade (sec) (per slot: the fade at the end; rest is hold)
+// --- Slot crossfade: PER SLOT, placed beside Slot linger where it belongs.
+//     Adds fade time AFTER the linger's pure hold, so the fade transitions
+//     from this slot to the next one. Total time on this slot's leg =
+//     linger + crossfade. Set to 0 for a hard cut at the end of the hold;
+//     set to any positive value for a smooth transition to the next slot. ---
+slider5:1<0,300,0.1>Slot crossfade (sec) (per slot: fade to next slot, added after the hold)
 
 // --- Slot mute: PER SLOT, appended at slider6 (slider IDs are primary keys
 //     now, so this stays at the end). When On, the slot is skipped in Sweep /
@@ -210,7 +211,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_xfade[i] = 4; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_xfade[i] = 1; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -916,15 +917,12 @@ automorph_mode > 0.5 ? (
     (automorph_mode == 2 && cur_slot == active_slots[n_active - 1]) ? (
       xfade = 0; nxt_slot = cur_slot;
     ) : (
-      // Slot linger = HOLD + CROSSFADE. Sit on cur_slot with xfade pinned at 0
-      // for the hold portion, then advance xfade 0->1 over the crossfade portion.
-      // Crossfade is clamped to linger (>= linger means "all crossfade", i.e. the
-      // pre-hold behaviour where every leg was a continuous morph). One counter
-      // in seconds keeps the accounting readable and the boundary at exactly
-      // slot_linger regardless of how the split is chosen.
-      leg_len   = max(0.05, slot_linger[cur_slot]);
-      leg_fade  = max(0, min(leg_len, slot_xfade[cur_slot]));
-      leg_hold  = leg_len - leg_fade;
+      // Slot linger = pure hold time. Slot crossfade = added on top. Leg length
+      // is the two summed. The number the user types for linger is what they
+      // hear as pure-slot time -- no subtraction, no ratio.
+      leg_hold  = max(0, slot_linger[cur_slot]);
+      leg_fade  = max(0, slot_xfade[cur_slot]);
+      leg_len   = max(0.05, leg_hold + leg_fade);
       leg_elapsed += 1 / srate;
       xfade = leg_elapsed <= leg_hold ? 0 :
               (leg_fade <= 0.0001 ? 1 :
@@ -1094,18 +1092,21 @@ spl1 = dryR + voutR;
 // of truth) + counts; wash spectrum and harmonic analysis re-derive from slotraw
 // on the first @block after load. Magic leads the stream so an old/absent blob
 // degrades to "no captures" instead of scrambling state (CLAUDE.md gotcha).
-// v2 widened the Drift/Ramp banks (6 targets -> 9) and added per-slot banks, so
-// its stream is NOT the v1 layout. The magic is bumped to say so, and the v1
-// value is still accepted and READ IN ITS OWN SHAPE -- otherwise a v1 project
-// opened in v2 would read 9 values where 6 were written, dragging every array
-// after it out of alignment and scrambling everything past the captures.
-//
-// This is what lets an existing project move to v2 with its recordings intact:
-// copy the project, point it at v2, and the captures survive.
-ser_magic = 7700002;
+// Magic:
+//   7700001 -- v1 blob layout (Auto-morph time global, 6-wide Drift/Ramp banks,
+//              no per-slot banks). Read in its own shape; per-slot banks seeded
+//              from the visible sliders in @block.
+//   7700002 -- v2 Option A layout (linger = full interval, crossfade nested in
+//              it). Read as v2, then Slot linger converted on the fly to Option B
+//              semantics: new_linger = max(0, old_linger - old_crossfade). This
+//              preserves the SOUND of an Option-A-saved project under B.
+//   7700003 -- current, Option B layout (linger = pure hold, crossfade added
+//              on top). Read straight through.
+ser_magic = 7700003;
 file_var(0, ser_magic);
-(ser_magic == 7700002 || ser_magic == 7700001) ? (
-  ser_v1 = ser_magic == 7700001;
+(ser_magic == 7700003 || ser_magic == 7700002 || ser_magic == 7700001) ? (
+  ser_v1  = ser_magic == 7700001;
+  ser_v2a = ser_magic == 7700002;   // old Option A; needs linger conversion below
   // A v2 blob's banks are authoritative -- cancel the fresh-instance seed.
   (file_avail(0) >= 0 && !ser_v1) ? ( seed_slots_from_sliders = 0; );
   n_ser_targets = ser_v1 ? 6 : N_TARGETS;
@@ -1225,6 +1226,19 @@ file_var(0, ser_magic);
   file_mem(0, slot_denoise, NSLOTS);
   (file_avail(0) >= 0 && slot_denoise[0] == -999) ? (
     sps = 0; loop(NSLOTS, slot_denoise[sps] = 0.0; sps += 1; );
+  );
+
+  // Option A -> B conversion. Under A, slot_linger was the total leg length
+  // (hold + fade combined) and slot_xfade was the fade portion. Under B,
+  // slot_linger is the pure hold and slot_xfade is the added fade -- so an
+  // Option-A-saved project's linger has the crossfade baked in and needs
+  // subtracting out to keep the same sound.
+  ser_v2a ? (
+    cv = 0;
+    loop(NSLOTS,
+      slot_linger[cv] = max(0, slot_linger[cv] - slot_xfade[cv]);
+      cv += 1;
+    );
   );
 
   // Slot mute: appended at the VERY END of the v2 section, after every other
