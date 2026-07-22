@@ -305,6 +305,101 @@ of a silence slot's crossfade as doing anything (its own audio has nothing
 to fade), but it's the only control that shapes how the next sound gets
 in.
 
+### The auto-gain needs extra time coming out of silence
+
+If you hear a slight bloom, level spike, or the audio "arriving louder
+than it should" when an audio slot fades in from a silent one, that is the
+plugin's slow auto-gain smoother catching up. During silence, the auto-gain
+sits at whatever amplification it had before silence began (it can't
+measure loudness from a signal that has none, so it freezes). The moment
+audio starts fading back in, the amplification is still cranked up from
+before, and the fresh audio gets multiplied by it before the smoother has
+time to catch back down.
+
+The fix is one of:
+
+- **Add about a second more crossfade** on the silence slot (its crossfade
+  governs the arrival) OR on the audio slot that is arriving. Either works.
+  The extra time gives the auto-gain room to settle before the audio is
+  fully in.
+- **Match the level of the silence-adjacent slots more carefully** — the
+  bloom is worst when the audio slot is much quieter than the peak-time
+  auto-gain expected. Louder captures on either side smooth this.
+
+In practice, a second more crossfade is the simple fix and it barely
+changes the cycle timing at all — a good default reflex whenever you hear
+a fade-in that feels too eager.
+
+## The per-slot rule (and what it means for every parameter, not just silence)
+
+The silent-slot section above is the sharpest instance of a general rule
+worth stating on its own:
+
+> **Every per-slot parameter crossfades with the audio.** Any difference
+> between two adjacent slots on any of the seven per-slot parameters —
+> Voice level, Texture, Spread, Pitch, Stereo width, Low cut, Denoise —
+> animates during the transition between them.
+
+This is a feature. It's why v2 exists in the first place. But it means
+setting different values across slots produces motion during transitions,
+whether you wanted that motion or not.
+
+**When you want the motion:** capture two spectra, set them to different
+Pitch values, and Sweep between them — you get a natural pitch morph. Same
+with Texture (voice-to-wash across the transition), Spread, Stereo width,
+etc. This is a whole expressive dimension the original Morpher didn't
+have.
+
+**When you don't:** if you set slot 1 to Pitch −5 and slot 2 to Pitch 0
+thinking each would just play at its own pitch (as v1's global Pitch would
+have), the transition between them will bend pitch continuously across
+the crossfade. To keep pitch constant across slots, set the parameter to
+the same value on every slot that participates in the morph.
+
+**The pattern for eliminating unwanted motion**, in general: pick the
+value you want for the whole morph, then set it on every unmuted slot
+via **Capture slot** → adjust → next → adjust. It is the same walk you'd
+do for silent-slot configuration — because silent-slot configuration is
+one specific case of this rule.
+
+## What's global vs per-slot
+
+Since the split doesn't always match intuition, here is the plain list.
+
+**Per slot** (each slot carries its own; morph crossfades them):
+- Capture point, Slot linger, Slot crossfade, Slot mute
+- Voice level, Texture, Spread, Pitch, Stereo width, Low cut, Denoise
+
+**Global** (one setting for the whole plugin):
+- Input level, Audition, Morph, Auto-morph, Wash grain
+- All Drift and Ramp settings — including the targets. Drift acts on the
+  global *effective* value of a target, not per-slot: drift Texture up 20
+  and every slot's Texture gets shifted 20, not just the currently-audible
+  one.
+
+The most common surprise: **Wash grain is global.** You cannot have one
+slot with a grainy 5 ms texture and another with a glassy 300 ms texture
+on the same instance. If you want that, use two instances of the plugin
+on separate tracks with different Wash grain settings, feeding the same
+or different captures.
+
+## Focused mode is a monitor, not a preview
+
+**Focused slot** (`Audition` = Focused slot) plays exactly the slot you
+point at, at 100%, ignoring the auto-morph sequencer entirely. Which
+means it also ignores:
+
+- **Slot mute** — a focused muted slot still plays. Focused is "let me
+  hear this exact slot no matter what."
+- **Auto-morph timing** — no linger, no crossfade, no transitions. The
+  slot just plays continuously for as long as you leave Focused on.
+- **The morph slider** — manual position along the slot line is
+  irrelevant in Focused mode.
+
+Focused is for auditioning and rendering individual slots as stems. If you
+want to preview what your morph will sound like, switch **Audition** to
+**Morph** and let auto-morph run.
+
 ### Drift (in-plugin automation)
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
