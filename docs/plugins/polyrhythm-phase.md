@@ -10,6 +10,14 @@ Polyrhythm Phase is a binaural oscillator with up to eight simultaneous voices, 
 
 The plugin generates no audio from an input signal. It is a pure synthesizer.
 
+> **Prefer note names?** There is a companion plugin,
+> [Polyrhythm Phase (Note Names)](polyrhythm-notes.md) (`polyrhythm_notes.jsfx`),
+> with an identical engine but a different way of setting pitch: each voice picks
+> its note by name from a list, with a separate fine-tune control in cents,
+> instead of counting semitone offsets from a base note. Same sound, no
+> arithmetic. The two do not share project data — pick one per project.
+
+
 ---
 
 ## Signal Architecture
@@ -64,6 +72,16 @@ How far each voice drops in amplitude at the bottom of its tremolo cycle. At 0 d
 **Tuning Reference Hz** `400-480 Hz, default 440`
 The reference pitch used to calculate all voice frequencies. At 440 Hz, A4 = 440 Hz and all other pitches follow standard equal temperament from that anchor. Adjusting this shifts all voices simultaneously without changing their relative intervals.
 
+**Base Note** `C through B, default C`
+The root note all voices are measured from. Each voice's Semitones value counts
+up or down from this note. Changing it moves every voice together, keeping the
+intervals between them intact.
+
+**Center Octave** `0-8, default 4`
+Which octave the Base Note sits in. Together with Base Note this sets the anchor
+pitch that per-voice Semitones offsets are counted from — at the defaults
+(C, 4) the anchor is C4. Also sets the frequency the **Body** control boosts.
+
 ---
 
 ### Per-Voice Controls (Voices 1-8)
@@ -73,8 +91,8 @@ Each voice has five parameters. By default V1 is audible (Gain -6 dB, Active On)
 **Vn Gain dB** `-60 to +6 dB, default -6 for V1 and -60 for V2-V8`
 Per-voice output level applied before the voice is summed into the mix. -60 dB is effectively silent. Use this to balance voices relative to one another. To fully cut a voice with no CPU cost, prefer Vn Active = Off rather than gain at -60.
 
-**Vn Semitones** `-1000 to +1000, default 0`
-The voice's pitch offset in semitones from the global Base Note + Center Octave anchor. 0 plays the anchor pitch; +12 plays one octave up; -7 plays a fifth down. The left oscillator runs at this resulting frequency; the right oscillator runs at the same frequency plus the Binaural Beat Hz offset.
+**Vn Semitones** `-1000 to +1000, step 0.1, default 0`
+The voice's pitch offset in semitones from the global Base Note + Center Octave anchor. The slider moves in tenths of a semitone, so voices can be detuned against each other by ear rather than only landing on exact note steps. 0 plays the anchor pitch; +12 plays one octave up; -7 plays a fifth down. The left oscillator runs at this resulting frequency; the right oscillator runs at the same frequency plus the Binaural Beat Hz offset.
 
 **Vn Drift / Rate** `-1000 to +1000, default 0`
 In Drift mode: an offset added to the global Rate Value to determine this voice's tremolo rate. Positive values make the voice run faster than the global rate; negative values slower. 0 means the voice runs at exactly the global rate.
@@ -108,6 +126,18 @@ The oscillator waveform used by all voices simultaneously.
 - **Phi Triangle** — golden-ratio phase warp (same as Golden TS) fed into a TRIANGLE output instead of a sine. Brighter and harmonically richer than Golden TS — triangles carry odd harmonics that the sine-output version smooths over.
 - **Phi Sine** — golden-ratio phase warp (same as Golden TS) fed into a clean sine output, with **no** sine pre-warp. The minimalist version of Golden SG: same warp shape, no added prewarp brightness.
 
+**Pulse Width %** `1-99%, step 0.1, default 25`
+Duty cycle for the **Pulse** waveform — the fraction of each cycle the wave
+spends high before snapping low. 50% is a square wave and sounds identical to
+the Square slot. Narrower values get thinner and more nasal; wider values mirror
+the same character back the other way, so 25% and 75% sound alike. The default
+of 25% is deliberately off-square so Pulse sounds distinct from Square the
+moment you select it. The range stops short of 0 and 100, which would be
+silence and DC respectively.
+
+Only meaningful when Waveform is set to **Pulse**, and hidden from the parameter
+list entirely on every other waveform.
+
 ---
 
 ### Pan
@@ -129,6 +159,39 @@ Base rate for pan movement in Increment mode, in the units set by Rate Mode.
 
 **Pan Increment per Voice** `-1000–+1000, default 0`
 The per-voice rate offset in Increment mode. Each successive voice's pan rate is offset by this amount from the previous. Setting a positive value spreads voices across different pan speeds; a negative value reverses the direction of the spread.
+
+---
+
+### Character
+
+Four controls that shape whichever waveform is selected. They are applied to the
+**summed output of all voices**, after all per-voice processing — so they colour
+the overall sound rather than each voice separately. All four default to neutral,
+so the plugin sounds untouched until you push one.
+
+**Tone (Warm <-> Bright)** `-100 to +100, step 0.1, default 0`
+Tilt EQ across the whole output. Negative values are warmer and darker (lows
+boosted, highs pulled back); positive values are brighter and airier (the
+reverse). One control covering the entire warmth-to-brightness axis. The pivot
+sits around 700 Hz, and the extremes reach roughly 9 dB of boost either way.
+
+**Edge** `0-100, step 0.1, default 0`
+Soft-clip drive on the summed signal. At 0 the output is clean; pushing it adds
+progressively more harmonic grit. A sine picks up a saw-flavoured character; a
+triangle gets more bite. Level stays roughly constant as you push it, so you can
+judge the change in character without the loudness confusing the comparison.
+
+**Movement** `0-100, step 0.1, default 0`
+Chorus on the output. The signal runs through a modulated delay line read at two
+separate points, one per output channel, giving stereo shimmer and motion. At 0
+there is no effect; higher values raise the wet mix.
+
+**Body** `0-100, step 0.1, default 0`
+Peaking EQ centred on the root pitch, boosting the fundamental region by up to
+12 dB. It **tracks the pitch** — move the root and the boost moves with it.
+Useful for the Golden and Phi waveforms, which can sound thin in the low end.
+
+---
 
 ### Direction & Reverse
 
