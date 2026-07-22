@@ -56,19 +56,9 @@ armed + monitored). Render to commit a result.
 **Character & tone**
 - **Texture** (0 voice .. 100 wash) — the crossfade above.
 - **Wash grain (ms)** — *synthesis grain length* for the wash: short =
-  rougher/grainier, long = glassier/smoother. Note the unit is **milliseconds**,
-  so 300 is roughly a third of a second per grain, not a fraction of one. Cheap
-  to change and **safe to automate** — it no longer re-analyzes (that's decoupled
-  to a fixed analysis window + Capture point), so it won't drop out under an
-  envelope.
-
-  **CPU is now roughly flat across the whole range.** Previously the synthesis
-  FFT was a fixed size no matter how short the grain, while grains fire on a hop
-  of a quarter of the grain length — so shortening the grain multiplied the work
-  without making any single grain cheaper, and the bottom of the range dropped
-  out on most machines. The FFT is now sized to the grain, which is what a grain
-  can actually carry: short grains fire often but each is small, long grains are
-  large but rare, and the two cancel. The short end of the slider is usable.
+  rougher/grainier, long = glassier/smoother. Cheap to change and **safe to
+  automate** — it no longer re-analyzes (that's decoupled to a fixed analysis
+  window + Capture point), so it won't drop out under an envelope.
 - **Spread (Hz)** — blurs the spectrum across frequency: diffuses a narrow
   capture into a wider noise bed.
 - **Pitch (semitones)** — transpose. Tape-style: formants move with pitch, so one
