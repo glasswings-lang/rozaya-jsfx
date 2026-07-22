@@ -147,7 +147,7 @@ Same as polyrhythm and melody.
 
 ## Spectral Vowel Morpher — render-speed optimization (LANDED 2026-07-01)
 
-**Status:** ✅ **LANDED 2026-07-01** (commit `793eebc`, pushed). The Primary fix below — wavetable the voice oscillators — shipped into `src/spectral_vowel_morpher.jsfx`. Internal only: **no sliders, no @serialize change, so existing projects open unchanged and just render faster.** Ear-verified by Rozaya as perceptually identical via an A/B (a `_wt` test build swapped into a byte-clone of a real project). The Secondary iFFT idea below was NOT needed and stays optional. Plan preserved for reference. Original diagnosis (2026-06-30): renders stacking 3 instances crawled near/below realtime; the per-sample `sin()` cost was the cause, and the wavetable removed it.
+**Status:** ✅ **LANDED 2026-07-01** (commit `793eebc`, pushed). The Primary fix below — wavetable the voice oscillators — shipped into `src/spectral_vowel_morpher.jsfx`. Internal only: **no sliders, no @serialize change, so existing projects open unchanged and just render faster.** Ear-verified by Rozaya as perceptually identical via an A/B (a `_wt` test build swapped into a byte-clone of a real project). The Secondary iFFT idea below was not needed *for this*, but **landed later anyway, for a different reason** — see the iFFT note under cost item 2. Plan preserved for reference. Original diagnosis (2026-06-30): renders stacking 3 instances crawled near/below realtime; the per-sample `sin()` cost was the cause, and the wavetable removed it.
 
 ### Where the cost is
 
@@ -155,6 +155,8 @@ Two continuous costs, both real, multiplied by however many instances are stacke
 
 1. **Per-sample additive voice engine (`@sample`).** The `loop(NHARM, …)` (NHARM = 64) calls `sin()` **twice per harmonic** — voice A (`sin(hph[vn])`) and voice B (`sin(hphB[vn])`) — so ~128 `sin()` per output sample, ≈ 6 M sines/sec **per instance**, continuously while audio plays. This is the dominant ongoing cost and the best target.
 2. **Wash FFTs (`gen_grain` → `build_spectrum`).** `build_spectrum()` runs **twice per grain** (L = `build_spectrum(0)`, R = `build_spectrum(1)`), each ending in `ifft(FFTSIZE = 32768)`. At Wash grain 150 ms / 48 k, HOP ≈ W/4 ≈ 1800 → ~27 grains/sec → ~54 × 32768-pt iFFTs/sec, plus the NBINS (16385) morph/spread/denoise/random-phase loops around each.
+
+   **✅ FIXED 2026-07-21, in `spectral_vowel_morpher_v2.jsfx`.** The analysis above under-states it at the short end: grain cost is CONSTANT while grains fire every W/4, so the rate scales inversely with grain length — at the bottom of the Wash grain range that is ~800 grains/sec, each still paying two 32768-point iFFTs. Rozaya heard it as evenly-spaced dropouts and assumed tiny grains were inherently fragile; it was real-time underrun. The FFT is now sized to the grain (`GFFT`), which is all a grain can carry anyway — only the first W samples of each 32768-point result were ever used. Short grains become the cheapest setting rather than the most expensive, and CPU is roughly flat across the slider. Note `ifft()` is unnormalized, so 1/GFFT is folded into the magnitudes to keep grain level independent of size; without that the auto-gain smoother would chase a step at every power-of-two crossing and dragging the slider would swell and dip.
 
 Also a one-time spike at every render start: the `@block` play-edge re-runs `compute_spectrum` + `analyze_harm` (a 32 k FFT + YIN) for every used slot.
 
@@ -215,7 +217,8 @@ Two directions surfaced while playing the Sculptor live (via the kin_bridge live
 
 Let the Fundamental be set by musical note, not only Hz. Currently `slider4 "Fundamental Hz"` (20–2000). Picking "A2" is far easier than dialing "110.00 Hz" — a direct fit for the dyscalculia sweep (never make the user produce a number; see `docs/dyscalculia-accessibility-sweep.md`).
 
-- Borrow the proven pattern from `polyrhythm_phase.jsfx`: Base Note (C..B enum) + Center Octave + Tuning Reference Hz (default 440) deriving the frequency.
+- **⚠ Do NOT borrow `polyrhythm_phase.jsfx`'s Base Note + Center Octave shape — tested with Rozaya 2026-07-21 and it is not enough.** That pattern names the *root*, then asks for each voice as a semitone offset from it, so the user is still doing arithmetic; and Harmonic Sculptor's own `H6 +5th` labels are *music-theory jargon*, which is exactly as unreachable as a bare number for someone who does not read music. Rozaya named this directly: "i don't know music theory, thats how come the harmonic thing is so hard."
+- **Do this instead:** an absolute note picker — the voice names the note it plays (`G4`), no root and no offset — plus a separate fine-tune in **cents**. See `src/polyrhythm_notes.jsfx` and its manual page for the worked version. Interval names ("a fifth") are NOT an acceptable substitute for note names; they are a second vocabulary to learn, not a removal of one.
 - Add new sliders at the END only (slider IDs are primary keys — never renumber). Add a Tuning mode toggle (Hz / Note), Base Note, Octave, Tuning Reference; `slider_show()` to hide the irrelevant set per mode. Keep the existing Fundamental Hz slider working so old projects don't break.
 
 ### 2. Vowel / formant mode (additive formant synthesis)

@@ -298,6 +298,53 @@ Then apply the matching fix from the toolkit. Ear-test per plugin. Keep slider
 
 ---
 
+## Pitch was never swept (2026-07-21)
+
+The sweep had only ever covered **rhythm** — rate, drift, timing, duration.
+Pitch controls were never audited, and three plugins were handing over raw
+semitone counts: `polyrhythm_phase`, `melody_phase`, `bubbler`.
+
+Worse, Polyrhythm was paying the *cost* of a whole-number grid with none of its
+benefit. A whole-number grid is the price of putting **names** on the steps —
+that is what makes Harmonic Sculptor's picker work at all. Polyrhythm locked
+itself to whole semitones and never labelled them, so you could neither detune
+by ear nor pick a note. Tax, no service.
+
+**Landed:**
+
+- `polyrhythm_phase` semitone sliders step in tenths, so voices can be detuned
+  against each other by ear. One character, no other change; the pitch maths was
+  already floating point and had always accepted fractions.
+- `src/polyrhythm_notes.jsfx` — the same engine with each voice naming its note
+  (`C2`–`C6`) and a separate fine-tune in **cents**. A separate plugin, because
+  the layout needed six sliders per voice in a fixed order and renumbering in
+  place would have broken every saved project.
+
+**The lesson that cost the most:** the first attempt used *interval* names
+("a fifth"), which is music-theory jargon and no more reachable than `7` for
+someone who does not read music. Note names are the fix. Written up under
+"Two ways to fail this that both look like fixes" in the companion doc.
+
+**Still unswept:** `melody_phase` and `bubbler` both still take raw semitones.
+
+## Morph timing: a percentage was the wrong unit (2026-07-21)
+
+`spectral_vowel_morpher` had one global Auto-morph time for the whole journey
+across the captured slots, so capturing another slot made every step *faster*
+— the total stayed put and got divided more ways. With exactly two slots that
+is indistinguishable from "time per step", which is why it only surprises you
+on the third.
+
+The first fix was a per-slot **dwell percentage**, and it was wrong for the
+reason this whole document exists: a percentage of a shared total is a ratio.
+Replaced with a per-slot **linger in seconds** in `spectral_vowel_morpher_v2`,
+and the global removed entirely — a cycle is now its steps added together.
+Asymmetry (a breath out longer than a breath in) falls out for free and cannot
+be expressed by any single shared number.
+
+Every setting that describes a capture is per-slot in v2 for the same reason:
+one global flattening eight captures is a shared quantity nobody asked to share.
+
 ## Precedent already shipped
 
 The **multiplier → signed-delta** change across the Speed Ramp sweep ("the

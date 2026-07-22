@@ -104,12 +104,41 @@ math, and shows its working. Not a fallback — the correct home.
 | **Host-tempo / tap sync** | borrowing the host's accessible tap-tempo |
 | **Nudge-by-ear** — a clean small step, "tune it till it sits" | "get it feeling right" controls |
 | **Relative-to-reference** | inter-voice / inter-layer timing |
+| **Absolute over offset** | pitch, position — name the thing, don't count from an anchor |
+| **Per-item absolute units** | anything with a shared global that gets divided up |
 
 The decimal grid is the recurring villain. A slider that steps
 `0.01, 0.02 … 0.12, 0.13` *cannot land on `0.125`* — an eighth note lives
 *between* two steps, so you're forced to type the decimal, straight back into
 number-production. Re-grid to note-values, or replace the number with a picker,
 and the brain's strongest channel becomes reachable by feel.
+
+## Two ways to fail this that both *look* like fixes
+
+Both were made here, on the same evening, and both had to be undone.
+
+**A percentage of a global is a ratio wearing a friendly hat.** A "Slot dwell %"
+was added so each step of a morph could be longer or shorter than the others.
+It defaulted to 100, took whole numbers, and never showed a decimal point — and
+it was still wrong, because the number only meant anything *relative to a shared
+total*, so using it meant computing a proportion. Replacing it with a per-slot
+time **in seconds** fixed it: an absolute felt unit, no shared total to divide,
+and no relationship to hold in mind. The global it replaced disappeared entirely
+— a cycle is now simply its steps added up.
+
+Note the second win: removing the global also removed a *question*. With a
+shared total, "is this number the whole journey or one step?" is a real
+ambiguity, and it had already produced a confusing control. Per-item absolutes
+don't have that question to answer.
+
+**Note names are not interval names.** The fix-pattern table says to replace a
+computed number with a picker — but a picker of `+5th`, `+min7th`, `2 octaves`
+is a *second vocabulary*, not a removal of one. It is only easier for someone
+who already reads music. Rozaya does not, and said so plainly: "i don't know
+music theory, thats how come the harmonic thing is so hard." The working
+version names the **note** (`G4`) — the thing already known — and puts fine
+adjustment in cents beside it. Test for this: does the label name something the
+user already has a word for, or something they'd have to go and learn?
 
 ## Snap vs. nudge — you don't lose the groove
 
