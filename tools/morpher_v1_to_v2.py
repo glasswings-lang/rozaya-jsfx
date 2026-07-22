@@ -41,6 +41,7 @@ import time
 JS1 = "glasswings/spectral_vowel_morpher.jsfx"
 JS2 = "glasswings/spectral_vowel_morpher_v2.jsfx"
 LINGER = "Slot linger"
+XFADE = "Slot crossfade"               # v2-only, added after v1; seed = linger
 DROPPED = "Auto-morph time (sec)"      # v1-only: becomes the per-slot linger
 V1_MAGIC = 7700001.0
 
@@ -147,6 +148,11 @@ def main():
             if label in by_label:
                 values.append(v1[by_label[label]])
             elif label.startswith(LINGER):
+                values.append(linger)
+            elif label.startswith(XFADE):
+                # Seed to match linger so a converted v1 project sounds exactly
+                # like v1 (pure crossfade, no hold). The user then lowers this
+                # per slot to introduce a hold period.
                 values.append(linger)
             else:
                 sys.exit("no v1 source for v2 slider %d (%s)" % (k, label))

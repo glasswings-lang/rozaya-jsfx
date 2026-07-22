@@ -84,6 +84,15 @@ slider25:0<0,60,0.1>Ramp duration (minutes)
 slider26:0<0,60,0.1>Ramp start delay (minutes)
 slider27:0<0,1,1{Off,On}>Ramp engage
 
+// --- Slot crossfade: PER SLOT, appended at the end (slider IDs are primary
+//     keys now). The fraction of Slot linger that is a crossfade to the next
+//     slot; the rest is a hold on this slot. Clamped to Slot linger at run
+//     time, so a value larger than the linger just means "all crossfade" (the
+//     original behaviour). Default matches Slot linger's default, so an
+//     unedited instance sounds exactly as it did before this control existed;
+//     hold appears only when the user lowers it. ---
+slider28:4<0,300,0.1>Slot crossfade (sec) (per slot: the fade at the end; rest is hold)
+
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
 // memory) survive transport stop/play -- the whole point of a capture-based
@@ -148,6 +157,7 @@ slot_width    = freemem; freemem += NSLOTS;   // PER-SLOT stereo_width
 slot_lowcut   = freemem; freemem += NSLOTS;   // PER-SLOT lowcut_hz
 slot_denoise  = freemem; freemem += NSLOTS;   // PER-SLOT denoise_amt
 slot_linger   = freemem; freemem += NSLOTS;      // PER-SLOT step time in SECONDS (time to leave this slot)
+slot_xfade    = freemem; freemem += NSLOTS;      // PER-SLOT crossfade length in SECONDS; hold = linger - xfade
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 // --- harmonic (voice) engine scratch ---
 hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
@@ -184,7 +194,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_xfade[i] = 4; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -235,7 +245,7 @@ i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analy
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
 cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
-bag_pos = 999; last_slot = 0; drift_primed = 0; auto_primed = 0; sweep_dir = 1;   // walk + shuffle-bag state (primed lazily in @sample)
+bag_pos = 999; last_slot = 0; drift_primed = 0; auto_primed = 0; sweep_dir = 1; leg_elapsed = 0;   // walk + shuffle-bag state (primed lazily in @sample)
 // Fresh instance: every slot starts as whatever is on screen. Without this only
 // the slot selected when a slider was last touched would carry the visible
 // settings, and the others would sit at hard-coded defaults.
@@ -516,7 +526,9 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
   slot_lowcut[last_cap_slot] = slider12;
   slot_denoise[last_cap_slot] = slider13;
   slot_linger[last_cap_slot] = slider4;            // linger banks with the slot too
+  slot_xfade[last_cap_slot]  = slider28;           // crossfade too
   slider4 = slot_linger[cap_slot];
+  slider28 = slot_xfade[cap_slot];
   slider6 = slot_voicedb[cap_slot];
   slider7 = slot_texture[cap_slot] * 100;
   slider9 = slot_spread[cap_slot];
@@ -534,6 +546,7 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
 ) : (
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
   slot_linger[cap_slot] = slider4;                 // and a live linger edit
+  slot_xfade[cap_slot]  = slider28;                // and a live crossfade edit
   // a live edit of any per-slot value stamps the slot it belongs to
   slot_voicedb[cap_slot] = slider6;
   slot_texture[cap_slot] = slider7 * 0.01;
@@ -659,7 +672,7 @@ drift_restart_free = slider22;   // 0 = restart on play (sync), 1 = free-running
   // morph phase was zeroed here; now that the modes step slot to slot, the
   // walk state is what has to be cleared or Glide would stay parked on its
   // final slot for every subsequent play.
-  auto_primed = 0; drift_primed = 0; sweep_dir = 1;
+  auto_primed = 0; drift_primed = 0; sweep_dir = 1; leg_elapsed = 0;
   last_gsamp = floor(grain_ms * srate / 1000); last_cappoint = cap_point01;
   cap_dirty = 0;
   // (Drift reset is handled by its own transport block below — it must also
@@ -719,6 +732,7 @@ seed_slots_from_sliders == 1 ? (
   ss = 0;
   loop(NSLOTS,
     slot_linger[ss]  = slider4;
+    slot_xfade[ss]   = slider28;
     slot_voicedb[ss] = slider6;  slot_texture[ss] = slider7 * 0.01;
     slot_spread[ss]  = slider9;  slot_pitch[ss]   = slider10;
     slot_width[ss]   = slider11; slot_lowcut[ss]  = slider12;
@@ -848,9 +862,21 @@ automorph_mode > 0.5 ? (
     (automorph_mode == 2 && cur_slot >= n_used - 1) ? (
       xfade = 0; nxt_slot = cur_slot;
     ) : (
-      xfade += 1 / max(1, max(0.05, slot_linger[cur_slot]) * srate);
-      xfade >= 1 ? (
-        cur_slot = nxt_slot; xfade = 0;
+      // Slot linger = HOLD + CROSSFADE. Sit on cur_slot with xfade pinned at 0
+      // for the hold portion, then advance xfade 0->1 over the crossfade portion.
+      // Crossfade is clamped to linger (>= linger means "all crossfade", i.e. the
+      // pre-hold behaviour where every leg was a continuous morph). One counter
+      // in seconds keeps the accounting readable and the boundary at exactly
+      // slot_linger regardless of how the split is chosen.
+      leg_len   = max(0.05, slot_linger[cur_slot]);
+      leg_fade  = max(0, min(leg_len, slot_xfade[cur_slot]));
+      leg_hold  = leg_len - leg_fade;
+      leg_elapsed += 1 / srate;
+      xfade = leg_elapsed <= leg_hold ? 0 :
+              (leg_fade <= 0.0001 ? 1 :
+               min(1, (leg_elapsed - leg_hold) / leg_fade));
+      leg_elapsed >= leg_len ? (
+        cur_slot = nxt_slot; xfade = 0; leg_elapsed = 0;
         automorph_mode == 3 ? (
           bag_pos >= n_used ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );   // through them all -> reshuffle
           nxt_slot = driftbag[bag_pos]; bag_pos += 1;
@@ -1076,7 +1102,7 @@ file_var(0, ser_magic);
   // Deferred to @slider because load order between the two sections is not
   // guaranteed and the slider values may not have arrived yet.
   (file_avail(0) >= 0 && ser_v1) ? (
-    sv1 = 0; loop(NSLOTS, slot_linger[sv1] = 4; sv1 += 1; );
+    sv1 = 0; loop(NSLOTS, slot_linger[sv1] = 4; slot_xfade[sv1] = 4; sv1 += 1; );
     sv1 = 6; loop(N_TARGETS - 6,
       target_drift_up[sv1] = 0; target_drift_down[sv1] = 0;
       target_drift_per[sv1] = 30; target_drift_shape[sv1] = 0;
@@ -1093,6 +1119,16 @@ file_var(0, ser_magic);
   file_mem(0, slot_linger, NSLOTS);
   (file_avail(0) >= 0 && slot_linger[0] == -999) ? (
     sdw = 0; loop(NSLOTS, slot_linger[sdw] = 4; sdw += 1; );
+  );
+
+  // Slot crossfade: appended after Slot linger. EOF-safe -- a project saved
+  // before this field existed leaves the sentinel untouched, and we seed
+  // slot_xfade to match slot_linger so those projects sound exactly as they
+  // did (pure crossfade, no hold). New / live-edited slots override as usual.
+  file_avail(0) >= 0 ? ( slot_xfade[0] = -999; );
+  file_mem(0, slot_xfade, NSLOTS);
+  (file_avail(0) >= 0 && slot_xfade[0] == -999) ? (
+    sxf = 0; loop(NSLOTS, slot_xfade[sxf] = slot_linger[sxf]; sxf += 1; );
   );
 
   // --- Per-slot parameter banks, appended. Same sentinel migration as the
@@ -1168,6 +1204,7 @@ file_var(0, ser_magic);
     // for a v2 load the banks are, and the sliders follow them as before.
     ser_v1 ? 0 : (
       slider4 = slot_linger[cps];
+    slider28 = slot_xfade[cps];
       slider6 = slot_voicedb[cps];
       slider7 = slot_texture[cps] * 100;
       slider9 = slot_spread[cps];

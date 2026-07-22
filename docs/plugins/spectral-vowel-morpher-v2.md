@@ -157,6 +157,31 @@ Works in all three Auto-morph modes. In **Sweep**, which walks out and back,
 each slot's linger applies whenever you leave it — so the return trip is timed
 by the slots it is leaving, not a mirror of the way out.
 
+**Slot crossfade (sec)** `0 to 300, default 4`
+How much of **Slot linger** is a crossfade *into the next slot*. The rest is a
+**hold** on this slot — the sound sits there, unmoving, until the crossfade
+begins.
+
+*Per slot*, edited the same way as Slot linger: the value you see belongs to
+whichever **Capture slot** is selected.
+
+The whole step still takes exactly **Slot linger** seconds. Slot crossfade only
+decides how it is split.
+
+- **Crossfade equals linger** (the default) — the entire step is a continuous
+  crossfade, with no hold. This is how the original Morpher worked and is the
+  right choice for evolving textures where the sound never really settles.
+- **Crossfade less than linger** — the slot is held for `linger − crossfade`
+  seconds, then a `crossfade`-second fade to the next slot. For breath,
+  spoken phrases, or anything where each slot is a *recognisable moment*
+  rather than a stop on a continuous morph, this is what you want.
+- **Crossfade equals zero** — a hard cut at the end of the hold.
+- **Crossfade greater than linger** — silently clamped to the linger. A value
+  larger than makes sense just means "all crossfade".
+
+Independent per slot: a slow silence-slot with a long hold can sit between two
+short sound-slots with fast crossfades, or whatever shape actually fits.
+
 ### Drift (in-plugin automation)
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
