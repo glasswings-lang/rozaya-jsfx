@@ -182,6 +182,49 @@ decides how it is split.
 Independent per slot: a slow silence-slot with a long hold can sit between two
 short sound-slots with fast crossfades, or whatever shape actually fits.
 
+### Where does a slot "begin"?
+
+This is the part that trips people up (including everyone who's designed this
+plugin), because there are three different answers depending on what you mean.
+For a concrete case — slot 0 with `linger 10, crossfade 3`, then slot 1:
+
+```
+time:     0              7           10                17          20
+          |------ hold --|-- fade ---|------ hold -----|-- fade ---|
+what:     pure slot 0    slot 0→1    pure slot 1       slot 1→2
+```
+
+Three "beginnings" of slot 1:
+
+1. **When you first hear slot 1** — time 7. Slot 1 fades in over 3 seconds
+   while slot 0 fades out. Both are audible during those 3 seconds.
+2. **When slot 1 is fully alone, no blend** — time 10. Slot 0's crossfade
+   has completed and slot 1 is at 100%.
+3. **When slot 1's own linger starts counting** — also time 10. Its hold
+   runs 10→17, then its own crossfade 17→20.
+
+The rule underneath: **each slot's linger is the interval from *"I am at
+100% alone"* to *"the next slot is at 100% alone."*** That interval splits
+into hold-first, fade-at-end. The crossfade at the boundary between two
+slots **belongs entirely to the earlier slot's linger.** Slot 1 doesn't have
+an "inbound fade" of its own — slot 1's own crossfade is only its *outbound*
+fade to slot 2.
+
+The mental shortcut: **the fade lives between two slots and belongs to the
+earlier one.** If you want to know "how do I get *out* of slot 3," you look
+at slot 3's crossfade. If you want to know "how do I get *into* slot 3," you
+look at slot 2's crossfade. Never slot 3's — from slot 3's view, "getting in"
+was slot 2's problem.
+
+**Practical implication for setting linger and crossfade for a specific
+audible effect:**
+
+- To hear pure slot 3 for 8 seconds, then have it transition over 2 seconds
+  to slot 4: set slot 3's `linger 10, crossfade 2`.
+- Slot 4's timing is decided by slot 4's own linger and crossfade,
+  independently. Slot 4's "hearability" begins during slot 3's crossfade
+  regardless of what slot 4 is set to.
+
 **Slot mute (Off / On)** `default Off`
 When **On**, this slot is skipped by Sweep, Glide, and Shuffle. The morph
 crossfades from the previous unmuted slot directly to the next unmuted slot,
@@ -208,6 +251,45 @@ of them today: mute the two you don't want in the sequence.
 Edge cases: if every slot is muted, the morph is silent. If exactly one is
 active, it plays solo (no morph, since there's nothing to morph between).
 Both fall out of the sequencer naturally.
+
+## A gotcha with silent (or otherwise "empty-feeling") slots
+
+**Every per-slot setting belongs to the slot as captured** — including Stereo
+width, Denoise, Pitch, Spread, and the rest. This is usually what you want:
+each capture carries its own colour. But it means **a silent slot inherits
+whatever the sliders were set to at the moment you captured it**, and if those
+differ from your audio slots, the morph will crossfade the *settings* right
+along with the audio — producing sweeps that seem to come from nowhere.
+
+The classic version of this is: you capture your in-breath and out-breath at
+one Stereo width, then capture silence for the pause between them at a
+different Stereo width without meaning to. The plugin then dutifully sweeps
+width from mono to wide as the morph passes through the silent slot, and it
+sounds like some hidden LFO is animating stereo. It isn't. It's just the
+per-slot width doing exactly what it says it does.
+
+The fix is one of:
+
+- **Configure the silent slot the same as your audio slots — ALL seven per-slot
+  parameters, not just the one you noticed.** Select the silent slot via
+  **Capture slot** and walk down: **Voice level, Texture, Spread, Pitch, Stereo
+  width, Low cut, Denoise**. Set each to match your audio slots. Silence at
+  any of these values sounds the same (silence is silence), but the moment the
+  morph passes through the silent slot, each mismatched parameter animates
+  audibly on your audio slots. Missing even one is enough to hear it. There is
+  no way to know from listening to a silent slot alone that its Denoise is
+  wrong — the mismatch only surfaces mid-crossfade.
+- **Mute the silent slot** with **Slot mute** so the morph skips it entirely.
+  Now the crossfade goes audio-to-audio and never traverses the silent slot's
+  settings. This is the reliable fix if you don't care about the silent slot's
+  own settings ever mattering.
+
+In the original Morpher (v1) there was one global Stereo width, so this
+couldn't happen — every slot shared the same width, and adding a silent
+capture cost you nothing extra to configure. In v2, per-slot control is the
+feature, but the cost is that empty-feeling slots (silence, near-silence,
+placeholder captures) need their non-audio parameters set deliberately, or
+you'll hear those parameters *animating* on you during transitions.
 
 ### Drift (in-plugin automation)
 
