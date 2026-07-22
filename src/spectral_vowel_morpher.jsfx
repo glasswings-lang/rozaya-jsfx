@@ -295,19 +295,21 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir) (
   // Build a Hermitian-symmetric spectrum so ifft() returns a REAL signal:
   // fill bins 0..N/2 from the magnitude data, mirror them as conjugates.
   i = 0;
-  loop(FFTSIZE/2 + 1,
-    srcb = i / pitch_ratio;
-    (srcb >= 0 && srcb < NBINS - 1) ? ( b0 = floor(srcb); fr = srcb - b0; m = curmag[b0]*(1-fr) + curmag[b0+1]*fr; ) : ( m = 0; );
+  loop(GBINS,
+    // GR maps this grain's bin grid back onto the fixed analysis grid, so the
+    // same frequency is read whatever size the synthesis FFT currently is.
+    srcb = i * GR / pitch_ratio;
+    (srcb >= 0 && srcb < NBINS - 1) ? ( b0 = floor(srcb); fr = srcb - b0; m = (curmag[b0]*(1-fr) + curmag[b0+1]*fr) * GINV; ) : ( m = 0; );
     ph = phase[i] + (useR ? woff*doff[i] : 0);
     re = m * cos(ph); im = m * sin(ph);
     fftwork[2*i] = re; fftwork[2*i+1] = im;
-    (i > 0 && i < FFTSIZE/2) ? ( mir = FFTSIZE - i; fftwork[2*mir] = re; fftwork[2*mir+1] = -im; );
+    (i > 0 && i < GFFT/2) ? ( mir = GFFT - i; fftwork[2*mir] = re; fftwork[2*mir+1] = -im; );
     i += 1;
   );
   fftwork[1] = 0;                       // DC imaginary = 0
-  fftwork[2*(FFTSIZE/2)+1] = 0;         // Nyquist imaginary = 0
-  fft_ipermute(fftwork, FFTSIZE);
-  ifft(fftwork, FFTSIZE);
+  fftwork[2*(GFFT/2)+1] = 0;            // Nyquist imaginary = 0
+  fft_ipermute(fftwork, GFFT);
+  ifft(fftwork, GFFT);
 );
 
 function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw) (
@@ -337,7 +339,9 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
     i < cutbin ? ( curmag[i] = 0; ) : ( curmag[i] = max(0, curmag[i] - thr); );
     i += 1;
   );
-  i = 0; loop(NBINS, phase[i] = rand(1)*TWOPI; i += 1; );
+  // Only the bins this grain's FFT actually reads need a fresh random phase.
+  // Was NBINS unconditionally -- another cost that ignored grain size.
+  i = 0; loop(GBINS, phase[i] = rand(1)*TWOPI; i += 1; );
   build_spectrum(0);
   rms = 0; i = 0; loop(W, sv = fftwork[2*i]; grainbuf[i] = sv; rms += sv*sv; i += 1; );
   rms = sqrt(rms / W);
@@ -361,9 +365,38 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
 // Rebuild ONLY the synthesis grain window (sqrt-Hann, length W = Wash grain).
 // CHEAP: no FFT, no YIN, no accumulator clear -- so Wash grain can be dragged
 // or AUTOMATED without dropouts (old-length grains finish as new ones start).
+// GFFT: the synthesis FFT is sized TO THE GRAIN, not fixed at FFTSIZE.
+//
+// A grain of W samples cannot carry more spectral detail than W supports, so
+// synthesizing FFTSIZE points and then keeping only the first W was buying
+// nothing -- it was pure discarded work, and the shorter the grain the more of
+// it got thrown away. Worse, cost-per-grain was CONSTANT while grains fire
+// every W/4 samples, so shortening the grain multiplied CPU linearly: at the
+// bottom of the Wash grain range the wash fired ~800 grains/sec, each paying
+// two full 32768-point iFFTs. That is the "even dropouts at short grain"
+// symptom -- real-time underrun, not a windowing artifact.
+//
+// Sizing the FFT to the grain inverts that: short grains become the CHEAPEST
+// setting instead of the most expensive, and long grains are unchanged in
+// character (at the default grain the old FFT was already longer than the
+// grain itself, so the extra resolution was never audible).
+//
+// GR is the source->target bin stride. The captured spectra stay on the fixed
+// FFTSIZE analysis grid; only synthesis resolution adapts.
 function build_synwin(wlen) local(i) (
   wlen = max(64, min(MAXFFT, floor(wlen)));
   W = wlen; HOP = max(1, floor(W / 4));
+  GFFT = 256;
+  loop(16, GFFT < W ? GFFT *= 2; );      // bounded: 256 << 16 covers MAXFFT
+  GFFT = min(GFFT, FFTSIZE);
+  GBINS = GFFT/2 + 1;
+  GR = FFTSIZE / GFFT;                   // integer: both are powers of two
+  // JSFX ifft() is UNNORMALIZED ("scaled down by 1/size, if used"), so raw grain
+  // amplitude tracks GFFT. Folding 1/GFFT into the magnitudes keeps grain level
+  // independent of grain size -- without it the slow auto-gain smoother would
+  // have to chase a large jump every time GFFT crossed a power of two, i.e.
+  // dragging Wash grain would swell and dip. Free: it rides an existing multiply.
+  GINV = 1 / GFFT;
   i = 0; loop(W, synwin[i] = sqrt(0.5 - 0.5*cos(TWOPI*i/(W-1))); i += 1; );
 );
 function clear_accum() local(i) (
@@ -396,6 +429,14 @@ function shuffle_bag() local(i, j, t) (
   );
   (n_used > 1 && driftbag[0] == last_slot) ? ( t = driftbag[0]; driftbag[0] = driftbag[1]; driftbag[1] = t; );
 );
+
+// Seed the grain window and its FFT size here rather than relying on @block
+// reaching the "grain length changed" branch first. In practice it always does
+// (last_gsamp starts at 0), but GFFT / GBINS / GR / GINV are now divisors and
+// loop counts in the synthesis path -- leaving them at 0 for even one block
+// would be a divide-by-zero, so the dependency is made explicit instead of
+// inherited from initialization order.
+build_synwin(max(64, floor(150 * srate / 1000)));
 
 @slider
 // Every slider read into a named global here; nothing downstream references a
