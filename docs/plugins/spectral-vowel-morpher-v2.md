@@ -2,16 +2,24 @@
 
 **Designed by Rozaya — Developed with Claude (Anthropic)**
 
-> **This is v2.** Identical controls and identical sound design to
-> [Spectral Vowel Morpher](spectral-vowel-morpher.md) — the only change is
-> inside the wash engine, where the synthesis FFT is now sized to the grain
-> instead of being fixed at maximum. The short end of **Wash grain** is usable
-> now; on the original it drops out.
+> **This is v2**, a separate plugin from
+> [Spectral Vowel Morpher](spectral-vowel-morpher.md) so the original keeps
+> working untouched in projects that already use it. Both can be installed at
+> once. Two things differ:
 >
-> It ships as a separate plugin so the original keeps working untouched in
-> projects that already use it. Both can be installed at once. Nothing else
-> differs, so a setting that sounds right on one should sound right on the other
-> — if it doesn't, that is worth reporting.
+> **1. Short grains work.** The synthesis FFT is sized to the grain rather than
+> fixed at maximum, so the low end of **Wash grain** is usable. On the original
+> it drops out.
+>
+> **2. Each slot holds for its own length of time, in seconds.** The single
+> global *Auto-morph time* is gone. Every slot now carries its own **Slot
+> linger**, and the cycle is simply its steps added up. Adding a slot makes the
+> cycle longer instead of squeezing the existing steps, and — the point of it —
+> the steps can differ from each other.
+>
+> Controls are also grouped by what they belong to rather than by when they were
+> added, so **Slot linger** sits beside **Capture point**: both belong to
+> whichever slot is selected.
 
 ---
 
@@ -104,41 +112,28 @@ Spectral subtraction — raise to thin toward the strongest partials (more tonal
 Crossfades across the captured slots. Pitch-preserving — each slot plays at its own pitch, so there is no portamento glide.
 
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
-In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. One full pass takes one Auto-morph time, so each slot gets an equal share of it — same timing and same gentle crossfades as Sweep, just shuffled (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
+In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. Every mode is timed the same way: each step lasts the **Slot linger** of the slot it is leaving, so a pass is however long its steps add up to — same gentle crossfades throughout, just a different order (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
-**Auto-morph time (sec)** `1 to 600, default 20`
-How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Shuffle it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow motion.
+**Slot linger (sec)** `0.1 to 300, default 4`
+How long the step *leaving this slot* takes, in seconds. That is the whole rule.
 
-**Auto-morph time means** `Whole pass / Each step, default Whole pass`
-How to read the Auto-morph time number.
+Like **Capture point**, it belongs to whichever **Capture slot** is selected:
+pick a slot, set its linger, pick the next, set that one. Each slot remembers
+its own and they save with the project.
 
-- **Whole pass** — the original meaning: that many seconds for the *entire*
-  journey across your slots. Capturing another slot therefore makes every step
-  *faster*, because the same total gets divided more ways. With exactly two
-  slots "whole pass" and "one step" are the same thing, which is why this only
-  surprises you once you capture a third.
-- **Each step** — the number is the time for *one* step. Adding a slot makes the
-  cycle longer instead of quicker. This is what you want for pacing work: a
-  breath does not speed up because you gave it more stages.
-
-Left on **Whole pass** by default, so existing projects are unchanged.
-
-**Slot dwell %** `10 to 500, default 100`
-Per slot: how long the step *leaving* this slot takes, relative to the others.
-100 is even — the previous behaviour. 200 makes that step twice as long as an
-even one; 50 makes it half.
-
-Like **Capture point**, this belongs to whichever **Capture slot** is selected —
-select a slot, set its dwell, select another, set that one. Each slot remembers
-its own, and they save with the project.
+There is no global morph time in v2. A cycle is just its steps added together,
+so nothing is divided and nothing is a proportion of anything — you say how long
+each step is and that is what it is.
 
 This is what makes an uneven cycle possible. A real breath is not symmetrical:
 the out-breath is usually longer than the in-breath, and a hold is longer than
-either. With dwell you set those proportions directly instead of accepting an
-even walk. Combined with **Each step**, the Auto-morph time becomes the length
-of a single even step and each slot's dwell scales its own.
+either. Set slot 1 to four seconds and slot 2 to six, and moving away from slot
+1 takes four while moving away from slot 2 takes six. No single shared number
+could ever express that.
 
-Works in all three Auto-morph modes.
+Works in all three Auto-morph modes. In **Sweep**, which walks out and back,
+each slot's linger applies whenever you leave it — so the return trip is timed
+by the slots it is leaving, not a mirror of the way out.
 
 ### Drift (in-plugin automation)
 
