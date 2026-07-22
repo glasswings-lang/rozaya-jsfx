@@ -18,11 +18,11 @@ every plugin, fix per-plugin, ear-test. This doc is the compass.
 > does any math.
 
 Sharpened 2026-07-09 (Rozaya corrected an earlier overstatement — "never *show* a
-number" is condescending; she can read and set values fine). The canonical
+number" is condescending; reading and setting values is fine). The canonical
 trigger: **`0.0625 ÷ 2` — everything fell apart.** That hits all three weak spots
 at once — a decimal with no felt magnitude, the hardest operation (division), and
 a working-memory hold — whereas **`480 − 440 = 40` is painless** (round, anchored
-numbers; a difference she can *feel*). It's not the digits, it's the
+numbers; a difference that can be *felt*). It's not the digits, it's the
 operation-on-un-anchored-values. Kill the forced operation, keep the honest,
 precise control. (Do **not** "fix" this by hiding numbers behind opaque
 mood-labels — that's dumbing-down, a separate mistake already made and rejected;
@@ -52,9 +52,19 @@ continuation and visual/relational reasoning are documented compensations.
 
 **Blind wrinkle (load-bearing):** Rozaya navigates by the parameter list (OSARA),
 not the `@gfx` canvas. So the usual sighted-dyscalculia fix — *show a live
-readout of the computed result* — **does not work** (NVDA can't read `@gfx`). The
-fix must be **input-side**: the control speaks a felt unit, or selects from a
-list, or syncs to REAPER's accessible tempo. Never "display the answer."
+readout of the computed result* — **does not work inside a plugin** (NVDA can't
+read `@gfx`). In-plugin, the fix must be **input-side**: the control speaks a
+felt unit, or selects from a list, or syncs to REAPER's accessible tempo.
+
+**Carve-out (sharpened 2026-07-21).** "Never display the answer" is true *of the
+plugin* and false *outside* it. The blocker is `@gfx`, not display as such — and
+a terminal is fully accessible. A companion tool in `tools/` can print both the
+answer **and the derivation chain**, and that lands fine: Rozaya can't *hold* a
+multi-step chain in working memory, but one can absolutely **audit a result one can
+read**. So a displayed chain is not the failed sighted fix; it's a different,
+working one. Design rule: the tool does the holding, then shows its work so the
+result can be checked rather than trusted. Never a black box that emits a bare
+number.
 
 ---
 
@@ -122,6 +132,44 @@ TODO — assume they vary until checked.)
   others (e.g. Attack% + Release% summing). Let the plugin clamp/handle it.
 
 ---
+
+## Cross-instance — the fixes that CANNOT live in a plugin
+
+Every pattern in the toolkit above is **input-side inside one instance**:
+note-value pickers, felt units, nudge-by-ear, relative-to-V1. That's coherent and
+it works — but it has a hard edge, and the edge is where the sweep was silently
+incomplete.
+
+**Instance 2 has no idea instance 1 exists.** There is no control you can add to
+a JSFX that knows what another copy of itself is set to. So any relationship
+*between* instances is structurally unreachable from input-side design. Not
+un-built: unreachable.
+
+**Worked case (2026-07-21).** Two Polyrhythm-style instances, base 30 BPM, voices
+laddering `+0.05` each. Goal: voice 8 of instance 2 should land `0.05` BPM *below*
+voice 1 of instance 1. Answer is `29.60`, and getting there means cancelling the
+`+0.35` upward stack **and** applying the `−0.05` shift — two subtractions pulling
+opposite ways, held simultaneously. Exactly the doc's own failure profile.
+
+Note what this confirms: **within** an instance the `0.05, 0.10, 0.15…` ladder was
+painless, precisely as this doc predicts (pattern continuation, spared faculty).
+The model held. The wall was *only* at the instance boundary. So this isn't a
+correction to the model — it's its missing edge case.
+
+**Fix: `tools/rate_calc.py`.** Takes base, step, which voice you're placing, what
+you're placing it against, and the offset you want. Prints the base rate to dial
+in, the full derivation chain, the resulting voice table, and a verification line.
+See `tools/README.md`.
+
+**Rule of thumb for the sweep — which lane a fix belongs in:**
+
+| The relationship is… | Fix lives… |
+|---|---|
+| within one instance (voice↔voice, slider↔slider) | **in-plugin, input-side** — picker, felt unit, nudge |
+| between instances, or plugin↔project, or plugin↔plugin | **tool-side** — `tools/`, prints answer + chain |
+
+If a fix would require a plugin to know something it cannot see, stop designing
+controls and write the tool.
 
 ## What JSFX can actually build (control reality — verified 2026-07-09)
 
@@ -240,6 +288,9 @@ For every slider, flag it if it forces any of:
 - [ ] an absolute target derived by calculation (vs a pattern continued)
 - [ ] a decimal-grid increment that can't land on note-values
 - [ ] a "welded" unit that silently changes when another slider moves
+- [ ] a relationship to something **outside this instance** (another instance,
+      another plugin, the project) — can't be fixed input-side at all; route it
+      to a `tools/` script instead
 
 Then apply the matching fix from the toolkit. Ear-test per plugin. Keep slider
 **IDs** stable (add new sliders at the end — the usual rule); changing a slider's

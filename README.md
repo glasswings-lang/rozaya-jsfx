@@ -31,6 +31,26 @@ A collection of audio synthesis and effect plugins for [REAPER](https://www.reap
 Full parameter reference and usage notes — **one page per plugin**, so you can
 read just the plugin you installed: [docs/plugins/](docs/plugins/README.md)
 
+## Tools
+
+Small helper scripts that live alongside the suite — they do the jobs a plugin
+structurally can't. Full usage and flags: **[tools/README.md](tools/README.md)**
+
+- **`rate_calc.py`** — works out the base rate for a second plugin instance so a
+  chosen voice lands exactly where you want it relative to the first. Prints the
+  answer *and the working*. (One instance can't see another, so this can't be a
+  control.)
+- **`loop_finder.py`** — finds loop-ready material in a recording and writes
+  clean looping WAVs, so loop points don't have to be hunted by eye.
+
+
+```
+python tools/rate_calc.py --help
+```
+
+Every tool is stdlib-only unless its entry says otherwise, and every one prints
+its full flag list with `--help`.
+
 ## Installation
 
 1. Copy the `.jsfx` files from `src/` into your REAPER `Effects` folder (or a subfolder of it).

@@ -2,6 +2,71 @@
 
 Small utility scripts that support the suite but aren't JSFX plugins.
 
+Every one runs from a terminal and prints its full flag list with `--help`.
+`rate_calc.py` needs nothing installed; `loop_finder.py` needs two packages
+(noted below).
+
+| Tool | For |
+|---|---|
+| [`rate_calc.py`](#rate_calcpy) | base rate for a second instance, so a chosen voice lands where you want it |
+| [`loop_finder.py`](#loop_finderpy) | pulling clean looping samples out of a recording |
+
+## rate_calc.py
+
+Works out what base rate to dial into a **second instance** of a plugin so that
+one of its voices lands exactly where you want it, relative to a voice in the
+first instance.
+
+```
+python tools/rate_calc.py --base 30 --aim 8 --offset -0.05
+```
+
+**Why it exists.** Voices inside an instance stack *upward* from the base rate.
+So putting a high-numbered voice *below* something means cancelling that stack
+**and** applying the shift — two subtractions pulling opposite ways, held at
+once. That's bookkeeping, not music, and it's the exact profile in
+[docs/dyscalculia-accessibility-sweep.md](../docs/dyscalculia-accessibility-sweep.md).
+
+This can't be a plugin control: **instance 2 has no idea instance 1 exists.**
+Nothing you add to a JSFX can see another copy of itself, so cross-instance
+relationships have to be solved out here.
+
+It prints the answer **and the working** — target, the stack it subtracted, the
+resulting base — then the full voice table and a verification line. The chain is
+there so you can *check* the result by reading rather than trust it.
+
+| Flag | Default | What it does |
+|---|---|---|
+| `--base BPM` | `30` | base rate of the **first** instance |
+| `--step BPM` | `0.05` | how much faster each voice runs than the one before |
+| `--voices N` | `8` | voices per instance |
+| `--aim N` | `8` | which voice of the **second** instance you're placing |
+| `--against N` | `1` | which voice of the **first** instance to place it against |
+| `--offset BPM` | `-0.05` | how far off that voice you want it (negative = slower) |
+| `--inspect BPM` | off | **reverse mode** — you already set instance 2 to this; report what offset that actually gave you |
+| `--show` | off | just list one instance's voices and stop |
+| `--merged` | off | also list every voice from both instances together, slowest first, with the gap between each |
+| `--decimals N` | `3` | decimal places to show |
+
+### Examples
+
+```
+# 8th voice of instance 2, one step below instance 1's first voice
+python tools/rate_calc.py --base 30 --aim 8 --offset -0.05
+
+# land it against instance 1's voice 4 instead
+python tools/rate_calc.py --base 30 --aim 8 --against 4 --offset -0.05
+
+# what is one instance actually doing?
+python tools/rate_calc.py --base 30 --show
+
+# I already set instance 2 to 29.6 -- what did that give me?
+python tools/rate_calc.py --base 30 --inspect 29.6 --aim 8
+
+# hear how the whole thing spaces out once both are running
+python tools/rate_calc.py --base 30 --aim 8 --offset -0.05 --merged
+```
+
 ## loop_finder.py
 
 Finds loop-ready material in any recording so you don't have to hunt for loop
