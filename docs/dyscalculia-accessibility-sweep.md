@@ -315,7 +315,7 @@ by ear nor pick a note. Tax, no service.
 - `polyrhythm_phase` semitone sliders step in tenths, so voices can be detuned
   against each other by ear. One character, no other change; the pitch maths was
   already floating point and had always accepted fractions.
-- `src/polyrhythm_notes.jsfx` — the same engine with each voice naming its note
+- `src/polyrhythm_phase_v3.jsfx` — the same engine with each voice naming its note
   (`C2`–`C6`) and a separate fine-tune in **cents**. A separate plugin, because
   the layout needed six sliders per voice in a fixed order and renumbering in
   place would have broken every saved project.

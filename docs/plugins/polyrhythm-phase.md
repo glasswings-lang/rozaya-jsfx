@@ -10,8 +10,8 @@ Polyrhythm Phase is a binaural oscillator with up to eight simultaneous voices, 
 
 The plugin generates no audio from an input signal. It is a pure synthesizer.
 
-> **Prefer note names?** There is a companion plugin,
-> [Polyrhythm Phase (Note Names)](polyrhythm-notes.md) (`polyrhythm_notes.jsfx`),
+> **Prefer note names?** There is a companion version,
+> [Polyrhythm Phase v3 (Note-Based)](polyrhythm-phase-v3.md) (`polyrhythm_phase_v3.jsfx`),
 > with an identical engine but a different way of setting pitch: each voice picks
 > its note by name from a list, with a separate fine-tune control in cents,
 > instead of counting semitone offsets from a base note. Same sound, no

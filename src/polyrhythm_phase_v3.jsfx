@@ -1,18 +1,21 @@
-desc: Binaural Polyrhythm Oscillator (note names)
+desc: Binaural Polyrhythm Oscillator v3 (note-based)
 // Designed by Rozaya, developed with Claude (Anthropic)
 //
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 //
-// v2 adds Play/Rest gating (sliders 63, 64) on top of the v1 feature
-// set. Per-voice cycle counting means V8 (fast drift) paces ahead of
-// V1 in real time. On the final cycle of each play period the always-
-// on Depth floor is cancelled during the release portion of the LFO
-// so the voice glides to actual silence before the rest freeze,
-// regardless of the user's Depth setting. With the new sliders at
-// their defaults (both 0), the gate is disabled and the plugin is
-// functionally identical to v1 — existing project files keep working
-// without modification.
+// v3 takes a note-based approach: each voice picks a musical note
+// (with a cents-level fine tune) rather than v2's per-voice rate in
+// BPM / Hz / seconds. Play/Rest gating carries forward from v2 at
+// the same defaults, and per-voice cycle counting keeps fast-drift
+// voices paced ahead of slow ones in real time.
+//
+// v2 (src/polyrhythm_phase.jsfx) continues to ship for players who
+// think in rates rather than notes, and to keep existing REAPER
+// projects working — sliders were reorganized in v3 for maintenance
+// convenience, so v2 project files will load against v3 with
+// settings landing on the wrong controls. Pick the version whose
+// mental model fits the piece; both are current.
 
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Drift,Independent}>Tremolo Mode

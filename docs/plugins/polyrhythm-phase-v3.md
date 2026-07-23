@@ -1,4 +1,4 @@
-# Polyrhythm Phase (Note Names)
+# Polyrhythm Phase v3 (Note-Based)
 
 **Designed by Rozaya — Developed with Claude (Anthropic)**
 
