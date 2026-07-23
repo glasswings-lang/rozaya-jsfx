@@ -8,3 +8,6 @@ Thumbs.db
 # REAPER
 *.RPP-bak
 *.reapeaks
+
+# Personal scratchpad for git commit messages (git commit -F msg.txt); never tracked
+msg.txt
