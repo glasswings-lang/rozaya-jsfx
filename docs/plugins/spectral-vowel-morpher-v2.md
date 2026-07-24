@@ -118,7 +118,7 @@ Blurs the spectrum across frequency — diffuses a narrow capture into a wider n
 **Pitch (semitones)** `-24 to +24, default 0`
 Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."
 
-*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
+*Per slot — and the one value that does **not** blend.* It belongs to whichever **Capture slot** is selected, like the others, but it is never averaged between two slots. Averaging two pitches doesn't produce an in-between sound, it produces a glide. Both engines transpose each slot at its own pitch — the voice sounds each slot's harmonics at that slot's tuning, and the wash transposes each slot's spectrum before the two are blended — so the morph crossfades in level only, with no sliding between differently-tuned slots.
 
 **Stereo width** `0 to 100, default 50`
 Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phase (mono-safe). In the voice it runs a slightly-detuned copy on the right channel (up to ~14 cents at 100), so the two sides beat slowly against each other — real width plus a shimmer that softens the robotic edge of the pure harmonics. At 0 the voice is exactly mono (unchanged from older projects). The detuned voice is only computed when the voice is actually audible (Texture below full wash), so living on the wash costs nothing.
@@ -139,7 +139,7 @@ Spectral subtraction — raise to thin toward the strongest partials (more tonal
 *Focused slot* plays exactly the Capture-slot, ignoring Morph (so you can hear each grab as you build it). *Morph* plays the morph blend.
 
 **Morph** `0 to 100, default 0`
-Crossfades across the captured slots. Pitch-preserving — each slot plays at its own pitch, so there is no portamento glide.
+Crossfades across the captured slots. Pitch-preserving in both engines — each slot is sounded at its own pitch, so there is no portamento glide however far apart two slots are tuned.
 
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. Every mode is timed the same way: each step lasts the **Slot linger** of the slot it is leaving, so a pass is however long its steps add up to — same gentle crossfades throughout, just a different order (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*

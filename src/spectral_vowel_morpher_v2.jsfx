@@ -354,7 +354,9 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir) (
   loop(GBINS,
     // GR maps this grain's bin grid back onto the fixed analysis grid, so the
     // same frequency is read whatever size the synthesis FFT currently is.
-    srcb = i * GR / pitch_ratio;
+    // No pitch term: transposition is applied per slot in gen_grain, before the
+    // two spectra are blended. GR only maps grain grid -> analysis grid.
+    srcb = i * GR;
     (srcb >= 0 && srcb < NBINS - 1) ? ( b0 = floor(srcb); fr = srcb - b0; m = (curmag[b0]*(1-fr) + curmag[b0+1]*fr) * GINV; ) : ( m = 0; );
     ph = phase[i] + (useR ? woff*doff[i] : 0);
     re = m * cos(ph); im = m * sin(ph);
@@ -368,15 +370,44 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir) (
   ifft(fftwork, GFFT);
 );
 
-function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw) (
+function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw,
+                          sA, sB, ia, ib, fa, fb, ma, mb) (
   // slot selection (vsi/vsj/vmfr) is computed once per sample in @sample so the
   // wash and the harmonic voice always agree on which slot(s) they're playing.
   si = vsi; sj = vsj; mfr = vmfr;
   ni = slot_norm[si]; ni <= 0 ? ni = 1;
   nj = slot_norm[sj]; nj <= 0 ? nj = 1;
   bi = si*NBINS; bj = sj*NBINS;
+  // --- Pitch is applied HERE, per slot, BEFORE the blend. ---
+  // It used to be applied in build_spectrum, i.e. AFTER these two spectra were
+  // averaged together -- which meant one shared pitch dragged across the whole
+  // blend, so a crossfade between two differently-tuned slots slid from one
+  // tuning to the other over the fade. That's a glide, not a crossfade.
+  //
+  // Transposition here is only a bin-index remap on read (read bin i/ratio to
+  // sound bin i), so doing it per slot costs one interpolation per bin rather
+  // than a second grain and a second iFFT -- and build_spectrum drops a divide
+  // per bin in exchange. Each slot is now read at its OWN tuning and the blend
+  // mixes two correctly-pitched spectra, so the morph fades in level only.
+  //
+  // Reads past the top of the analysis grid (pitching down far enough that
+  // i/ratio runs off the end) contribute silence, the same guard
+  // build_spectrum used to apply.
   i = 0;
-  loop(NBINS, mtmp[i] = (1-mfr)*(slotmag[bi+i]/ni) + mfr*(slotmag[bj+i]/nj); i += 1; );
+  loop(NBINS,
+    sA = i / pitch_ratio_A;
+    sB = i / pitch_ratio_B;
+    (sA >= 0 && sA < NBINS - 1) ? (
+      ia = floor(sA); fa = sA - ia;
+      ma = (slotmag[bi+ia]*(1-fa) + slotmag[bi+ia+1]*fa) / ni;
+    ) : ( ma = 0; );
+    (sB >= 0 && sB < NBINS - 1) ? (
+      ib = floor(sB); fb = sB - ib;
+      mb = (slotmag[bj+ib]*(1-fb) + slotmag[bj+ib+1]*fb) / nj;
+    ) : ( mb = 0; );
+    mtmp[i] = (1-mfr)*ma + mfr*mb;
+    i += 1;
+  );
   sp = floor(eff_spread_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
   // Spread is a box blur across frequency bins. It used to re-add every
   // neighbour from scratch for each bin, so its cost grew with the width -- at
@@ -615,7 +646,10 @@ wlevel        = sin(texture * PI * 0.5);
 grain_ms        = slider10;
 spread_hz     = slider11;
 pitch_semi    = slider12;                                    // base for Pitch drift
-pitch_ratio   = pow(2.0, slider12/12);
+// Pre-@sample seed for the two per-slot ratios (@sample recomputes them every
+// sample from each slot's own value). Only matters before the first sample has
+// run; without it a first grain could read a zero ratio and come out silent.
+pitch_ratio_A = pitch_ratio_B = pow(2.0, slider12/12);
 stereo_width  = slider13;
 voice_detune  = stereo_width * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
 lowcut_hz     = slider14;
@@ -984,9 +1018,27 @@ hlevel = cos(eff_tex * PI * 0.5); wlevel = sin(eff_tex * PI * 0.5);
 eff_spread_hz = max(0, min(150, sblend(slot_spread, sb_i, sb_j, sb_f)
                                 + target_drift_offset[1] + ramp_offset_mem[1]));
 
-eff_semi = max(-24, min(24, sblend(slot_pitch, sb_i, sb_j, sb_f)
-                            + target_drift_offset[2] + ramp_offset_mem[2]));
-pitch_ratio = pow(2.0, eff_semi/12);
+// --- Pitch is the ONE per-slot value that must NOT be blended. ---
+// Every other per-slot value is a quantity you can average: half of one
+// texture plus half of another is a real, meaningful in-between. Pitch is a
+// FREQUENCY, and averaging two of them doesn't produce a blend, it produces a
+// GLIDE. Blending the semitone value made both slots play at the same moving
+// pitch during a crossfade: the outgoing slot was dragged off its own tuning,
+// and the incoming one arrived detuned and slid into place over exactly the
+// crossfade duration, correcting itself only once the fade completed.
+//
+// Each slot is now voiced at ITS OWN pitch and the crossfade happens purely in
+// level, which is what a crossfade is. Drift and Ramp still apply, as a shared
+// offset ON TOP of each slot's own value, so Pitch remains a modulation target.
+pitch_mod  = target_drift_offset[2] + ramp_offset_mem[2];
+eff_semi_A = max(-24, min(24, slot_pitch[sb_i] + pitch_mod));
+eff_semi_B = max(-24, min(24, slot_pitch[sb_j] + pitch_mod));
+pitch_ratio_A = pow(2.0, eff_semi_A/12);
+pitch_ratio_B = pow(2.0, eff_semi_B/12);
+// BOTH engines use these: the voice reads them directly (fA/fB below), and the
+// wash reads them in gen_grain, where each slot's spectrum is transposed by its
+// own ratio before the two are blended. Nothing consumes a single blended pitch
+// any more -- that was the glide.
 
 eff_stereo_width = max(0, min(100, sblend(slot_width, sb_i, sb_j, sb_f)
                                    + target_drift_offset[3] + ramp_offset_mem[3]));
@@ -1037,8 +1089,10 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
 // entirely when the voice is inaudible (Texture at full wash, hlevel ~ 0) --
 // that reclaims the whole per-sample harmonic loop when you live on the wash.
 (hlevel > 0.0001 && have > 0) ? (
-  fA = slot_f0[vsi] * pitch_ratio; normA = slot_hnorm[vsi]; normA <= 0 ? normA = 1;
-  fB = slot_f0[vsj] * pitch_ratio; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1;
+  // Each slot at its own ratio -- see the pitch_ratio_A/B note above. Using one
+  // blended ratio here is what made pitched slots glide across the crossfade.
+  fA = slot_f0[vsi] * pitch_ratio_A; normA = slot_hnorm[vsi]; normA <= 0 ? normA = 1;
+  fB = slot_f0[vsj] * pitch_ratio_B; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1;
   bA = vsi*NHARM; bB = vsj*NHARM;
   voice_detune > 0 ? (
     // Stereo: left slightly flat, right slightly sharp (symmetric, so the
