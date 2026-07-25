@@ -1,4 +1,4 @@
-desc: Spectral Vowel Morpher v2 - voice<->wash capture instrument
+desc: Spectral Vowel Passage - voice<->wash capture instrument, paced per slot
 // =====================================================================
 // Capture-based vocal instrument. Feeds on LIVE audio playing into it (drag a
 // WAV onto the track, or send another track in -- the proper REAPER way).
@@ -29,84 +29,79 @@ desc: Spectral Vowel Morpher v2 - voice<->wash capture instrument
 // =====================================================================
 
 // --- Controls are grouped by what they belong to, not by when they were added.
-//     Renumbered THREE times during v2's build: at birth, when Slot crossfade
-//     was added, and when Slot mute joined the group. Renumbering is free while
-//     the plugin has no shipped saved projects -- breathing_v2.rpp regenerates
-//     from breathing.rpp via tools/morpher_v1_to_v2.py, which maps by label
-//     rather than by slider number. Once v2 is shipped and other people have
-//     projects using it, IDs become primary keys and additions append. Until
-//     then, getting the layout right is the goal, not preserving numbers. ---
+//     Renumbered several times during the build (at birth, when Slot crossfade
+//     was added, when Slot mute joined, and again for the per-slot timing
+//     redesign that became "Passage"). Renumbering was free while the plugin
+//     had no shipped saved projects -- a Morpher project regenerates onto
+//     Passage via tools/morpher_to_passage.py, which maps by label rather than
+//     by slider number. Now that Passage is a named, shippable plugin, IDs are
+//     primary keys and any further additions APPEND at the end. ---
 slider1:0<0,7,1>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture spectrum
 slider3:0<0,100,1>Capture point (per slot: earliest .. at press)
-// Slot linger: PER SLOT, edited for whichever Capture slot is selected -- the
-// same nested-selector shape as the per-slot Capture point above, and placed
-// next to it so everything belonging to the selected slot sits together.
+// --- The SLOT-TIMING cluster (sliders 4-9). All PER SLOT, edited for whichever
+//     Capture slot is selected, and laid out in the order a slot lives its
+//     life: fade in, hold, fade out, the gap of silence after it, whether it
+//     crossfades into the next slot, and mute. Modelled on a DAW item's own
+//     fades so the numbers you type are the seconds you hear -- no arithmetic,
+//     nothing about a slot living on a different slot. (v2 is unshipped, so
+//     these were renumbered freely to group them; slider IDs only become
+//     primary keys once real projects exist.) ---
 //
-// It is the PURE HOLD TIME for this slot, in seconds -- how long you hear this
-// slot alone before its crossfade to the next slot begins. Slot crossfade
-// (below) adds fade time ON TOP of this: total time on the slot = linger +
-// crossfade. That means the number you type IS what you hear: linger 4 = 4
-// seconds of hearing this slot alone. No arithmetic to figure out hold from
-// some other value.
-//
-// linger 0 means "no hold, all crossfade" (matches the original Morpher's
-// continuous-morph behaviour when paired with a non-zero crossfade).
-slider4:4<0,300,0.1>Slot linger (sec) (per slot: pure hold time you hear this slot alone)
-
-// --- Slot crossfade: PER SLOT, placed beside Slot linger where it belongs.
-//     Adds fade time AFTER the linger's pure hold, so the fade transitions
-//     from this slot to the next one. Total time on this slot's leg =
-//     linger + crossfade. Set to 0 for a hard cut at the end of the hold;
-//     set to any positive value for a smooth transition to the next slot. ---
-slider5:1<0,300,0.1>Slot crossfade (sec) (per slot: fade to next slot, added after the hold)
-
-// --- Slot mute: PER SLOT, appended at slider6 (slider IDs are primary keys
-//     now, so this stays at the end). When On, the slot is skipped in Sweep /
-//     Glide / Shuffle -- the morph moves directly to the next unmuted slot,
-//     with no crossfade to nothing in between. Focused mode ignores mute (it
-//     always plays the slot you point at, that's what Focused is for). Set
-//     once per slot via the Capture slot selector; a captured silence slot
-//     between two audio slots is the canonical use, so the morph fades sound
-//     to sound rather than sound to silence to sound. ---
-slider6:0<0,1,1{Off,On}>Slot mute (per slot: skip in morph)
-slider7:0<-60,12,0.1>Input level (dry, dB)
-slider8:0<-60,12,0.1>Voice level (dB)
-slider9:50<0,100,1>Texture (0 voice, 100 wash)
-slider10:150<5,680,1>Wash grain (ms)
-slider11:0<0,150,0.5>Spread (Hz)
-slider12:0<-24,24,0.1>Pitch (semitones)
-slider13:50<0,100,1>Stereo width
-slider14:0<0,500,1>Low cut (Hz)
-slider15:0<0,100,0.1>Denoise
-slider16:1<0,1,1{Focused slot,Morph}>Audition
-slider17:0<0,100,0.1>Morph (across captured slots)
-slider18:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
+// All six controls are LIVE -- the audio engine consumes fade-in, hold,
+// fade-out, gap and the crossfade toggle (see the leg-envelope block in
+// @sample). With crossfade ON the slot holds, then blends into the next over
+// its fade-out, and the gap is unused; with crossfade OFF the slot fades in,
+// holds, fades out to silence, then the gap of silence plays before the next
+// fades in.
+slider4:1<0,300,0.1>Slot fade in (sec) (per slot: how long this slot takes to rise)
+slider5:4<0,300,0.1>Slot hold (sec) (per slot: how long it stays up, at full)
+slider6:1<0,300,0.1>Slot fade out (sec) (per slot: how long this slot takes to fall)
+slider7:0<0,300,0.1>Slot gap after (sec) (per slot: silence before the next slot begins)
+// Crossfade into next: On = the fades overlap, so this slot hands over by
+// blending into the next (the classic morph -- what happens today). Off = this
+// slot fades out, the gap of silence plays, then the next fades in.
+slider8:1<0,1,1{Off,On}>Slot crossfade into next (per slot)
+// --- Slot mute: PER SLOT. When On, the slot is skipped in Sweep / Glide /
+//     Shuffle -- the morph moves directly to the next unmuted slot. Focused
+//     mode ignores mute (it always plays the slot you point at). ---
+slider9:0<0,1,1{Off,On}>Slot mute (per slot: skip in morph)
+slider10:0<-60,12,0.1>Input level (dry, dB)
+slider11:0<-60,12,0.1>Voice level (dB)
+slider12:50<0,100,1>Texture (0 voice, 100 wash)
+slider13:150<5,680,1>Wash grain (ms)
+slider14:0<0,150,0.5>Spread (Hz)
+slider15:0<-24,24,0.1>Pitch (semitones)
+slider16:50<0,100,1>Stereo width
+slider17:0<0,500,1>Low cut (Hz)
+slider18:0<0,100,0.1>Denoise
+slider19:1<0,1,1{Focused slot,Morph}>Audition
+slider20:0<0,100,0.1>Morph (across captured slots)
+slider21:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 // --- Drift: suite-wide automation replacement (nested-selector pattern).
 //     Pick a target; it wanders by up/down amounts over a wall-clock period.
 //     All targets drift in parallel; the selector only chooses which one the
-//     amount/period/shape sliders are editing. Added at the END of the range
-//     (slider IDs are primary keys — never renumber existing ones). ---
-slider19:0<0,8,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level}>Drift target
-slider20:0<0,300,0.1>Drift up amount (units match target)
-slider21:0<0,300,0.1>Drift down amount (units match target)
-slider22:30<1,600,0.5>Drift period (seconds)
-slider23:0<0,2,1{Sine,Triangle,Random}>Drift shape
+//     amount/period/shape sliders are editing. ---
+slider22:0<0,8,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level}>Drift target
+slider23:0<0,300,0.1>Drift up amount (units match target)
+slider24:0<0,300,0.1>Drift down amount (units match target)
+slider25:30<1,600,0.5>Drift period (seconds)
+slider26:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
 // drift ignores the transport and evolves continuously (loop under/over an
 // unbroken drift). A loop repeat is never a restart in either mode.
-slider24:0<0,1,1{Restart on play,Free-running}>Drift restart
+slider27:0<0,1,1{Restart on play,Free-running}>Drift restart
 // --- Ramp: the suite's "Speed Ramp" under an honest name (this plugin has no
 //     speed to ramp). A one-time slow RIDE of a parameter: pick a target, how
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider25:0<0,8,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level}>Ramp target
-slider26:0<-300,300,0.1>Ramp by (units match target)
-slider27:0<0,60,0.1>Ramp duration (minutes)
-slider28:0<0,60,0.1>Ramp start delay (minutes)
-slider29:0<0,1,1{Off,On}>Ramp engage
+slider28:0<0,8,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level}>Ramp target
+slider29:0<-300,300,0.1>Ramp by (units match target)
+slider30:0<0,60,0.1>Ramp duration (minutes)
+slider31:0<0,60,0.1>Ramp start delay (minutes)
+slider32:0<0,1,1{Off,On}>Ramp engage
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -171,8 +166,14 @@ slot_pitch    = freemem; freemem += NSLOTS;   // PER-SLOT pitch_semi
 slot_width    = freemem; freemem += NSLOTS;   // PER-SLOT stereo_width
 slot_lowcut   = freemem; freemem += NSLOTS;   // PER-SLOT lowcut_hz
 slot_denoise  = freemem; freemem += NSLOTS;   // PER-SLOT denoise_amt
-slot_linger   = freemem; freemem += NSLOTS;      // PER-SLOT step time in SECONDS (time to leave this slot)
-slot_xfade    = freemem; freemem += NSLOTS;      // PER-SLOT crossfade length in SECONDS; hold = linger - xfade
+// slot_linger holds the "Slot hold" seconds; slot_xfade holds "Slot fade out"
+// seconds. (Internal names kept from before the Half-1 relabel so the serialize
+// migration stays byte-compatible; the slider LABELS are hold / fade out.)
+slot_linger   = freemem; freemem += NSLOTS;      // PER-SLOT hold time in SECONDS
+slot_xfade    = freemem; freemem += NSLOTS;      // PER-SLOT fade-out length in SECONDS
+slot_fadein   = freemem; freemem += NSLOTS;      // PER-SLOT fade-in length in SECONDS (Half 2 consumes this)
+slot_gap      = freemem; freemem += NSLOTS;      // PER-SLOT silence AFTER this slot, in SECONDS (Half 2)
+slot_xfadeon  = freemem; freemem += NSLOTS;      // PER-SLOT crossfade-into-next flag 0/1 (Half 2)
 slot_mute     = freemem; freemem += NSLOTS;      // PER-SLOT mute flag (0/1); muted slots are skipped in Sweep / Glide / Shuffle
 active_slots  = freemem; freemem += NSLOTS;      // indices of unmuted slots (0..n_used-1 minus muted ones); rebuilt every @block
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
@@ -211,7 +212,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_xfade[i] = 1; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_linger[i] = 4; slot_xfade[i] = 1; slot_fadein[i] = 1; slot_gap[i] = 0; slot_xfadeon[i] = 1; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -263,6 +264,10 @@ morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
 cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
 bag_pos = 999; last_slot = 0; drift_primed = 0; auto_primed = 0; sweep_dir = 1; leg_elapsed = 0;   // walk + shuffle-bag state (primed lazily in @sample)
+// Half-2 leg envelope: leg_env is the per-sample output level (0..1) that makes
+// fade-in / fade-out / gap silence; need_fadein tracks whether the current leg
+// began from silence (fade it in) or arrived at full via a crossfade (don't).
+leg_env = 1; need_fadein = 1; out_env = 1;
 // Fresh instance: every slot starts as whatever is on screen. Without this only
 // the slot selected when a slider was last touched would carry the visible
 // settings, and the others would sit at hard-coded defaults.
@@ -593,26 +598,35 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
 // on screen are what the project saved; take them as given and stamp the slot.
 (last_cap_slot != cap_slot && !is_first_slider) ? (
   // Every per-slot value banks with the slot, same as Capture point does.
-  slot_voicedb[last_cap_slot] = slider8;
-  slot_texture[last_cap_slot] = slider9 * 0.01;
-  slot_spread[last_cap_slot] = slider11;
-  slot_pitch[last_cap_slot] = slider12;
-  slot_width[last_cap_slot] = slider13;
-  slot_lowcut[last_cap_slot] = slider14;
-  slot_denoise[last_cap_slot] = slider15;
-  slot_linger[last_cap_slot] = slider4;            // linger banks with the slot too
-  slot_xfade[last_cap_slot]  = slider5;           // crossfade too
-  slot_mute[last_cap_slot]   = slider6 > 0.5 ? 1 : 0;   // and mute
-  slider4 = slot_linger[cap_slot];
-  slider5 = slot_xfade[cap_slot];
-  slider6 = slot_mute[cap_slot] > 0.5 ? 1 : 0;
-  slider8 = slot_voicedb[cap_slot];
-  slider9 = slot_texture[cap_slot] * 100;
-  slider11 = slot_spread[cap_slot];
-  slider12 = slot_pitch[cap_slot];
-  slider13 = slot_width[cap_slot];
-  slider14 = slot_lowcut[cap_slot];
-  slider15 = slot_denoise[cap_slot];
+  // Slider map after the Half-1 renumber: hold=4->5? see the def block; the
+  // timing cluster is 4 fade-in, 5 hold, 6 fade-out, 7 gap, 8 crossfade, 9 mute;
+  // the sound controls are 10 input .. 18 denoise.
+  slot_voicedb[last_cap_slot] = slider11;
+  slot_texture[last_cap_slot] = slider12 * 0.01;
+  slot_spread[last_cap_slot] = slider14;
+  slot_pitch[last_cap_slot] = slider15;
+  slot_width[last_cap_slot] = slider16;
+  slot_lowcut[last_cap_slot] = slider17;
+  slot_denoise[last_cap_slot] = slider18;
+  slot_fadein[last_cap_slot]  = slider4;                 // fade in
+  slot_linger[last_cap_slot]  = slider5;                 // hold
+  slot_xfade[last_cap_slot]   = slider6;                 // fade out
+  slot_gap[last_cap_slot]     = slider7;                 // gap after
+  slot_xfadeon[last_cap_slot] = slider8 > 0.5 ? 1 : 0;   // crossfade into next
+  slot_mute[last_cap_slot]    = slider9 > 0.5 ? 1 : 0;   // mute
+  slider4 = slot_fadein[cap_slot];
+  slider5 = slot_linger[cap_slot];
+  slider6 = slot_xfade[cap_slot];
+  slider7 = slot_gap[cap_slot];
+  slider8 = slot_xfadeon[cap_slot] > 0.5 ? 1 : 0;
+  slider9 = slot_mute[cap_slot] > 0.5 ? 1 : 0;
+  slider11 = slot_voicedb[cap_slot];
+  slider12 = slot_texture[cap_slot] * 100;
+  slider14 = slot_spread[cap_slot];
+  slider15 = slot_pitch[cap_slot];
+  slider16 = slot_width[cap_slot];
+  slider17 = slot_lowcut[cap_slot];
+  slider18 = slot_denoise[cap_slot];
   sliderchange(-1);   // refresh the displayed values; NOT slider_automate
 
   slot_cappoint[last_cap_slot] = slider3 * 0.01;   // save the slot we're leaving
@@ -622,45 +636,48 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
   last_cappoint = slot_cappoint[cap_slot];          // no re-derive on switch: slot already analyzed at this point
 ) : (
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
-  slot_linger[cap_slot] = slider4;                 // and a live linger edit
-  slot_xfade[cap_slot]  = slider5;                // and a live crossfade edit
-  slot_mute[cap_slot]   = slider6 > 0.5 ? 1 : 0; // and a live mute edit
+  slot_fadein[cap_slot]  = slider4;                 // live fade-in edit
+  slot_linger[cap_slot]  = slider5;                 // live hold edit
+  slot_xfade[cap_slot]   = slider6;                 // live fade-out edit
+  slot_gap[cap_slot]     = slider7;                 // live gap edit
+  slot_xfadeon[cap_slot] = slider8 > 0.5 ? 1 : 0;   // live crossfade-toggle edit
+  slot_mute[cap_slot]    = slider9 > 0.5 ? 1 : 0;   // live mute edit
   // a live edit of any per-slot value stamps the slot it belongs to
-  slot_voicedb[cap_slot] = slider8;
-  slot_texture[cap_slot] = slider9 * 0.01;
-  slot_spread[cap_slot] = slider11;
-  slot_pitch[cap_slot] = slider12;
-  slot_width[cap_slot] = slider13;
-  slot_lowcut[cap_slot] = slider14;
-  slot_denoise[cap_slot] = slider15;
+  slot_voicedb[cap_slot] = slider11;
+  slot_texture[cap_slot] = slider12 * 0.01;
+  slot_spread[cap_slot] = slider14;
+  slot_pitch[cap_slot] = slider15;
+  slot_width[cap_slot] = slider16;
+  slot_lowcut[cap_slot] = slider17;
+  slot_denoise[cap_slot] = slider18;
   last_cap_slot = cap_slot;   // also syncs the first-load case above
 );
 cap_point01   = slider3 * 0.01;
-dry_db_base   = slider7;                                    // base for Input level drift
-dry_gain      = slider7 <= -60 ? 0 : pow(10, slider7/20);   // -60 = true silence
-voice_db_base = slider8;                                    // base for Voice level drift
-voice_gain    = slider8 <= -60 ? 0 : pow(10, slider8/20);
-texture       = slider9 * 0.01;                              // 0 voice .. 1 wash
+dry_db_base   = slider10;                                    // base for Input level drift
+dry_gain      = slider10 <= -60 ? 0 : pow(10, slider10/20);  // -60 = true silence
+voice_db_base = slider11;                                    // base for Voice level drift
+voice_gain    = slider11 <= -60 ? 0 : pow(10, slider11/20);
+texture       = slider12 * 0.01;                             // 0 voice .. 1 wash
 hlevel        = cos(texture * PI * 0.5);                     // equal-power crossfade
 wlevel        = sin(texture * PI * 0.5);
-grain_ms        = slider10;
-spread_hz     = slider11;
-pitch_semi    = slider12;                                    // base for Pitch drift
+grain_ms        = slider13;
+spread_hz     = slider14;
+pitch_semi    = slider15;                                    // base for Pitch drift
 // Pre-@sample seed for the two per-slot ratios (@sample recomputes them every
 // sample from each slot's own value). Only matters before the first sample has
 // run; without it a first grain could read a zero ratio and come out silent.
-pitch_ratio_A = pitch_ratio_B = pow(2.0, slider12/12);
-stereo_width  = slider13;
+pitch_ratio_A = pitch_ratio_B = pow(2.0, slider15/12);
+stereo_width  = slider16;
 voice_detune  = stereo_width * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
-lowcut_hz     = slider14;
+lowcut_hz     = slider17;
 // denoise_amt / pitch_semi / voice_db_base / spread_hz / lowcut_hz /
 // stereo_width are written here but no longer read: the effective values come
 // from the per-slot banks in @sample. Kept so the @slider path still seeds a
 // sane hlevel/wlevel before the first sample runs.
-denoise_amt   = slider15;
-audition_mode = slider16;                                   // 0 focused slot, 1 morph
-morph01       = slider17 * 0.01;
-automorph_mode = slider18;
+denoise_amt   = slider18;
+audition_mode = slider19;                                   // 0 focused slot, 1 morph
+morph01       = slider20 * 0.01;
+automorph_mode = slider21;
 automorph_mode != last_automode ? (
   last_automode = automorph_mode; morph_phase = 0;
   drift_primed = 0;   // force Drift to (re)build its shuffle bag on the next sample
@@ -669,28 +686,29 @@ automorph_mode != last_automode ? (
 
 
 // --- Drift target selector save/restore (nested-selector pattern, matching the
-//     rest of the suite). Switching slider19 saves sliders 18-21 into the OLD
-//     target's bank slot, then loads the NEW target's stored config into the
-//     visible sliders. Otherwise it captures live edits to the current target.
-//     All targets drift in parallel from @sample regardless of what's selected. ---
-sel_target = slider19;
-sel_up     = slider20;
-sel_down   = slider21;
-sel_per    = slider22;
-sel_shape  = slider23;
+//     rest of the suite). Switching the Drift target (slider22) saves the
+//     up/down/period/shape sliders (23-26) into the OLD target's bank slot,
+//     then loads the NEW target's stored config into the visible sliders.
+//     Otherwise it captures live edits to the current target. All targets drift
+//     in parallel from @sample regardless of what's selected. ---
+sel_target = slider22;
+sel_up     = slider23;
+sel_down   = slider24;
+sel_per    = slider25;
+sel_shape  = slider26;
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
   target_drift_down[last_target_select]  = sel_down;
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
-  slider20 = target_drift_up[sel_target];
-  slider21 = target_drift_down[sel_target];
-  slider22 = target_drift_per[sel_target];
-  slider23 = target_drift_shape[sel_target];
-  slider_automate(slider20);
-  slider_automate(slider21);
-  slider_automate(slider22);
+  slider23 = target_drift_up[sel_target];
+  slider24 = target_drift_down[sel_target];
+  slider25 = target_drift_per[sel_target];
+  slider26 = target_drift_shape[sel_target];
   slider_automate(slider23);
+  slider_automate(slider24);
+  slider_automate(slider25);
+  slider_automate(slider26);
   last_target_select = sel_target;
 ) : (
   target_drift_up[sel_target]    = sel_up;
@@ -702,29 +720,29 @@ last_target_select != sel_target ? (
 // per-sample effective-value recompute (and keep the exact original CPU/output)
 // for any target with no drift configured.
 // --- Ramp target selector save/restore (nested-selector, mirrors Drift).
-//     slider25 = target; 24 = per-target `by`; 25 = duration; 26 = start delay.
-//     slider29 (Engage) is GLOBAL. All targets ride in parallel from @sample. ---
-rsel_target = slider25;
-rsel_by     = slider26;
-rsel_dur    = slider27;
-rsel_delay  = slider28;
+//     slider28 = target; 29 = per-target `by`; 30 = duration; 31 = start delay.
+//     slider32 (Engage) is GLOBAL. All targets ride in parallel from @sample. ---
+rsel_target = slider28;
+rsel_by     = slider29;
+rsel_dur    = slider30;
+rsel_delay  = slider31;
 last_ramp_target != rsel_target ? (
   ramp_by_mem[last_ramp_target]    = rsel_by;
   ramp_dur_mem[last_ramp_target]   = rsel_dur;
   ramp_delay_mem[last_ramp_target] = rsel_delay;
-  slider26 = ramp_by_mem[rsel_target];
-  slider27 = ramp_dur_mem[rsel_target];
-  slider28 = ramp_delay_mem[rsel_target];
-  slider_automate(slider26);
-  slider_automate(slider27);
-  slider_automate(slider28);
+  slider29 = ramp_by_mem[rsel_target];
+  slider30 = ramp_dur_mem[rsel_target];
+  slider31 = ramp_delay_mem[rsel_target];
+  slider_automate(slider29);
+  slider_automate(slider30);
+  slider_automate(slider31);
   last_ramp_target = rsel_target;
 ) : (
   ramp_by_mem[rsel_target]    = rsel_by;
   ramp_dur_mem[rsel_target]   = rsel_dur;
   ramp_delay_mem[rsel_target] = rsel_delay;
 );
-ramp_engaged = slider29;
+ramp_engaged = slider32;
 
 // Per-target flags. td_active gates the drift-advance loop; mod_active gates the
 // effective-value recompute (drift OR ramp configured). A target with neither
@@ -736,7 +754,7 @@ i = 0; loop(N_TARGETS,
 );
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
-drift_restart_free = slider24;   // 0 = restart on play (sync), 1 = free-running
+drift_restart_free = slider27;   // 0 = restart on play (sync), 1 = free-running
 
 @block
 // Transport play-edge: immediate runtime setup -- rebuild window, clear the
@@ -754,6 +772,7 @@ drift_restart_free = slider24;   // 0 = restart on play (sync), 1 = free-running
   // walk state is what has to be cleared or Glide would stay parked on its
   // final slot for every subsequent play.
   auto_primed = 0; drift_primed = 0; sweep_dir = 1; leg_elapsed = 0;
+  need_fadein = 1; leg_env = 1;   // first leg after play fades in from silence
   last_gsamp = floor(grain_ms * srate / 1000); last_cappoint = cap_point01;
   cap_dirty = 0;
   // (Drift reset is handled by its own transport block below — it must also
@@ -812,13 +831,16 @@ seed_slots_from_sliders == 1 ? (
   seed_slots_from_sliders = 0;
   ss = 0;
   loop(NSLOTS,
-    slot_linger[ss]  = slider4;
-    slot_xfade[ss]   = slider5;
-    slot_mute[ss]    = slider6 > 0.5 ? 1 : 0;
-    slot_voicedb[ss] = slider8;  slot_texture[ss] = slider9 * 0.01;
-    slot_spread[ss]  = slider11;  slot_pitch[ss]   = slider12;
-    slot_width[ss]   = slider13; slot_lowcut[ss]  = slider14;
-    slot_denoise[ss] = slider15;
+    slot_fadein[ss]  = slider4;
+    slot_linger[ss]  = slider5;                 // hold
+    slot_xfade[ss]   = slider6;                 // fade out
+    slot_gap[ss]     = slider7;
+    slot_xfadeon[ss] = slider8 > 0.5 ? 1 : 0;
+    slot_mute[ss]    = slider9 > 0.5 ? 1 : 0;
+    slot_voicedb[ss] = slider11;  slot_texture[ss] = slider12 * 0.01;
+    slot_spread[ss]  = slider14;  slot_pitch[ss]   = slider15;
+    slot_width[ss]   = slider16; slot_lowcut[ss]  = slider17;
+    slot_denoise[ss] = slider18;
     ss += 1;
   );
 );
@@ -855,10 +877,10 @@ cap_dirty ? (
 
 (cap_trig > 0.5 && cap_last <= 0.5) ? ( capture(cap_slot);
   // a new capture takes the settings you were listening through
-  slot_voicedb[cap_slot] = slider8;  slot_texture[cap_slot] = slider9 * 0.01;
-  slot_spread[cap_slot]  = slider11;  slot_pitch[cap_slot]   = slider12;
-  slot_width[cap_slot]   = slider13; slot_lowcut[cap_slot]  = slider14;
-  slot_denoise[cap_slot] = slider15;
+  slot_voicedb[cap_slot] = slider11;  slot_texture[cap_slot] = slider12 * 0.01;
+  slot_spread[cap_slot]  = slider14;  slot_pitch[cap_slot]   = slider15;
+  slot_width[cap_slot]   = slider16; slot_lowcut[cap_slot]  = slider17;
+  slot_denoise[cap_slot] = slider18;
   slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
 cap_last = cap_trig;
 
@@ -926,8 +948,8 @@ automorph_mode > 0.5 ? (
   // Degenerate cases: no active slots at all -> silent pair; one active ->
   // that one solo. The n_active < 2 branch was previously "n_used < 2", but
   // with mute the effective count is n_active.
-  n_active < 1 ? ( cur_slot = 0; nxt_slot = 0; xfade = 0; ) :
-  n_active < 2 ? ( cur_slot = active_slots[0]; nxt_slot = cur_slot; xfade = 0; ) : (
+  n_active < 1 ? ( cur_slot = 0; nxt_slot = 0; xfade = 0; leg_env = 1; ) :
+  n_active < 2 ? ( cur_slot = active_slots[0]; nxt_slot = cur_slot; xfade = 0; leg_env = 1; ) : (
     automorph_mode == 3 ? (
       // Shuffle: order comes from the bag. Primed lazily -- NOT on mode entry,
       // because on reload that can fire before the captures finish loading
@@ -937,41 +959,75 @@ automorph_mode > 0.5 ? (
         cur_slot = driftbag[bag_pos]; bag_pos += 1;
         nxt_slot = driftbag[bag_pos]; bag_pos += 1;
         xfade = 0; drift_primed = 1;
+        leg_elapsed = 0; need_fadein = 1;   // first shuffle leg fades in
       );
     ) : (
       // Sweep and Glide: straight along the ACTIVE slot list.
       auto_primed != 1 ? (
         cur_slot = active_slots[0]; nxt_slot = active_slots[1];
         sweep_dir = 1; xfade = 0; auto_primed = 1;
+        leg_elapsed = 0; need_fadein = 1;   // first leg fades in
       );
     );
 
     // Glide once holds on the final slot; everything else keeps moving.
     // Glide ends when we arrive at the last ACTIVE slot (was: n_used-1).
     (automorph_mode == 2 && cur_slot == active_slots[n_active - 1]) ? (
-      xfade = 0; nxt_slot = cur_slot;
+      xfade = 0; nxt_slot = cur_slot; leg_env = 1;
     ) : (
-      // Slot linger = pure hold time. Slot crossfade = added on top. Leg length
-      // is the two summed. The number the user types for linger is what they
-      // hear as pure-slot time -- no subtraction, no ratio.
-      leg_hold  = max(0, slot_linger[cur_slot]);
-      leg_fade  = max(0, slot_xfade[cur_slot]);
-      leg_len   = max(0.05, leg_hold + leg_fade);
+      // --- Per-slot DAW-item timing (Half 2). Each slot owns: fade in, hold,
+      //     fade out, the gap of silence after it, and whether it crossfades
+      //     into the next slot.
+      //       Crossfade ON  -> the fades overlap: hold, then blend into the next
+      //         slot over the fade-out time. leg_env stays 1; xfade (the spectral
+      //         blend) does the transition. The gap is NOT used in this mode.
+      //       Crossfade OFF -> sequential: fade in, hold, fade OUT to silence,
+      //         then the gap of silence, then the next slot fades in. No spectral
+      //         blend (xfade stays 0); leg_env is the whole amplitude envelope.
+      //     need_fadein says whether THIS leg began from silence (after a gap or
+      //     a hard fade-out -> fade it in) or arrived already at full via a
+      //     crossfade (-> skip the fade-in), so every slot boundary is click-safe
+      //     whatever each slot's crossfade setting is. ---
+      lg_fi = need_fadein ? max(0, slot_fadein[cur_slot]) : 0;
+      lg_h  = max(0, slot_linger[cur_slot]);   // hold
+      lg_fo = max(0, slot_xfade[cur_slot]);    // fade out
+      lg_g  = max(0, slot_gap[cur_slot]);      // gap of silence after
+      lg_x  = slot_xfadeon[cur_slot] > 0.5;    // crossfade into next?
       leg_elapsed += 1 / srate;
-      xfade = leg_elapsed <= leg_hold ? 0 :
-              (leg_fade <= 0.0001 ? 1 :
-               min(1, (leg_elapsed - leg_hold) / leg_fade));
-      leg_elapsed >= leg_len ? (
+      lg_t = leg_elapsed;
+      lg_advance = 0;
+      lg_x ? (
+        // Crossfade ON: fade-in (only if from silence) -> hold -> crossfade-out.
+        leg_len = max(0.05, lg_fi + lg_h + lg_fo);
+        leg_env = lg_t < lg_fi ? (lg_fi <= 0.0001 ? 1 : lg_t / lg_fi) : 1;
+        lg_tc = lg_t - lg_fi;                  // time past the fade-in
+        xfade = lg_tc <= lg_h ? 0 :
+                (lg_fo <= 0.0001 ? 1 : min(1, (lg_tc - lg_h) / lg_fo));
+        leg_elapsed >= leg_len ? ( lg_advance = 1; lg_next_fadein = 0; );
+      ) : (
+        // Crossfade OFF: fade-in -> hold -> fade-out to silence -> gap silence.
+        xfade = 0;
+        leg_len = max(0.05, lg_fi + lg_h + lg_fo + lg_g);
+        leg_env =
+          lg_t < lg_fi ? (lg_fi <= 0.0001 ? 1 : lg_t / lg_fi) :
+          lg_t < lg_fi + lg_h ? 1 :
+          lg_t < lg_fi + lg_h + lg_fo ?
+            (lg_fo <= 0.0001 ? 0 : 1 - (lg_t - lg_fi - lg_h) / lg_fo) :
+          0;
+        leg_elapsed >= leg_len ? ( lg_advance = 1; lg_next_fadein = 1; );
+      );
+      lg_advance ? (
         cur_slot = nxt_slot; xfade = 0; leg_elapsed = 0;
+        need_fadein = lg_next_fadein;
+        // Sequential arrives silent (fades in next); crossfade arrives at full.
+        leg_env = lg_next_fadein ? 0 : 1;
         automorph_mode == 3 ? (
           bag_pos >= n_active ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );   // through them all -> reshuffle
           nxt_slot = driftbag[bag_pos]; bag_pos += 1;
         ) : (
-          // Sweep bounces at either end of the ACTIVE slot list. Glide
-          // reaches here exactly once, on arrival at the last active slot,
-          // and the hold branch above catches it on the following sample --
-          // with xfade at 0 the crossfade sits fully on cur_slot, so the
-          // momentary nxt_slot is never heard.
+          // Sweep bounces at either end of the ACTIVE slot list. Glide reaches
+          // here exactly once, on arrival at the last active slot, and the hold
+          // branch above catches it on the following sample.
           cur_pos = active_pos(cur_slot);
           cur_pos < 0 ? cur_pos = 0;   // cur got muted mid-play: snap to start
           (sweep_dir > 0 && cur_pos >= n_active - 1) ? sweep_dir = -1;
@@ -986,21 +1042,25 @@ automorph_mode > 0.5 ? (
 
 // Shared slot selection -- BOTH engines read vsi/vsj/vmfr so they always agree.
 audition_mode < 0.5 ? (
-  // Focused-slot monitor: play exactly the capture slot, ignore morph.
-  vsi = cap_slot; vsj = cap_slot; vmfr = 0;
+  // Focused-slot monitor: play exactly the capture slot, ignore morph. The leg
+  // envelope must NOT apply here -- you're monitoring one slot at full, even if
+  // an auto-morph leg is still ticking underneath -- so force out_env open.
+  vsi = cap_slot; vsj = cap_slot; vmfr = 0; out_env = 1;
 ) : automorph_mode > 0.5 ? (
   // Every auto mode: a DIRECT crossfade between the two slots of the current
   // leg, never a position on the slot line. One leg is one crossfade whichever
-  // slots it joins -- no whoosh, and nothing in the middle to over-dwell.
-  vsi = cur_slot; vsj = nxt_slot; vmfr = xfade;
+  // slots it joins -- no whoosh, and nothing in the middle to over-dwell. The
+  // leg envelope (fade in / out / gap silence) rides on the output here.
+  vsi = cur_slot; vsj = nxt_slot; vmfr = xfade; out_env = leg_env;
 ) : (
-  // Manual morph / Sweep / Glide: a position along the fixed slot line, blending
-  // the two adjacent slots it sits between.
+  // Manual morph: a position along the fixed slot line, blending the two
+  // adjacent slots it sits between. No leg timing -> no envelope.
   vnu = n_used < 1 ? 1 : n_used;
   vmp = eff_morph01 * (vnu - 1);
   vsi = floor(vmp); vmfr = vmp - vsi;
   vsi >= vnu - 1 ? ( vsi = vnu - 1; vmfr = 0; );
   vsj = vsi < vnu - 1 ? vsi + 1 : vsi;
+  out_env = 1;
 );
 
 // Effective values = the two current slots' settings crossfaded by the same
@@ -1136,7 +1196,9 @@ have > 0 ? (
   voutL = hlevel*hVL + wlevel*wL;
   voutR = hlevel*hVR + wlevel*wR;
 ) : ( voutL = 0; voutR = 0; );
-voutL *= voice_gain; voutR *= voice_gain;
+// out_env is the per-slot leg envelope (Half 2): fade in / fade out / gap
+// silence in the auto-morph modes, forced to 1 in Focused and manual morph.
+voutL *= voice_gain * out_env; voutR *= voice_gain * out_env;
 
 spl0 = dryL + voutL;
 spl1 = dryR + voutR;
@@ -1309,6 +1371,29 @@ file_var(0, ser_magic);
     sm = 0; loop(NSLOTS, slot_mute[sm] = 0; sm += 1; );
   );
 
+  // --- Slot fade-in / gap / crossfade-toggle: appended at the VERY END, AFTER
+  //     slot_mute, for the SAME reason slot_mute itself is last (see the warning
+  //     above) -- new per-slot fields MUST append, never insert mid-stream, or
+  //     an older blob's bytes shift into the wrong field. A project saved before
+  //     these existed reads past EOF here and gets EOF-safe defaults that
+  //     reproduce the earlier sound: fade-in matches fade-out, no gap,
+  //     crossfade ON (a blend into the next slot, exactly how it behaved). ---
+  file_avail(0) >= 0 ? ( slot_fadein[0] = -999 );
+  file_mem(0, slot_fadein, NSLOTS);
+  (file_avail(0) >= 0 && slot_fadein[0] == -999) ? (
+    sfi = 0; loop(NSLOTS, slot_fadein[sfi] = slot_xfade[sfi]; sfi += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_gap[0] = -999 );
+  file_mem(0, slot_gap, NSLOTS);
+  (file_avail(0) >= 0 && slot_gap[0] == -999) ? (
+    sgp = 0; loop(NSLOTS, slot_gap[sgp] = 0.0; sgp += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_xfadeon[0] = -999 );
+  file_mem(0, slot_xfadeon, NSLOTS);
+  (file_avail(0) >= 0 && slot_xfadeon[0] == -999) ? (
+    sxo = 0; loop(NSLOTS, slot_xfadeon[sxo] = 1; sxo += 1; );
+  );
+
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
   // duplicate) file_avail(0) >= 0; on WRITE (save / undo) it's < 0. @serialize
   // is the one section guaranteed to run on both load AND duplicate, so after
@@ -1317,13 +1402,13 @@ file_var(0, ser_magic);
   // restoring the "visible slider == bank[selected]" invariant. sliderchange
   // (NOT slider_automate) here -- automate would write automation on load.
   file_avail(0) >= 0 ? (
-    slider20 = target_drift_up[last_target_select];
-    slider21 = target_drift_down[last_target_select];
-    slider22 = target_drift_per[last_target_select];
-    slider23 = target_drift_shape[last_target_select];
-    slider26 = ramp_by_mem[last_ramp_target];
-    slider27 = ramp_dur_mem[last_ramp_target];
-    slider28 = ramp_delay_mem[last_ramp_target];
+    slider23 = target_drift_up[last_target_select];
+    slider24 = target_drift_down[last_target_select];
+    slider25 = target_drift_per[last_target_select];
+    slider26 = target_drift_shape[last_target_select];
+    slider29 = ramp_by_mem[last_ramp_target];
+    slider30 = ramp_dur_mem[last_ramp_target];
+    slider31 = ramp_delay_mem[last_ramp_target];
     // Per-slot Capture point: force slider3 to the restored slot's stored point,
     // and sync last_cap_slot so the first @slider doesn't mistake load for a
     // slot-switch (which would save the visible point into the wrong slot).
@@ -1343,16 +1428,19 @@ file_var(0, ser_magic);
     // For a v1 load the SLIDERS are the source of truth and must be left alone;
     // for a v2 load the banks are, and the sliders follow them as before.
     ser_v1 ? 0 : (
-      slider4 = slot_linger[cps];
-    slider5 = slot_xfade[cps];
-    slider6 = slot_mute[cps] > 0.5 ? 1 : 0;
-      slider8 = slot_voicedb[cps];
-      slider9 = slot_texture[cps] * 100;
-      slider11 = slot_spread[cps];
-      slider12 = slot_pitch[cps];
-      slider13 = slot_width[cps];
-      slider14 = slot_lowcut[cps];
-      slider15 = slot_denoise[cps];
+      slider4 = slot_fadein[cps];
+      slider5 = slot_linger[cps];                 // hold
+      slider6 = slot_xfade[cps];                  // fade out
+      slider7 = slot_gap[cps];
+      slider8 = slot_xfadeon[cps] > 0.5 ? 1 : 0;
+      slider9 = slot_mute[cps] > 0.5 ? 1 : 0;
+      slider11 = slot_voicedb[cps];
+      slider12 = slot_texture[cps] * 100;
+      slider14 = slot_spread[cps];
+      slider15 = slot_pitch[cps];
+      slider16 = slot_width[cps];
+      slider17 = slot_lowcut[cps];
+      slider18 = slot_denoise[cps];
     );
 
     sliderchange(-1);

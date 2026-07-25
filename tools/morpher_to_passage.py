@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 """
-morpher_v1_to_v2.py -- copy a REAPER project that uses Spectral Vowel Morpher
-so the copy uses v2 instead, keeping the captures and every setting.
+morpher_to_passage.py -- copy a REAPER project that uses Spectral Vowel Morpher
+so the copy uses its sibling Spectral Vowel Passage instead, keeping the
+captures and every setting.
 
-Why it exists: v2 groups its controls by what they belong to, which renumbered
-the sliders, and it replaced v1's single global Auto-morph time with a per-slot
-Slot linger. Pointing a project at v2 by hand shifts every value by one
-position, so everything lands on the wrong control. This maps them BY LABEL,
-read live from both .jsfx files, so it stays correct even if either layout is
-renumbered again -- no slider number is hard-coded here.
+Why it exists: Passage groups its controls by what they belong to, which
+renumbered the sliders, and it replaced Morpher's single global Auto-morph time
+with a per-slot timing cluster (fade in / hold / fade out / gap / crossfade
+toggle). Pointing a project at Passage by hand shifts every value out of place,
+so everything lands on the wrong control. This maps them BY LABEL, read live
+from both .jsfx files, so it stays correct even if either layout is renumbered
+again -- no slider number is hard-coded here.
 
 It also reads the slot count out of each instance's own capture blob, so the
-Slot linger it derives reproduces the timing the project already had rather
-than guessing at it.
+per-slot time it derives reproduces the timing the project already had rather
+than guessing at it: Morpher's whole-pass time becomes each slot's fade-out (the
+whole leg is a crossfade, exactly how Morpher sounded), with no hold, crossfade
+on, and no gap.
 
 Your original project is never modified; a new file is written beside it.
 Afterwards both files are read back and compared label for label, and the tool
@@ -20,8 +24,8 @@ refuses to report success if anything failed to line up.
 
 Nothing to install -- standard library only.
 
-    python tools/morpher_v1_to_v2.py "E:/reaper/breathing.rpp"
-    python tools/morpher_v1_to_v2.py song.rpp --out song_v2.rpp
+    python tools/morpher_to_passage.py "path/to/project.rpp"
+    python tools/morpher_to_passage.py song.rpp --out song_passage.rpp
 
 One caveat worth knowing: convert from a SAVED project. This reads what is on
 disk, so if the project is open in REAPER with unsaved changes, the copy is
@@ -39,11 +43,18 @@ import sys
 import time
 
 JS1 = "glasswings/spectral_vowel_morpher.jsfx"
-JS2 = "glasswings/spectral_vowel_morpher_v2.jsfx"
-LINGER = "Slot linger"
-XFADE = "Slot crossfade"               # v2-only, added after v1; seed = linger
-MUTE = "Slot mute"                     # v2-only; seed = 0 (unmuted), preserves v1 sound
-DROPPED = "Auto-morph time (sec)"      # v1-only: becomes the per-slot linger
+JS2 = "glasswings/spectral_vowel_passage.jsfx"
+# Passage-only per-slot timing controls (none exist in Morpher). Matched by
+# label prefix, so the parenthetical hints after each label don't matter. FADEIN
+# and FADEOUT are distinct prefixes ("Slot fade in" vs "Slot fade out"), so no
+# ambiguity.
+FADEIN = "Slot fade in"                # seed = per-step time (matches fade-out)
+HOLD = "Slot hold"                     # seed = 0 (v1 had no hold, all crossfade)
+FADEOUT = "Slot fade out"              # seed = per-step time (the whole leg is the fade)
+GAP = "Slot gap"                       # seed = 0 (no silence; unused with crossfade on)
+XFADE = "Slot crossfade"               # NOW a toggle ("...into next"); seed = 1 (On)
+MUTE = "Slot mute"                     # seed = 0 (unmuted), preserves v1 sound
+DROPPED = "Auto-morph time (sec)"      # v1-only: becomes the per-slot fade-out
 V1_MAGIC = 7700001.0
 
 
@@ -72,7 +83,7 @@ def slots_used(lines, js_index):
     raw = base64.b64decode("".join(chunks) + "==")
     magic, _have, n_used = struct.unpack_from("<3f", raw, 0)
     if magic != V1_MAGIC:
-        sys.exit("unexpected capture format (magic %r) -- not a v1 project?" % magic)
+        sys.exit("unexpected capture format (magic %r) -- not a Spectral Vowel Morpher project?" % magic)
     return int(n_used)
 
 
@@ -95,14 +106,14 @@ def main():
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("project", help="the .rpp to convert (never modified)")
-    ap.add_argument("--out", help="output path (default: <project>_v2.rpp)")
+    ap.add_argument("--out", help="output path (default: <project>_passage.rpp)")
     ap.add_argument("--src-dir", default=os.path.join(os.path.dirname(here), "src"),
                     help="folder holding the two .jsfx files (default: ../src)")
     args = ap.parse_args()
 
-    dst = args.out or re.sub(r"\.rpp$", "", args.project, flags=re.I) + "_v2.rpp"
+    dst = args.out or re.sub(r"\.rpp$", "", args.project, flags=re.I) + "_passage.rpp"
     p1 = os.path.join(args.src_dir, "spectral_vowel_morpher.jsfx")
-    p2 = os.path.join(args.src_dir, "spectral_vowel_morpher_v2.jsfx")
+    p2 = os.path.join(args.src_dir, "spectral_vowel_passage.jsfx")
     for p in (args.project, p1, p2):
         if not os.path.exists(p):
             sys.exit("not found: " + p)
@@ -110,7 +121,7 @@ def main():
     l1, l2 = slider_labels(p1), slider_labels(p2)
     by_label = {v: k for k, v in l1.items()}
     if len(by_label) != len(l1):
-        sys.exit("v1 has duplicate slider labels -- cannot map by name")
+        sys.exit("Morpher has duplicate slider labels -- cannot map by name")
 
     saved = time.strftime("%Y-%m-%d %H:%M:%S",
                           time.localtime(os.path.getmtime(args.project)))
@@ -133,43 +144,59 @@ def main():
         cells = lines[i + 1].split()
         nums = [x for x in cells if x != "-"]
         if len(nums) != len(l1):
-            sys.exit("instance at line %d has %d values, v1 declares %d sliders"
+            sys.exit("instance at line %d has %d values, Morpher declares %d sliders"
                      % (i + 1, len(nums), len(l1)))
         v1 = {k: float(nums[k - 1]) for k in l1}
 
-        # v1 spent Auto-morph time on the WHOLE pass; v2 spends linger on each
-        # step. Sweep and Glide walk n_used-1 steps; Shuffle wraps, so n_used.
+        # v1 spent Auto-morph time on the WHOLE pass; v2 spends time on each
+        # slot's leg. Sweep and Glide walk n_used-1 steps; Shuffle wraps, so
+        # n_used. Each v1 leg was a pure crossfade, so per_step becomes the
+        # per-slot FADE-OUT (which, with crossfade on, IS the crossfade).
         mode = v1[by_label["Auto-morph"]]
         legs = n_used if mode == 3 else max(1, n_used - 1)
-        linger = round(v1[by_label[DROPPED]] / legs, 4)
+        per_step = round(v1[by_label[DROPPED]] / legs, 4)
 
         values = []
         for k in sorted(l2):
             label = l2[k]
             if label in by_label:
                 values.append(v1[by_label[label]])
-            elif label.startswith(LINGER):
-                # Under Option B: linger is pure hold. v1 had no hold (whole leg
-                # was crossfade), so linger = 0 for v1-fidelity migration.
+            elif label.startswith(FADEOUT):
+                # v1's leg was all crossfade: the whole per-step time is the
+                # fade-out, and with crossfade On (below) the fade-out IS the
+                # crossfade into the next slot -- matching how v1 sounded.
+                values.append(per_step)
+            elif label.startswith(FADEIN):
+                # Match the fade-out, mirroring the in-plugin default for older
+                # v2 projects. Only heard at the very start of a pass (mid-morph
+                # the crossfade raises each slot), so it's a gentle opening rise.
+                values.append(per_step)
+            elif label.startswith(HOLD):
+                # v1 had no hold -- the leg was entirely crossfade. The user adds
+                # steady time per slot by raising hold above 0.
+                values.append(0)
+            elif label.startswith(GAP):
+                # No silence between slots in v1; and the gap is unused while
+                # crossfade is on anyway.
                 values.append(0)
             elif label.startswith(XFADE):
-                # Crossfade is the full v1 leg time -- all fade, no hold, which
-                # matches how v1 sounded. User introduces hold per slot by
-                # raising slot linger above 0.
-                values.append(linger)
+                # Crossfade into next = On reproduces v1's continuous morph (each
+                # slot blends into the next). This is a 0/1 toggle now, not the
+                # old seconds value.
+                values.append(1)
             elif label.startswith(MUTE):
                 # Seed unmuted so a converted v1 project morphs across every
                 # captured slot exactly as it did before mute existed.
                 values.append(0)
             else:
-                sys.exit("no v1 source for v2 slider %d (%s)" % (k, label))
+                sys.exit("no Morpher source for Passage slider %d (%s)" % (k, label))
 
         out.append(line.replace(JS1, JS2))
         out.append("        " + " ".join(fmt(x) for x in values)
                    + " " + " ".join(["-"] * (len(cells) - len(nums))))
         n += 1
-        print("  instance %d: %d slots, mode %g, %g s per pass -> %g s per step"
-              % (n, n_used, mode, v1[by_label[DROPPED]], linger))
+        print("  instance %d: %d slots, mode %g, %g s per pass -> %g s fade-out per slot"
+              % (n, n_used, mode, v1[by_label[DROPPED]], per_step))
         i += 2
 
     if not n:
