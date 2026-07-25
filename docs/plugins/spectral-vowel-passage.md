@@ -1,23 +1,30 @@
-# Spectral Vowel Morpher v2
+# Spectral Vowel Passage
 
 **Designed by Rozaya — Developed with Claude (Anthropic)**
 
-> **This is v2**, a separate plugin from
-> [Spectral Vowel Morpher](spectral-vowel-morpher.md) so the original keeps
-> working untouched in projects that already use it. Both can be installed at
-> once. Two things differ:
+> **Spectral Vowel Passage is a sibling of
+> [Spectral Vowel Morpher](spectral-vowel-morpher.md)** — the same capture-and-
+> resynthesis engine, but a different instrument to play. Morpher is a *field you
+> sit inside*: one continuous morph that never quite settles. Passage is a *route
+> with stops*: you set each captured moment's timing deliberately — how it fades
+> in, how long it holds, how it hands over — and the piece walks through them.
+> Both are worth keeping installed, and the shared "Spectral Vowel" prefix keeps
+> them together in the plugin list. *(Passage began as "Morpher v2"; the per-slot
+> timing redesign made it its own instrument, so it earned its own name.)*
 >
-> **1. Short grains work.** The synthesis FFT is sized to the grain rather than
-> fixed at maximum, so the low end of **Wash grain** is usable. On the original
-> it drops out.
+> What Passage does that Morpher doesn't:
 >
-> **2. Each slot holds for its own length of time, in seconds.** The single
-> global *Auto-morph time* is gone. Every slot now carries its own **Slot
-> linger**, and the cycle is simply its steps added up. Adding a slot makes the
-> cycle longer instead of squeezing the existing steps, and — the point of it —
-> the steps can differ from each other.
+> **1. Each slot owns its whole leg of time, in seconds.** The single global
+> *Auto-morph time* is gone. Every slot carries its own **fade in**, **hold**,
+> and **fade out**, an optional **gap** of silence after it, and a **crossfade
+> into next** toggle — so the cycle is simply its slots' legs added up. Adding a
+> slot makes the cycle longer instead of squeezing the existing steps, and — the
+> point of it — every slot's timing can differ from every other's. Each number
+> is the seconds you hear: four seconds of hold means typing four, four seconds
+> of silence means a gap of four. Nothing about one slot's timing lives on a
+> different slot.
 >
-> **3. Every setting that describes a capture is per slot.** Voice level,
+> **2. Every setting that describes a capture is per slot.** Voice level,
 > Texture, Spread, Pitch, Stereo width, Low cut and Denoise all belong to the
 > selected slot rather than being one global setting flattening every capture.
 > The morph crossfades them along with the spectra, so moving between two slots
@@ -25,9 +32,14 @@
 > the track's, not a capture's), and so does Wash grain (it rebuilds a window
 > rather than scaling a value, so it cannot be crossfaded per grain).
 >
+> **3. The synthesis FFT is sized to the grain** rather than fixed at maximum — a
+> CPU saving on wash-heavy projects. (This was *meant* to also cure the
+> short-grain crackle; by ear it didn't, so that stays a known limitation — see
+> the note under **Wash grain**. The sizing is kept for the CPU win.)
+>
 > Controls are also grouped by what they belong to rather than by when they were
-> added, so everything owned by the selected slot — **Capture point**, **Slot
-> linger**, and the seven above — is reached through **Capture slot**.
+> added, so everything owned by the selected slot — **Capture point**, the five
+> timing controls, and the seven above — is reached through **Capture slot**.
 
 ---
 
@@ -35,7 +47,7 @@
 
 A capture-based instrument. You play audio into it, capture a few moments, and it resynthesizes them — as a recognizable voice, an evolving wash, or any blend between — and morphs between the captured moments. It is built for sustaining and looping vocal material, but it freezes any source.
 
-Unlike Sustain Looper (which loops a region of a *loaded* file), the Morpher feeds on **live audio playing into it** — drop a WAV on the track or send another track in, play it, and hit Capture when you hear a moment you want. Captures persist across project save and reopen.
+Unlike Sustain Looper (which loops a region of a *loaded* file), Passage feeds on **live audio playing into it** — drop a WAV on the track or send another track in, play it, and hit Capture when you hear a moment you want. Captures persist across project save and reopen.
 
 It is a generator: it only sounds with the transport rolling (or the track armed and monitored).
 
@@ -94,8 +106,8 @@ smoother. Affects only the wash; cheap and safe to automate. The unit is
 of one.
 
 **Known limitation: short Wash grain still produces evenly-spaced crackling.**
-v2 changed the synthesis FFT to size itself to the grain (instead of always
-using the maximum size), on the theory that shorter grains were fixing
+Passage sizes the synthesis FFT to the grain (instead of always
+using the maximum size), on the theory that shorter grains were firing
 constant-cost FFTs many times per second and that was what caused the
 dropouts. That theory was tested by ear and the crackle *did not go away*.
 Which means either the CPU-per-grain wasn't the bottleneck, or something
@@ -142,88 +154,89 @@ Spectral subtraction — raise to thin toward the strongest partials (more tonal
 Crossfades across the captured slots. Pitch-preserving in both engines — each slot is sounded at its own pitch, so there is no portamento glide however far apart two slots are tuned.
 
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
-In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. Every mode is timed the same way: each step lasts the **Slot linger** of the slot it is leaving, so a pass is however long its steps add up to — same gentle crossfades throughout, just a different order (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
+In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. Every mode is timed the same way: each step lasts the full leg of the slot it is leaving — its fade in, hold, fade out, and any gap — so a pass is however long its slots' legs add up to, just a different order (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
-**Slot linger (sec)** `0 to 300, default 4`
-**Pure hold time** for this slot — how long you hear it alone, at 100%, before
-its crossfade to the next slot begins. **The number you type is the number of
-seconds.** No arithmetic to figure out, no ratios of anything.
+All five timing controls belong to whichever **Capture slot** is selected: pick
+a slot, set its timing, pick the next, set that one. Each slot remembers its own
+and they save with the project. Every value is the seconds you hear — no
+arithmetic, no allowance for a fade bleeding in from a neighbour, nothing about
+one slot's timing living on another slot.
 
-Like **Capture point**, it belongs to whichever **Capture slot** is selected:
-pick a slot, set its linger, pick the next, set that one. Each slot remembers
-its own and they save with the project.
+**Slot fade in (sec)** `0 to 300, default 1` — *per slot*
+How long this slot takes to rise from silence when it arrives. You hear it at
+the very start of a pass, and any time a slot arrives *out of silence* — after a
+**gap**, or after the previous slot faded out with its crossfade **Off**. When
+the previous slot **crossfades into** this one instead, the crossfade has already
+raised it to full, so its own fade-in is skipped (nothing fades in twice, and the
+boundary stays click-safe either way). Fade in 2 = a two-second rise.
 
-There is no global morph time. A cycle is just its steps added together — each
-slot contributes `linger + crossfade` seconds. Set linger 4 on every slot and
-each will hold for 4 seconds. Set linger 4 on one and 8 on another and their
-holds differ, which is what an uneven cycle (like a real breath) needs.
+**Slot hold (sec)** `0 to 300, default 4` — *per slot*
+How long the slot stays up at full, alone, once it has arrived. **The number you
+type is the number of seconds.** Hold 4 on every slot and each holds four
+seconds; hold 4 on one and 8 on another and their holds differ, which is what an
+uneven cycle (like a real breath) needs. Hold 0 means no steady part — the slot
+rises and immediately begins to fall.
 
-Works in all three Auto-morph modes. In **Sweep**, which walks out and back,
-each slot's linger applies whenever it is the current slot.
+**Slot fade out (sec)** `0 to 300, default 1` — *per slot*
+How long the slot takes to fall at the end of its hold. What the fall *is*
+depends on the crossfade toggle below:
 
-**Setting Slot linger to 0** means "no hold, all crossfade" — the whole leg
-is the crossfade to the next slot. This matches the original Morpher's
-continuous-morph behaviour and is right for evolving textures where the sound
-never really settles.
+- **Crossfade into next = On** — the fade-out *is* the **crossfade** into the
+  next slot: this one falls as the next rises, the two overlapping. (The gap is
+  unused in this mode.)
+- **Crossfade into next = Off** — the fade-out falls all the way to **silence**;
+  then the gap (if any) plays; then the next slot fades in on its own.
 
-**Slot crossfade (sec)** `0 to 300, default 1`
-The fade from this slot to the next slot, added **on top** of the linger. Total
-time on this slot's leg is `linger + crossfade`.
+Fade out 0 is a hard edge — an instant switch to the next slot with crossfade on,
+or a hard cut to silence with it off (which can click on sharp-edged captures;
+soft-edged captures like breath cut cleanly).
 
-*Per slot*, edited the same way as Slot linger: belongs to whichever **Capture
-slot** is selected.
+**Slot gap after (sec)** `0 to 300, default 0` — *per slot*
+Seconds of silence after this slot, before the next one begins. **This is how you
+place silence now** — the quiet lives between the slots, where it is, so you no
+longer capture a silent slot to make a pause. Four seconds of quiet means typing
+four.
 
-- **Crossfade 0** — hard cut from this slot to the next at the end of the hold.
-  Works cleanly when captures have soft edges of their own (like breath); can
-  click if edges are sharp.
-- **Crossfade small (0.5–2s)** — smooth transition without dominating. Natural
-  for breath, spoken phrases, or anything where each slot should be recognisable
-  as itself.
-- **Crossfade large** — long, gradual crossfade. When combined with `linger 0`
-  this reproduces the original Morpher's continuous-morph feel.
+The gap only does something when **crossfade into next is Off** — a crossfade
+leaves no room for silence in the middle, because the two slots are overlapping.
+With crossfade on, the gap is ignored.
 
-Independent per slot: silence-slots with a long hold can sit between two short
-sound-slots with brief fades, or any other shape.
+**Slot crossfade into next** `Off / On, default On` — *per slot*
+How this slot hands over to the next.
 
-### Where does a slot "begin"?
+- **On** (default) — the fades overlap: this slot's fade-out is a crossfade, the
+  next slot rising as this one falls. The classic morph, and how the plugin has
+  always behaved.
+- **Off** — a clean handover: this slot fades out to silence, the gap (if any)
+  plays, then the next slot fades in on its own.
 
-Three plausible answers depending on what you mean. For a concrete case — slot 0
-with `linger 4, crossfade 2`, then slot 1:
+### The four ways a handover can sound
 
-```
-time:     0                 4          6                 10        12
-          |------ hold ------|-- fade -|------ hold ------|-- fade |
-what:     pure slot 0        slot 0→1  pure slot 1        slot 1→2
-```
+The toggle and the gap together give four combinations, and each does something:
 
-Three "beginnings" of slot 1:
+- **Crossfade On, no gap** — classic morph. The next rises as this one falls.
+- **Crossfade Off, no gap** — clean handover. This one fades out, the next fades
+  in, no overlap and no silence between.
+- **Crossfade Off, gap set** — hard silence. This one fades out, that many
+  seconds of nothing, then the next fades in. Silence with edges.
+- **Crossfade On, gap set** — the gap does nothing (a crossfade leaves no gap to
+  fill). Turn the crossfade Off to make a gap audible.
 
-1. **When you first hear slot 1** — time 4. Slot 1 fades in over 2 seconds
-   while slot 0 fades out. Both are audible during those 2 seconds.
-2. **When slot 1 is fully alone, no blend** — time 6. Slot 0's crossfade has
-   completed and slot 1 is at 100%.
-3. **When slot 1's own linger starts counting** — also time 6. Its hold runs
-   6→10, then its own crossfade 10→12.
+### How a slot's leg adds up
 
-The rule underneath: **each slot contributes `linger + crossfade` seconds to
-the cycle. Linger is pure hold; crossfade is the transition out.** The crossfade
-at the boundary between two slots **belongs entirely to the earlier slot** —
-slot 1 doesn't have an "inbound fade" of its own; slot 1's own crossfade is
-only its *outbound* fade to slot 2.
+A slot's whole leg is its parts in order:
 
-The mental shortcut: **the fade lives between two slots and belongs to the
-earlier one.** How do you get *out* of slot 3? Look at slot 3's crossfade. How
-do you get *into* slot 3? Look at slot 2's crossfade. Never slot 3's — from
-slot 3's view, "getting in" was slot 2's problem.
+- **Crossfade on:** `fade in + hold + fade out`. The fade-in only counts on the
+  first slot of a pass (or a slot arrived-at out of silence) — mid-morph, the
+  crossfade from the slot before already raised it, so what you hear per slot is
+  `hold + fade out`.
+- **Crossfade off:** `fade in + hold + fade out + gap`. The fade-in counts every
+  time, because every slot arrives from the silence the slot before left.
 
-**Practical implication:**
-
-- To hear slot 3 alone for 8 seconds, then have it transition over 2 seconds
-  to slot 4: set slot 3's `linger 8, crossfade 2`.
-- Total time from "slot 3 at 100%" to "slot 4 at 100%" = 8 + 2 = 10 seconds.
-- Slot 4's timing is decided by slot 4's own linger and crossfade,
-  independently. Slot 4 starts fading in during slot 3's crossfade regardless
-  of what slot 4 is set to.
+A cycle is just its slots' legs added together. There is no global morph time to
+divide — each slot's leg is exactly the seconds you set on it. To hear slot 3
+alone for 8 seconds and then blend over 2 seconds into slot 4: set slot 3's
+`hold 8, fade out 2, crossfade On`. Slot 4's timing is entirely slot 4's own.
 
 **Slot mute (Off / On)** `default Off`
 When **On**, this slot is skipped by Sweep, Glide, and Shuffle. The morph
@@ -237,22 +250,27 @@ slot via **Capture slot**, then toggle the mute.
 mode, you still hear it — Focused is "audition this specific slot no matter
 what." So mute affects the *morph sequence*, not what a slot IS.
 
-The canonical use is a captured silence slot between two audio slots. In the
-original Morpher, a silence slot in the middle of the sequence meant every
-crossfade had to traverse silence — which read as abrupt fade-outs and
-fade-ins rather than a morph, because you cannot gradually fade INTO nothing.
-Mute the silence slot and Sweep/Glide/Shuffle skip it entirely, giving you
-sound-to-sound crossfades. The silence capture stays in the plugin's memory
-and remains audible via Focused mode if you want to render it as a stem.
+Its main use now is trimming which captures a pass visits: you've banked five
+slots but only want a morph across three of them today, so mute the other two.
 
-Also useful when you've captured five slots but only want a morph across three
-of them today: mute the two you don't want in the sequence.
+**Placing silence between two sounds no longer needs a muted silence capture** —
+set the earlier slot's crossfade **Off** and give it a **gap**. That is what
+gaps are for, and it is why the old "capture silence, then mute it so the morph
+skips it" dance is gone. Mute is for skipping a slot; the gap is for making
+quiet.
 
 Edge cases: if every slot is muted, the morph is silent. If exactly one is
 active, it plays solo (no morph, since there's nothing to morph between).
 Both fall out of the sequencer naturally.
 
 ## A gotcha with silent (or otherwise "empty-feeling") slots
+
+> **First, the easy way out:** most reasons to capture silence are gone —
+> to put a pause between two sounds, set the earlier slot's crossfade **Off**
+> and give it a **gap**. The rest of this section only matters if you
+> *deliberately* capture silence or near-silence as a slot of its own (for its
+> own texture, or a held placeholder). If you use gaps for your quiet, skip
+> ahead.
 
 **Every per-slot setting belongs to the slot as captured** — including Stereo
 width, Denoise, Pitch, Spread, and the rest. This is usually what you want:
@@ -262,11 +280,12 @@ differ from your audio slots, the morph will crossfade the *settings* right
 along with the audio — producing sweeps that seem to come from nowhere.
 
 The classic version of this is: you capture your in-breath and out-breath at
-one Stereo width, then capture silence for the pause between them at a
-different Stereo width without meaning to. The plugin then dutifully sweeps
-width from mono to wide as the morph passes through the silent slot, and it
-sounds like some hidden LFO is animating stereo. It isn't. It's just the
-per-slot width doing exactly what it says it does.
+one Stereo width, then capture a quiet slot between them at a different Stereo
+width without meaning to. The plugin then dutifully sweeps width from mono to
+wide as the morph passes through the silent slot, and it sounds like some hidden
+LFO is animating stereo. It isn't. It's just the per-slot width doing exactly
+what it says it does. (A **gap** avoids this entirely — silence between slots
+carries no settings to sweep.)
 
 The fix is one of:
 
@@ -284,59 +303,51 @@ The fix is one of:
   settings. This is the reliable fix if you don't care about the silent slot's
   own settings ever mattering.
 
-In the original Morpher (v1) there was one global Stereo width, so this
-couldn't happen — every slot shared the same width, and adding a silent
-capture cost you nothing extra to configure. In v2, per-slot control is the
+In Morpher there is one global Stereo width, so this
+couldn't happen — every slot shares the same width, and adding a silent
+capture costs you nothing extra to configure. In Passage, per-slot control is the
 feature, but the cost is that empty-feeling slots (silence, near-silence,
 placeholder captures) need their non-audio parameters set deliberately, or
 you'll hear those parameters *animating* on you during transitions.
 
-### The silence slot's crossfade does work for the slot after it
+### How the next sound gets *in* — it's the arriving slot's own fade-in now
 
-One more thing worth naming out loud. **A silent slot's own Slot crossfade
-still matters, even though silence itself needs no fading** — because it
-governs how the NEXT slot's audio appears.
+Worth naming, because it works differently from Morpher. Under that older model
+the fade into a slot belonged to the slot *before* it. Now **each slot owns its
+own fade-in**,
+so how a sound appears out of quiet is set right there on that sound's slot, not
+on whatever came before.
 
-Concretely: audio slot → silence → audio slot. The first audio slot's
-crossfade decides how the sound melts away *into* the silence. The silence
-slot's crossfade decides how the next audio slot appears *out of* the
-silence. Setting the silent slot's crossfade to 0 gives you a hard-arrival
-next-audio, which usually sounds like an abrupt sudden appearance even
-though the audio itself is fading in from zero — because the transition
-window is too short for your ear to register as "arriving."
-
-Practical rule: **a silence slot between two audio slots wants a crossfade
-of at least the same length as the audio slots' crossfades**, or a little
-longer, so the arrival feels as gradual as the departure. This is the "the
-fade belongs to the earlier slot" rule made concrete — you might not think
-of a silence slot's crossfade as doing anything (its own audio has nothing
-to fade), but it's the only control that shapes how the next sound gets
-in.
+Concretely, for sound → gap → sound: the first slot's **fade out** decides how it
+melts away, its **gap** is the length of quiet, and the second slot's **fade in**
+decides how it appears. If an arrival feels abrupt — a sudden appearance even
+though the level is rising from zero — the transition window is too short for the
+ear to register as "arriving": lengthen that slot's **fade in**. No hunting on a
+neighbour; the control is on the slot you're hearing.
 
 ### The auto-gain needs extra time coming out of silence
 
 If you hear a slight bloom, level spike, or the audio "arriving louder
-than it should" when an audio slot fades in from a silent one, that is the
-plugin's slow auto-gain smoother catching up. During silence, the auto-gain
-sits at whatever amplification it had before silence began (it can't
-measure loudness from a signal that has none, so it freezes). The moment
-audio starts fading back in, the amplification is still cranked up from
-before, and the fresh audio gets multiplied by it before the smoother has
-time to catch back down.
+than it should" when a slot fades in out of a gap (or a silent slot), that is
+the plugin's slow auto-gain smoother catching up. During silence, the auto-gain
+sits at whatever amplification it had before the quiet began (it can't measure
+loudness from a signal that has none, so it freezes). The moment audio starts
+fading back in, the amplification is still cranked up from before, and the fresh
+audio gets multiplied by it before the smoother has time to catch back down.
 
 The fix is one of:
 
-- **Add about a second more crossfade** on the silence slot (its crossfade
-  governs the arrival) OR on the audio slot that is arriving. Either works.
-  The extra time gives the auto-gain room to settle before the audio is
-  fully in.
-- **Match the level of the silence-adjacent slots more carefully** — the
-  bloom is worst when the audio slot is much quieter than the peak-time
-  auto-gain expected. Louder captures on either side smooth this.
+- **Give the arriving slot about a second more fade-in.** The extra time gives
+  the auto-gain room to settle before the audio is fully in. (Adding to the gap
+  ahead of it doesn't help — nothing is playing to settle the gain during silence;
+  it's the *rise* that needs to be longer.)
+- **Match the level of the slots around the quiet more carefully** — the bloom
+  is worst when the arriving slot is much quieter than the peak-time auto-gain
+  expected. Louder captures on either side smooth this.
 
-In practice, a second more crossfade is the simple fix and it barely
-changes the cycle timing at all — a good default reflex whenever you hear
-a fade-in that feels too eager.
+In practice, a second more fade-in is the simple fix and it barely changes the
+cycle timing at all — a good default reflex whenever you hear a fade-in that
+feels too eager.
 
 ## The per-slot rule (and what it means for every parameter, not just silence)
 
@@ -348,7 +359,7 @@ worth stating on its own:
 > Voice level, Texture, Spread, Pitch, Stereo width, Low cut, Denoise —
 > animates during the transition between them.
 
-This is a feature. It's why v2 exists in the first place. But it means
+This is a feature. It's a good part of why Passage exists at all. But it means
 setting different values across slots produces motion during transitions,
 whether you wanted that motion or not.
 
@@ -359,7 +370,7 @@ etc. This is a whole expressive dimension the original Morpher didn't
 have.
 
 **When you don't:** if you set slot 1 to Pitch −5 and slot 2 to Pitch 0
-thinking each would just play at its own pitch (as v1's global Pitch would
+thinking each would just play at its own pitch (as Morpher's global Pitch would
 have), the transition between them will bend pitch continuously across
 the crossfade. To keep pitch constant across slots, set the parameter to
 the same value on every slot that participates in the morph.
@@ -374,9 +385,13 @@ one specific case of this rule.
 
 Since the split doesn't always match intuition, here is the plain list.
 
-**Per slot** (each slot carries its own; morph crossfades them):
-- Capture point, Slot linger, Slot crossfade, Slot mute
+**Per slot** (each slot carries its own):
+- Capture point; the five timing controls (Slot fade in, Slot hold, Slot fade
+  out, Slot gap after, Slot crossfade into next); Slot mute
 - Voice level, Texture, Spread, Pitch, Stereo width, Low cut, Denoise
+  *(these seven — the sound of a slot — are the ones the morph crossfades
+  between slots; the timing controls and mute shape the sequence rather than
+  blend)*
 
 **Global** (one setting for the whole plugin):
 - Input level, Audition, Morph, Auto-morph, Wash grain
@@ -399,8 +414,9 @@ means it also ignores:
 
 - **Slot mute** — a focused muted slot still plays. Focused is "let me
   hear this exact slot no matter what."
-- **Auto-morph timing** — no linger, no crossfade, no transitions. The
-  slot just plays continuously for as long as you leave Focused on.
+- **Auto-morph timing** — no fade in, hold, fade out, gap or crossfade; no
+  transitions at all. The slot just plays continuously, at full, for as long as
+  you leave Focused on.
 - **The morph slider** — manual position along the slot line is
   irrelevant in Focused mode.
 
@@ -464,11 +480,11 @@ Arms every configured target at once. While On, each rides its own duration from
 - **Captures persist** across save and reopen (the raw audio is stored in the project; both engines rebuild on load).
 - **Transport must be moving** for it to sound — it is a generator. Loop the transport, or arm the track and monitor.
 
-See [`docs/spectral-vowel-morpher.md`](spectral-vowel-morpher.md) for deeper design notes and advanced techniques.
+See [`spectral-vowel-morpher.md`](spectral-vowel-morpher.md) — its sibling — for the shared engine's deeper design notes and advanced techniques.
 
 ---
 
-*Spectral Vowel Morpher is part of the Rozaya JSFX plugin suite.*
+*Spectral Vowel Passage is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
 
 

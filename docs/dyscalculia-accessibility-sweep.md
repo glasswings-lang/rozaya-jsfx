@@ -337,8 +337,9 @@ on the third.
 
 The first fix was a per-slot **dwell percentage**, and it was wrong for the
 reason this whole document exists: a percentage of a shared total is a ratio.
-Replaced with a per-slot **linger in seconds** in `spectral_vowel_morpher_v2`,
-and the global removed entirely — a cycle is now its steps added together.
+Replaced with per-slot **timing in seconds** (fade in / hold / fade out / gap) in
+`spectral_vowel_passage`, and the global removed entirely — a cycle is now its
+slots' legs added together.
 Asymmetry (a breath out longer than a breath in) falls out for free and cannot
 be expressed by any single shared number.
 

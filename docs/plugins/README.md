@@ -46,7 +46,7 @@ nothing else to open.
 |---|---|---|
 | Sustain Looper | `sustain_looper.jsfx` | [sustain-looper.md](sustain-looper.md) |
 | Spectral Vowel Morpher | `spectral_vowel_morpher.jsfx` | [spectral-vowel-morpher.md](spectral-vowel-morpher.md) |
-| Spectral Vowel Morpher v2 | `spectral_vowel_morpher_v2.jsfx` | [spectral-vowel-morpher-v2.md](spectral-vowel-morpher-v2.md) |
+| Spectral Vowel Passage | `spectral_vowel_passage.jsfx` | [spectral-vowel-passage.md](spectral-vowel-passage.md) |
 
 ### Utilities
 

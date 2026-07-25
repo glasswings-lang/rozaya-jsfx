@@ -1,13 +1,15 @@
 # Spectral Vowel Morpher
 
-Source: `src/spectral_vowel_morpher.jsfx`. **There is also a v2**
-(`src/spectral_vowel_morpher_v2.jsfx`, [manual](plugins/spectral-vowel-morpher-v2.md)):
-same engine, but short Wash grain settings work (the synthesis FFT is sized to
-the grain rather than fixed), the global Auto-morph time is replaced by a
-per-slot linger in seconds, and every setting describing a capture belongs to
-its slot. The design notes below apply to both except where they discuss those
-three things. (Fold into `rozaya_jsfx_manual.md`
-alongside the other plugins.)
+Source: `src/spectral_vowel_morpher.jsfx`. **There is a sibling instrument,
+[Spectral Vowel Passage](plugins/spectral-vowel-passage.md)**
+(`src/spectral_vowel_passage.jsfx`): the same engine, but a paced arrangement
+rather than a continuous morph — each captured moment carries its own timing
+(fade in, hold, fade out, an optional gap, and a crossfade-into-next toggle),
+and every setting describing a capture belongs to its slot. Reach for Passage
+when you want per-slot hold and crossfade paced deliberately; reach for Morpher
+when you want one continuous blend that never quite settles. The design notes
+below cover the shared engine and apply to both. (Fold into
+`rozaya_jsfx_manual.md` alongside the other plugins.)
 
 A **capture-based instrument**. You play audio into it, capture a few moments,
 and it resynthesizes them — either as a recognizable voice, an evolving wash, or

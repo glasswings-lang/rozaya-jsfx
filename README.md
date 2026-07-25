@@ -15,7 +15,7 @@ A collection of audio synthesis and effect plugins for [REAPER](https://www.reap
 - `Dapple` — scattered-droplet texture generator: random pitched plinks that chirp upward, over a resonant noise fizz, blendable from gurgle to plink (32-voice polyphonic)
 
 - `Spectral Vowel Morpher` — capture-based instrument: grab moments of live audio into slots and resynthesize them as a recognizable voice, an evolving wash, or any blend, morphing between the captured moments
-- `Spectral Vowel Morpher v2` — the Morpher with two changes: short Wash grain settings work (the synthesis FFT is sized to the grain), and every setting that describes a capture — Texture, Pitch, Spread, Stereo width, Low cut, Denoise, Voice level, plus how long the morph lingers on it — belongs to the slot rather than being one global setting flattening them all
+- `Spectral Vowel Passage` — a sibling of the Morpher on the same engine, but a paced-arrangement instrument instead of a continuous morph: each captured moment carries its own timing (fade in, hold, fade out, an optional gap of silence, and a crossfade-into-next toggle), and every setting that describes a capture — Texture, Pitch, Spread, Stereo width, Low cut, Denoise, Voice level — belongs to that slot rather than being one global setting flattening them all
 - `Harmonic Sculptor` — additive resynthesis over a 64-harmonic selector, each harmonic level-adjustable, for building or carving a spectrum by hand
 - `Sustain Looper` — loads a sample and builds a clean crossfaded sustain loop, with an ensemble layer
 

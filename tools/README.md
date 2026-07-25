@@ -3,14 +3,14 @@
 Small utility scripts that support the suite but aren't JSFX plugins.
 
 Every one runs from a terminal and prints its full flag list with `--help`.
-`rate_calc.py` and `morpher_v1_to_v2.py` need nothing installed;
+`rate_calc.py` and `morpher_to_passage.py` need nothing installed;
 `loop_finder.py` needs two packages (noted below).
 
 | Tool | For |
 |---|---|
 | [`rate_calc.py`](#rate_calcpy) | base rate for a second instance, so a chosen voice lands where you want it |
 | [`loop_finder.py`](#loop_finderpy) | pulling clean looping samples out of a recording |
-| [`morpher_v1_to_v2.py`](#morpher_v1_to_v2py) | moving a project onto Spectral Vowel Morpher v2, captures and all |
+| [`morpher_to_passage.py`](#morpher_to_passagepy) | moving a Spectral Vowel Morpher project onto its sibling Passage, captures and all |
 
 ## rate_calc.py
 
@@ -130,30 +130,32 @@ ear-proxy — the same "find a flat bit and grab it" pass done by hand to turn a
 real breath recording into a clean looping sample. Steady textures loop as-is;
 gestures are flattened so they loop too.
 
-## morpher_v1_to_v2.py
+## morpher_to_passage.py
 
-Copies a REAPER project that uses **Spectral Vowel Morpher** so the copy uses
-**v2**, keeping the captures and every setting.
+Copies a REAPER project that uses **Spectral Vowel Morpher** so the copy uses its
+sibling **Spectral Vowel Passage**, keeping the captures and every setting.
 
 ```
-python tools/morpher_v1_to_v2.py "E:/reaper/breathing.rpp"
+python tools/morpher_to_passage.py "path/to/project.rpp"
 ```
 
-Writes `breathing_v2.rpp` beside the original. **Your project is never
+Writes `project_passage.rpp` beside the original. **Your project is never
 modified**, so you can open one, then the other, and compare.
 
-**Why it exists.** v2 groups its controls by what they belong to, which
-renumbered the sliders, and it replaced v1's single global Auto-morph time with
-a per-slot **Slot linger**. Repointing a project at v2 by hand shifts every
-value along by one, so Texture lands on Wash grain, Pitch lands on Spread, and
-so on — it *loads*, it just sounds nothing like it did.
+**Why it exists.** Passage groups its controls by what they belong to, which
+renumbered the sliders, and it replaced Morpher's single global Auto-morph time
+with a per-slot timing cluster (fade in / hold / fade out / gap / crossfade
+toggle). Repointing a project at Passage by hand shifts every value out of place,
+so Texture lands on the wrong control, Pitch on another, and so on — it *loads*,
+it just sounds nothing like it did.
 
 This maps controls **by name**, read live from both `.jsfx` files, so it stays
 right even if either layout is renumbered again. It reads each instance's slot
-count out of its own capture data, so the Slot linger it works out reproduces
-the morph timing the project already had. Then it reads both files back and
-compares them label for label, and **refuses to report success** if anything
-failed to line up.
+count out of its own capture data, so the per-slot fade-out it works out
+reproduces the morph timing the project already had (Morpher's whole-pass time
+spread across the slots, still a continuous crossfade). Then it reads both files
+back and compares them label for label, and **refuses to report success** if
+anything failed to line up.
 
 **Convert from a saved project.** It reads what is on disk, so if the project is
 open in REAPER with unsaved changes, the copy is built from the older state —
