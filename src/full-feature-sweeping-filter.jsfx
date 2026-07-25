@@ -35,7 +35,7 @@ slider23:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 // beats / Seconds / Hz cycles), interpreted against Rate Value. As an
 // EFFECT plugin the dry signal passes through during the delay. Re-
 // arms on every transport stop/start. 0 disables the delay.
-slider24:0<0,1000,0.001>Start Delay
+slider24:0<0,1000,0.001>Start Delay (in Rate Mode units)
 
 // Per-cycle Play/Rest gate. Effect is applied normally for N cycles
 // of the Rate Value, then bypassed (dry signal passes through

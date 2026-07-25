@@ -113,7 +113,7 @@ slider61:0<0,1,1{Off,On}>V8 Active
 // transport stop/start. During the delay the @sample work is gated
 // entirely so the sequencer state stays at its play-start position
 // rather than advancing silently through the silent window.
-slider62:0<0,1000,0.001>Start Delay
+slider62:0<0,1000,0.001>Start Delay (in Rate Mode units)
 
 // --- Direction (slider 63) ---
 // Walk order through the active voices in the pool (the first

@@ -132,7 +132,7 @@ slider59:0<0,1,1{Off,On}>V8 Active
 // Units match Rate Mode (BPM beats / Seconds / Hz cycles), interpreted
 // against Rate Value. Re-arms on every transport stop/start. 0
 // disables the delay.
-slider60:0<0,1000,0.001>Start Delay
+slider60:0<0,1000,0.001>Start Delay (in Rate Mode units)
 
 // Per-cycle Play/Rest gate over the continuous glissando. Voices
 // play normally for N cycles of the master Rate Value, then go
