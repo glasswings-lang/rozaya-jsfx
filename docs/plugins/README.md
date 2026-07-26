@@ -24,7 +24,7 @@ nothing else to open.
 | Womb Sound Generator | `womb_sound_generator_v3.jsfx` | [womb.md](womb.md) |
 | Polyrhythm Phase | `polyrhythm_phase.jsfx` | [polyrhythm-phase.md](polyrhythm-phase.md) |
 | Polyrhythm Phase v3 (Note-Based) | `polyrhythm_phase_v3.jsfx` | [polyrhythm-phase-v3.md](polyrhythm-phase-v3.md) |
-| Melody Phase | `melody_phase.jsfx` | [melody-phase.md](melody-phase.md) |
+| Melody Phase | `melody_phase_v2.jsfx` | [melody-phase-v2.md](melody-phase-v2.md) |
 | Harmonic Sculptor | `harmonic_sculptor.jsfx` | [harmonic-sculptor.md](harmonic-sculptor.md) |
 | Dapple | `dapple.jsfx` | [dapple.md](dapple.md) |
 

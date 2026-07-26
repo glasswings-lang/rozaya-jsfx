@@ -55,3 +55,9 @@ here's the old one for recovery and reference."
   bitmask); left unfixed because they're frozen as-shipped. The fix, if
   ever needed, is the Park-Miller / MINSTD generator now used in the active
   plugins (see `src/breath_gen.jsfx`).
+- `melody_phase/v1.jsfx` — Melody Phase before the v2 rework that collapsed
+  the forty flat per-voice sliders (V1–V8 × five controls) behind a single
+  Voice selector. Same engine and feature set; the reorganisation just keeps
+  the parameter list short for linear / screen-reader navigation. Superseded
+  by `src/melody_phase_v2.jsfx` (archived 2026-07). `v1.md` beside it is v1's
+  manual, kept for anyone loading an old project on the archived plugin.
