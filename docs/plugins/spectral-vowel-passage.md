@@ -191,7 +191,7 @@ Fade out 0 is a hard edge — an instant switch to the next slot with crossfade 
 or a hard cut to silence with it off (which can click on sharp-edged captures;
 soft-edged captures like breath cut cleanly).
 
-**Fade in shape** / **Fade out shape** `Linear / Cosine / Logarithmic / Exponential, default Cosine` — *global*
+**Fade in shape (all slots)** / **Fade out shape (all slots)** `Linear / Cosine / Logarithmic / Exponential, default Cosine` — *global*
 The *curve* of the leg fades, as distinct from their length above. **Cosine** (the
 default) is a smooth, eased fade at both ends — a slot rises out of silence and
 settles back into it with no hard edge, which is usually what you want for placed,
