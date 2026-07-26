@@ -1021,6 +1021,16 @@ automorph_mode > 0.5 ? (
         need_fadein = lg_next_fadein;
         // Sequential arrives silent (fades in next); crossfade arrives at full.
         leg_env = lg_next_fadein ? 0 : 1;
+        // Sequential handoff (crossfade OFF): flush the wash overlap-add buffer so
+        // the next slot starts from real silence. That buffer still holds up to a
+        // full grain (~0.7 s) of the PREVIOUS slot's grains, written AHEAD of the
+        // read pointer during the fade-out and gap; out_env muted the OUTPUT
+        // through the gap but never emptied the buffer, so the tail was read back
+        // at full as the next slot faded in -- the previous slot bleeding onto the
+        // next. Crossfade ON keeps its tail on purpose (that tail IS the blend),
+        // so this fires only on the sequential path. Rare (once per slot handoff)
+        // and lands in the silent gap, so the buffer clear is inaudible.
+        lg_next_fadein ? clear_accum();
         automorph_mode == 3 ? (
           bag_pos >= n_active ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );   // through them all -> reshuffle
           nxt_slot = driftbag[bag_pos]; bag_pos += 1;
