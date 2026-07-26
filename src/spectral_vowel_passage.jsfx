@@ -102,6 +102,16 @@ slider29:0<-300,300,0.1>Ramp by (units match target)
 slider30:0<0,60,0.1>Ramp duration (minutes)
 slider31:0<0,60,0.1>Ramp start delay (minutes)
 slider32:0<0,1,1{Off,On}>Ramp engage
+// --- Fade curve (appended -- IDs are primary keys now, so new controls append
+//     rather than renumber). Shapes the leg fade-in and fade-out, matching the
+//     sweeping-filter suite's Attack/Release Shape: same apply_curve math, same
+//     options. GLOBAL (a house-style aesthetic, not per slot). Default Cosine is
+//     a smooth eased fade at both ends, so a slot rises out of silence and falls
+//     back to it with no abrupt edge; Linear is the old straight ramp. Fade-out
+//     shape applies to the crossfade-OFF fall to silence -- with crossfade ON the
+//     handover is the spectral crossfade, which these curves don't touch. ---
+slider33:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade in shape
+slider34:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade out shape
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -268,6 +278,7 @@ bag_pos = 999; last_slot = 0; drift_primed = 0; auto_primed = 0; sweep_dir = 1; 
 // fade-in / fade-out / gap silence; need_fadein tracks whether the current leg
 // began from silence (fade it in) or arrived at full via a crossfade (don't).
 leg_env = 1; need_fadein = 1; out_env = 1;
+fade_in_shape = 1; fade_out_shape = 1;   // Cosine until @slider reads sliders 33/34
 // Fresh instance: every slot starts as whatever is on screen. Without this only
 // the slot selected when a slider was last touched would carry the visible
 // settings, and the others would sit at hard-coded defaults.
@@ -514,6 +525,17 @@ function clear_accum() local(i) (
   i = 0; loop(ACCLEN, accL[i] = 0; accR[i] = 0; i += 1; );
   accpos = 0; hopcount = 0;
 );
+// Fade-curve shaping -- shared math with the sweeping-filter suite's apply_curve.
+// Maps a rising 0..1 ramp to a shaped rising 0..1: the leg fade-in uses
+// apply_curve(t, fade_in_shape) and the fade-out uses 1 - apply_curve(t,
+// fade_out_shape). Default (Cosine, 1) is the smooth eased S the suite defaults
+// to everywhere; Linear (0) is the old straight ramp.
+function apply_curve(t, shape) (
+  shape == 0 ? t :
+  shape == 1 ? (0.5 - 0.5 * cos(t * $pi)) :
+  shape == 2 ? (log(1 + 9*t) / log(10)) :
+               ((10^t - 1) / 9)
+);
 // wavetable sine: linear-interpolated lookup of one precomputed period. Only the
 // sin() EVALUATION changes; phase accumulators/increments are untouched, so every
 // harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
@@ -678,6 +700,8 @@ denoise_amt   = slider18;
 audition_mode = slider19;                                   // 0 focused slot, 1 morph
 morph01       = slider20 * 0.01;
 automorph_mode = slider21;
+fade_in_shape  = slider33;   // leg fade curves (global) -- shaped in @sample via apply_curve
+fade_out_shape = slider34;
 automorph_mode != last_automode ? (
   last_automode = automorph_mode; morph_phase = 0;
   drift_primed = 0;   // force Drift to (re)build its shuffle bag on the next sample
@@ -999,7 +1023,7 @@ automorph_mode > 0.5 ? (
       lg_x ? (
         // Crossfade ON: fade-in (only if from silence) -> hold -> crossfade-out.
         leg_len = max(0.05, lg_fi + lg_h + lg_fo);
-        leg_env = lg_t < lg_fi ? (lg_fi <= 0.0001 ? 1 : lg_t / lg_fi) : 1;
+        leg_env = lg_t < lg_fi ? (lg_fi <= 0.0001 ? 1 : apply_curve(lg_t / lg_fi, fade_in_shape)) : 1;
         lg_tc = lg_t - lg_fi;                  // time past the fade-in
         xfade = lg_tc <= lg_h ? 0 :
                 (lg_fo <= 0.0001 ? 1 : min(1, (lg_tc - lg_h) / lg_fo));
@@ -1009,10 +1033,10 @@ automorph_mode > 0.5 ? (
         xfade = 0;
         leg_len = max(0.05, lg_fi + lg_h + lg_fo + lg_g);
         leg_env =
-          lg_t < lg_fi ? (lg_fi <= 0.0001 ? 1 : lg_t / lg_fi) :
+          lg_t < lg_fi ? (lg_fi <= 0.0001 ? 1 : apply_curve(lg_t / lg_fi, fade_in_shape)) :
           lg_t < lg_fi + lg_h ? 1 :
           lg_t < lg_fi + lg_h + lg_fo ?
-            (lg_fo <= 0.0001 ? 0 : 1 - (lg_t - lg_fi - lg_h) / lg_fo) :
+            (lg_fo <= 0.0001 ? 0 : 1 - apply_curve((lg_t - lg_fi - lg_h) / lg_fo, fade_out_shape)) :
           0;
         leg_elapsed >= leg_len ? ( lg_advance = 1; lg_next_fadein = 1; );
       );

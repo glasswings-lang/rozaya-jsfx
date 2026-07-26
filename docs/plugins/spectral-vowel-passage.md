@@ -191,6 +191,22 @@ Fade out 0 is a hard edge — an instant switch to the next slot with crossfade 
 or a hard cut to silence with it off (which can click on sharp-edged captures;
 soft-edged captures like breath cut cleanly).
 
+**Fade in shape** / **Fade out shape** `Linear / Cosine / Logarithmic / Exponential, default Cosine` — *global*
+The *curve* of the leg fades, as distinct from their length above. **Cosine** (the
+default) is a smooth, eased fade at both ends — a slot rises out of silence and
+settles back into it with no hard edge, which is usually what you want for placed,
+breathing material. **Linear** is a straight-line ramp — the plugin's original
+behaviour, and the one that can feel abrupt right at the top of a fade-in or the
+bottom of a fade-out; reach for it only if you want that edge. **Logarithmic**
+rises fast then eases; **Exponential** starts slow then accelerates. These are the
+same four shapes, by the same names, that the sweeping filters use for their
+Attack/Release.
+
+The shape is **global** — one curve for every slot's fades, a house style rather
+than a per-moment setting (the fade *times* stay per slot). **Fade out shape**
+governs the crossfade-**Off** fall to silence; with crossfade **On** the handover
+is the spectral crossfade, which these curves don't touch.
+
 **Slot gap after (sec)** `0 to 300, default 0` — *per slot*
 Seconds of silence after this slot, before the next one begins. **This is how you
 place silence now** — the quiet lives between the slots, where it is, so you no
@@ -323,7 +339,9 @@ melts away, its **gap** is the length of quiet, and the second slot's **fade in*
 decides how it appears. If an arrival feels abrupt — a sudden appearance even
 though the level is rising from zero — the transition window is too short for the
 ear to register as "arriving": lengthen that slot's **fade in**. No hunting on a
-neighbour; the control is on the slot you're hearing.
+neighbour; the control is on the slot you're hearing. (Also check **Fade in shape**
+is on **Cosine**, not Linear — the eased curve softens an arrival on its own, and a
+straight-line ramp is the most likely thing making a fade-in feel abrupt.)
 
 ### The auto-gain needs extra time coming out of silence
 
@@ -394,7 +412,7 @@ Since the split doesn't always match intuition, here is the plain list.
   blend)*
 
 **Global** (one setting for the whole plugin):
-- Input level, Audition, Morph, Auto-morph, Wash grain
+- Input level, Audition, Morph, Auto-morph, Wash grain, Fade in shape, Fade out shape
 - All Drift and Ramp settings — including the targets. Drift acts on the
   global *effective* value of a target, not per-slot: drift Texture up 20
   and every slot's Texture gets shifted 20, not just the currently-audible
