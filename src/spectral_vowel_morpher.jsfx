@@ -237,7 +237,7 @@ voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
-cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
+cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
 // Previous sample's morph pair, for the voice phase handover in @sample. -1 so
 // the first sample records the pair without copying anything.
 last_vsi = -1; last_vsj = -1;
@@ -248,17 +248,17 @@ bag_pos = 999; last_slot = 0; drift_primed = 0;    // Drift shuffle-bag state (p
 // starts somewhere different. One-time, bounded, ~free.
 _tp = time_precise(); i = 0; loop(floor(1 + (_tp - floor(_tp)) * 500), rand(1); i += 1; );
 
-// wavetable sine: linear-interpolated lookup of one precomputed period. Only the
-// sin() EVALUATION changes; phase accumulators/increments are untouched, so every
-// harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
-// accumulators wrap to [0, TWOPI), so fidx lands in [0, WTBL) and the guard sample
-// at sintab[WTBL] covers i0 = WTBL-1.
-function wtsin(ph) local(fidx, i0, fr) (
-  fidx = ph * WTSCALE;
-  i0 = floor(fidx); fr = fidx - i0;
-  sintab[i0]*(1-fr) + sintab[i0+1]*fr;
-);
-
+// wavetable sine: linear-interpolated lookup of one precomputed period. Only the
+// sin() EVALUATION changes; phase accumulators/increments are untouched, so every
+// harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
+// accumulators wrap to [0, TWOPI), so fidx lands in [0, WTBL) and the guard sample
+// at sintab[WTBL] covers i0 = WTBL-1.
+function wtsin(ph) local(fidx, i0, fr) (
+  fidx = ph * WTSCALE;
+  i0 = floor(fidx); fr = fidx - i0;
+  sintab[i0]*(1-fr) + sintab[i0+1]*fr;
+);
+
 // grab the most recent MAXFFT input samples into a slot's raw store
 function grab_raw(slot) local(i, idx, base) (
   base = slot*MAXFFT;
