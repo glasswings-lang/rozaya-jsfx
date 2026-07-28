@@ -505,6 +505,72 @@ Focused is for auditioning and rendering individual slots as stems. If you
 want to preview what your morph will sound like, switch **Audition** to
 **Morph** and let auto-morph run.
 
+## Overtone — one voice, two notes
+
+Overtone singing (Tuvan khoomei and its relatives) sounds like a singer holding a
+drone and whistling a separate melody over it. There is no second voice. The
+singer holds **one** fundamental, and narrows the vocal tract into a very sharp
+resonance parked on **one harmonic of that same note**, so that partial stands
+clear of its neighbours and the ear hears it as a pitch in its own right. The
+melody is that resonance walking up and down the harmonic series — which is
+exactly why overtone melodies only ever land on harmonic-series intervals.
+
+Passage's voice engine is already a bank of 64 partials sitting at exact
+multiples of the detected fundamental, so it can do this directly. These three
+controls are the tract.
+
+**Overtone harmonic** `0 to 64, default 0 (off)` — *global*
+Which partial to bring out. 0 is off. 1 is the fundamental itself (no effect
+worth having — that's the drone). The usable range for a singing overtone is
+roughly **6 to 14**; below that the partials are too far apart to read as a
+melody, above it they get faint and crowded. Consecutive numbers are consecutive
+overtone "notes", so a melody is just a sequence of small whole numbers — 8, 9,
+10, 12 — and the machine works out every frequency.
+
+**Overtone depth (dB the others drop by)** `0 to 48, default 24` — *global*
+How far everything except the chosen harmonic is pushed down. This **only ever
+attenuates** — the chosen partial is never boosted, because a tract resonance
+redistributes energy rather than adding any, and because a boost at these depths
+would be an ear-safety problem on headphones. Around 20–30 dB is where the
+overtone separates into its own note. Push to 40+ and you're left with the drone
+and a near-pure whistle.
+
+Expect the voice to get *quieter* as you raise this; make it up on **Voice
+level**.
+
+**Overtone width (harmonics either side)** `0.5 to 4, default 1` — *global*
+How sharp the resonance is. **1** is the classic narrow whistle. Higher values
+let neighbouring partials come along, which is broader, more vowel-like and less
+synthetic — closer to the softer end of overtone technique.
+
+### Making it sing
+
+**The fundamental never drops, at any depth.** It's the drone half of "two notes
+at once"; suppress it and you have a whistle rather than overtone singing. It's
+hard-wired, not a setting.
+
+**It's voice-only.** Keep **Texture** at or near 0. The wash randomises phase,
+which turns every partial into a narrow band of noise — an isolated one there
+whistles instead of sounding a pitch.
+
+**Your capture has to be bright.** The effect isolates a partial that must
+already be there. A soft, breathy vowel has almost nothing in the upper harmonics
+to find; a bright, buzzy, pressed tone has plenty. If the overtone sounds thin or
+absent, the source is usually why.
+
+**Overtone harmonic is a Drift and Ramp target, and that's the melody.** Set
+Drift on it with a small up/down and a slow period and the overtone wanders the
+series on its own — the mouse-free version of drawing an automation lane.
+Fractional positions are deliberate: at 7.5 the emphasis sits evenly across
+partials 7 and 8 and hands over between them, which is what a real singer's
+resonance does as it sweeps. Ramp walks it once, slowly, from wherever it starts
+— an overtone rising through the series across a whole piece.
+
+Because the partials are defined off the detected fundamental, the overtone
+tracks everything the voice does for free — pitch, Pitch drift, the per-slot
+tunings, the morph. It cannot go out of tune with the drone, because it *is* the
+drone.
+
 ### Drift (in-plugin automation)
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.

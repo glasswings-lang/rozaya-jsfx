@@ -125,7 +125,7 @@ slider24:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 //     Pick a target; it wanders by up/down amounts over a wall-clock period.
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
-slider25:0<0,8,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level}>Drift target
+slider25:0<0,9,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level,Overtone harmonic}>Drift target
 slider26:0<0,300,0.1>Drift up amount (units match target)
 slider27:0<0,300,0.1>Drift down amount (units match target)
 slider28:30<1,600,0.5>Drift period (seconds)
@@ -140,11 +140,39 @@ slider30:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider31:0<0,8,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level}>Ramp target
+slider31:0<0,9,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level,Overtone harmonic}>Ramp target
 slider32:0<-300,300,0.1>Ramp by (units match target)
 slider33:0<0,60,0.1>Ramp duration (minutes)
 slider34:0<0,60,0.1>Ramp start delay (minutes)
 slider35:0<0,1,1{Off,On}>Ramp engage
+// --- Overtone: bring ONE partial of the voice out far enough to be heard as a
+//     note of its own, the way overtone / throat singing does. Appended at the
+//     end -- these are a new block belonging to nothing above them, so there is
+//     no grouping argument for an insert and no migration to pay for.
+//
+//     The physics it models: a singer does not add a second voice. They hold one
+//     fundamental and narrow the vocal tract into a sharp resonance parked on one
+//     harmonic of that same series, so that partial stands 20-30 dB clear of its
+//     neighbours and the ear hears it as a separate pitch. The melody is walking
+//     the resonance up and down the series, which is why overtone melodies only
+//     ever land on harmonic-series intervals.
+//
+//     So this is modelled as ATTENUATION of the others, never a boost of the
+//     chosen one. A tract resonance redistributes energy, it does not add any --
+//     and modelled this way the control can only ever make the voice quieter,
+//     which matters when the person reaching for it is wearing headphones and
+//     cannot see the meter. A boost slider at these depths would be an ear-safety
+//     problem.
+//
+//     Harmonic 1 is exempt, always. It is the drone half of "two notes at once":
+//     suppress it and you have a whistle, not overtone singing.
+//
+//     VOICE ONLY. The wash randomises phase, which turns every partial into a
+//     narrow band of noise -- an isolated one there whistles rather than sounding
+//     a pitch. Keep Texture at the voice end for this to work at all.
+slider36:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
+slider37:24<0,48,0.5>Overtone depth (dB the others drop by)
+slider38:1<0.5,4,0.1>Overtone width (harmonics either side)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -155,7 +183,7 @@ slider35:0<0,1,1{Off,On}>Ramp engage
 ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
-N_TARGETS = 9;   // Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Denoise, Morph, Input level
+N_TARGETS = 10;  // Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Denoise, Morph, Input level, Overtone harmonic
 // Wash grain is deliberately NOT a target: it rebuilds a window rather than
 // scaling a value, so it is driven from @block and cannot read a per-sample
 // drift offset the way the others do.
@@ -233,6 +261,7 @@ hph       = freemem; freemem += NHARM;         // resynth phase accumulators (vo
 hphB      = freemem; freemem += NHARM;         // resynth phase accumulators (voice B, left)
 hphR      = freemem; freemem += NHARM;         // voice A, right channel (detuned for width)
 hphBR     = freemem; freemem += NHARM;         // voice B, right channel (detuned for width)
+ot_gain   = freemem; freemem += NHARM;         // per-harmonic Overtone gain multiplier (1 = untouched); rebuilt only when the overtone controls move
 anbuf     = freemem; freemem += WHARM;         // mono analysis frame
 yin_df    = freemem; freemem += WHARM;         // YIN difference function
 yin_cmnd  = freemem; freemem += WHARM;         // YIN cumulative-mean-normalized difference
@@ -310,6 +339,15 @@ cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
 texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
 i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hph[i]; hphBR[i] = hphB[i]; i += 1; );
 voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
+// Overtone: gains start flat (feature off), and the smoothers start settled so
+// the first sample does not glide up from nowhere. ~30 ms takes the step out of
+// a manual move of the harmonic or the depth -- both are gain changes across
+// tens of partials at once, which steps the waveform if applied raw.
+i = 0; loop(NHARM, ot_gain[i] = 1; i += 1; );
+ot_coeff = 1 - exp(-1 / (0.03 * srate));
+ot_harm_base = 0; ot_depth_db = 24; ot_width = 1;
+ot_h_smooth = 0; ot_db_smooth = 24; ot_w_smooth = 1;
+ot_on_last = 0; ot_h_last = -1; ot_db_last = -1; ot_w_last = -1;
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
@@ -888,6 +926,9 @@ last_ramp_target != rsel_target ? (
   ramp_delay_mem[rsel_target] = rsel_delay;
 );
 ramp_engaged = slider35;
+ot_harm_base = max(0, min(NHARM, slider36));   // base for Overtone harmonic drift/ramp
+ot_depth_db  = max(0, min(48, slider37));
+ot_width     = max(0.5, min(4, slider38));
 
 // Per-target flags. td_active gates the drift-advance loop; mod_active gates the
 // effective-value recompute (drift OR ramp configured). A target with neither
@@ -920,6 +961,11 @@ drift_restart_free = slider30;   // 0 = restart on play (sync), 1 = free-running
   need_fadein = 1; leg_env = 1;   // first leg after play fades in from silence
   last_gsamp = floor(grain_ms * srate / 1000); last_cappoint = cap_point01;
   last_capavg = cap_avg;
+  // Snap the Overtone smoothers to where the sliders already are. Without this a
+  // project saved with the overtone parked on, say, harmonic 8 sweeps up through
+  // 1..8 over the smoother's 30 ms on every play -- a small chirp on a control
+  // that was never moved.
+  ot_h_smooth = ot_harm_base; ot_db_smooth = ot_depth_db; ot_w_smooth = ot_width;
   cap_dirty = 0;
   // (Drift reset is handled by its own transport block below — it must also
   //  catch loop-wraps / rewinds, which this capture-engine play-edge does not.)
@@ -1329,6 +1375,53 @@ mod_active[8] ? (
   dry_gain = eff_dry_db <= -60 ? 0 : pow(10, eff_dry_db/20);
 );
 
+// --- Overtone: build the per-harmonic gain curve. ---
+// Everything except a narrow window around the chosen harmonic is pushed DOWN by
+// the depth, so one partial is left standing clear of its neighbours and reads as
+// a pitch of its own. Attenuation rather than boost, so the control can only make
+// the voice quieter -- see the note at the slider declarations.
+//
+// eff_ot_h is deliberately allowed to be FRACTIONAL. Drift and Ramp move it
+// continuously, and a real overtone singer's resonance sweeps rather than jumps:
+// at 7.5 the window sits evenly across partials 7 and 8, so the emphasis hands
+// over between them exactly the way it does in the throat. The raised-cosine
+// window is what makes that handover smooth, and it uses the existing sine table
+// rather than a cos() call.
+//
+// The three inputs are smoothed because each one is a gain change across dozens
+// of partials at once; applied raw, a manual move steps the waveform. Once they
+// settle the values snap and compare equal, so the rebuild below stops running
+// altogether -- and a project that never touches the overtone (harmonic 0) pays
+// one comparison per sample and nothing else.
+eff_ot_h = max(0, min(NHARM, ot_harm_base + target_drift_offset[9] + ramp_offset_mem[9]));
+abs(eff_ot_h - ot_h_smooth)  < 0.0005 ? ot_h_smooth  = eff_ot_h  : ot_h_smooth  += (eff_ot_h  - ot_h_smooth)  * ot_coeff;
+abs(ot_depth_db - ot_db_smooth) < 0.0005 ? ot_db_smooth = ot_depth_db : ot_db_smooth += (ot_depth_db - ot_db_smooth) * ot_coeff;
+abs(ot_width - ot_w_smooth)  < 0.0005 ? ot_w_smooth  = ot_width  : ot_w_smooth  += (ot_width  - ot_w_smooth)  * ot_coeff;
+ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
+(ot_on != ot_on_last || (ot_on && (ot_h_smooth != ot_h_last || ot_db_smooth != ot_db_last || ot_w_smooth != ot_w_last))) ? (
+  ot_on ? (
+    otfl = pow(10, -ot_db_smooth/20);          // the floor everything else drops to
+    otw  = max(0.5, ot_w_smooth);
+    oi = 0; loop(NHARM, ot_gain[oi] = otfl; oi += 1; );
+    olo = max(1, ceil(ot_h_smooth - otw));     // harmonic NUMBERS (index = number - 1)
+    ohi = min(NHARM, floor(ot_h_smooth + otw));
+    oi = olo;
+    loop(max(0, ohi - olo + 1),
+      od = abs(oi - ot_h_smooth) / otw;
+      // raised cosine: 1 on the chosen harmonic, 0 at the edge of the window.
+      ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
+      ot_gain[oi-1] = otfl + (1 - otfl)*ow;
+      oi += 1;
+    );
+    // The fundamental never drops. It is the drone half of "two notes at once";
+    // suppress it and what is left is a whistle, not overtone singing.
+    ot_gain[0] = 1;
+  ) : (
+    oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );
+  );
+  ot_on_last = ot_on; ot_h_last = ot_h_smooth; ot_db_last = ot_db_smooth; ot_w_last = ot_w_smooth;
+);
+
 dryL = spl0 * dry_gain; dryR = spl1 * dry_gain;
 
 // --- wash (spectral) engine: read overlap-add accumulator, refill per hop ---
@@ -1386,12 +1479,12 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     // Pitch is a Drift and Ramp target, so it is reachable by automation, and it
     // reads foreign memory when it happens.
     loop(NHARM,
-      hmA = slot_harm[bA+vn]/normA;
+      hmA = slot_harm[bA+vn]/normA * ot_gain[vn];   // Overtone: 1 everywhere when off
       ((vn+1)*fAL) < srate*0.5 ? ( vvAL += hmA*wtsin(hph[vn]);
         hph[vn]   += TWOPI*(vn+1)*fAL/srate; hph[vn]   >= TWOPI ? hph[vn]   -= TWOPI; );
       ((vn+1)*fAR) < srate*0.5 ? ( vvAR += hmA*wtsin(hphR[vn]);
         hphR[vn]  += TWOPI*(vn+1)*fAR/srate; hphR[vn]  >= TWOPI ? hphR[vn]  -= TWOPI; );
-      hmB = slot_harm[bB+vn]/normB;
+      hmB = slot_harm[bB+vn]/normB * ot_gain[vn];
       ((vn+1)*fBL) < srate*0.5 ? ( vvBL += hmB*wtsin(hphB[vn]);
         hphB[vn]  += TWOPI*(vn+1)*fBL/srate; hphB[vn]  >= TWOPI ? hphB[vn]  -= TWOPI; );
       ((vn+1)*fBR) < srate*0.5 ? ( vvBR += hmB*wtsin(hphBR[vn]);
@@ -1407,9 +1500,9 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     // above -- see the note there for why an above-Nyquist partial could run its
     // accumulator away and read past the end of the sine table.
     loop(NHARM,
-      ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*wtsin(hph[vn]);
+      ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*ot_gain[vn]*wtsin(hph[vn]);
         hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI; );
-      ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*wtsin(hphB[vn]);
+      ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*ot_gain[vn]*wtsin(hphB[vn]);
         hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI; );
       vn += 1;
     );
@@ -1443,16 +1536,23 @@ spl1 = dryR + voutR;
 //              it). Read as v2, then Slot linger converted on the fly to Option B
 //              semantics: new_linger = max(0, old_linger - old_crossfade). This
 //              preserves the SOUND of an Option-A-saved project under B.
-//   7700003 -- current, Option B layout (linger = pure hold, crossfade added
-//              on top). Read straight through.
-ser_magic = 7700003;
+//   7700003 -- Option B layout (linger = pure hold, crossfade added on top),
+//              9 Drift/Ramp targets.
+//   7700004 -- current. Identical except Overtone harmonic joined the Drift and
+//              Ramp target lists, making it 10. The TARGET COUNT IS PART OF THE
+//              FORMAT: the banks are written back to back, so reading 10 where 9
+//              were written walks the cursor off the end of one bank and into the
+//              next -- the exact failure the magic exists to prevent. Hence a new
+//              magic rather than an append. A 7700003 blob still reads 9 and the
+//              tenth target keeps its @init defaults.
+ser_magic = 7700004;
 file_var(0, ser_magic);
-(ser_magic == 7700003 || ser_magic == 7700002 || ser_magic == 7700001) ? (
+(ser_magic == 7700004 || ser_magic == 7700003 || ser_magic == 7700002 || ser_magic == 7700001) ? (
   ser_v1  = ser_magic == 7700001;
   ser_v2a = ser_magic == 7700002;   // old Option A; needs linger conversion below
   // A v2 blob's banks are authoritative -- cancel the fresh-instance seed.
   (file_avail(0) >= 0 && !ser_v1) ? ( seed_slots_from_sliders = 0; );
-  n_ser_targets = ser_v1 ? 6 : N_TARGETS;
+  n_ser_targets = ser_v1 ? 6 : (ser_magic == 7700004 ? N_TARGETS : 9);
   file_var(0, have);
   file_var(0, n_used);
   // Save/restore only the slots actually captured (n_used * MAXFFT), not the
