@@ -170,7 +170,7 @@ slider35:0<0,1,1{Off,On}>Ramp engage
 //     VOICE ONLY. The wash randomises phase, which turns every partial into a
 //     narrow band of noise -- an isolated one there whistles rather than sounding
 //     a pitch. Keep Texture at the voice end for this to work at all.
-slider36:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
+slider36:0<0,64,1>Overtone harmonic (VOICE only -- 0 = off)
 slider37:24<0,48,0.5>Overtone depth (dB the others drop by)
 slider38:1<0.5,4,0.1>Overtone width (harmonics either side)
 

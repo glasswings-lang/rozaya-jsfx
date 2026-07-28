@@ -521,6 +521,13 @@ Passage's voice engine is already a bank of 64 partials sitting at exact
 multiples of the detected fundamental, so it can do this directly. These three
 controls are the tract.
 
+> **These controls do nothing at Texture 100.** Overtone works on the *voice*
+> engine's partials; the wash has none to isolate, only noise bands, and at full
+> wash the voice engine isn't running at all. If you turn these up and hear no
+> change, check Texture first — it is almost always this. (Note the neighbouring
+> **Capture average** is the mirror image: it affects only the *wash*, and does
+> nothing at Texture 0. The two cannot be auditioned at the same setting.)
+
 **Overtone harmonic** `0 to 64, default 0 (off)` — *global*
 Which partial to bring out. 0 is off. 1 is the fundamental itself (no effect
 worth having — that's the drone). The usable range for a singing overtone is
