@@ -72,9 +72,18 @@ slider27:0<0,1,1{Off,On}>Ramp engage
 // --- Ported from Spectral Vowel Passage. Appended rather than grouped: 18 saved
 //     projects use this plugin, and appending costs them nothing at all. ---
 // Capture average: how many analysis frames the WASH spectrum is averaged over.
-// PER SLOT, pairing with the per-slot Capture point -- both describe how a slot's
-// grab is READ. 1 is the original single-frame behaviour and the default.
-slider28:1<1,6,1>Capture average (per slot: 1 = one frame, higher = smoother)
+// GLOBAL here, unlike Passage -- for the same reason Overtone below is. It first
+// landed per slot only because it was ported wholesale from Passage, where per
+// slot is the house rule; the pairing with Capture point that justified it does
+// not hold up. Capture POINT has to be per slot: it indexes into that slot's own
+// grab, so a shared value would be meaningless. This is a smoothness dial, not
+// an index, and per slot it cost eight identical edits on every project.
+// The loss is real but small: a slot that only needed 1 now takes the same
+// time-smear as the slot that needed 6. In a field whose slots blur into one
+// another that costs far less than it would on Passage's separate stops -- which
+// is exactly why Passage keeps it per slot.
+// 1 is the original single-frame behaviour and the default.
+slider28:1<1,6,1>Capture average (1 = one frame, higher = smoother)
 // Overtone: bring one partial out far enough to be heard as a note of its own.
 // GLOBAL here, unlike Passage -- this plugin is a field you sit inside, with one
 // setting across the morph, rather than a route whose stops each have a character.
@@ -141,7 +150,7 @@ slot_norm = freemem; freemem += NSLOTS;        // wash peak normalization
 slot_harm = freemem; freemem += NSLOTS*NHARM;  // voice harmonic magnitudes
 slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
 slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
-slot_capavg   = freemem; freemem += NSLOTS;    // PER-SLOT capture average (frames), pairing with the per-slot capture point below
+slot_capavg   = freemem; freemem += NSLOTS;    // Capture average (frames) per slot. The CONTROL is global -- every entry holds the same value -- but the storage stays per slot so compute_spectrum reads it the same way and the @serialize field keeps its byte format
 ot_gain   = freemem; freemem += NHARM;         // per-harmonic Overtone gain (1 = untouched)
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 // --- harmonic (voice) engine scratch ---
@@ -215,7 +224,7 @@ i = 0; loop(N_TARGETS,
 eff_spread_hz = 0; eff_lowcut_hz = 0; eff_stereo_width = 0;   // seeded properly in @slider/@sample
 // runtime state
 cap_last = 0; first_slider = 1; inpos = 0; last_gsamp = -1; last_cappoint = 0;
-cap_dirty = 0; settle = 0; last_capavg = 1;   // debounce for Capture-point / Capture-average re-analysis
+cap_dirty = 0; capavg_dirty = 0; settle = 0; last_capavg = 1;   // debounce for Capture-point / Capture-average re-analysis (capavg_dirty = the re-derive covers ALL slots, not just the focused one)
 // Captured spectra re-derive LAZILY -- only when actually stale (a fresh project
 // load, or a capture-point scrub), never on an ordinary stop/play. In the normal
 // capture-then-play flow nothing re-derives at all. Starts stale on load
@@ -489,18 +498,20 @@ last_cap_slot != cap_slot ? (
   slot_cappoint[last_cap_slot] = slider3 * 0.01;   // save the slot we're leaving
   slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering
   slider_automate(slider3);
-  slot_capavg[last_cap_slot] = max(1, min(CAPAVG_MAX, slider28));
-  slider28 = slot_capavg[cap_slot];
-  slider_automate(slider28);
   last_cap_slot = cap_slot;
   last_cappoint = slot_cappoint[cap_slot];          // no re-derive on switch: slot already analyzed at this point
-  last_capavg   = slot_capavg[cap_slot];
 ) : (
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
-  slot_capavg[cap_slot]   = max(1, min(CAPAVG_MAX, slider28));
 );
 cap_point01   = slider3 * 0.01;
+// Capture average is GLOBAL: one slider value stamped onto every slot, so
+// switching slots neither saves nor loads it and there is nothing per-slot left
+// to get out of step. The per-slot bank stays as the storage compute_spectrum
+// reads and as the @serialize field (byte format unchanged) -- it just never
+// holds eight different values any more. Stamping every @slider is also what
+// flattens a project that was saved back when this WAS per slot.
 cap_avg       = max(1, min(CAPAVG_MAX, slider28));
+sca2 = 0; loop(NSLOTS, slot_capavg[sca2] = cap_avg; sca2 += 1; );
 // Overtone is GLOBAL in this plugin -- see the slider block.
 ot_harm_base  = max(0, min(NHARM, slider29));
 ot_depth_db   = max(0, min(48, slider30));
@@ -667,7 +678,10 @@ gsamp != last_gsamp ? ( last_gsamp = gsamp; build_synwin(gsamp); );
 // once, when it settles, in one lump. (Fresh load is handled at the play-edge
 // above -- analysis_valid starts 0 in @init.) NOT an automation target.
 cap_point01 != last_cappoint ? ( last_cappoint = cap_point01; cap_dirty = 1; settle = 0; );
-cap_avg != last_capavg ? ( last_capavg = cap_avg; cap_dirty = 1; settle = 0; );
+// Capture average is global, so a change to it invalidates EVERY captured slot,
+// not just the focused one. Flag that separately: the settle below needs to know
+// which SCOPE to re-derive, and the two causes no longer share one.
+cap_avg != last_capavg ? ( last_capavg = cap_avg; cap_dirty = 1; capavg_dirty = 1; settle = 0; );
 cap_dirty ? (
   settle += 1;
   // On settle, re-derive all captured slots in ONE pass (debounced, so a by-ear
@@ -681,13 +695,17 @@ cap_dirty ? (
       // yet, so derive ALL captured slots -- each at its OWN stored point.
       si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
       analysis_valid = 1;
+    ) : capavg_dirty ? (
+      // Warm, and the GLOBAL Capture average moved: it describes how every slot
+      // is read, so every captured slot has to come back through the analysis.
+      si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
     ) : (
-      // Warm: only the focused slot's capture point moved (per-slot now), so
-      // re-derive JUST that slot -- scrubbing one slot no longer retunes the
+      // Warm: only the focused slot's capture point moved (that one IS per slot),
+      // so re-derive JUST that slot -- scrubbing one slot no longer retunes the
       // others (the bug this fix addresses).
       compute_spectrum(cap_slot); analyze_harm(cap_slot);
     );
-    cap_dirty = 0;
+    cap_dirty = 0; capavg_dirty = 0;
   );
 );
 
@@ -1084,7 +1102,13 @@ file_var(0, ser_magic);
     cps = max(0, min(NSLOTS-1, slider1));
     last_cap_slot = cps;
     slider3 = slot_cappoint[cps] * 100;
-    slider28 = max(1, min(CAPAVG_MAX, slot_capavg[cps]));
+    // Capture average is GLOBAL now, so this stamps the visible slider onto every
+    // slot rather than loading one slot's value into the slider. A project saved
+    // back when it was per slot flattens to the value the slider shows -- which
+    // is the one its owner sees, and now the one they hear. @slider stamps too,
+    // so it converges whichever of the two restore paths REAPER runs first.
+    sca3 = max(1, min(CAPAVG_MAX, slider28));
+    sca4 = 0; loop(NSLOTS, slot_capavg[sca4] = sca3; sca4 += 1; );
     sliderchange(-1);
   );
 );

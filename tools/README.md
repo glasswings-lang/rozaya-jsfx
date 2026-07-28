@@ -447,12 +447,20 @@ python tools/passage_set_capture_average.py "E:eaper	o-be-re-rendered\*.RPP" --
 **What it touches.** One line of plain text per instance — the slider line. It
 does not go near your captures.
 
-That's enough because of how both plugins restore the setting. Capture average is
-stored per slot, but a project saved before the control existed has no such field,
-and on load the plugin seeds every slot from the visible slider — the same
-migration the per-slot Capture point already uses. So writing the slider carries
-all eight slots with it. Projects saved *since* the control existed carry their
-own per-slot values, and those win, because somebody chose them.
+That's enough because of how each plugin restores the setting — and the two now
+differ, so it's worth knowing which you're editing.
+
+**Morpher** — Capture average is one **global** control. The slider is the whole
+truth: on load the plugin stamps it onto all eight slots every time, whatever the
+saved project holds. Writing the slider here always takes, so this tool is just
+the way to do it across a folder without opening each project in REAPER.
+
+**Passage** — Capture average is still **per slot**, on purpose: each stop on the
+route has its own character. Writing the slider reaches a project that *predates*
+the control — it has no such field, so on load the plugin seeds every slot from
+the visible slider, the same migration the per-slot Capture point already uses. A
+Passage project saved *since* the control existed carries its own per-slot values,
+and those win, because somebody chose them. Change those in the plugin.
 
 Older projects may not have the slider at all — Morpher's Capture average is
 slider 28, and a project from its 16-slider days stops well short. The missing

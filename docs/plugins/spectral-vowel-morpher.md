@@ -60,6 +60,15 @@ Grab the current moment into the selected slot. It captures *whatever audio is r
 
 **Each slot keeps its own Capture point.** When you capture a slot it remembers where you scrubbed to, and scrubbing one slot no longer re-tunes the others. Switching **Capture slot** shows that slot's saved point on the slider, so you can bank several captures and tune each one to its own vowel independently. Saved points persist across reload. (Older projects made before this change open with every slot on the single point they shared; re-scrub any slot to give it its own.)
 
+**Capture average** `1 to 6, default 1` — *one setting for all eight slots*
+How many analysis frames the **wash** spectrum is averaged over. At 1 you get the original single-frame analysis. Turn it up if a slot wobbles.
+
+A single frame freezes that one frame's per-bin scatter and replays it on every grain. On a natural sustained voice, successive frames look alike and you'll never hear it — but on material that has *already* been through a spectral process, the scatter is irregular and its repetition becomes an audible wobble sitting centre-image. Averaging several frames lets the scatter cancel while the real spectral shape survives. The cost is time-smear: the frames span a stretch of the grab, so a vowel that *moves* gets blended across the average. That's why it's a dial and not automatic — **turn it up until the wobble goes, and no further.**
+
+Changing it re-analyzes every captured slot, so expect one brief glitch when you stop moving it (it's debounced — it recomputes once when the slider settles, not on every step). It only touches the wash; the voice engine resynthesizes exact harmonics with continuous phase and has no scatter to freeze. And because captures are stored as raw audio and re-analyzed on load, this reaches captures you banked long ago — no re-capture, no re-render.
+
+> **This is one global setting, unlike Passage, where it's per slot.** Morpher is a field you sit inside, with one setting across the morph — the same reason **Overtone** is global here. The tradeoff is that a slot that only needed 1 takes the same time-smear as the slot that needed 6; in a morph whose slots blur into one another, that costs much less than it would on Passage's separate stops. *(It was briefly per slot here after being ported over from Passage. If you open a project from that build, all eight slots flatten to whatever the slider itself shows.)*
+
 **Input level (dry, dB)** `-60 to +12, default 0`
 The source passed straight through. −60 = silent.
 
@@ -103,7 +112,7 @@ How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Sh
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level, default Texture`
+**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic, default Texture`
 Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
 
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
@@ -128,7 +137,7 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level, default Texture`
+**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic, default Texture`
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
 **Ramp by** `-300 to +300, units match the target, default 0`
@@ -145,12 +154,33 @@ Arms every configured target at once. While On, each rides its own duration from
 
 ---
 
+## Overtone — one voice, two notes
+
+Overtone singing (Tuvan khoomei and its relatives) sounds like a singer holding a drone and whistling a separate melody over it. There is no second voice. The singer holds **one** fundamental and narrows the vocal tract into a very sharp resonance parked on **one harmonic of that same note**, so that partial stands clear of its neighbours and the ear hears it as a pitch in its own right. The melody is that resonance walking up and down the harmonic series — which is why overtone melodies only ever land on harmonic-series intervals.
+
+Morpher's voice engine is already a bank of 64 partials sitting at exact multiples of the detected fundamental, so it can do this directly. These three controls are the tract.
+
+> **These work at both ends of Texture, and sound different at each.** On the voice they isolate one exact partial — a clean, near-pure tone. On the wash, where phase has already been randomized into narrow noise bands, the same window leaves a pitched *band*: breathier and airier, but still a definite note. Both run off the same controls and the same detected fundamental, so a Texture blend moves between the two characters rather than between two different overtones.
+
+**Overtone harmonic** `0 to 64, default 0 (off)` — *global*
+Which partial to bring out. 0 is off. 1 is the fundamental itself (no effect worth having — that's the drone). The usable range for a singing overtone is roughly **6 to 14**; below that the partials are too far apart to read as a melody, above it they get faint and crowded. Consecutive numbers are consecutive overtone "notes", so a melody is just a sequence of small whole numbers — 8, 9, 10, 12 — and the machine works out every frequency. It's a Drift and Ramp target, so that melody can play itself. Fractional values are deliberate: at 7.5 the emphasis hands over between partials 7 and 8, the way a real sweep does.
+
+**Overtone depth (dB the others drop by)** `0 to 48, default 24` — *global*
+How far everything except the chosen harmonic is pushed down. This **only ever attenuates** — the chosen partial is never boosted, because a tract resonance redistributes energy rather than adding any, and because a boost at these depths would be an ear-safety problem on headphones. Around 20–30 dB is where the overtone separates into its own note. Push to 40+ and you're left with the drone and a near-pure whistle. Harmonic 1 is exempt at any depth — it's the drone half of "two notes". Expect the voice to get *quieter* as you raise this; make it up on **Voice level**.
+
+**Overtone width (harmonics either side)** `0.5 to 4, default 1` — *global*
+How sharp the resonance is. **1** is the classic narrow whistle. Higher values let neighbouring partials come along, which is broader, more vowel-like and less synthetic — closer to the softer end of overtone technique.
+
+> **All three are global here, where Passage puts harmonic and depth per slot.** Passage models a singer moving through a route of separate notes; Morpher is one continuous field, so the tract holds one shape across the whole morph.
+
+---
+
 ## Usage Notes
 
 - **The capture workflow.** Put audio on the track, Input level up and Voice level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment — and because each slot keeps its own point, you can go slot by slot and tune every capture to its own vowel without disturbing the ones you already set.
 - **The voice end needs pitched material.** Texture 0 only sings on clearly pitched sources (a sustained vowel, organ, bowed note). On unpitched material it produces a tone — use the wash end (or the middle) there instead.
 - **Vowel + breath is the middle.** The pure voice end has no breath; the pure wash end has breath but de-voices. A blend around Texture 30–50 gives the vowel plus air.
-- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels, Stereo width, Low cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Six of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, Voice level — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
+- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels, Stereo width, Low cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Seven of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Overtone harmonic — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
 - **Source-agnostic.** It freezes anything — synths, field recordings, strings, cymbals, even a whole mix via a track send. The wash texturizes any source.
 - **Captures persist** across save and reopen (the raw audio is stored in the project; both engines rebuild on load).
 - **Transport must be moving** for it to sound — it is a generator. Loop the transport, or arm the track and monitor.

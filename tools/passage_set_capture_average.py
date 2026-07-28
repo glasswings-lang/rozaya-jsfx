@@ -15,12 +15,20 @@ WHAT IT TOUCHES
 Only the plugin's slider line -- one line of plain text per instance. It does not
 go near the saved captures.
 
-That works because of how both plugins restore the setting. Capture average is
-stored per slot, but a project saved before the control existed has no such field,
-and on load the plugin seeds every slot from the visible slider (the same
-migration the per-slot Capture point uses). So writing the slider is enough: all
-eight slots follow it. Projects saved SINCE the control existed carry their own
-per-slot values, and those win -- as they should, since somebody chose them.
+That works because of how each plugin restores the setting, and the two now differ.
+
+MORPHER -- Capture average is one GLOBAL control. The slider is the whole truth:
+on load the plugin stamps it onto all eight slots, every time, whatever the saved
+project holds. So writing the slider here always takes, and this tool is simply
+the way to do it across a folder without opening each project in REAPER.
+
+PASSAGE -- Capture average is still PER SLOT, deliberately (each stop on the route
+has its own character). Writing the slider reaches a project that predates the
+control: it has no such field, so on load the plugin seeds every slot from the
+visible slider, the same migration the per-slot Capture point uses. A Passage
+project saved SINCE the control existed carries its own per-slot values, and those
+win -- as they should, since somebody chose them. If you need to change one of
+those, do it in the plugin.
 
 Old projects may not have the slider at all: Morpher's Capture average is slider
 28, and a project from its 16-slider days stops long before that. The missing
