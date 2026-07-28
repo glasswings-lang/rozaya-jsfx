@@ -49,7 +49,7 @@ slider16:20<1,600,0.5>Auto-morph time (sec)
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. Added at the END of the range
 //     (slider IDs are primary keys — never renumber existing ones). ---
-slider17:0<0,5,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level}>Drift target
+slider17:0<0,6,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Overtone harmonic}>Drift target
 slider18:0<0,300,0.1>Drift up amount (units match target)
 slider19:0<0,300,0.1>Drift down amount (units match target)
 slider20:30<1,600,0.5>Drift period (seconds)
@@ -64,11 +64,26 @@ slider22:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider23:0<0,5,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level}>Ramp target
+slider23:0<0,6,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Overtone harmonic}>Ramp target
 slider24:0<-300,300,0.1>Ramp by (units match target)
 slider25:0<0,60,0.1>Ramp duration (minutes)
 slider26:0<0,60,0.1>Ramp start delay (minutes)
 slider27:0<0,1,1{Off,On}>Ramp engage
+// --- Ported from Spectral Vowel Passage. Appended rather than grouped: 18 saved
+//     projects use this plugin, and appending costs them nothing at all. ---
+// Capture average: how many analysis frames the WASH spectrum is averaged over.
+// PER SLOT, pairing with the per-slot Capture point -- both describe how a slot's
+// grab is READ. 1 is the original single-frame behaviour and the default.
+slider28:1<1,6,1>Capture average (per slot: 1 = one frame, higher = smoother)
+// Overtone: bring one partial out far enough to be heard as a note of its own.
+// GLOBAL here, unlike Passage -- this plugin is a field you sit inside, with one
+// setting across the morph, rather than a route whose stops each have a character.
+// Attenuates the others rather than boosting the chosen one: that is what a tract
+// resonance physically does, and it means the control can only make the voice
+// quieter. Harmonic 1 is exempt at any depth -- it is the drone.
+slider29:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
+slider30:24<0,48,0.5>Overtone depth (dB the others drop by)
+slider31:1<0.5,4,0.1>Overtone width (harmonics either side)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -79,13 +94,16 @@ slider27:0<0,1,1{Off,On}>Ramp engage
 ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
-N_TARGETS = 6;   // Drift targets: Texture, Spread, Pitch, Stereo width, Low cut, Voice level
+N_TARGETS = 7;   // Drift targets: Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Overtone harmonic
 FFTSIZE = 32768; NBINS = 16385;
 // WA = analysis window length, FIXED and decoupled from Wash grain. The capture
 // analysis (heavy: FFT + YIN) happens at WA; Wash grain only rebuilds the cheap
 // synthesis grain. That makes Wash grain safe to AUTOMATE (no re-FFT, no buffer
 // clear -> no dropouts), and Capture point scrubs this WA-length window in the grab.
 WA = 8192;   // ~170 ms @ 48k: good spectral resolution, leaves ~0.5 s scrub range
+// Capture average: frames step by half a window, and CAPAVG_MAX is what fits
+// inside one grab while leaving the capture point somewhere to move.
+CAPAVG_HOP = WA / 2; CAPAVG_MAX = 6;
 // ACCLEN must exceed the LONGEST grain (W up to MAXFFT) plus a hop, or a long
 // grain wraps the circular accumulator onto the read pointer (audible at the
 // top of the Window-size range). 2*MAXFFT is comfortable headroom.
@@ -123,6 +141,8 @@ slot_norm = freemem; freemem += NSLOTS;        // wash peak normalization
 slot_harm = freemem; freemem += NSLOTS*NHARM;  // voice harmonic magnitudes
 slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
 slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
+slot_capavg   = freemem; freemem += NSLOTS;    // PER-SLOT capture average (frames), pairing with the per-slot capture point below
+ot_gain   = freemem; freemem += NHARM;         // per-harmonic Overtone gain (1 = untouched)
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 // --- harmonic (voice) engine scratch ---
 hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
@@ -159,7 +179,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_capavg[i] = 1; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -195,7 +215,7 @@ i = 0; loop(N_TARGETS,
 eff_spread_hz = 0; eff_lowcut_hz = 0; eff_stereo_width = 0;   // seeded properly in @slider/@sample
 // runtime state
 cap_last = 0; first_slider = 1; inpos = 0; last_gsamp = -1; last_cappoint = 0;
-cap_dirty = 0; settle = 0;   // debounce for Capture-point re-analysis
+cap_dirty = 0; settle = 0; last_capavg = 1;   // debounce for Capture-point / Capture-average re-analysis
 // Captured spectra re-derive LAZILY -- only when actually stale (a fresh project
 // load, or a capture-point scrub), never on an ordinary stop/play. In the normal
 // capture-then-play flow nothing re-derives at all. Starts stale on load
@@ -205,6 +225,14 @@ rms_smooth = 0;   // slow auto-gain state (stable loudness, no per-grain pump)
 cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
 texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
 i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hph[i]; hphBR[i] = hphB[i]; i += 1; );
+// Overtone: flat gains (off), smoothers settled, ~30 ms to take the step out
+// of a manual move -- each control is a gain change across dozens of partials.
+i = 0; loop(NHARM, ot_gain[i] = 1; i += 1; );
+ot_coeff = 1 - exp(-1 / (0.03 * srate));
+ot_harm_base = 0; ot_depth_db = 24; ot_width = 1;
+ot_h_smooth = 0; ot_db_smooth = 24; ot_w_smooth = 1;
+ot_on_last = 0; ot_h_last = -1; ot_db_last = -1; ot_w_last = -1;
+ot_floor = 1; ot_bin = 0; ot_binw = 1; ot_f0bin = 0;
 voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
@@ -220,6 +248,17 @@ bag_pos = 999; last_slot = 0; drift_primed = 0;    // Drift shuffle-bag state (p
 // starts somewhere different. One-time, bounded, ~free.
 _tp = time_precise(); i = 0; loop(floor(1 + (_tp - floor(_tp)) * 500), rand(1); i += 1; );
 
+// wavetable sine: linear-interpolated lookup of one precomputed period. Only the
+// sin() EVALUATION changes; phase accumulators/increments are untouched, so every
+// harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
+// accumulators wrap to [0, TWOPI), so fidx lands in [0, WTBL) and the guard sample
+// at sintab[WTBL] covers i0 = WTBL-1.
+function wtsin(ph) local(fidx, i0, fr) (
+  fidx = ph * WTSCALE;
+  i0 = floor(fidx); fr = fidx - i0;
+  sintab[i0]*(1-fr) + sintab[i0+1]*fr;
+);
+
 // grab the most recent MAXFFT input samples into a slot's raw store
 function grab_raw(slot) local(i, idx, base) (
   base = slot*MAXFFT;
@@ -232,15 +271,46 @@ function grab_raw(slot) local(i, idx, base) (
 // triggers this. Capture point picks WHERE in the ~0.68 s grab to look: 0 =
 // earliest (the sustained vowel, since you react a beat after hearing it) .. 1 =
 // the press-moment.
-function compute_spectrum(slot) local(i, re, im, mx, rbase, mbase) (
-  rbase = slot*MAXFFT + floor(slot_cappoint[slot] * (MAXFFT - WA)); mbase = slot*NBINS;   // per-slot capture point
-  i = 0; loop(WA, fftwork[2*i] = slotraw[rbase+i]*window[i]; fftwork[2*i+1] = 0; i += 1; );
-  i = WA; loop(FFTSIZE - WA, fftwork[2*i] = 0; fftwork[2*i+1] = 0; i += 1; );
-  fft(fftwork, FFTSIZE); fft_permute(fftwork, FFTSIZE);
+// Averages the MAGNITUDES of `Capture average` frames stepped through the grab
+// by CAPAVG_HOP and centred on the capture point. At 1 frame this is the original
+// analysis exactly, so nothing that already exists changes until the dial moves.
+//
+// Above 1 it fixes the wobble on re-spectralised material: a single frame freezes
+// that instant's per-bin scatter and the wash replays it on every grain, so
+// roughness that would average out over time instead recurs identically. Natural
+// voice is unaffected -- successive frames look alike. Averaging lets the scatter
+// cancel while the spectral shape, which every frame agrees on, survives.
+//
+// Magnitudes, not complex bins: summing complex would let frames cancel by phase,
+// which is a comb filter rather than an average. The trade is time-smear, which
+// is why it is a dial and not a default.
+function compute_spectrum(slot) local(i, f, re, im, mx, rbase, mbase, kk, lo, hi, fstart, fb) (
+  kk = max(1, min(CAPAVG_MAX, floor(slot_capavg[slot])));
+  lo = slot*MAXFFT;
+  rbase = lo + floor(slot_cappoint[slot] * (MAXFFT - WA));   // per-slot capture point
+  hi = lo + MAXFFT - WA - (kk-1)*CAPAVG_HOP;                 // last start leaving room for kk frames
+  fstart = rbase - floor((kk-1)/2)*CAPAVG_HOP;               // centre the span on the point
+  fstart < lo ? fstart = lo;
+  fstart > hi ? fstart = hi;
+  mbase = slot*NBINS;
+  i = 0; loop(NBINS, slotmag[mbase+i] = 0; i += 1; );
+  f = 0;
+  loop(kk,
+    fb = fstart + f*CAPAVG_HOP;
+    i = 0; loop(WA, fftwork[2*i] = slotraw[fb+i]*window[i]; fftwork[2*i+1] = 0; i += 1; );
+    i = WA; loop(FFTSIZE - WA, fftwork[2*i] = 0; fftwork[2*i+1] = 0; i += 1; );
+    fft(fftwork, FFTSIZE); fft_permute(fftwork, FFTSIZE);
+    i = 0;
+    loop(NBINS,
+      re = fftwork[2*i]; im = fftwork[2*i+1];
+      slotmag[mbase+i] += sqrt(re*re + im*im);
+      i += 1;
+    );
+    f += 1;
+  );
   mx = 0; i = 0;
   loop(NBINS,
-    re = fftwork[2*i]; im = fftwork[2*i+1];
-    slotmag[mbase+i] = sqrt(re*re + im*im);
+    slotmag[mbase+i] = slotmag[mbase+i] / kk;
     slotmag[mbase+i] > mx ? mx = slotmag[mbase+i];
     i += 1;
   );
@@ -287,6 +357,7 @@ function analyze_harm(slot) local(base, ci, almin, almax, tmax, tau, ii, d, dd, 
 function capture(slot) (
   grab_raw(slot);
   slot_cappoint[slot] = cap_point01;   // stamp this slot with the current capture point; scrubbing later re-tunes only this slot
+  slot_capavg[slot]   = cap_avg;       // and the frame count on screen
   compute_spectrum(slot);   // wash (spectral) analysis
   analyze_harm(slot);       // voice (harmonic) analysis -- same captured frame
   have = 1;
@@ -332,12 +403,25 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
     );
     i += 1;
   );
+  ot_wash = (ot_on && ot_bin > 0) ? 1 : 0;
   pk = 0; i = 0; loop(NBINS, curmag[i] > pk ? pk = curmag[i]; i += 1; );
   thr = denoise_amt * 0.01 * 0.1 * pk;
   cutbin = floor(eff_lowcut_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
   i = 0;
   loop(NBINS,
     i < cutbin ? ( curmag[i] = 0; ) : ( curmag[i] = max(0, curmag[i] - thr); );
+    // Overtone on the wash. The harmonic peaks are still in the magnitude
+    // spectrum, phase-randomised into narrow noise bands, so isolating one leaves
+    // a pitched BAND rather than nothing -- breathier than the voice engine's
+    // pure partial, still a definite note. Bins under the fundamental's own peak
+    // are exempt, mirroring harmonic 1 being exempt in the voice.
+    ot_wash ? (
+      i > ot_f0bin ? (
+        od = abs(i - ot_bin) / ot_binw;
+        ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
+        curmag[i] = curmag[i] * (ot_floor + (1 - ot_floor)*ow);
+      );
+    );
     i += 1;
   );
   i = 0; loop(NBINS, phase[i] = rand(1)*TWOPI; i += 1; );
@@ -373,16 +457,6 @@ function clear_accum() local(i) (
   i = 0; loop(ACCLEN, accL[i] = 0; accR[i] = 0; i += 1; );
   accpos = 0; hopcount = 0;
 );
-// wavetable sine: linear-interpolated lookup of one precomputed period. Only the
-// sin() EVALUATION changes; phase accumulators/increments are untouched, so every
-// harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
-// accumulators wrap to [0, TWOPI), so fidx lands in [0, WTBL) and the guard sample
-// at sintab[WTBL] covers i0 = WTBL-1.
-function wtsin(ph) local(fidx, i0, fr) (
-  fidx = ph * WTSCALE;
-  i0 = floor(fidx); fr = fidx - i0;
-  sintab[i0]*(1-fr) + sintab[i0+1]*fr;
-);
 
 // Fisher-Yates shuffle of the first n_used slot indices into driftbag. Drift
 // draws its next slot from this bag, so it visits every captured slot exactly
@@ -415,12 +489,22 @@ last_cap_slot != cap_slot ? (
   slot_cappoint[last_cap_slot] = slider3 * 0.01;   // save the slot we're leaving
   slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering
   slider_automate(slider3);
+  slot_capavg[last_cap_slot] = max(1, min(CAPAVG_MAX, slider28));
+  slider28 = slot_capavg[cap_slot];
+  slider_automate(slider28);
   last_cap_slot = cap_slot;
   last_cappoint = slot_cappoint[cap_slot];          // no re-derive on switch: slot already analyzed at this point
+  last_capavg   = slot_capavg[cap_slot];
 ) : (
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
+  slot_capavg[cap_slot]   = max(1, min(CAPAVG_MAX, slider28));
 );
 cap_point01   = slider3 * 0.01;
+cap_avg       = max(1, min(CAPAVG_MAX, slider28));
+// Overtone is GLOBAL in this plugin -- see the slider block.
+ot_harm_base  = max(0, min(NHARM, slider29));
+ot_depth_db   = max(0, min(48, slider30));
+ot_width      = max(0.5, min(4, slider31));
 dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
 voice_db_base = slider5;                                    // base for Voice level drift
 voice_gain    = slider5 <= -60 ? 0 : pow(10, slider5/20);
@@ -527,6 +611,10 @@ drift_restart_free = slider22;   // 0 = restart on play (sync), 1 = free-running
   clear_accum();
   inpos = 0; rms_smooth = 0; morph_phase = 0;
   last_gsamp = floor(grain_ms * srate / 1000); last_cappoint = cap_point01;
+  last_capavg = cap_avg;
+  // Snap the Overtone smoothers so a saved-on overtone does not chirp up the
+  // series over 30 ms on every play.
+  ot_h_smooth = ot_harm_base; ot_db_smooth = ot_depth_db; ot_w_smooth = ot_width;
   cap_dirty = 0;
   // (Drift reset is handled by its own transport block below — it must also
   //  catch loop-wraps / rewinds, which this capture-engine play-edge does not.)
@@ -579,6 +667,7 @@ gsamp != last_gsamp ? ( last_gsamp = gsamp; build_synwin(gsamp); );
 // once, when it settles, in one lump. (Fresh load is handled at the play-edge
 // above -- analysis_valid starts 0 in @init.) NOT an automation target.
 cap_point01 != last_cappoint ? ( last_cappoint = cap_point01; cap_dirty = 1; settle = 0; );
+cap_avg != last_capavg ? ( last_capavg = cap_avg; cap_dirty = 1; settle = 0; );
 cap_dirty ? (
   settle += 1;
   // On settle, re-derive all captured slots in ONE pass (debounced, so a by-ear
@@ -767,6 +856,51 @@ audition_mode < 0.5 ? (
   last_vsi = vsi; last_vsj = vsj;
 );
 
+// --- Overtone: build the per-harmonic gain curve. ---
+// Everything except a narrow window around the chosen harmonic is pushed DOWN, so
+// one partial stands clear of its neighbours and reads as a pitch of its own.
+// Attenuation rather than boost -- what a tract resonance physically does, and it
+// means the control can only ever make the voice quieter.
+//
+// eff_ot_h is deliberately fractional: Drift and Ramp move it continuously, and a
+// real singer's resonance sweeps rather than jumps, so at 7.5 the window sits
+// across partials 7 and 8 and the emphasis hands over between them.
+eff_ot_h = max(0, min(NHARM, ot_harm_base + target_drift_offset[6] + ramp_offset_mem[6]));
+abs(eff_ot_h - ot_h_smooth)     < 0.0005 ? ot_h_smooth  = eff_ot_h    : ot_h_smooth  += (eff_ot_h    - ot_h_smooth)  * ot_coeff;
+abs(ot_depth_db - ot_db_smooth) < 0.0005 ? ot_db_smooth = ot_depth_db : ot_db_smooth += (ot_depth_db - ot_db_smooth) * ot_coeff;
+abs(ot_width - ot_w_smooth)     < 0.0005 ? ot_w_smooth  = ot_width    : ot_w_smooth  += (ot_width    - ot_w_smooth)  * ot_coeff;
+ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
+(ot_on != ot_on_last || (ot_on && (ot_h_smooth != ot_h_last || ot_db_smooth != ot_db_last || ot_w_smooth != ot_w_last))) ? (
+  ot_on ? (
+    otfl = pow(10, -ot_db_smooth/20);
+    otw  = max(0.5, ot_w_smooth);
+    oi = 0; loop(NHARM, ot_gain[oi] = otfl; oi += 1; );
+    olo = max(1, ceil(ot_h_smooth - otw));     // harmonic NUMBERS (index = number - 1)
+    ohi = min(NHARM, floor(ot_h_smooth + otw));
+    oi = olo;
+    loop(max(0, ohi - olo + 1),
+      od = abs(oi - ot_h_smooth) / otw;
+      ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
+      ot_gain[oi-1] = otfl + (1 - otfl)*ow;
+      oi += 1;
+    );
+    ot_gain[0] = 1;   // the fundamental never drops -- it is the drone
+    ot_floor = otfl;
+  ) : (
+    oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );
+  );
+  ot_on_last = ot_on; ot_h_last = ot_h_smooth; ot_db_last = ot_db_smooth; ot_w_last = ot_w_smooth;
+);
+// Wash-side position, in bins, off the morph-blended fundamental. Width is in
+// harmonics for both engines, so here it becomes width x f0 in Hz.
+(ot_on && have > 0) ? (
+  ot_f0mix = ((1-vmfr)*slot_f0[vsi] + vmfr*slot_f0[vsj]) * pitch_ratio;
+  ot_bpf   = FFTSIZE / srate;
+  ot_bin   = ot_f0mix * ot_h_smooth * ot_bpf;
+  ot_binw  = max(1, ot_f0mix * max(0.5, ot_w_smooth) * ot_bpf);
+  ot_f0bin = ot_f0mix * 1.5 * ot_bpf;
+) : ( ot_bin = 0; );
+
 dryL = spl0 * dry_gain; dryR = spl1 * dry_gain;
 
 // --- wash (spectral) engine: read overlap-add accumulator, refill per hop ---
@@ -803,7 +937,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     fBL = fB*(1-voice_detune); fBR = fB*(1+voice_detune);
     vvAL = 0; vvAR = 0; vvBL = 0; vvBR = 0; vn = 0;
     loop(NHARM,
-      hmA = slot_harm[bA+vn]/normA;
+      hmA = slot_harm[bA+vn]/normA * ot_gain[vn];   // Overtone: 1 everywhere when off
       // Phase advances INSIDE the audibility test. The wrap below subtracts
       // TWOPI at most once per sample, which only keeps up while the step is
       // smaller than TWOPI -- i.e. while the partial sits under the sample rate.
@@ -817,7 +951,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
         hph[vn]   += TWOPI*(vn+1)*fAL/srate; hph[vn]   >= TWOPI ? hph[vn]   -= TWOPI; );
       ((vn+1)*fAR) < srate*0.5 ? ( vvAR += hmA*wtsin(hphR[vn]);
         hphR[vn]  += TWOPI*(vn+1)*fAR/srate; hphR[vn]  >= TWOPI ? hphR[vn]  -= TWOPI; );
-      hmB = slot_harm[bB+vn]/normB;
+      hmB = slot_harm[bB+vn]/normB * ot_gain[vn];
       ((vn+1)*fBL) < srate*0.5 ? ( vvBL += hmB*wtsin(hphB[vn]);
         hphB[vn]  += TWOPI*(vn+1)*fBL/srate; hphB[vn]  >= TWOPI ? hphB[vn]  -= TWOPI; );
       ((vn+1)*fBR) < srate*0.5 ? ( vvBR += hmB*wtsin(hphBR[vn]);
@@ -831,9 +965,9 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     vvA = 0; vvB = 0; vn = 0;
     loop(NHARM,
       // Phase advance moved inside the audibility guard -- see the stereo path.
-      ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*wtsin(hph[vn]);
+      ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*ot_gain[vn]*wtsin(hph[vn]);
         hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI; );
-      ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*wtsin(hphB[vn]);
+      ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*ot_gain[vn]*wtsin(hphB[vn]);
         hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI; );
       vn += 1;
     );
@@ -857,9 +991,18 @@ spl1 = dryR + voutR;
 // of truth) + counts; wash spectrum and harmonic analysis re-derive from slotraw
 // on the first @block after load. Magic leads the stream so an old/absent blob
 // degrades to "no captures" instead of scrambling state (CLAUDE.md gotcha).
-ser_magic = 7700001;
+// Magic:
+//   7700001 -- 6 Drift/Ramp targets.
+//   7700002 -- current. Overtone harmonic joined the target lists, making it 7.
+//              The TARGET COUNT IS PART OF THE FORMAT -- the banks are written
+//              back to back, so reading 7 where 6 were written walks the cursor
+//              off the end of one and into the next. Hence a new magic rather
+//              than an append. A 7700001 blob reads 6 and the seventh target
+//              keeps its defaults.
+ser_magic = 7700002;
 file_var(0, ser_magic);
-ser_magic == 7700001 ? (
+(ser_magic == 7700002 || ser_magic == 7700001) ? (
+  n_ser_targets = ser_magic == 7700002 ? N_TARGETS : 6;
   file_var(0, have);
   file_var(0, n_used);
   // Save/restore only the slots actually captured (n_used * MAXFFT), not the
@@ -875,17 +1018,17 @@ ser_magic == 7700001 ? (
   //     reads run past EOF, and REAPER leaves the destination unchanged on a
   //     short read -- so old projects keep their captures and get default drift.
   //     Inserting mid-stream would misalign; appending is EOF-safe. ---
-  file_mem(0, target_drift_up,    N_TARGETS);
-  file_mem(0, target_drift_down,  N_TARGETS);
-  file_mem(0, target_drift_per,   N_TARGETS);
-  file_mem(0, target_drift_shape, N_TARGETS);
+  file_mem(0, target_drift_up, n_ser_targets);
+  file_mem(0, target_drift_down, n_ser_targets);
+  file_mem(0, target_drift_per, n_ser_targets);
+  file_mem(0, target_drift_shape, n_ser_targets);
   file_var(0, last_target_select);
 
   // --- Ramp config, appended after Drift. EOF-safe: a pre-Ramp project (drift
   //     only, or captures only) reads past EOF here and keeps default ramp. ---
-  file_mem(0, ramp_by_mem,    N_TARGETS);
-  file_mem(0, ramp_dur_mem,   N_TARGETS);
-  file_mem(0, ramp_delay_mem, N_TARGETS);
+  file_mem(0, ramp_by_mem, n_ser_targets);
+  file_mem(0, ramp_dur_mem, n_ser_targets);
+  file_mem(0, ramp_delay_mem, n_ser_targets);
   file_var(0, last_ramp_target);
 
   // --- Per-slot Capture point, appended after Ramp (EOF-safe append; no magic
@@ -902,6 +1045,16 @@ ser_magic == 7700001 ? (
   (file_avail(0) >= 0 && slot_cappoint[0] == -999) ? (
     seed_cp = slider3 * 0.01;
     scp = 0; loop(NSLOTS, slot_cappoint[scp] = seed_cp; scp += 1; );
+  );
+
+  // --- Per-slot Capture average, appended after Capture point. EOF-safe: a
+  //     project saved before it existed reads past the end, keeps the sentinel,
+  //     and seeds to 1 -- the single-frame analysis those projects were built
+  //     on, so they sound exactly as they did. ---
+  file_avail(0) >= 0 ? ( slot_capavg[0] = -999; );
+  file_mem(0, slot_capavg, NSLOTS);
+  (file_avail(0) >= 0 && slot_capavg[0] == -999) ? (
+    sca = 0; loop(NSLOTS, slot_capavg[sca] = 1; sca += 1; );
   );
 
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
@@ -925,6 +1078,7 @@ ser_magic == 7700001 ? (
     cps = max(0, min(NSLOTS-1, slider1));
     last_cap_slot = cps;
     slider3 = slot_cappoint[cps] * 100;
+    slider28 = max(1, min(CAPAVG_MAX, slot_capavg[cps]));
     sliderchange(-1);
   );
 );
