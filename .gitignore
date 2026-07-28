@@ -11,3 +11,7 @@ Thumbs.db
 
 # Personal scratchpad for git commit messages (git commit -F msg.txt); never tracked
 msg.txt
+
+# Python bytecode (passage_inject imports passage_captures, so this appears)
+__pycache__/
+*.pyc
