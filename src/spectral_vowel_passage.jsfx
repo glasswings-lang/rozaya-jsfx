@@ -175,9 +175,9 @@ slider35:0<0,1,1{Off,On}>Ramp engage
 //     means everywhere else in this plugin. Both engines read the same smoothed
 //     controls and the same blended fundamental, so they stay in step through a
 //     Texture blend instead of describing two different overtones.
-slider36:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
-slider37:24<0,48,0.5>Overtone depth (dB the others drop by)
-slider38:1<0.5,4,0.1>Overtone width (harmonics either side)
+slider36:0<0,64,1>Overtone harmonic (per slot: 0 = off, 1 = fundamental)
+slider37:24<0,48,0.5>Overtone depth (per slot: dB the others drop by)
+slider38:1<0.5,4,0.1>Overtone width (all slots: harmonics either side)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -260,6 +260,8 @@ slot_xfadeon  = freemem; freemem += NSLOTS;      // PER-SLOT crossfade-into-next
 slot_mute     = freemem; freemem += NSLOTS;      // PER-SLOT mute flag (0/1); muted slots are skipped in Sweep / Glide / Shuffle
 active_slots  = freemem; freemem += NSLOTS;      // indices of unmuted slots (0..n_used-1 minus muted ones); rebuilt every @block
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
+slot_ot_harm  = freemem; freemem += NSLOTS;    // PER-SLOT Overtone harmonic (0 = none for this slot)
+slot_ot_depth = freemem; freemem += NSLOTS;    // PER-SLOT Overtone depth (dB the other partials drop by)
 slot_capavg   = freemem; freemem += NSLOTS;    // PER-SLOT capture average (1..CAPAVG_MAX frames) for the WASH spectrum. 1 = the original single-frame analysis.
 // --- harmonic (voice) engine scratch ---
 hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
@@ -297,7 +299,7 @@ i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
-  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_capavg[i] = 1; slot_linger[i] = 4; slot_xfade[i] = 1; slot_fadein[i] = 1; slot_gap[i] = 0; slot_xfadeon[i] = 1; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_capavg[i] = 1; slot_ot_harm[i] = 0; slot_ot_depth[i] = 24; slot_linger[i] = 4; slot_xfade[i] = 1; slot_fadein[i] = 1; slot_gap[i] = 0; slot_xfadeon[i] = 1; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -499,6 +501,8 @@ function capture(slot) (
   grab_raw(slot);
   slot_cappoint[slot] = cap_point01;   // stamp this slot with the current capture point; scrubbing later re-tunes only this slot
   slot_capavg[slot]   = cap_avg;       // and with the frame count on screen, so the capture is analyzed the way you were listening
+  slot_ot_harm[slot]  = max(0, min(NHARM, slider36));   // and the overtone it was sung with
+  slot_ot_depth[slot] = max(0, min(48, slider37));
   compute_spectrum(slot);   // wash (spectral) analysis
   analyze_harm(slot);       // voice (harmonic) analysis -- same captured frame
   have = 1;
@@ -835,14 +839,23 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
   // Capture average banks with the slot exactly like Capture point, and for the
   // same reason: it describes how THIS slot's material has to be read.
   slot_capavg[last_cap_slot] = max(1, min(CAPAVG_MAX, slider4));
+  // Overtone harmonic + depth belong to the slot: they are its mouth shape.
+  slot_ot_harm[last_cap_slot]  = max(0, min(NHARM, slider36));
+  slot_ot_depth[last_cap_slot] = max(0, min(48, slider37));
   slider4 = slot_capavg[cap_slot];
   slider_automate(slider4);
+  slider36 = slot_ot_harm[cap_slot];
+  slider37 = slot_ot_depth[cap_slot];
+  slider_automate(slider36);
+  slider_automate(slider37);
   last_cap_slot = cap_slot;
   last_cappoint = slot_cappoint[cap_slot];          // no re-derive on switch: slot already analyzed at this point
   last_capavg   = slot_capavg[cap_slot];            // ditto -- the slot is already analyzed at its own frame count
 ) : (
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
   slot_capavg[cap_slot]   = max(1, min(CAPAVG_MAX, slider4));   // live capture-average edit
+  slot_ot_harm[cap_slot]  = max(0, min(NHARM, slider36));       // live overtone edits
+  slot_ot_depth[cap_slot] = max(0, min(48, slider37));
   slot_fadein[cap_slot]  = slider5;                 // live fade-in edit
   slot_linger[cap_slot]  = slider6;                 // live hold edit
   slot_xfade[cap_slot]   = slider7;                 // live fade-out edit
@@ -953,8 +966,9 @@ last_ramp_target != rsel_target ? (
   ramp_delay_mem[rsel_target] = rsel_delay;
 );
 ramp_engaged = slider35;
-ot_harm_base = max(0, min(NHARM, slider36));   // base for Overtone harmonic drift/ramp
-ot_depth_db  = max(0, min(48, slider37));
+// Overtone harmonic and depth are PER SLOT (banked above); only width is
+// global -- a singer has one throat, and how sharply it resonates is their
+// technique rather than something chosen per note.
 ot_width     = max(0.5, min(4, slider38));
 
 // Per-target flags. td_active gates the drift-advance loop; mod_active gates the
@@ -1051,6 +1065,8 @@ seed_slots_from_sliders == 1 ? (
   ss = 0;
   loop(NSLOTS,
     slot_capavg[ss]  = max(1, min(CAPAVG_MAX, slider4));
+    slot_ot_harm[ss] = max(0, min(NHARM, slider36));
+    slot_ot_depth[ss]= max(0, min(48, slider37));
     slot_fadein[ss]  = slider5;
     slot_linger[ss]  = slider6;                 // hold
     slot_xfade[ss]   = slider7;                 // fade out
@@ -1420,6 +1436,24 @@ mod_active[8] ? (
 // settle the values snap and compare equal, so the rebuild below stops running
 // altogether -- and a project that never touches the overtone (harmonic 0) pays
 // one comparison per sample and nothing else.
+// Blend the morph pair's overtones. Unlike Pitch -- which must NOT be blended,
+// because averaging two notes drags both slots off their own tuning -- the
+// overtone harmonic SHOULD slide. The resonance is a physical mouth shape, and
+// moving between two vowels passes through the shapes in between, so the emphasis
+// slides from one partial to the next. That glide is the "wah" between overtone
+// notes, and the fractional-harmonic window below already renders it.
+//
+// A slot with no overtone (harmonic 0) is handled as a singer would: it borrows
+// its neighbour's harmonic and fades the DEPTH to nothing, so the resonance
+// relaxes away. Blending the harmonic toward 0 instead would sweep the emphasis
+// down the whole series on its way out -- a descending whistle nobody asked for.
+ot_hA = slot_ot_harm[sb_i]; ot_hB = slot_ot_harm[sb_j];
+ot_dA = ot_hA >= 0.5 ? slot_ot_depth[sb_i] : 0;
+ot_dB = ot_hB >= 0.5 ? slot_ot_depth[sb_j] : 0;
+ot_hA < 0.5 ? ot_hA = ot_hB;
+ot_hB < 0.5 ? ot_hB = ot_hA;
+ot_harm_base = (1 - sb_f)*ot_hA + sb_f*ot_hB;
+ot_depth_db  = (1 - sb_f)*ot_dA + sb_f*ot_dB;
 eff_ot_h = max(0, min(NHARM, ot_harm_base + target_drift_offset[9] + ramp_offset_mem[9]));
 abs(eff_ot_h - ot_h_smooth)  < 0.0005 ? ot_h_smooth  = eff_ot_h  : ot_h_smooth  += (eff_ot_h  - ot_h_smooth)  * ot_coeff;
 abs(ot_depth_db - ot_db_smooth) < 0.0005 ? ot_db_smooth = ot_depth_db : ot_db_smooth += (ot_depth_db - ot_db_smooth) * ot_coeff;
@@ -1774,6 +1808,21 @@ file_var(0, ser_magic);
     sca = 0; loop(NSLOTS, slot_capavg[sca] = 1; sca += 1; );
   );
 
+  // --- Per-slot Overtone harmonic + depth, appended after Capture average.
+  //     APPEND, never insert (see the slot_mute warning above). A project saved
+  //     while Overtone was still global reads past EOF here and seeds harmonic 0
+  //     -- no overtone -- which is how those projects sound. ---
+  file_avail(0) >= 0 ? ( slot_ot_harm[0] = -999 );
+  file_mem(0, slot_ot_harm, NSLOTS);
+  (file_avail(0) >= 0 && slot_ot_harm[0] == -999) ? (
+    soh = 0; loop(NSLOTS, slot_ot_harm[soh] = 0; soh += 1; );
+  );
+  file_avail(0) >= 0 ? ( slot_ot_depth[0] = -999 );
+  file_mem(0, slot_ot_depth, NSLOTS);
+  (file_avail(0) >= 0 && slot_ot_depth[0] == -999) ? (
+    sod = 0; loop(NSLOTS, slot_ot_depth[sod] = 24; sod += 1; );
+  );
+
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
   // duplicate) file_avail(0) >= 0; on WRITE (save / undo) it's < 0. @serialize
   // is the one section guaranteed to run on both load AND duplicate, so after
@@ -1796,6 +1845,8 @@ file_var(0, ser_magic);
     last_cap_slot = cps;
     slider3 = slot_cappoint[cps] * 100;
     slider4 = max(1, min(CAPAVG_MAX, slot_capavg[cps]));
+    slider36 = slot_ot_harm[cps];
+    slider37 = slot_ot_depth[cps];
     // The per-slot banks are only authoritative when they were actually READ.
     //
     // On a v1 project they have NOT been filled yet -- v1 stored no per-slot

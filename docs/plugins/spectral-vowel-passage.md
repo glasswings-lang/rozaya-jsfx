@@ -529,7 +529,7 @@ controls are the tract.
 > so a Texture blend moves between the two characters rather than between two
 > different overtones.
 
-**Overtone harmonic** `0 to 64, default 0 (off)` — *global*
+**Overtone harmonic** `0 to 64, default 0 (off)` — *per slot*
 Which partial to bring out. 0 is off. 1 is the fundamental itself (no effect
 worth having — that's the drone). The usable range for a singing overtone is
 roughly **6 to 14**; below that the partials are too far apart to read as a
@@ -537,7 +537,7 @@ melody, above it they get faint and crowded. Consecutive numbers are consecutive
 overtone "notes", so a melody is just a sequence of small whole numbers — 8, 9,
 10, 12 — and the machine works out every frequency.
 
-**Overtone depth (dB the others drop by)** `0 to 48, default 24` — *global*
+**Overtone depth (dB the others drop by)** `0 to 48, default 24` — *per slot*
 How far everything except the chosen harmonic is pushed down. This **only ever
 attenuates** — the chosen partial is never boosted, because a tract resonance
 redistributes energy rather than adding any, and because a boost at these depths
@@ -548,10 +548,38 @@ and a near-pure whistle.
 Expect the voice to get *quieter* as you raise this; make it up on **Voice
 level**.
 
-**Overtone width (harmonics either side)** `0.5 to 4, default 1` — *global*
+**Overtone width (harmonics either side)** `0.5 to 4, default 1` — *all slots*
 How sharp the resonance is. **1** is the classic narrow whistle. Higher values
 let neighbouring partials come along, which is broader, more vowel-like and less
 synthetic — closer to the softer end of overtone technique.
+
+### Per slot, because that is how a singer works
+
+**Harmonic and depth belong to the slot. Width doesn't.** A singer has one
+throat, and how sharply it resonates is their technique — not something they
+re-choose per note. But *which* harmonic sits under that resonance, and how
+tightly it closes, are set by the shape of the mouth — and a captured moment is a
+mouth shape. So each slot carries its own overtone, and the passage walks through
+them.
+
+That also means each slot can use a harmonic its own material supports. A bright,
+pressed capture will hold harmonic 12; a softer one hasn't got the upper partials
+and wants 7 or 8. Before, one number had to serve every slot.
+
+**Moving between two slots slides the overtone.** This is the one place Passage
+deliberately *does* blend something it refuses to blend for Pitch. Averaging two
+pitches drags both slots off their own tuning — that's a glide, not a crossfade,
+and it was a bug. But the overtone resonance is a physical mouth shape, and moving
+between two vowels passes through every shape in between, so the emphasis really
+does slide from partial to partial. That slide is the "wah" you hear between
+overtone notes. A morph from a slot on harmonic 8 to one on harmonic 12 walks
+through 9, 10 and 11 on the way.
+
+**A slot with no overtone doesn't drag the note down with it.** If the next slot
+is set to 0, the harmonic *stays where it is* and the depth fades to nothing — the
+resonance relaxes and the overtone dissolves, which is what a singer does when
+they stop. (Sliding the harmonic toward zero instead would sweep the emphasis down
+the entire series on its way out: a descending whistle nobody asked for.)
 
 ### Making it sing
 
