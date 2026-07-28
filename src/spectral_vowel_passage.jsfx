@@ -1804,8 +1804,14 @@ file_var(0, ser_magic);
   //     on, so they sound exactly as they did. ---
   file_avail(0) >= 0 ? ( slot_capavg[0] = -999 );
   file_mem(0, slot_capavg, NSLOTS);
+  // Absent field: seed every slot from the VISIBLE slider, exactly as the
+  // Capture point migration above does. A project saved before this existed
+  // has the slider at its default of 1, so it still reproduces the
+  // single-frame analysis it was built on -- but it also means the setting
+  // can be dialled in from outside without surgery on the saved blob.
   (file_avail(0) >= 0 && slot_capavg[0] == -999) ? (
-    sca = 0; loop(NSLOTS, slot_capavg[sca] = 1; sca += 1; );
+    seed_ca = max(1, min(CAPAVG_MAX, slider4));
+    sca = 0; loop(NSLOTS, slot_capavg[sca] = seed_ca; sca += 1; );
   );
 
   // --- Per-slot Overtone harmonic + depth, appended after Capture average.

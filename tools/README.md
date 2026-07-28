@@ -18,6 +18,7 @@ nothing installed; `loop_finder.py` needs two packages (noted below).
 | [`passage_migrate_sliders.py`](#passage_migrate_sliderspy) | repairing older projects after Passage gained a control mid-list |
 | [`passage_captures.py`](#passage_capturespy) | reading and extracting the captures stored inside a project |
 | [`passage_inject.py`](#passage_injectpy) | putting a WAV back *into* a capture slot |
+| [`passage_set_capture_average.py`](#passage_set_capture_averagepy) | turning Capture average up across a whole folder of projects |
 
 ## rate_calc.py
 
@@ -432,3 +433,37 @@ leave a hole.
 
 **Close the project in REAPER first.** REAPER keeps its own copy in memory and
 writes it back over yours on the next save.
+
+## passage_set_capture_average.py
+
+Sets **Capture average** on every Passage / Morpher instance in a project, so a
+backlog of finished pieces can be re-rendered with the multi-frame analysis
+without opening each one and hunting for the control.
+
+```
+python tools/passage_set_capture_average.py "E:eaper	o-be-re-rendered\*.RPP" --value 6 --in-place
+```
+
+**What it touches.** One line of plain text per instance — the slider line. It
+does not go near your captures.
+
+That's enough because of how both plugins restore the setting. Capture average is
+stored per slot, but a project saved before the control existed has no such field,
+and on load the plugin seeds every slot from the visible slider — the same
+migration the per-slot Capture point already uses. So writing the slider carries
+all eight slots with it. Projects saved *since* the control existed carry their
+own per-slot values, and those win, because somebody chose them.
+
+Older projects may not have the slider at all — Morpher's Capture average is
+slider 28, and a project from its 16-slider days stops well short. The missing
+positions are filled with each slider's real default, read live out of the `.jsfx`
+rather than guessed, so nothing else moves.
+
+| Flag | What it does |
+|---|---|
+| `--value N` | 1–6 (default 6) |
+| `--in-place` | edit the projects themselves, keeping a `.pre-capavg-bak` each |
+| `--dry-run` | report what would change, write nothing |
+
+Close the projects in REAPER first. Wildcards are fine — quote them so the script
+expands them rather than the shell.
