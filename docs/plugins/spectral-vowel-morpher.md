@@ -14,6 +14,19 @@ It is a generator: it only sounds with the transport rolling (or the track armed
 
 ---
 
+
+**Fixed 2026-07-27: a click when the morph crossed between slots.** In every
+build before this, stepping from one slot to the next — a Drift step, or the
+Morph slider crossing a slot boundary — put a small click in the voice engine.
+The voice runs two banks of oscillators and hands the outgoing slot from one to
+the other at the crossing; the banks were at unrelated points in their cycles, so
+the waveform jumped. Its loudness depended on where the two banks happened to be,
+which is why it popped on some crossings and not others and felt random rather
+than "once per slot". The handover now carries the phase across. Nothing about it
+was adjustable and no setting worked around it — if you have an older render with
+ticks where the morph moves between slots, that was this. (Diagnosed and
+ear-tested in the sibling plugin, [Passage](spectral-vowel-passage.md).)
+
 ## Signal Architecture
 
 Every capture is analyzed two ways at once, and the **Texture** knob crossfades between them.
