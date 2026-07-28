@@ -68,6 +68,8 @@ PaulStretch-style phase randomization: it keeps the magnitude spectrum and disca
 
 ### Capture
 
+**Your captures can be taken out as WAV files, and files can be put back in** — see [Getting your captures out](../getting-your-captures-out.md) for a step-by-step walkthrough. Useful for reusing a good vowel elsewhere, backing captures up on their own, or listing what is in your eight slots without auditioning each one.
+
 Capture grabs the most recent ~0.68 seconds of input (a fixed sample count, so the *duration* shrinks at higher sample rates) and stores that whole window. The analysis looks at one slice inside it, positioned by **Capture point** — and each slot remembers its own Capture point, so you tune every capture to its own moment independently. Both engines re-derive from the stored raw audio, so you can re-analyze (sweep Capture point, change the wash grain) without re-capturing, and the captures survive a project reload.
 
 ---

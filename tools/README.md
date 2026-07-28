@@ -3,6 +3,10 @@
 Small utility scripts that support the suite but aren't JSFX plugins.
 
 Every one runs from a terminal and prints its full flag list with `--help`.
+
+**New to this?** [docs/getting-your-captures-out.md](../docs/getting-your-captures-out.md) walks through the two capture tools from scratch — installing Python, opening a
+terminal, and reading the output — assuming no prior experience. This page is the
+reference; that one is the tutorial.
 `rate_calc.py`, `morpher_to_passage.py` and `passage_migrate_sliders.py` need
 nothing installed; `loop_finder.py` needs two packages (noted below).
 
