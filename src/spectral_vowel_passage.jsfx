@@ -378,6 +378,17 @@ seed_slots_from_sliders = 1;
 // starts somewhere different. One-time, bounded, ~free.
 _tp = time_precise(); i = 0; loop(floor(1 + (_tp - floor(_tp)) * 500), rand(1); i += 1; );
 
+// wavetable sine: linear-interpolated lookup of one precomputed period. Only the
+// sin() EVALUATION changes; phase accumulators/increments are untouched, so every
+// harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
+// accumulators wrap to [0, TWOPI), so fidx lands in [0, WTBL) and the guard sample
+// at sintab[WTBL] covers i0 = WTBL-1.
+function wtsin(ph) local(fidx, i0, fr) (
+  fidx = ph * WTSCALE;
+  i0 = floor(fidx); fr = fidx - i0;
+  sintab[i0]*(1-fr) + sintab[i0+1]*fr;
+);
+
 // grab the most recent MAXFFT input samples into a slot's raw store
 function grab_raw(slot) local(i, idx, base) (
   base = slot*MAXFFT;
@@ -712,16 +723,6 @@ function apply_curve(t, shape) (
   shape == 1 ? (0.5 - 0.5 * cos(t * $pi)) :
   shape == 2 ? (log(1 + 9*t) / log(10)) :
                ((10^t - 1) / 9)
-);
-// wavetable sine: linear-interpolated lookup of one precomputed period. Only the
-// sin() EVALUATION changes; phase accumulators/increments are untouched, so every
-// harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
-// accumulators wrap to [0, TWOPI), so fidx lands in [0, WTBL) and the guard sample
-// at sintab[WTBL] covers i0 = WTBL-1.
-function wtsin(ph) local(fidx, i0, fr) (
-  fidx = ph * WTSCALE;
-  i0 = floor(fidx); fr = fidx - i0;
-  sintab[i0]*(1-fr) + sintab[i0+1]*fr;
 );
 
 // Fisher-Yates shuffle of the first n_used slot indices into driftbag. Drift
