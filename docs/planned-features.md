@@ -211,6 +211,20 @@ Mentioned in the design session but explicitly deferred to keep current scope ma
 
 ## Harmonic Sculptor (captured 2026-07-01, live-jam session)
 
+> **⚠ STANDING QUESTION, 2026-07-27 — overhaul or drop, decide before building.**
+> Rozaya, asked to prototype the overtone effect in the Sculptor: *"harmonic
+> sculpter is something I feel like needs a serious overhaul, either that, or to
+> be dropped entirely. I certainly wouldn't reach for it."* The two directions
+> below are still good ideas; what is no longer safe to assume is that the
+> Sculptor is where they should land. It graduated (2026-06-26) as the sound-design
+> front end for the render-and-loop pipeline, and the capture-based instruments
+> have since taken most of that job — they start from real recordings instead of
+> building a timbre from nothing. **Do not propose it as the cheap place to
+> prototype something, and do not start incremental work on it without asking
+> overhaul-vs-drop first.** Note that direction 2 below (additive formants) partly
+> shipped elsewhere anyway: Passage's Overtone controls do harmonic-weighting on
+> the same 64-partial engine, with the harmonics pinned to a *detected* f0.
+
 Two directions surfaced while playing the Sculptor live (via the kin_bridge live-control tool). Rozaya asked these be written down here rather than left as ephemeral task chips.
 
 ### 1. Note / semitone tuning (dyscalculia-accessibility)
@@ -425,3 +439,50 @@ The 2026-07-02 audit table above lists 12 plugins. It was written before the v2.
 **Constraints:** memory budget (~80 s stereo default, 32 M = ~5.5 min via `options:maxmem`) means *short* loops — fine for the intended use. WAV/OGG only (FLAC/MP3 unreliable — see CLAUDE.md sample-loading gotcha). Loop STEADY material or the loop seam telegraphs (Sustain Looper's lesson).
 
 **Verdict:** a genuinely new, coherent plugin that's mostly assembly of proven parts. Good candidate for a focused build session. Open question for Rozaya: option 1 vs 2, and how many slots (morpher settled on 8).
+
+## Getting captures out of (and into) REAPER project files (captured 2026-07-27)
+
+**Where this came from.** A slider renumber broke five saved projects, and the
+repair turned out to be a plain-text edit of one line per plugin instance —
+because a JSFX `@serialize` blob is a raw memory dump with no notion of slider
+numbering, so it survives anything done to the slider list. Decoding one to prove
+that also proved the format is *fully* understood: the layout consumed exactly
+every float in the blob, none left over. Rozaya, on realising what that implies:
+*"I have a weird feeling that suddenly I'll be wanting blobs for a lot more than
+just featuring in soundscapes."*
+
+**What is actually in there.** A Passage blob holds, per instance, eight slots ×
+32768 samples of **raw captured audio** (mono float32 at project rate — about 5.5
+seconds each), plus every per-slot bank. One 21-track project already carries
+twenty instances: roughly 20 MB of recorded voice, existing nowhere else.
+
+Ideas, roughly in order of value:
+
+1. **Extract captures to WAV.** A capture currently exists only inside the project
+   that made it. As files they become reusable in other pieces, feedable to
+   Sustain Looper and the additive engines, backed up independently, and the start
+   of a CC0 vowel library. Closest to done — the decoder already exists in
+   session history; it is the writer that is missing.
+2. **Inject captures back in.** Same layout, written rather than read. Copy slot 3
+   of one project into slot 7 of another, seed a project with a known-good set,
+   hand someone else your captures. Riskier than reading: gate on the magic the
+   way the plugin does, and work on copies.
+3. **Report what is in a slot without auditioning it.** Eight unlabelled captures
+   and no waveform to look at is a real accessibility problem. A text listing —
+   *"slot 3: 187 Hz, −22 dB, 0.68 s of signal"* — is something NVDA can read out.
+   Cheap, and probably the highest ratio of usefulness to effort.
+4. **Generalise to the whole suite.** Nothing here is Passage-specific; every
+   plugin serialises memory the same way. A generic dumper plus a per-plugin
+   memory map would turn future migrations into text edits instead of
+   redo-by-ear, and would make `@serialize` bugs inspectable rather than
+   deducible.
+5. **The weight problem.** Each Passage instance carries ~1 MB of audio, ~1.4 MB
+   once base64'd into the RPP, and REAPER re-serialises all of it into *every
+   undo point*. That is why a twenty-instance project is 30 MB and why editing it
+   feels like wading. Captures-as-external-files would fix it, at the cost of
+   projects no longer being self-contained — a real trade, not an obvious win.
+
+**Constraint to respect:** reading is safe, writing much less so, and the blob
+layout is version-gated on a magic number that has already moved four times
+(7700001 → 7700004). Any tool must check it exactly as the plugin does and refuse
+rather than guess.

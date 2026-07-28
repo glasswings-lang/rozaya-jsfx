@@ -3,14 +3,15 @@
 Small utility scripts that support the suite but aren't JSFX plugins.
 
 Every one runs from a terminal and prints its full flag list with `--help`.
-`rate_calc.py` and `morpher_to_passage.py` need nothing installed;
-`loop_finder.py` needs two packages (noted below).
+`rate_calc.py`, `morpher_to_passage.py` and `passage_migrate_sliders.py` need
+nothing installed; `loop_finder.py` needs two packages (noted below).
 
 | Tool | For |
 |---|---|
 | [`rate_calc.py`](#rate_calcpy) | base rate for a second instance, so a chosen voice lands where you want it |
 | [`loop_finder.py`](#loop_finderpy) | pulling clean looping samples out of a recording |
 | [`morpher_to_passage.py`](#morpher_to_passagepy) | moving a Spectral Vowel Morpher project onto its sibling Passage, captures and all |
+| [`passage_migrate_sliders.py`](#passage_migrate_sliderspy) | repairing older projects after Passage gained a control mid-list |
 
 ## rate_calc.py
 
@@ -161,3 +162,71 @@ anything failed to line up.
 open in REAPER with unsaved changes, the copy is built from the older state —
 which is exactly the mistake that prompted this to be written down as a tool
 rather than done by hand.
+
+## passage_migrate_sliders.py
+
+Fixes projects that were saved before **Spectral Vowel Passage** gained a control
+in the middle of its list.
+
+```
+python tools/passage_migrate_sliders.py "path/to/project.rpp"
+```
+
+**The symptom.** You open an older project and everything above a certain point
+is wrong — Wash grain's 150 showing up as Voice level, Auto-morph sitting on
+Audition, Texture on something else again. It isn't corruption. REAPER stores
+plugin settings by slider *position*, so inserting a control at slider 4 pushes
+everything above it along by one, and each value lands on its neighbour.
+
+**Your captures are never at risk.** They're stored separately from the settings,
+in a form that has no idea slider numbers exist, so they come through any
+renumber untouched. Only the control values move — which is why this is
+repairable at all, and repairable as a text edit rather than a re-capture.
+
+**What it does.** Rewrites each instance's settings into their new positions and
+fills in the new controls with whatever reproduces how that project *already*
+sounded — Linear fades, and a Capture average of 1 — rather than the plugin's
+current defaults. A project should still sound like itself after a repair;
+adopting the new defaults is a choice you make afterwards, not something a
+migration should decide for you.
+
+It handles as many layout changes as a project is behind, in one run, so it
+doesn't matter how old the project is.
+
+| Flag | What it does |
+|---|---|
+| `--dry-run` | **Preview only** — report what would change, write nothing |
+| `--out FILE` | write the result to a new file and leave the original alone (one project at a time) |
+
+Several projects at once is fine — just list them.
+
+### Before you run it
+
+**Close the project in REAPER first.** REAPER keeps its own copy in memory and
+writes it back over yours on the next save, so a migration applied underneath an
+open project is silently undone.
+
+In-place runs leave a `.pre-slider-migrate-bak` copy beside each project, and
+refuse to start if one is already there rather than overwriting your safety net.
+Running it twice is harmless — anything already current is left alone.
+
+### Examples
+
+```
+# look before you leap
+python tools/passage_migrate_sliders.py "E:/reaper/nightfall.RPP" --dry-run
+
+# repair several projects, backups kept automatically
+python tools/passage_migrate_sliders.py project-a.RPP project-b.RPP project-c.RPP
+
+# keep the original untouched and write a repaired copy instead
+python tools/passage_migrate_sliders.py old.RPP --out repaired.RPP
+```
+
+**Why it exists.** Passage's controls are grouped by what they belong to, and
+twice now a new control has belonged in the middle rather than at the end — Fade
+in/out shape with the timing cluster, Capture average with the other
+capture-analysis controls. Appending them instead would have kept every project
+working, but at the cost of a control list that reads in the order things were
+built rather than the order you use them. This exists so that trade can go the
+other way.
