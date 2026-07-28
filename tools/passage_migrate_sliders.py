@@ -57,6 +57,14 @@ import sys
 
 PLUGIN = "spectral_vowel_passage.jsfx"
 
+# Passage was called this before it was named. The file still sits in some
+# Effects folders, so projects saved against it still open -- silently running
+# code from before the rename, and missing everything added since. Its slider
+# layout is identical to Passage's own 32-slider layout (verified label for
+# label), so repointing the project at the current file is safe, and the hops
+# below then bring it the rest of the way.
+OLD_NAMES = ("spectral_vowel_morpher_v2.jsfx",)
+
 # (slider count this hop applies to, how many sliders keep their place, values to
 # insert).  A "keep" of 9 means the new values land at slider 10, straight after
 # Slot mute.  Ordered oldest hop first; a project is walked through every hop it
@@ -65,7 +73,11 @@ HOPS = [
     (32, 9, ["0", "0"]),   # Fade in shape / Fade out shape -> Linear
     (34, 3, ["1"]),        # Capture average -> 1 frame
 ]
-CURRENT = 35   # slider count of the build this script targets
+SETTLED = 35   # the count after every INSERT hop has been applied
+# Sliders added at the END need no migration at all -- REAPER simply gives the
+# missing trailing ones their defaults. So anything at or above SETTLED is fine,
+# however many controls the plugin has grown since (Overtone took it to 38).
+# Only the inserts in HOPS actually move existing values.
 
 BACKUP_SUFFIX = ".pre-slider-migrate-bak"
 
@@ -97,7 +109,7 @@ def shift_slider_line(line):
     if values != tokens[: len(values)]:
         return line + eol, "SKIPPED (unexpected layout: '-' among the values)"
 
-    if len(values) == CURRENT:
+    if len(values) >= SETTLED:
         return line + eol, "already current"
 
     applied = []
@@ -107,12 +119,12 @@ def shift_slider_line(line):
             applied.append("%d->%d" % (count, len(values)))
 
     if not applied:
-        known = sorted({h[0] for h in HOPS} | {CURRENT})
+        known = sorted({h[0] for h in HOPS} | {SETTLED})
         return line + eol, ("SKIPPED (unrecognised layout: %d values, expected one "
                             "of %s)" % (len(values), known))
-    if len(values) != CURRENT:
-        return line + eol, ("SKIPPED (hop chain ended at %d, not %d -- HOPS is "
-                            "incomplete)" % (len(values), CURRENT))
+    if len(values) < SETTLED:
+        return line + eol, ("SKIPPED (hop chain ended at %d, short of %d -- HOPS is "
+                            "incomplete)" % (len(values), SETTLED))
 
     # Give back the slots the new values took, so the line keeps the width
     # REAPER wrote.  It re-pads on its own next save either way.
@@ -126,8 +138,15 @@ def migrate(text):
     lines = text.split("\n")
     report = []
     for i, line in enumerate(lines):
-        if PLUGIN not in line or "<JS" not in line:
+        if "<JS" not in line:
             continue
+        renamed = ""
+        if PLUGIN not in line:
+            hit = next((o for o in OLD_NAMES if o in line), None)
+            if hit is None:
+                continue
+            lines[i] = line.replace(hit, PLUGIN)
+            renamed = " (repointed from %s)" % hit
         # The slider values are always the line immediately after the <JS ...>
         # header.
         if i + 1 >= len(lines):
@@ -135,7 +154,9 @@ def migrate(text):
             continue
         new_line, status = shift_slider_line(lines[i + 1])
         lines[i + 1] = new_line
-        report.append((status, "instance at line %d: %s" % (i + 1, status)))
+        if renamed and status == "already current":
+            status = "migrated"          # the repoint alone is a change worth writing
+        report.append((status, "instance at line %d: %s%s" % (i + 1, status, renamed)))
     return "\n".join(lines), report
 
 

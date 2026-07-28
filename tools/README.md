@@ -199,6 +199,18 @@ migration should decide for you.
 It handles as many layout changes as a project is behind, in one run, so it
 doesn't matter how old the project is.
 
+**It also repoints projects that use the old plugin filename.** Passage was
+called `spectral_vowel_morpher_v2.jsfx` before it was named. Those projects
+still open — that file may still be sitting in your Effects folder — but they're
+silently running code from before the rename, missing every fix since. Their
+slider layout is identical to Passage's own 32-slider layout, so the tool
+switches them over and then migrates them the rest of the way in the same pass.
+
+**Controls added at the END never need migrating.** REAPER just gives the
+missing trailing ones their defaults, so a project saved before Overtone existed
+is already fine. Only controls inserted mid-list move anything, and those are
+the only ones this tool touches.
+
 | Flag | What it does |
 |---|---|
 | `--dry-run` | **Preview only** — report what would change, write nothing |
