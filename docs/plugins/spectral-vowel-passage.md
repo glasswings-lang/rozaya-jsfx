@@ -38,8 +38,9 @@
 > the note under **Wash grain**. The sizing is kept for the CPU win.)
 >
 > Controls are also grouped by what they belong to rather than by when they were
-> added, so everything owned by the selected slot — **Capture point**, the five
-> timing controls, and the seven above — is reached through **Capture slot**.
+> added, so everything owned by the selected slot — **Capture point**, **Capture
+> average**, the timing controls, and the seven above — is reached through
+> **Capture slot**.
 
 ---
 
@@ -85,6 +86,44 @@ Grab the current moment into the selected slot. It captures *whatever audio is r
 *Where* in the captured ~0.68 s to analyze — 0 = earliest, 100 = the instant you pressed. Defaults to earliest because, by the time you react and press, the sound is already a beat in the past; the press-moment tends to catch the breathy release. Re-analyzes live, so sweep it by ear to land on the vowel. Set-once — not an automation target (it re-runs the full analysis).
 
 **Each slot keeps its own Capture point.** When you capture a slot it remembers where you scrubbed to, and scrubbing one slot no longer re-tunes the others. Switching **Capture slot** shows that slot's saved point on the slider, so you can bank several captures and tune each one to its own vowel independently. Saved points persist across reload. (Older projects made before this change open with every slot on the single point they shared; re-scrub any slot to give it its own.)
+
+**Capture average** `1 to 6, default 1` — *per slot*
+*How much* of the grab the wash analysis looks at, as against Capture point's
+*where*. At 1 it reads a single instant — the original behaviour, and right for
+natural voice. Turn it up and it reads several overlapping slices around the
+capture point and averages them.
+
+**This is the fix for the wobble on already-processed material.** A single
+analysis frame freezes that instant's fine detail and the wash then replays the
+same frozen detail on every grain, hundreds of times a second. On a natural
+sustained vowel that's harmless — one instant looks much like the next, so the
+frozen frame is a fair description of the sound. On something that has *already*
+been through a spectral process the fine detail is irregular, and hearing the
+identical irregularity repeat is what you register as a wobble. Averaging lets
+the roughness cancel out while the actual shape of the sound, which every frame
+agrees on, survives.
+
+So: **capturing a render that has been through Passage (or any spectral
+processing) before? Raise this until the wobble goes, and no further.** Two or
+three is usually enough.
+
+Raising **Spread** also eases the wobble, and until now that was the only lever —
+but Spread only blurs the frozen detail rather than removing it, and blurs
+everything else along with it. With Capture average doing the job properly,
+Spread is free to go back to whatever you actually want it at for character, and
+you get the definition back that you were spending on it.
+
+The cost is time-smear: the frames cover a stretch rather than an instant, so a
+vowel that *moves* gets blended across that stretch. That's why it's a dial and
+not automatic — on moving material, keep it low. Like Capture point it re-analyzes
+live, so step it by ear; and like Capture point it's set-once, not an automation
+target. **Each slot keeps its own**, because it describes the material in *that*
+slot — one slot holding natural voice can sit at 1 while its neighbour holding a
+re-spectralised wash sits at 4.
+
+Nothing needs re-capturing to benefit. The stored raw audio is what gets
+re-analyzed, so every capture you already have — in this project or any older one
+— can simply be re-read at a higher frame count.
 
 **Input level (dry, dB)** `-60 to +12, default 0`
 The source passed straight through. −60 = silent.
@@ -219,18 +258,17 @@ than a per-moment setting (the fade *times* stay per slot). **Fade out shape**
 governs the crossfade-**Off** fall to silence; with crossfade **On** the handover
 is the spectral crossfade, which these curves don't touch.
 
-**Projects saved before these two controls existed need migrating.** They were
-added as sliders 10 and 11, which pushes every control from **Input level**
-upward along by two — and REAPER restores plugin values by slider *position*, so
-an older project opens with everything above **Slot mute** shifted: Wash grain's
-150 arriving as Voice level, Auto-morph landing on Audition, and so on. Your
-captures are safe regardless (they're stored separately and don't know what a
-slider number is); it's only the control values that shift. Run
-`tools/passage_shift_fade_shapes.py` over any project saved before this build and
-it rewrites them into the new positions, setting both shapes to **Linear** —
-which is what those fades actually were, since the old build had no shape control
-and ramped straight. Switch them to Cosine afterwards if you prefer it. The tool
-keeps a `.pre-fadeshape-bak` copy and is safe to run twice.
+**Older projects need migrating.** These two shapes were added as sliders 10 and
+11, and **Capture average** later as slider 4 — and REAPER restores plugin values
+by slider *position*, so a project saved before either one opens with everything
+above the insert shifted along: Wash grain's 150 arriving as Voice level,
+Auto-morph landing on Audition, and so on. Your captures are safe regardless —
+they're stored separately and have no idea what a slider number is — so it is
+only the control values that move. Run `tools/passage_migrate_sliders.py` over any
+project saved before this build; it applies whichever shifts that project still
+needs, setting the fade shapes to **Linear** and Capture average to **1**, which
+is what those projects actually were. Change them afterwards if you want the new
+defaults. It keeps a `.pre-slider-migrate-bak` copy and is safe to run twice.
 
 **Slot gap after (sec)** `0 to 300, default 0` — *per slot*
 Seconds of silence after this slot, before the next one begins. **This is how you

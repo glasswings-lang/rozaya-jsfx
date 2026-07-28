@@ -163,9 +163,31 @@ Status as built (2026-07-25):
   for banking the sound-character values already exists in v2 and could be
   ported. Slot timing stays v2's alone — that is what makes them different
   instruments.
-- **Capture averages one frame.** Confirmed cause of the wobble when
-  re-spectralising already-processed material: a single analysis frame freezes
-  that frame's per-bin scatter and repeats it every grain. Raising Spread (with
-  grain around 300) smooths it away in practice. A proper fix would average the
-  magnitudes across several frames at capture time — natural sources barely
-  change, processed ones lose the baked-in scatter.
+- **Capture averages one frame — FIXED 2026-07-27.** Confirmed cause of the
+  wobble when re-spectralising already-processed material: a single analysis
+  frame freezes that frame's per-bin scatter and repeats it every grain. Raising
+  Spread (with grain around 300) smoothed it away in practice but never removed
+  it — a blur over the frozen scatter, not a fix, and it cost definition and a
+  Spread setting that should have been free for character.
+
+  The proper fix named here is what shipped: `compute_spectrum` now averages
+  MAGNITUDES (not complex bins — summing complex would let frames cancel by
+  phase, which is a comb filter) across *Capture average* frames stepped by
+  `WA/2` and centred on the capture point. **Per slot**, on slider 4 beside the
+  other capture-analysis controls, default 1 = the original single-frame
+  analysis, so nothing that already exists changes until the dial is turned.
+  The trade is time-smear: a vowel that moves gets blended across the span,
+  which is why it is a dial rather than a default.
+
+  **No re-capture or re-render needed.** The blob stores `slotraw` — the raw
+  captured audio — and the analysis is re-derived from it on load, so every
+  capture in every existing project can be re-read at a higher frame count.
+
+  Voice (harmonic) analysis deliberately left single-frame: it resynthesises
+  exact harmonics at the detected f0 with continuous phase and has no per-bin
+  scatter to freeze, so it has nothing to gain and would multiply the cost of
+  its DFT — the expensive half of a capture — by the frame count. Stereo is
+  untouched: width comes entirely from the per-bin phase offsets applied at
+  synthesis, and the magnitudes the averaging changes are SHARED by both
+  channels, which is why the wobble sat in the centre of the image rather than
+  in the width.
