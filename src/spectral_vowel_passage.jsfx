@@ -167,10 +167,15 @@ slider35:0<0,1,1{Off,On}>Ramp engage
 //     Harmonic 1 is exempt, always. It is the drone half of "two notes at once":
 //     suppress it and you have a whistle, not overtone singing.
 //
-//     VOICE ONLY. The wash randomises phase, which turns every partial into a
-//     narrow band of noise -- an isolated one there whistles rather than sounding
-//     a pitch. Keep Texture at the voice end for this to work at all.
-slider36:0<0,64,1>Overtone harmonic (VOICE only -- 0 = off)
+//     Works at BOTH ends of Texture, and the character follows the engine. On the
+//     voice it isolates one exact partial: a clean, near-pure tone. On the wash --
+//     where phase has been randomised, so every partial is already a narrow band
+//     of noise -- the same window leaves a pitched BAND: breathier, airier, still
+//     a definite note. Same gesture, different material, which is what Texture
+//     means everywhere else in this plugin. Both engines read the same smoothed
+//     controls and the same blended fundamental, so they stay in step through a
+//     Texture blend instead of describing two different overtones.
+slider36:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
 slider37:24<0,48,0.5>Overtone depth (dB the others drop by)
 slider38:1<0.5,4,0.1>Overtone width (harmonics either side)
 
@@ -348,6 +353,7 @@ ot_coeff = 1 - exp(-1 / (0.03 * srate));
 ot_harm_base = 0; ot_depth_db = 24; ot_width = 1;
 ot_h_smooth = 0; ot_db_smooth = 24; ot_w_smooth = 1;
 ot_on_last = 0; ot_h_last = -1; ot_db_last = -1; ot_w_last = -1;
+ot_floor = 1; ot_bin = 0; ot_binw = 1; ot_f0bin = 0;   // wash-side, until @sample sets them
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
@@ -579,9 +585,29 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   pk = 0; i = 0; loop(NBINS, curmag[i] > pk ? pk = curmag[i]; i += 1; );
   thr = eff_denoise * 0.01 * 0.1 * pk;
   cutbin = floor(eff_lowcut_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
+  // Overtone on the WASH. Same control, same window shape, expressed in bins
+  // instead of partials. The wash keeps the magnitude spectrum -- the harmonic
+  // peaks are still there, phase-randomised into narrow noise bands -- so
+  // isolating one leaves a pitched band rather than nothing. Breathier than the
+  // voice engine's pure partial, which is what Texture means everywhere else in
+  // this plugin: same gesture, different material.
+  //
+  // ot_bin / ot_binw / ot_floor / ot_f0bin are set per sample in @sample, off the
+  // SAME smoothed controls the voice uses, so the two engines stay in step
+  // through a Texture blend rather than describing different overtones.
+  ot_wash = (ot_on && ot_bin > 0) ? 1 : 0;
   i = 0;
   loop(NBINS,
     i < cutbin ? ( curmag[i] = 0; ) : ( curmag[i] = max(0, curmag[i] - thr); );
+    ot_wash ? (
+      // Bins under the fundamental's own peak are exempt, mirroring harmonic 1
+      // being exempt in the voice: it is the drone the overtone sings over.
+      i > ot_f0bin ? (
+        od = abs(i - ot_bin) / ot_binw;
+        ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
+        curmag[i] = curmag[i] * (ot_floor + (1 - ot_floor)*ow);
+      );
+    );
     i += 1;
   );
   // Only the bins this grain's FFT actually reads need a fresh random phase.
@@ -1416,11 +1442,25 @@ ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
     // The fundamental never drops. It is the drone half of "two notes at once";
     // suppress it and what is left is a whistle, not overtone singing.
     ot_gain[0] = 1;
+    ot_floor = otfl;
   ) : (
     oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );
   );
   ot_on_last = ot_on; ot_h_last = ot_h_smooth; ot_db_last = ot_db_smooth; ot_w_last = ot_w_smooth;
 );
+
+// Wash-side overtone position, in bins. Derived from the SAME smoothed controls
+// as the voice curve above, using the morph-blended fundamental so a crossfade
+// between two differently-tuned slots moves the band with it. Width is in
+// harmonics for both engines, so on the wash it becomes width x f0 in Hz -- the
+// slider means the same thing whichever end of Texture you are at.
+(ot_on && have > 0) ? (
+  ot_f0mix = (1-vmfr)*slot_f0[vsi]*pitch_ratio_A + vmfr*slot_f0[vsj]*pitch_ratio_B;
+  ot_bpf   = FFTSIZE / srate;
+  ot_bin   = ot_f0mix * ot_h_smooth * ot_bpf;
+  ot_binw  = max(1, ot_f0mix * max(0.5, ot_w_smooth) * ot_bpf);
+  ot_f0bin = ot_f0mix * 1.5 * ot_bpf;   // leave the fundamental's own peak alone
+) : ( ot_bin = 0; );
 
 dryL = spl0 * dry_gain; dryR = spl1 * dry_gain;
 

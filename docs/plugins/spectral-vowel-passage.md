@@ -521,12 +521,13 @@ Passage's voice engine is already a bank of 64 partials sitting at exact
 multiples of the detected fundamental, so it can do this directly. These three
 controls are the tract.
 
-> **These controls do nothing at Texture 100.** Overtone works on the *voice*
-> engine's partials; the wash has none to isolate, only noise bands, and at full
-> wash the voice engine isn't running at all. If you turn these up and hear no
-> change, check Texture first — it is almost always this. (Note the neighbouring
-> **Capture average** is the mirror image: it affects only the *wash*, and does
-> nothing at Texture 0. The two cannot be auditioned at the same setting.)
+> **These work at both ends of Texture, and sound different at each.** On the
+> voice they isolate one exact partial — a clean, near-pure tone. On the wash,
+> where phase has already been randomised into narrow noise bands, the same
+> window leaves a pitched *band*: breathier and airier, but still a definite
+> note. Both are driven by the same controls and the same detected fundamental,
+> so a Texture blend moves between the two characters rather than between two
+> different overtones.
 
 **Overtone harmonic** `0 to 64, default 0 (off)` — *global*
 Which partial to bring out. 0 is off. 1 is the fundamental itself (no effect
@@ -558,9 +559,10 @@ synthetic — closer to the softer end of overtone technique.
 at once"; suppress it and you have a whistle rather than overtone singing. It's
 hard-wired, not a setting.
 
-**It's voice-only.** Keep **Texture** at or near 0. The wash randomises phase,
-which turns every partial into a narrow band of noise — an isolated one there
-whistles instead of sounding a pitch.
+**Texture picks the character, not whether it works.** Near 0 you get the pure
+tone; near 100 you get the breathy band. Both are usable — the wash version is
+closer to a whistle heard through air, which suits a bed better than a clean
+partial does.
 
 **Your capture has to be bright.** The effect isolates a partial that must
 already be there. A soft, breathy vowel has almost nothing in the upper harmonics
