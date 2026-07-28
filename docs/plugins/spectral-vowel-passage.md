@@ -156,6 +156,18 @@ Crossfades across the captured slots. Pitch-preserving in both engines — each 
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. Every mode is timed the same way: each step lasts the full leg of the slot it is leaving — its fade in, hold, fade out, and any gap — so a pass is however long its slots' legs add up to, just a different order (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
+**Fixed: a click at slot changes.** Up to and including the build shipped
+2026-07-25, every step from one slot to the next put a small click in the voice
+engine — in all three Auto-morph modes, and when the Morph slider was dragged
+past a slot boundary by hand. The voice runs two banks of oscillators and hands
+the outgoing slot from one bank to the other at the step; the banks were at
+unrelated points in their cycles, so the waveform jumped. Its loudness depended
+on where the two banks happened to be, which is why it popped on some changes
+and not others and felt random rather than "once per slot". The handover now
+carries the phase across, so the sound runs straight through the step. Nothing
+about it is adjustable and no setting worked around it — if you have an older
+render with ticks at the slot changes, that was this.
+
 All five timing controls belong to whichever **Capture slot** is selected: pick
 a slot, set its timing, pick the next, set that one. Each slot remembers its own
 and they save with the project. Every value is the seconds you hear — no
@@ -206,6 +218,19 @@ The shape is **global** — one curve for every slot's fades, a house style rath
 than a per-moment setting (the fade *times* stay per slot). **Fade out shape**
 governs the crossfade-**Off** fall to silence; with crossfade **On** the handover
 is the spectral crossfade, which these curves don't touch.
+
+**Projects saved before these two controls existed need migrating.** They were
+added as sliders 10 and 11, which pushes every control from **Input level**
+upward along by two — and REAPER restores plugin values by slider *position*, so
+an older project opens with everything above **Slot mute** shifted: Wash grain's
+150 arriving as Voice level, Auto-morph landing on Audition, and so on. Your
+captures are safe regardless (they're stored separately and don't know what a
+slider number is); it's only the control values that shift. Run
+`tools/passage_shift_fade_shapes.py` over any project saved before this build and
+it rewrites them into the new positions, setting both shapes to **Linear** —
+which is what those fades actually were, since the old build had no shape control
+and ramped straight. Switch them to Cosine afterwards if you prefer it. The tool
+keeps a `.pre-fadeshape-bak` copy and is safe to run twice.
 
 **Slot gap after (sec)** `0 to 300, default 0` — *per slot*
 Seconds of silence after this slot, before the next one begins. **This is how you

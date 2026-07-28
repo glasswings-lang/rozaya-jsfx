@@ -35,7 +35,18 @@ desc: Spectral Vowel Passage - voice<->wash capture instrument, paced per slot
 //     had no shipped saved projects -- a Morpher project regenerates onto
 //     Passage via tools/morpher_to_passage.py, which maps by label rather than
 //     by slider number. Now that Passage is a named, shippable plugin, IDs are
-//     primary keys and any further additions APPEND at the end. ---
+//     primary keys and any further additions APPEND at the end.
+//
+//     That "no shipped saved projects" assumption expired before it was written
+//     down: real Passage projects already existed when Fade in/out shape was
+//     inserted at 10-11, and pushing everything from Input level up by two
+//     scrambles them on load (Wash grain 150 lands on Voice level dB, and so
+//     on). The captures themselves are safe either way -- @serialize is a memory
+//     blob and has no idea what a slider number is -- so the fix is a text
+//     migration of the project's slider line, NOT another renumber here:
+//     tools/passage_shift_fade_shapes.py shifts old sliders 10-32 to 12-34 and
+//     seeds the two new ones to Linear (what those projects' fades actually
+//     were). Run it on any project saved before this build. ---
 slider1:0<0,7,1>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture spectrum
 slider3:0<0,100,1>Capture point (per slot: earliest .. at press)
@@ -273,6 +284,10 @@ i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analy
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
 cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
+// Previous sample's morph pair, for the voice phase handover in @sample. -1 so
+// the very first sample records the pair without copying anything (there is no
+// previous waveform to stay continuous with).
+last_vsi = -1; last_vsj = -1;
 bag_pos = 999; last_slot = 0; drift_primed = 0; auto_primed = 0; sweep_dir = 1; leg_elapsed = 0;   // walk + shuffle-bag state (primed lazily in @sample)
 // Half-2 leg envelope: leg_env is the per-sample output level (0..1) that makes
 // fade-in / fade-out / gap silence; need_fadein tracks whether the current leg
@@ -524,6 +539,31 @@ function build_synwin(wlen) local(i) (
 function clear_accum() local(i) (
   i = 0; loop(ACCLEN, accL[i] = 0; accR[i] = 0; i += 1; );
   accpos = 0; hopcount = 0;
+);
+// Empty ONLY the audio still waiting to be read, leaving the read pointer and
+// the grain cadence alone. Same job as clear_accum -- the sequential-handoff
+// flush that stops the previous slot's tail bleeding into the next one -- but
+// affordable to call from @sample.
+//
+// A grain is written W samples ahead of wherever the read pointer stood, and the
+// pointer only ever moves forward, so everything unread necessarily lives inside
+// [accpos, accpos + W). Clearing that window empties the buffer just as
+// completely as wiping all ACCLEN slots did; the other ~58000 slots wiped by the
+// full version were already-read zeros. At the default grain that is ~7200
+// samples instead of 65536, and it shrinks further as the grain shortens.
+//
+// This matters because the caller is in @sample: the full wipe was 131072 writes
+// crammed into a SINGLE sample, a spike large enough to cost a whole block on a
+// loaded project. accpos / hopcount are deliberately NOT reset here -- moving
+// the read pointer would walk it straight into slots this function never
+// cleared, which is the one way to reintroduce the bleed it exists to prevent.
+function flush_accum_pending() local(i, aw) (
+  i = 0;
+  loop(W,
+    aw = accpos + i; aw >= ACCLEN ? aw -= ACCLEN;
+    accL[aw] = 0; accR[aw] = 0;
+    i += 1;
+  );
 );
 // Fade-curve shaping -- shared math with the sweeping-filter suite's apply_curve.
 // Maps a rising 0..1 ramp to a shaped rising 0..1: the leg fade-in uses
@@ -1054,7 +1094,13 @@ automorph_mode > 0.5 ? (
         // next. Crossfade ON keeps its tail on purpose (that tail IS the blend),
         // so this fires only on the sequential path. Rare (once per slot handoff)
         // and lands in the silent gap, so the buffer clear is inaudible.
-        lg_next_fadein ? clear_accum();
+        //
+        // flush_accum_pending, not clear_accum: identical effect on the audio
+        // (every unread sample is zeroed, so the tail cannot bleed through) but
+        // it only touches the one grain-length window that can still be read,
+        // instead of wiping all 65536 slots of both accumulators from inside a
+        // single sample. The bleed fix is unchanged; only its cost is.
+        lg_next_fadein ? flush_accum_pending();
         automorph_mode == 3 ? (
           bag_pos >= n_active ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );   // through them all -> reshuffle
           nxt_slot = driftbag[bag_pos]; bag_pos += 1;
@@ -1095,6 +1141,44 @@ audition_mode < 0.5 ? (
   vsi >= vnu - 1 ? ( vsi = vnu - 1; vmfr = 0; );
   vsj = vsi < vnu - 1 ? vsi + 1 : vsi;
   out_env = 1;
+);
+
+// --- Voice phase handover: hand the oscillator phases over with the slot. ---
+// The voice engine runs two banks of 64 oscillators: bank A voices vsi, bank B
+// voices vsj. When the morph pair steps on -- a leg handoff in Sweep / Glide /
+// Shuffle, or the manual Morph slider crossing a slot boundary -- the slot that
+// bank B had just finished crossfading TO becomes bank A's slot, and bank A
+// picks it up from ITS OWN phase accumulators. Same harmonic magnitudes, same
+// frequency, but 64 partials all restarting mid-cycle, so the summed waveform
+// STEPPED. That step was the click at slot changes.
+//
+// It read as intermittent because the step's size is the difference between two
+// unrelated phase sets: sometimes they land close together and nothing is
+// audible, sometimes they land opposed and it pops. Same event every handoff.
+//
+// Copying B's phases into A makes A resume the exact waveform B was mid-way
+// through, so the output is continuous through the swap. B's own phases don't
+// matter afterwards -- it re-enters at zero level on the new pair and fades up,
+// so it can start anywhere. A backwards step (Sweep bouncing, Morph dragged
+// down) is the mirror case and hands A's phases to B instead.
+//
+// The copy is 64 slots x 2 banks and only runs on the handoff sample itself, so
+// it costs nothing per-sample; the test either side of it is two compares.
+// The two cases are mutually exclusive on purpose. A two-slot Sweep bouncing
+// back and forth satisfies BOTH tests at once (the pair simply swaps ends), and
+// running both copies would hand each bank the other's old phases -- the second
+// copy reading values the first had already overwritten. Forward wins: bank A is
+// the one that has to stay continuous, because it is the bank still carrying
+// audible level through the swap.
+(vsi != last_vsi || vsj != last_vsj) ? (
+  (vsi == last_vsj && vsi != last_vsi) ? (
+    vcp = 0; loop(NHARM, hph[vcp]  = hphB[vcp]; hphR[vcp]  = hphBR[vcp]; vcp += 1; );
+  ) : (
+    (vsj == last_vsi && vsj != last_vsj) ? (
+      vcp = 0; loop(NHARM, hphB[vcp] = hph[vcp];  hphBR[vcp] = hphR[vcp];  vcp += 1; );
+    );
+  );
+  last_vsi = vsi; last_vsj = vsj;
 );
 
 // Effective values = the two current slots' settings crossfaded by the same
@@ -1195,17 +1279,36 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     fAL = fA*(1-voice_detune); fAR = fA*(1+voice_detune);
     fBL = fB*(1-voice_detune); fBR = fB*(1+voice_detune);
     vvAL = 0; vvAR = 0; vvBL = 0; vvBR = 0; vn = 0;
+    // Each partial's phase now advances INSIDE its own audibility test, not
+    // after it. The wrap below subtracts TWOPI at most once per sample, which is
+    // only enough if the step is smaller than TWOPI -- i.e. if the partial sits
+    // under the sample rate. Above that the subtraction could not keep up and
+    // the accumulator climbed without limit, and wtsin indexes its table
+    // straight off that accumulator, so a runaway phase reads clean past the end
+    // of the sine table into whatever memory follows it.
+    //
+    // Nothing above Nyquist is ever heard, so the fix is simply not to advance a
+    // partial that is not being read: the guard already skips those, and moving
+    // the advance inside it makes every step that DOES happen smaller than PI by
+    // construction. Silent partials hold their phase until they come back into
+    // range (they re-enter abruptly either way, so this changes nothing audible)
+    // and the loop does slightly less work than before.
+    //
+    // Out of reach at ordinary settings -- it needs f0 x pitch above ~750 Hz, so
+    // roughly +2 semitones on the highest voice the detector will report -- but
+    // Pitch is a Drift and Ramp target, so it is reachable by automation, and it
+    // reads foreign memory when it happens.
     loop(NHARM,
       hmA = slot_harm[bA+vn]/normA;
-      ((vn+1)*fAL) < srate*0.5 ? ( vvAL += hmA*wtsin(hph[vn]);  );
-      ((vn+1)*fAR) < srate*0.5 ? ( vvAR += hmA*wtsin(hphR[vn]); );
-      hph[vn]  += TWOPI*(vn+1)*fAL/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI;
-      hphR[vn] += TWOPI*(vn+1)*fAR/srate; hphR[vn] >= TWOPI ? hphR[vn] -= TWOPI;
+      ((vn+1)*fAL) < srate*0.5 ? ( vvAL += hmA*wtsin(hph[vn]);
+        hph[vn]   += TWOPI*(vn+1)*fAL/srate; hph[vn]   >= TWOPI ? hph[vn]   -= TWOPI; );
+      ((vn+1)*fAR) < srate*0.5 ? ( vvAR += hmA*wtsin(hphR[vn]);
+        hphR[vn]  += TWOPI*(vn+1)*fAR/srate; hphR[vn]  >= TWOPI ? hphR[vn]  -= TWOPI; );
       hmB = slot_harm[bB+vn]/normB;
-      ((vn+1)*fBL) < srate*0.5 ? ( vvBL += hmB*wtsin(hphB[vn]);  );
-      ((vn+1)*fBR) < srate*0.5 ? ( vvBR += hmB*wtsin(hphBR[vn]); );
-      hphB[vn]  += TWOPI*(vn+1)*fBL/srate; hphB[vn]  >= TWOPI ? hphB[vn]  -= TWOPI;
-      hphBR[vn] += TWOPI*(vn+1)*fBR/srate; hphBR[vn] >= TWOPI ? hphBR[vn] -= TWOPI;
+      ((vn+1)*fBL) < srate*0.5 ? ( vvBL += hmB*wtsin(hphB[vn]);
+        hphB[vn]  += TWOPI*(vn+1)*fBL/srate; hphB[vn]  >= TWOPI ? hphB[vn]  -= TWOPI; );
+      ((vn+1)*fBR) < srate*0.5 ? ( vvBR += hmB*wtsin(hphBR[vn]);
+        hphBR[vn] += TWOPI*(vn+1)*fBR/srate; hphBR[vn] >= TWOPI ? hphBR[vn] -= TWOPI; );
       vn += 1;
     );
     hVL = ((1-vmfr)*vvAL + vmfr*vvBL) * 0.08;   // ~match the wash's ~0.1 RMS
@@ -1213,11 +1316,14 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
   ) : (
     // Mono (Stereo width 0): the exact original single-bank path, L = R.
     vvA = 0; vvB = 0; vn = 0;
+    // Phase advance moved inside the audibility guard, same as the stereo path
+    // above -- see the note there for why an above-Nyquist partial could run its
+    // accumulator away and read past the end of the sine table.
     loop(NHARM,
-      ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*wtsin(hph[vn]); );
-      hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI;
-      ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*wtsin(hphB[vn]); );
-      hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI;
+      ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*wtsin(hph[vn]);
+        hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI; );
+      ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*wtsin(hphB[vn]);
+        hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI; );
       vn += 1;
     );
     hVL = ((1-vmfr)*vvA + vmfr*vvB) * 0.08;
