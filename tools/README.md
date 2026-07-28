@@ -12,6 +12,7 @@ nothing installed; `loop_finder.py` needs two packages (noted below).
 | [`loop_finder.py`](#loop_finderpy) | pulling clean looping samples out of a recording |
 | [`morpher_to_passage.py`](#morpher_to_passagepy) | moving a Spectral Vowel Morpher project onto its sibling Passage, captures and all |
 | [`passage_migrate_sliders.py`](#passage_migrate_sliderspy) | repairing older projects after Passage gained a control mid-list |
+| [`passage_captures.py`](#passage_capturespy) | reading and extracting the captures stored inside a project |
 
 ## rate_calc.py
 
@@ -230,3 +231,70 @@ capture-analysis controls. Appending them instead would have kept every project
 working, but at the cost of a control list that reads in the order things were
 built rather than the order you use them. This exists so that trade can go the
 other way.
+
+## passage_captures.py
+
+Lists what's in every **Spectral Vowel Passage** / **Morpher** slot in a project,
+and can write each one out as a WAV. **It only ever reads** — your project is
+never modified.
+
+```
+python tools/passage_captures.py "path/to/project.rpp"
+python tools/passage_captures.py "path/to/project.rpp" --extract captures/
+```
+
+**Why it exists.** A capture only exists inside the project that made it. You
+can't reuse a good vowel in another piece, back one up on its own, feed one to
+Sustain Looper, or hand one to anybody else. And you can't tell your eight slots
+apart without playing all eight — which, with no waveform to look at, means
+auditioning every one of them every time.
+
+But the audio is right there. Both plugins store the **raw captured audio** in
+their saved state (which is why scrubbing Capture point re-tunes a slot without
+re-recording it), and that's plain enough to read straight out of the project
+file.
+
+### The listing
+
+One line per slot: how loud it is, how long the real signal lasts, and its pitch
+**as a note name**. Enough to tell slots apart, find the one you want, and spot
+the empty ones — by reading rather than by ear.
+
+```
+08  (spectral_vowel_passage, line 136) -- 8 slot(s), 48000 Hz
+   slot 1   0.68 s  peak   -6.8 dB  rms  -15.9 dB  F#2   -43 cents    90.2 Hz
+   slot 3   0.68 s  peak   -6.2 dB  rms  -16.3 dB  unpitched
+```
+
+**"unpitched"** means the pitch detector wasn't confident — usually a breath, a
+consonant, or a moment too noisy to have one clear note. It's honest rather than
+guessing, and it's a useful signal in itself: those are the slots the *voice*
+engine will struggle with and the *wash* will like.
+
+**"empty — captured silence"** is the classic mistake of firing Capture with
+nothing playing. Now you can see it in a list instead of discovering it when the
+morph fades out.
+
+### Extracting
+
+`--extract DIR` writes one WAV per non-empty slot at the project's own sample
+rate, named by project, track and slot. Put them in
+`<REAPER resource>/Data/glasswings_samples/` and they show up in Sustain Looper's
+dropdown; or run them through [`loop_finder.py`](#loop_finderpy); or just keep
+them — a capture that exists only inside one `.RPP` is one bad save from gone.
+
+| Flag | What it does |
+|---|---|
+| `--extract DIR` | write one WAV per non-empty slot into DIR |
+| `--float` | 32-bit float WAVs instead of 16-bit (exact, but 16-bit loads everywhere — including JSFX, which does not guarantee float) |
+| `--no-pitch` | skip pitch detection (faster on projects with many instances) |
+
+Several projects at once is fine — just list them.
+
+### A note on safety
+
+The saved state leads with a number identifying its layout, and this tool
+**refuses to read anything it doesn't recognise** rather than guessing. A
+mis-parsed blob wouldn't error, it would produce plausible-sounding garbage, so
+the check matters more than it looks. Extraction itself works on every version
+ever shipped, because the raw audio has never moved from the front.
