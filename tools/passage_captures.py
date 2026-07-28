@@ -206,20 +206,32 @@ def estimate_f0(samples, srate):
     if energy <= 0:
         return None
 
-    best_lag, best_score = 0, 0.0
+    scores = []
     for lag in range(lo, hi + 1):
         s = 0.0
         for i in range(len(win) - lag):
             s += win[i] * win[i + lag]
-        score = s / energy
-        if score > best_score:
-            best_score, best_lag = score, lag
+        scores.append(s / energy)
+    best_i = max(range(len(scores)), key=lambda i: scores[i])
+    best_score = scores[best_i]
 
     # Below this the "period" is noise agreeing with itself by chance; calling
     # that a pitch is worse than admitting there isn't one.
-    if best_lag == 0 or best_score < 0.35:
+    if best_score < 0.35:
         return None
-    return sr / best_lag
+
+    # Parabolic interpolation around the peak. Whole-sample lags quantise badly
+    # up here -- at 220 Hz one lag either way is over 20 cents, which is enough
+    # to name the wrong note. Fitting a curve through the peak and its two
+    # neighbours recovers the fraction between them. (The plugin's own YIN does
+    # the same thing, for the same reason.)
+    lag = lo + best_i
+    if 0 < best_i < len(scores) - 1:
+        a_, b_, c_ = scores[best_i - 1], best_score, scores[best_i + 1]
+        den = a_ - 2 * b_ + c_
+        if den != 0:
+            lag += 0.5 * (a_ - c_) / den
+    return sr / lag if lag > 0 else None
 
 
 def note_name(hz):

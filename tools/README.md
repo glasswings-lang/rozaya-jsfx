@@ -13,6 +13,7 @@ nothing installed; `loop_finder.py` needs two packages (noted below).
 | [`morpher_to_passage.py`](#morpher_to_passagepy) | moving a Spectral Vowel Morpher project onto its sibling Passage, captures and all |
 | [`passage_migrate_sliders.py`](#passage_migrate_sliderspy) | repairing older projects after Passage gained a control mid-list |
 | [`passage_captures.py`](#passage_capturespy) | reading and extracting the captures stored inside a project |
+| [`passage_inject.py`](#passage_injectpy) | putting a WAV back *into* a capture slot |
 
 ## rate_calc.py
 
@@ -298,3 +299,73 @@ The saved state leads with a number identifying its layout, and this tool
 mis-parsed blob wouldn't error, it would produce plausible-sounding garbage, so
 the check matters more than it looks. Extraction itself works on every version
 ever shipped, because the raw audio has never moved from the front.
+
+## passage_inject.py
+
+The other direction from [`passage_captures.py`](#passage_capturespy): writes a
+WAV **into** a Passage / Morpher capture slot.
+
+```
+python tools/passage_inject.py "project.rpp" --set 3=vowel.wav
+python tools/passage_inject.py "project.rpp" --set 3=a.wav --set 5=b.wav
+```
+
+By default it writes a **new project beside the original** and leaves yours
+alone.
+
+**Why it works.** The saved state holds only the raw audio — the wash spectrum
+and the harmonic analysis aren't in there, they're worked out fresh from that
+audio every time the project loads. So this doesn't have to compute anything:
+put audio in and the plugin analyses it itself, exactly as if you'd captured it.
+
+**What that means in practice: a capture no longer has to come from a
+performance.** Anything you can put in a WAV can become a slot — one lifted out
+of another project, a clip from [`loop_finder.py`](#loop_finderpy), or a
+generated source. You can assemble a bank of eight deliberately instead of
+catching eight moments live.
+
+### What it does to your audio
+
+A slot is exactly 32768 samples — about 0.68 s at 48 kHz — mono, at the
+project's own sample rate.
+
+**Sample rate has to match, and this is the one that would bite you silently.**
+Nothing inside the project records what rate a capture was made at; it just plays
+at whatever the project runs at. So a 44.1k file dropped into a 48k project comes
+out sharp and short, with no error anywhere and a result that sounds *plausible*.
+A mismatch is refused outright unless you pass `--resample`.
+
+**Stereo is summed to mono**, because the capture buffer is mono — your stereo
+placement arrives centred.
+
+**Long files are trimmed** to their loudest 0.68 s, which on a held note lands on
+the sustained middle rather than the attack. `--from SECONDS` picks the spot
+yourself.
+
+**Short files are centred and padded**, and the slot's **Capture point is set for
+you** so the analysis lands on the audio instead of on the padding. Without that,
+a short file analyses as silence and the slot plays nothing — which would look
+like the injection had failed.
+
+| Flag | What it does |
+|---|---|
+| `--set SLOT=FILE` | put FILE into slot SLOT (1–8). Repeatable. |
+| `--instance N` | which plugin instance, when the project has more than one (it lists them if you don't say) |
+| `--from SECONDS` | where in a long file to take the slot from |
+| `--resample` | allow a rate mismatch, converting to the project's rate |
+| `--in-place` | edit the project itself, keeping a `.pre-inject-bak` |
+| `--out FILE` | write somewhere specific |
+
+### Safety
+
+Every run **re-reads and re-decodes what it wrote** before letting it stand, and
+checks two things: that the slots you asked for actually landed, and that every
+other slot is byte-identical to what it was. If either fails it says so and
+doesn't pretend the run succeeded.
+
+Writing into a slot the project has never used also fills in any slots skipped
+over, with silence — so asking for slot 6 in a project that only used two won't
+leave a hole.
+
+**Close the project in REAPER first.** REAPER keeps its own copy in memory and
+writes it back over yours on the next save.
