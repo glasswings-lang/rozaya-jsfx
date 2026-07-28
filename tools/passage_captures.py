@@ -16,7 +16,22 @@ plain memory dump, so it can be read straight out of the .RPP.
 This tool only ever READS.  It never modifies a project.
 
     python tools/passage_captures.py PROJECT.RPP                # what's in there
+    python tools/passage_captures.py PROJECT.RPP --settings     # what you set
     python tools/passage_captures.py PROJECT.RPP --extract DIR  # write WAVs
+
+WHAT COMES OUT IS THE RAW GRAB
+------------------------------
+Worth saying plainly, because it has caught someone out: the WAVs are the
+audio as CAPTURED, before any of the settings that shape it. Fade times,
+texture, pitch, spread, denoise -- none of that is in them, because none of it
+is audio. It's a transformation applied while sound passes through, and the
+only place the shaped version exists is a render.
+
+That is not the settings being lost. They're all still in the project, and
+`--settings` reads them back out: what each slot is set to, in words, showing
+only what you changed from the starting values. `--extract` writes them beside
+the WAVs as `settings.txt`, so the setup survives the project too and can be
+read without opening a DAW at all.
 
 WHAT YOU GET
 ------------
@@ -148,9 +163,66 @@ def parse_blob(floats):
     take(1)
     for name in ("cappoint", "linger", "xfade", "voicedb", "texture", "spread",
                  "pitch", "width", "lowcut", "denoise", "mute", "fadein", "gap",
-                 "xfadeon", "capavg"):
+                 "xfadeon", "capavg", "ot_harm", "ot_depth"):
         info[name] = take(NSLOTS)
     return info
+
+
+# --------------------------------------------------------------------------
+# the settings you dialled in
+# --------------------------------------------------------------------------
+#
+# The per-slot fields above, in the order @serialize writes them, paired with
+# the slider each one belongs to and the value it starts at. The point of the
+# default is that it lets the listing show only what somebody CHANGED.
+#
+# That matters more than it sounds. Seventeen settings across eight slots is a
+# hundred and thirty-six numbers, and handed over all at once that is a wall --
+# "it makes me wanna run away cuz it's real lots and crowded" is exactly what
+# the plugin's own UI already does to the person these were dialled in by. What
+# they actually want to know is what they touched.
+#
+# Morpher keeps most of these as GLOBAL sliders and only stores Capture point
+# per slot, so its blob simply ends early and every later field reads back as
+# None. Absent is not the same as unchanged, so absent fields are skipped
+# rather than reported as defaults.
+SLOT_SETTINGS = [
+    ("cappoint", "Capture point",        0.0,  "{v:g}"),
+    ("capavg",   "Capture average",      1.0,  "{v:g}"),
+    ("fadein",   "Fade in",              1.0,  "{v:g} seconds"),
+    ("linger",   "Hold",                 4.0,  "{v:g} seconds"),
+    ("xfade",    "Fade out",             1.0,  "{v:g} seconds"),
+    ("gap",      "Gap after",            0.0,  "{v:g} seconds"),
+    ("xfadeon",  "Crossfade into next",  1.0,  None),      # on / off
+    ("mute",     "Muted",                0.0,  None),      # on / off
+    ("voicedb",  "Voice level",          0.0,  "{v:+g} dB"),
+    ("texture",  "Texture",             50.0,  "{v:g}  (0 is voice, 100 is wash)"),
+    ("spread",   "Spread",               0.0,  "{v:g} Hz"),
+    ("pitch",    "Pitch",                0.0,  "{v:+g} semitones"),
+    ("width",    "Stereo width",        50.0,  "{v:g}"),
+    ("lowcut",   "Low cut",              0.0,  "{v:g} Hz"),
+    ("denoise",  "Denoise",              0.0,  "{v:g}"),
+    ("ot_harm",  "Overtone harmonic",    0.0,  "{v:g}"),
+    ("ot_depth", "Overtone depth",      24.0,  "{v:g} dB"),
+]
+
+
+def slot_settings(info, slot, changed_only=True):
+    """What this slot is set to, as plain lines. Only what differs from the
+    starting value, unless changed_only is False."""
+    out = []
+    for key, label, default, fmt in SLOT_SETTINGS:
+        bank = info.get(key)
+        if not bank or slot >= len(bank):
+            continue                      # this plugin doesn't store it
+        v = bank[slot]
+        if changed_only and abs(v - default) < 1e-9:
+            continue
+        if fmt is None:
+            out.append("%s: %s" % (label, "on" if v >= 0.5 else "off"))
+        else:
+            out.append("%s: %s" % (label, fmt.format(v=round(v, 4))))
+    return out
 
 
 # --------------------------------------------------------------------------
@@ -286,7 +358,15 @@ def main():
     ap.add_argument("--unique", action="store_true",
                     help="write each distinct capture once, skipping identical "
                          "copies (duplicated tracks share their captures)")
+    ap.add_argument("--settings", action="store_true",
+                    help="show what each slot is SET TO -- only the settings "
+                         "you changed from their starting values")
+    ap.add_argument("--all-settings", action="store_true", dest="all_settings",
+                    help="with --settings, show every setting, not just the "
+                         "ones you changed")
     args = ap.parse_args()
+    if args.all_settings:
+        args.settings = True
 
     if args.extract:
         os.makedirs(args.extract, exist_ok=True)
@@ -299,6 +379,8 @@ def main():
     # files for 14 sounds.
     seen_audio = {}
     duplicates = 0
+    notes = []          # (instance label, [(slot number, lines), ...])
+    note_seen = set()   # so duplicated tracks don't write the same page twice
     for path in args.projects:
         print("== %s" % path)
         try:
@@ -322,6 +404,7 @@ def main():
                 continue
 
             srate = inst["srate"]
+            inst_notes = []
             print("   %s -- %d slot(s), %d Hz" % (label, info["n_used"], srate))
             for s in range(info["n_used"]):
                 d = describe(info["audio"][s], srate)
@@ -335,6 +418,21 @@ def main():
                         info["pitch"][s], int(round(info["capavg"][s])))
                 print("      slot %d  %5.2f s  peak %6.1f dB  rms %6.1f dB%s%s"
                       % (s + 1, d["dur"], db(d["peak"]), db(d["rms"]), pitch, extra))
+
+                if args.settings:
+                    # One per line, on purpose. A screen reader gets a breath
+                    # between each, and a tired reader gets to stop anywhere.
+                    lines = slot_settings(info, s,
+                                          changed_only=not args.all_settings)
+                    if lines:
+                        print("         you changed:"
+                              if not args.all_settings else "         set to:")
+                        for ln in lines:
+                            print("            %s" % ln)
+                    else:
+                        print("         everything here is at its starting "
+                              "value")
+                    inst_notes.append((s + 1, lines))
 
                 if args.extract:
                     key = hash(info["audio"][s])
@@ -351,6 +449,41 @@ def main():
                     write_wav(os.path.join(args.extract, fn),
                               info["audio"][s], srate, args.as_float)
                     written += 1
+
+            # One entry per INSTANCE, and identical instances only once.
+            # Copying a track copies its settings too, so a project built by
+            # duplicating one instance across twenty tracks would otherwise
+            # write the same page out twenty times -- which is the wall this
+            # is meant to spare someone, rebuilt.
+            if inst_notes:
+                fingerprint = tuple((n, tuple(ls)) for n, ls in inst_notes)
+                if fingerprint not in note_seen:
+                    note_seen.add(fingerprint)
+                    notes.append((label, inst_notes))
+
+    if args.extract and notes:
+        # The WAVs are the RAW grabs -- the settings are what shapes them, and
+        # they only existed inside the project. Writing them down next to the
+        # audio means the setup survives the project too, and can be read
+        # without opening a DAW.
+        note_path = os.path.join(args.extract, "settings.txt")
+        try:
+            with open(note_path, "w", encoding="utf-8") as fh:
+                fh.write("What each capture is set to.\n\n"
+                         "The WAV files next to this are the raw grabs, before "
+                         "any of these settings.\nThese are what shape them.\n")
+                for label, slots in notes:
+                    fh.write("\n\n%s\n%s\n" % (label, "-" * len(label)))
+                    for slot, lines in slots:
+                        fh.write("\nslot %d\n" % slot)
+                        if lines:
+                            for ln in lines:
+                                fh.write("   %s\n" % ln)
+                        else:
+                            fh.write("   everything at its starting value\n")
+            print("\nwrote your settings to %s" % note_path)
+        except OSError as exc:
+            print("\ncouldn't write the settings file: %s" % exc)
 
     if args.extract:
         print("\nwrote %d WAV(s) to %s" % (written, args.extract))

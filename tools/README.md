@@ -257,8 +257,23 @@ never modified.
 
 ```
 python tools/passage_captures.py "path/to/project.rpp"
+python tools/passage_captures.py "path/to/project.rpp" --settings
 python tools/passage_captures.py "path/to/project.rpp" --extract captures/
 ```
+
+### ⚠ The WAVs are the raw grab, not the sound you shaped
+
+This has caught someone out, so it's worth saying before anything else.
+
+`--extract` writes the audio **as captured** — before the fade times, the
+texture, the pitch, the spread, the denoise. Those aren't stored anywhere as
+audio, because they aren't audio: they're a transformation applied while sound
+passes through the plugin. **The only place the shaped version exists is a
+render.** If what you want is the sound you made, render it from REAPER; no
+tool can lift it out of the project, because it isn't in there.
+
+That is *not* your settings being lost. They're all still in the project, and
+`--settings` reads them straight back out.
 
 **Why it exists.** A capture only exists inside the project that made it. You
 can't reuse a good vowel in another piece, back one up on its own, feed one to
@@ -287,6 +302,35 @@ the empty ones — by reading rather than by ear.
 consonant, or a moment too noisy to have one clear note. It's honest rather than
 guessing, and it's a useful signal in itself: those are the slots the *voice*
 engine will struggle with and the *wash* will like.
+
+### `--settings` — what you dialled in
+
+Reads your settings back out of the project, in words, **showing only what you
+changed** from the starting values:
+
+```
+slot 1
+   Fade in: 3.5 seconds
+   Hold: 3.5 seconds
+   Fade out: 3.5 seconds
+   Texture: 0  (0 is voice, 100 is wash)
+   Pitch: +0.5 semitones
+   Stereo width: 100
+```
+
+Seventeen settings across eight slots is a hundred and thirty-six numbers, and
+handed over all at once that's a wall — which is what the plugin's own UI
+already does to you. Only what you touched is worth reading. Add
+`--all-settings` if you do want every one.
+
+With `--extract`, the same thing is written beside the WAVs as
+**`settings.txt`**, so your setup survives the project too and can be read
+without opening a DAW. Identical duplicated tracks are written once, not
+twenty times.
+
+**Morpher** keeps most of these as global sliders rather than per slot, so only
+Capture point appears for it. Missing isn't the same as unchanged, so anything
+the plugin doesn't store is left out rather than reported as a default.
 
 **"empty — captured silence"** is the classic mistake of firing Capture with
 nothing playing. Now you can see it in a list instead of discovering it when the
