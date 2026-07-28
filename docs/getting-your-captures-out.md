@@ -149,11 +149,14 @@ Now they're just audio files. You can play them, keep them, back them up, or:
 - run them through `loop_finder.py` to pull loop-ready pieces out;
 - capture them into a different project.
 
-**If you duplicated tracks, add `--unique`.** Copying a track copies its captures with it, so a piece built from twenty copies of one plugin holds twenty copies of the same handful of sounds. Without the flag you get a file for every slot; with it you get one file per distinct sound. Either way it tells you how many were repeats.
+**If you duplicated tracks, add `--unique`.** Copying a track copies its
+captures with it, so a piece built from twenty copies of one plugin holds twenty
+copies of the same handful of sounds. Without the flag you get a file for every
+slot; with it you get one file per distinct sound. Either way it tells you how
+many were repeats.
 
 ```
-python C:\git-srcozaya-jsfx	ools\passage_captures.py "E:eaper
-ightfall.RPP" --extract "E:\captures" --unique
+python C:\git-src\rozaya-jsfx\tools\passage_captures.py "E:\reaper\nightfall.RPP" --extract "E:\captures" --unique
 ```
 
 **This is worth doing even if you have no plan for them.** A capture that exists
