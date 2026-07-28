@@ -283,12 +283,22 @@ def main():
                          "(exact, but 16-bit is what loads everywhere)")
     ap.add_argument("--no-pitch", action="store_true",
                     help="skip pitch detection (faster on big projects)")
+    ap.add_argument("--unique", action="store_true",
+                    help="write each distinct capture once, skipping identical "
+                         "copies (duplicated tracks share their captures)")
     args = ap.parse_args()
 
     if args.extract:
         os.makedirs(args.extract, exist_ok=True)
 
     written = 0
+    # Duplicating a track duplicates its captures, so a project built by
+    # copying one instance across twenty tracks holds twenty copies of the
+    # same eight sounds. Hashing what we write lets --unique collapse that,
+    # and lets the default at least SAY so rather than quietly producing 206
+    # files for 14 sounds.
+    seen_audio = {}
+    duplicates = 0
     for path in args.projects:
         print("== %s" % path)
         try:
@@ -327,15 +337,30 @@ def main():
                       % (s + 1, d["dur"], db(d["peak"]), db(d["rms"]), pitch, extra))
 
                 if args.extract:
+                    key = hash(info["audio"][s])
+                    if key in seen_audio:
+                        duplicates += 1
+                        if args.unique:
+                            print("         (identical to %s -- skipped)"
+                                  % seen_audio[key])
+                            continue
                     fn = "%s_%s_inst%d_slot%d.wav" % (
                         safe(os.path.splitext(os.path.basename(path))[0]),
                         safe(inst["track"]), idx, s + 1)
+                    seen_audio.setdefault(key, fn)
                     write_wav(os.path.join(args.extract, fn),
                               info["audio"][s], srate, args.as_float)
                     written += 1
 
     if args.extract:
         print("\nwrote %d WAV(s) to %s" % (written, args.extract))
+        if duplicates and not args.unique:
+            print("%d of those are identical copies of others (duplicated tracks"
+                  " share their captures)."
+                  " Re-run with --unique to write %d file(s) instead."
+                  % (duplicates, written - duplicates))
+        elif duplicates:
+            print("skipped %d identical copy/copies" % duplicates)
     return 0
 
 

@@ -283,7 +283,9 @@ morph fades out.
 ### Extracting
 
 `--extract DIR` writes one WAV per non-empty slot at the project's own sample
-rate, named by project, track and slot. Put them in
+rate (add `--unique` if the project has duplicated tracks — they share
+their captures, so twenty copies of one instance means twenty copies of the same
+eight sounds, and the default says so when it spots them), named by project, track and slot. Put them in
 `<REAPER resource>/Data/glasswings_samples/` and they show up in Sustain Looper's
 dropdown; or run them through [`loop_finder.py`](#loop_finderpy); or just keep
 them — a capture that exists only inside one `.RPP` is one bad save from gone.
@@ -293,6 +295,7 @@ them — a capture that exists only inside one `.RPP` is one bad save from gone.
 | `--extract DIR` | write one WAV per non-empty slot into DIR |
 | `--float` | 32-bit float WAVs instead of 16-bit (exact, but 16-bit loads everywhere — including JSFX, which does not guarantee float) |
 | `--no-pitch` | skip pitch detection (faster on projects with many instances) |
+| `--unique` | write each distinct capture once, skipping identical copies |
 
 Several projects at once is fine — just list them.
 
