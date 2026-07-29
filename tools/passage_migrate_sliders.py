@@ -46,8 +46,9 @@ to clobber an existing one).  Close the project in REAPER before migrating in
 place -- REAPER holds its own copy in memory and writes it back over yours on the
 next save.
 
-Idempotent: an instance already at the current count is left alone, so re-running
-over a folder is safe.
+Running it twice does the same as running it once: an instance already migrated
+is left alone, so you can re-run it over a whole folder without keeping track of
+which projects you have already done.
 """
 
 import argparse

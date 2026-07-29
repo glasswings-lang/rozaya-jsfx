@@ -49,7 +49,7 @@ desc: Spectral Vowel Passage - voice<->wash capture instrument, paced per slot
 //     fade-shape insert at 10-11, then Capture average at 4), seeding each new
 //     slider to whatever reproduces the OLD behaviour -- Linear fades, and a
 //     one-frame capture average. Run it on any project saved before this
-//     build; it is idempotent. ---
+//     build; running it twice does the same as running it once. ---
 slider1:0<0,7,1>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture spectrum
 slider3:0<0,100,1>Capture point (per slot: earliest .. at press)
