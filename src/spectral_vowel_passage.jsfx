@@ -114,7 +114,7 @@ slider14:0<-60,12,0.1>Voice level (dB)
 slider15:50<0,100,1>Texture (0 voice, 100 wash)
 slider16:150<5,680,1>Wash grain (ms)
 slider17:0<0,150,0.5>Spread (Hz)
-slider18:0<-24,24,0.1>Pitch (semitones)
+slider18:0<-36,36,0.1>Pitch (semitones)
 slider19:50<0,100,1>Stereo width
 slider20:0<0,500,1>Low cut (Hz)
 slider21:0<0,100,0.1>Denoise
@@ -1389,8 +1389,8 @@ eff_spread_hz = max(0, min(150, sblend(slot_spread, sb_i, sb_j, sb_f)
 // level, which is what a crossfade is. Drift and Ramp still apply, as a shared
 // offset ON TOP of each slot's own value, so Pitch remains a modulation target.
 pitch_mod  = target_drift_offset[2] + ramp_offset_mem[2];
-eff_semi_A = max(-24, min(24, slot_pitch[sb_i] + pitch_mod));
-eff_semi_B = max(-24, min(24, slot_pitch[sb_j] + pitch_mod));
+eff_semi_A = max(-36, min(36, slot_pitch[sb_i] + pitch_mod));
+eff_semi_B = max(-36, min(36, slot_pitch[sb_j] + pitch_mod));
 pitch_ratio_A = pow(2.0, eff_semi_A/12);
 pitch_ratio_B = pow(2.0, eff_semi_B/12);
 // BOTH engines use these: the voice reads them directly (fA/fB below), and the

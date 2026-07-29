@@ -84,7 +84,7 @@ The wash's grain length: short = rougher and grainier, long = glassier and smoot
 **Spread (Hz)** `0 to 150, default 0`
 Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
 
-**Pitch (semitones)** `-24 to +24, default 0`
+**Pitch (semitones)** `-36 to +36, default 0`
 Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."
 
 **Stereo width** `0 to 100, default 50`
