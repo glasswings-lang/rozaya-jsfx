@@ -209,6 +209,11 @@ carries the phase across, so the sound runs straight through the step. Nothing
 about it is adjustable and no setting worked around it — if you have an older
 render with ticks at the slot changes, that was this.
 
+**It was voice-engine only.** The voice is scaled by an equal-power crossfade
+against Texture, so the click tracked how much voice was in the mix: full at
+**Texture 0**, and *absent* at **Texture 100**, where the voice contributes
+nothing at all. A pure-wash patch never had it; anything with voice in it did.
+
 All five timing controls belong to whichever **Capture slot** is selected: pick
 a slot, set its timing, pick the next, set that one. Each slot remembers its own
 and they save with the project. Every value is the seconds you hear — no
@@ -563,12 +568,6 @@ while the drone barely moves. Past roughly 30 dB you stop gaining separation (th
 lift plateaus near +18 dB) and start losing the drone instead, which is a whistle
 rather than overtone singing. Harmonic 1 is never lifted at any setting — it *is*
 the drone half of "two notes".
-
-> **Earlier builds had this backwards.** Until 2026-07-28 the control floored
-> every *other* partial and left the chosen one alone, so the overtone only ever
-> emerged by the voice ducking around it — audible, and wrong. If a project from
-> before that sounds different, this is why, and it wants a lower number now: the
-> old 24 was a 24 dB duck, the new 24 is a 17 dB lift.
 
 **Overtone width (harmonics either side)** `0.5 to 4, default 1` — *all slots*
 How sharp the resonance is. **1** is the classic narrow whistle. Higher values
