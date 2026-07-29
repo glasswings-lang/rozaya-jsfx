@@ -176,7 +176,7 @@ slider35:0<0,1,1{Off,On}>Ramp engage
 //     controls and the same blended fundamental, so they stay in step through a
 //     Texture blend instead of describing two different overtones.
 slider36:0<0,64,1>Overtone harmonic (per slot: 0 = off, 1 = fundamental)
-slider37:24<0,48,0.5>Overtone depth (per slot: dB the others drop by)
+slider37:24<0,48,0.5>Overtone lift (per slot: dB the chosen harmonic rises by)
 slider38:1<0.5,4,0.1>Overtone width (all slots: harmonics either side)
 
 @init
@@ -261,7 +261,7 @@ slot_mute     = freemem; freemem += NSLOTS;      // PER-SLOT mute flag (0/1); mu
 active_slots  = freemem; freemem += NSLOTS;      // indices of unmuted slots (0..n_used-1 minus muted ones); rebuilt every @block
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 slot_ot_harm  = freemem; freemem += NSLOTS;    // PER-SLOT Overtone harmonic (0 = none for this slot)
-slot_ot_depth = freemem; freemem += NSLOTS;    // PER-SLOT Overtone depth (dB the other partials drop by)
+slot_ot_depth = freemem; freemem += NSLOTS;    // PER-SLOT Overtone lift (dB the chosen partial rises by). Name kept for the @serialize field; the meaning inverted 2026-07-28.
 slot_capavg   = freemem; freemem += NSLOTS;    // PER-SLOT capture average (1..CAPAVG_MAX frames) for the WASH spectrum. 1 = the original single-frame analysis.
 // --- harmonic (voice) engine scratch ---
 hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
@@ -355,7 +355,7 @@ ot_coeff = 1 - exp(-1 / (0.03 * srate));
 ot_harm_base = 0; ot_depth_db = 24; ot_width = 1;
 ot_h_smooth = 0; ot_db_smooth = 24; ot_w_smooth = 1;
 ot_on_last = 0; ot_h_last = -1; ot_db_last = -1; ot_w_last = -1;
-ot_floor = 1; ot_bin = 0; ot_binw = 1; ot_f0bin = 0;   // wash-side, until @sample sets them
+ot_boost = 1; ot_norm = 1; ot_bin = 0; ot_binw = 1; ot_f0bin = 0;   // wash-side, until @sample sets them
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
@@ -607,7 +607,7 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   // voice engine's pure partial, which is what Texture means everywhere else in
   // this plugin: same gesture, different material.
   //
-  // ot_bin / ot_binw / ot_floor / ot_f0bin are set per sample in @sample, off the
+  // ot_bin / ot_binw / ot_boost / ot_norm / ot_f0bin are set per sample in @sample, off the
   // SAME smoothed controls the voice uses, so the two engines stay in step
   // through a Texture blend rather than describing different overtones.
   ot_wash = (ot_on && ot_bin > 0) ? 1 : 0;
@@ -615,12 +615,16 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   loop(NBINS,
     i < cutbin ? ( curmag[i] = 0; ) : ( curmag[i] = max(0, curmag[i] - thr); );
     ot_wash ? (
-      // Bins under the fundamental's own peak are exempt, mirroring harmonic 1
-      // being exempt in the voice: it is the drone the overtone sings over.
+      // Bins under the fundamental's own peak are never lifted, mirroring harmonic
+      // 1 in the voice: it is the drone the overtone sings over. They still take
+      // ot_norm, so the whole wash recedes together rather than the band alone
+      // rising out of an untouched bed.
       i > ot_f0bin ? (
         od = abs(i - ot_bin) / ot_binw;
         ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
-        curmag[i] = curmag[i] * (ot_floor + (1 - ot_floor)*ow);
+        curmag[i] = curmag[i] * (1 + (ot_boost - 1)*ow) * ot_norm;
+      ) : (
+        curmag[i] = curmag[i] * ot_norm;
       );
     );
     i += 1;
@@ -1461,25 +1465,51 @@ abs(ot_width - ot_w_smooth)  < 0.0005 ? ot_w_smooth  = ot_width  : ot_w_smooth  
 ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
 (ot_on != ot_on_last || (ot_on && (ot_h_smooth != ot_h_last || ot_db_smooth != ot_db_last || ot_w_smooth != ot_w_last))) ? (
   ot_on ? (
-    otfl = pow(10, -ot_db_smooth/20);          // the floor everything else drops to
+    // --- A resonance is a PEAK. The chosen partial is LIFTED above where it sat;
+    //     the others are left alone. The first build of this did the opposite --
+    //     floored everything and returned the chosen one to 1.0, so the maximum
+    //     gain in the curve was 1 and nothing was ever lifted. That normalises to
+    //     the PEAK, which is arithmetically identical to ducking the whole voice,
+    //     and it is audible as one: Rozaya, 2026-07-28, "real overtones don't dip
+    //     everything else and that's what this is doing." Correct, and the error
+    //     was in the reasoning, not the code -- a tract redistributes ENERGY, but
+    //     its SHAPE is a peak.
+    //
+    //     Ear-safety (this can never get louder -- a headphones user with no meter
+    //     must be able to trust that) is kept by normalising to POWER instead:
+    //     lift the partial, then scale the whole bank so the summed RMS is what it
+    //     was. Same guarantee, opposite percept. At the default 24 dB that is
+    //     roughly +17 dB on the chosen partial and -7 dB on everything else, where
+    //     before it was 0 and -24. A few dB of recession in the drone is right --
+    //     energy really does move into the resonance when a singer does this. ---
+    otg  = pow(10, ot_db_smooth/20);           // how hard the resonance lifts it
     otw  = max(0.5, ot_w_smooth);
-    oi = 0; loop(NHARM, ot_gain[oi] = otfl; oi += 1; );
+    oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );   // everything else stays put
     olo = max(1, ceil(ot_h_smooth - otw));     // harmonic NUMBERS (index = number - 1)
     ohi = min(NHARM, floor(ot_h_smooth + otw));
     oi = olo;
     loop(max(0, ohi - olo + 1),
       od = abs(oi - ot_h_smooth) / otw;
-      // raised cosine: 1 on the chosen harmonic, 0 at the edge of the window.
+      // raised cosine: full lift on the chosen harmonic, none at the window edge.
       ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
-      ot_gain[oi-1] = otfl + (1 - otfl)*ow;
+      ot_gain[oi-1] = 1 + (otg - 1)*ow;
       oi += 1;
     );
-    // The fundamental never drops. It is the drone half of "two notes at once";
-    // suppress it and what is left is a whistle, not overtone singing.
+    // The fundamental is never lifted. It is the drone half of "two notes at
+    // once" -- lift it and there is no second note, just a louder voice.
     ot_gain[0] = 1;
-    ot_floor = otfl;
+    // Power normalisation, computed against a flat spectrum. Exact only if every
+    // partial were equal, but a real 1/n rolloff lands within about 1.5 dB of it
+    // (the lifted partial is a quiet upper one, so it contributes little either
+    // way) -- not worth a per-sample pass over the live magnitudes to chase.
+    opw = 0; oi = 0; loop(NHARM, opw += ot_gain[oi]*ot_gain[oi]; oi += 1; );
+    ot_norm = opw > 0 ? sqrt(NHARM / opw) : 1;
+    // Folded into the curve, so the voice loop needs no knowledge of any of this.
+    oi = 0; loop(NHARM, ot_gain[oi] = ot_gain[oi] * ot_norm; oi += 1; );
+    ot_boost = otg;                            // the wash rebuilds the window itself
   ) : (
     oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );
+    ot_boost = 1; ot_norm = 1;
   );
   ot_on_last = ot_on; ot_h_last = ot_h_smooth; ot_db_last = ot_db_smooth; ot_w_last = ot_w_smooth;
 );

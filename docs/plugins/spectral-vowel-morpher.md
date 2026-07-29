@@ -165,8 +165,38 @@ Morpher's voice engine is already a bank of 64 partials sitting at exact multipl
 **Overtone harmonic** `0 to 64, default 0 (off)` — *global*
 Which partial to bring out. 0 is off. 1 is the fundamental itself (no effect worth having — that's the drone). The usable range for a singing overtone is roughly **6 to 14**; below that the partials are too far apart to read as a melody, above it they get faint and crowded. Consecutive numbers are consecutive overtone "notes", so a melody is just a sequence of small whole numbers — 8, 9, 10, 12 — and the machine works out every frequency. It's a Drift and Ramp target, so that melody can play itself. Fractional values are deliberate: at 7.5 the emphasis hands over between partials 7 and 8, the way a real sweep does.
 
-**Overtone depth (dB the others drop by)** `0 to 48, default 24` — *global*
-How far everything except the chosen harmonic is pushed down. This **only ever attenuates** — the chosen partial is never boosted, because a tract resonance redistributes energy rather than adding any, and because a boost at these depths would be an ear-safety problem on headphones. Around 20–30 dB is where the overtone separates into its own note. Push to 40+ and you're left with the drone and a near-pure whistle. Harmonic 1 is exempt at any depth — it's the drone half of "two notes". Expect the voice to get *quieter* as you raise this; make it up on **Voice level**.
+**Overtone lift (dB the chosen harmonic rises by)** `0 to 48, default 24` — *global*
+How hard the resonance lifts the chosen partial. This is a **peak**, which is what
+a narrowed vocal tract actually is: the chosen harmonic rises above where it sat,
+and the rest of the voice stays roughly put.
+
+**It still can never get louder.** After the lift, the whole harmonic bank is
+scaled so the summed power is unchanged — so the effect is a redistribution, not a
+boost, and on real material (which rolls off steeply) it comes out slightly
+quieter than before rather than louder.
+
+That does mean the rest of the voice recedes a little, and more so the harder you
+push, because there is a fixed power budget to move around:
+
+| Lift | chosen partial | everything else |
+|---|---|---|
+| 6 dB | +5.8 dB | −0.2 dB |
+| 12 dB | +11.1 dB | −0.9 dB |
+| 18 dB | +15.1 dB | −2.9 dB |
+| 24 dB | +17.1 dB | −6.9 dB |
+| 36 dB | +18.0 dB | −18.0 dB |
+
+**Around 12–20 dB is the sweet spot** — the overtone separates into its own note
+while the drone barely moves. Past roughly 30 dB you stop gaining separation (the
+lift plateaus near +18 dB) and start losing the drone instead, which is a whistle
+rather than overtone singing. Harmonic 1 is never lifted at any setting — it *is*
+the drone half of "two notes".
+
+> **Earlier builds had this backwards.** Until 2026-07-28 the control floored
+> every *other* partial and left the chosen one alone, so the overtone only ever
+> emerged by the voice ducking around it — audible, and wrong. If a project from
+> before that sounds different, this is why, and it wants a lower number now: the
+> old 24 was a 24 dB duck, the new 24 is a 17 dB lift.
 
 **Overtone width (harmonics either side)** `0.5 to 4, default 1` — *global*
 How sharp the resonance is. **1** is the classic narrow whistle. Higher values let neighbouring partials come along, which is broader, more vowel-like and less synthetic — closer to the softer end of overtone technique.

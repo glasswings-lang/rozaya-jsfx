@@ -91,7 +91,7 @@ slider28:1<1,6,1>Capture average (1 = one frame, higher = smoother)
 // resonance physically does, and it means the control can only make the voice
 // quieter. Harmonic 1 is exempt at any depth -- it is the drone.
 slider29:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
-slider30:24<0,48,0.5>Overtone depth (dB the others drop by)
+slider30:24<0,48,0.5>Overtone lift (dB the chosen harmonic rises by)
 slider31:1<0.5,4,0.1>Overtone width (harmonics either side)
 
 @init
@@ -241,7 +241,7 @@ ot_coeff = 1 - exp(-1 / (0.03 * srate));
 ot_harm_base = 0; ot_depth_db = 24; ot_width = 1;
 ot_h_smooth = 0; ot_db_smooth = 24; ot_w_smooth = 1;
 ot_on_last = 0; ot_h_last = -1; ot_db_last = -1; ot_w_last = -1;
-ot_floor = 1; ot_bin = 0; ot_binw = 1; ot_f0bin = 0;
+ot_boost = 1; ot_norm = 1; ot_bin = 0; ot_binw = 1; ot_f0bin = 0;
 voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
 morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
@@ -423,12 +423,16 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
     // spectrum, phase-randomised into narrow noise bands, so isolating one leaves
     // a pitched BAND rather than nothing -- breathier than the voice engine's
     // pure partial, still a definite note. Bins under the fundamental's own peak
-    // are exempt, mirroring harmonic 1 being exempt in the voice.
+    // are never lifted, mirroring harmonic 1 in the voice -- but they still take
+    // ot_norm, so the whole wash recedes together rather than the band alone
+    // rising out of an untouched bed.
     ot_wash ? (
       i > ot_f0bin ? (
         od = abs(i - ot_bin) / ot_binw;
         ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
-        curmag[i] = curmag[i] * (ot_floor + (1 - ot_floor)*ow);
+        curmag[i] = curmag[i] * (1 + (ot_boost - 1)*ow) * ot_norm;
+      ) : (
+        curmag[i] = curmag[i] * ot_norm;
       );
     );
     i += 1;
@@ -890,22 +894,35 @@ abs(ot_width - ot_w_smooth)     < 0.0005 ? ot_w_smooth  = ot_width    : ot_w_smo
 ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
 (ot_on != ot_on_last || (ot_on && (ot_h_smooth != ot_h_last || ot_db_smooth != ot_db_last || ot_w_smooth != ot_w_last))) ? (
   ot_on ? (
-    otfl = pow(10, -ot_db_smooth/20);
+    // --- A resonance is a PEAK: the chosen partial is LIFTED, the others are left
+    //     alone. This first shipped inverted -- floored everything and returned the
+    //     chosen one to 1.0, so the curve's maximum gain was 1 and nothing was ever
+    //     lifted. Normalising to the PEAK is arithmetically the same as ducking the
+    //     whole voice, and it is audible as one (Rozaya, 2026-07-28). Ear-safety is
+    //     kept by normalising to POWER instead: lift the partial, then scale the
+    //     bank so summed RMS is unchanged. It still can never get louder; it just
+    //     stops sounding like the voice ducking. Full writeup in Passage, which
+    //     carries the same engine. ---
+    otg  = pow(10, ot_db_smooth/20);           // how hard the resonance lifts it
     otw  = max(0.5, ot_w_smooth);
-    oi = 0; loop(NHARM, ot_gain[oi] = otfl; oi += 1; );
+    oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );   // everything else stays put
     olo = max(1, ceil(ot_h_smooth - otw));     // harmonic NUMBERS (index = number - 1)
     ohi = min(NHARM, floor(ot_h_smooth + otw));
     oi = olo;
     loop(max(0, ohi - olo + 1),
       od = abs(oi - ot_h_smooth) / otw;
       ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
-      ot_gain[oi-1] = otfl + (1 - otfl)*ow;
+      ot_gain[oi-1] = 1 + (otg - 1)*ow;
       oi += 1;
     );
-    ot_gain[0] = 1;   // the fundamental never drops -- it is the drone
-    ot_floor = otfl;
+    ot_gain[0] = 1;   // the fundamental is never lifted -- it is the drone
+    opw = 0; oi = 0; loop(NHARM, opw += ot_gain[oi]*ot_gain[oi]; oi += 1; );
+    ot_norm = opw > 0 ? sqrt(NHARM / opw) : 1;
+    oi = 0; loop(NHARM, ot_gain[oi] = ot_gain[oi] * ot_norm; oi += 1; );
+    ot_boost = otg;                            // the wash rebuilds the window itself
   ) : (
     oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );
+    ot_boost = 1; ot_norm = 1;
   );
   ot_on_last = ot_on; ot_h_last = ot_h_smooth; ot_db_last = ot_db_smooth; ot_w_last = ot_w_smooth;
 );
