@@ -635,8 +635,12 @@ drone.
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level, default Texture`
+**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Denoise / Morph / Input level / Overtone harmonic / Slot fade in / Slot hold / Slot fade out / Slot gap, default Texture`
 Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
+
+**The four slot-timing targets behave differently from the rest, on purpose.** Every other target drifts continuously — the value moves under your ear while you listen. A *duration* can't do that: if the hold time changed while a hold was already running, the finish line would move mid-leg, stretching a pause out from under you or ending a fade that was still going. So a slot-timing target is **sampled once, at the moment its leg begins**, and held for that whole leg. The cycle comes out a little different every time round instead of wobbling inside itself.
+
+Which is what makes a breath out of slots possible: **fade in is the inhale, hold is the top pause, fade out is the exhale, gap is the bottom pause.** Give each a small drift and the breathing stops being metronomic. Results are clamped at zero, so a drift larger than the setting itself shortens the leg to nothing rather than inverting it.
 
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
 How far it wanders above (up) and below (down) the parameter's current value, in that parameter's own units — Texture in its 0–100, Pitch in semitones, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
@@ -660,7 +664,7 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level, default Texture`
+**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Denoise / Morph / Input level / Overtone harmonic / Slot fade in / Slot hold / Slot fade out / Slot gap, default Texture`
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
 **Ramp by** `-300 to +300, units match the target, default 0`

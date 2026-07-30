@@ -125,7 +125,7 @@ slider24:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 //     Pick a target; it wanders by up/down amounts over a wall-clock period.
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
-slider25:0<0,9,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level,Overtone harmonic}>Drift target
+slider25:0<0,13,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level,Overtone harmonic,Slot fade in,Slot hold,Slot fade out,Slot gap}>Drift target
 slider26:0<0,300,0.1>Drift up amount (units match target)
 slider27:0<0,300,0.1>Drift down amount (units match target)
 slider28:30<1,600,0.5>Drift period (seconds)
@@ -140,7 +140,7 @@ slider30:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider31:0<0,9,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level,Overtone harmonic}>Ramp target
+slider31:0<0,13,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level,Overtone harmonic,Slot fade in,Slot hold,Slot fade out,Slot gap}>Ramp target
 slider32:0<-300,300,0.1>Ramp by (units match target)
 slider33:0<0,60,0.1>Ramp duration (minutes)
 slider34:0<0,60,0.1>Ramp start delay (minutes)
@@ -188,7 +188,7 @@ slider38:1<0.5,4,0.1>Overtone width (all slots: harmonics either side)
 ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
-N_TARGETS = 10;  // Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Denoise, Morph, Input level, Overtone harmonic
+N_TARGETS = 14;  // Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Denoise, Morph, Input level, Overtone harmonic, Slot fade in, Slot hold, Slot fade out, Slot gap
 // Wash grain is deliberately NOT a target: it rebuilds a window rather than
 // scaling a value, so it is driven from @block and cannot read a per-sample
 // drift offset the way the others do.
@@ -369,6 +369,8 @@ bag_pos = 999; last_slot = 0; drift_primed = 0; auto_primed = 0; sweep_dir = 1; 
 // fade-in / fade-out / gap silence; need_fadein tracks whether the current leg
 // began from silence (fade it in) or arrived at full via a crossfade (don't).
 leg_env = 1; need_fadein = 1; out_env = 1;
+// Slot-timing drift/ramp offsets, SAMPLED once per leg (see the leg machine).
+lgo_fi = 0; lgo_h = 0; lgo_fo = 0; lgo_g = 0;
 fade_in_shape = 1; fade_out_shape = 1;   // Cosine until @slider reads sliders 33/34
 // Fresh instance: every slot starts as whatever is on screen. Without this only
 // the slot selected when a slider was last touched would carry the visible
@@ -1003,6 +1005,7 @@ drift_restart_free = slider30;   // 0 = restart on play (sync), 1 = free-running
   // walk state is what has to be cleared or Glide would stay parked on its
   // final slot for every subsequent play.
   auto_primed = 0; drift_primed = 0; sweep_dir = 1; leg_elapsed = 0;
+  lgo_fi = 0; lgo_h = 0; lgo_fo = 0; lgo_g = 0;   // first leg after play starts unmodified
   need_fadein = 1; leg_env = 1;   // first leg after play fades in from silence
   last_gsamp = floor(grain_ms * srate / 1000); last_cappoint = cap_point01;
   last_capavg = cap_avg;
@@ -1232,10 +1235,18 @@ automorph_mode > 0.5 ? (
       //     a hard fade-out -> fade it in) or arrived already at full via a
       //     crossfade (-> skip the fade-in), so every slot boundary is click-safe
       //     whatever each slot's crossfade setting is. ---
-      lg_fi = need_fadein ? max(0, slot_fadein[cur_slot]) : 0;
-      lg_h  = max(0, slot_linger[cur_slot]);   // hold
-      lg_fo = max(0, slot_xfade[cur_slot]);    // fade out
-      lg_g  = max(0, slot_gap[cur_slot]);      // gap of silence after
+      //     Slot timing is a Drift/Ramp target, and a DURATION target is sampled
+      //     ONCE when its leg begins (lgo_*, set at the advance below) rather than
+      //     read live. Reading it live would move the finish line while the leg was
+      //     already running -- a hold that stretches out from under you, or a fade
+      //     that is suddenly already over. Same rule Melody Phase uses for Note
+      //     duration: continuous drift for levels, sampled-at-trigger for lengths.
+      //     Every one is clamped at zero; a negative gap means nothing and a
+      //     negative fade would run the leg backwards.
+      lg_fi = need_fadein ? max(0, slot_fadein[cur_slot] + lgo_fi) : 0;
+      lg_h  = max(0, slot_linger[cur_slot] + lgo_h);   // hold
+      lg_fo = max(0, slot_xfade[cur_slot]  + lgo_fo);  // fade out
+      lg_g  = max(0, slot_gap[cur_slot]    + lgo_g);   // gap of silence after
       lg_x  = slot_xfadeon[cur_slot] > 0.5;    // crossfade into next?
       leg_elapsed += 1 / srate;
       lg_t = leg_elapsed;
@@ -1263,6 +1274,11 @@ automorph_mode > 0.5 ? (
       lg_advance ? (
         cur_slot = nxt_slot; xfade = 0; leg_elapsed = 0;
         need_fadein = lg_next_fadein;
+        // Sample this leg's timing offsets and hold them for its whole duration.
+        lgo_fi = target_drift_offset[10] + ramp_offset_mem[10];
+        lgo_h  = target_drift_offset[11] + ramp_offset_mem[11];
+        lgo_fo = target_drift_offset[12] + ramp_offset_mem[12];
+        lgo_g  = target_drift_offset[13] + ramp_offset_mem[13];
         // Sequential arrives silent (fades in next); crossfade arrives at full.
         leg_env = lg_next_fadein ? 0 : 1;
         // Sequential handoff (crossfade OFF): flush the wash overlap-add buffer so
@@ -1643,21 +1659,31 @@ spl1 = dryR + voutR;
 //              preserves the SOUND of an Option-A-saved project under B.
 //   7700003 -- Option B layout (linger = pure hold, crossfade added on top),
 //              9 Drift/Ramp targets.
-//   7700004 -- current. Identical except Overtone harmonic joined the Drift and
+//   7700005 -- current. Identical except the four SLOT TIMING controls joined the
+//              Drift and Ramp target lists, making it 14. Same reasoning as the
+//              bump below: the count is part of the format. A 7700004 blob still
+//              reads 10 and the four new targets keep their @init defaults, so an
+//              existing project opens with slot timing simply not drifting.
+//   7700004 -- Identical except Overtone harmonic joined the Drift and
 //              Ramp target lists, making it 10. The TARGET COUNT IS PART OF THE
 //              FORMAT: the banks are written back to back, so reading 10 where 9
 //              were written walks the cursor off the end of one bank and into the
 //              next -- the exact failure the magic exists to prevent. Hence a new
 //              magic rather than an append. A 7700003 blob still reads 9 and the
 //              tenth target keeps its @init defaults.
-ser_magic = 7700004;
+ser_magic = 7700005;
 file_var(0, ser_magic);
-(ser_magic == 7700004 || ser_magic == 7700003 || ser_magic == 7700002 || ser_magic == 7700001) ? (
+(ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700003 || ser_magic == 7700002 || ser_magic == 7700001) ? (
   ser_v1  = ser_magic == 7700001;
   ser_v2a = ser_magic == 7700002;   // old Option A; needs linger conversion below
   // A v2 blob's banks are authoritative -- cancel the fresh-instance seed.
   (file_avail(0) >= 0 && !ser_v1) ? ( seed_slots_from_sliders = 0; );
-  n_ser_targets = ser_v1 ? 6 : (ser_magic == 7700004 ? N_TARGETS : 9);
+  // Literal counts per format, NOT N_TARGETS -- that constant moves every time
+  // a target is added, and using it here would read the new count out of an
+  // old blob, which is precisely the misalignment the magic exists to stop.
+  n_ser_targets = ser_v1 ? 6 :
+                  ser_magic == 7700005 ? 14 :
+                  ser_magic == 7700004 ? 10 : 9;
   file_var(0, have);
   file_var(0, n_used);
   // Save/restore only the slots actually captured (n_used * MAXFFT), not the
