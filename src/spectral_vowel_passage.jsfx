@@ -277,24 +277,35 @@ yin_cmnd  = freemem; freemem += WHARM;         // YIN cumulative-mean-normalized
 // behavior change (frequency is set by the phase INCREMENT, which is untouched). ---
 sintab    = freemem; freemem += WTBL+2;        // one sine period + a guard sample for interp
 driftbag  = freemem; freemem += NSLOTS;        // Auto-morph Shuffle bag (even random slot coverage)
-// --- suite Drift: per-target config + runtime banks (16-slot-spaced for growth) ---
-target_drift_up     = freemem; freemem += 16;  // CONFIG: up amount   (survives transport)
-target_drift_down   = freemem; freemem += 16;  // CONFIG: down amount
-target_drift_per    = freemem; freemem += 16;  // CONFIG: period (seconds)
-target_drift_shape  = freemem; freemem += 16;  // CONFIG: 0 Sine / 1 Triangle / 2 Random
-target_drift_phase  = freemem; freemem += 16;  // RUNTIME: 0..1 phase (reset on play)
-target_drift_prev   = freemem; freemem += 16;  // RUNTIME: Random shape prev value
-target_drift_curr   = freemem; freemem += 16;  // RUNTIME: Random shape target value
-target_drift_offset = freemem; freemem += 16;  // RUNTIME: current offset (read at consumption)
-td_active           = freemem; freemem += 16;  // @slider: 1 if a target has any drift configured
+// --- suite Drift: config + runtime banks, indexed PER SLOT x PER TARGET.
+//     Passage is a per-slot instrument -- Texture, Pitch, the leg timings and
+//     the rest all belong to a slot -- and drift was the last thing in it that
+//     was not. It is now keyed DKEY(slot, target) = slot*DSTRIDE + target.
+//     DSTRIDE stays 16 (> N_TARGETS) so adding a target never re-spaces the
+//     bank; only the serialize magic moves.
+//     Morph (7) and Input level (8) are GLOBAL by design and always live at
+//     slot 0 -- a per-slot Morph drift would be circular, since Morph decides
+//     which slot is playing. @slider never writes them anywhere else, so their
+//     td_active stays 0 for every other slot and the advance loop skips them. ---
+DSTRIDE = 16;
+DBANK   = DSTRIDE * NSLOTS;
+target_drift_up     = freemem; freemem += DBANK;  // CONFIG: up amount   (survives transport)
+target_drift_down   = freemem; freemem += DBANK;  // CONFIG: down amount
+target_drift_per    = freemem; freemem += DBANK;  // CONFIG: period (seconds)
+target_drift_shape  = freemem; freemem += DBANK;  // CONFIG: 0 Sine / 1 Triangle / 2 Random
+target_drift_phase  = freemem; freemem += DBANK;  // RUNTIME: 0..1 phase (reset on play)
+target_drift_prev   = freemem; freemem += DBANK;  // RUNTIME: Random shape prev value
+target_drift_curr   = freemem; freemem += DBANK;  // RUNTIME: Random shape target value
+target_drift_offset = freemem; freemem += DBANK;  // RUNTIME: current offset (read at consumption)
+td_active           = freemem; freemem += DBANK;  // @slider: 1 if a target has any drift configured
 // --- Ramp: per-target config + runtime banks (16-slot-spaced) ---
-ramp_by_mem            = freemem; freemem += 16;  // CONFIG: signed `by` amount
-ramp_dur_mem           = freemem; freemem += 16;  // CONFIG: duration (minutes)
-ramp_delay_mem         = freemem; freemem += 16;  // CONFIG: start delay (minutes)
-ramp_t_mem             = freemem; freemem += 16;  // RUNTIME: 0..1 ride progress (reset on play)
-ramp_delay_elapsed_mem = freemem; freemem += 16;  // RUNTIME: start-delay sample counter
-ramp_offset_mem        = freemem; freemem += 16;  // RUNTIME: ramp_t * by (read at consumption)
-mod_active             = freemem; freemem += 16;  // @slider: 1 if a target has drift OR ramp configured
+ramp_by_mem            = freemem; freemem += DBANK;  // CONFIG: signed `by` amount
+ramp_dur_mem           = freemem; freemem += DBANK;  // CONFIG: duration (minutes)
+ramp_delay_mem         = freemem; freemem += DBANK;  // CONFIG: start delay (minutes)
+ramp_t_mem             = freemem; freemem += DBANK;  // RUNTIME: 0..1 ride progress (reset on play)
+ramp_delay_elapsed_mem = freemem; freemem += DBANK;  // RUNTIME: start-delay sample counter
+ramp_offset_mem        = freemem; freemem += DBANK;  // RUNTIME: ramp_t * by (read at consumption)
+mod_active             = freemem; freemem += DBANK;  // @slider: 1 if a target has drift OR ramp configured
 i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
@@ -309,7 +320,7 @@ slots_inited == 0 ? (
   // they must survive transport play. @serialize overwrites these with the
   // saved config on project load (the guard runs on fresh load, BEFORE the
   // @serialize restore — the exact order the captures above already rely on).
-  i = 0; loop(N_TARGETS,
+  i = 0; loop(DBANK,
     target_drift_up[i]    = 0;
     target_drift_down[i]  = 0;
     target_drift_per[i]   = 30;
@@ -319,14 +330,14 @@ slots_inited == 0 ? (
     ramp_delay_mem[i] = 0;
     i += 1;
   );
-  last_target_select = 0;
-  last_ramp_target   = 0;
+  last_drift_key = 0;   // composite (slot, target) keys now, not bare targets
+  last_ramp_key  = 0;
   last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
 );
 // Drift RUNTIME state (phase/prev/curr/offset) is reset here on load AND on the
 // transport play-edge in @block, so drift restarts at phase 0 on every play
 // (continues across stop) — matching the rest of the suite.
-i = 0; loop(N_TARGETS,
+i = 0; loop(DBANK,
   target_drift_phase[i] = 0; target_drift_prev[i] = 0;
   target_drift_curr[i]  = 0; target_drift_offset[i] = 0;
   ramp_t_mem[i] = 0; ramp_delay_elapsed_mem[i] = 0; ramp_offset_mem[i] = 0;
@@ -678,6 +689,20 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
 // Crossfade one per-slot value the same way the spectra are crossfaded.
 function sblend(arr, i, j, f) ( arr[i] * (1 - f) + arr[j] * f );
 
+// Drift + Ramp offset for one target, BLENDED between the two morphing slots by
+// the same fraction that blends the values it modifies (sb_i / sb_j / sb_f are
+// set in @sample just before the effective values are computed).
+//
+// The blend is not cosmetic. Per-slot offsets read raw would STEP at every slot
+// handoff -- slot A's wander replaced by slot B's in one sample, on a value
+// feeding Texture or Low cut. That is a discontinuity in precisely the place the
+// voice phase handover exists to keep continuous, and it would click for the
+// same reason. Blending it means the modulation crossfades with everything else.
+function dmod(dmt) (
+    (target_drift_offset[sb_i*DSTRIDE + dmt] + ramp_offset_mem[sb_i*DSTRIDE + dmt]) * (1 - sb_f)
+  + (target_drift_offset[sb_j*DSTRIDE + dmt] + ramp_offset_mem[sb_j*DSTRIDE + dmt]) * sb_f
+);
+
 function build_synwin(wlen) local(i) (
   wlen = max(64, min(MAXFFT, floor(wlen)));
   W = wlen; HOP = max(1, floor(W / 4));
@@ -921,29 +946,38 @@ automorph_mode != last_automode ? (
 //     Otherwise it captures live edits to the current target. All targets drift
 //     in parallel from @sample regardless of what's selected. ---
 sel_target = slider25;
+// --- Drift is now keyed on BOTH selectors: Capture slot (outer) and Drift
+//     target (inner), the same shape Resonance Bank uses for band x parameter.
+//     So the four Drift sliders show the config for THIS slot's THIS target,
+//     and every (slot, target) pair wanders on its own.
+//     Morph (7) and Input level (8) are the exceptions: global by design, so
+//     they pin to slot 0 and the Capture slot selector does not change what you
+//     are editing for them. ---
+dsel_slot = (sel_target == 7 || sel_target == 8) ? 0 : cap_slot;
+dkey      = dsel_slot*DSTRIDE + sel_target;
 sel_up     = slider26;
 sel_down   = slider27;
 sel_per    = slider28;
 sel_shape  = slider29;
-last_target_select != sel_target ? (
-  target_drift_up[last_target_select]    = sel_up;
-  target_drift_down[last_target_select]  = sel_down;
-  target_drift_per[last_target_select]   = sel_per;
-  target_drift_shape[last_target_select] = sel_shape;
-  slider26 = target_drift_up[sel_target];
-  slider27 = target_drift_down[sel_target];
-  slider28 = target_drift_per[sel_target];
-  slider29 = target_drift_shape[sel_target];
+last_drift_key != dkey ? (
+  target_drift_up[last_drift_key]    = sel_up;
+  target_drift_down[last_drift_key]  = sel_down;
+  target_drift_per[last_drift_key]   = sel_per;
+  target_drift_shape[last_drift_key] = sel_shape;
+  slider26 = target_drift_up[dkey];
+  slider27 = target_drift_down[dkey];
+  slider28 = target_drift_per[dkey];
+  slider29 = target_drift_shape[dkey];
   slider_automate(slider26);
   slider_automate(slider27);
   slider_automate(slider28);
   slider_automate(slider29);
-  last_target_select = sel_target;
+  last_drift_key = dkey;
 ) : (
-  target_drift_up[sel_target]    = sel_up;
-  target_drift_down[sel_target]  = sel_down;
-  target_drift_per[sel_target]   = sel_per;
-  target_drift_shape[sel_target] = sel_shape;
+  target_drift_up[dkey]    = sel_up;
+  target_drift_down[dkey]  = sel_down;
+  target_drift_per[dkey]   = sel_per;
+  target_drift_shape[dkey] = sel_shape;
 );
 // Per-target "is this target being driven at all?" flag — lets @sample skip the
 // per-sample effective-value recompute (and keep the exact original CPU/output)
@@ -952,24 +986,28 @@ last_target_select != sel_target ? (
 //     slider31 = target; 32 = per-target `by`; 33 = duration; 34 = start delay.
 //     slider35 (Engage) is GLOBAL. All targets ride in parallel from @sample. ---
 rsel_target = slider31;
+// Same two-dimensional keying as Drift above, and the same slot-0 pinning
+// for the two global targets.
+rsel_slot = (rsel_target == 7 || rsel_target == 8) ? 0 : cap_slot;
+rkey      = rsel_slot*DSTRIDE + rsel_target;
 rsel_by     = slider32;
 rsel_dur    = slider33;
 rsel_delay  = slider34;
-last_ramp_target != rsel_target ? (
-  ramp_by_mem[last_ramp_target]    = rsel_by;
-  ramp_dur_mem[last_ramp_target]   = rsel_dur;
-  ramp_delay_mem[last_ramp_target] = rsel_delay;
-  slider32 = ramp_by_mem[rsel_target];
-  slider33 = ramp_dur_mem[rsel_target];
-  slider34 = ramp_delay_mem[rsel_target];
+last_ramp_key != rkey ? (
+  ramp_by_mem[last_ramp_key]    = rsel_by;
+  ramp_dur_mem[last_ramp_key]   = rsel_dur;
+  ramp_delay_mem[last_ramp_key] = rsel_delay;
+  slider32 = ramp_by_mem[rkey];
+  slider33 = ramp_dur_mem[rkey];
+  slider34 = ramp_delay_mem[rkey];
   slider_automate(slider32);
   slider_automate(slider33);
   slider_automate(slider34);
-  last_ramp_target = rsel_target;
+  last_ramp_key = rkey;
 ) : (
-  ramp_by_mem[rsel_target]    = rsel_by;
-  ramp_dur_mem[rsel_target]   = rsel_dur;
-  ramp_delay_mem[rsel_target] = rsel_delay;
+  ramp_by_mem[rkey]    = rsel_by;
+  ramp_dur_mem[rkey]   = rsel_dur;
+  ramp_delay_mem[rkey] = rsel_delay;
 );
 ramp_engaged = slider35;
 // Overtone harmonic and depth are PER SLOT (banked above); only width is
@@ -980,7 +1018,7 @@ ot_width     = max(0.5, min(4, slider38));
 // Per-target flags. td_active gates the drift-advance loop; mod_active gates the
 // effective-value recompute (drift OR ramp configured). A target with neither
 // stays exactly at its base value — bit-identical to no modulation.
-i = 0; loop(N_TARGETS,
+i = 0; loop(DBANK,
   td_active[i]  = (target_drift_up[i] > 0 || target_drift_down[i] > 0) ? 1 : 0;
   mod_active[i] = (td_active[i] || ramp_by_mem[i] != 0) ? 1 : 0;
   i += 1;
@@ -1045,10 +1083,10 @@ drift_now_playing = (play_state == 1 || play_state == 5);
 (drift_now_playing && drift_was_playing == 0) ? (
   // Ramp ALWAYS restarts its ride on transport play (its wind-down begins from
   // the current values each pass) — the suite's Speed-Ramp transport behaviour.
-  ri = 0; loop(N_TARGETS, ramp_t_mem[ri] = 0; ramp_delay_elapsed_mem[ri] = 0; ri += 1; );
+  ri = 0; loop(DBANK, ramp_t_mem[ri] = 0; ramp_delay_elapsed_mem[ri] = 0; ri += 1; );
   // Drift restarts only in Restart-on-play mode (Free-running ignores transport).
   drift_restart_free == 0 ? (
-    di = 0; loop(N_TARGETS,
+    di = 0; loop(DBANK,
       target_drift_phase[di]  = 0; target_drift_prev[di]  = 0;
       target_drift_curr[di]   = 0; target_drift_offset[di] = 0;
       di += 1;
@@ -1140,8 +1178,12 @@ inpos += 1; inpos >= INRING ? inpos = 0;
 //     math (Sine / Triangle / Random value-noise) matches the rest of the
 //     suite. Offset is asymmetric: positive half scales by `up`, negative by
 //     `down`. Runs before every consumer below so grain/voice/output all agree. ---
+// Every (slot, target) pair wanders independently, so the loop walks the whole
+// bank. td_active gates the work, and it is 0 for anything unconfigured, so a
+// patch using two drifts costs two drifts -- the extra iterations are a flag
+// read apiece.
 di = 0;
-loop(N_TARGETS,
+loop(DBANK,
   td_active[di] ? (
     dper = target_drift_per[di];
     dphase = target_drift_phase[di] + 1.0 / max(dper * srate, 1);
@@ -1171,7 +1213,7 @@ loop(N_TARGETS,
 //     the Drift offset below. ---
 ramp_engaged ? (
   ri = 0;
-  loop(N_TARGETS,
+  loop(DBANK,
     ramp_dur_mem[ri] > 0 ? (
       rdelay_samps = ramp_delay_mem[ri] * 60 * srate;
       ramp_delay_elapsed_mem[ri] < rdelay_samps ? (
@@ -1184,7 +1226,7 @@ ramp_engaged ? (
     ri += 1;
   );
 );
-ri = 0; loop(N_TARGETS, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; ri += 1; );
+ri = 0; loop(DBANK, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; ri += 1; );
 
 // Every auto-morph mode now walks slot to slot, holding each leg for the
 // linger of the slot it is LEAVING. Sweep and Glide used to slide a position
@@ -1275,10 +1317,14 @@ automorph_mode > 0.5 ? (
         cur_slot = nxt_slot; xfade = 0; leg_elapsed = 0;
         need_fadein = lg_next_fadein;
         // Sample this leg's timing offsets and hold them for its whole duration.
-        lgo_fi = target_drift_offset[10] + ramp_offset_mem[10];
-        lgo_h  = target_drift_offset[11] + ramp_offset_mem[11];
-        lgo_fo = target_drift_offset[12] + ramp_offset_mem[12];
-        lgo_g  = target_drift_offset[13] + ramp_offset_mem[13];
+        // This leg belongs to cur_slot (just advanced), so it samples that
+        // slot's own timing drift -- no blend, because a leg is not a crossfade
+        // of two durations, it is one slot's leg.
+        lgk    = cur_slot*DSTRIDE;
+        lgo_fi = target_drift_offset[lgk + 10] + ramp_offset_mem[lgk + 10];
+        lgo_h  = target_drift_offset[lgk + 11] + ramp_offset_mem[lgk + 11];
+        lgo_fo = target_drift_offset[lgk + 12] + ramp_offset_mem[lgk + 12];
+        lgo_g  = target_drift_offset[lgk + 13] + ramp_offset_mem[lgk + 13];
         // Sequential arrives silent (fades in next); crossfade arrives at full.
         leg_env = lg_next_fadein ? 0 : 1;
         // Sequential handoff (crossfade OFF): flush the wash overlap-add buffer so
@@ -1386,11 +1432,11 @@ audition_mode < 0.5 ? (
 // exactly its own settings; there is no blended state to confuse it with.
 sb_i = vsi; sb_j = vsj; sb_f = vmfr;
 eff_tex = max(0, min(1, sblend(slot_texture, sb_i, sb_j, sb_f)
-                        + (target_drift_offset[0] + ramp_offset_mem[0]) * 0.01));
+                        + (dmod(0)) * 0.01));
 hlevel = cos(eff_tex * PI * 0.5); wlevel = sin(eff_tex * PI * 0.5);
 
 eff_spread_hz = max(0, min(150, sblend(slot_spread, sb_i, sb_j, sb_f)
-                                + target_drift_offset[1] + ramp_offset_mem[1]));
+                                + dmod(1)));
 
 // --- Pitch is the ONE per-slot value that must NOT be blended. ---
 // Every other per-slot value is a quantity you can average: half of one
@@ -1404,9 +1450,14 @@ eff_spread_hz = max(0, min(150, sblend(slot_spread, sb_i, sb_j, sb_f)
 // Each slot is now voiced at ITS OWN pitch and the crossfade happens purely in
 // level, which is what a crossfade is. Drift and Ramp still apply, as a shared
 // offset ON TOP of each slot's own value, so Pitch remains a modulation target.
-pitch_mod  = target_drift_offset[2] + ramp_offset_mem[2];
-eff_semi_A = max(-36, min(36, slot_pitch[sb_i] + pitch_mod));
-eff_semi_B = max(-36, min(36, slot_pitch[sb_j] + pitch_mod));
+// Pitch takes each slot's OWN drift rather than a blended one -- and per slot
+// this is more correct than the shared offset it replaces, not merely finer.
+// Blending two frequencies is a glide, which is why the base values are kept
+// separate here; blending their modulation would reintroduce exactly that.
+pitch_mod_A = target_drift_offset[sb_i*DSTRIDE + 2] + ramp_offset_mem[sb_i*DSTRIDE + 2];
+pitch_mod_B = target_drift_offset[sb_j*DSTRIDE + 2] + ramp_offset_mem[sb_j*DSTRIDE + 2];
+eff_semi_A = max(-36, min(36, slot_pitch[sb_i] + pitch_mod_A));
+eff_semi_B = max(-36, min(36, slot_pitch[sb_j] + pitch_mod_B));
 pitch_ratio_A = pow(2.0, eff_semi_A/12);
 pitch_ratio_B = pow(2.0, eff_semi_B/12);
 // BOTH engines use these: the voice reads them directly (fA/fB below), and the
@@ -1415,18 +1466,18 @@ pitch_ratio_B = pow(2.0, eff_semi_B/12);
 // any more -- that was the glide.
 
 eff_stereo_width = max(0, min(100, sblend(slot_width, sb_i, sb_j, sb_f)
-                                   + target_drift_offset[3] + ramp_offset_mem[3]));
+                                   + dmod(3)));
 voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX;
 
 eff_lowcut_hz = max(0, min(500, sblend(slot_lowcut, sb_i, sb_j, sb_f)
-                                + target_drift_offset[4] + ramp_offset_mem[4]));
+                                + dmod(4)));
 
 eff_vdb = max(-60, min(12, sblend(slot_voicedb, sb_i, sb_j, sb_f)
-                           + target_drift_offset[5] + ramp_offset_mem[5]));
+                           + dmod(5)));
 voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
 
 eff_denoise = max(0, min(100, sblend(slot_denoise, sb_i, sb_j, sb_f)
-                              + target_drift_offset[6] + ramp_offset_mem[6]));
+                              + dmod(6)));
 
 // Morph and Input level are global, but newly reachable by Drift / Ramp.
 mod_active[7] ? (
@@ -1474,7 +1525,7 @@ ot_hA < 0.5 ? ot_hA = ot_hB;
 ot_hB < 0.5 ? ot_hB = ot_hA;
 ot_harm_base = (1 - sb_f)*ot_hA + sb_f*ot_hB;
 ot_depth_db  = (1 - sb_f)*ot_dA + sb_f*ot_dB;
-eff_ot_h = max(0, min(NHARM, ot_harm_base + target_drift_offset[9] + ramp_offset_mem[9]));
+eff_ot_h = max(0, min(NHARM, ot_harm_base + dmod(9)));
 abs(eff_ot_h - ot_h_smooth)  < 0.0005 ? ot_h_smooth  = eff_ot_h  : ot_h_smooth  += (eff_ot_h  - ot_h_smooth)  * ot_coeff;
 abs(ot_depth_db - ot_db_smooth) < 0.0005 ? ot_db_smooth = ot_depth_db : ot_db_smooth += (ot_depth_db - ot_db_smooth) * ot_coeff;
 abs(ot_width - ot_w_smooth)  < 0.0005 ? ot_w_smooth  = ot_width  : ot_w_smooth  += (ot_width  - ot_w_smooth)  * ot_coeff;
@@ -1664,6 +1715,14 @@ spl1 = dryR + voutR;
 //              bump below: the count is part of the format. A 7700004 blob still
 //              reads 10 and the four new targets keep their @init defaults, so an
 //              existing project opens with slot timing simply not drifting.
+//   7700006 -- current. The Drift/Ramp banks went PER SLOT: they are no longer
+//              N_TARGETS long but DBANK (NSLOTS * DSTRIDE), so the bank SIZE is
+//              part of the format now as well as the target count. An older blob
+//              is read at its own flat length -- which lands in slot 0's entries
+//              -- and then slot 0 is COPIED ACROSS EVERY SLOT, so a project that
+//              drifted globally goes on drifting on every slot exactly as it did.
+//              Without that copy its drift would silently become slot-0-only.
+//   7700005 -- The four slot-timing controls joined the target lists (14).
 //   7700004 -- Identical except Overtone harmonic joined the Drift and
 //              Ramp target lists, making it 10. The TARGET COUNT IS PART OF THE
 //              FORMAT: the banks are written back to back, so reading 10 where 9
@@ -1671,9 +1730,9 @@ spl1 = dryR + voutR;
 //              next -- the exact failure the magic exists to prevent. Hence a new
 //              magic rather than an append. A 7700003 blob still reads 9 and the
 //              tenth target keeps its @init defaults.
-ser_magic = 7700005;
+ser_magic = 7700006;
 file_var(0, ser_magic);
-(ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700003 || ser_magic == 7700002 || ser_magic == 7700001) ? (
+(ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700003 || ser_magic == 7700002 || ser_magic == 7700001) ? (
   ser_v1  = ser_magic == 7700001;
   ser_v2a = ser_magic == 7700002;   // old Option A; needs linger conversion below
   // A v2 blob's banks are authoritative -- cancel the fresh-instance seed.
@@ -1681,7 +1740,11 @@ file_var(0, ser_magic);
   // Literal counts per format, NOT N_TARGETS -- that constant moves every time
   // a target is added, and using it here would read the new count out of an
   // old blob, which is precisely the misalignment the magic exists to stop.
-  n_ser_targets = ser_v1 ? 6 :
+  // How many entries each Drift/Ramp bank occupies in THIS blob. From 7700006
+  // that is the whole per-slot bank; before it, a flat per-target list.
+  ser_perslot   = ser_magic == 7700006;
+  n_ser_targets = ser_perslot ? DBANK :
+                  ser_v1 ? 6 :
                   ser_magic == 7700005 ? 14 :
                   ser_magic == 7700004 ? 10 : 9;
   file_var(0, have);
@@ -1703,14 +1766,37 @@ file_var(0, ser_magic);
   file_mem(0, target_drift_down,  n_ser_targets);
   file_mem(0, target_drift_per,   n_ser_targets);
   file_mem(0, target_drift_shape, n_ser_targets);
-  file_var(0, last_target_select);
+  file_var(0, last_drift_key);
 
   // --- Ramp config, appended after Drift. EOF-safe: a pre-Ramp project (drift
   //     only, or captures only) reads past EOF here and keeps default ramp. ---
   file_mem(0, ramp_by_mem,    n_ser_targets);
   file_mem(0, ramp_dur_mem,   n_ser_targets);
   file_mem(0, ramp_delay_mem, n_ser_targets);
-  file_var(0, last_ramp_target);
+  file_var(0, last_ramp_key);
+
+  // --- MIGRATION: a pre-7700006 blob wrote one flat config per target, which
+  //     the reads above dropped into slot 0's entries. Copy slot 0 across every
+  //     other slot so a project that drifted globally keeps drifting on all of
+  //     them. Skipping this would quietly demote existing drift to slot 0 only,
+  //     which sounds like the drift half-vanishing on load. READ side only. ---
+  (file_avail(0) >= 0 && !ser_perslot) ? (
+    mgs = 1;
+    loop(NSLOTS - 1,
+      mgt = 0;
+      loop(DSTRIDE,
+        target_drift_up[mgs*DSTRIDE + mgt]    = target_drift_up[mgt];
+        target_drift_down[mgs*DSTRIDE + mgt]  = target_drift_down[mgt];
+        target_drift_per[mgs*DSTRIDE + mgt]   = target_drift_per[mgt];
+        target_drift_shape[mgs*DSTRIDE + mgt] = target_drift_shape[mgt];
+        ramp_by_mem[mgs*DSTRIDE + mgt]        = ramp_by_mem[mgt];
+        ramp_dur_mem[mgs*DSTRIDE + mgt]       = ramp_dur_mem[mgt];
+        ramp_delay_mem[mgs*DSTRIDE + mgt]     = ramp_delay_mem[mgt];
+        mgt += 1;
+      );
+      mgs += 1;
+    );
+  );
 
   // --- Per-slot Capture point, appended after Ramp (EOF-safe append; no magic
   //     bump, same as Drift/Ramp were added). MIGRATION for projects saved
@@ -1893,13 +1979,25 @@ file_var(0, ser_magic);
   // restoring the "visible slider == bank[selected]" invariant. sliderchange
   // (NOT slider_automate) here -- automate would write automation on load.
   file_avail(0) >= 0 ? (
-    slider26 = target_drift_up[last_target_select];
-    slider27 = target_drift_down[last_target_select];
-    slider28 = target_drift_per[last_target_select];
-    slider29 = target_drift_shape[last_target_select];
-    slider32 = ramp_by_mem[last_ramp_target];
-    slider33 = ramp_dur_mem[last_ramp_target];
-    slider34 = ramp_delay_mem[last_ramp_target];
+    // Rebuild both keys from the RESTORED selectors rather than trusting the
+    // saved key. Capture slot, Drift target and Ramp target are restored by
+    // REAPER's own slider path, independently of this blob and in no guaranteed
+    // order -- so a saved key can disagree with the sliders the user is looking
+    // at. Deriving it here re-establishes the "visible sliders == bank[key]"
+    // invariant authoritatively; leaving them to disagree would make the next
+    // @slider save the visible values into the wrong slot's config.
+    dupslot        = max(0, min(NSLOTS-1, slider1));
+    duptgt         = max(0, min(N_TARGETS-1, slider25));
+    duprtgt        = max(0, min(N_TARGETS-1, slider31));
+    last_drift_key = ((duptgt  == 7 || duptgt  == 8) ? 0 : dupslot)*DSTRIDE + duptgt;
+    last_ramp_key  = ((duprtgt == 7 || duprtgt == 8) ? 0 : dupslot)*DSTRIDE + duprtgt;
+    slider26 = target_drift_up[last_drift_key];
+    slider27 = target_drift_down[last_drift_key];
+    slider28 = target_drift_per[last_drift_key];
+    slider29 = target_drift_shape[last_drift_key];
+    slider32 = ramp_by_mem[last_ramp_key];
+    slider33 = ramp_dur_mem[last_ramp_key];
+    slider34 = ramp_delay_mem[last_ramp_key];
     // Per-slot Capture point: force slider3 to the restored slot's stored point,
     // and sync last_cap_slot so the first @slider doesn't mistake load for a
     // slot-switch (which would save the visible point into the wrong slot).

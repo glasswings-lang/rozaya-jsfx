@@ -636,7 +636,13 @@ drone.
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
 **Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Denoise / Morph / Input level / Overtone harmonic / Slot fade in / Slot hold / Slot fade out / Slot gap, default Texture`
-Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
+Which parameter the Drift sliders below are editing.
+
+**Drift is per slot, like everything else here.** The Drift sliders show the settings for *the selected Capture slot's* selected target — so slot 1's Texture can wander slowly while slot 4's barely moves, and each has its own period and shape. Two selectors reach it: **Capture slot** picks which slot, **Drift target** picks which parameter of it. Everything you configure keeps running in the background regardless of what's on screen.
+
+**Two targets are global and ignore the slot selector: Morph and Input level.** Morph decides *which slot is playing*, so a per-slot Morph drift would be circular; Input level is the dry track signal, which isn't a capture's property. Those two show the same settings whatever slot you have selected.
+
+**During a morph, the drift crossfades along with the value it modifies.** If slot 3's Low cut is wandering one way and slot 4's another, moving between them blends the two — the wander doesn't jump when the slot changes. **Pitch is the exception, and deliberately**: pitch is never blended between slots (averaging two frequencies is a glide, not a blend), so each slot is voiced at its own pitch with its own drift on top.
 
 **The four slot-timing targets behave differently from the rest, on purpose.** Every other target drifts continuously — the value moves under your ear while you listen. A *duration* can't do that: if the hold time changed while a hold was already running, the finish line would move mid-leg, stretching a pause out from under you or ending a fade that was still going. So a slot-timing target is **sampled once, at the moment its leg begins**, and held for that whole leg. The cycle comes out a little different every time round instead of wobbling inside itself.
 
