@@ -42,11 +42,47 @@ When Glide time > 0, each new voice's frequency starts at the previous voice's t
 
 ### Global
 
-**Rate Mode** `BPM / Seconds / Hz` (default Seconds)
-How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1, one cycle is one second, so the per-voice "Next voice in" and "Note duration" numbers behave as raw seconds. **BPM** = beats per minute; the per-voice numbers become beats. **Hz** = cycles per second (Rate = 0.05 Hz means one cycle every 20 seconds — good for very slow ambient pacing).
+**Rate Mode** `BPM / Seconds / Hz / Host x` (default Seconds)
+How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1, one cycle is one second, so the per-voice "Next voice in" and "Note duration" numbers behave as raw seconds. **BPM** = beats per minute; the per-voice numbers become beats. **Hz** = cycles per second (Rate = 0.05 Hz means one cycle every 20 seconds — good for very slow ambient pacing). **Host x** = follow the project tempo; see below.
 
 **Rate Value** `0.001 – 1000` (default 1)
 The global rate; meaning depends on Rate Mode.
+
+### Host x — following the project tempo
+
+In the first three modes each instance holds its own absolute rate, and nothing
+in the plugin knows that two instances are related. That's fine until you want
+to change the speed of a whole arrangement: nudging every instance by hand
+changes the *relationships* between them, not just the pace, and layers that
+used to nest start scattering.
+
+**Host x** fixes that by making Rate Value a **multiplier of the project
+tempo** instead of an absolute rate. x1 = one cycle per beat, x2 = twice as
+fast, x0.5 = half. Higher is faster, same as BPM and Hz (only Seconds inverts).
+Move the project tempo and every instance moves with it, in proportion.
+
+This is **not** quantising. Rate Value stays continuous, so unlocked
+relationships are as available as locked ones — and they survive a tempo change
+too:
+
+| Layer | Multiplier | Tempo 40 | Tempo 45 |
+|---|---|---|---|
+| Fast | x1 | 40 | 45 |
+| Mid | x0.5 | 20 | 22.5 |
+| Slow | x0.25 | 10 | 11.25 |
+
+…nests forever, while `x1 / x0.618 / x0.25` never resolves — and keeps not
+resolving in the same way at any tempo.
+
+Tempo changes take effect live, including mid-playback. Voice and envelope
+proportions are untouched; the melody just runs faster or slower.
+
+**Host ratio (writes Rate Value)** `Free / 1/8 / 1/4 / 1/3 / 1/2 / phi down (0.618) / 2/3 / 3/4 / 1 / 4/3 / 3/2 / phi up (1.618) / 2 / 3 / 4 / 8` (default Free)
+A convenience picker, shown only in Host x mode. Choosing an entry writes that
+multiplier into Rate Value and then gets out of the way — it does not hold Rate
+Value afterwards, so you can still type or automate any value you like. **Free**
+never writes anything. The list carries the two phi ratios alongside the tidy
+ones because deliberately-unlocked relationships are first-class here.
 
 **Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
 Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions. Half-sine sounds an octave higher than the others at the same note (its full-wave-rectified spectrum has no fundamental).

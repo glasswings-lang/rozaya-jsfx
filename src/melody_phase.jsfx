@@ -26,7 +26,7 @@ desc:Melody Phase
 // CC0 — public domain.
 
 // --- Global sliders (1-14) ---
-slider1:1<0,2,1{BPM,Seconds,Hz}>Rate Mode
+slider1:1<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
 slider2:1<0.001,1000,0.001>Rate Value
 slider3:0<0,11,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine}>Waveform
 slider4:440<400,480,0.1>Tuning Reference Hz
@@ -257,6 +257,20 @@ slider74:0<0,20,0.01>Drift down amount (units match target)
 slider75:8<1,1000,1>Drift period (cycles)
 slider76:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
+// --- Host ratio helper (slider 77) — only meaningful in Host x rate mode ---
+//
+// This does NOT quantise anything. Rate Value stays a free continuous
+// multiplier; this picker just WRITES a value into it so you don't have to
+// work one out. "Free" is the default and means the picker is doing nothing
+// at all, which is the state you want for hand-dialled phase relationships.
+//
+// The list holds tidy ratios AND the two phi ratios, because locked and
+// deliberately-unlocked are both first-class here: 1/2 and 2 nest forever,
+// 0.618 and 1.618 never resolve. Per docs/designing-for-dyscalculia.md the
+// point is to move the ARITHMETIC, not to take away the precise control —
+// you can still type 0.618 into Rate Value yourself.
+slider77:0<0,15,1{Free,1/8,1/4,1/3,1/2,phi down (0.618),2/3,3/4,1,4/3,3/2,phi up (1.618),2,3,4,8}>Host ratio (writes Rate Value)
+
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
 // NO ext_noinit: we let REAPER re-run @init on every transport play
@@ -272,6 +286,26 @@ slider76:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // drift CONFIG bank (user's per-target up/down/period/shape). That's
 // guarded by drift_cfg_inited below so it survives across play presses
 // while everything else resets.
+
+// Host tempo capture. `tempo` is one of REAPER's READ-ONLY system
+// variables (see CLAUDE.md — assigning to it is silently ignored, which
+// is how rhythm-track's Tempo slider did nothing for months). We only ever
+// READ it, into our own global, and the global is deliberately NOT called
+// `tempo`. host_bpm_ref is the tempo that the current @slider derivation
+// was computed against; the live/ref ratio is what makes a tempo change
+// take effect without re-running @slider (see @block).
+host_bpm     = max(tempo, 0.001);
+host_bpm_ref = host_bpm;
+host_scale   = 1;
+
+// The Host ratio picker is a CHANGE-triggered one-shot. On load it must
+// adopt the saved slider77 WITHOUT firing, or a project that saved e.g.
+// "1/2" would have its hand-tuned Rate Value overwritten the moment it
+// opened. This flag makes the first @slider pass an adopt rather than a
+// write. (@init re-runs on transport play, so it re-adopts each play —
+// which is fine: the picker only ever needs to write when the user
+// actually turns it.)
+host_ratio_inited = 0;
 
 // Memory layout per voice (16 slots each — V0 starts at the
 // labelled base, voice i offsets by i; e.g., V3's osc_phase_l is
@@ -512,8 +546,14 @@ function rate_to_cycle_seconds(raw_rate, rmode) (
   //                      so per-voice "cycles" are directly seconds
   //                      when Rate Value is left at 1)
   // Hz:   1 / value      (cycles/sec inverted to sec/cycle)
+  // Host x: 60 / (host BPM * value)  — Rate Value is a MULTIPLIER of the
+  //         project tempo, so x1 = one cycle per beat, x2 = twice as fast,
+  //         x0.5 = half. Higher is faster, matching BPM and Hz modes (only
+  //         Seconds mode inverts). host_bpm is REAPER's read-only `tempo`
+  //         captured into our own global — see the @block note.
   rmode == 0 ? 60 / max(raw_rate, 0.001) :
   rmode == 1 ? max(raw_rate, 0.001) :
+  rmode == 3 ? 60 / max(host_bpm * raw_rate, 0.001) :
                1 / max(raw_rate, 0.001)
 );
 
@@ -700,6 +740,53 @@ function trigger_seq_voice(prev_idx) (
 
 @slider
 rate_mode     = slider1;
+
+// --- Host ratio picker (slider77) -> Rate Value ---------------------------
+// One-shot: it fires only when the picker CHANGES, writes the multiplier
+// into Rate Value, and then stays out of the way. It does not hold Rate
+// Value hostage afterwards, so hand-editing Rate Value to 0.6183 (or
+// automating it) works exactly as before — the picker just shows whatever
+// was last applied. "Free" (0) never writes anything.
+//
+// slider_automate (not sliderchange) because Rate Value is a real
+// automatable parameter and we want REAPER's own value to follow.
+!host_ratio_inited ? (
+  host_ratio_sel    = slider77;   // adopt on load, do not write
+  host_ratio_inited = 1;
+);
+host_ratio_sel != slider77 ? (
+  host_ratio_sel = slider77;
+  host_ratio_sel > 0 ? (
+    slider2 =
+      host_ratio_sel ==  1 ? 0.125 :
+      host_ratio_sel ==  2 ? 0.25  :
+      host_ratio_sel ==  3 ? 1/3   :
+      host_ratio_sel ==  4 ? 0.5   :
+      host_ratio_sel ==  5 ? 0.618 :
+      host_ratio_sel ==  6 ? 2/3   :
+      host_ratio_sel ==  7 ? 0.75  :
+      host_ratio_sel ==  8 ? 1     :
+      host_ratio_sel ==  9 ? 4/3   :
+      host_ratio_sel == 10 ? 1.5   :
+      host_ratio_sel == 11 ? 1.618 :
+      host_ratio_sel == 12 ? 2     :
+      host_ratio_sel == 13 ? 3     :
+      host_ratio_sel == 14 ? 4     :
+                             8;
+    slider_automate(slider2);
+  );
+);
+
+// Only meaningful in Host x mode — hide it everywhere else so the panel
+// doesn't grow a control that does nothing.
+slider_show(slider77, rate_mode == 3);
+
+// Re-read the live host tempo and remember what this derivation was
+// computed against. @slider does not re-run when the project tempo moves,
+// so @block compares against host_bpm_ref to scale the timeline.
+host_bpm      = max(tempo, 0.001);
+host_bpm_ref  = host_bpm;
+
 rate_value    = slider2;
 waveform      = slider3;
 tuning_ref    = slider4;
@@ -860,9 +947,12 @@ slider_show(slider19, pan_enabled && pan_mode == 1);
 // and Hz cycles are interpreted against Rate Value (so 1 beat at
 // 60 BPM = 1 second). Seconds mode is literal seconds.
 start_delay_units = slider62;
-rate_mode == 0 ? start_delay_sec = start_delay_units * 60 / max(rate_value, 0.001) :
+// Every non-Seconds mode means "this many CYCLES", so the conversion is
+// just units x cycle_seconds. That's identical to the old per-mode
+// arithmetic (BPM: 60/value, Hz: 1/value) and picks up Host x for free
+// rather than falling through to the Hz branch and ignoring the tempo.
 rate_mode == 1 ? start_delay_sec = start_delay_units :
-                 start_delay_sec = start_delay_units / max(rate_value, 0.001);
+                 start_delay_sec = start_delay_units * cycle_seconds;
 
 // Direction mode + derived flags. For Up/Down (modes 0/1) we force
 // seq_dir to the mode's natural direction every @slider so that
@@ -955,6 +1045,27 @@ last_sr_target != sr_sel_target ? (
 // drift wave period. Recomputed here because cycle_seconds may have
 // changed (rate_mode / rate_value sliders).
 samples_per_primary_cycle = max(cycle_seconds * srate, 1);
+
+@block
+// Follow the project tempo while Host x mode is active.
+//
+// @slider does NOT re-run when the tempo changes, so everything derived
+// from cycle_seconds (v_step_seconds, v_note_seconds, the envelope
+// segments) is still expressed against host_bpm_ref. Rather than
+// recomputing that whole block — which would mean lifting ~60 lines of
+// @slider into a function — we scale the timeline by the live/reference
+// ratio and let it flow through `dt`, exactly as Speed Ramp and Drift
+// already do. Every duration is stretched by the same factor, so voice
+// and envelope PROPORTIONS are untouched: the melody simply runs faster
+// or slower, which is what a tempo change means.
+//
+// host_scale is 1 in every other rate mode, so BPM / Seconds / Hz
+// projects are bit-identical to before.
+//
+// Transport-edge detection belongs in @block, not @sample (play_state
+// only updates per block) — same reasoning applies to tempo.
+host_bpm = max(tempo, 0.001);
+host_scale = (rate_mode == 3 && host_bpm_ref > 0) ? host_bpm / host_bpm_ref : 1;
 
 @sample
 // Advance speed ramp every sample, then compute musical + slow
@@ -1050,7 +1161,9 @@ rate_mode == 1 ?
   drift_mult = rate_value / drifted_rate :
   drift_mult = drifted_rate / rate_value;
 
-combined_scale = speed_scale_current * drift_mult;
+// host_scale folds the live project tempo in alongside Speed Ramp and
+// Drift (1 outside Host x mode, so this line is a no-op elsewhere).
+combined_scale = speed_scale_current * drift_mult * host_scale;
 dt = combined_scale / srate;
 
 // Pan Rate drift (target 9): convert the offset to a multiplier on the
