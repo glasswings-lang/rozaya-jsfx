@@ -496,3 +496,133 @@ Ideas, roughly in order of value:
 layout is version-gated on a magic number that has already moved four times
 (7700001 → 7700004). Any tool must check it exactly as the plugin does and refuse
 rather than guess.
+
+---
+
+# Host tempo sync sweep (planned 2026-08-11)
+
+Melody Phase v1 + v2 landed `Host x` on `feature/host-tempo-sync` and it's
+ear-tested working. The rest of the suite should follow. Rozaya: *"We should
+have done this a long time ago with all the bloody rest, same adjustability
+fixes, same everything."*
+
+## Why it matters (the problem it solves)
+
+Without host sync, every instance holds its own **absolute** rate and nothing
+in the plugin knows that two instances are related. Speeding up an arrangement
+then means editing every instance by hand — which changes the *relationships*
+between them, not just the pace. A 40 / 20 / 10 stack (locked 4:2:1) nudged by
++5 each becomes 45 / 25 / 15, which is 9:5:3: the layers stop nesting and start
+scattering, and restarting the transport can't fix it because restart resets
+*phase*, not *ratio*.
+
+Host sync expresses every rate as a ratio of one clock, so any relationship —
+locked or deliberately unlocked — survives a tempo change intact.
+
+## Two control shapes, chosen per plugin
+
+**Do NOT force one shape on both.** The control should match what the plugin
+already has.
+
+- **Plugins that already have a Rate Mode enum** → append `Host x` as a new
+  final entry. Rate Value becomes a multiplier of the project tempo.
+- **Plugins with a bare BPM slider and no modes** → add a **Follow host tempo**
+  on/off plus a **Host ratio** multiplier. Adding "Seconds" and "Hz" modes to a
+  metronome would be nonsense.
+
+Both give the same concept. Rozaya asked for "an on/off like everything else",
+which is exactly the second shape.
+
+## Scope
+
+### Tier 1 — has `{BPM,Seconds,Hz}`, drop-in copy of Melody Phase
+
+| Plugin | Rate Mode slider | Highest slider | New sliders |
+|---|---|---|---|
+| `polyrhythm_phase` | 2 | 83 | 84 (ratio picker) |
+| `polyrhythm_phase_v3` | 2 | 87 | 88 |
+| `shepard-tone` | 2 | 73 | 74 |
+
+### Tier 2 — has a mode enum, but ordered `{Hz,Seconds,BPM}`
+
+| Plugin | Rate Mode slider | Highest slider |
+|---|---|---|
+| `Full_Feature_Tremolo` | 2 | 33 |
+| `full-feature-sweeping-filter` | 4 | 38 |
+| `sweep-dwell-filter` | 19 (Pan Sweep Rate Unit) | 37 |
+
+**The suite disagrees with itself about mode ordering.** `mode 0` is BPM in
+Tier 1 and Hz in Tier 2 — the same class of drift the waveform-palette sweep
+cleaned up. Appending `Host x` at index 3 works for both, so this sweep does
+NOT need to fix the ordering, and shouldn't (it would break saved projects).
+Recorded so nobody assumes a shared meaning for mode indices.
+
+**Lucky break:** Seconds is index 1 in *both* orderings, so the
+`rate_mode == 1 ? inverted : normal` rule stays correct everywhere.
+
+### Tier 3 — bare BPM slider, gets the on/off shape
+
+| Plugin | Rate slider | Highest slider |
+|---|---|---|
+| `rhythm-track` | 1 Tempo (BPM) | 26 |
+| `shepard-scale` | 1 BPM | 61 |
+| `stereo-phaser` | 1 Rate Hz | 7 |
+| `heartbeat gen` | 1 BPM | — |
+| `womb_sound_generator_v3` | 1 BPM | — |
+
+`rhythm-track` is the sharpest case: a metronome that cannot follow the project
+tempo. It's also the plugin with the historic reserved-`tempo` bug, so read that
+CLAUDE.md note before touching it.
+
+Heartbeat and Womb are a *pulse* rather than a musical rate; Rozaya confirmed
+they're in ("womb could do with an on/off like everything else").
+
+### Explicitly NOT in this sweep
+
+The pitch / cutoff / frequency plugins — `dapple`, `harmonic_sculptor`,
+`resonance_bank`, `veil`, `breath_gen`, `spectral_vowel_morpher`,
+`spectral_vowel_passage`, `bubbler`, `sustain_looper`. Several have modulation
+that could sync, but Rozaya has explicitly deferred them: *"that's another job."*
+
+## The spec every plugin follows
+
+1. **Append, never renumber.** New mode entry goes at the END of the enum; new
+   sliders at the END of the range. Run
+   `grep -rl <plugin>.jsfx --include=*.RPP` over the project folders first.
+2. **A multiplier, not a note grid.** This suite is phase music — layers
+   slipping against each other is the point, and a grid takes that away. A
+   multiplier carries *any* ratio through a tempo change, including irrational
+   ones. Rozaya: *"I'm not just designing for locks."*
+3. **Ratio picker**, hidden unless synced, null entry named **`Custom`** —
+   never `Free`, which already means FREE-RUNNING in sync UI and reads as a
+   second competing sync switch. Entries labelled by what you HEAR
+   (`every 4 beats`, `1 per beat`, `2 per beat`), never as note values: `1/4`
+   means a quarter NOTE everywhere else and sits at the opposite end of the
+   scale. Include `phi slow` / `phi fast`.
+4. **`host_scale` must be ABSOLUTE (`tempo / 60`)**, never a ratio against a
+   remembered reference tempo. `@init` re-runs on every transport play and
+   wipes globals, so anything that must remember a value across transport is
+   wrong unless explicitly guarded. Compute the plugin's cycle length against a
+   nominal 60 BPM and apply the live tempo separately.
+5. **Audit EVERY accumulator, not just the obvious one.** Introducing a second
+   time base means auditing every `+= something / srate` in the file. In Melody
+   Phase the sequencer rode `dt` and was fine, but pan, drift and Start Delay
+   each accumulate independently and each needed the factor applied by hand.
+   Start Delay was the one that shipped broken, and its symptom was nasty
+   precisely because it was *partial*: one timing wrong by a tempo ratio while
+   everything around it was right reads as drift, not as a units bug.
+6. **Switching modes changes what Rate Value MEANS** and nothing rescales it.
+   Document that on each plugin page. A "convert my rate to the new mode"
+   helper would be a real kindness and is not built.
+7. **Update `docs/plugins/<plugin>.md` in lockstep.**
+8. **Ear-test before merging.** JSFX can't be compiled outside REAPER, so
+   syntax checks (paren balance, no empty `()` branches, reserved-name audit)
+   are the most that can be verified here. Back up installed copies before
+   overwriting.
+
+## Suggested order
+
+Tier 1 first (identical to work already done and validated), then Tier 3's
+`rhythm-track` (highest value, smallest file), then the rest. Land in small
+batches — each one needs an ear test, and a batch that's too big can't be
+diagnosed when something sounds wrong.
