@@ -84,6 +84,12 @@ one cycle spread across four beats (multiplier 0.25) — deliberately *not*
 written `1/4`, which everywhere else means a quarter NOTE and would sit at the
 opposite end of the scale. "phi slow" is x0.618, "phi fast" is x1.618.
 
+> **Switching Rate Mode changes what Rate Value means, and nothing rescales it
+> for you.** A Rate Value of 20 is 20 BPM in BPM mode, but twenty times the
+> project tempo in Host x. Toggling a running instance between the two will
+> jump hard. Set the mode first, then set the rate (or reach for the Host ratio
+> picker, which does the sum for you).
+
 **Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
 Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions, including the back-compat note on the Golden / Phi family. Note that Half-sine sounds an octave higher than the others at the same note + Center Octave setting (full-wave-rectified spectrum has no fundamental).
 
