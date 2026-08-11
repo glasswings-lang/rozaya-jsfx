@@ -84,6 +84,10 @@ one cycle spread across four beats (multiplier 0.25) — deliberately *not*
 written `1/4`, which everywhere else means a quarter NOTE and would sit at the
 opposite end of the scale. "phi slow" is x0.618, "phi fast" is x1.618.
 
+> **Start Delay is counted in cycles of the rate, and in Host x that means
+> cycles of the tempo-scaled rate** — so a delay of 8 stays 8 cycles when you
+> move the tempo, rather than drifting against the notes.
+
 > **Switching Rate Mode changes what Rate Value means, and nothing rescales it
 > for you.** A Rate Value of 20 is 20 BPM in BPM mode, but twenty times the
 > project tempo in Host x. Toggling a running instance between the two will

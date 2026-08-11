@@ -1229,7 +1229,18 @@ pan_rate_off != 0 ? (
 // delay elapses the sequencer kicks in cleanly from V1 as if just
 // loaded. After the gate releases the rest of @sample runs normally.
 start_delay_elapsed < start_delay_sec ? (
-  start_delay_elapsed += 1 / srate;
+  // * host_scale so the delay is counted in the SAME time base the cycle
+  // lengths are. In Host x mode cycle_seconds is deliberately nominal
+  // (60 BPM) with the real tempo applied as host_scale, so a wall-clock
+  // counter here made "8 cycles" mean 8 NOMINAL cycles -- the delayed
+  // instance came in late against its partner by exactly the tempo
+  // ratio. host_scale is 1 in BPM / Seconds / Hz, so those are unchanged.
+  //
+  // NOTE this still does not track Speed Ramp / Drift (combined_scale):
+  // if the rate is ramping, "8 cycles" of delay is measured against the
+  // unramped rate. Pre-existing and left alone deliberately -- changing
+  // it would move the start point of existing projects that use both.
+  start_delay_elapsed += host_scale / srate;
   spl0 = 0;
   spl1 = 0;
 ) : (
