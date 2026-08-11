@@ -31,8 +31,48 @@ Sets how per-voice sweep rates are determined.
 - **Synced** — all voices share the global Rate Value as their sweep speed. Each voice's Drift slider adds a cents offset to its oscillators, creating subtle detuning without changing the underlying rate.
 - **Independent** — the global Rate Value is ignored. Each voice's Drift / Rate slider sets that voice's sweep rate directly, in the units set by Rate Mode. Voices can sweep at entirely different speeds.
 
-**Rate Mode** `BPM / Seconds / Hz`
-Unit for interpreting rate values.
+**Rate Mode** `BPM / Seconds / Hz / Host x`
+Unit for interpreting rate values. **Host x** follows the project tempo — see below.
+
+### Host x — following the project tempo
+
+In the first three modes the plugin holds its own absolute rate, and nothing in
+it knows that another instance exists. That's fine until you want to change the
+speed of a whole arrangement: nudging each instance by hand changes the
+*relationships* between them, not just the pace, and layers that used to nest
+start scattering. Restarting the transport can't fix that — restart resets
+phase, not ratio.
+
+**Host x** makes Rate Value a **multiplier of the project tempo**. x1 = one
+sweep cycle per beat, x2 = twice as fast, x0.5 = half. Higher is faster, same
+as BPM and Hz (only Seconds inverts). Move the tempo and everything moves with
+it, in proportion.
+
+This is **not** quantising — Rate Value stays continuous, so deliberately
+unlocked relationships survive a tempo change just as locked ones do. `x1` and
+`x0.5` nest forever; `x1` against `x0.618` never resolves, and keeps not
+resolving in the same way at any tempo.
+
+Tempo changes apply live, including mid-playback. The sweep rate, the Play/Rest
+cycle counter and Start Delay all follow. **Pitch does not** — a tempo change
+moves the glissando, it doesn't transpose the tone.
+
+**Host ratio (writes Rate Value)** `Custom / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Custom)
+A convenience picker, shown only in Host x mode. Choosing an entry writes that
+multiplier into Rate Value and then gets out of the way — it doesn't hold the
+value, so you can still type or automate anything you like. **Custom** never
+writes anything; it just means Rate Value is whatever you set. It's deliberately
+not called "Free", because in sync UI that word means FREE-RUNNING, and that
+switch is Rate Mode itself: BPM / Seconds / Hz are the free-running cases.
+
+Entries are named for what you HEAR, not as note values. "every 4 beats" means
+one cycle spread across four beats (multiplier 0.25) — deliberately *not*
+written `1/4`, which everywhere else means a quarter NOTE and sits at the
+opposite end of the scale.
+
+> **Switching Rate Mode changes what Rate Value means, and nothing rescales it
+> for you.** 0.5 is 0.5 BPM in BPM mode but half the project tempo in Host x.
+> Set the mode first, then the rate.
 
 **Rate Value** `0.001-1000, default 0.5 BPM`
 The global sweep rate, in the units set by Rate Mode. Only used in Synced mode. At 0.5 BPM, one full sweep cycle takes two minutes — appropriate for slow ambient use.
