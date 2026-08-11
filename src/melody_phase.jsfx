@@ -261,15 +261,19 @@ slider76:0<0,2,1{Sine,Triangle,Random}>Drift shape
 //
 // This does NOT quantise anything. Rate Value stays a free continuous
 // multiplier; this picker just WRITES a value into it so you don't have to
-// work one out. "Free" is the default and means the picker is doing nothing
-// at all, which is the state you want for hand-dialled phase relationships.
+// work one out. "Custom" is the default and means the picker is doing nothing
+// at all -- Rate Value is whatever you typed. It is deliberately NOT called
+// "Free": in LFO/sync UI everywhere that word means FREE-RUNNING, i.e. not
+// synced, and that job already belongs to Rate Mode (any of BPM / Seconds /
+// Hz is the free-running case; Host x is the synced one). Calling the null
+// entry "Free" invited exactly the reading that it would unsync the plugin.
 //
 // The list holds tidy ratios AND the two phi ratios, because locked and
 // deliberately-unlocked are both first-class here: 1/2 and 2 nest forever,
 // 0.618 and 1.618 never resolve. Per docs/designing-for-dyscalculia.md the
 // point is to move the ARITHMETIC, not to take away the precise control —
 // you can still type 0.618 into Rate Value yourself.
-slider77:0<0,15,1{Free,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
+slider77:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -751,7 +755,7 @@ rate_mode     = slider1;
 // into Rate Value, and then stays out of the way. It does not hold Rate
 // Value hostage afterwards, so hand-editing Rate Value to 0.6183 (or
 // automating it) works exactly as before — the picker just shows whatever
-// was last applied. "Free" (0) never writes anything.
+// was last applied. "Custom" (0) never writes anything.
 //
 // slider_automate (not sliderchange) because Rate Value is a real
 // automatable parameter and we want REAPER's own value to follow.

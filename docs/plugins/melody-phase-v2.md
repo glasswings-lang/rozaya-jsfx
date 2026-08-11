@@ -79,11 +79,14 @@ resolving in the same way at any tempo.
 Tempo changes take effect live, including mid-playback. Voice and envelope
 proportions are untouched; the melody just runs faster or slower.
 
-**Host ratio (writes Rate Value)** `Free / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Free)
+**Host ratio (writes Rate Value)** `Custom / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Custom)
 A convenience picker, shown only in Host x mode. Choosing an entry writes that
 multiplier into Rate Value and then gets out of the way — it does not hold Rate
-Value afterwards, so you can still type or automate any value you like. **Free**
-never writes anything. The list carries the two phi ratios alongside the tidy
+Value afterwards, so you can still type or automate any value you like.
+**Custom** never writes anything -- it just means Rate Value is whatever you
+set it to. It is deliberately not called "Free", because in sync UI that word
+means FREE-RUNNING, and that switch is Rate Mode: any of BPM / Seconds / Hz is
+the free-running case, Host x is the synced one. The list carries the two phi ratios alongside the tidy
 ones because deliberately-unlocked relationships are first-class here.
 
 Entries are named for what you HEAR, not as note values. "every 4 beats" means
