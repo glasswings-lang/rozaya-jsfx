@@ -9,8 +9,10 @@
 > **Voice** selector: pick a voice, and five controls below show and edit *that*
 > voice. **All eight voices still play** — the selector is an editing cursor,
 > not a mute. Everything else — rate, waveforms, pan, glide, legato, direction,
-> play/rest gating, Speed Ramp and Drift — is carried over unchanged. (The old
-> flat-slider version is archived.)
+> play/rest gating, Speed Ramp and Drift — is carried over unchanged. (The flat-slider version is still
+> maintained as `melody_phase.jsfx` — see [melody-phase.md](melody-phase.md).
+> It came back out of the archive on 2026-08-11 because every project on disk
+> uses it and none use v2.)
 
 ## Overview
 
@@ -77,12 +79,17 @@ resolving in the same way at any tempo.
 Tempo changes take effect live, including mid-playback. Voice and envelope
 proportions are untouched; the melody just runs faster or slower.
 
-**Host ratio (writes Rate Value)** `Free / 1/8 / 1/4 / 1/3 / 1/2 / phi down (0.618) / 2/3 / 3/4 / 1 / 4/3 / 3/2 / phi up (1.618) / 2 / 3 / 4 / 8` (default Free)
+**Host ratio (writes Rate Value)** `Free / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Free)
 A convenience picker, shown only in Host x mode. Choosing an entry writes that
 multiplier into Rate Value and then gets out of the way — it does not hold Rate
 Value afterwards, so you can still type or automate any value you like. **Free**
 never writes anything. The list carries the two phi ratios alongside the tidy
 ones because deliberately-unlocked relationships are first-class here.
+
+Entries are named for what you HEAR, not as note values. "every 4 beats" means
+one cycle spread across four beats (multiplier 0.25) — deliberately *not*
+written `1/4`, which everywhere else means a quarter NOTE and would sit at the
+opposite end of the scale. "phi slow" is x0.618, "phi fast" is x1.618.
 
 **Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
 Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions. Half-sine sounds an octave higher than the others at the same note (its full-wave-rectified spectrum has no fundamental).

@@ -235,7 +235,7 @@ slider76:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // 0.618 and 1.618 never resolve. Per docs/designing-for-dyscalculia.md the
 // point is to move the ARITHMETIC, not to take away the precise control —
 // you can still type 0.618 into Rate Value yourself.
-slider77:0<0,15,1{Free,1/8,1/4,1/3,1/2,phi down (0.618),2/3,3/4,1,4/3,3/2,phi up (1.618),2,3,4,8}>Host ratio (writes Rate Value)
+slider77:0<0,15,1{Free,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -257,11 +257,9 @@ slider77:0<0,15,1{Free,1/8,1/4,1/3,1/2,phi down (0.618),2/3,3/4,1,4/3,3/2,phi up
 // variables (see CLAUDE.md — assigning to it is silently ignored, which
 // is how rhythm-track's Tempo slider did nothing for months). We only ever
 // READ it, into our own global, and the global is deliberately NOT called
-// `tempo`. host_bpm_ref is the tempo that the current @slider derivation
-// was computed against; the live/ref ratio is what makes a tempo change
-// take effect without re-running @slider (see @block).
+// `tempo`. The live tempo is applied as host_scale in @block; nothing
+// here needs to remember it (see the rate_to_cycle_seconds note).
 host_bpm     = max(tempo, 0.001);
-host_bpm_ref = host_bpm;
 host_scale   = 1;
 
 // The Host ratio picker is a CHANGE-triggered one-shot. On load it must
@@ -539,14 +537,21 @@ function rate_to_cycle_seconds(raw_rate, rmode) (
   //                        so per-voice "cycles" are directly seconds
   //                        when Rate Value is left at 1)
   // Hz:     1 / value      (cycles/sec inverted to sec/cycle)
-  // Host x: 60 / (host BPM * value)  — Rate Value is a MULTIPLIER of the
-  //         project tempo, so x1 = one cycle per beat, x2 = twice as fast,
-  //         x0.5 = half. Higher is faster, matching BPM and Hz modes (only
-  //         Seconds mode inverts). host_bpm is REAPER's read-only `tempo`
-  //         captured into our own global — see the @block note.
+  // Host x: 1 / value — computed against a NOMINAL 60 BPM, so this stays
+  //         tempo-INDEPENDENT. The live project tempo is applied separately
+  //         as host_scale (= tempo / 60) in @block, and the two multiply out
+  //         to 60/(tempo*value) seconds per cycle.
+  //
+  //         Keeping the tempo OUT of here is the whole trick. @init re-runs
+  //         on every transport play and wipes globals, so an earlier version
+  //         that remembered "the tempo this derivation was computed against"
+  //         had that reference reset on play while the frozen step/note
+  //         seconds still described the OLD tempo — pressing play silently
+  //         threw the tempo change away. Nothing to remember, nothing to go
+  //         stale.
   rmode == 0 ? 60 / max(raw_rate, 0.001) :
   rmode == 1 ? max(raw_rate, 0.001) :
-  rmode == 3 ? 60 / max(host_bpm * raw_rate, 0.001) :
+  rmode == 3 ? 1 / max(raw_rate, 0.001) :
                1 / max(raw_rate, 0.001)
 );
 
@@ -773,12 +778,6 @@ host_ratio_sel != slider77 ? (
 // Only meaningful in Host x mode — hide it everywhere else so the panel
 // doesn't grow a control that does nothing.
 slider_show(slider77, rate_mode == 3);
-
-// Re-read the live host tempo and remember what this derivation was
-// computed against. @slider does not re-run when the project tempo moves,
-// so @block compares against host_bpm_ref to scale the timeline.
-host_bpm      = max(tempo, 0.001);
-host_bpm_ref  = host_bpm;
 
 rate_value    = slider2;
 waveform      = slider3;
@@ -1079,13 +1078,19 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 //
 // @slider does NOT re-run when the tempo changes, so everything derived
 // from cycle_seconds (v_step_seconds, v_note_seconds, the envelope
-// segments) is still expressed against host_bpm_ref. Rather than
-// recomputing that whole block — which would mean lifting ~60 lines of
-// @slider into a function — we scale the timeline by the live/reference
-// ratio and let it flow through `dt`, exactly as Speed Ramp and Drift
-// already do. Every duration is stretched by the same factor, so voice
-// and envelope PROPORTIONS are untouched: the melody simply runs faster
-// or slower, which is what a tempo change means.
+// segments) would go stale. Rather than recompute that whole block —
+// which would mean lifting ~60 lines of @slider into a function — we
+// scale the timeline and let it flow through the same paths Speed Ramp
+// and Drift already use. Every duration stretches by the same factor, so
+// voice and envelope PROPORTIONS are untouched: the melody simply runs
+// faster or slower, which is what a tempo change means.
+//
+// host_scale is ABSOLUTE (tempo / 60), not a ratio against a remembered
+// reference tempo. That matters: @init re-runs on every transport play
+// and wipes globals, so a remembered reference was reset on play while
+// the frozen step/note seconds still described the old tempo — the
+// tempo change vanished the moment you pressed play. cycle_seconds is
+// computed against a nominal 60 BPM instead, and the two multiply out.
 //
 // host_scale is 1 in every other rate mode, so BPM / Seconds / Hz
 // projects are bit-identical to before.
@@ -1093,7 +1098,7 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 // Transport-edge detection belongs in @block, not @sample (play_state
 // only updates per block) — same reasoning applies to tempo.
 host_bpm = max(tempo, 0.001);
-host_scale = (rate_mode == 3 && host_bpm_ref > 0) ? host_bpm / host_bpm_ref : 1;
+host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
 
 @sample
 // Advance speed ramp every sample, then compute musical + slow
@@ -1153,7 +1158,11 @@ loop(N_TARGETS,
 
   drift_offset_local = 0;
   (up > 0 || down > 0) ? (
-    new_phase = target_drift_phase[i] + speed_scale_current / (per * samples_per_primary_cycle);
+    // host_scale keeps the drift period in step with the project tempo;
+
+    // like pan, this advance bypasses dt so it needs the factor applied.
+
+    new_phase = target_drift_phase[i] + speed_scale_current * host_scale / (per * samples_per_primary_cycle);
     new_phase >= 1.0 ? (
       new_phase -= 1.0;
       shape == 2 ? (
@@ -1687,7 +1696,13 @@ loop(8,
         pan_mode < 2 ? (
           // Tremolo / Increment: pan position oscillates via LFO.
           // pan_rate_mult carries the Pan Rate drift (target 9).
-          pan_phase[i] += v_pan_freq[i] * pan_rate_mult / srate;
+          // * host_scale so pan follows the project tempo in Host x mode. Pan
+
+          // advances on its own accumulator rather than through dt, so it does
+
+          // NOT pick up combined_scale and has to be scaled here explicitly.
+
+          pan_phase[i] += v_pan_freq[i] * pan_rate_mult * host_scale / srate;
           pan_phase[i] >= 1 ? pan_phase[i] -= 1;
           raw_pan = sin(pan_phase[i] * 2 * $pi) * pan_spread;
         ) : (
