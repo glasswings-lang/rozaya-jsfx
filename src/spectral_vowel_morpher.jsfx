@@ -36,7 +36,7 @@ slider5:0<-60,12,0.1>Voice level (dB)
 slider6:50<0,100,1>Texture (0 voice, 100 wash)
 slider7:150<5,680,1>Wash grain (ms)
 slider8:0<0,150,0.5>Spread (Hz)
-slider9:0<-36,36,0.1>Pitch (semitones)
+slider9:0<-96,96,0.1>Pitch (semitones)
 slider10:50<0,100,1>Stereo width
 slider11:0<0,500,1>Low cut (Hz)
 slider12:0<0,100,0.1>Denoise
@@ -782,7 +782,12 @@ mod_active[0] ? (   // Texture: internal 0..1, offset is in 0-100 Texture units
 );
 eff_spread_hz    = max(0,  min(150, spread_hz    + (mod_active[1] ? target_drift_offset[1] + ramp_offset_mem[1] : 0)));
 mod_active[2] ? (   // Pitch (semitones)
-  eff_semi = max(-36, min(36, pitch_semi + target_drift_offset[2] + ramp_offset_mem[2]));
+  // NOT clamped -- same reasoning as the twin in spectral_vowel_passage.
+  // Pinning this to the slider's own +/-36 meant Drift and Ramp flattened
+  // against the edge: the modulation kept moving and the sound stopped. The
+  // spectral read is already bounds-guarded and the voice path only makes a
+  // frequency, so an extreme value is inaudible rather than unsafe.
+  eff_semi = pitch_semi + target_drift_offset[2] + ramp_offset_mem[2];
   pitch_ratio = pow(2.0, eff_semi/12);
 );
 eff_stereo_width = max(0,  min(100, stereo_width + (mod_active[3] ? target_drift_offset[3] + ramp_offset_mem[3] : 0)));

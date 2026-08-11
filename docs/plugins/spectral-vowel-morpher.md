@@ -84,7 +84,12 @@ The wash's grain length: short = rougher and grainier, long = glassier and smoot
 **Spread (Hz)** `0 to 150, default 0`
 Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
 
-**Pitch (semitones)** `-36 to +36, default 0`
+**Pitch (semitones)** `-96 to +96, default 0`
+
+Drift and Ramp are applied ON TOP of this and are **not** clipped back to the
+slider range, so modulation can carry the pitch beyond +/-96. Previously it was
+pinned there, which meant a wide Drift flattened against the edge: the
+modulation carried on moving while the sound stopped changing.
 Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."
 
 **Stereo width** `0 to 100, default 50`

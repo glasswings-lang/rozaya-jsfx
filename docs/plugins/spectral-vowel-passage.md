@@ -168,7 +168,12 @@ Blurs the spectrum across frequency — diffuses a narrow capture into a wider n
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
-**Pitch (semitones)** `-36 to +36, default 0`
+**Pitch (semitones)** `-96 to +96, default 0`
+
+Drift and Ramp are applied ON TOP of this and are **not** clipped back to the
+slider range, so modulation can carry the pitch beyond +/-96. Previously it was
+pinned there, which meant a wide Drift flattened against the edge: the
+modulation carried on moving while the sound stopped changing.
 Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."
 
 *Per slot — and the one value that does **not** blend.* It belongs to whichever **Capture slot** is selected, like the others, but it is never averaged between two slots. Averaging two pitches doesn't produce an in-between sound, it produces a glide. Both engines transpose each slot at its own pitch — the voice sounds each slot's harmonics at that slot's tuning, and the wash transposes each slot's spectrum before the two are blended — so the morph crossfades in level only, with no sliding between differently-tuned slots.

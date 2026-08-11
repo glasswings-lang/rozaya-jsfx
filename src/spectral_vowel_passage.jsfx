@@ -114,7 +114,7 @@ slider14:0<-60,12,0.1>Voice level (dB)
 slider15:50<0,100,1>Texture (0 voice, 100 wash)
 slider16:150<5,680,1>Wash grain (ms)
 slider17:0<0,150,0.5>Spread (Hz)
-slider18:0<-36,36,0.1>Pitch (semitones)
+slider18:0<-96,96,0.1>Pitch (semitones)
 slider19:50<0,100,1>Stereo width
 slider20:0<0,500,1>Low cut (Hz)
 slider21:0<0,100,0.1>Denoise
@@ -1456,8 +1456,20 @@ eff_spread_hz = max(0, min(150, sblend(slot_spread, sb_i, sb_j, sb_f)
 // separate here; blending their modulation would reintroduce exactly that.
 pitch_mod_A = target_drift_offset[sb_i*DSTRIDE + 2] + ramp_offset_mem[sb_i*DSTRIDE + 2];
 pitch_mod_B = target_drift_offset[sb_j*DSTRIDE + 2] + ramp_offset_mem[sb_j*DSTRIDE + 2];
-eff_semi_A = max(-36, min(36, slot_pitch[sb_i] + pitch_mod_A));
-eff_semi_B = max(-36, min(36, slot_pitch[sb_j] + pitch_mod_B));
+// NOT clamped. These used to be pinned to the slider's own +/-36, which meant
+// Drift and Ramp could push Pitch right up to the edge and then flatten
+// against it -- the modulation kept moving and the sound stopped, which reads
+// as the modulation having broken rather than as a limit being hit.
+//
+// Nothing here needs the clamp. The spectral read below is already guarded
+// (`sA >= 0 && sA < NBINS - 1`, else the bin contributes silence), and the
+// voice path only turns the ratio into a frequency -- an extreme one is
+// inaudible, not unsafe. Worst reachable value is base 36 + drift 300 +
+// ramp 300 = 636 semitones, and pow(2, 636/12) is ~9e15: large, finite, and
+// nowhere near the ~12288 semitones it would take to overflow to infinity and
+// put a NaN into the audio.
+eff_semi_A = slot_pitch[sb_i] + pitch_mod_A;
+eff_semi_B = slot_pitch[sb_j] + pitch_mod_B;
 pitch_ratio_A = pow(2.0, eff_semi_A/12);
 pitch_ratio_B = pow(2.0, eff_semi_B/12);
 // BOTH engines use these: the voice reads them directly (fA/fB below), and the
