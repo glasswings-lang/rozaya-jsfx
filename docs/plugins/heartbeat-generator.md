@@ -127,7 +127,9 @@ Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clo
 Signed delta in the selected target's natural unit. **0** = no change. Examples:
 - Heart rate target, by -35: heart ramps from 70 → 35 BPM over the duration.
 
-In **Host x** the rate targets take a *multiplier* delta rather than BPM, matching what the BPM slider itself means in that mode — at a multiplier of `1`, a `by` of `-0.5` ends at `0.5`, half speed and still following the project. Landing the delta on the multiplier is what lets it stretch with the project tempo instead of being a fixed BPM amount that means a different proportion at every tempo. (RSA / HRV depth is unaffected — its own slider is a BPM swing in every mode, so its unit doesn't change.)
+In **Host x** the delta stays in this plugin's own unit — it does **not** become a multiplier. That means a ramp does not stretch when the project tempo changes: `-60` is `-60 BPM` whatever the tempo does. That's a deliberate limitation. The alternative was tried and rejected: these amount sliders step in 0.1, a grain chosen for BPM, and in multiplier terms 0.1 is a 10% wander with nothing finer reachable — so the value you'd actually want stops being settable.
+
+This matters more here than elsewhere: HRV figures are real quantities you'd read off a page. "±5 BPM of variability" should stay ±5 BPM, not become ±8 because the project sped up.
 - S1-S2 gap target, by +50: systole stretches from 120 → 170 ms.
 - Breath HRV depth target, by +0.05: breath-coupled HRV grows from baseline by 0.05.
 - Random HRV depth target, by -0.01: random HRV shrinks by 0.01 toward 0.

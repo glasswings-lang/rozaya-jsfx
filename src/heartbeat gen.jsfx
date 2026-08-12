@@ -534,10 +534,14 @@ rand_hrv_depth       = max(slider13 + speed_ramp_rand_hrv_offset + target_drift_
 // Floor lowered from 10 to 0.01: it existed as a physiological sanity bound,
 // but in Host x a small multiplier can legitimately land below it and a
 // silent clamp would defeat the mode exactly as rhythm-track's did.
-// Rate offsets are scaled by host_mult so they're deltas in slider units.
-// bpm_smoothed already carries the multiply, so scaling only the offsets is
-// equivalent to (units + offsets) * host_mult while keeping the smoother.
-effective_bpm  = max(bpm_smoothed + (speed_ramp_heart_offset + target_drift_offset[0]) * host_mult, 0.01);
+// Drift and Speed Ramp offsets are in the plugin's OWN unit in every mode --
+// BPM here, never a multiplier, even in Host x. Tried it the other way and it
+// fails on the slider grid: these amount sliders step in 0.1, chosen for BPM,
+// and in multiplier terms 0.1 is a 10% wander with nothing finer reachable.
+// The value you want stops being settable, which is worse than the
+// inconsistency it fixed. Consequence, deliberate and documented: a ramp does
+// NOT stretch when the project tempo changes -- -60 stays -60 BPM.
+effective_bpm  = max(bpm_smoothed + speed_ramp_heart_offset + target_drift_offset[0], 0.01);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // (No transport-edge reset here — Path A. REAPER re-runs @init on every

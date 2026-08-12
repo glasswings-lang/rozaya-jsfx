@@ -591,10 +591,14 @@ slider20 ? (
 // (track_bpm + Tempo ramp, no drift) so it doesn't self-modulate.
 speed_ramp_offset_tempo = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
 speed_ramp_offset_swing = speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1];
-// Offsets are added in slider units, then the host multiply is applied — so
-// in Host x a ramp of -0.5 means "half a cycle per beat slower", not "0.5 BPM
-// slower". In Own BPM mode host_mult is 1 and this is the old arithmetic.
-sr_adjusted_tempo = max(0.01, (rate_units + speed_ramp_offset_tempo) * host_mult);
+// Drift and Speed Ramp offsets are in the plugin's OWN unit in every mode --
+// BPM here, never a multiplier, even in Host x. Tried it the other way and it
+// fails on the slider grid: these amount sliders step in 0.1, chosen for BPM,
+// and in multiplier terms 0.1 is a 10% wander with nothing finer reachable.
+// The value you want stops being settable, which is worse than the
+// inconsistency it fixed. Consequence, deliberate and documented: a ramp does
+// NOT stretch when the project tempo changes -- -60 stays -60 BPM.
+sr_adjusted_tempo = max(0.01, track_bpm + speed_ramp_offset_tempo);
 sr_adjusted_samples_per_beat = (60.0 / sr_adjusted_tempo) * srate;
 
 // Per-target drift wave computation. 2 targets (0=Tempo BPM,
@@ -641,7 +645,7 @@ loop(N_TARGETS,
 // Effective tempo with drift + Speed Ramp, clamped at 10 BPM (matches
 // slider1's minimum) so over-aggressive Down amounts can't silence
 // or invert the metronome.
-effective_tempo = max(0.01, (rate_units + target_drift_offset[0] + speed_ramp_offset_tempo) * host_mult);
+effective_tempo = max(0.01, track_bpm + target_drift_offset[0] + speed_ramp_offset_tempo);
 effective_samples_per_beat = (60.0 / effective_tempo) * srate;
 
 // Effective swing: baseline + Swing drift + Swing Speed Ramp, clamped to

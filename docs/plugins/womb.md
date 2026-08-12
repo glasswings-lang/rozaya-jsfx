@@ -139,7 +139,7 @@ If you want the v2-style "whole womb winds down together" feel where everything 
 
 - **slider 49 — Speed ramp by** — signed delta in the selected target's natural units. Range -2000 to +2000, step 0.1 (widened in v2.14 to reach the Hz-scale Inhale/Exhale Freq targets; coarser for the small-value targets as a result). **0 = no change, negative = decrease, positive = increase.** Reads as a sentence with the selector: *"Speed ramp by -35, target Heart rate."* Examples:
     - Heart rate target, amount -35: heart ramps DOWN 35 BPM from wherever it started (70 → 35).
-    - In **Host x**, the Heart rate target takes a *multiplier* delta instead, matching what the BPM slider itself means in that mode: at a multiplier of `1`, an amount of `-0.5` ends at `0.5` — half speed, still following the project. That's what lets a ramp stretch with the project tempo rather than being a fixed BPM amount meaning a different proportion at every tempo. RSA depth is unaffected: its slider is a BPM swing in every mode, not a delta on the rate.
+    - In **Host x** this is still BPM — the amount never becomes a multiplier, so `-35` stays `-35 BPM` whatever the project tempo does. HRV figures are real quantities you'd read off a page, and ±5 BPM of variability should stay ±5 BPM rather than growing because the project sped up. (Same reasoning as RSA depth, which is a BPM swing in every mode.)
     - Inhale target, amount +4: inhale ramps from 4 sec → 8 sec.
     - Bottom Pause target, amount +2: bottom pause stretches by 2 seconds.
     - RSA depth target, amount +6: RSA swing grows by 6 BPM peak-to-peak.

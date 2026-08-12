@@ -773,12 +773,14 @@ rsa_baseline_bpm > 0 ? (
 // heart offset. All additive in raw BPM.
 // Floor lowered from 20 to 0.01 -- see the heartbeat note; a silent clamp
 // would defeat Host x at small multipliers.
-// Drift and Speed Ramp on the heart rate are scaled by host_mult so they're
-// deltas in slider units (bpm_smoothed already carries the multiply, so
-// scaling the offsets alone is equivalent while keeping the smoother).
-// RSA is deliberately NOT scaled: its depth slider is a BPM swing in every
-// mode, not a delta on the rate slider, so its unit doesn't change with mode.
-effective_bpm  = max(bpm_smoothed + (target_drift_offset[0] + speed_ramp_heart_offset) * host_mult + heart_with_breath_offset, 0.01);
+// Drift and Speed Ramp offsets are in the plugin's OWN unit in every mode --
+// BPM here, never a multiplier, even in Host x. Tried it the other way and it
+// fails on the slider grid: these amount sliders step in 0.1, chosen for BPM,
+// and in multiplier terms 0.1 is a 10% wander with nothing finer reachable.
+// The value you want stops being settable, which is worse than the
+// inconsistency it fixed. Consequence, deliberate and documented: a ramp does
+// NOT stretch when the project tempo changes -- -60 stays -60 BPM.
+effective_bpm  = max(bpm_smoothed + target_drift_offset[0] + heart_with_breath_offset + speed_ramp_heart_offset, 0.01);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // Apply systole drift (target 1) + Speed Ramp offset: baseline ms + drift + ramp.
