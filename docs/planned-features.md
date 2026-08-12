@@ -627,7 +627,7 @@ Tier 1 first (identical to work already done and validated), then Tier 3's
 batches — each one needs an ear test, and a batch that's too big can't be
 diagnosed when something sounds wrong.
 
-## Sweep progress (2026-08-11) — 12 of 13 done, NONE ear-tested
+## Sweep progress (2026-08-11) — 15 done, NONE ear-tested
 
 All on `feature/host-tempo-sync`. Nothing has been compiled or heard; JSFX only
 builds inside REAPER. Every installed copy is backed up as
@@ -701,3 +701,36 @@ pitch perception, so it's a poor subject for judging whether a rate is right.
 8. `start_delay_elapsed += host_scale / srate` — this is the one that gets
    missed, and it's missed in a way that reads as drift rather than as a bug.
 9. Update `docs/plugins/<plugin>.md`. Back up before installing.
+
+### Also done, found in a second survey
+
+`bubbler` and `dapple` (plain bubbles-per-second rate — straight ports) and
+`resonance_bank` (already had a mode enum; Host x appends).
+
+**`resonance_bank` uses a THIRD mode ordering: `{BPM,Hz,Seconds}`.** Seconds is
+index 2 there, not 1. So across the suite "Seconds" is index 1 in two families
+and index 2 in a third. Its own conversions are correct — but anything copied
+in that special-cases the Seconds branch BY INDEX will be wrong, which is the
+exact mistake that put Start Delay 60x out in Tremolo and the sweeping filter.
+A warning comment sits above the slider. **Key these branches by name, never by
+index.**
+
+### Deliberately NOT retrofitted — waiting on new versions
+
+**`spectral_vowel_morpher`, `spectral_vowel_passage` and `breath_gen`.**
+Rozaya, 2026-08-11: *"we might have to make other versions of the morfers, and
+of breath. cuz like… those two are overdue for upgrades."* Bolting Host x onto
+code that's about to be rewritten is wasted work, so it waits for the rewrite.
+**Do not helpfully retrofit these** — the decision is deliberate, not an
+oversight.
+
+### Still open — a design call, not a port
+
+`sweep-dwell-filter`, `veil`, `harmonic_sculptor`. These have **lengths**, not
+rates: "4 seconds of high dwell", "30 second drift period", "0.5 sec attack".
+Those can follow the tempo perfectly well, but whether they SHOULD differs per
+control, and it's Rozaya's call which ones are musical pacing and which are
+just durations. Her instinct so far: a drift period probably should follow; a
+breath length probably shouldn't.
+
+`sustain_looper` has nothing rate-like and is out entirely.
