@@ -31,6 +31,11 @@ compiles, loads, follows the tempo, and Start Delay is right *in one plugin*.
 `heartbeat gen`, `womb_sound_generator_v3`, `stereo-phaser`, `bubbler`,
 `dapple`, `resonance_bank`, `sweep-dwell-filter`, `veil`.
 
+**There is a step-by-step checklist for this:
+[`docs/host-sync-ear-test.md`](host-sync-ear-test.md)** — five tests, ~15
+minutes, with the expected result and the failure shapes for each. Use it
+rather than reconstructing the plan below from scratch.
+
 **Where to start listening, in order:**
 
 1. **`rhythm-track`** — the only unambiguous test in the suite. It's a
