@@ -60,7 +60,11 @@ slider6:0<-24,12,0.5>Output (dB)
 slider7:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Drift target
 slider8:0<0,1000,0.1>Drift up amount (units match target)
 slider9:0<0,1000,0.1>Drift down amount (units match target)
-slider10:20<1,600,0.1>Drift period (seconds)
+// Unit is set by slider17 (Drift period unit) — seconds by default, beats in
+// Host-synced projects. The unit is deliberately NOT in this label: NVDA
+// re-reads the parameter name on every arrow step, and a name that lies half
+// the time is worse than one that's short.
+slider10:20<1,600,0.1>Drift period
 slider11:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // --- Speed Ramp (nested selector; signed delta) ---
@@ -69,6 +73,16 @@ slider13:0<-1000,1000,0.1>Speed ramp by (units match target)
 slider14:0<0,60,0.1>Speed ramp duration (minutes)
 slider15:0<0,1,1{Off,On}>Speed ramp engage
 slider16:0<0,60,0.1>Speed ramp start delay (minutes)
+
+// Host tempo sync. Veil has no rate — the only musical length in it is the
+// drift period, so that is the only thing Host x touches. Seconds (default)
+// leaves existing projects bit-identical; Beats reinterprets slider10's
+// number as beats and follows the project tempo.
+// GLOBAL, not per drift target: one drift clock unit for the whole plugin.
+// Deliberately NOT synced: Speed ramp duration / start delay stay in
+// minutes. A wind-down is wall-clock — it's how long until you're asleep,
+// not a musical length — and the cutoffs are pitch, never tempo.
+slider17:0<0,1,1{Seconds,Beats}>Drift period unit
 
 @init
 // NO ext_noinit: REAPER re-runs @init on every transport play / render
@@ -130,6 +144,15 @@ loop(N_TARGETS,
   drift_offset_mem[i] = 0;
   i += 1;
 );
+
+// Host tempo. ABSOLUTE, never a ratio against a remembered reference — @init
+// re-runs on every transport play and would wipe the reference. Seeded here
+// so the first @sample after a play has a sane value before @block runs.
+host_bpm = max(tempo, 0.001);
+
+@block
+// Project tempo, refreshed once per block (it never changes mid-block).
+host_bpm = max(tempo, 0.001);
 
 @slider
 n_stages = slider5 + 1;   // 1..4 cascaded stages
@@ -217,7 +240,10 @@ loop(N_TARGETS,
 
   drift_offset_local = 0;
   (up > 0 || down > 0) && per > 0 ? (
-    period_samples = max(per * srate, 1);
+    // Drift period unit (slider17): Seconds = per as-is; Beats = per beats
+    // converted at the live project tempo, so the wander follows the host.
+    per_seconds = slider17 == 1 ? per * 60 / host_bpm : per;
+    period_samples = max(per_seconds * srate, 1);
     new_phase = drift_phase_mem[i] + 1.0 / period_samples;
     new_phase >= 1.0 ? (
       new_phase -= 1.0;

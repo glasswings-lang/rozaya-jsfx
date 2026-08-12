@@ -80,12 +80,27 @@ The amount is in the **target's own unit**: Hz for a cutoff (use the big end of
 the range), 0–1 for a resonance (use the small end). You tune it *by ear* — nudge
 until the wander feels right.
 
-**Drift period (seconds)** `1–600, default 20` — how long one full wander cycle
-takes. **Give Left and Right cutoffs *different* periods** (say 20 s and 31 s) and
-the width itself breathes — the signature Veil move.
+**Drift period** `1–600, default 20` — how long one full wander cycle takes, in
+whatever unit **Drift period unit** is set to (below). **Give Left and Right
+cutoffs *different* periods** (say 20 and 31) and the width itself breathes — the
+signature Veil move.
 
 **Drift shape** `Sine / Triangle / Random, default Sine` — Sine = smooth wander,
 Triangle = linear ramps, Random = smooth wander to unpredictable targets.
+
+**Drift period unit** `Seconds / Beats, default Seconds` — whether Drift period is
+wall-clock seconds or beats at the project tempo. This one switch covers all four
+drift targets; there's no per-target unit. On **Beats** the wander follows the host,
+so a tempo change carries the breathing with it — and two Veils at 20 and 31 beats
+keep their relationship through the change, which is the whole point of the pair.
+
+Note the unit slider sits at the *end* of the parameter list rather than next to
+Drift period. REAPER orders controls by slider number and moving an existing one
+would scramble saved projects, so new controls always land at the end.
+
+Nothing else in Veil follows the tempo, deliberately. The cutoffs are pitch, and
+Speed ramp duration / start delay are wall-clock on purpose — a wind-down is how
+long until you're asleep, not a musical length.
 
 ### Speed Ramp (nested selector)
 

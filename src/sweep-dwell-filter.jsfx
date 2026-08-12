@@ -23,7 +23,12 @@ slider15:1<0,1,0.01>Pan Spread (0=mono, 1=full)
 slider16:5<0,100,0.1>Pan Glide ms (0=instant)
 slider17:8<2,32,1>Cycle Steps (per-cycle modes)
 slider18:2<0.001,1000,0.001>Pan Sweep Rate
-slider19:0<0,2,1{Hz,Seconds,BPM}>Pan Sweep Rate Unit
+// NOTE: this enum is {Hz,Seconds,BPM} — Seconds is index 1 here, but other
+// plugins in the suite order it {BPM,Seconds,Hz} and resonance_bank uses
+// {BPM,Hz,Seconds}. Key these branches by NAME, never by index; keying by
+// index is what put Start Delay 60x out in Tremolo and the sweeping filter.
+// Host x appended at the END (index 3) so saved values 0-2 are untouched.
+slider19:0<0,3,1{Hz,Seconds,BPM,Host x}>Pan Sweep Rate Unit
 slider20:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 // ===== PAN BLOCK SLIDERS END =====
 
@@ -129,6 +134,22 @@ slider34:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // post-engage slot for the new `by` amount).
 slider37:0<0,60,0.1>Speed ramp start delay (minutes)
 
+// Host tempo sync for the dwell cycle.
+//   Own durations (default) — the four dwell sliders are literal seconds,
+//     exactly as before. Existing projects are untouched.
+//   Host x — the four dwell sliders keep their PROPORTIONS but the whole
+//     cycle is stretched to Cycle length (beats) at the project tempo.
+//     Defaults 4+1+6+1 at 12 beats = the same shape, now beat-locked.
+// Consequences worth knowing, both documented on the plugin page:
+//   - Drift period (slider33) is counted in cycles, so it follows too.
+//   - Drift / Speed Ramp on the four dwell phases become SHAPE controls in
+//     Host x: they still shift the balance between high, fade and low, but
+//     the total cycle length stays pinned to the tempo.
+//   - Start Delay (slider21) stays literal seconds. It is labelled seconds
+//     and is a "wait before the effect arrives" control, not musical pacing.
+slider38:0<0,1,1{Own durations,Host x}>Cycle mode
+slider39:12<0.25,128,0.25>Cycle length (beats)
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -145,6 +166,13 @@ out_pin:right output
 phase_l = 0;
 phase_r = 0;
 n3 = n4 = rn3 = rn4 = 0;
+
+// Host tempo, refreshed every block. Seeded here so the first @sample after
+// a transport start has a sane value even before @block has run once.
+// ABSOLUTE, never a ratio against a remembered reference tempo — @init
+// re-runs on every transport play and would wipe the reference.
+host_bpm = max(tempo, 0.001);
+
 cut_smooth_l = cut_smooth_r = 0.1;
 
 // ===== PAN BLOCK INIT START =====
@@ -369,6 +397,10 @@ wet             = slider10;
 dry             = 1 - wet;
 phase_offset    = slider11 / 360;
 
+cycle_mode      = slider38;
+cycle_beats     = max(slider39, 0.001);
+slider_show(slider39, cycle_mode == 1);
+
 // ===== PAN BLOCK SLIDER READ START =====
 pan_enabled     = slider13;
 pan_mode        = slider14;
@@ -466,6 +498,13 @@ last_target_select != sel_target ? (
 );
 
 
+@block
+
+// Project tempo, read once per block (it never changes mid-block, so polling
+// it per sample would be wasted work). Absolute — see the note in @init.
+host_bpm = max(tempo, 0.001);
+
+
 @sample
 
 // (No transport-edge reset here — Path A. REAPER re-runs @init on every
@@ -488,6 +527,12 @@ fade_down_secs  = slider5;
 fade_down_shape = slider6;
 fade_up_secs    = slider7;
 fade_up_shape   = slider8;
+cycle_mode      = slider38;
+cycle_beats     = max(slider39, 0.001);
+// In Host x the cycle length comes from the tempo, not from the sum of the
+// four durations. Computed once here so the drift reference period and the
+// dwell LFO frequency below both use exactly the same number.
+host_cycle_secs = cycle_beats * 60 / host_bpm;
 resonance       = slider9;
 wet             = slider10;
 dry             = 1 - wet;
@@ -542,6 +587,10 @@ ref_low  = max(slider4 + speed_ramp_low_offset,       0.001);
 ref_fu   = max(slider7 + speed_ramp_fade_up_offset,   0.001);
 drift_ref_period = max(ref_high + ref_fd + ref_low + ref_fu, 0.001);
 
+// Host x: one cycle is a fixed number of beats, so the drift period — which
+// is counted in cycles — follows the tempo with it.
+cycle_mode == 1 ? drift_ref_period = max(host_cycle_secs, 0.001);
+
 // Per-target drift wave computation. 6 targets (0-3 = the four dwell
 // phases, 4 = Pan Sweep Rate, 5 = Resonance). Each gets a phase counter
 // advancing per sample. Period unit is dwell patterns: one drift cycle
@@ -590,6 +639,14 @@ low_secs       = max(slider4 + speed_ramp_low_offset       + target_drift_offset
 fade_up_secs   = max(slider7 + speed_ramp_fade_up_offset   + target_drift_offset[3], 0.001);
 
 period = high_secs + fade_down_secs + low_secs + fade_up_secs;
+
+// Host x: pin the cycle to the tempo. The four durations above still set the
+// SHAPE — calc_lfo() divides each by `period` to get its fraction of the
+// cycle, so their ratios are all that survives — but the total length now
+// comes from Cycle length (beats). Drift and Speed Ramp on the dwell phases
+// therefore rebalance the cycle rather than lengthening it.
+cycle_mode == 1 ? period = max(host_cycle_secs, 0.00001);
+
 freq   = 1 / max(period, 0.00001);
 
 // Resonance drift + Speed Ramp (target 5): clamp to [0, 1] (slider range).
@@ -713,10 +770,13 @@ pan_enabled ? (
 
   ) : pan_mode == 10 ? (
     // Pan Sweep — gate phase advance for Freeze mode. eff_pan_sweep_val
-    // carries the Pan Sweep Rate drift offset (target 4).
+    // carries the Pan Sweep Rate drift offset (target 4). Branches keyed by
+    // the enum's NAMES: 0 Hz, 1 Seconds, 2 BPM, 3 Host x (a multiplier of
+    // the project tempo, so higher = faster, same as the rest of the suite).
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
-                          (pan_freq = eff_pan_sweep_val / 60);
+    pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val / 60) :
+                          (pan_freq = eff_pan_sweep_val * host_bpm / 60);
     !in_frozen_rest ? (
       pan_phase += pan_freq / srate;
       pan_phase >= 1 ? pan_phase -= 1;
@@ -725,10 +785,12 @@ pan_enabled ? (
     pan_l = cur_pan;
 
   ) : pan_mode == 11 ? (
-    // Pan Sweep Flipped — gate phase advance for Freeze mode.
+    // Pan Sweep Flipped — gate phase advance for Freeze mode. Same
+    // name-keyed branches as mode 10 above.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
-                          (pan_freq = eff_pan_sweep_val / 60);
+    pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val / 60) :
+                          (pan_freq = eff_pan_sweep_val * host_bpm / 60);
     !in_frozen_rest ? (
       pan_phase += pan_freq / srate;
       pan_phase >= 1 ? pan_phase -= 1;

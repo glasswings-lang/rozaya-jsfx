@@ -66,6 +66,25 @@ Curve shape applied to the fade-up transition. Same options as Fade Down Shape. 
 
 ---
 
+### Host tempo sync
+
+**Cycle mode** `Own durations / Host x, default Own durations`
+- **Own durations** — the four dwell sliders are literal seconds and the cycle is however long they add up to. This is the original behaviour and the default, so existing projects are unchanged.
+- **Host x** — the four sliders keep their *proportions* but the whole cycle is stretched or squeezed to fit **Cycle length (beats)** at the project tempo. The shape you tuned by ear survives; only the speed changes.
+
+**Cycle length (beats)** `0.25–128, default 12` *(hidden unless Cycle mode is Host x)*
+How many beats one full dwell pattern takes. The default 12 matches the default durations (4 + 1 + 6 + 1 = 12 sec) so switching modes at 60 BPM changes nothing audible.
+
+Three things follow from this that are worth knowing before you reach for it:
+
+- **The dwell sliders become shape controls, not length controls.** In Host x, doubling High Dwell doesn't make the cycle longer — it makes the high hold take a bigger share of the same cycle, and everything else shrinks to fit. Same for Drift and Speed Ramp aimed at any of the four.
+- **Drift period follows the tempo too.** It's counted in cycles, and a cycle is now a fixed number of beats, so a drift period of 8 stays "eight cycles" whatever the tempo does.
+- **Start Delay stays in literal seconds.** It's a "wait before the effect arrives" control rather than musical pacing, so it doesn't follow the tempo. If you're staggering two instances against each other, that's the one to watch.
+
+Switching Cycle mode changes what the dwell numbers *mean*, and nothing rescales them for you. Nothing is lost — flip back and the seconds are still there — but the sound will jump.
+
+---
+
 ### Stereo
 
 **Stereo Phase Offset degrees** `-180–+180°, default 0`
@@ -136,11 +155,20 @@ Sequence length for per-cycle modes.
 **Pan Sweep Rate** `0.001-1000, default 2`
 Rate for Pan Sweep and Pan Sweep (Flipped) modes.
 
-**Pan Sweep Rate Unit** `Hz / Seconds / BPM`
-Unit for Pan Sweep Rate.
+**Pan Sweep Rate Unit** `Hz / Seconds / BPM / Host x`
+Unit for Pan Sweep Rate. **Host x** makes the value a multiplier of the project tempo — 1 is one pan sweep per beat, 0.25 is one every four beats, 2 is two per beat. Higher is faster.
 
 **Filter Speed Multiplier (Linked Sweep)** `0.125-8×, default 1×`
 Pan sweep speed relative to filter cycle, for Linked Sweep only.
+
+#### What host sync does to pan
+
+Most of the pan modes follow the tempo for free once **Cycle mode** is Host x, because they were never on their own clock:
+
+- **Mono** — no motion, nothing to sync.
+- **Alternating, Distributed, Converging, Diverging** and their Flipped / Ping-pong variants (the per-cycle modes) step one position per dwell cycle. Sync the cycle and they step in time automatically.
+- **Linked Sweep** runs at the filter's own cycle rate times the multiplier, so it follows too — and at multipliers like 2 or 0.5 it lands on beat divisions.
+- **Pan Sweep** and **Pan Sweep (Flipped)** are the only two on an independent clock. Those use Pan Sweep Rate Unit above — set it to Host x if you want them locked as well.
 
 ### Start Delay
 

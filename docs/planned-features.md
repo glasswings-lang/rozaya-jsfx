@@ -627,7 +627,7 @@ Tier 1 first (identical to work already done and validated), then Tier 3's
 batches — each one needs an ear test, and a batch that's too big can't be
 diagnosed when something sounds wrong.
 
-## Sweep progress (2026-08-11) — 15 done, NONE ear-tested
+## Sweep progress (2026-08-11) — 17 done, NONE ear-tested
 
 All on `feature/host-tempo-sync`. Nothing has been compiled or heard; JSFX only
 builds inside REAPER. Every installed copy is backed up as
@@ -643,13 +643,8 @@ all: each derives everything from one number already recomputed per sample, so
 Host x only feeds the right number in and `@block` repeats it. That is the
 `rhythm-track` pattern, and it is much the easier of the two.
 
-**Remaining: `sweep-dwell-filter` only — and it is NOT a mechanical copy.**
-Its Start Delay is literal seconds (so no 60x bug), and its timing is built
-from dwell DURATIONS in seconds rather than a rate. Host-syncing it means
-deciding whether "4 seconds of high dwell" should become "4 beats", which is a
-design question for Rozaya, not a port. Its `slider19 Pan Sweep Rate Unit` does
-use the `{Hz,Seconds,BPM}` ordering, so that sub-rate could be synced on its
-own, but doing only that would be a strange half-measure. Ask first.
+**Nothing remaining to port.** `sweep-dwell-filter` and `veil` landed once the
+design call was taken — see "The length-not-rate three" below.
 
 ### What ear-testing should start with
 
@@ -724,13 +719,62 @@ code that's about to be rewritten is wasted work, so it waits for the rewrite.
 **Do not helpfully retrofit these** — the decision is deliberate, not an
 oversight.
 
-### Still open — a design call, not a port
+### The length-not-rate three — DECIDED 2026-08-11, now 17 done
 
-`sweep-dwell-filter`, `veil`, `harmonic_sculptor`. These have **lengths**, not
-rates: "4 seconds of high dwell", "30 second drift period", "0.5 sec attack".
+`sweep-dwell-filter`, `veil` and `harmonic_sculptor` have **lengths**, not
+rates: "4 seconds of high dwell", "20 second drift period", "0.5 sec attack".
 Those can follow the tempo perfectly well, but whether they SHOULD differs per
-control, and it's Rozaya's call which ones are musical pacing and which are
-just durations. Her instinct so far: a drift period probably should follow; a
-breath length probably shouldn't.
+control. Rozaya's call, taken this session:
+
+**`sweep-dwell-filter` — cycle length in beats, proportions preserved.** Not
+"the four durations become beats". A new `Cycle mode {Own durations, Host x}`
+(slider38) plus `Cycle length (beats)` (slider39, default 12) pins the whole
+dwell pattern to N beats, and the four duration sliders keep only their
+RATIOS. This works because `calc_lfo()` already divides each duration by the
+total to get its fraction of the cycle — the sum was only ever used as the
+rate. So the override is two lines: `period` before `freq = 1/period`, and
+`drift_ref_period` before the drift loop.
+
+Three consequences, all documented on the plugin page:
+
+1. **The dwell sliders become SHAPE controls in Host x**, and so do Drift and
+   Speed Ramp aimed at them. They rebalance the cycle instead of lengthening
+   it. This is a feature — drift on High dwell now breathes the *shape* while
+   the pulse stays locked — but it is not what the slider names suggest.
+2. **Drift period follows for free** (it's counted in cycles).
+3. **Start Delay stays literal seconds.** It's labelled seconds and it's a
+   "wait before the effect arrives" control, not pacing. Chosen deliberately,
+   so don't helpfully "fix" it — but it IS the thing to check first if two
+   staggered instances don't line up, per the Melody Phase lesson.
+
+**Pan needed almost nothing** — 11 of the 13 pan modes were never on their own
+clock. The per-cycle modes step on dwell-cycle wraps and Linked Sweep runs at
+`freq * ratio`, so syncing the cycle syncs them. Only `Pan Sweep` and
+`Pan Sweep (Flipped)` have an independent rate, and those already had a unit
+enum, so `Host x` appended at index 3 (`{Hz,Seconds,BPM,Host x}`) finishes the
+job. **The doc's warning about that enum was live**: the existing chain ended
+in a bare `: (BPM)` else, which would have swallowed the new index 3 into the
+BPM formula — exactly the by-index mistake that put Start Delay 60x out in
+Tremolo and the sweeping filter. Both chains are now keyed explicitly by name
+with `pan_sweep_mode == 2` before the else.
+
+**`veil` — drift period only** (`Drift period unit {Seconds, Beats}`,
+slider17, global across all four targets). Everything else stays put on
+purpose: the cutoffs are pitch, and Speed ramp duration / start delay are
+wall-clock because a wind-down is how long until you're asleep, not a musical
+length. `slider10`'s label lost its `(seconds)` suffix — a name that lies half
+the time is worse than a short one, given NVDA re-reads it on every step.
+
+**`harmonic_sculptor` — out entirely**, same as `sustain_looper`. Its Attack
+and Release are the shape of one note on a drone you render and loop. Nothing
+in it is pacing.
 
 `sustain_looper` has nothing rate-like and is out entirely.
+
+**Both new files got their first `@block`.** Neither had one; the tempo read
+belongs there.
+
+**Still NONE of the 17 ear-tested.** `sweep-dwell-filter` is a reasonable test
+subject despite not being on the "start here" list — a 12-beat cycle against
+REAPER's click is nearly as unambiguous as `rhythm-track`, because the dwell
+turnaround is an audible event you can place against a beat.
