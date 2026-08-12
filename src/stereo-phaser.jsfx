@@ -106,7 +106,30 @@ rate_mode == 1 ? (
   lfoInc = 2 * $pi * rate / srate;
 );
 
+// Transport POSITION, for phase-locking the sweep in Host x. Tempo sync sets
+// the sweep's speed; this sets where in it we are, so the phaser lands the
+// same way at the same bar however you got there. Nothing in this plugin can
+// modulate the rate -- no Drift, no Speed Ramp -- so the lock needs no
+// "is something moving the rate" guard, unlike the tremolo and the sweeping
+// filter. Only while the transport is moving (1 = playing, 5 = recording);
+// stopped or paused, beat_position doesn't advance and locking would freeze
+// the sweep for live monitoring.
+host_beat_pos   = beat_position;
+host_pos_locked = (rate_mode == 1) && (play_state == 1 || play_state == 5);
+blk_sample      = 0;
+
 @sample
+// Where this sample sits in the project, in beats -- @block gives the position
+// at the start of the block, so step forward by however far in we are. slider1
+// is cycles per beat in Host x, so the phase is simply how far through the
+// cycle that position is.
+host_pos_locked ? (
+  sample_beat_pos = host_beat_pos + blk_sample * max(tempo, 0.001) / (60 * srate);
+  lfo_turns = sample_beat_pos * slider1;
+  lfoPhase  = (lfo_turns - floor(lfo_turns)) * 2 * $pi;
+);
+blk_sample += 1;
+
 // per-channel swept coefficient (right channel offset by Stereo Spread)
 dL = dmin + dsc * (sin(lfoPhase) + 1);
 dR = dmin + dsc * (sin(lfoPhase + spreadRad) + 1);
