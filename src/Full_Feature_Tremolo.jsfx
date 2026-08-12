@@ -634,7 +634,19 @@ slider27 ? (
 // above, then express as a multiplicative factor on freq so the existing
 // combined_scale-based audio path keeps working. No "snapshot at engage" —
 // live edits adjust trajectory.
-effective_rate_val = rate_val + speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
+// Rate drift and Speed Ramp are in BPM in EVERY mode, Host x included --
+// "BPM is BPM". In Host x the rate slider is a multiplier, so a BPM delta has
+// to be converted before it can be added to it: D BPM is D/tempo in multiplier
+// terms, and the PLUGIN does that division, never the user. (Equivalently it
+// lands as D/60 Hz downstream, which is the same formula the BPM mode uses --
+// keeping the two modes literally identical here.)
+// Rejected alternative: a multiplier delta. It reads consistent and it fails
+// in use, because reaching a musical destination then needs arithmetic
+// (1 - 1/3 = 0.667 for "every three beats"), and a ramp deliberately leaves
+// the grid anyway, so a fraction of a beat buys nothing.
+sr_rate_by = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
+rate_mode == 3 ? sr_rate_by = sr_rate_by / max(host_bpm, 0.001);
+effective_rate_val = rate_val + sr_rate_by;
 rate_mode == 0 ? (effective_rate_hz = effective_rate_val) :
 rate_mode == 1 ? (effective_rate_hz = 1 / max(effective_rate_val, 0.001)) :
 rate_mode == 3 ? (effective_rate_hz = effective_rate_val) :
@@ -708,8 +720,9 @@ rate_drift_user != 0 ? (
     new_period    = max(cur_period + rate_drift_user, 0.0001);
     rate_drift_hz = (1 / new_period) - freq;
   ) :
+  // Host x takes the SAME formula as BPM: the amount is BPM in both.
   rate_mode == 2 ? (rate_drift_hz = rate_drift_user / 60) :
-                   (rate_drift_hz = rate_drift_user * host_scale);
+                   (rate_drift_hz = rate_drift_user / 60);
 );
 freq = max(freq + rate_drift_hz, 0.001);
 // ===== DRIFT BLOCK END =====

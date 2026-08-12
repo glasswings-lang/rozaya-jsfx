@@ -835,3 +835,46 @@ no rate drift. Same edit.
 
 So the sweep's "17 plugins" is not "17 position locks". It's four, plus one
 careful one, plus a design question over the sequencers.
+
+## Drift and Speed Ramp are BPM in every mode, Host x included (2026-08-12)
+
+Rozaya, settling a question I had flip-flopped on all session: *"let drift and
+ramp have the literal exact same flux as womb or heartbeat. Cause bpm is bpm,
+fuck being gridlocked for something like that, fractions of a beat only make
+sense when you're playing with the grid and + or - 20 in beats is just that
+added or subtracted from project bpm when host sync is the mode anyway."*
+
+**The rule: the rate's drift and ramp amounts are BPM everywhere.** In Host x
+the rate slider is a multiplier, so a BPM amount is converted before it's
+added -- D BPM is `D / tempo` in multiplier terms -- and the PLUGIN does that
+division. `function host_bpm_delta()` in the five sequencer-family files; the
+same thing falls out as `D / 60` Hz in the tremolo and sweeping filter, which
+is literally the BPM branch's own formula.
+
+**Why not a multiplier delta**, which is what "units match target" implies and
+what I twice argued for:
+
+1. **Resolution.** shepard-scale and rhythm-track step their drift amount in
+   0.1 -- a grain chosen for BPM. In multiplier terms 0.1 is a 10% wander with
+   nothing finer reachable, so the value you want stops being *settable*.
+2. **Arithmetic to reach a destination.** Where the step is fine (tremolo, at
+   0.001) it still fails: getting to "every three beats" means 1 - 1/3 =
+   0.667. Division and a subtraction for a thing you could name.
+3. **It buys nothing.** A ramp deliberately leaves the grid -- that's what a
+   ramp IS -- so expressing it as a fraction of a beat is precision aimed at
+   the one place precision doesn't apply.
+
+**Drift was never really the problem** and would have been fine either way:
+you don't have a destination for a wander, you nudge up from 0 by ear. It
+moves to BPM anyway, because one unit everywhere beats two rules.
+
+**Process lesson, and it cost most of a session.** The original code was right.
+A bare `else` in the tremolo and sweeping filter swallowed Host x into the BPM
+branch, which I diagnosed as the by-index bug the sweep notes warn about --
+correct about the mechanism, wrong about the outcome, because BPM semantics
+were what was wanted. I then "fixed" it to a multiplier, reverted four plugins
+when the resolution wall showed up, and left seven inconsistent until Rozaya
+noticed. **Before changing a control's units, ask what the user will be
+holding in their head when they set it** -- a figure they know (5 BPM of HRV,
+slow by 20) or a feel they are dialling for. That decides it, and neither the
+code nor the label can tell you.
