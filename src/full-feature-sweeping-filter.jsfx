@@ -694,14 +694,19 @@ loop(N_TARGETS,
 rate_drift_user = target_drift_offset[0];
 rate_drift_hz   = 0;
 rate_drift_user != 0 ? (
+  // Keyed by NAME, not index: 0 Hz, 1 Seconds, 2 BPM, 3 Host x. This chain
+  // used to end in a bare else, which swallowed Host x into the BPM branch
+  // and made Sweep Rate drift 60x too small — i.e. inaudible. In Host x the
+  // offset is a multiplier delta, so it converts like Hz and then takes
+  // host_scale, because it is added to freq_base AFTER speed_scale_current.
   rate_mode == 0 ? (rate_drift_hz = rate_drift_user) :
   rate_mode == 1 ? (
     cur_period    = 1 / drift_ref_freq;
     new_period    = max(cur_period + rate_drift_user, 0.0001);
     rate_drift_hz = (1 / new_period) - freq_base;
-  ) : (
-    rate_drift_hz = rate_drift_user / 60;
-  );
+  ) :
+  rate_mode == 2 ? (rate_drift_hz = rate_drift_user / 60) :
+                   (rate_drift_hz = rate_drift_user * host_scale);
 );
 freq = max(freq_base + rate_drift_hz, 0.001);
 
