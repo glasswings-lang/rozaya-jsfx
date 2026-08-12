@@ -131,6 +131,10 @@ tick_pan     = 0;
 // before the metronome actually starts ticking. (Bug pre-dated the
 // initial public release; reported by ear.)
 beat_phase       = 1.0;
+// Seek detection for the Host x beat-grid placement in @block. was_moving = 0
+// means the first block after a transport start always places the grid.
+was_moving         = 0;
+predicted_beat_pos = 0;
 host_ratio_inited = 0;   // picker adopts on load rather than firing
 beat_index       = 0;
 
@@ -553,6 +557,47 @@ rate_mode == 1 ? (
   samples_per_beat = (60.0 / max(track_bpm, 0.001)) * srate;
   start_delay_sec = slider14 * 60 / max(track_bpm, 0.001);
 );
+
+// --- Place the beat grid from the project (Host x only) -------------------
+//
+// PLACE ONCE, then run. The LFO plugins recompute their phase every sample,
+// which is fine for a smooth shape but wrong here: this clock FIRES EVENTS,
+// and re-deciding its position constantly could skip a tick or fire two. So
+// the grid is placed when you press play or move the playhead, and left alone
+// after that -- a jump can then only happen where you asked for one.
+//
+// A seek is detected by comparing where this block actually starts against
+// where the last block predicted it would. Normal playback matches to well
+// under the 0.25-beat threshold; a seek or loop doesn't.
+//
+// beat_index is "the beat about to fire" (the wrap below fires it, THEN
+// increments), so landing part-way through beat N means the next tick is
+// N+1. Landing exactly on a beat means that beat is due now: phase 1.0 fires
+// it on this very sample, which is the same trick @init uses to avoid a beat
+// of silence at the start.
+//
+// Placed on the straight grid; swing then resumes from the next tick. Start
+// Delay and the Play/Rest gate still count from when you pressed play rather
+// than from the project position -- they're "after you start" controls, not
+// part of the bar grid.
+transport_moving = (play_state == 1 || play_state == 5);
+rate_mode == 1 && transport_moving ? (
+  (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ? (
+    tb = max(beat_position, 0) * rate_units;
+    tb_floor = floor(tb);
+    tb_frac  = tb - tb_floor;
+    ts_beats = max(slider2, 1);
+    tb_frac < 0.0001 ? (
+      beat_phase = 1.0;
+      beat_index = tb_floor % ts_beats;
+    ) : (
+      beat_phase = tb_frac;
+      beat_index = (tb_floor + 1) % ts_beats;
+    );
+  );
+);
+predicted_beat_pos = beat_position + samplesblock * max(tempo, 0.001) / (60 * srate);
+was_moving = transport_moving;
 
 @sample
 

@@ -70,6 +70,19 @@ The number of beats in each bar. Beat index 0 is the strong (accented) beat; all
 **Swing amount** `-1.0–+1.0, default 0`
 Applies a swing feel to the beat by offsetting the timing of alternating beats. Positive values push even-numbered beats later (forward swing — the common jazz feel). Negative values push them earlier (reverse swing). The offset is applied as a fraction of one third of the beat duration, consistent with triplet-based swing. At 0 the rhythm is straight.
 
+
+#### The beat grid is placed from the project
+
+In **Host x**, with the transport rolling, the metronome works out where it should be from the project position — so it lines up with the bar wherever you start. Drop the playhead into the middle of bar 40 and the accent is exactly where it would have been if you'd played from the top.
+
+It's placed **once**, when you press play or move the playhead, and then left to run. That matters here in a way it doesn't for the sweeping effects: this plugin fires clicks rather than moving a filter, and constantly re-deciding its position could skip a click or fire two. Placing it once means a jump can only happen where you asked for one.
+
+Placed on the straight grid, so **Swing** picks up from the next tick.
+
+Two things still count from when you pressed play rather than from the project position, deliberately: **Start Delay** and the **Play / Rest** gate. Both are "after you start" controls rather than part of the bar grid — a Start Delay that skipped itself because you seeked past it would be surprising.
+
+In **Own BPM** the metronome is free-running as it always was, and none of this applies.
+
 ---
 
 ### Tone
