@@ -1327,7 +1327,12 @@ seq_started == 0 ? (
     // branch needs prev_idx >= 0 so it won't fire, and the glide
     // branch hits the !have_prev_trigger path which snaps the
     // current frequency to this voice's own target.
-    trigger_seq_voice(-1);
+    // Don't fire voice 1 when a placement is about to move us: REAPER
+    // re-runs @init on a locate, which zeroes seq_started, so this branch
+    // fires the first note again on EVERY playhead move while playing --
+    // audibly, and even where the gate or a finished sequence says silence.
+    // The placement below sets the real position and triggers there.
+    !seq_place_pending ? trigger_seq_voice(-1);
     seq_started = 1;
     // Count this step toward the play period. No threshold check on
     // the first step (pr_step is 0; threshold is always >= 1 when
@@ -1520,7 +1525,10 @@ seq_place_pending ? (
         place_frozen ? (
           pr_rest_duration_samples =
             simulate_rest_duration_seconds(place_walk, rest_for_steps) * srate;
-          pr_rest_elapsed = pr_rest_duration_samples - place_t * srate;
+          // place_t is how far INTO the rest we landed (we froze precisely
+          // because place_t < the rest's length), so it IS the elapsed
+          // amount. Seeding it as duration-minus-that ran the rest backwards.
+          pr_rest_elapsed = place_t * srate;
           pr_frozen_prev_voice = -1;
         );
       );
