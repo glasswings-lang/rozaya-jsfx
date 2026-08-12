@@ -190,3 +190,22 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 ---
 
+
+### Host tempo sync
+
+**Rate Mode** `Own BPM / Host x` (default Own BPM)
+**Own BPM** is the original behaviour — free-running, project tempo ignored.
+**Host x** makes BPM a **multiplier of the project tempo** instead: x1 follows
+it exactly, x2 is double speed, x0.5 half. Tempo changes apply live.
+
+Only two entries rather than the four in Melody Phase / Polyrhythm, because
+this plugin only ever had one unit — "Seconds" and "Hz" would be meaningless.
+
+> **Switching modes changes what BPM means, and nothing rescales it.** Set the
+> mode first, then the value — or use the picker below, which fills it in.
+
+**Host ratio (writes BPM)** `Custom / every 8 beats / … / 8 per beat` (default Custom)
+Shown only in Host x. Writes the multiplier and then gets out of the way, so you
+can still type or automate anything. **Custom** never writes anything, and is
+deliberately not called "Free" — in sync UI that means free-running, which Own
+BPM already is. Entries are named for what you hear, not as note values.

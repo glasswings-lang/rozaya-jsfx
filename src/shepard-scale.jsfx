@@ -39,7 +39,7 @@ desc: Shepard Scale Generator
 //   Pan     — Stereo position.
 
 // ===== GLOBAL CONTROLS =====
-slider1:120<10,300,0.1>BPM
+slider1:120<0.001,1000,0.001>BPM (or multiplier in Host x)
 slider2:0<0,1,1{Asc,Desc}>Direction
 slider3:0<0,1,1{Skip,Rest}>Inactive Notes
 slider4:10<0,100,0.1>Attack %
@@ -170,6 +170,18 @@ slider60:8<1,1000,1>Drift period (beats)
 slider61:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 
+// --- Host tempo sync (sliders 62-63) ------------------------------------
+// Own BPM: free-running, project tempo ignored -- the original behaviour.
+// Host x: BPM becomes a MULTIPLIER of the project tempo.
+// Two entries, not four: this plugin only ever had one unit, so Seconds and
+// Hz would be meaningless on it. Appended at the END per never-renumber.
+slider62:0<0,1,1{Own BPM,Host x}>Rate Mode
+
+// Convenience picker: writes a multiplier into BPM on change then gets out
+// of the way. "Custom" (default) never writes. Not "Free" -- that means
+// FREE-RUNNING in sync UI, which Own BPM already is.
+slider63:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes BPM)
+
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
 // NO ext_noinit: REAPER re-runs @init on every transport play / render
@@ -177,6 +189,12 @@ slider61:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // oscillator re-init flag, drift runtime, Speed Ramp, Start Delay,
 // Play/Rest). Only the drift CONFIG bank must survive the re-run; it's
 // guarded by drift_cfg_inited below.
+
+// Host tempo capture. `tempo` is READ-ONLY in JSFX (assigning is silently
+// ignored -- the rhythm-track bug in CLAUDE.md). Read only, into a global
+// deliberately not named `tempo`. Nothing remembers it across transport.
+host_bpm = max(tempo, 0.001);
+host_ratio_inited = 0;
 
 PHI = 1.6180339887;
 NUM_OSC = 12; // max octave layers per note
@@ -410,7 +428,28 @@ loop(N_TARGETS,
 
 @slider
 
-bpm           = slider1;
+rate_mode     = slider62;
+!host_ratio_inited ? ( host_ratio_sel = slider63; host_ratio_inited = 1; );
+host_ratio_sel != slider63 ? (
+  host_ratio_sel = slider63;
+  host_ratio_sel > 0 ? (
+    slider1 =
+      host_ratio_sel ==  1 ? 0.125 : host_ratio_sel ==  2 ? 0.25  :
+      host_ratio_sel ==  3 ? 1/3   : host_ratio_sel ==  4 ? 0.5   :
+      host_ratio_sel ==  5 ? 0.618 : host_ratio_sel ==  6 ? 2/3   :
+      host_ratio_sel ==  7 ? 0.75  : host_ratio_sel ==  8 ? 1     :
+      host_ratio_sel ==  9 ? 4/3   : host_ratio_sel == 10 ? 1.5   :
+      host_ratio_sel == 11 ? 1.618 : host_ratio_sel == 12 ? 2     :
+      host_ratio_sel == 13 ? 3     : host_ratio_sel == 14 ? 4     : 8;
+    slider_automate(slider1);
+  );
+);
+slider_show(slider63, rate_mode == 1);
+// Host x: slider1 is a MULTIPLIER of the project tempo. beat_hz,
+// effective_bpm, the drift period and Start Delay all derive from bpm and
+// effective_beat_hz is recomputed per sample, so feeding the right number
+// in is the whole job -- no host_scale factor needed. @block repeats it.
+bpm           = rate_mode == 1 ? max(tempo, 0.001) * slider1 : slider1;
 direction     = slider2;
 skip_mode     = slider3;
 attack_frac   = slider4 / 100.0;
@@ -459,7 +498,7 @@ loop(12,
 );
 
 // Start Delay: convert beats to seconds at the current scale BPM.
-start_delay_sec = slider48 * 60 / max(bpm, 1);
+start_delay_sec = slider48 * 60 / max(bpm, 0.001);
 
 // Play/Rest gate: integer beat counts. Both must be > 0 for the
 // gate to engage; 0 in either slider disables.
@@ -535,6 +574,14 @@ last_sr_target != sr_sel_target ? (
   speed_ramp_delay_mem[sr_sel_target] = sr_sel_delay;
 );
 
+
+@block
+// Follow the project tempo live in Host x. @slider does not re-run on a tempo
+// change, so these two lines repeat here; everything else is per-sample.
+rate_mode == 1 ? (
+  bpm = max(tempo, 0.001) * slider1;
+  start_delay_sec = slider48 * 60 / max(bpm, 0.001);
+);
 
 @sample
 

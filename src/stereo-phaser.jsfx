@@ -22,13 +22,25 @@ desc: Stereo Phaser
 // between the copies so they drift apart instead of reinforcing, OR put a
 // limiter after them. It's specifically the stacked-AND-identical-AND-hot case.
 
-slider1:0.3<0.01,10,0.01>Rate Hz
+slider1:0.3<0.001,1000,0.001>Rate Hz (or multiplier in Host x)
 slider2:300<40,20000,1>Range Min Hz
 slider3:1500<40,20000,1>Range Max Hz
 slider4:0.6<0,0.95,0.01>Feedback
 slider5:6<2,64,2>Stages
 slider6:90<0,180,1>Stereo Spread (degrees)
 slider7:0.5<0,1,0.01>Wet/Dry Mix
+
+// --- Host tempo sync (sliders 8-9) --------------------------------------
+// Own Hz: free-running at Rate Hz -- the original behaviour.
+// Host x: Rate becomes a MULTIPLIER of the project tempo (x1 = one LFO
+//         sweep per beat). Two entries, not four: this plugin only ever had
+//         one unit. Appended at the END per the never-renumber rule.
+slider8:0<0,1,1{Own Hz,Host x}>Rate Mode
+
+// Writes a multiplier into Rate on change then gets out of the way.
+// "Custom" (default) never writes. Not "Free" -- that means FREE-RUNNING in
+// sync UI, which Own Hz already is.
+slider9:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate)
 
 in_pin:left input
 in_pin:right input
@@ -39,6 +51,8 @@ out_pin:right output
 // Path A render convention: NO ext_noinit, so REAPER re-runs @init on every
 // transport play / render start and resets all runtime for free.
 lfoPhase = 0;
+// `tempo` is READ-ONLY in JSFX; read only, into a global not named `tempo`.
+host_ratio_inited = 0;
 // paired allpass state (y and x history), 64 stages max, per channel.
 // Each array holds 64 slots, so the four never overlap.
 lyL = 0;    lxL = 64;    // left
@@ -46,7 +60,27 @@ lyR = 128;  lxR = 192;   // right
 memset(0, 0, 256);
 
 @slider
-rate      = slider1;
+rate_mode = slider8;
+!host_ratio_inited ? ( host_ratio_sel = slider9; host_ratio_inited = 1; );
+host_ratio_sel != slider9 ? (
+  host_ratio_sel = slider9;
+  host_ratio_sel > 0 ? (
+    slider1 =
+      host_ratio_sel ==  1 ? 0.125 : host_ratio_sel ==  2 ? 0.25  :
+      host_ratio_sel ==  3 ? 1/3   : host_ratio_sel ==  4 ? 0.5   :
+      host_ratio_sel ==  5 ? 0.618 : host_ratio_sel ==  6 ? 2/3   :
+      host_ratio_sel ==  7 ? 0.75  : host_ratio_sel ==  8 ? 1     :
+      host_ratio_sel ==  9 ? 4/3   : host_ratio_sel == 10 ? 1.5   :
+      host_ratio_sel == 11 ? 1.618 : host_ratio_sel == 12 ? 2     :
+      host_ratio_sel == 13 ? 3     : host_ratio_sel == 14 ? 4     : 8;
+    slider_automate(slider1);
+  );
+);
+slider_show(slider9, rate_mode == 1);
+// Host x: Rate is a multiplier of the project tempo, converted to Hz here
+// (tempo/60 = beats per second). lfoInc below is the only thing that uses
+// it, and @block repeats this so a tempo change lands live.
+rate      = rate_mode == 1 ? max(tempo, 0.001) / 60 * slider1 : slider1;
 rangeMin  = min(slider2, slider3);
 rangeMax  = max(slider2, slider3);
 fb        = slider4;
@@ -63,6 +97,14 @@ dmax = 2 * rangeMax / srate;
 dsc  = abs(dmax - dmin) * 0.5;
 dmin = min(dmin, dmax);
 lfoInc = 2 * $pi * rate / srate;
+
+@block
+// Follow the project tempo live in Host x. @slider does not re-run on a tempo
+// change, so the rate and the LFO increment are recomputed here.
+rate_mode == 1 ? (
+  rate   = max(tempo, 0.001) / 60 * slider1;
+  lfoInc = 2 * $pi * rate / srate;
+);
 
 @sample
 // per-channel swept coefficient (right channel offset by Stereo Spread)
