@@ -83,6 +83,19 @@ Three things follow from this that are worth knowing before you reach for it:
 
 Switching Cycle mode changes what the dwell numbers *mean*, and nothing rescales them for you. Nothing is lost — flip back and the seconds are still there — but the sound will jump.
 
+#### The cycle is positioned from the project, not from when you pressed play
+
+In Host x, with the transport rolling, the plugin asks REAPER where it is in the song and puts the cycle there. Drop the playhead into the middle of bar 40 and the sweep is already exactly where it would have been if you'd played from the top. The start of the high dwell lands on a bar line, every time.
+
+That's the behaviour tempo-synced effects are expected to have, and it's the reason to sync at all — a cycle that's the right *length* but starts wherever you happened to press play still lands off the grid. It also can't slowly drift out over a long session, and it follows seeking and looping for free.
+
+Two exceptions, both deliberate:
+
+- **Stopped or paused**, the project position doesn't move, so the cycle free-runs instead. Otherwise it would sit frozen for anyone monitoring live.
+- **Pan Sweep** (modes 10 and 11) always free-runs, even on the Host x unit, because Drift and Speed Ramp can move its rate — and positioning from the project assumes a rate that isn't being modulated underneath. **Linked Sweep** does lock, since its multiplier is fixed. The rule across the plugin is: lock what's constant, accumulate what's modulated.
+
+Every other rate mode is unchanged and still starts from zero on play.
+
 ---
 
 ### Stereo

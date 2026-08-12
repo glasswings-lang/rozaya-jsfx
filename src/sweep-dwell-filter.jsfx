@@ -173,6 +173,13 @@ n3 = n4 = rn3 = rn4 = 0;
 // re-runs on every transport play and would wipe the reference.
 host_bpm = max(tempo, 0.001);
 
+// Transport-position seeds, so the first @sample after a play has defined
+// values even before @block has run once. Nothing is remembered across
+// transport — all three are rewritten every block.
+host_beat_pos   = beat_position;
+host_pos_locked = 0;
+blk_sample      = 0;
+
 cut_smooth_l = cut_smooth_r = 0.1;
 
 // ===== PAN BLOCK INIT START =====
@@ -504,6 +511,22 @@ last_target_select != sel_target ? (
 // it per sample would be wasted work). Absolute — see the note in @init.
 host_bpm = max(tempo, 0.001);
 
+// Transport POSITION, for phase-locking the cycle in Host x. Tempo sync sets
+// the cycle's speed; this sets where in the cycle we are. Without it the
+// pattern is the right length but starts wherever you pressed play, so the
+// turnarounds land off the bar — which is what a tempo-synced effect is
+// expected NOT to do. Deriving phase from the project position instead of
+// accumulating also means it can't drift over a long session, and it survives
+// seeking and looping for free.
+//
+// Only while the transport is actually moving (1 = playing, 5 = recording).
+// Stopped or paused, beat_position doesn't advance, so locking to it would
+// freeze the LFO for anyone monitoring live — those cases fall back to the
+// free-running accumulator below.
+host_beat_pos    = beat_position;
+host_pos_locked  = (play_state == 1 || play_state == 5);
+blk_sample       = 0;
+
 
 @sample
 
@@ -513,6 +536,13 @@ host_bpm = max(tempo, 0.001);
 // Speed Ramp, Start Delay, Play/Rest + effect mix; the CONFIG banks are
 // preserved across those re-runs by the drift_cfg_inited guard in @init.
 // See docs/v2.9-render-state-bug.md.)
+
+// Where this sample sits in the project, in beats. @block gives the position
+// at the START of the block, so step forward by however many samples in we
+// are. Counted unconditionally (including through the Start Delay) so the
+// position is always right the instant the delay ends.
+sample_beat_pos = host_beat_pos + blk_sample * host_bpm / (60 * srate);
+blk_sample += 1;
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
@@ -695,13 +725,35 @@ effect_mix        = effect_mix * smooth + target_effect_mix * (1 - smooth);
 silence_mode      = (rest_output_mode == 1);
 
 // Advance dwell-pattern LFO phases unless Freeze rest is pinning them.
+//
+// In Host x with the transport rolling, phase is POSITIONED from the project
+// rather than accumulated: one cycle spans cycle_beats beats, so the phase is
+// just how far through those beats we are. Cycle length is a fixed slider
+// here (dwell drift only changes the SHAPE in this mode, never the length),
+// so the position formula is exact — nothing is being modulated underneath it.
+// Every other case keeps the original accumulator.
+//
+// Freeze rest still wins: it pins the phase where it was, and on resume the
+// lock re-asserts, so the cutoff steps to wherever the project now is. The
+// 3 ms cutoff smoother rounds that off.
 !in_frozen_rest ? (
-  phase_l += freq / srate;
-  phase_l >= 1 ? phase_l -= 1;
+  (cycle_mode == 1 && host_pos_locked) ? (
+    phase_l = sample_beat_pos / cycle_beats;
+    phase_l -= floor(phase_l);
+  ) : (
+    phase_l += freq / srate;
+    phase_l >= 1 ? phase_l -= 1;
+  );
 
   slider12 == 0 ? (
-    phase_r += freq / srate;
-    phase_r >= 1 ? phase_r -= 1;
+    // Independent L+R: both run at the same rate from the same start, so the
+    // locked case is simply the same position.
+    (cycle_mode == 1 && host_pos_locked) ? (
+      phase_r = phase_l;
+    ) : (
+      phase_r += freq / srate;
+      phase_r >= 1 ? phase_r -= 1;
+    );
   ) : (
     phase_r = phase_l + phase_offset;
     phase_r >= 1 ? phase_r -= 1;
@@ -799,10 +851,24 @@ pan_enabled ? (
     pan_l = cur_pan;
 
   ) : (
-    // Linked Sweep — gate phase advance for Freeze mode.
+    // Linked Sweep — gate phase advance for Freeze mode. This mode rides the
+    // dwell cycle times a fixed multiplier, so when the cycle is position-
+    // locked this one can be too, and it stays exactly in step instead of
+    // slowly separating from it over a long session.
+    //
+    // Pan Sweep (modes 10/11) deliberately does NOT lock, even on the Host x
+    // unit: its rate can be moved by Drift and Speed Ramp, and positioning
+    // from the project assumes a rate that isn't being modulated underneath.
+    // The rule across the plugin is lock what's constant, accumulate what's
+    // modulated.
     !in_frozen_rest ? (
-      pan_phase += (freq * pan_sweep_ratio) / srate;
-      pan_phase >= 1 ? pan_phase -= 1;
+      (cycle_mode == 1 && host_pos_locked) ? (
+        pan_phase = sample_beat_pos * pan_sweep_ratio / cycle_beats;
+        pan_phase -= floor(pan_phase);
+      ) : (
+        pan_phase += (freq * pan_sweep_ratio) / srate;
+        pan_phase >= 1 ? pan_phase -= 1;
+      );
     );
     cur_pan = (pan_phase * 2.0 - 1.0) * pan_spread;
     pan_l = cur_pan;
