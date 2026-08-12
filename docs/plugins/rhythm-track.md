@@ -26,7 +26,42 @@ Swing is applied by offsetting the beat phase at each cycle boundary, advancing 
 
 ### Timing
 
-**Tempo (BPM)** `10-300 BPM, default 120`
+**Rate Mode** `Own BPM / Host x` (default Own BPM)
+**Own BPM** is the original behaviour: Tempo below is the metronome's own
+speed and the project tempo is ignored. **Host x** makes Tempo a **multiplier
+of the project tempo** instead — x1 follows it exactly, x2 is double time, x0.5
+is half. Tempo changes apply live, including mid-playback.
+
+A metronome that couldn't follow the project tempo was the odd one out in any
+session, so this is the plugin the mode matters most on. It's also the easiest
+one to check: run it against REAPER's own click and either they lock or they
+don't.
+
+Only two entries rather than the four in Melody Phase / Shepard Tone, because
+this plugin only ever had one unit — "Seconds" and "Hz" would be meaningless
+on a metronome.
+
+> **Switching modes changes what Tempo means, and nothing rescales it.** 120 is
+> 120 BPM in Own BPM mode, but 120× the project tempo in Host x. Set the mode
+> first, then the Tempo — or use the Host ratio picker, which fills it in.
+
+**Host ratio (writes Tempo)** `Custom / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Custom)
+Shown only in Host x mode. Choosing an entry writes that multiplier into Tempo
+and then gets out of the way — it doesn't hold the value, so you can still type
+or automate anything. **Custom** never writes anything. It's deliberately not
+called "Free", because in sync UI that word means free-running, which is what
+Own BPM already is. Entries are named for what you hear, not as note values.
+
+**Tempo (BPM, or multiplier in Host x)** `0.001-1000, default 120`
+
+Widened from the old `10-300`. The bottom end was the pinch — very slow ambient
+pulses were unreachable without typing values in by hand — and Host x needs the
+range to reach down to fractional multipliers anyway.
+
+Two hidden floors went with it: the effective tempo used to be clamped to a
+minimum of **10 BPM** in two places internally, so anything slower than that
+silently snapped back up. Now floored only at 0.001, which exists purely to
+avoid dividing by zero.
 The tempo of the beat track in beats per minute. Range matches Shepard Scale's BPM slider for consistency across the suite's BPM-style rate controls. Internal floors clamp at 10 BPM at every consumption site so a heavy Drift down or Speed Ramp delta can't drive tempo below the slider's stated minimum.
 
 **Beats per bar** `1-20, default 4`
