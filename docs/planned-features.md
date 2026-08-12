@@ -627,7 +627,7 @@ Tier 1 first (identical to work already done and validated), then Tier 3's
 batches — each one needs an ear test, and a batch that's too big can't be
 diagnosed when something sounds wrong.
 
-## Sweep progress (2026-08-11) — 8 of 13 done, NONE ear-tested
+## Sweep progress (2026-08-11) — 12 of 13 done, NONE ear-tested
 
 All on `feature/host-tempo-sync`. Nothing has been compiled or heard; JSFX only
 builds inside REAPER. Every installed copy is backed up as
@@ -637,8 +637,19 @@ builds inside REAPER. Every installed copy is backed up as
 `polyrhythm_phase`, `polyrhythm_phase_v3`, `Full_Feature_Tremolo`,
 `full-feature-sweeping-filter`.
 
-**Remaining:** `sweep-dwell-filter`, `shepard-scale`, `stereo-phaser`,
-`heartbeat gen`, `womb_sound_generator_v3`.
+Plus `shepard-scale`, `heartbeat gen`, `womb_sound_generator_v3`,
+`stereo-phaser` — all Tier 3, none of which needed a `host_scale` factor at
+all: each derives everything from one number already recomputed per sample, so
+Host x only feeds the right number in and `@block` repeats it. That is the
+`rhythm-track` pattern, and it is much the easier of the two.
+
+**Remaining: `sweep-dwell-filter` only — and it is NOT a mechanical copy.**
+Its Start Delay is literal seconds (so no 60x bug), and its timing is built
+from dwell DURATIONS in seconds rather than a rate. Host-syncing it means
+deciding whether "4 seconds of high dwell" should become "4 beats", which is a
+design question for Rozaya, not a port. Its `slider19 Pan Sweep Rate Unit` does
+use the `{Hz,Seconds,BPM}` ordering, so that sub-rate could be synced on its
+own, but doing only that would be a strange half-measure. Ask first.
 
 ### What ear-testing should start with
 
