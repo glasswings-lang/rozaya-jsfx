@@ -626,3 +626,67 @@ Tier 1 first (identical to work already done and validated), then Tier 3's
 `rhythm-track` (highest value, smallest file), then the rest. Land in small
 batches — each one needs an ear test, and a batch that's too big can't be
 diagnosed when something sounds wrong.
+
+## Sweep progress (2026-08-11) — 8 of 13 done, NONE ear-tested
+
+All on `feature/host-tempo-sync`. Nothing has been compiled or heard; JSFX only
+builds inside REAPER. Every installed copy is backed up as
+`*.pre-hostsync.bak` in the Effects folder.
+
+**Done:** `melody_phase`, `melody_phase_v2`, `shepard-tone`, `rhythm-track`,
+`polyrhythm_phase`, `polyrhythm_phase_v3`, `Full_Feature_Tremolo`,
+`full-feature-sweeping-filter`.
+
+**Remaining:** `sweep-dwell-filter`, `shepard-scale`, `stereo-phaser`,
+`heartbeat gen`, `womb_sound_generator_v3`.
+
+### What ear-testing should start with
+
+**`rhythm-track` is the only unambiguous test in the suite.** It's a metronome:
+set Rate Mode to Host x, Tempo to 1, run REAPER's own click, and either they
+lock or they don't. Everything else is the same idea in a different house.
+
+**`Full_Feature_Tremolo` is second best** — it's in `simple-sequence.RPP`
+(2 instances) so it can be heard in a real project.
+
+**Do NOT gate on `shepard-tone`.** Rozaya: *"Shepard tone is actually harder to
+hear accurately."* Correct — a Shepard-Risset glissando is engineered to defeat
+pitch perception, so it's a poor subject for judging whether a rate is right.
+
+### Two things learned doing the eight
+
+1. **The hook point is NOT the same line in every plugin. Check before
+   assuming.** Most fold `host_scale` into `combined_scale`, but
+   `full-feature-sweeping-filter` has no `combined_scale` at all —
+   `speed_scale_current` is its shared factor. `rhythm-track` has neither and
+   needed no scale factor whatsoever, because it recomputes its rate every
+   sample and only needed the right number fed in. Grep for what the per-sample
+   path actually multiplies by.
+
+2. **The {Hz,Seconds,BPM} vs {BPM,Seconds,Hz} split is not cosmetic — it has
+   already caused a real bug, twice.** Both `Full_Feature_Tremolo` and
+   `full-feature-sweeping-filter` had their Start Delay conversion keyed as if
+   the enum were `{BPM,Seconds,Hz}`, so Hz got the BPM formula and BPM got the
+   Hz one: **60x out in both**, Seconds correct. Copied between the two along
+   with the code. Both fixed. **`sweep-dwell-filter` uses the same ordering on
+   its Pan Sweep Rate Unit (slider19) — check it for the same mistake.**
+
+### The recipe, concretely
+
+1. Rate Mode enum: append `Host x` at the END (never renumber). Plugins with a
+   bare BPM slider and no enum get a two-entry `{Own BPM, Host x}` instead — see
+   `rhythm-track`.
+2. Rate conversion gains a mode-3 branch returning a **nominal** rate (as if
+   tempo were 60), so it stays tempo-independent.
+3. `@init`: `host_bpm`, `host_scale = 1`, `host_ratio_inited = 0`.
+4. `@slider`: the picker one-shot (adopt-on-load, then write-on-change),
+   `slider_show(pickerN, rate_mode == 3)`.
+5. New `@block`: `host_scale = rate_mode == 3 ? max(tempo,0.001) / 60 : 1`.
+   **Absolute, never a remembered reference** — `@init` wipes globals on play.
+6. Fold `host_scale` into whatever the per-sample path multiplies by.
+7. **Audit every `+= .../srate` by hand.** Scale the time ones. Do NOT scale
+   oscillator phase — that's PITCH, and a tempo change must move the pulse
+   without transposing the tone.
+8. `start_delay_elapsed += host_scale / srate` — this is the one that gets
+   missed, and it's missed in a way that reads as drift rather than as a bug.
+9. Update `docs/plugins/<plugin>.md`. Back up before installing.
