@@ -1337,7 +1337,14 @@ seq_started == 0 ? (
 // again. Documented rather than hidden.
 seq_place_pending ? (
   seq_place_pending = 0;
-  seq_place_ok = (rate_mode == 3) && loop_enabled && !bounce_active && !pr_enabled;
+  // Every direction mode is placeable: the walk below handles bounce (period =
+  // there and back) and Loop=Off (walk until it ends) directly, so neither is
+  // excluded. Only two things are, and for real reasons rather than effort:
+  // per-voice timing drift/ramp (the step lengths at bar 40 aren't the ones a
+  // walk from bar 0 would have used, so a walk would be a confident guess --
+  // the "lock what's constant" rule), and the Play/Rest gate (a second
+  // sequence layered on this one, which Freeze mode also makes time-dependent).
+  seq_place_ok = (rate_mode == 3) && !pr_enabled;
   seq_place_ok ? (
     i = 1;
     loop(8,
@@ -1347,32 +1354,92 @@ seq_place_pending ? (
     );
   );
   seq_place_ok ? (
-    // One full pass of the pool, in beats.
     // Start where the sequence itself starts: a Down sequence begins at the
     // TOP of the pool, matching the first_idx logic in the branch above.
     place_idx = starts_down ? next_active_voice(seq_length_eff - 1, -1)
                             : next_active_voice(0, 1);
     place_idx >= 0 ? (
+      place_dir0 = starts_down ? -1 : 1;
+
+      // PASS 1 -- find the period by walking until the sequence returns to its
+      // starting (voice, direction) state. That covers plain Up/Down (period =
+      // one pass of the pool) AND both bounce variants (period = there and
+      // back, whether or not the edge note repeats) without special-casing
+      // either. If it never returns, or Loop is off, there is no period and
+      // pass 2 just walks until the sequence ends.
       place_period = 0;
-      place_walk = place_idx;
-      place_n = count_active_voices();
-      loop(place_n, place_period += v_step_seconds[place_walk];
-                    place_walk = next_active_voice(place_walk + seq_dir, seq_dir););
-      place_period > 0.0001 ? (
-        place_t = seq_place_beats - floor(seq_place_beats / place_period) * place_period;
-        place_walk = place_idx;
-        place_guard = 0;
-        loop(place_n,
-          (place_guard == 0 && place_t >= v_step_seconds[place_walk]) ? (
-            place_t -= v_step_seconds[place_walk];
-            place_walk = next_active_voice(place_walk + seq_dir, seq_dir);
-          ) : place_guard = 1;
+      place_walk   = place_idx;
+      place_wdir   = place_dir0;
+      place_bounce = 0;
+      place_found  = 0;
+      place_done   = 0;
+      loop(64,
+        place_done ? 0 : (
+          place_period += v_step_seconds[place_walk];
+          place_nxt = step_in_dir_no_wrap(place_walk, place_wdir);
+          place_nxt < 0 ? (
+            bounce_active ? (
+              place_wdir = -place_wdir;
+              place_bounce += 1;
+              (!loop_enabled && place_bounce >= 2) ? place_done = 1 :
+                place_nxt = bounce_is_repeat ? place_walk
+                                             : step_in_dir_no_wrap(place_walk, place_wdir);
+            ) : (
+              loop_enabled ? place_nxt = next_active_voice(
+                               place_wdir > 0 ? 0 : seq_length_eff - 1, place_wdir)
+                           : place_done = 1;
+            );
+          );
+          place_done ? 0 : (
+            place_walk = place_nxt;
+            (place_walk == place_idx && place_wdir == place_dir0) ?
+              ( place_found = 1; place_done = 1; );
+          );
         );
-        seq_index = place_walk;
-        seq_step_elapsed = place_t;
-        seq_finished = 0;
-        seq_started ? trigger_seq_voice(-1);
       );
+
+      // PASS 2 -- walk to the target. With a period, reduce first so a project
+      // two hours in costs the same as one at bar 2. Without one (Loop off),
+      // walk until the time runs out or the sequence ends -- and if it ended
+      // first, that IS the answer: it would have finished by now.
+      place_t = seq_place_beats;
+      (place_found && loop_enabled && place_period > 0.0001) ?
+        place_t = place_t - floor(place_t / place_period) * place_period;
+
+      place_walk   = place_idx;
+      place_wdir   = place_dir0;
+      place_bounce = 0;
+      place_done   = 0;
+      place_end    = 0;
+      loop(4096,
+        place_done ? 0 : (
+          place_t < v_step_seconds[place_walk] ? place_done = 1 : (
+            place_t -= v_step_seconds[place_walk];
+            place_nxt = step_in_dir_no_wrap(place_walk, place_wdir);
+            place_nxt < 0 ? (
+              bounce_active ? (
+                place_wdir = -place_wdir;
+                place_bounce += 1;
+                (!loop_enabled && place_bounce >= 2) ? ( place_end = 1; place_done = 1; ) :
+                  place_nxt = bounce_is_repeat ? place_walk
+                                               : step_in_dir_no_wrap(place_walk, place_wdir);
+              ) : (
+                loop_enabled ? place_nxt = next_active_voice(
+                                 place_wdir > 0 ? 0 : seq_length_eff - 1, place_wdir)
+                             : ( place_end = 1; place_done = 1; );
+              );
+            );
+            place_done ? 0 : place_walk = place_nxt;
+          );
+        );
+      );
+
+      seq_index          = place_walk;
+      seq_dir            = place_wdir;
+      bounce_count_total = place_bounce;
+      seq_step_elapsed   = place_end ? 0 : place_t;
+      seq_finished       = place_end;
+      (seq_started && !place_end) ? trigger_seq_voice(-1);
     );
   );
 );

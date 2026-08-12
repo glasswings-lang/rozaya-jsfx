@@ -280,13 +280,14 @@ In **Host x**, with the transport rolling, the sequencer works out which note it
 
 Placed **once**, on transport start or when you move the playhead, then left to run. A sequencer that re-decided its position constantly would jump mid-note.
 
-**This is deliberately narrow.** Placement only happens for a plain looping **Up** or **Down** sequence with fixed step lengths and no Play/Rest gate. Everything else starts from the top as before, because:
+**Every direction mode is placed** — Up, Down, and both bounce modes, with Loop on or off. A bouncing sequence is periodic (there and back is simply a longer cycle) and Loop = Off is simpler still: the plugin walks until the sequence would have ended, and if you've started past that point, it's finished, which is the correct answer.
 
-- **Bounce modes and Loop = Off** depend on where the sequence has *been*, not just how much time has passed. There's no answer to compute.
-- **Per-voice timing Drift or Speed Ramp** means the step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer.
-- **The Play / Rest gate** is a second sequence layered on this one.
+Two things are not placed, and those start from the top as before:
 
-A narrow correct placement is worth more than a broad approximate one. Nothing is lost in the excluded cases — they behave exactly as they always have.
+- **Per-voice timing Drift or Speed Ramp.** The step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer. This is the same rule the sweeping effects follow — anything modulating the rate hands back to free-running.
+- **The Play / Rest gate**, which is a second sequence layered on this one, and which in Freeze mode changes how elapsed time maps to sequence position at all.
+
+Nothing is lost in those two cases — they behave exactly as they always have.
 
 On a mid-song seek, the note you land on **retriggers from the start of its envelope** rather than continuing partway through. You get the right note; it just begins again.
 
