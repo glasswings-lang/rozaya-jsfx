@@ -35,7 +35,31 @@ When the pan block is enabled, the post-tremolo signal is summed to mono, then r
 **Rate Value** `0.001-1000, default 2`
 The tremolo rate in the units set by Rate Mode.
 
-**Rate Mode** `Hz / Seconds / BPM`
+**Rate Mode** `Hz / Seconds / BPM / Host x`
+
+**Host x** makes Rate Value a **multiplier of the project tempo** instead of an
+absolute rate — x1 = one tremolo cycle per beat, x2 = twice as fast, x0.5 =
+half. Move the project tempo and it moves with it, in proportion, so several
+instances keep their relationships to each other instead of scattering when you
+change the speed of an arrangement.
+
+Not quantising: Rate Value stays continuous, so deliberately unlocked
+relationships survive a tempo change just as locked ones do. Tempo changes
+apply live, including mid-playback.
+
+**Host ratio (writes Rate Value)** `Custom / every 8 beats / … / 8 per beat` (default Custom)
+Shown only in Host x mode. Writes the multiplier into Rate Value and then gets
+out of the way, so you can still type or automate anything. **Custom** never
+writes anything, and is deliberately not called "Free" — in sync UI that means
+free-running, which is what the other three modes already are. Entries are
+named for what you hear, never as note values.
+
+> **Fixed at the same time:** Start Delay was 60x out in both Hz and BPM modes.
+> The conversion had been written as if Rate Mode were ordered
+> `{BPM, Seconds, Hz}` (as it is in Melody Phase and Polyrhythm Phase), but here
+> it is `{Hz, Seconds, BPM}` — so Hz was getting the BPM formula and BPM the Hz
+> one. Seconds mode was always correct. If you had dialled a Start Delay by ear
+> to compensate, it will now be 60x off in the other direction.
 How Rate Value is interpreted.
 - **Hz** — cycles per second.
 - **Seconds** — period of one full cycle.
