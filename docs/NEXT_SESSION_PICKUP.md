@@ -68,13 +68,28 @@ thing to carry forward:
   when setting it** — a figure they know (5 BPM of HRV) or a feel they're
   dialling for. Neither the code nor the label can tell you.
 
-## Older threads, unchanged
+## Older threads — BOTH CLOSED 2026-08-12
 
-- **Passage fade curves** — does Cosine-default fix the "abrupt fades", or was
-  the fade just too short? One long Cosine fade answers it. May have been
-  settled in passing on 07-28 but was never recorded.
-- **Passage short-grain crackle** — still unexplained. The FFT-sizing theory
-  was wrong. Diagnostic questions and the sine-at-slot-0 isolation test are in
-  the git history of this file (2026-08-11 version) and in
-  `docs/planned-features.md`. Don't theorise from the code; test by ear with a
-  controlled signal.
+- **Passage fade curves — passed.** Cosine default, tested against Linear.
+  Installed copy verified byte-identical to source first, so it was genuinely
+  the current build being heard.
+- **Passage short-grain crackle — GONE.** Tested at Wash grain **5** with Wash
+  at **100**, i.e. the worst case the plugin offers: no crackle. This thread
+  had been open since 25 July.
+
+  **Nobody fixed it deliberately, and that's the lesson.** It was last
+  confirmed present on 07-25. Three things landed on 07-27 while chasing a
+  different bug (the click at slot handoffs): the voice phase handover,
+  `flush_accum_pending` replacing a 131072-slot clear performed inside a single
+  sample, and moving the harmonic phase advance inside the audibility guard —
+  which also stopped an out-of-range read past the end of the sine table.
+  Any of those could plausibly do it; the table overrun is the best candidate,
+  since it produces actual wrong samples rather than merely load.
+
+  Nobody re-tested the crackle after 07-27, so it sat on the books as an open
+  mystery for two weeks while probably already being fixed.
+
+  **Carry forward: when a fix lands near an open bug, re-test the open bug.**
+  The cost of the check is a minute; the cost of not checking was two weeks of
+  a false open thread, and a diagnostic plan written for a problem that no
+  longer existed.
