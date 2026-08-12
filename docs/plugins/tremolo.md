@@ -94,6 +94,20 @@ When Phase Mode is set to Offset from L, this controls how far ahead or behind t
 - **Independent L+R** — left and right LFO phases advance independently. Both start at zero and run freely. In practice they stay in sync unless rates diverge, which they don't in this plugin — so this mode produces synchronized stereo tremolo.
 - **Offset from L** — the right channel phase is continuously derived as the left phase plus the Stereo Phase Offset. This keeps the offset locked regardless of where in the cycle each channel is, and is the correct mode to use when you want a stable stereo phase relationship.
 
+
+#### The cycle is positioned from the project, not from when you pressed play
+
+In **Host x**, with the transport rolling, the plugin asks REAPER where it is in the song and puts the cycle there. Drop the playhead into the middle of bar 40 and the tremolo is already exactly where it would have been if you'd played from the top — so it lands the same way at the same bar however you got there. That's the behaviour a tempo-synced effect is expected to have, and it's most of the reason to sync at all: a cycle that's the right *length* but starts wherever you pressed play still lands off the grid.
+
+It also can't slowly drift out over a long session, and it follows seeking and looping for free.
+
+Two exceptions, both deliberate:
+
+- **Stopped or paused**, the project position isn't advancing, so it free-runs instead — otherwise it would sit frozen for anyone monitoring live.
+- **Drift or Speed Ramp on the rate hands it back to free-running.** Positioning from the project answers "where would this be if it had run at this rate all along," which stops being the right question the moment something is changing the rate. There's no jump at the handover, and it stays free until the next transport start rather than lurching back onto the grid mid-play. Which is what you asked for anyway — putting drift on the rate *is* asking for it off the grid.
+
+Every other rate mode is unchanged and still starts from zero on play.
+
 ---
 
 ### Pan Block

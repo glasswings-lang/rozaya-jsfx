@@ -545,6 +545,17 @@ last_sr_target != sr_sel_target ? (
 host_bpm = max(tempo, 0.001);
 host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
 
+// Transport POSITION, for phase-locking the sweep in Host x. Tempo sync sets
+// the sweep's speed; this sets where in the cycle it is, so the filter lands
+// the same way at the same bar however you got there. Deriving phase from the
+// position also means it can't drift over a long session, and it survives
+// seeking and looping. Only while the transport is actually moving
+// (1 = playing, 5 = recording); stopped or paused, beat_position doesn't
+// advance and locking to it would freeze the sweep for live monitoring.
+host_beat_pos   = beat_position;
+host_pos_locked = (play_state == 1 || play_state == 5);
+blk_sample      = 0;
+
 @sample
 
 // (No transport-edge reset here — Path A. REAPER re-runs @init on every
@@ -774,14 +785,41 @@ target_effect_mix = pr_enabled && pr_resting ? 0 : 1;
 effect_mix        = effect_mix * smooth + target_effect_mix * (1 - smooth);
 silence_mode      = (rest_output_mode == 1);
 
+// Where this sample sits in the project, in beats -- @block gives the position
+// at the start of the block, so step forward by however far in we are.
+sample_beat_pos = host_beat_pos + blk_sample * host_bpm / (60 * srate);
+blk_sample += 1;
+
+// Lock the phase to the project only while NOTHING is moving the rate. The
+// position formula answers "where would the sweep be if it had run at this
+// rate all along", which is only the right question when that's true. As soon
+// as Drift or Speed Ramp touches the rate you've asked for something off the
+// grid, so it hands over to the free-running accumulator from wherever it is
+// -- no jump on the handover, and it stays free until the next transport
+// start rather than lurching back onto the grid mid-play.
+rate_pos_lock = (rate_mode == 3) && host_pos_locked
+                && rate_drift_hz == 0
+                && speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0] == 0;
+
 // Advance filter sweep LFO phases unless Freeze rest is pinning them.
 !in_frozen_rest ? (
-  phase_l += freq / srate;
-  phase_l >= 1 ? phase_l -= 1;
+  rate_pos_lock ? (
+    // rate_val is cycles per beat in Host x, so this is just how far through
+    // the cycle the project position is.
+    phase_l = sample_beat_pos * rate_val;
+    phase_l -= floor(phase_l);
+  ) : (
+    phase_l += freq / srate;
+    phase_l >= 1 ? phase_l -= 1;
+  );
 
   slider14 == 0 ? (
-    phase_r += freq / srate;
-    phase_r >= 1 ? phase_r -= 1;
+    rate_pos_lock ? (
+      phase_r = phase_l;
+    ) : (
+      phase_r += freq / srate;
+      phase_r >= 1 ? phase_r -= 1;
+    );
   ) : (
     phase_r = phase_l + phase_offset;
     phase_r >= 1 ? phase_r -= 1;
