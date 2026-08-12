@@ -1120,6 +1120,17 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 host_bpm = max(tempo, 0.001);
 host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
 
+// --- Flag a sequence placement (Host x only) -------------------------------
+// Detects transport start and seeks; the placement itself happens in @sample
+// where the sequencer's own state lives. A seek is spotted by comparing this
+// block's actual position against the one the previous block predicted --
+// normal playback agrees to far under the 0.25-beat threshold.
+transport_moving = (play_state == 1 || play_state == 5);
+transport_moving && (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ?
+  ( seq_place_pending = 1; seq_place_beats = max(beat_position, 0); );
+predicted_beat_pos = beat_position + samplesblock * max(tempo, 0.001) / (60 * srate);
+was_moving = transport_moving;
+
 @sample
 // Advance speed ramp every sample, then compute musical + slow
 // drift offsets to the effective rate. combined_scale stretches
@@ -1294,6 +1305,75 @@ seq_started == 0 ? (
     // the first step (pr_step is 0; threshold is always >= 1 when
     // pr_enabled, so it'd never fire here anyway).
     pr_enabled ? pr_step += 1;
+  );
+);
+
+// --- Place the sequence from the project (Host x only) ---------------------
+//
+// PLACE ONCE, like rhythm-track and shepard-scale: a sequencer that recomputed
+// its position every sample would re-decide which note is sounding and jump
+// mid-envelope.
+//
+// In Host x, dt already carries tempo/60, so seq_step_elapsed and
+// v_step_seconds are both effectively in BEATS -- which is what makes this a
+// straight walk against beat_position with no unit conversion.
+//
+// DELIBERATELY NARROW. Placement only happens for a plain looping Up or Down
+// sequence with fixed step lengths and no gate. Everything else falls back to
+// today's behaviour of starting from the top, because:
+//   - bounce modes and Loop=Off have a path that depends on history, not just
+//     on elapsed time;
+//   - per-voice timing drift or ramp means the step lengths at bar 40 aren't
+//     the ones a walk from bar 0 would have used, so the walk would be a
+//     confident guess rather than an answer (the "lock what's constant" rule);
+//   - the Play/Rest gate adds a second sequence on top of this one.
+// A narrow correct placement beats a broad approximate one.
+//
+// The walk is bounded by taking the elapsed time modulo one full pass of the
+// pool first, so a project two hours in costs the same as one at bar 2.
+//
+// On a mid-play seek the landed note retriggers from the start of its envelope
+// rather than partway through. You land on the RIGHT note; it just begins
+// again. Documented rather than hidden.
+seq_place_pending ? (
+  seq_place_pending = 0;
+  seq_place_ok = (rate_mode == 3) && loop_enabled && !bounce_active && !pr_enabled;
+  seq_place_ok ? (
+    i = 1;
+    loop(8,
+      (target_drift_offset[i] != 0 ||
+       speed_ramp_ramp_t_mem[i] * speed_ramp_by_mem[i] != 0) ? seq_place_ok = 0;
+      i += 1;
+    );
+  );
+  seq_place_ok ? (
+    // One full pass of the pool, in beats.
+    // Start where the sequence itself starts: a Down sequence begins at the
+    // TOP of the pool, matching the first_idx logic in the branch above.
+    place_idx = starts_down ? next_active_voice(seq_length_eff - 1, -1)
+                            : next_active_voice(0, 1);
+    place_idx >= 0 ? (
+      place_period = 0;
+      place_walk = place_idx;
+      place_n = count_active_voices();
+      loop(place_n, place_period += v_step_seconds[place_walk];
+                    place_walk = next_active_voice(place_walk + seq_dir, seq_dir););
+      place_period > 0.0001 ? (
+        place_t = seq_place_beats - floor(seq_place_beats / place_period) * place_period;
+        place_walk = place_idx;
+        place_guard = 0;
+        loop(place_n,
+          (place_guard == 0 && place_t >= v_step_seconds[place_walk]) ? (
+            place_t -= v_step_seconds[place_walk];
+            place_walk = next_active_voice(place_walk + seq_dir, seq_dir);
+          ) : place_guard = 1;
+        );
+        seq_index = place_walk;
+        seq_step_elapsed = place_t;
+        seq_finished = 0;
+        seq_started ? trigger_seq_voice(-1);
+      );
+    );
   );
 );
 

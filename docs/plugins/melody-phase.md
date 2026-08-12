@@ -343,6 +343,23 @@ Two things this fixes. The rate slider's default was chosen for its own unit, so
 
 Landing on 1 per beat only happens when *you* change the mode. Opening a saved project leaves your rate exactly as you set it.
 
+
+#### The sequence is placed from the project
+
+In **Host x**, with the transport rolling, the sequencer works out which note it should be on from the project position — so starting playback at bar 40 gives you the note you'd have reached playing from the top, not the first note again.
+
+Placed **once**, on transport start or when you move the playhead, then left to run. A sequencer that re-decided its position constantly would jump mid-note.
+
+**This is deliberately narrow.** Placement only happens for a plain looping **Up** or **Down** sequence with fixed step lengths and no Play/Rest gate. Everything else starts from the top as before, because:
+
+- **Bounce modes and Loop = Off** depend on where the sequence has *been*, not just how much time has passed. There's no answer to compute.
+- **Per-voice timing Drift or Speed Ramp** means the step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer.
+- **The Play / Rest gate** is a second sequence layered on this one.
+
+A narrow correct placement is worth more than a broad approximate one. Nothing is lost in the excluded cases — they behave exactly as they always have.
+
+On a mid-song seek, the note you land on **retriggers from the start of its envelope** rather than continuing partway through. You get the right note; it just begins again.
+
 ---
 
 *Melody Phase is part of the Rozaya JSFX plugin suite.*
