@@ -72,13 +72,21 @@ Curve shape applied to the fade-up transition. Same options as Fade Down Shape. 
 - **Own durations** — the four dwell sliders are literal seconds and the cycle is however long they add up to. This is the original behaviour and the default, so existing projects are unchanged.
 - **Host x** — the four sliders keep their *proportions* but the whole cycle is stretched or squeezed to fit **Cycle length (beats)** at the project tempo. The shape you tuned by ear survives; only the speed changes.
 
-**Cycle length (beats)** `0.25–128, default 12` *(hidden unless Cycle mode is Host x)*
-How many beats one full dwell pattern takes. The default 12 matches the default durations (4 + 1 + 6 + 1 = 12 sec) so switching modes at 60 BPM changes nothing audible.
+**Cycle length mode** `Fit to durations / Set in beats, default Fit to durations` *(hidden unless Cycle mode is Host x)*
 
-Three things follow from this that are worth knowing before you reach for it:
+- **Fit to durations** — the cycle is however long your four dwell sliders add up to, in beats. Which means **each of the four is simply a beat count**: type `2` into Fade Down and the fade is two beats. Nothing to add up, nothing to convert, and the sum is worked out for you.
+- **Set in beats** — the cycle is pinned to **Cycle length (beats)** below, and the four durations act as proportions filling it. Use this when you want a shape you've tuned by ear squeezed into a fixed number of beats.
 
-- **The dwell sliders become shape controls, not length controls.** In Host x, doubling High Dwell doesn't make the cycle longer — it makes the high hold take a bigger share of the same cycle, and everything else shrinks to fit. Same for Drift and Speed Ramp aimed at any of the four.
-- **Drift period follows the tempo too.** It's counted in cycles, and a cycle is now a fixed number of beats, so a drift period of 8 stays "eight cycles" whatever the tempo does.
+Fit is the plugin's own way of thinking, just expressed in beats instead of seconds — Sweep Dwell has never had a rate slider; it has four times whose sum *is* the cycle. That's how envelopes work too (attack, decay, release — nobody sets a total). Set in beats is the LFO family's convention, borrowed in for when it's the more useful one.
+
+Either way, Fit uses your four **slider** values, never the drifted ones. Drift and Speed Ramp still only move the shape and can't make the cycle wander in length.
+
+**Cycle length (beats)** `0.25–128, default 12` *(hidden unless Cycle length mode is Set in beats)*
+How many beats one full dwell pattern takes. The default 12 matches the default durations (4 + 1 + 6 + 1) so the two modes agree out of the box.
+
+Two more things worth knowing before you reach for Host x:
+
+- **In Set in beats, the dwell sliders become shape controls, not length controls.** Doubling High Dwell doesn't make the cycle longer — it makes the high hold take a bigger share of the same cycle, and everything else shrinks to fit. Same for Drift and Speed Ramp aimed at any of the four. (In Fit to durations they stay length controls, which is the point of it.)
 - **Start Delay stays in literal seconds.** It's a "wait before the effect arrives" control rather than musical pacing, so it doesn't follow the tempo. If you're staggering two instances against each other, that's the one to watch.
 
 Switching Cycle mode changes what the dwell numbers *mean*, and nothing rescales them for you. Nothing is lost — flip back and the seconds are still there — but the sound will jump.

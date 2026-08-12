@@ -150,6 +150,20 @@ slider37:0<0,60,0.1>Speed ramp start delay (minutes)
 slider38:0<0,1,1{Own durations,Host x}>Cycle mode
 slider39:12<0.25,128,0.25>Cycle length (beats)
 
+// How the cycle length is arrived at, in Host x.
+//   Fit to durations (default) — the cycle is however long the four dwell
+//     sliders ADD UP TO, in beats. So each of the four IS a beat count: type
+//     2 into Fade Down and the fade is two beats. Nothing to add up, nothing
+//     to convert. This is the plugin's native model (it was born with no rate
+//     slider at all — four times whose sum is the cycle) simply expressed in
+//     beats instead of seconds, and it's the envelope family's convention.
+//   Set in beats — the cycle is pinned to Cycle length (beats) and the four
+//     durations act as PROPORTIONS filling it. The LFO family's convention:
+//     a fixed shape squeezed into a fixed number of beats.
+// Fit uses the four SLIDER values, never the drifted ones, so Drift and Speed
+// Ramp still only move the shape and can't make the cycle wander in length.
+slider40:0<0,1,1{Fit to durations,Set in beats}>Cycle length mode
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -405,8 +419,14 @@ dry             = 1 - wet;
 phase_offset    = slider11 / 360;
 
 cycle_mode      = slider38;
-cycle_beats     = max(slider39, 0.001);
-slider_show(slider39, cycle_mode == 1);
+cycle_len_mode  = slider40;
+// Fit mode: the cycle is the sum of the four dwell sliders, so each of them
+// is a beat count directly. Raw slider values on purpose — see slider40.
+cycle_beats     = cycle_len_mode == 0
+                    ? max(slider3 + slider5 + slider4 + slider7, 0.001)
+                    : max(slider39, 0.001);
+slider_show(slider39, cycle_mode == 1 && cycle_len_mode == 1);
+slider_show(slider40, cycle_mode == 1);
 
 // ===== PAN BLOCK SLIDER READ START =====
 pan_enabled     = slider13;
@@ -558,7 +578,13 @@ fade_down_shape = slider6;
 fade_up_secs    = slider7;
 fade_up_shape   = slider8;
 cycle_mode      = slider38;
-cycle_beats     = max(slider39, 0.001);
+cycle_len_mode  = slider40;
+// Fit mode: cycle length is the sum of the four dwell sliders (so each one is
+// a beat count). Set-in-beats mode: pinned to slider39, the four acting as
+// proportions. Raw slider values either way, so drift moves shape not length.
+cycle_beats     = cycle_len_mode == 0
+                    ? max(slider3 + slider5 + slider4 + slider7, 0.001)
+                    : max(slider39, 0.001);
 // In Host x the cycle length comes from the tempo, not from the sum of the
 // four durations. Computed once here so the drift reference period and the
 // dwell LFO frequency below both use exactly the same number.
