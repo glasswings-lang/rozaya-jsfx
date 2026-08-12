@@ -109,7 +109,7 @@ slider47:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // the pulse wave) so there's no bloodflow target — see CLAUDE.md for
 // the design point on whether bloodflow should ever be an independent
 // layer.
-slider48:0<0,9,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Speed ramp target
+slider48:0<0,9,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Speed ramp target
 slider49:0<-2000,2000,0.1>Speed ramp by
 slider50:0<0,60,0.1>Speed ramp duration (minutes)
 slider51:0<0,1,1{Off,On}>Speed ramp engage
@@ -128,7 +128,7 @@ slider53:0<0,30,0.1>Breaths per minute (0=off; rescales durations 16-19)
 // Switching the selector saves the current values to the old target's
 // memory slot and loads the new target's values into the sliders.
 // All seven targets' drifts run in parallel.
-slider54:0<0,9,1{Heart BPM,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Drift target
+slider54:0<0,9,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Drift target
 slider55:0<0,2000,0.1>Drift up amount (units match target)
 slider56:0<0,2000,0.1>Drift down amount (units match target)
 slider57:8<1,1000,1>Drift period (heartbeats or breath cycles)
@@ -309,6 +309,12 @@ pr_smooth = exp(-1 / (srate * 0.003));
 // BPM smoother state.
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 bpm_target               = slider1;
+// host_mult is what turns slider1's own unit into BPM: 1 in Own BPM mode, the
+// project tempo in Host x (where slider1 is a multiplier). Drift and Speed
+// Ramp offsets on the rate are scaled by it at the consumption site, so they
+// stay deltas in whatever unit slider1 is currently showing rather than being
+// raw BPM that means a different proportion at every tempo.
+host_mult = 1;
 bpm_smoothed             = slider1;
 
 // Speed ramp state. ramp_t advances 0->1 over slider50 minutes while
@@ -455,7 +461,8 @@ slider_show(slider63, rate_mode == 1);
 // the per-sample smoother, and cycle_len / the drift period / Start Delay
 // all derive from it, so feeding the right number in is the whole job.
 // A pulse locked to musical tempo is a deliberate creative option here.
-bpm_target = rate_mode == 1 ? max(tempo, 0.001) * slider1 : slider1;
+host_mult  = rate_mode == 1 ? max(tempo, 0.001) : 1;
+bpm_target = slider1 * host_mult;
 systole_samples = floor(srate * slider5 * 0.001);
 s1_vol = slider6;
 s2_vol = slider7;
@@ -645,7 +652,8 @@ breath_freq_active = (target_drift_up[8] > 0 || target_drift_down[8] > 0 ||
 // Follow the project tempo live in Host x. @slider does not re-run on a
 // tempo change, so these repeat here; everything else is per-sample.
 rate_mode == 1 ? (
-  bpm_target = max(tempo, 0.001) * slider1;
+  host_mult  = max(tempo, 0.001);
+  bpm_target = slider1 * host_mult;
   start_delay_sec = slider41 * 60 / max(bpm_target, 0.001);
 );
 
@@ -765,7 +773,12 @@ rsa_baseline_bpm > 0 ? (
 // heart offset. All additive in raw BPM.
 // Floor lowered from 20 to 0.01 -- see the heartbeat note; a silent clamp
 // would defeat Host x at small multipliers.
-effective_bpm  = max(bpm_smoothed + target_drift_offset[0] + heart_with_breath_offset + speed_ramp_heart_offset, 0.01);
+// Drift and Speed Ramp on the heart rate are scaled by host_mult so they're
+// deltas in slider units (bpm_smoothed already carries the multiply, so
+// scaling the offsets alone is equivalent while keeping the smoother).
+// RSA is deliberately NOT scaled: its depth slider is a BPM swing in every
+// mode, not a delta on the rate slider, so its unit doesn't change with mode.
+effective_bpm  = max(bpm_smoothed + (target_drift_offset[0] + speed_ramp_heart_offset) * host_mult + heart_with_breath_offset, 0.01);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // Apply systole drift (target 1) + Speed Ramp offset: baseline ms + drift + ramp.

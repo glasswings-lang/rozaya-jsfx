@@ -53,7 +53,7 @@ slider16:0<0,1000,1>Rest for (beats)
 // start-delay was stranded at slider28. Old IDs 17-20 + 28 are now unused;
 // Speed Ramp configs reset on this upgrade (magic already bumped). Declared
 // here for context; REAPER orders by ID so they appear grouped at 29-33.
-slider29:0<0,3,1{Heart BPM,S1-S2 gap,Breath HRV depth,Random HRV depth}>Speed ramp target
+slider29:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Speed ramp target
 slider30:0<-400,400,0.01>Speed ramp by
 slider31:0<0,60,0.1>Speed ramp duration (minutes)
 slider32:0<0,1,1{Off,On}>Speed ramp engage
@@ -81,7 +81,7 @@ slider32:0<0,1,1{Off,On}>Speed ramp engage
 // to Heart BPM, slider22-23 become up/down amounts in BPM). Reset
 // drift sliders to defaults after upgrade and reconfigure if you'd
 // used the old block.
-slider21:0<0,3,1{Heart BPM,S1-S2 gap,Breath HRV depth,Random HRV depth}>Drift target
+slider21:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Drift target
 slider22:0<0,50,0.1>Drift up amount (units match target)
 slider23:0<0,50,0.1>Drift down amount (units match target)
 slider24:8<1,1000,1>Drift period (heartbeats)
@@ -207,6 +207,12 @@ pr_enabled     = 0;
 // smoothed from a stale default.
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 bpm_target               = slider1;
+// host_mult is what turns slider1's own unit into BPM: 1 in Own BPM mode, the
+// project tempo in Host x (where slider1 is a multiplier). Drift and Speed
+// Ramp offsets on the rate are scaled by it at the consumption site, so they
+// stay deltas in whatever unit slider1 is currently showing rather than being
+// raw BPM that means a different proportion at every tempo.
+host_mult = 1;
 bpm_smoothed             = slider1;
 // Speed Ramp state. Per-target memory bank for 4 targets' signed
 // `by` amounts (Heart BPM, S1-S2 gap, Breath HRV depth, Random HRV
@@ -315,7 +321,8 @@ slider_show(slider35, rate_mode == 1);
 // the per-sample smoother, and cycle_len / the drift period / Start Delay
 // all derive from it, so feeding the right number in is the whole job.
 // A pulse locked to musical tempo is a deliberate creative option here.
-bpm_target = rate_mode == 1 ? max(tempo, 0.001) * slider1 : slider1;
+host_mult  = rate_mode == 1 ? max(tempo, 0.001) : 1;
+bpm_target = slider1 * host_mult;
 
 // Speed Ramp target selector save/restore (nested-selector pattern). slider29
 // = target; slider30 = per-target `by`; slider31 = per-target duration;
@@ -431,7 +438,8 @@ pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 // Follow the project tempo live in Host x. @slider does not re-run on a
 // tempo change, so these repeat here; everything else is per-sample.
 rate_mode == 1 ? (
-  bpm_target = max(tempo, 0.001) * slider1;
+  host_mult  = max(tempo, 0.001);
+  bpm_target = slider1 * host_mult;
   start_delay_sec = slider14 * 60 / max(bpm_target, 0.001);
 );
 
@@ -526,7 +534,10 @@ rand_hrv_depth       = max(slider13 + speed_ramp_rand_hrv_offset + target_drift_
 // Floor lowered from 10 to 0.01: it existed as a physiological sanity bound,
 // but in Host x a small multiplier can legitimately land below it and a
 // silent clamp would defeat the mode exactly as rhythm-track's did.
-effective_bpm  = max(bpm_smoothed + speed_ramp_heart_offset + target_drift_offset[0], 0.01);
+// Rate offsets are scaled by host_mult so they're deltas in slider units.
+// bpm_smoothed already carries the multiply, so scaling only the offsets is
+// equivalent to (units + offsets) * host_mult while keeping the smoother.
+effective_bpm  = max(bpm_smoothed + (speed_ramp_heart_offset + target_drift_offset[0]) * host_mult, 0.01);
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // (No transport-edge reset here — Path A. REAPER re-runs @init on every

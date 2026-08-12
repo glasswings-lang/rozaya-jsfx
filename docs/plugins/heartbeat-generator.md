@@ -112,11 +112,11 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 ### Speed Ramp
 
-Nested-selector pattern matching Womb v3. Pick one of 4 targets (Heart BPM, S1-S2 gap, Breath HRV depth, Random HRV depth) on slider 29, then set a signed `by` amount on slider 30. All 4 targets ramp in parallel; the selector just changes which one you're editing.
+Nested-selector pattern matching Womb v3. Pick one of 4 targets (Heart rate, S1-S2 gap, Breath HRV depth, Random HRV depth) on slider 29, then set a signed `by` amount on slider 30. All 4 targets ramp in parallel; the selector just changes which one you're editing.
 
 *(v2.14 reorg: the Speed Ramp block is now a contiguous selector-first group at sliders **29–33** — target 29, by 30, duration 31, engage 32, start-delay 33 — so it tabs together. Old IDs 17–20 + 28 are retired; Speed Ramp configs reset on upgrade.)*
 
-**Speed ramp target (slider 29)** `Heart BPM / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart BPM`
+**Speed ramp target (slider 29)** `Heart rate / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart rate`
 The 4-option selector. Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 4 targets ramp regardless of which one is selected.
 
 **Speed ramp duration (slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Speed ramp engage (slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
@@ -125,7 +125,9 @@ Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clo
 
 **Speed ramp by (slider 30)** `-400 to +400, step 0.01, default 0`
 Signed delta in the selected target's natural unit. **0** = no change. Examples:
-- Heart BPM target, by -35: heart ramps from 70 → 35 BPM over the duration.
+- Heart rate target, by -35: heart ramps from 70 → 35 BPM over the duration.
+
+In **Host x** the rate targets take a *multiplier* delta rather than BPM, matching what the BPM slider itself means in that mode — at a multiplier of `1`, a `by` of `-0.5` ends at `0.5`, half speed and still following the project. Landing the delta on the multiplier is what lets it stretch with the project tempo instead of being a fixed BPM amount that means a different proportion at every tempo. (RSA / HRV depth is unaffected — its own slider is a BPM swing in every mode, so its unit doesn't change.)
 - S1-S2 gap target, by +50: systole stretches from 120 → 170 ms.
 - Breath HRV depth target, by +0.05: breath-coupled HRV grows from baseline by 0.05.
 - Random HRV depth target, by -0.01: random HRV shrinks by 0.01 toward 0.
@@ -142,7 +144,7 @@ A small ~100 ms smoother sits between the BPM slider and the audio, so manual BP
 
 ### Drift (v2.9 nested-selector)
 
-Slow organic wander applied independently to any of four targets: Heart BPM, S1-S2 gap, Breath HRV depth, or Random HRV depth. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
+Slow organic wander applied independently to any of four targets: Heart rate, S1-S2 gap, Breath HRV depth, or Random HRV depth. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
 Same pattern as Womb v3's drift and the Speed Ramp block above. The 4 drift targets are intentionally the same set as the 4 Speed Ramp targets and use the same selector indices, so once you've decided "I want to wind down the heart over 30 min and wander the systole gap a bit" you can configure both blocks on the same target indices.
 
@@ -150,11 +152,11 @@ Switching the **Drift target** selector saves the current sliders 22-25 into the
 
 For slow wall-clock-feel drift, set a long period (~360 heartbeats ≈ 5 min at 72 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (heartbeats), and you express the timescale you want with the period value.
 
-**Drift target** `Heart BPM / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart BPM`
+**Drift target** `Heart rate / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart rate`
 Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount** `0.0–50.0, default 0` (units match target)
-How far above the target's baseline the drift wanders at its peak. Units are BPM for Heart BPM, ms for S1-S2 gap, fractional depth (0.0-0.25 range) for Breath HRV depth, fractional depth (0.0-0.08 range) for Random HRV depth. 0 = drift off on the up side.
+How far above the target's baseline the drift wanders at its peak. Units are BPM for Heart rate, ms for S1-S2 gap, fractional depth (0.0-0.25 range) for Breath HRV depth, fractional depth (0.0-0.08 range) for Random HRV depth. 0 = drift off on the up side.
 
 **Drift down amount** `0.0–50.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric biological-feel wander supported. Either non-zero activates drift for the target; both 0 = drift off.
@@ -171,7 +173,7 @@ On every transport play press, drift cycle restarts: all 4 targets' phase counte
 
 #### Migration from v2.8
 
-The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 21-27) was 7 sliders covering Heart BPM only. v2.9 is 5 sliders covering 4 independent targets, reusing slider IDs 21-25; sliders 26 and 27 are no longer declared. Old project values get reinterpreted (selector defaults to Heart BPM; non-zero amounts on sliders 22-23 will produce drift on the Heart BPM target). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 21-27) was 7 sliders covering Heart rate only. v2.9 is 5 sliders covering 4 independent targets, reusing slider IDs 21-25; sliders 26 and 27 are no longer declared. Old project values get reinterpreted (selector defaults to Heart rate; non-zero amounts on sliders 22-23 will produce drift on the Heart rate target). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 

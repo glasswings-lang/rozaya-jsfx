@@ -52,7 +52,7 @@ slider16:0<0,1000,1>Rest for (beats)
 // their Speed Ramp + Drift configs on upgrade (both are off-by-default; the
 // metronome sound on sliders 1-16 is untouched). Re-add the instance for
 // clean defaults, or reconfigure. See the manual's migration note.
-slider17:0<0,1,1{Tempo BPM,Swing amount}>Speed ramp target
+slider17:0<0,1,1{Tempo,Swing amount}>Speed ramp target
 slider18:0<-300,300,0.1>Speed ramp by (units match target)
 slider19:0<0,60,0.1>Speed ramp duration (minutes)
 slider20:0<0,1,1{Off,On}>Speed ramp engage
@@ -67,7 +67,7 @@ slider21:0<0,60,0.1>Speed ramp start delay (minutes)
 // targets. For slow wall-clock feel, set a long period (~960 beats ≈ 8 min
 // at 120 BPM). (Drift IDs shifted +1 from the old 21-25 layout in the v2.14
 // reorg above — same reset story.)
-slider22:0<0,1,1{Tempo BPM,Swing amount}>Drift target
+slider22:0<0,1,1{Tempo,Swing amount}>Drift target
 slider23:0<0,50,0.1>Drift up amount (units match target)
 slider24:0<0,50,0.1>Drift down amount (units match target)
 slider25:8<1,1000,1>Drift period (beats)

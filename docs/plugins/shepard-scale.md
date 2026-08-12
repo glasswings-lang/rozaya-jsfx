@@ -109,7 +109,7 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 In-plugin one-time morph over time, without automation envelopes. As of v2.14 Speed Ramp is nested-selector (same shape as Drift) and reaches the **same four targets as Drift** — BPM, Note Length %, Attack %, Release %. It is **fully per-target**: each target has its own `by`, its own duration, and its own start delay, so different targets can wind down over different timelines from a single engage. Only **engage** is global.
 
-**Speed ramp target (slider 52)** `BPM / Note Length % / Attack % / Release %, default BPM`
+**Speed ramp target (slider 52)** `Tempo / Note Length % / Attack % / Release %, default Tempo`
 Picks which target the `by`, duration, and start delay sliders are currently editing. Switching the selector saves those three into the old target's memory slot, then loads the new target's stored values. Sits at the top of the Speed Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
 **Speed ramp by (slider 53)** `-300 to +300, step 0.1, default 0` (units match the selected target)
@@ -135,7 +135,7 @@ Same pattern as Womb v3's drift and the matching block in Heartbeat / Breath Gen
 
 For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (beats, paced by the BPM clock), and you express the timescale you want with the period value.
 
-**Drift target (slider 57)** `BPM / Note Length % / Attack % / Release %, default BPM`
+**Drift target (slider 57)** `Tempo / Note Length % / Attack % / Release %, default Tempo`
 Picks which target's drift configuration sliders 58-61 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount (slider 58)** `0.0–100.0, default 0` (units match target)
