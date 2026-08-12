@@ -1154,7 +1154,8 @@ host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
 // block's actual position against the one the previous block predicted --
 // normal playback agrees to far under the 0.25-beat threshold.
 transport_moving = (play_state == 1 || play_state == 5);
-transport_moving && (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ?
+rate_mode == 3 && transport_moving
+  && (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ?
   ( seq_place_pending = 1; seq_place_beats = max(beat_position, 0); );
 predicted_beat_pos = beat_position + samplesblock * max(tempo, 0.001) / (60 * srate);
 was_moving = transport_moving;
@@ -1332,7 +1333,11 @@ seq_started == 0 ? (
     // fires the first note again on EVERY playhead move while playing --
     // audibly, and even where the gate or a finished sequence says silence.
     // The placement below sets the real position and triggers there.
-    !seq_place_pending ? trigger_seq_voice(-1);
+    //
+    // DEFERRED, not dropped. The placement owns the trigger from here, and it
+    // fires one even when it decides not to move anything -- otherwise a
+    // pending flag that leads to no placement eats the first note entirely.
+    seq_place_pending ? seq_place_needs_trigger = 1 : trigger_seq_voice(-1);
     seq_started = 1;
     // Count this step toward the play period. No threshold check on
     // the first step (pr_step is 0; threshold is always >= 1 when
@@ -1547,9 +1552,18 @@ seq_place_pending ? (
           pr_frozen_prev_voice = -1;
         );
       );
+      // Placement owns the deferred trigger now, whatever it decided.
+      seq_place_needs_trigger = 0;
       (seq_started && !place_end && !place_frozen && (!pr_enabled || !pr_resting)) ?
         trigger_seq_voice(-1);
     );
+  );
+  // Placement declined -- wrong mode, per-voice timing drift active, or no
+  // active voice to place. Fire the note the start branch deferred, where it
+  // would have been anyway.
+  seq_place_needs_trigger ? (
+    seq_place_needs_trigger = 0;
+    trigger_seq_voice(-1);
   );
 );
 
