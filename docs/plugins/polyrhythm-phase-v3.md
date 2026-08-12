@@ -46,7 +46,43 @@ Sets how each voice's tremolo rate is determined.
 - **Drift** — all voices share a single global rate (set by Rate Value and Rate Mode), with each voice adding its own Drift / Rate value as an offset. A voice with a drift of +5 runs slightly faster than the global rate; one with -5 runs slightly slower. This creates organic polyrhythmic drift from a common tempo anchor.
 - **Independent** — the global Rate Value is hidden. Each voice's Drift / Rate slider sets that voice's tremolo rate directly in the units selected by Rate Mode. Voices can run at entirely different rates with no shared reference.
 
-**Rate Mode** `BPM / Seconds / Hz`
+**Rate Mode** `BPM / Seconds / Hz / Host x`
+
+### Host x — following the project tempo
+
+In the first three modes each instance holds its own absolute rate, and nothing
+in the plugin knows another instance exists. That's fine until you want to
+change the speed of a whole arrangement: nudging each one by hand changes the
+*relationships* between them, not just the pace, and layers that used to nest
+start scattering. Restarting the transport can't fix that — restart resets
+phase, not ratio.
+
+**Host x** makes Rate Value a **multiplier of the project tempo**. x1 = one
+cycle per beat, x2 = twice as fast, x0.5 = half. Higher is faster, same as BPM
+and Hz (only Seconds inverts). Move the tempo and everything moves with it, in
+proportion.
+
+This is **not** quantising — Rate Value stays continuous, so deliberately
+unlocked relationships survive a tempo change just as locked ones do. `x1` and
+`x0.5` nest forever; `x1` against `x0.618` never resolves, and keeps not
+resolving in the same way at any tempo.
+
+All eight voices follow together, along with the Play/Rest counters, the drift
+period and Start Delay. **Pitch does not** — a tempo change moves the pulse, it
+doesn't transpose the tone.
+
+**Host ratio (writes Rate Value)** `Custom / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Custom)
+Shown only in Host x mode. Choosing an entry writes that multiplier into Rate
+Value and then gets out of the way — it doesn't hold the value, so you can
+still type or automate anything. **Custom** never writes anything. It's
+deliberately not called "Free", because in sync UI that means free-running,
+which is what the other three modes already are. Entries are named for what you
+HEAR, not as note values: "every 4 beats" is one cycle across four beats, and
+is deliberately *not* written `1/4`, which everywhere else means a quarter NOTE
+and sits at the opposite end of the scale.
+
+> **Switching Rate Mode changes what Rate Value means, and nothing rescales it
+> for you.** Set the mode first, then the rate — or use the picker.
 Unit for interpreting rate values, both global and per-voice.
 
 **Rate Value (Drift only)** `0.001-1000, default 60`

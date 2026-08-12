@@ -16,7 +16,7 @@ desc: Binaural Polyrhythm Oscillator v2
 
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
-slider2:0<0,2,1{BPM,Seconds,Hz}>Rate Mode
+slider2:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
 slider3:60<0.001,1000,0.001>Rate Value (Drift only)
 slider4:4<0,100,0.1>Binaural Beat Hz (L/R offset)
 slider5:100<0,100,0.1>On Duration % of Cycle
@@ -232,6 +232,13 @@ slider81:0<0,60,0.1>Speed ramp duration (minutes)
 slider82:0<0,1,1{Off,On}>Speed ramp engage
 slider83:0<0,60,0.1>Speed ramp start delay (minutes)
 
+// Convenience picker for Host x, not a grid: WRITES a multiplier into Rate
+// Value on change, then gets out of the way. "Custom" (default) never writes.
+// Not called "Free" -- in sync UI that means FREE-RUNNING, which is what the
+// other three Rate Modes already are. Labelled by what you HEAR, never as note
+// values ("1/4" means a quarter NOTE everywhere else, the opposite end).
+slider84:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
+
 // ===== CHARACTER (global post-effects) =====
 // Four sliders that adjust the character of WHATEVER waveform is
 // selected. Applied to the summed output of all voices after all
@@ -345,6 +352,19 @@ slider79:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 R
 // up/down/period/shape + the Speed Ramp `by` bank); those are guarded by
 // drift_cfg_inited below so they survive across play presses.
 PHI = 1.6180339887;
+
+// Host tempo capture. `tempo` is a READ-ONLY JSFX system variable (assigning
+// to it is silently ignored -- that is the rhythm-track bug in CLAUDE.md). We
+// only READ it, into our own global, deliberately NOT named `tempo`. The live
+// tempo is applied as host_scale in @block; nothing here remembers it, so
+// nothing goes stale when @init re-runs on transport play.
+host_bpm   = max(tempo, 0.001);
+host_scale = 1;
+
+// The Host ratio picker adopts its saved value on load rather than firing, so
+// a project that saved a picker position doesn't have its hand-set Rate Value
+// overwritten the moment it opens.
+host_ratio_inited = 0;
 
 // Memory layout — 16 slots each
 osc_phase_l  = 0;
@@ -570,8 +590,18 @@ local(aw, rw, hold_w, re_start, t, result, total) (
 );
 
 function rate_to_hz(raw_rate, rmode) (
+  // Host x (mode 3) returns a NOMINAL rate in cycles/sec, computed as if the
+  // project were at 60 BPM, so this stays tempo-INDEPENDENT. The live tempo is
+  // applied separately as host_scale in @block, and the two multiply out.
+  //
+  // Keeping the tempo out of here is what lets the mode survive a transport
+  // press: @init re-runs on every play and wipes globals, so anything that
+  // had to REMEMBER the tempo a derivation was computed against would reset
+  // while the derived values still described the old one. Melody Phase
+  // shipped exactly that bug; don't repeat it.
   rmode == 0 ? max(raw_rate, 0.001) / 60 :
   rmode == 1 ? 1 / max(raw_rate, 0.001) :
+  rmode == 3 ? max(raw_rate, 0.001) :
                max(raw_rate, 0.001)
 );
 
@@ -609,6 +639,39 @@ function polyblep(t, dt) local(s) (
 
 trem_mode     = slider1;
 rate_mode     = slider2;
+
+// --- Host ratio picker (slider84) -> Rate Value -------------------------
+// Fires only when the picker CHANGES, writes the multiplier into Rate Value,
+// then stays out of the way -- it does not hold the value, so hand-editing
+// and automation work exactly as before. "Custom" (0) never writes.
+!host_ratio_inited ? (
+  host_ratio_sel    = slider84;   // adopt on load, do not write
+  host_ratio_inited = 1;
+);
+host_ratio_sel != slider84 ? (
+  host_ratio_sel = slider84;
+  host_ratio_sel > 0 ? (
+    slider3 =
+      host_ratio_sel ==  1 ? 0.125 :
+      host_ratio_sel ==  2 ? 0.25  :
+      host_ratio_sel ==  3 ? 1/3   :
+      host_ratio_sel ==  4 ? 0.5   :
+      host_ratio_sel ==  5 ? 0.618 :
+      host_ratio_sel ==  6 ? 2/3   :
+      host_ratio_sel ==  7 ? 0.75  :
+      host_ratio_sel ==  8 ? 1     :
+      host_ratio_sel ==  9 ? 4/3   :
+      host_ratio_sel == 10 ? 1.5   :
+      host_ratio_sel == 11 ? 1.618 :
+      host_ratio_sel == 12 ? 2     :
+      host_ratio_sel == 13 ? 3     :
+      host_ratio_sel == 14 ? 4     :
+                             8;
+    slider_automate(slider3);
+  );
+);
+slider_show(slider84, rate_mode == 3);
+
 rate_val      = slider3;
 bin_beat_hz   = slider4;
 on_dur_pct    = slider5;
@@ -649,10 +712,15 @@ n_voices              = is_both ? 16 : 8;
 // Mode. BPM beats and Hz cycles are interpreted against the global
 // Rate Value (slider3), which is what "1 beat" or "1 cycle" means.
 // Seconds mode is literal seconds regardless of Rate Value.
+//
+// Every non-Seconds mode means "this many CYCLES", and rate_to_hz already
+// gives cycles-per-second, so the conversion is just units / that. That's
+// algebraically identical to the old per-mode arithmetic (BPM: 60/rate,
+// Hz: 1/rate) and picks up Host x for free rather than falling through to
+// the Hz branch and ignoring the tempo.
 start_delay_units = slider62;
-rate_mode == 0 ? start_delay_sec = start_delay_units * 60 / max(rate_val, 0.001) :
 rate_mode == 1 ? start_delay_sec = start_delay_units :
-                 start_delay_sec = start_delay_units / max(rate_val, 0.001);
+                 start_delay_sec = start_delay_units / max(rate_to_hz(rate_val, rate_mode), 0.001);
 
 // Play/Rest gating — slider values are integer voice-cycle counts.
 // Each voice counts ITS OWN cycles (advancing at v_trem_freq[i],
@@ -955,6 +1023,22 @@ aw_eff + rw_eff > on_frac ? (
 );
 re_start = on_frac - rw_eff;
 
+@block
+// Follow the project tempo while Host x mode is active.
+//
+// host_scale is ABSOLUTE (tempo / 60), never a ratio against a remembered
+// reference tempo: @init re-runs on every transport play and wipes globals, so
+// a remembered reference would reset on play while the stored per-voice rates
+// still described the old tempo -- the change would vanish the instant you
+// pressed play. rate_to_hz computes mode 3 against a nominal 60 BPM instead.
+//
+// This plugin stores a rate PER VOICE, but all eight are multiplied by the one
+// shared combined_scale in the per-sample path, so eight voices is one job,
+// not eight. host_scale is 1 in every other rate mode, leaving BPM / Seconds /
+// Hz projects bit-identical.
+host_bpm = max(tempo, 0.001);
+host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
+
 @sample
 
 // (No transport-edge reset here — Path A. REAPER re-runs @init on every
@@ -994,7 +1078,13 @@ effective_rate_val = rate_val + speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
 effective_rate_hz  = rate_to_hz(effective_rate_val, rate_mode);
 base_rate_hz_ref   = rate_to_hz(rate_val, rate_mode);
 speed_scale_current = effective_rate_hz / max(base_rate_hz_ref, 0.001);
-combined_scale = speed_scale_current;
+// host_scale folds the live project tempo in alongside Speed Ramp (1 outside
+// Host x, so a no-op elsewhere). Everything riding combined_scale -- all eight
+// voices' tremolo phases, the Play/Rest cycle counters and the drift period --
+// follows the tempo for free. The oscillator phase accumulators deliberately
+// do NOT ride it: those are PITCH, and a tempo change must move the pulse
+// without transposing the tone.
+combined_scale = speed_scale_current * host_scale;
 
 // ===== DRIFT (per-plugin, nested-selector) =====
 // Per-target drift wave computation. 13 targets (0=Base Rate, 1-8=
@@ -1142,7 +1232,13 @@ pr_enabled = (play_for_cycles > 0 && rest_for_cycles > 0);
 // When the delay ends, voices begin cleanly from phase 0 (or their
 // phase offsets) rather than from a mid-cycle position.
 start_delay_elapsed < start_delay_sec ? (
-  start_delay_elapsed += 1 / srate;
+  // * host_scale so the delay is counted in the SAME time base as the cycle
+  // lengths. start_delay_sec derives from rate_to_hz, which in Host x is
+  // NOMINAL, so a wall-clock counter here would make the delay wrong by
+  // exactly the tempo ratio while every other timing was right. That is the
+  // bug Melody Phase shipped, and it is hard to read precisely because it is
+  // partial. host_scale is 1 in BPM / Seconds / Hz.
+  start_delay_elapsed += host_scale / srate;
   spl0 = 0;
   spl1 = 0;
 ) : (
