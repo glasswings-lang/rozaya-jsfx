@@ -28,6 +28,17 @@ slider20:8<2,32,1>Cycle Steps (per-cycle modes)
 slider21:2<0.001,1000,0.001>Pan Sweep Rate
 slider22:0<0,2,1{Hz,Seconds,BPM}>Pan Sweep Rate Unit
 slider23:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
+
+// Named picker for the Linked Sweep multiplier, same idea as Host ratio: the
+// raw control is a MULTIPLIER with 0.125 steps, so asking for half speed means
+// typing 0.5 and a quarter means 0.25 -- exposed decimals for something you
+// could just name. Entries are labelled by what you HEAR, never as note values.
+// Only ratios that land on the 0.125 grid are offered (no "every 3 cycles",
+// since a third isn't representable there).
+// Writes the multiplier on change then gets out of the way; "Custom" (default)
+// never writes, and is what a project saved before this slider existed lands
+// on, so nothing already tuned by hand is touched.
+slider40:0<0,8,1{Custom,every 8 cycles,every 4 cycles,every 2 cycles,same as filter,2 per cycle,3 per cycle,4 per cycle,8 per cycle}>Pan speed (Linked Sweep)
 // ===== PAN BLOCK SLIDERS END =====
 
 // Pass-through for N units after playback starts, then apply the
@@ -472,7 +483,24 @@ slider_show(slider19, pan_enabled);
 slider_show(slider20, pan_enabled && pan_mode >= 1 && pan_mode <= 9);
 slider_show(slider21, pan_enabled && (pan_mode == 10 || pan_mode == 11));
 slider_show(slider22, pan_enabled && (pan_mode == 10 || pan_mode == 11));
-slider_show(slider23, pan_enabled && pan_mode == 12);
+// Linked Sweep pan-speed picker. Adopt-on-load so opening a project never
+// overwrites a hand-set multiplier; writes only on a real change.
+!pan_speed_inited ? ( pan_speed_sel = slider40; pan_speed_inited = 1; );
+pan_speed_sel != slider40 ? (
+  pan_speed_sel = slider40;
+  pan_speed_sel > 0 ? (
+    slider23 =
+      pan_speed_sel == 1 ? 0.125 : pan_speed_sel == 2 ? 0.25 :
+      pan_speed_sel == 3 ? 0.5   : pan_speed_sel == 4 ? 1    :
+      pan_speed_sel == 5 ? 2     : pan_speed_sel == 6 ? 3    :
+      pan_speed_sel == 7 ? 4     : 8;
+    slider_automate(slider23);
+  );
+);
+slider_show(slider40, pan_enabled && pan_mode == 12);
+// Hide the raw multiplier unless Custom -- the named list is the way in, and
+// the number only appears when you deliberately want one the list lacks.
+slider_show(slider23, pan_enabled && pan_mode == 12 && slider40 == 0);
 // ===== PAN BLOCK SLIDER READ END =====
 
 // Start Delay: convert to seconds based on Rate Mode. BPM beats and
