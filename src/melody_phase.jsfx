@@ -1413,12 +1413,19 @@ seq_place_pending ? (
             // check and flip first, then increment for the step about to run.
             pr_enabled ? (
               place_prstep >= (place_prrest ? rest_for_steps : play_for_steps) ? (
-                // Entering a Freeze rest costs wall-clock time in which the
-                // sequence does NOT advance, so the period has to include it.
-                (!place_prrest && rest_mode == 1) ?
+                // In FREEZE, a rest is a block of TIME, not a run of steps:
+                // the sequence stands still for its whole length and then
+                // carries straight on playing. So it's consumed atomically
+                // here and the state never sits "resting" between steps.
+                // In WALK the sequencer keeps stepping through rest, so the
+                // state does flip and the steps are counted normally.
+                (!place_prrest && rest_mode == 1) ? (
                   place_period += simulate_rest_duration_seconds(place_walk, rest_for_steps);
-                place_prrest = 1 - place_prrest;
-                place_prstep = 0;
+                  place_prstep = 0;
+                ) : (
+                  place_prrest = 1 - place_prrest;
+                  place_prstep = 0;
+                );
               );
               place_prstep += 1;
             );
@@ -1468,14 +1475,22 @@ seq_place_pending ? (
               pr_enabled ? (
                 place_prstep >= (place_prrest ? rest_for_steps : play_for_steps) ? (
                   (!place_prrest && rest_mode == 1) ? (
-                    // Freeze rest: consume its wall-clock length with the
-                    // sequence standing still. If the target lands inside that
-                    // window, this is where it sits -- frozen on this voice.
+                    // Freeze rest: a block of TIME with the sequence standing
+                    // still. Either the target lands inside it -- frozen on
+                    // this voice, with the timer seeded below -- or the whole
+                    // rest is served and play resumes immediately. It is never
+                    // left half-entered, which is what made a placement land
+                    // "resting" with no rest duration set, and the rest timer
+                    // refuses to run without one: silence that never ended.
                     place_rest = simulate_rest_duration_seconds(place_walk, rest_for_steps);
-                    place_t < place_rest ? ( place_frozen = 1; place_done = 1; ) :
-                                           place_t -= place_rest;
+                    place_t < place_rest ? ( place_frozen = 1; place_done = 1; ) : (
+                      place_t -= place_rest;
+                      place_prstep = 0;
+                    );
+                  ) : (
+                    place_prrest = 1 - place_prrest;
+                    place_prstep = 0;
                   );
-                  place_done ? 0 : ( place_prrest = 1 - place_prrest; place_prstep = 0; );
                 );
                 place_done ? 0 : place_prstep += 1;
               );
