@@ -7,7 +7,7 @@ desc: Resonant Sweeping Filter with Shaped LFO and Pan Modes
 slider1:500<20,20000,1>Frequency Low Hz
 slider2:5000<20,20000,1>Frequency High Hz
 slider3:2<0.001,1000,0.001>Rate Value
-slider4:0<0,2,1{Hz,Seconds,BPM}>Rate Mode
+slider4:0<0,3,1{Hz,Seconds,BPM,Host x}>Rate Mode
 slider5:0<-180,180,0.1>LFO Start Phase (degrees)
 slider6:50<0,100,0.1>On Duration % of Cycle
 slider7:100<0,100,0.1>Depth %
@@ -133,6 +133,12 @@ slider36:0<0,5000,0.01>Drift down amount (units match target)
 slider37:8<1,1000,1>Drift period (cycles)
 slider38:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
+// Convenience picker for Host x. Writes a multiplier into Rate Value on
+// change then gets out of the way; "Custom" (default) never writes. Not
+// called "Free" -- that means FREE-RUNNING in sync UI, which the other
+// three modes already are. Named for what you HEAR, not as note values.
+slider39:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -146,6 +152,12 @@ out_pin:right output
 // from the slider, drift runtime, Speed Ramp, Start Delay, Play/Rest +
 // effect mix). Only the drift CONFIG bank must survive the re-run; it's
 // guarded by drift_cfg_inited below.
+
+// Host tempo capture. `tempo` is READ-ONLY in JSFX; read only, into a global
+// deliberately not named `tempo`. Nothing remembers it across transport.
+host_bpm   = max(tempo, 0.001);
+host_scale = 1;
+host_ratio_inited = 0;
 
 phase_l = 0;
 phase_r = 0;
@@ -379,6 +391,22 @@ freq_lo      = min(slider1, slider2);
 freq_hi      = max(slider1, slider2);
 rate_val     = slider3;
 rate_mode    = slider4;
+!host_ratio_inited ? ( host_ratio_sel = slider39; host_ratio_inited = 1; );
+host_ratio_sel != slider39 ? (
+  host_ratio_sel = slider39;
+  host_ratio_sel > 0 ? (
+    slider3 =
+      host_ratio_sel ==  1 ? 0.125 : host_ratio_sel ==  2 ? 0.25  :
+      host_ratio_sel ==  3 ? 1/3   : host_ratio_sel ==  4 ? 0.5   :
+      host_ratio_sel ==  5 ? 0.618 : host_ratio_sel ==  6 ? 2/3   :
+      host_ratio_sel ==  7 ? 0.75  : host_ratio_sel ==  8 ? 1     :
+      host_ratio_sel ==  9 ? 4/3   : host_ratio_sel == 10 ? 1.5   :
+      host_ratio_sel == 11 ? 1.618 : host_ratio_sel == 12 ? 2     :
+      host_ratio_sel == 13 ? 3     : host_ratio_sel == 14 ? 4     : 8;
+    slider_automate(slider3);
+  );
+);
+slider_show(slider39, rate_mode == 3);
 dur_pct      = slider6;
 depth_pct    = slider7 * 0.01;
 att_pct      = slider8;
@@ -419,8 +447,14 @@ slider_show(slider23, pan_enabled && pan_mode == 12);
 // Start Delay: convert to seconds based on Rate Mode. BPM beats and
 // Hz cycles are interpreted against Rate Value; Seconds is literal.
 start_delay_units = slider24;
-slider4 == 0 ? start_delay_sec = start_delay_units * 60 / max(slider3, 0.001) :
+// These branches were keyed as if Rate Mode were {BPM,Seconds,Hz} like Melody
+// Phase / Polyrhythm. It is {Hz,Seconds,BPM} here, so mode 0 is Hz and mode 2
+// is BPM -- Hz got the BPM formula and BPM the Hz one, putting Start Delay
+// 60x out in both. Same bug as Full Feature Tremolo, copied with the code.
+// (Mode 3 = Host x shares the Hz form: its nominal rate is also cycles per
+// second, with the live tempo applied to the counter via host_scale.)
 slider4 == 1 ? start_delay_sec = start_delay_units :
+slider4 == 2 ? start_delay_sec = start_delay_units * 60 / max(slider3, 0.001) :
                start_delay_sec = start_delay_units / max(slider3, 0.001);
 
 // Play/Rest gate: integer cycle counts. Both must be > 0 for the
@@ -504,6 +538,13 @@ last_sr_target != sr_sel_target ? (
 );
 
 
+@block
+// Follow the project tempo while Host x is active. ABSOLUTE (tempo / 60), not
+// a ratio against a remembered reference -- @init re-runs on play and wipes
+// globals, so a reference would reset and silently discard the change.
+host_bpm = max(tempo, 0.001);
+host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
+
 @sample
 
 // (No transport-edge reset here — Path A. REAPER re-runs @init on every
@@ -515,7 +556,10 @@ last_sr_target != sr_sel_target ? (
 // See docs/v2.9-render-state-bug.md.)
 
 start_delay_elapsed < start_delay_sec ? (
-  start_delay_elapsed += 1 / srate;
+  // * host_scale: start_delay_sec derives from the NOMINAL rate, so a
+  // wall-clock counter would be off by exactly the tempo ratio while every
+  // other timing was right -- the partial failure Melody Phase shipped.
+  start_delay_elapsed += host_scale / srate;
   // No-op — spl0 and spl1 pass through unchanged.
 ) : (
 
@@ -545,8 +589,12 @@ pan_sweep_mode  = slider22;
 pan_sweep_ratio = slider23;
 // ===== PAN BLOCK SAMPLE READ END =====
 
+// Host x (3) is a NOMINAL cycles-per-second (as if the project were at 60
+// BPM); the live tempo arrives separately as host_scale, so nothing here has
+// to remember a tempo and go stale when @init re-runs on transport play.
 rate_mode == 0 ? (freq_raw = rate_val) :
 rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
+rate_mode == 3 ? (freq_raw = rate_val) :
                  (freq_raw = rate_val / 60);
 
 // Smooth the rate slider, advance the speed ramp, apply per-plugin
@@ -587,8 +635,13 @@ slider32 ? (
 effective_rate_val = rate_val + speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
 rate_mode == 0 ? (effective_rate_hz = effective_rate_val) :
 rate_mode == 1 ? (effective_rate_hz = 1 / max(effective_rate_val, 0.001)) :
+rate_mode == 3 ? (effective_rate_hz = effective_rate_val) :
                  (effective_rate_hz = effective_rate_val / 60);
-speed_scale_current = effective_rate_hz / max(freq_raw, 0.001);
+// host_scale folds the live project tempo in here rather than into a
+// combined_scale (this plugin has none -- speed_scale_current is the shared
+// factor, consumed by freq_base below and everything downstream of it).
+// 1 outside Host x, so other modes are bit-identical.
+speed_scale_current = effective_rate_hz / max(freq_raw, 0.001) * host_scale;
 
 // Per-target drift wave computation. 6 targets (0=Sweep Rate, 1=Freq
 // Low, 2=Freq High, 3=Pan Sweep Rate, 4=Resonance, 5=Wet/Dry). Each

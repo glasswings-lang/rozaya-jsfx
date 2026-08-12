@@ -45,7 +45,23 @@ Blend between the filtered signal (wet) and the original unprocessed signal (dry
 **Rate Value** `0.001-1000, default 2`
 The sweep rate in the units set by Rate Mode.
 
-**Rate Mode** `Hz / Seconds / BPM`
+**Rate Mode** `Hz / Seconds / BPM / Host x`
+
+**Host x** makes Rate Value a **multiplier of the project tempo** rather than an
+absolute rate — x1 = one sweep per beat, x2 = twice as fast, x0.5 = half. Move
+the tempo and it moves with it, in proportion, so instances keep their
+relationships instead of scattering. Rate Value stays continuous, so
+deliberately unlocked relationships survive a tempo change too. Applies live.
+
+**Host ratio (writes Rate Value)** `Custom / every 8 beats / … / 8 per beat` (default Custom)
+Shown only in Host x. Writes the multiplier into Rate Value then gets out of the
+way. **Custom** never writes anything, and is deliberately not "Free" — that
+means free-running in sync UI, which the other three modes already are.
+
+> **Fixed at the same time:** Start Delay was 60x out in both Hz and BPM modes.
+> The conversion was written as if Rate Mode were `{BPM, Seconds, Hz}` (as in
+> Melody Phase and Polyrhythm Phase) when here it is `{Hz, Seconds, BPM}`, so Hz
+> got the BPM formula and BPM the Hz one. Seconds was always correct.
 How Rate Value is interpreted.
 - **Hz** — cycles per second.
 - **Seconds** — period of one full cycle.
