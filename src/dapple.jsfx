@@ -31,7 +31,7 @@ desc: Dapple
 // Resonant lowpass is the Cockos state-variable topology (standard JSFX);
 // noise is Park-Miller (MINSTD), one independent stream per channel.
 
-slider1:6<0.2,40,0.1>Bubble rate (per second)
+slider1:6<0.001,1000,0.001>Bubble rate (per second, or multiplier in Host x)
 slider2:70<0,100,1>Timing randomness %
 slider3:150<40,1500,1>Pitch (Hz)
 slider4:50<0,100,1>Pitch spread %
@@ -48,6 +48,19 @@ in_pin:right input
 out_pin:left output
 out_pin:right output
 
+
+// --- Host tempo sync (sliders 12-13) ------------------------------------
+// Own rate: free-running bubbles per second -- the original behaviour.
+// Host x:   Bubble rate becomes a MULTIPLIER of the project tempo, so x1
+//           is one bubble per beat. Two entries only; this plugin has one
+//           unit. Appended at the END per the never-renumber rule.
+slider12:0<0,1,1{Own rate,Host x}>Rate Mode
+
+// Writes a multiplier into Bubble rate on change then gets out of the way.
+// "Custom" (default) never writes. Not "Free" -- that means FREE-RUNNING
+// in sync UI, which Own rate already is.
+slider13:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Bubble rate)
+
 @init
 // Path A: no ext_noinit, so @init re-runs on transport play and reseeds.
 NV = 32;                     // voices per channel
@@ -61,8 +74,32 @@ eR = 160;  p0R = 192;  n3R = 224;   n4R = 256;   phR = 288;   // right 160..319
 memset(0, 0, 320);
 SINE_LEVEL = 0.3;            // tonal-voice level, roughly matched to the noise voice
 
+// `tempo` is READ-ONLY in JSFX; read only, into a global not named `tempo`.
+host_ratio_inited = 0;
+
 @slider
-rate      = max(slider1, 0.01);
+rate_mode = slider12;
+!host_ratio_inited ? ( host_ratio_sel = slider13; host_ratio_inited = 1; );
+host_ratio_sel != slider13 ? (
+  host_ratio_sel = slider13;
+  host_ratio_sel > 0 ? (
+    slider1 =
+      host_ratio_sel ==  1 ? 0.125 : host_ratio_sel ==  2 ? 0.25  :
+      host_ratio_sel ==  3 ? 1/3   : host_ratio_sel ==  4 ? 0.5   :
+      host_ratio_sel ==  5 ? 0.618 : host_ratio_sel ==  6 ? 2/3   :
+      host_ratio_sel ==  7 ? 0.75  : host_ratio_sel ==  8 ? 1     :
+      host_ratio_sel ==  9 ? 4/3   : host_ratio_sel == 10 ? 1.5   :
+      host_ratio_sel == 11 ? 1.618 : host_ratio_sel == 12 ? 2     :
+      host_ratio_sel == 13 ? 3     : host_ratio_sel == 14 ? 4     : 8;
+    slider_automate(slider1);
+  );
+);
+slider_show(slider13, rate_mode == 1);
+// Host x: slider1 is a multiplier of the project tempo, converted to
+// bubbles-per-second here (tempo/60 = beats per second). @block repeats
+// this so a tempo change lands live.
+rate      = rate_mode == 1 ? max(max(tempo,0.001)/60*slider1, 0.0001)
+                           : max(slider1, 0.01);
 jitter    = slider2 * 0.01;
 basePitch = slider3;
 spreadOct = slider4 * 0.01 * 3;      // up to 3 octaves of random pitch
@@ -74,6 +111,11 @@ outlev    = 2 ^ (slider9 / 6);
 tone      = slider10 * 0.01;         // 0 = noise voice, 1 = tonal plink
 inp       = slider11 * 0.01;         // 0 = internal noise, 1 = excite noise voice from input
 meanIntv  = srate / rate;            // avg samples between bubbles
+
+@block
+// Follow the project tempo live in Host x. @slider does not re-run when the
+// tempo changes, so the rate is recomputed here.
+rate_mode == 1 ? rate = max(max(tempo,0.001)/60*slider1, 0.0001);
 
 @sample
 dryL = spl0;

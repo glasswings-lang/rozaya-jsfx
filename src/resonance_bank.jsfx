@@ -57,7 +57,18 @@ slider9:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Drift target
 slider10:0<0,1000,0.1>Drift up amount (units match target)
 slider11:0<0,1000,0.1>Drift down amount (units match target)
 slider12:0<0,1000,0.001>Drift period (interpret by mode; 0 = off)
-slider13:2<0,2,1{BPM,Hz,Seconds}>Drift period mode
+// NOTE the ordering here is {BPM,Hz,Seconds} -- a THIRD variant. Melody Phase
+// and Polyrhythm use {BPM,Seconds,Hz}; Tremolo and the sweeping filter use
+// {Hz,Seconds,BPM}. Seconds is index 2 here, not 1. Any code copied between
+// plugins that special-cases "the Seconds branch" by index will be WRONG here
+// -- that mistake put Start Delay 60x out in two plugins already. The
+// conversions below are correct for THIS ordering; leave them keyed by name.
+//
+// Host x appends at index 3. No ratio picker on this one: the period is a
+// PER-BAND value living behind the drift selector, not a headline rate, so a
+// picker writing into the visible slider would fight the selector's own
+// save/restore (see the nested-selector note in CLAUDE.md).
+slider13:2<0,3,1{BPM,Hz,Seconds,Host x}>Drift period mode
 slider14:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 slider15:0<0,1,1{Parallel bandpass,Serial peaking EQ}>Mode
@@ -324,6 +335,9 @@ mode == 1 ? (
         d_per_mode == 0 ? d_cps = d_per / 60;
         d_per_mode == 1 ? d_cps = d_per;
         d_per_mode == 2 ? d_cps = 1.0 / d_per;
+        // Host x: d_per is a multiplier of the project tempo. Applied right
+        // here, per band, so bands in other modes are untouched.
+        d_per_mode == 3 ? d_cps = d_per * max(tempo, 0.001) / 60;
 
         band_drift_phase[slot] += d_cps / srate;
         band_drift_phase[slot] >= 1.0 ? (
@@ -443,6 +457,9 @@ mode == 1 ? (
         d_per_mode == 0 ? d_cps = d_per / 60;
         d_per_mode == 1 ? d_cps = d_per;
         d_per_mode == 2 ? d_cps = 1.0 / d_per;
+        // Host x: d_per is a multiplier of the project tempo. Applied right
+        // here, per band, so bands in other modes are untouched.
+        d_per_mode == 3 ? d_cps = d_per * max(tempo, 0.001) / 60;
 
         band_drift_phase[slot] += d_cps / srate;
         band_drift_phase[slot] >= 1.0 ? (
