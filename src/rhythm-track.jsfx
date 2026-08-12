@@ -143,6 +143,16 @@ beat_index       = 0;
 track_bpm        = slider1;
 samples_per_beat = (60.0 / max(slider1, 0.001)) * srate;
 
+// rate_units is slider1 in ITS OWN unit — plain BPM in Own BPM mode, a
+// multiplier of the project tempo in Host x — and host_mult is what turns
+// one into the other. Drift and Speed Ramp offsets are added to rate_units
+// BEFORE the multiply, so they're deltas in whatever unit the Tempo slider
+// is currently showing. That matches the seven plugins whose ramp adds
+// straight onto Rate Value, and it means a ramp in Host x stretches with
+// the project tempo instead of staying a fixed BPM amount.
+rate_units       = slider1;
+host_mult        = 1;
+
 // Start Delay state. start_delay_elapsed counts up from 0 at each
 // play start; while it's below start_delay_sec the @sample work is
 // gated and output is silent.
@@ -422,7 +432,9 @@ slider_show(slider28, rate_mode == 1);
 // clock itself) derives from track_bpm and so follows for free — this plugin
 // needs no host_scale factor because it never froze a rate in the first
 // place. @block re-does this line so a tempo change lands live.
-track_bpm    = rate_mode == 1 ? max(tempo, 0.001) * slider1 : slider1;
+rate_units   = slider1;
+host_mult    = rate_mode == 1 ? max(tempo, 0.001) : 1;
+track_bpm    = rate_units * host_mult;
 timesig      = slider2;
 swing        = slider3;
 strong_hz    = slider4;
@@ -535,7 +547,9 @@ weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_
 // matters because @init re-runs on every transport play and wipes globals -- a
 // remembered reference would reset on play and silently discard the change.
 rate_mode == 1 ? (
-  track_bpm = max(tempo, 0.001) * slider1;
+  rate_units = slider1;
+  host_mult = max(tempo, 0.001);
+  track_bpm = rate_units * host_mult;
   samples_per_beat = (60.0 / max(track_bpm, 0.001)) * srate;
   start_delay_sec = slider14 * 60 / max(track_bpm, 0.001);
 );
@@ -577,7 +591,10 @@ slider20 ? (
 // (track_bpm + Tempo ramp, no drift) so it doesn't self-modulate.
 speed_ramp_offset_tempo = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
 speed_ramp_offset_swing = speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1];
-sr_adjusted_tempo = max(0.01, track_bpm + speed_ramp_offset_tempo);
+// Offsets are added in slider units, then the host multiply is applied — so
+// in Host x a ramp of -0.5 means "half a cycle per beat slower", not "0.5 BPM
+// slower". In Own BPM mode host_mult is 1 and this is the old arithmetic.
+sr_adjusted_tempo = max(0.01, (rate_units + speed_ramp_offset_tempo) * host_mult);
 sr_adjusted_samples_per_beat = (60.0 / sr_adjusted_tempo) * srate;
 
 // Per-target drift wave computation. 2 targets (0=Tempo BPM,
@@ -624,7 +641,7 @@ loop(N_TARGETS,
 // Effective tempo with drift + Speed Ramp, clamped at 10 BPM (matches
 // slider1's minimum) so over-aggressive Down amounts can't silence
 // or invert the metronome.
-effective_tempo = max(0.01, track_bpm + target_drift_offset[0] + speed_ramp_offset_tempo);
+effective_tempo = max(0.01, (rate_units + target_drift_offset[0] + speed_ramp_offset_tempo) * host_mult);
 effective_samples_per_beat = (60.0 / effective_tempo) * srate;
 
 // Effective swing: baseline + Swing drift + Swing Speed Ramp, clamped to

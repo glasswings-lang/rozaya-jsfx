@@ -153,7 +153,11 @@ Picks which target the `by` amount applies to. Switching the selector saves slid
 
 **Speed ramp by (slider 18)** `-300 to +300, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit. **0** = no change (safe default — engaging at 0 produces no effect).
-- **Target = Tempo BPM:** the delta is in BPM. `-60` ramps Tempo from 120 → 60 over the duration; positive speeds up. (The wide ±300 range is here for BPM.)
+- **Target = Tempo BPM:** the delta is in whatever unit the Tempo slider is currently showing — which depends on Rate Mode.
+  - **Own BPM:** it's BPM. `-60` ramps Tempo from 120 → 60 over the duration; positive speeds up. (The wide ±300 range is here for this.)
+  - **Host x:** it's a multiplier delta, matching the Tempo slider. At Tempo `1`, a `by` of `-0.5` ends at `0.5` — half speed, still locked to the project. Numbers are small here; that's expected, and the step of 0.1 is meant for nudging by ear rather than working a value out.
+
+  Because the delta lands on the multiplier rather than on the finished BPM, a ramp in Host x **stretches with the project tempo** like the rest of the plugin. A fixed BPM delta wouldn't — it would mean a different proportion at every tempo.
 - **Target = Swing amount:** the delta is in the same **swing fraction** as the Swing amount slider (−1…+1, where 0 = straight and ±1 = full triplet shuffle). So a `by` of `+0.8` gradually swings the groove from wherever it starts toward heavily swung; `-0.5` gradually straightens it. Only roughly ±2 of the slider's range is meaningful for this target (swing is clamped to ±1 at the consumer); the rest of the range is just headroom shared with the BPM target.
 
 **Speed ramp duration (slider 19)** `0–60 minutes, default 0` — **per-target** (as of v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 doesn't ramp. · **Speed ramp start delay (slider 21)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target begins moving. · **Speed ramp engage (slider 20)** `Off / On, default Off` — **global**: one switch arms both targets, each then riding its own duration after its own delay. (Duration and start delay are saved/loaded per target by the selector, exactly like `by`.)
