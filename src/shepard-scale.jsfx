@@ -456,6 +456,37 @@ host_ratio_sel != slider63 ? (
   );
 );
 slider_show(slider63, rate_mode == 1);
+// --- Landing in Host x, and keeping the multiplier out of the way ----------
+//
+// Two problems, one fix. (a) The rate slider's default was chosen for its own
+// unit -- 2 means 2 Hz, which as a MULTIPLIER is double time -- so switching
+// mode used to hand you an arbitrary speed you never asked for. (b) In Host x
+// that slider is a multiplier, and setting one by hand means arithmetic, which
+// is the thing this project exists to avoid. The Host ratio picker already
+// solves (b), but it sits at the far end of the slider list because IDs can
+// never be renumbered, so you meet the multiplier first and the cure last.
+//
+// So: entering Host x lands on "1 per beat" (picker index 8) unless you had
+// already chosen a ratio, and the raw multiplier HIDES unless the picker is
+// on Custom. The named list becomes the way in; the number only appears when
+// you deliberately ask for one the list doesn't have.
+//
+// Guarded on a real in-session mode CHANGE. Adopting on load instead would
+// overwrite a hand-tuned rate the moment a saved project opened -- the same
+// trap the picker's own host_ratio_inited guard exists for.
+!rate_mode_inited ? ( last_rate_mode = rate_mode; rate_mode_inited = 1; );
+last_rate_mode != rate_mode ? (
+  rate_mode == 1 && slider63 == 0 ? (
+    slider63 = 8;
+    host_ratio_sel = 8;
+    slider1 = 1;
+    slider_automate(slider63);
+    slider_automate(slider1);
+  );
+  last_rate_mode = rate_mode;
+);
+slider_show(slider1, rate_mode != 1 || slider63 == 0);
+
 // Host x: slider1 is a MULTIPLIER of the project tempo. beat_hz,
 // effective_bpm, the drift period and Start Delay all derive from bpm and
 // effective_beat_hz is recomputed per sample, so feeding the right number

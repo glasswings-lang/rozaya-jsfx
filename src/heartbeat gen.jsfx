@@ -317,6 +317,33 @@ host_ratio_sel != slider35 ? (
   );
 );
 slider_show(slider35, rate_mode == 1);
+// --- Landing in Host x, and keeping the multiplier out of the way ----------
+//
+// Same fix as the rest of the suite, and this plugin needed it most: the BPM
+// slider defaults to 70, which as a MULTIPLIER is seventy times the project
+// tempo. Switching mode used to hand you that.
+//
+// So: entering Host x lands on "1 per beat" (picker index 8) unless a ratio
+// was already chosen, and the raw multiplier HIDES unless the picker is on
+// Custom -- the named list becomes the way in, and the number only appears
+// when you deliberately want one the list doesn't have. The picker can't be
+// moved next to the rate slider because IDs can never be renumbered.
+//
+// Guarded on a real in-session mode CHANGE, so opening a saved project never
+// overwrites a hand-tuned rate.
+!rate_mode_inited ? ( last_rate_mode = rate_mode; rate_mode_inited = 1; );
+last_rate_mode != rate_mode ? (
+  rate_mode == 1 && slider35 == 0 ? (
+    slider35 = 8;
+    host_ratio_sel = 8;
+    slider1 = 1;
+    slider_automate(slider35);
+    slider_automate(slider1);
+  );
+  last_rate_mode = rate_mode;
+);
+slider_show(slider1, rate_mode != 1 || slider35 == 0);
+
 // Host x: slider1 is a MULTIPLIER of the project tempo. bpm_target feeds
 // the per-sample smoother, and cycle_len / the drift period / Start Delay
 // all derive from it, so feeding the right number in is the whole job.

@@ -277,3 +277,15 @@ Shown only in Host x. Writes the multiplier and then gets out of the way, so you
 can still type or automate anything. **Custom** never writes anything, and is
 deliberately not called "Free" — in sync UI that means free-running, which Own
 BPM already is. Entries are named for what you hear, not as note values.
+
+---
+
+#### Host x hands you the ratio list, not a multiplier
+
+Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw BPM number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat* — so setting a rate is picking a name rather than working out a number.
+
+Set Host ratio to **Custom** and the number reappears, with whatever it last held, for ratios the list doesn't cover.
+
+This plugin needed it most: the BPM slider defaults to 70, and as a *multiplier* that's seventy times the project tempo. Switching mode used to hand you exactly that.
+
+Landing on 1 per beat only happens when *you* change the mode — opening a saved project leaves your rate alone.

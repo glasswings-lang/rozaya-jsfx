@@ -103,6 +103,17 @@ The global tonic. Per-voice Note sliders are interpreted as offsets from this va
 **Tuning Reference Hz** `400-480 Hz, default 440`
 The A4 reference frequency used to calculate all oscillator pitches.
 
+
+#### Host x hands you the ratio list, not a multiplier
+
+Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw rate number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat*, and so on — so setting a rate is picking a name, never working out a number.
+
+Set Host ratio to **Custom** and the rate value reappears, with whatever it last held. That's the way in for ratios the list doesn't cover, which is most of the point of a multiplier rather than a note grid.
+
+Two things this fixes. The rate slider's default was chosen for its own unit, so switching mode used to hand you a speed you never asked for — in the effects, a default of 2 meant *double time* the moment you selected Host x. And the picker sits at the far end of the parameter list (slider IDs can never be renumbered without scrambling saved projects), so you met the multiplier first and the cure last.
+
+Landing on 1 per beat only happens when *you* change the mode. Opening a saved project leaves your rate exactly as you set it.
+
 ---
 
 ### Per-Voice Controls (Voices 1-8)
