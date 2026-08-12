@@ -778,3 +778,60 @@ belongs there.
 subject despite not being on the "start here" list — a 12-beat cycle against
 REAPER's click is nearly as unambiguous as `rhythm-track`, because the dwell
 turnaround is an audible event you can place against a beat.
+
+## Position locking (2026-08-12) — and why it does NOT apply to all 17
+
+Ear-testing sweep-dwell turned up the half of "sync" the sweep had missed.
+Host x set every plugin's SPEED and nothing set its POSITION, so a cycle came
+out the right length but started wherever play was pressed. Rozaya heard it
+immediately as "noticeably shortened, but it's not on-grid shortened."
+`rhythm-track` had passed test 1 only because playback started at the top, so
+plugin and metronome both began at zero at the same instant.
+
+Fix: in Host x with the transport moving, derive phase from `beat_position`
+rather than accumulating. Exact by construction, so it also can't drift over a
+long session, and seeking and looping come free.
+
+**Two guards, both load-bearing:**
+
+1. **Free-run when stopped or paused.** `beat_position` doesn't advance, so
+   locking to it freezes the LFO for anyone monitoring live.
+2. **Free-run whenever Drift or Speed Ramp is moving the rate.** The position
+   formula answers *"where would this be if it had run at this rate all
+   along"*, which stops being the right question the moment the rate is
+   changing. Hand over from wherever the phase already is (no jump), and stay
+   free until the next transport start rather than lurching back onto the grid
+   mid-play. General rule: **lock what's constant, accumulate what's
+   modulated.**
+
+**Done:** `sweep-dwell-filter` (ear-tested ✓), `Full_Feature_Tremolo`,
+`full-feature-sweeping-filter`.
+
+**Straightforward, not yet done:** `stereo-phaser` — one `lfoPhase` in radians,
+no rate drift. Same edit.
+
+**Needs real care, NOT a copy-paste:**
+
+- **`rhythm-track`.** Its clock FIRES EVENTS rather than driving a continuous
+  shape, so a phase jump can skip a tick or double-fire one. And `beat_index`
+  (the bar accent) and the swing offset both hang off the same counter, so
+  locking has to derive those from the position too, not just `beat_phase`.
+  Worth doing — it's the plugin that most wants it — but it's its own job.
+- **`shepard-scale`, both Melody Phases, both Polyrhythms.** Sequencers.
+  "Phase" there is a position in a note sequence; jumping it means jumping
+  notes, and the per-voice envelopes are mid-flight. What locking should even
+  mean is a design question (does bar 40 imply a particular STEP?), not an
+  implementation one.
+
+**Should NOT get it:**
+
+- **`heartbeat gen`, `womb_sound_generator_v3`.** State machines with
+  event-shaped output; a heart can't jump mid-beat without a click. And
+  grid-locking a heartbeat isn't a thing anyone wants — these follow the tempo
+  as a *rate* and that's the whole ask.
+- **`bubbler`, `dapple`.** Randomly-scheduled events. There's no phase.
+- **`veil`, `resonance_bank`.** Only their drift periods follow the tempo, and
+  drift never locks by the rule above.
+
+So the sweep's "17 plugins" is not "17 position locks". It's four, plus one
+careful one, plus a design question over the sequencers.
