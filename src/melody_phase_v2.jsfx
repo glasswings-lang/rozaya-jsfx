@@ -1354,7 +1354,6 @@ seq_started == 0 ? (
 //   - per-voice timing drift or ramp means the step lengths at bar 40 aren't
 //     the ones a walk from bar 0 would have used, so the walk would be a
 //     confident guess rather than an answer (the "lock what's constant" rule);
-//   - the Play/Rest gate adds a second sequence on top of this one.
 // A narrow correct placement beats a broad approximate one.
 //
 // The walk is bounded by taking the elapsed time modulo one full pass of the
@@ -1371,8 +1370,14 @@ seq_place_pending ? (
   // per-voice timing drift/ramp (the step lengths at bar 40 aren't the ones a
   // walk from bar 0 would have used, so a walk would be a confident guess --
   // the "lock what's constant" rule), and the Play/Rest gate (a second
-  // sequence layered on this one, which Freeze mode also makes time-dependent).
-  seq_place_ok = (rate_mode == 3) && !pr_enabled;
+  // The Play/Rest gate IS placed: it's periodic too, and the walk below
+  // simulates it alongside the sequence (including Freeze mode, where each
+  // rest injects wall-clock time in which the sequence stands still).
+  // Only per-voice timing drift/ramp is excluded, and for a real reason: the
+  // step lengths at bar 40 aren't the ones a walk from bar 0 would have used,
+  // so the walk would be a confident guess. That's the "lock what's constant"
+  // rule the sweeping effects follow too.
+  seq_place_ok = (rate_mode == 3);
   seq_place_ok ? (
     i = 1;
     loop(8,
@@ -1395,13 +1400,20 @@ seq_place_pending ? (
       // back, whether or not the edge note repeats) without special-casing
       // either. If it never returns, or Loop is off, there is no period and
       // pass 2 just walks until the sequence ends.
+      // Gate state travels with the walk. The combined pattern only repeats
+      // when the SEQUENCE and the GATE line up again -- 4 voices against a
+      // play-3/rest-2 gate repeats every 20 steps, not 4 and not 5 -- so the
+      // period test below requires pr_step and pr_resting to come back too,
+      // and the step cap is raised to cover that longer cycle.
       place_period = 0;
       place_walk   = place_idx;
       place_wdir   = place_dir0;
       place_bounce = 0;
+      place_prstep = 1;
+      place_prrest = 0;
       place_found  = 0;
       place_done   = 0;
-      loop(64,
+      loop(1024,
         place_done ? 0 : (
           place_period += v_step_seconds[place_walk];
           place_nxt = step_in_dir_no_wrap(place_walk, place_wdir);
@@ -1420,7 +1432,21 @@ seq_place_pending ? (
           );
           place_done ? 0 : (
             place_walk = place_nxt;
-            (place_walk == place_idx && place_wdir == place_dir0) ?
+            // Mirror the gate exactly as the step handler does it: threshold
+            // check and flip first, then increment for the step about to run.
+            pr_enabled ? (
+              place_prstep >= (place_prrest ? rest_for_steps : play_for_steps) ? (
+                // Entering a Freeze rest costs wall-clock time in which the
+                // sequence does NOT advance, so the period has to include it.
+                (!place_prrest && rest_mode == 1) ?
+                  place_period += simulate_rest_duration_seconds(place_walk, rest_for_steps);
+                place_prrest = 1 - place_prrest;
+                place_prstep = 0;
+              );
+              place_prstep += 1;
+            );
+            (place_walk == place_idx && place_wdir == place_dir0
+             && place_prstep == 1 && place_prrest == 0) ?
               ( place_found = 1; place_done = 1; );
           );
         );
@@ -1437,6 +1463,9 @@ seq_place_pending ? (
       place_walk   = place_idx;
       place_wdir   = place_dir0;
       place_bounce = 0;
+      place_prstep = 1;
+      place_prrest = 0;
+      place_frozen = 0;
       place_done   = 0;
       place_end    = 0;
       loop(4096,
@@ -1457,7 +1486,23 @@ seq_place_pending ? (
                              : ( place_end = 1; place_done = 1; );
               );
             );
-            place_done ? 0 : place_walk = place_nxt;
+            place_done ? 0 : (
+              place_walk = place_nxt;
+              pr_enabled ? (
+                place_prstep >= (place_prrest ? rest_for_steps : play_for_steps) ? (
+                  (!place_prrest && rest_mode == 1) ? (
+                    // Freeze rest: consume its wall-clock length with the
+                    // sequence standing still. If the target lands inside that
+                    // window, this is where it sits -- frozen on this voice.
+                    place_rest = simulate_rest_duration_seconds(place_walk, rest_for_steps);
+                    place_t < place_rest ? ( place_frozen = 1; place_done = 1; ) :
+                                           place_t -= place_rest;
+                  );
+                  place_done ? 0 : ( place_prrest = 1 - place_prrest; place_prstep = 0; );
+                );
+                place_done ? 0 : place_prstep += 1;
+              );
+            );
           );
         );
       );
@@ -1465,9 +1510,22 @@ seq_place_pending ? (
       seq_index          = place_walk;
       seq_dir            = place_wdir;
       bounce_count_total = place_bounce;
-      seq_step_elapsed   = place_end ? 0 : place_t;
+      seq_step_elapsed   = (place_end || place_frozen) ? 0 : place_t;
       seq_finished       = place_end;
-      (seq_started && !place_end) ? trigger_seq_voice(-1);
+      pr_enabled ? (
+        pr_resting = place_frozen ? 1 : place_prrest;
+        pr_step    = place_prstep;
+        // Landed inside a Freeze rest: sit frozen on this voice and let the
+        // existing rest timer carry the remainder, so it resumes on schedule.
+        place_frozen ? (
+          pr_rest_duration_samples =
+            simulate_rest_duration_seconds(place_walk, rest_for_steps) * srate;
+          pr_rest_elapsed = pr_rest_duration_samples - place_t * srate;
+          pr_frozen_prev_voice = -1;
+        );
+      );
+      (seq_started && !place_end && !place_frozen && (!pr_enabled || !pr_resting)) ?
+        trigger_seq_voice(-1);
     );
   );
 );

@@ -352,12 +352,11 @@ Placed **once**, on transport start or when you move the playhead, then left to 
 
 **Every direction mode is placed** — Up, Down, and both bounce modes, with Loop on or off. A bouncing sequence is periodic (there and back is simply a longer cycle) and Loop = Off is simpler still: the plugin walks until the sequence would have ended, and if you've started past that point, it's finished, which is the correct answer.
 
-Two things are not placed, and those start from the top as before:
+**The Play / Rest gate is placed too**, in both rest modes. In **Walk** the sequencer keeps stepping through rest, so the gate is just a second wrap running alongside the first. In **Freeze** the sequencer stops while the clock keeps going, so each rest injects time in which nothing advances — the plugin accounts for that, and if you land inside a rest it sits frozen on the right voice with the right amount of rest still to run.
 
-- **Per-voice timing Drift or Speed Ramp.** The step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer. This is the same rule the sweeping effects follow — anything modulating the rate hands back to free-running.
-- **The Play / Rest gate**, which is a second sequence layered on this one, and which in Freeze mode changes how elapsed time maps to sequence position at all.
+One thing is not placed, and it starts from the top as before: **per-voice timing Drift or Speed Ramp**. The step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer — the same rule the sweeping effects follow, where anything modulating the rate hands back to free-running.
 
-Nothing is lost in those two cases — they behave exactly as they always have.
+Nothing is lost in that case; it behaves exactly as it always has.
 
 On a mid-song seek, the note you land on **retriggers from the start of its envelope** rather than continuing partway through. You get the right note; it just begins again.
 

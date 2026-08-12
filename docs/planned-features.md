@@ -323,7 +323,7 @@ Same family as Polyrhythm Phase's per-voice sequencing. All three compose into a
 
 ## Automation-replacement sweep — Drift + Speed Ramp reach *everything adjustable* (captured 2026-07-02)
 
-**Why this exists.** Drift + Speed Ramp are the in-plugin substitute for REAPER automation — Rozaya is blind and can't drive automation envelopes through OSARA (see `project-kin-bridge-reaper-live-control`). The test that names this sweep: *"will this replace automation?"* — for every plugin, can Drift (repeating wander) + Speed Ramp (one-time ride) reach every parameter you'd realistically want to move over the course of a piece? Today the answer is **no** in three specific ways. Trigger: building a real session, Rozaya wanted **breaths-per-minute** as a Drift *and* Speed Ramp target in Womb v3 and it wasn't there — you can ramp the four breath segments individually but not the breath *rate* as one felt control.
+**Why this exists.** Drift + Speed Ramp are the in-plugin substitute for REAPER automation. **Stated correctly (this gets mis-remembered as an access failure — it isn't one):** OSARA drives envelopes fine (alt+L / alt+shift+L select envelope, alt+K / alt+J step points, shift+E insert, ctrl+alt+J cycle shape, plus automation items). Every command is **serial and single-point**, though — you traverse a curve one point at a time and never perceive it whole, so a 40-minute wander means placing and shaping dozens of points while holding the whole shape in working memory. Rozaya found that overwhelming and designed around it on the assumption others would too: a usability call, not a workaround for inaccessibility. Same family as the dyscalculia rule — the barrier is the holding-and-assembling, not the reaching. The test that names this sweep: *"will this replace automation?"* — for every plugin, can Drift (repeating wander) + Speed Ramp (one-time ride) reach every parameter you'd realistically want to move over the course of a piece? Today the answer is **no** in three specific ways. Trigger: building a real session, Rozaya wanted **breaths-per-minute** as a Drift *and* Speed Ramp target in Womb v3 and it wasn't there — you can ramp the four breath segments individually but not the breath *rate* as one felt control.
 
 **The audit (2026-07-02).** Current target coverage across the suite:
 
@@ -426,7 +426,7 @@ The 2026-07-02 audit table above lists 12 plugins. It was written before the v2.
 | **sustain_looper** | sample looper (v2.11) | Plausible, lower priority | Pitch/detune, Ensemble spread, Level, Crossfade |
 | **harmonic_sculptor** | render-source design tool (v2.11) | **Judgment call** — it's a freeze-a-timbre-then-render tool, not a live ambient player; drift may not fit its workflow (though it's used in live-jam per the 2026-07-01 note). Decide with Rozaya. |
 
-**stereo-phaser, dapple, and bubbler are the clear gap** — they're real-time ambient plugins exactly like the ones already covered, and the automation-replacement rationale ("Rozaya can't drive OSARA automation") applies identically. Each needs the standard nested-selector Drift + per-target-timeline Speed Ramp package (selector-first layout, `@serialize` version-guard, track-duplicate fix, manual). Same mechanical work as Job A. Reuse the reference implementations (shepard-tone for ratio-path, shepard-scale for additive). Note these are still on the v2.16 line, so a fresh `@serialize` version guard is safe (no legacy blob to protect for these params — they never had them).
+**stereo-phaser, dapple, and bubbler are the clear gap** — they're real-time ambient plugins exactly like the ones already covered, and the automation-replacement rationale (envelope editing under OSARA is reachable but serial and single-point, so it's overwhelming to build a long curve — see "Why this exists" above) applies identically. Each needs the standard nested-selector Drift + per-target-timeline Speed Ramp package (selector-first layout, `@serialize` version-guard, track-duplicate fix, manual). Same mechanical work as Job A. Reuse the reference implementations (shepard-tone for ratio-path, shepard-scale for additive). Note these are still on the v2.16 line, so a fresh `@serialize` version guard is safe (no legacy blob to protect for these params — they never had them).
 
 **Do this as its own small sweep** (3 clear plugins + 2 to decide on), one commit + ear-test each, folded into whatever the next release tag is.
 
@@ -916,3 +916,120 @@ constant". The eligible case — every voice constant, no gate, forward — is
 narrow, and its only payoff is identical playback from a mid-song start, which
 for a drone is worth little. These follow the tempo as a RATE, which was the
 whole ask.
+
+## Random drift barely moves — three defects and one missing control (captured 2026-08-12)
+
+Rozaya, playing Resonance Bank: Random drift on Pan *"start[s] from its current
+position in the stereo field and mov[es] from there to something tinier-ly
+different."* Correct, and it is not bad luck — it's the design. Four separate
+things, in rising order of how much they matter.
+
+### 1. Missing control: you can bound the territory but not ask for a journey
+
+**This is the real one.** Drift up / Drift down set *where the value is allowed
+to go*. Nothing sets *how far it travels each period*. Each period draws a new
+ABSOLUTE target with `rand(2) - 1`, independent of where the value currently
+sits — so the step size is whatever chance hands you.
+
+The gap between two independent uniform draws has a **triangular distribution
+peaking at zero**. The single most likely step is *no step*. Small moves aren't
+an occasional failure, they're the default; large moves are the exception.
+Roughly one period in five moves less than a tenth of the range, better than a
+third move less than a fifth of it — and each of those costs a whole period,
+which is minutes.
+
+Two things compound it perceptually. Because targets are absolute rather than
+steps, consecutive periods frequently double back (high, low, middling), so it
+jiggles around the base value instead of exploring. And the interpolation is
+linear across the whole period, so even a large draw is spread over minutes and
+reads as slow creep rather than travel.
+
+**Cheap fix (a couple of lines, no new slider):** force each new target into the
+opposite half from the current one, with a minimum magnitude. Every period then
+crosses centre and covers real ground. For Pan that means actually traversing
+the stereo field instead of loitering on one side. Site:
+`src/resonance_bank.jsfx:347`, and the equivalent in every ported plugin.
+
+**Fuller fix (better, costs a slider in ~11 plugins):** a separate *travel*
+amount — how far it moves per period — with Up/Down staying as bounds it
+reflects off. Decide this one alongside the dyscalculia sweep; it's the same
+question about what the numbers on a drift control should *mean*.
+
+### 2. Cold start — Random gives one full period of NOTHING, every play (REGRESSION)
+
+`src/polyrhythm_phase.jsfx:557` zeroes `target_drift_prev[i]` and
+`target_drift_curr[i]` in the RUNTIME reset. New targets are only drawn when the
+phase WRAPS (`:1157`), so the first full period interpolates `0 + (0-0)*phase` =
+flat. With a 4-minute drift period that's 4 minutes of no drift **after every
+transport play** (`@init` re-runs per play). Random-only — Sine and Triangle
+start moving immediately, which is exactly why it reads as "sometimes."
+
+**Resonance Bank does NOT have this** — `src/resonance_bank.jsfx:173-175` seeds
+`band_drift_phase` (via `rand(1)`), `band_rand_old` and `band_rand_new` on every
+init. It was the reference implementation and it got this right; **the
+2026-06-12 nested-selector sweep dropped the seeding on the way out.** So this is
+a port regression, and it probably affects most sweep-era plugins — NOT audited
+beyond these two yet (~10 quick greps to know).
+
+### 3. A zero on one side kills a quarter of periods outright
+
+`d_offset = d_mod >= 0 ? d_mod * d_up : d_mod * d_down`
+(`src/resonance_bank.jsfx:358`, `src/polyrhythm_phase.jsfx:1176`). With
+`down = 0`, any period whose old AND new targets both landed negative outputs
+exactly zero for its entire length — 25% of periods, dead flat. Same for
+`up = 0`. Fix: map the random value across the full Down-to-Up span so neither
+half can be dead. Random only — changing it for Sine/Triangle would alter
+existing projects.
+
+### 4. Polyrhythm's targets all crest together
+
+Polyrhythm zeroes drift phase for all 24 targets, so anything sharing a period
+moves in lockstep. Resonance Bank scatters it per slot deliberately —
+`src/resonance_bank.jsfx:166`: *"so the bands don't all crest together (matches
+the original load-time seeding)."* That reasoning didn't survive the port
+either, and it's part of why Resonance Bank's drift feels more alive.
+
+**Ordering note:** 2 and 3 are bug fixes and are cheap. 1 is a design decision
+and shouldn't be rushed. Do the fixes in ONE plugin and ear-test before porting
+— that's what went wrong the first time.
+
+## Custom drift shapes — breakpoint lists as a fourth Shape option (captured 2026-08-12)
+
+Wanted: arbitrary drift/LFO shapes, e.g. for a sweep filter — *"sweeps up fully,
+down fully, up halfway then holds, then the rest of the way."* Currently only
+reachable by drawing an automation envelope, which is the thing the whole suite
+exists to avoid (see "Why this exists" above).
+
+**Data model:** a breakpoint list. Each segment has a target level, a duration,
+and a curve. "Hold" is just a segment whose target equals where it already is.
+That's all of it.
+
+**The slider problem dissolves — this is the nested-selector pattern again.**
+Segment selector + target level + duration + curve = **4 sliders for N
+segments**, plus a fifth for how many segments are active so the loop knows
+where to wrap. Slider count is decoupled from segment count exactly as it is for
+drift targets, so there is **no hard segment limit** — the cap is however many
+slots the bank allocates. 64 costs the same 4 sliders as 8.
+
+**Where it plugs in:** Drift's Shape slider already reads Sine / Triangle /
+Random. **Custom becomes the fourth option.** Nothing else in the architecture
+changes — same per-target phase counter, same period slider setting how long one
+pass takes, same offset consumed at the same site. One plugin working means every
+drift target in it gains arbitrary shapes, and the port is mechanical. Unlike an
+envelope it runs indefinitely, survives a tempo change, and travels with the
+plugin instance.
+
+**Unsolved half — sharing shapes.** A segment bank lives inside one instance. A
+library ("twelve breathing curves") needs files. The file-selector slider from
+`src/sustain_looper.jsfx` gives an NVDA-navigable dropdown of a Data folder,
+which is the right interface. Whether JSFX reads TEXT files reliably needs
+verifying (`file_string` exists; behavior unconfirmed). Bulletproof fallback:
+ship shapes as tiny WAVs — one cycle of the curve, read via the exact mechanism
+Sustain Looper already uses, indexed by drift phase — with a `tools/` script
+compiling plain-text shape descriptions into them, so text stays the source of
+truth and modders stay first-class.
+
+**Cost, honestly:** new memory bank, `@serialize` version bump with the
+count-encoded magic, the segment-selector save/restore dance, and the
+track-duplicate fix in `@serialize`'s read branch. All have reference
+implementations; it's four of them at once. Not an afternoon.
