@@ -878,3 +878,41 @@ noticed. **Before changing a control's units, ask what the user will be
 holding in their head when they set it** -- a figure they know (5 BPM of HRV,
 slow by 20) or a feel they are dialling for. That decides it, and neither the
 code nor the label can tell you.
+
+## Position locking, revised triage (2026-08-12) — it's three, not six
+
+Reading Polyrhythm's per-voice engine changed the grouping. "Six note-players"
+was the wrong cut; the real question is **does this thing have a grid to agree
+with.**
+
+**Gets it: `shepard-scale` (done), `melody_phase`, `melody_phase_v2`.** These
+play a SEQUENCE OF NOTES. Starting mid-song on the wrong note is obviously,
+audibly wrong, so placing them from the project earns its keep.
+
+Uses rhythm-track's place-once, not the LFO plugins' per-sample lock: a
+sequencer re-deciding its position every sample would jump mid-envelope.
+Placed on transport start or a seek, then left to run.
+
+**`shepard-scale` detail — the sequence is WALKED, not indexed.** Skip mode
+steps over inactive notes, so "40 beats in" is not note 40; it depends which
+notes are off. The walk is bounded by taking the step count modulo the
+sequence's own period first (active-note count in Skip, 12 in Rest), so a
+project two hours in costs the same handful of steps as one at bar 2.
+Documented consequence: toggling notes active WHILE playing changes what
+"where you would have been" means, so two playbacks can differ if you flipped
+notes between them. It can't glitch — placement only happens on play or seek.
+
+**Does NOT get it: `polyrhythm_phase`, `polyrhythm_phase_v3`,
+`shepard-tone`.** Same reasoning that already excluded heartbeat and womb:
+these are DRONES, not grid instruments. Polyrhythm's whole identity is eight
+voices at deliberately incommensurate rates slipping against each other —
+there is no single position to place, and pinning each voice to the bar fights
+the thing the plugin is for. Shepard Tone is layered continuous glissandi with
+the same character.
+
+And mechanically most voices would be ineligible anyway: per-voice drift,
+Play/Rest gating and the reverse-time modes each violate "lock what's
+constant". The eligible case — every voice constant, no gate, forward — is
+narrow, and its only payoff is identical playback from a mid-song start, which
+for a drone is worth little. These follow the tempo as a RATE, which was the
+whole ask.

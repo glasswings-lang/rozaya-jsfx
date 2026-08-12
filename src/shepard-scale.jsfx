@@ -226,6 +226,10 @@ n_env       = 624; // 624-635: per-note envelope gain (smoothed)
 // Sequencer state
 seq_pos   = 0;   // current note index 0-11
 seq_phase = 0.0; // position in current beat 0-1
+// Seek detection for the Host x sequence placement in @block. was_moving = 0
+// means the first block after a transport start always places the sequence.
+was_moving         = 0;
+predicted_beat_pos = 0;
 
 smooth_gain = 0; // set in @slider
 needs_init   = 1;
@@ -628,6 +632,65 @@ rate_mode == 1 ? (
   bpm = rate_units * host_mult;
   start_delay_sec = slider48 * 60 / max(bpm, 0.001);
 );
+
+// --- Place the sequence from the project (Host x only) --------------------
+//
+// PLACE ONCE, then run -- the same approach as rhythm-track, and for the same
+// reason: this steps through NOTES, so recomputing its position every sample
+// would re-decide which note is sounding and jump mid-envelope. Placed on
+// transport start or a seek, then left alone.
+//
+// A seek is spotted by comparing where this block actually starts against
+// where the last block predicted it would. Normal playback agrees to well
+// under the 0.25-beat threshold; a seek or loop doesn't.
+//
+// Walking the sequence rather than indexing it, because Skip mode steps over
+// inactive notes -- so "40 beats in" is not note 40, it depends on which notes
+// are switched off. The walk is bounded by taking the step count modulo the
+// sequence's own period first (the active-note count in Skip, 12 in Rest), so
+// a project two hours in costs the same handful of steps as one at bar 2.
+//
+// Consequence worth knowing, documented rather than hidden: toggling notes
+// active WHILE playing changes what "where you would have been" means. It
+// won't glitch -- placement only happens on play or a seek -- but two
+// playbacks can differ if you flipped notes in between.
+transport_moving = (play_state == 1 || play_state == 5);
+rate_mode == 1 && transport_moving ? (
+  (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ? (
+    seq_total = max(beat_position, 0) * rate_units;
+    seq_steps = floor(seq_total);
+    seq_phase = seq_total - seq_steps;
+
+    seq_active_n = 0;
+    i = 0;
+    loop(12, n_active[i] ? seq_active_n += 1; i += 1;);
+
+    skip_mode == 0 && seq_active_n > 0 ? (
+      // Skip: the sequence only visits active notes, so it repeats every
+      // seq_active_n steps. Walk that many, hopping over inactive notes.
+      seq_steps = seq_steps % seq_active_n;
+      seq_pos = 0;
+      !n_active[seq_pos] ? (
+        seq_tries = 0;
+        loop(12, seq_tries < 12 && !n_active[seq_pos] ?
+          (seq_pos = direction == 0 ? (seq_pos+1)%12 : (seq_pos+11)%12; seq_tries += 1;););
+      );
+      loop(seq_steps,
+        seq_pos = direction == 0 ? (seq_pos+1)%12 : (seq_pos+11)%12;
+        seq_tries = 0;
+        loop(12, seq_tries < 12 && !n_active[seq_pos] ?
+          (seq_pos = direction == 0 ? (seq_pos+1)%12 : (seq_pos+11)%12; seq_tries += 1;););
+      );
+    ) : (
+      // Rest: inactive notes still take their beat, so it's a plain 12-step
+      // cycle and the position is arithmetic.
+      seq_steps = seq_steps % 12;
+      seq_pos = direction == 0 ? seq_steps : (12 - seq_steps) % 12;
+    );
+  );
+);
+predicted_beat_pos = beat_position + samplesblock * max(tempo, 0.001) / (60 * srate);
+was_moving = transport_moving;
 
 @sample
 
