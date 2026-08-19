@@ -155,6 +155,18 @@ slider33:0<0,10,1{Custom 1,Custom 2,Custom 3,4 octaves down,3 octaves down,2 oct
 slider34:-60<-60,0,0.1>Layer level (dB, -60 = off)
 slider35:5<0,14,1{Custom,6 octaves down,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,6 octaves up}>Layer interval (Custom layers)
 slider36:-12<-96,96,0.1>Layer pitch (semitones)
+// Active/Inactive, per layer, and NOT the same thing as a level of -60.
+// -60 is "this layer is silent because that is the level I want"; Inactive is
+// "silence this layer and give it back to me later" -- the level you tuned is
+// still there when you switch it on again. The suite convention (Vn Active in
+// polyrhythm) and the reason it exists: a mute you can undo without having to
+// remember a number. Both routes cost the same nothing at runtime, because the
+// gate is the layer's gain and the whole layer's DSP is skipped when it is 0.
+// Appended at 37 rather than placed next to the level, per the never-renumber
+// rule -- this plugin is already loaded in a project. For the eight octave
+// layers the interval sliders are hidden anyway, so what you actually tab
+// through is Layer, Layer level, Layer active.
+slider37:1<0,1,1{Inactive,Active}>Layer active
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -243,6 +255,7 @@ layer_ratio = freemem; freemem += 32;   // frequency multiplier from the interva
 layer_gain  = freemem; freemem += 32;   // linear gain from the level (0 = off)
 lay_semi    = freemem; freemem += 32;   // interval in semitones (the raw slider)
 lay_db_base = freemem; freemem += 32;   // level in dB, before Drift/Ramp
+lay_active  = freemem; freemem += 32;   // 1 = audible, 0 = muted but remembered
 lay_pick    = freemem; freemem += 32;   // interval picker position
 lay_pick_last  = freemem; freemem += 32;   // ...and the last one seen, for the one-shot
 lay_pick_semi  = freemem; freemem += 32;   // semitones each picker entry writes
@@ -308,7 +321,7 @@ slots_inited == 0 ? (
   // interval is already decided by which layer you picked. These live in the
   // one-time guard for the same reason the captures do: they must survive the
   // transport, and @serialize overwrites them with the saved bank on load.
-  lpi = 0; loop(NLAYERS, lay_db_base[lpi] = -60; layer_gain[lpi] = 0; layer_ratio[lpi] = 1; lpi += 1; );
+  lpi = 0; loop(NLAYERS, lay_db_base[lpi] = -60; lay_active[lpi] = 1; layer_gain[lpi] = 0; layer_ratio[lpi] = 1; lpi += 1; );
   // The three Custom layers start somewhere musical (an octave down, an octave
   // up, two octaves down) so that raising one is immediately worth hearing.
   lay_semi[0] = -12; lay_semi[1] = 12;  lay_semi[2] = -24;
@@ -705,8 +718,10 @@ ot_width      = max(0.5, min(4, slider31));
 lay_sel = max(0, min(NLAYERS-1, slider33));
 last_lay_sel != lay_sel ? (
   lay_db_base[last_lay_sel] = slider34;
+  lay_active[last_lay_sel]  = slider37;
   last_lay_sel < N_CUSTOM ? ( lay_pick[last_lay_sel] = slider35; lay_semi[last_lay_sel] = slider36; );
   slider34 = lay_db_base[lay_sel]; slider_automate(slider34);
+  slider37 = lay_active[lay_sel];  slider_automate(slider37);
   // The interval controls only mean anything on a Custom layer; an octave's
   // interval is fixed by which entry you picked. Load them anyway so the two
   // sliders always show the layer you are actually looking at.
@@ -717,6 +732,7 @@ last_lay_sel != lay_sel ? (
   last_lay_sel = lay_sel;
 ) : (
   lay_db_base[lay_sel] = slider34;
+  lay_active[lay_sel]  = slider37;
   lay_sel < N_CUSTOM ? ( lay_pick[lay_sel] = slider35; lay_semi[lay_sel] = slider36; );
 );
 // --- Interval picker for the selected Custom layer. A change-triggered
@@ -757,7 +773,10 @@ layer_ratio[N_CUSTOM+6] = 8;      layer_ratio[N_CUSTOM+7] = 16;
 // no DSP, not merely no output.
 lz = 0;
 loop(NLAYERS,
-  layer_gain[lz] = lay_db_base[lz] <= -60 ? 0 : pow(10, lay_db_base[lz]/20);
+  // Inactive is a gain of 0 and nothing else -- the dB the user set stays in
+  // the bank untouched, so switching back restores it exactly. Everything
+  // downstream already gates on gain, so an inactive layer costs no CPU.
+  layer_gain[lz] = (lay_active[lz] < 0.5 || lay_db_base[lz] <= -60) ? 0 : pow(10, lay_db_base[lz]/20);
   lz += 1;
 );
 dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
@@ -1067,7 +1086,10 @@ hc_on ? (
 nlay_on = 0;
 lz = 0;
 loop(NLAYERS,
-  mod_active[LAY_T0+lz] ? (
+  // Drift and Ramp move the level, never the switch: an Inactive layer stays
+  // silent however far its level target wanders, so arming drift on a layer you
+  // have muted cannot bring it back without you.
+  (mod_active[LAY_T0+lz] && lay_active[lz] >= 0.5) ? (
     eff_ldb = max(-60, min(0, lay_db_base[lz] + target_drift_offset[LAY_T0+lz] + ramp_offset_mem[LAY_T0+lz]));
     layer_gain[lz] = eff_ldb <= -60 ? 0 : pow(10, eff_ldb/20);
   );
@@ -1473,6 +1495,13 @@ file_var(0, ser_magic);
   file_mem(0, lay_semi,    N_CUSTOM);
   file_mem(0, lay_pick,    N_CUSTOM);
   file_var(0, last_lay_sel);
+  // Active flags APPENDED after the block above rather than slotted in beside
+  // the levels they belong with. Order is the format here -- the reads are one
+  // sequential cursor -- so putting them next to lay_db_base would misalign any
+  // blob already written without them. Appending is EOF-safe: an older blob
+  // stops here and every layer keeps its @init default of Active, which is the
+  // state those projects were saved in.
+  file_mem(0, lay_active,  NLAYERS);
 
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
   // duplicate) file_avail(0) >= 0; on WRITE (save / undo) it's < 0. @serialize
@@ -1517,6 +1546,7 @@ file_var(0, ser_magic);
     lsel = max(0, min(NLAYERS-1, slider33));
     last_lay_sel = lsel;
     slider34 = lay_db_base[lsel];
+    slider37 = lay_active[lsel];
     lsel < N_CUSTOM ? (
       slider35 = lay_pick[lsel]; slider36 = lay_semi[lsel];
       lay_pick_last[lsel] = lay_pick[lsel];
