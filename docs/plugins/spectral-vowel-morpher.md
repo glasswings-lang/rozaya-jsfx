@@ -123,14 +123,14 @@ How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Sh
 
 ### Layers (octave stacking)
 
-Extra copies of **the whole instrument** — voice and wash both — playing at a fixed interval from the main pitch, at the same time, from the same instance. Eleven of them: eight fixed octaves and three free-interval Custom layers, all behind **five sliders**.
+Extra copies of **the whole instrument** — voice and wash both — playing at a fixed interval from the main pitch, at the same time, from the same instance. Fifteen of them: twelve fixed intervals — four octaves each way, plus fifths and fourths — and three free-interval Custom layers, all behind **five sliders**.
 
 The point is the *lock*. Two instances of the plugin on Shuffle wander independently: one lands on your "ah" while the other is on an "oo" a fifth away, and the octaves you wanted arrive as a clash. A Layer is not another instance — it is the same capture, at the same morph position, in the same crossfade, an octave away. Every slot change, every Drift, every Shuffle step happens to all of them together, so a stack stays consonant no matter where the morph wanders. Layers ride Pitch as *offsets* from it, so pitching (or Drifting, or Ramping) the main Pitch transposes the whole stack as one.
 
 They work the way Drift target and Capture slot do: **every layer sounds at once**, and the selector only chooses which one the sliders below are editing. The selector is a view, never a mute.
 
-**Layer** `Custom 1 / Custom 2 / Custom 3 / 4, 3, 2, 1 octaves down / 1, 2, 3, 4 octaves up, default Custom 1`
-Which layer you are setting. For the eight octave entries the interval is decided by the name — there is nothing to convert and nothing else to set but the level.
+**Layer** `Custom 1-3 / 4, 3, 2, 1 octaves down / a fifth down / a fourth down / a fourth up / a fifth up / 1, 2, 3, 4 octaves up, default Custom 1`
+Which layer you are setting. For the twelve named entries the interval is decided by the name — there is nothing to convert and nothing else to set but the level.
 
 **Layer active** `Inactive / Active, default Active`
 Silences the selected layer **without losing its level**. That's the difference between this and a level of −60: −60 means "this layer is silent because that's the level I want," Inactive means "silence it and give it back to me later." Flip it off, flip it back on, and the dB you tuned is exactly where you left it. Costs the same nothing as −60 while it's off — the layer's DSP is skipped either way.
@@ -146,11 +146,15 @@ The cost of that honesty is that levels **add**: eleven layers at 0 dB is twelve
 
 **−60 is truly off** and costs no CPU at all: the layer's DSP is skipped, not muted. Every layer's level is also its own Drift and Ramp target, which is where this gets interesting — octaves that swell in and out on their own periods, hands-free, while you do nothing.
 
-**Layer interval** `Custom / 6, 4, 3, 2, 1 octaves down / a fifth down / a fourth down / a fourth up / a fifth up / 1, 2, 3, 4, 6 octaves up` — *shown only on a Custom layer*
-The interval for one of the three Custom layers — fifths, fourths, six octaves, whatever you want that isn't a plain octave. Pick it by name and the plugin does the arithmetic and writes the semitone value, then hides the semitone slider.
+**Layer solo** `Off / Solo, default Off`
+Audition one layer alone. Any layer soloed silences every layer that isn't **and the base voice** — solo means "let me hear this one thing," so leaving the un-transposed morph playing underneath would defeat the point. Solo more than one layer to hear those together.
 
-**Layer pitch (semitones)** `-96 to +96` — *shown only on a Custom layer whose interval picker is on Custom*
-The interval by hand, for anything the picker doesn't name — including a fractional offset for a slow beating unison. Same eight-octave range as Pitch itself.
+Solo deliberately **overrides Inactive**: you solo something in order to hear it, and a solo that returns silence because the layer was also muted is a bad thirty seconds when you're working by ear. A level of −60 is still silent though, because that's a level, not a mute.
+
+While soloing, the wash's per-grain auto-gain brings a quiet layer up to a normal listening level rather than leaving it at its mix level — which is what you want for auditioning, but means solo is not a way to judge relative balance.
+
+**Layer pitch (semitones, Custom layers)** `-96 to +96` — *shown only on a Custom layer*
+The interval by hand, for anything the selector doesn't name — a seventh, six octaves, or a fractional offset for a slow beating unison. Same eight-octave range as Pitch itself.
 
 #### Cost, and how deep you can go
 
