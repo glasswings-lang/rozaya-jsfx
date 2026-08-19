@@ -1547,13 +1547,22 @@ file_var(0, ser_magic);
     // wrong layer's values over the right one's. This is the section that runs
     // on a track DUPLICATE, where @init may not run at all -- without it the
     // selected layer is the one that silently zeroes.
-    lsel = max(0, min(NLAYERS-1, slider33));
-    last_lay_sel = lsel;
-    slider35 = lay_db_base[lsel];
-    slider34 = lay_active[lsel];
-    lsel < N_CUSTOM ? (
-      slider36 = lay_pick[lsel]; slider37 = lay_semi[lsel];
-      lay_pick_last[lsel] = lay_pick[lsel];
+    // Index off the BLOB's own last_lay_sel, NEVER off slider33 -- this is the
+    // whole point of doing it here. Reading the slider assumes REAPER has
+    // already restored the slider line, and the two restore paths have no
+    // guaranteed order: if the slider is still at its default the visible
+    // controls get loaded with the WRONG layer's values, and then the real
+    // selector arrives, @slider reads it as a selector CHANGE, and the save
+    // branch writes those wrong values into a different layer's bank slot.
+    // The bank is scrambled and the next save persists the scramble.
+    // Overwriting last_lay_sel from the slider made it worse by destroying the
+    // one correct copy of the index we had just read back.
+    // (The Capture-slot block below DOES read its slider -- correctly, because
+    // last_cap_slot is not in the stream, so the slider is its only source.)
+    slider34 = lay_active[last_lay_sel];
+    slider35 = lay_db_base[last_lay_sel];
+    last_lay_sel < N_CUSTOM ? (
+      slider36 = lay_pick[last_lay_sel]; slider37 = lay_semi[last_lay_sel];
     );
     // Adopt every restored picker position rather than firing on it -- firing
     // would call slider_automate during project open, writing into an
