@@ -269,6 +269,22 @@ it exactly, x2 is double speed, x0.5 half. Tempo changes apply live.
 Only two entries rather than the four in Melody Phase / Polyrhythm, because
 this plugin only ever had one unit — "Seconds" and "Hz" would be meaningless.
 
+**The breath follows the tempo too.** All three layers move together in Host x:
+the heart scales, bloodflow is locked to the heart, and the breath cycle scales
+with them — so the number of heartbeats per breath stays exactly where you set
+it, at any tempo. It has to work that way. This is one body, and the heart and
+lungs of one body don't disagree about how fast time is passing.
+
+> **What the four duration sliders mean in Host x.** They read as **seconds at
+> 60 BPM**. At 60 the plugin behaves exactly as it does in Own BPM and the
+> numbers on the sliders are the literal seconds; above 60 the whole breath
+> gets proportionally shorter, below 60 longer. So the sliders keep doing the
+> job you actually use them for — setting the *shape* of the breath, the
+> in-to-out ratio and where the pauses sit — while the project sets its length.
+> Drift, Speed Ramp and Breaths-per-minute all still apply on top, untouched.
+> The sigh timer is the one thing that stays wall-clock: a 5-minute sigh
+> interval is five real minutes at any tempo.
+
 > **Switching modes changes what BPM means, and nothing rescales it.** Set the
 > mode first, then the value — or use the picker below, which fills it in.
 

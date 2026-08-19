@@ -148,7 +148,10 @@ slider61:1.5<1.0,3.0,0.05>Sigh depth multiplier
 
 // --- Host tempo sync (sliders 62-63) ------------------------------------
 // Own BPM: free-running, project tempo ignored -- original behaviour.
-// Host x:  BPM becomes a MULTIPLIER of the project tempo.
+// Host x:  BPM becomes a MULTIPLIER of the project tempo, and the BREATH
+//          follows the tempo with it, so the two layers keep their ratio.
+//          The four duration sliders then read as seconds at 60 BPM: they
+//          still set the shape of the breath, the project sets its length.
 // Two entries, not four: only one unit here, so Seconds / Hz would be
 // meaningless. Appended at the END per the never-renumber rule.
 slider62:0<0,1,1{Own BPM,Host x}>Rate Mode
@@ -314,7 +317,7 @@ bpm_target               = slider1;
 // Ramp offsets on the rate are scaled by it at the consumption site, so they
 // stay deltas in whatever unit slider1 is currently showing rather than being
 // raw BPM that means a different proportion at every tempo.
-host_mult = 1;
+host_mult = 1; breath_host_scale = 1;
 bpm_smoothed             = slider1;
 
 // Speed ramp state. ramp_t advances 0->1 over slider50 minutes while
@@ -682,6 +685,29 @@ rate_mode == 1 ? (
   host_mult  = max(tempo, 0.001);
   bpm_target = slider1 * host_mult;
   start_delay_sec = slider41 * 60 / max(bpm_target, 0.001);
+  // ...and the BREATH follows the tempo too. It did not, until now: the heart
+  // scaled with the project and the breath state machine kept advancing one
+  // sample per sample, so a tempo change slid them apart. That is an asymmetry
+  // in a plugin whose whole subject is one body -- the heart and the lungs of
+  // the same organism do not disagree about how fast time is passing.
+  //
+  // The scale is tempo/60, against a NOMINAL 60 BPM, which is the idiom the
+  // rest of the Host x sweep uses (melody phase, and for the same reason:
+  // nothing to remember across a transport that re-runs @init). At 60 BPM it
+  // is exactly 1, so Host x at 60 sounds identical to Own BPM and the four
+  // duration sliders still mean the seconds printed on them.
+  //
+  // What makes this the right shape rather than merely a shape: the heart is
+  // slider1 * tempo and the breath cycle is cycle_seconds * 60/tempo, so
+  // heartbeats-per-breath comes out as slider1 * cycle_seconds -- the tempo
+  // cancels. The RATIO between the two layers, which is what the ear hears as
+  // "one body", is invariant under any tempo change. That also answers the
+  // objection that linking breath to the host makes the duration sliders
+  // meaningless: they keep setting the SHAPE of the breath (and its length at
+  // the reference tempo); the project only stretches it.
+  breath_host_scale = host_mult / 60;
+) : (
+  breath_host_scale = 1;
 );
 
 @sample
@@ -866,11 +892,17 @@ breath_freq_active ? (
 // and by breath drift periods.
 total_breath_samples = inhale_len + top_len + exhale_len + bot_len;
 
-// Breath state_pos advances at 1× sample-rate; segment lengths carry
-// any drift or Speed Ramp offset. v3 dropped v2's combined_scale
+// Breath state_pos advances at 1× sample-rate in Own BPM; segment lengths
+// carry any drift or Speed Ramp offset. v3 dropped v2's combined_scale
 // multiplicative shape — each target's effect is now contained to its
 // own parameter via additive offsets above.
-breath_state_advance = 1;
+// In Host x it advances at the project's rate instead (see @block), so the
+// breath follows the tempo exactly as the heart does. Everything counted in
+// breath-time rides this: the Play/Rest timer below already uses it, and the
+// segment lengths scale by being CONSUMED faster rather than being rewritten,
+// so drift and Speed Ramp offsets survive untouched. The sigh timer
+// deliberately does not -- it is wall-clock minutes and stays that way.
+breath_state_advance = breath_host_scale;
 
 // Sigh timer advances in wall-clock seconds. Pure wall-clock with no
 // scaling: a 5-minute sigh interval is 5 real minutes, regardless of
