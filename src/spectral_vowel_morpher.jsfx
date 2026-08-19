@@ -357,7 +357,7 @@ i = 0; loop(NLAYERS*NHARM,
 // High cut / Layers runtime defaults: OFF, and off means the arithmetic below
 // multiplies by exactly 1.0 -- bit-identical to the engine before they existed.
 hicut_hz = 20000; eff_hicut_hz = 20000; hc_on = 0;
-hc_top = srate*0.5; hc_lo = 1e9; hc_inv = 0; hc_bound = srate*0.5;
+hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;   // EEL2 has NO scientific notation -- 1e9 is a syntax error
 hcbin_hi = NBINS + 1; hcbin_lo = NBINS + 1; hcbin_inv = 0;
 nlay_on = 0;
 // Overtone: flat gains (off), smoothers settled, ~30 ms to take the step out
@@ -1052,7 +1052,7 @@ hc_on ? (
   hc_inv = 1 / max(1, hc_top - hc_lo);
   hc_bound = min(srate*0.5, hc_top);
 ) : (
-  hc_top = srate*0.5; hc_lo = 1e9; hc_inv = 0; hc_bound = srate*0.5;
+  hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;   // EEL2 has NO scientific notation -- 1e9 is a syntax error
 );
 // --- Layer levels (targets LAY_T0..LAY_T0+NLAYERS-1, one per layer in layer
 //     order). Recomputed per sample only for a layer whose level is actually
@@ -1263,7 +1263,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     loop(NHARM,
       hmA = slot_harm[bA+vn]/normA * ot_gain[vn];   // Overtone: 1 everywhere when off
       // High cut: hcg fades a partial out across the top fifth of the cut, and
-      // hc_bound stops computing it entirely. With High cut off hc_lo is 1e9 and
+      // hc_bound stops computing it entirely. With High cut off hc_lo is huge and
       // hc_bound is srate*0.5, so hcg is exactly 1 and the test is the original
       // one -- this path stays bit-identical for a project that never sets it.
       // Phase advances INSIDE the audibility test. The wrap below subtracts

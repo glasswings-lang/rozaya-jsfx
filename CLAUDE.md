@@ -53,6 +53,8 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
   ```
 
   ...becomes `pr_resting ? ( ) : (...)` to the eel2 parser. Empty paren block is a syntax error. The plugin fails to compile, but Reaper doesn't always pop a visible error — symptom is just "no sound." Discovered 2026-05-26 while adding Play/Rest to Breath Generator (commit `a546fce` is the fix). **Workarounds:** either invert the conditional to a one-armed form (`!pr_resting ? (...);` — only the populated case runs), or put a no-op like `0;` inside the empty branch. Whenever you write a `cond ? (...) : (...)` where one branch is "do nothing," prefer the one-armed inverted form so the parser never sees an empty block.
+- **EEL2 has NO scientific notation — `1e9` is a syntax error, not a big number.** Every other C-family language accepts it, so it gets typed on autopilot when you want "effectively infinity" as a sentinel (here: a High-cut fade threshold that no frequency can reach, so the fade multiplier is always exactly 1 when the control is off). REAPER reports it clearly — `@init:360: syntax error: 'hc_lo = 1 <!> e9;'` — but only when the plugin is loaded, so it survives every desk check. **Fix:** write the digits out, `1000000000`. **Audit:** `grep -nE '(?<![A-Za-z0-9_])[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+' src/*.jsfx` (ripgrep needs `-P` for the lookbehind) — should return nothing across the suite. Worth running alongside the paren-balance and empty-`()` checks, since none of those catch it. (Hit 2026-08-19 adding High cut to spectral_vowel_morpher; the whole suite was scanned and this was the only instance.)
+
 - **Polyrhythm Phase voice memory layout** (16 slots each):
   - 0  osc_phase_l
   - 16 osc_phase_r
