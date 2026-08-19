@@ -731,12 +731,27 @@ last_target_select != sel_target ? (
 // @sample so the common case (no breath-freq target) keeps the coeffs cached
 // here and pays nothing. When a freq target is un-configured, this @slider
 // re-run also resets in_f_l/r + ex_f_l/r back to their base (below).
+// breath_freq_active is DERIVED from the drift and Speed Ramp banks, so it is
+// computed in @block instead -- see the note there.
+
+@block
+// --- Gating flag DERIVED from the @serialize banks, and therefore computed
+//     here rather than in @slider.
+//
+// It gates the per-sample breath-filter-coeff recompute below, so the common
+// case (no breath-freq target configured) keeps the coeffs cached and pays
+// nothing. In @slider it was subject to the restore-order bug: @slider and
+// @serialize have no guaranteed order, so on a load or track duplicate where
+// @slider ran first this was computed from empty banks, came out 0, and was
+// never recomputed once the banks were restored underneath it -- a configured
+// breath-frequency drift would simply not move until a control was touched.
+// @block runs every block regardless of what happened when. (Same bug found
+// in the Morpher on 2026-08-19 and swept across the suite.)
 breath_freq_active = (target_drift_up[8] > 0 || target_drift_down[8] > 0 ||
                       target_drift_up[9] > 0 || target_drift_down[9] > 0 ||
                       speed_ramp_target_value_mem[8] != 0 ||
                       speed_ramp_target_value_mem[9] != 0);
 
-@block
 // Follow the project tempo live in Host x. @slider does not re-run on a
 // tempo change, so these repeat here; everything else is per-sample.
 rate_mode == 1 ? (

@@ -1015,14 +1015,8 @@ ramp_engaged = slider35;
 // technique rather than something chosen per note.
 ot_width     = max(0.5, min(4, slider38));
 
-// Per-target flags. td_active gates the drift-advance loop; mod_active gates the
-// effective-value recompute (drift OR ramp configured). A target with neither
-// stays exactly at its base value — bit-identical to no modulation.
-i = 0; loop(DBANK,
-  td_active[i]  = (target_drift_up[i] > 0 || target_drift_down[i] > 0) ? 1 : 0;
-  mod_active[i] = (td_active[i] || ramp_by_mem[i] != 0) ? 1 : 0;
-  i += 1;
-);
+// td_active / mod_active are DERIVED from the drift and ramp banks, so they are
+// computed in @block -- see the note there. Deriving them here was a bug.
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
 drift_restart_free = slider30;   // 0 = restart on play (sync), 1 = free-running
@@ -1168,6 +1162,27 @@ cap_dirty ? (
   slot_denoise[cap_slot] = slider21;
   slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
 cap_last = cap_trig;
+
+// --- Per-target flags, DERIVED from the @serialize banks and therefore
+//     computed here rather than in @slider.
+//
+// td_active gates the drift-advance loop; mod_active gates the effective-value
+// recompute (drift OR ramp configured). A target with neither stays exactly at
+// its base value -- bit-identical to no modulation.
+//
+// They lived in @slider until 2026-08-19, which meant that on any restore where
+// @slider ran before @serialize -- project load, track duplicate, undo -- they
+// were computed from banks still holding their defaults, came out all-zero, and
+// were never recomputed once @serialize filled the banks in underneath. Drift
+// and Ramp configured in a saved project simply did not run. It went unnoticed
+// for so long because touching ANY control re-runs @slider and fixes it, and
+// touching a control is what you do next anyway. @block has no ordering problem:
+// it runs every block forever. (Diagnosed in the sibling plugin, the Morpher.)
+i = 0; loop(DBANK,
+  td_active[i]  = (target_drift_up[i] > 0 || target_drift_down[i] > 0) ? 1 : 0;
+  mod_active[i] = (td_active[i] || ramp_by_mem[i] != 0) ? 1 : 0;
+  i += 1;
+);
 
 @sample
 inbuf[inpos] = (spl0 + spl1) * 0.5;

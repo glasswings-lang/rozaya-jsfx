@@ -168,7 +168,7 @@ Four octaves each way is the usable span of a voice capture: four down is at the
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic / High cut / Custom 1-3 level / the eight octave levels, default Texture`
+**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic / High cut / Custom 1-3 level / the twelve named-interval levels, default Texture`
 Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
 
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
@@ -193,7 +193,7 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic / High cut / Custom 1-3 level / the eight octave levels, default Texture`
+**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic / High cut / Custom 1-3 level / the twelve named-interval levels, default Texture`
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
 **Ramp by** `-300 to +300, units match the target, default 0`
@@ -260,7 +260,7 @@ How sharp the resonance is. **1** is the classic narrow whistle. Higher values l
 - **The capture workflow.** Put audio on the track, Input level up and Voice level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment — and because each slot keeps its own point, you can go slot by slot and tune every capture to its own vowel without disturbing the ones you already set.
 - **The voice end needs pitched material.** Texture 0 only sings on clearly pitched sources (a sustained vowel, organ, bowed note). On unpitched material it produces a tone — use the wash end (or the middle) there instead.
 - **Vowel + breath is the middle.** The pure voice end has no breath; the pure wash end has breath but de-voices. A blend around Texture 30–50 gives the vowel plus air.
-- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels (including every layer level), Stereo width, Low cut, High cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Nineteen of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, High cut, Voice level, Overtone harmonic, and all eleven layer levels — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
+- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels (including every layer level), Stereo width, Low cut, High cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Twenty-three of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, High cut, Voice level, Overtone harmonic, and all fifteen layer levels — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
 - **Source-agnostic.** It freezes anything — synths, field recordings, strings, cymbals, even a whole mix via a track send. The wash texturizes any source.
 - **Captures persist** across save and reopen (the raw audio is stored in the project; both engines rebuild on load).
 - **Transport must be moving** for it to sound — it is a generator. Loop the transport, or arm the track and monitor.

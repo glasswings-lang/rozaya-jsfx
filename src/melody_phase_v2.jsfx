@@ -915,51 +915,8 @@ last_voice_select != vsel ? (
 // to seconds via the global cycle_seconds. Values come from the voice bank
 // (v2) rather than 40 flat sliders; the selector block above keeps the bank
 // current for whichever voice is being edited.
-i = 0;
-loop(8,
-  v_semitones[i] = voice_bank_note[i] - 24;   // note-picker index -> semitones (24 = C4 = 0)
-  v_step_cycles  = voice_bank_step[i];
-  v_note_cycles  = voice_bank_dur[i];
-  v_gain_db      = voice_bank_gaindb[i];
-  v_active[i]    = voice_bank_active[i];
-
-  v_step_seconds[i] = max(v_step_cycles * cycle_seconds, 0.001);
-  v_note_seconds[i] = max(v_note_cycles * cycle_seconds, 0);
-  v_gain[i] = db_to_lin(v_gain_db);
-
-  // Frequency: voice's note at the configured tuning.
-  // L channel uses the base frequency; R channel adds the binaural
-  // offset (in Hz, applied to R only). When binaural_hz=0, L and R
-  // run at identical frequencies — same shape as Polyrhythm Phase.
-  hz_base = semitones_to_hz(base_note, center_octave, v_semitones[i]);
-  v_freq_l[i] = hz_base;
-  v_freq_r[i] = hz_base + binaural_hz;
-
-  // Recompute envelope segment durations from the new note length.
-  // attack+release together can't exceed the note duration; if the
-  // user set both high (90%+90%), scale them proportionally to fit.
-  att_t = attack_pct * v_note_seconds[i];
-  rel_t = release_pct * v_note_seconds[i];
-  att_t + rel_t > v_note_seconds[i] ? (
-    total = att_t + rel_t;
-    total > 0 ? (
-      att_t = att_t / total * v_note_seconds[i];
-      rel_t = rel_t / total * v_note_seconds[i];
-    );
-  );
-  // No anti-click floor here on purpose — the @sample loop runs
-  // the raw envelope through a one-pole smoother (smooth_coeff)
-  // before applying it to the oscillator, which handles the
-  // 0-duration ramp case the same way Polyrhythm Phase does.
-  // Forcing a minimum ramp here would let a user's "attack = 0"
-  // setting silently become "attack = 3ms" — annoying when the
-  // user actually wanted a percussive transient.
-  v_attack_seconds[i]  = att_t;
-  v_release_seconds[i] = rel_t;
-  v_sustain_seconds[i] = max(0, v_note_seconds[i] - att_t - rel_t);
-
-  i += 1;
-);
+// The per-voice derivation from voice_bank_* moved to @block -- those banks
+// are restored by @serialize, and @slider has no guaranteed order against it.
 
 // Pan: per-voice LFO frequency for Tremolo / Increment modes.
 // Tremolo: every voice pans at Pan Base Rate (same as PRP's
@@ -1122,6 +1079,62 @@ last_sr_target != sr_sel_target ? (
 samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 
 @block
+// --- The whole per-voice configuration, DERIVED from the voice_bank_* banks
+//     that @serialize restores, and therefore computed here and not in @slider.
+//
+// This is the same restore-order bug found in the Morpher on 2026-08-19, and
+// by far the worst instance of it in the suite: it is not one gating flag but
+// every voice's note, step, duration, gain and active state. On any load or
+// track duplicate where @slider ran before @serialize, all eight voices were
+// derived from default banks and stayed that way until a control was touched.
+// @block runs every block, so the ordering cannot matter. cycle_seconds is
+// slider-derived and persists, so it is valid here.
+i = 0;
+loop(8,
+  v_semitones[i] = voice_bank_note[i] - 24;   // note-picker index -> semitones (24 = C4 = 0)
+  v_step_cycles  = voice_bank_step[i];
+  v_note_cycles  = voice_bank_dur[i];
+  v_gain_db      = voice_bank_gaindb[i];
+  v_active[i]    = voice_bank_active[i];
+
+  v_step_seconds[i] = max(v_step_cycles * cycle_seconds, 0.001);
+  v_note_seconds[i] = max(v_note_cycles * cycle_seconds, 0);
+  v_gain[i] = db_to_lin(v_gain_db);
+
+  // Frequency: voice's note at the configured tuning.
+  // L channel uses the base frequency; R channel adds the binaural
+  // offset (in Hz, applied to R only). When binaural_hz=0, L and R
+  // run at identical frequencies — same shape as Polyrhythm Phase.
+  hz_base = semitones_to_hz(base_note, center_octave, v_semitones[i]);
+  v_freq_l[i] = hz_base;
+  v_freq_r[i] = hz_base + binaural_hz;
+
+  // Recompute envelope segment durations from the new note length.
+  // attack+release together can't exceed the note duration; if the
+  // user set both high (90%+90%), scale them proportionally to fit.
+  att_t = attack_pct * v_note_seconds[i];
+  rel_t = release_pct * v_note_seconds[i];
+  att_t + rel_t > v_note_seconds[i] ? (
+    total = att_t + rel_t;
+    total > 0 ? (
+      att_t = att_t / total * v_note_seconds[i];
+      rel_t = rel_t / total * v_note_seconds[i];
+    );
+  );
+  // No anti-click floor here on purpose — the @sample loop runs
+  // the raw envelope through a one-pole smoother (smooth_coeff)
+  // before applying it to the oscillator, which handles the
+  // 0-duration ramp case the same way Polyrhythm Phase does.
+  // Forcing a minimum ramp here would let a user's "attack = 0"
+  // setting silently become "attack = 3ms" — annoying when the
+  // user actually wanted a percussive transient.
+  v_attack_seconds[i]  = att_t;
+  v_release_seconds[i] = rel_t;
+  v_sustain_seconds[i] = max(0, v_note_seconds[i] - att_t - rel_t);
+
+  i += 1;
+);
+
 // Follow the project tempo while Host x mode is active.
 //
 // @slider does NOT re-run when the tempo changes, so everything derived
