@@ -123,7 +123,7 @@ How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Sh
 
 ### Layers (octave stacking)
 
-Extra copies of **the whole instrument** — voice and wash both — playing at a fixed interval from the main pitch, at the same time, from the same instance. Eleven of them: eight fixed octaves and three free-interval Custom layers, all behind **four sliders**.
+Extra copies of **the whole instrument** — voice and wash both — playing at a fixed interval from the main pitch, at the same time, from the same instance. Eleven of them: eight fixed octaves and three free-interval Custom layers, all behind **five sliders**.
 
 The point is the *lock*. Two instances of the plugin on Shuffle wander independently: one lands on your "ah" while the other is on an "oo" a fifth away, and the octaves you wanted arrive as a clash. A Layer is not another instance — it is the same capture, at the same morph position, in the same crossfade, an octave away. Every slot change, every Drift, every Shuffle step happens to all of them together, so a stack stays consonant no matter where the morph wanders. Layers ride Pitch as *offsets* from it, so pitching (or Drifting, or Ramping) the main Pitch transposes the whole stack as one.
 
@@ -131,6 +131,11 @@ They work the way Drift target and Capture slot do: **every layer sounds at once
 
 **Layer** `Custom 1 / Custom 2 / Custom 3 / 4, 3, 2, 1 octaves down / 1, 2, 3, 4 octaves up, default Custom 1`
 Which layer you are setting. For the eight octave entries the interval is decided by the name — there is nothing to convert and nothing else to set but the level.
+
+**Layer active** `Inactive / Active, default Active`
+Silences the selected layer **without losing its level**. That's the difference between this and a level of −60: −60 means "this layer is silent because that's the level I want," Inactive means "silence it and give it back to me later." Flip it off, flip it back on, and the dB you tuned is exactly where you left it. Costs the same nothing as −60 while it's off — the layer's DSP is skipped either way.
+
+Drift and Ramp move the *level*, never this switch, so arming drift on a layer you've muted can't bring it back without you.
 
 **Layer level (dB)** `-60 to 0, default -60 (off)`
 How loud the selected layer sits under the main voice.
@@ -140,11 +145,6 @@ How loud the selected layer sits under the main voice.
 The cost of that honesty is that levels **add**: eleven layers at 0 dB is twelve times the amplitude, and it will clip if you let it. That is the trade, and it is the right way round — a plugin quietly re-mixing you means every adjustment is a chase against a soundscape you are also moving.
 
 **−60 is truly off** and costs no CPU at all: the layer's DSP is skipped, not muted. Every layer's level is also its own Drift and Ramp target, which is where this gets interesting — octaves that swell in and out on their own periods, hands-free, while you do nothing.
-
-**Layer active** `Inactive / Active, default Active`
-Silences the selected layer **without losing its level**. That's the difference between this and a level of −60: −60 means "this layer is silent because that's the level I want," Inactive means "silence it and give it back to me later." Flip it off, flip it back on, and the dB you tuned is exactly where you left it. Costs the same nothing as −60 while it's off — the layer's DSP is skipped either way.
-
-Drift and Ramp move the *level*, never this switch, so arming drift on a layer you've muted can't bring it back without you.
 
 **Layer interval** `Custom / 6, 4, 3, 2, 1 octaves down / a fifth down / a fourth down / a fourth up / a fifth up / 1, 2, 3, 4, 6 octaves up` — *shown only on a Custom layer*
 The interval for one of the three Custom layers — fifths, fourths, six octaves, whatever you want that isn't a plain octave. Pick it by name and the plugin does the arithmetic and writes the semitone value, then hides the semitone slider.

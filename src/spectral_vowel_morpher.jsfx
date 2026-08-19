@@ -121,7 +121,7 @@ slider32:20000<200,20000,10>High cut (Hz, 20000 = off)
 //     stack consonantly and Shuffle stays usable. Layers ride Pitch (and its
 //     Drift/Ramp) as offsets from it, so the stack transposes as one.
 //
-//     ELEVEN layers behind FOUR sliders, via the suite's nested-selector
+//     ELEVEN layers behind FIVE sliders, via the suite's nested-selector
 //     pattern (the same shape as Drift target and Capture slot): every layer
 //     sounds at once, and the selector only chooses which one the sliders below
 //     are editing. Eight of them are fixed octaves, -4 to +4, named by the
@@ -152,9 +152,6 @@ slider32:20000<200,20000,10>High cut (Hz, 20000 = off)
 //     The limit is physical rather than computational: past about five octaves
 //     down a layer is subsonic, inaudible while still eating headroom. ---
 slider33:0<0,10,1{Custom 1,Custom 2,Custom 3,4 octaves down,3 octaves down,2 octaves down,1 octave down,1 octave up,2 octaves up,3 octaves up,4 octaves up}>Layer
-slider34:-60<-60,0,0.1>Layer level (dB, -60 = off)
-slider35:5<0,14,1{Custom,6 octaves down,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,6 octaves up}>Layer interval (Custom layers)
-slider36:-12<-96,96,0.1>Layer pitch (semitones)
 // Active/Inactive, per layer, and NOT the same thing as a level of -60.
 // -60 is "this layer is silent because that is the level I want"; Inactive is
 // "silence this layer and give it back to me later" -- the level you tuned is
@@ -162,11 +159,18 @@ slider36:-12<-96,96,0.1>Layer pitch (semitones)
 // polyrhythm) and the reason it exists: a mute you can undo without having to
 // remember a number. Both routes cost the same nothing at runtime, because the
 // gate is the layer's gain and the whole layer's DSP is skipped when it is 0.
-// Appended at 37 rather than placed next to the level, per the never-renumber
-// rule -- this plugin is already loaded in a project. For the eight octave
-// layers the interval sliders are hidden anyway, so what you actually tab
-// through is Layer, Layer level, Layer active.
-slider37:1<0,1,1{Inactive,Active}>Layer active
+// Sits directly under the selector, ahead of the level: "is this layer in
+// play" is the first question you ask about a layer, and it is a binary you
+// can hear the answer to instantly. It also groups the two controls that
+// apply to EVERY layer (active, level) ahead of the two that only apply to a
+// Custom one (interval, pitch), so the always-present block is contiguous.
+// This diverges from polyrhythm, where Vn Active comes last in the per-voice
+// group -- deliberately: that group is flat and every voice is on screen at
+// once, where this is a selector showing you exactly one layer at a time.
+slider34:1<0,1,1{Inactive,Active}>Layer active
+slider35:-60<-60,0,0.1>Layer level (dB, -60 = off)
+slider36:5<0,14,1{Custom,6 octaves down,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,6 octaves up}>Layer interval (Custom layers)
+slider37:-12<-96,96,0.1>Layer pitch (semitones)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -717,23 +721,23 @@ ot_width      = max(0.5, min(4, slider31));
 //     the selector is a view, never a mute. ---
 lay_sel = max(0, min(NLAYERS-1, slider33));
 last_lay_sel != lay_sel ? (
-  lay_db_base[last_lay_sel] = slider34;
-  lay_active[last_lay_sel]  = slider37;
-  last_lay_sel < N_CUSTOM ? ( lay_pick[last_lay_sel] = slider35; lay_semi[last_lay_sel] = slider36; );
-  slider34 = lay_db_base[lay_sel]; slider_automate(slider34);
-  slider37 = lay_active[lay_sel];  slider_automate(slider37);
+  lay_db_base[last_lay_sel] = slider35;
+  lay_active[last_lay_sel]  = slider34;
+  last_lay_sel < N_CUSTOM ? ( lay_pick[last_lay_sel] = slider36; lay_semi[last_lay_sel] = slider37; );
+  slider35 = lay_db_base[lay_sel]; slider_automate(slider35);
+  slider34 = lay_active[lay_sel];  slider_automate(slider34);
   // The interval controls only mean anything on a Custom layer; an octave's
   // interval is fixed by which entry you picked. Load them anyway so the two
   // sliders always show the layer you are actually looking at.
   lay_sel < N_CUSTOM ? (
-    slider35 = lay_pick[lay_sel]; slider36 = lay_semi[lay_sel];
-    slider_automate(slider35); slider_automate(slider36);
+    slider36 = lay_pick[lay_sel]; slider37 = lay_semi[lay_sel];
+    slider_automate(slider36); slider_automate(slider37);
   );
   last_lay_sel = lay_sel;
 ) : (
-  lay_db_base[lay_sel] = slider34;
-  lay_active[lay_sel]  = slider37;
-  lay_sel < N_CUSTOM ? ( lay_pick[lay_sel] = slider35; lay_semi[lay_sel] = slider36; );
+  lay_db_base[lay_sel] = slider35;
+  lay_active[lay_sel]  = slider34;
+  lay_sel < N_CUSTOM ? ( lay_pick[lay_sel] = slider36; lay_semi[lay_sel] = slider37; );
 );
 // --- Interval picker for the selected Custom layer. A change-triggered
 //     one-shot: move it and it writes the semitone slider, then gets out of the
@@ -750,15 +754,15 @@ lay_sel < N_CUSTOM ? (
     lay_pick_last[lay_sel] = lay_pick[lay_sel];
     lay_pick[lay_sel] > 0.5 ? (
       lay_semi[lay_sel] = lay_pick_semi[floor(lay_pick[lay_sel])];
-      slider36 = lay_semi[lay_sel]; slider_automate(slider36);
+      slider37 = lay_semi[lay_sel]; slider_automate(slider37);
     );
   );
 );
 lay_pick_inited = 1;
 // Show the interval controls only where they mean something: the picker on a
 // Custom layer, and the raw semitones only when the picker can't say it.
-slider_show(slider35, lay_sel < N_CUSTOM);
-slider_show(slider36, lay_sel < N_CUSTOM && slider35 < 0.5);
+slider_show(slider36, lay_sel < N_CUSTOM);
+slider_show(slider37, lay_sel < N_CUSTOM && slider36 < 0.5);
 // --- Frequency ratios. The Custom layers come from their semitones; the octave
 //     stack is fixed and needs no arithmetic at all. ---
 lz = 0;
@@ -1545,10 +1549,10 @@ file_var(0, ser_magic);
     // selected layer is the one that silently zeroes.
     lsel = max(0, min(NLAYERS-1, slider33));
     last_lay_sel = lsel;
-    slider34 = lay_db_base[lsel];
-    slider37 = lay_active[lsel];
+    slider35 = lay_db_base[lsel];
+    slider34 = lay_active[lsel];
     lsel < N_CUSTOM ? (
-      slider35 = lay_pick[lsel]; slider36 = lay_semi[lsel];
+      slider36 = lay_pick[lsel]; slider37 = lay_semi[lsel];
       lay_pick_last[lsel] = lay_pick[lsel];
     );
     // Adopt every restored picker position rather than firing on it -- firing
