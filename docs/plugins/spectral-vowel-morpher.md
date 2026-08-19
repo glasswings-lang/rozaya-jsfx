@@ -123,32 +123,48 @@ How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Sh
 
 ### Layers (octave stacking)
 
-Up to **three extra copies of the whole instrument** — voice and wash both — playing at a fixed interval from the main pitch, at the same time, from the same instance.
+Extra copies of **the whole instrument** — voice and wash both — playing at a fixed interval from the main pitch, at the same time, from the same instance. Eight fixed octaves, plus three free-interval Custom layers.
 
-The point is the *lock*. Two instances of the plugin on Shuffle wander independently: one lands on your "ah" while the other is on an "oo" a fifth away, and the octaves you wanted arrive as a clash. A Layer is not another instance — it is the same capture, at the same morph position, in the same crossfade, an octave away. Every slot change, every Drift, every Shuffle step happens to all of them together, so a stack stays consonant no matter where the morph wanders.
+The point is the *lock*. Two instances of the plugin on Shuffle wander independently: one lands on your "ah" while the other is on an "oo" a fifth away, and the octaves you wanted arrive as a clash. A Layer is not another instance — it is the same capture, at the same morph position, in the same crossfade, an octave away. Every slot change, every Drift, every Shuffle step happens to all of them together, so a stack stays consonant no matter where the morph wanders. Layers ride Pitch as *offsets* from it, so pitching (or Drifting, or Ramping) the main Pitch transposes the whole stack as one.
 
-Layers ride Pitch as *offsets* from it, so pitching (or Drifting, or Ramping) the main Pitch transposes the whole stack as one.
+#### The octave stack
 
-**Layer N interval** `Custom / 6, 4, 3, 2, 1 octaves down / a fifth down / a fourth down / a fourth up / a fifth up / 1, 2, 3, 4, 6 octaves up`
-Pick the interval by name — the plugin does the arithmetic and writes the semitone value for you, then the semitone slider hides itself. Defaults: Layer 1 an octave down, Layer 2 an octave up, Layer 3 two octaves down.
+**4 / 3 / 2 / 1 octaves down (dB)** and **1 / 2 / 3 / 4 octaves up (dB)** `-60 to 0, default -60 (off)`
 
-**Layer N pitch (semitones)** `-96 to +96` — *only shown when the interval picker is on Custom*
-The interval by hand, for anything the picker doesn't name — a fractional offset for a slow beating unison, a seventh, a microtonal spread. Same eight-octave range as Pitch itself.
+One slider per octave. The interval is the slider's *name*; the value is just how loud that octave is, in dB below the main voice. Nothing to pick, nothing to convert, nothing derived from anything else.
 
-**Layer N level (dB)** `-60 to 0, default -60 (off)`
-How loud that layer sits under the main voice. **-60 is truly off** and costs no CPU at all — the layer's DSP is skipped, not just muted. This is also a Drift and Ramp target, which is where it gets interesting: octaves that swell in and out on their own periods.
+**The number you set is the number you get.** A level of −12 puts that octave 12 dB under the main voice and changes *nothing else*. There is no auto-balancing and no compensation moving under your hand while you set the next one — set four octaves in any order and the first three still sound the way you left them.
 
-**Cost:** near enough free on the wash (one extra spectrum read per bin, inside a grain that was being built anyway — no second FFT). On the voice a raised layer is another 64 partials, but an *upward* layer gets cheaper as it climbs, because its partials cross Nyquist (or your High cut) and stop being computed. A wide interval costs no more than a narrow one.
+The cost of that honesty is that levels **add**: eight octaves at 0 dB is nine times the amplitude, and it will clip if you let it. That is the trade, and it is the right way round — a plugin quietly re-mixing you means every adjustment is a chase against a soundscape you are also moving.
 
-**Depth is free; watch your meters.** The range goes to eight octaves in either direction because nothing in the engine cares. Past about five octaves down, though, the layer is below hearing — inaudible, but still eating headroom and moving speaker cones. A subsonic layer you can't hear is still on the meter.
+**−60 is truly off** and costs no CPU at all: the layer's DSP is skipped, not muted. Each layer's level is also a Drift and Ramp target, which is where this gets interesting — octaves that swell in and out on their own periods, hands-free.
 
-**Level:** the stack never gets louder than the bare voice. As layers come in, total power is held steady (the wash has always done this per grain; the voice now matches). So a layer genuinely *arrives* and the others give back a little — a third layer at full level costs the base about 2.4 dB — rather than everything ducking to make room. Raise Voice level if you want the stack louder overall.
+Four octaves each way is the usable span of a voice capture: four down is at the floor of hearing, four up is past where a captured harmonic series has much content left. Anything wider is a Custom layer.
+
+#### Custom layers
+
+**Custom N interval** `Custom / 6, 4, 3, 2, 1 octaves down / a fifth down / a fourth down / a fourth up / a fifth up / 1, 2, 3, 4, 6 octaves up`
+Three more layers at any interval you like — fifths, fourths, six octaves, or a fractional offset for a slow beating unison. Pick the interval by name and the plugin does the arithmetic and writes the semitone value, then hides the semitone slider.
+
+**Custom N pitch (semitones)** `-96 to +96` — *only shown when the interval picker is on Custom*
+The interval by hand, for anything the picker doesn't name. Same eight-octave range as Pitch itself.
+
+**Custom N level (dB)** `-60 to 0, default -60 (off)`
+Exactly as the octave levels above, including being a Drift/Ramp target.
+
+#### Cost, and how deep you can go
+
+Near enough free on the wash — one extra spectrum read per bin, inside a grain that was being built anyway, with no second FFT.
+
+On the voice each raised layer is another 64 partials, but the **upward** layers get cheaper the higher they go, because their partials cross Nyquist (or your High cut) and stop being computed at all. On a capture around 200 Hz, an octave up is 60 partials, two up is 30, three up is 15, four up is 7. The downward layers are the expensive ones — each is a full 64. Four octaves down all at once is real CPU; the same four upward is close to free.
+
+**Depth is free; watch your meters.** The Custom range goes to eight octaves either way because nothing in the engine cares. Past about five octaves down, though, a layer is below hearing — inaudible, but still eating headroom and moving speaker cones. A subsonic layer you can't hear is still on the meter.
 
 ### Drift (in-plugin automation)
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic / High cut / Layer 1 level / Layer 2 level / Layer 3 level, default Texture`
+**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic / High cut / the eight octave levels / Custom 1-3 level, default Texture`
 Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
 
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
@@ -173,7 +189,7 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic / High cut / Layer 1 level / Layer 2 level / Layer 3 level, default Texture`
+**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Overtone harmonic / High cut / the eight octave levels / Custom 1-3 level, default Texture`
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
 **Ramp by** `-300 to +300, units match the target, default 0`
@@ -240,7 +256,7 @@ How sharp the resonance is. **1** is the classic narrow whistle. Higher values l
 - **The capture workflow.** Put audio on the track, Input level up and Voice level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment — and because each slot keeps its own point, you can go slot by slot and tune every capture to its own vowel without disturbing the ones you already set.
 - **The voice end needs pitched material.** Texture 0 only sings on clearly pitched sources (a sustained vowel, organ, bowed note). On unpitched material it produces a tone — use the wash end (or the middle) there instead.
 - **Vowel + breath is the middle.** The pure voice end has no breath; the pure wash end has breath but de-voices. A blend around Texture 30–50 gives the vowel plus air.
-- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels (including the Layer levels), Stereo width, Low cut, High cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Eleven of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, High cut, Voice level, Overtone harmonic, and the three Layer levels — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
+- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels (including every layer level), Stereo width, Low cut, High cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Nineteen of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, High cut, Voice level, Overtone harmonic, and all eleven layer levels — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
 - **Source-agnostic.** It freezes anything — synths, field recordings, strings, cymbals, even a whole mix via a track send. The wash texturizes any source.
 - **Captures persist** across save and reopen (the raw audio is stored in the project; both engines rebuild on load).
 - **Transport must be moving** for it to sound — it is a generator. Loop the transport, or arm the track and monitor.
