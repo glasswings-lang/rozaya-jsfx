@@ -57,7 +57,7 @@ slider16:20<1,600,0.5>Auto-morph time (sec)
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. Added at the END of the range
 //     (slider IDs are primary keys — never renumber existing ones). ---
-slider17:0<0,18,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
+slider17:0<0,18,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Overtone harmonic,High cut,Custom 1 level,Custom 2 level,Custom 3 level,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level}>Drift target
 slider18:0<0,300,0.1>Drift up amount (units match target)
 slider19:0<0,300,0.1>Drift down amount (units match target)
 slider20:30<1,600,0.5>Drift period (seconds)
@@ -72,7 +72,7 @@ slider22:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider23:0<0,18,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Ramp target
+slider23:0<0,18,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Overtone harmonic,High cut,Custom 1 level,Custom 2 level,Custom 3 level,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level}>Ramp target
 slider24:0<-300,300,0.1>Ramp by (units match target)
 slider25:0<0,60,0.1>Ramp duration (minutes)
 slider26:0<0,60,0.1>Ramp start delay (minutes)
@@ -121,48 +121,40 @@ slider32:20000<200,20000,10>High cut (Hz, 20000 = off)
 //     stack consonantly and Shuffle stays usable. Layers ride Pitch (and its
 //     Drift/Ramp) as offsets from it, so the stack transposes as one.
 //
-//     THE NUMBER YOU SET IS THE NUMBER YOU GET. A level of -12 puts that octave
+//     ELEVEN layers behind FOUR sliders, via the suite's nested-selector
+//     pattern (the same shape as Drift target and Capture slot): every layer
+//     sounds at once, and the selector only chooses which one the sliders below
+//     are editing. Eight of them are fixed octaves, -4 to +4, named by the
+//     interval so there is no arithmetic and nothing to convert -- you pick the
+//     octave and set a dB. The first three are Custom: any interval you like,
+//     via a named picker or raw semitones. A flat layout would have cost
+//     seventeen sliders to say the same thing, and a slider you tab past all
+//     day is not free -- keyboard and screen-reader users pay for it in hands.
+//
+//     THE NUMBER YOU SET IS THE NUMBER YOU GET. A level of -12 puts that layer
 //     12 dB under the main voice and changes nothing else: no auto-balancing,
 //     no compensation shifting under your hand while you set the next one.
 //     An earlier build held total power steady as layers arrived, which is
 //     defensible in the abstract and useless in practice -- gain staging is a
 //     mix decision, and a plugin that keeps re-deciding it turns every
 //     adjustment into a chase against a soundscape you are also moving.
-//     The cost of honesty is that levels ADD: eight octaves at 0 dB is nine
+//     The cost of honesty is that levels ADD: eleven layers at 0 dB is twelve
 //     times the amplitude. Watch the meter; that is what it is for.
 //
 //     -60 is off, and off costs no CPU at all -- the layer's DSP is skipped.
-//     Four octaves each way is the usable span of a voice capture (four down
-//     is at the floor of hearing, four up is past where a captured harmonic
-//     series still has much content). Anything wider, or anything BETWEEN the
-//     octaves, is what the three Custom layers underneath are for. ---
-slider33:-60<-60,0,0.1>4 octaves down (dB)
-slider34:-60<-60,0,0.1>3 octaves down (dB)
-slider35:-60<-60,0,0.1>2 octaves down (dB)
-slider36:-60<-60,0,0.1>1 octave down (dB)
-slider37:-60<-60,0,0.1>1 octave up (dB)
-slider38:-60<-60,0,0.1>2 octaves up (dB)
-slider39:-60<-60,0,0.1>3 octaves up (dB)
-slider40:-60<-60,0,0.1>4 octaves up (dB)
-// --- Custom layers: three more of the same thing at any interval you like --
-//     fifths, fourths, six octaves, a fractional offset for a slow beating
-//     unison. The interval picker does the arithmetic and writes the semitone
-//     value, then hides it; set the picker to Custom to type the semitones by
-//     hand. Same +/-96 range as Pitch itself, because a wide transposition
-//     costs NOTHING here: the voice skips every partial that lands above
-//     Nyquist (so up is cheaper, not dearer) and the wash reads its magnitudes
-//     off the end of the spectrum and gets zero. The limit is physical rather
-//     than computational -- past about five octaves down a layer is subsonic,
-//     so it is inaudible while still eating headroom and moving cones. ---
-slider41:5<0,14,1{Custom,6 octaves down,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,6 octaves up}>Custom 1 interval
-slider42:-12<-96,96,0.1>Custom 1 pitch (semitones)
-slider43:-60<-60,0,0.1>Custom 1 level (dB, -60 = off)
-slider44:10<0,14,1{Custom,6 octaves down,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,6 octaves up}>Custom 2 interval
-slider45:12<-96,96,0.1>Custom 2 pitch (semitones)
-slider46:-60<-60,0,0.1>Custom 2 level (dB, -60 = off)
-slider47:4<0,14,1{Custom,6 octaves down,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,6 octaves up}>Custom 3 interval
-slider48:-24<-96,96,0.1>Custom 3 pitch (semitones)
-slider49:-60<-60,0,0.1>Custom 3 level (dB, -60 = off)
+//     Four octaves each way is the usable span of a voice capture (four down is
+//     at the floor of hearing, four up is past where a captured harmonic series
+//     still has much content). Anything wider, or anything BETWEEN the octaves,
+//     is what the Custom layers are for -- their range matches Pitch's own
+//     +/-96, because a wide transposition costs NOTHING here: the voice skips
+//     every partial that lands above Nyquist (so up is cheaper, not dearer) and
+//     the wash reads its magnitudes off the end of the spectrum and gets zero.
+//     The limit is physical rather than computational: past about five octaves
+//     down a layer is subsonic, inaudible while still eating headroom. ---
+slider33:0<0,10,1{Custom 1,Custom 2,Custom 3,4 octaves down,3 octaves down,2 octaves down,1 octave down,1 octave up,2 octaves up,3 octaves up,4 octaves up}>Layer
+slider34:-60<-60,0,0.1>Layer level (dB, -60 = off)
+slider35:5<0,14,1{Custom,6 octaves down,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,6 octaves up}>Layer interval (Custom layers)
+slider36:-12<-96,96,0.1>Layer pitch (semitones)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -178,11 +170,12 @@ N_TARGETS = 19;  // Drift/Ramp targets. APPEND ONLY -- the index is saved in the
                  // would silently repoint every saved selection above it:
                  // 0 Texture, 1 Spread, 2 Pitch, 3 Stereo width, 4 Low cut,
                  // 5 Voice level, 6 Overtone harmonic, 7 High cut, 8..18 layer levels
-                 // (in layer order: the eight octaves, then the three Custom layers).
-NLAYERS = 11;    // pitch-shifted copies of the morph: 8 fixed octaves + 3 Custom
-N_OCT   = 8;     // ...of which the first 8 are the fixed octave stack, -4..+4
-LAY_T0  = 8;     // target index of layer 0 -- targets LAY_T0+i map to layer i
-N_CUSTOM = 3;    // ...and the last 3 are the free-interval Custom layers
+                 // (in layer order: the three Custom layers, then the eight octaves --
+                 // the same order the Layer selector lists them in).
+NLAYERS  = 11;   // pitch-shifted copies of the morph, all behind one selector
+N_CUSTOM = 3;    // layers 0..2 are the free-interval Custom layers
+                 // layers 3..10 are the fixed octave stack, -4 -3 -2 -1 +1 +2 +3 +4
+LAY_T0   = 8;    // target index of layer 0 -- targets LAY_T0+i map to layer i
 FFTSIZE = 32768; NBINS = 16385;
 // WA = analysis window length, FIXED and decoupled from Wash grain. The capture
 // analysis (heavy: FFT + YIN) happens at WA; Wash grain only rebuilds the cheap
@@ -310,10 +303,18 @@ slots_inited == 0 ? (
   );
   last_target_select = 0;
   last_ramp_target   = 0;
-  // Layer levels default to off, so the defaults above (an octave down, an
-  // octave up, two octaves down) are inert until a level is raised -- but they
-  // are musical the moment it is, so raising one level is the whole gesture.
-  lpi = 0; loop(NLAYERS, layer_gain[lpi] = 0; layer_ratio[lpi] = 1; lpi += 1; );
+  // Layer bank defaults. Every layer starts OFF, so the whole feature is inert
+  // until a level is raised -- and one level IS the whole gesture, because the
+  // interval is already decided by which layer you picked. These live in the
+  // one-time guard for the same reason the captures do: they must survive the
+  // transport, and @serialize overwrites them with the saved bank on load.
+  lpi = 0; loop(NLAYERS, lay_db_base[lpi] = -60; layer_gain[lpi] = 0; layer_ratio[lpi] = 1; lpi += 1; );
+  // The three Custom layers start somewhere musical (an octave down, an octave
+  // up, two octaves down) so that raising one is immediately worth hearing.
+  lay_semi[0] = -12; lay_semi[1] = 12;  lay_semi[2] = -24;
+  lay_pick[0] = 5;   lay_pick[1] = 10;  lay_pick[2] = 4;    // the same three, as picker entries
+  lpi = 0; loop(N_CUSTOM, lay_pick_last[lpi] = lay_pick[lpi]; lpi += 1; );
+  last_lay_sel = 0;
   lay_pick_inited = 0;   // adopt the saved picker position on load; never fire on it
   last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
 );
@@ -695,47 +696,65 @@ sca2 = 0; loop(NSLOTS, slot_capavg[sca2] = cap_avg; sca2 += 1; );
 ot_harm_base  = max(0, min(NHARM, slider29));
 ot_depth_db   = max(0, min(48, slider30));
 ot_width      = max(0.5, min(4, slider31));
-// --- The octave stack (layers 0..7): fixed ratios, one dB slider each. No
-//     picker, no arithmetic, nothing derived -- the interval is in the slider's
-//     NAME and the value is the level, which is the whole reason it exists.
-layer_ratio[0] = 0.0625; layer_ratio[1] = 0.125; layer_ratio[2] = 0.25; layer_ratio[3] = 0.5;
-layer_ratio[4] = 2;      layer_ratio[5] = 4;     layer_ratio[6] = 8;    layer_ratio[7] = 16;
-lay_db_base[0] = slider33; lay_db_base[1] = slider34; lay_db_base[2] = slider35; lay_db_base[3] = slider36;
-lay_db_base[4] = slider37; lay_db_base[5] = slider38; lay_db_base[6] = slider39; lay_db_base[7] = slider40;
-// --- Custom layer interval pickers (layers 8..10). Each is a change-triggered
-//     one-shot: move it and it writes that layer's semitone slider, then gets
-//     out of the way (Custom writes nothing and reveals the semitone slider
-//     instead). The _inited guard is what stops a project that SAVED a picker
-//     position from overwriting its own hand-tuned semitones the instant it
-//     opens -- the trap the Melody Phase host-ratio picker hit. The first
-//     @slider after load only adopts what it sees.
-lay_pick[0] = slider41; lay_pick[1] = slider44; lay_pick[2] = slider47;
-lp = 0;
-loop(N_CUSTOM,
+// --- Layer selector (nested-selector pattern, exactly like Drift/Ramp target
+//     and Capture slot). Switching slider33 saves the visible sliders into the
+//     OUTGOING layer's bank slot and loads the INCOMING layer's stored config
+//     into them; otherwise it captures live edits to the selected layer. Every
+//     layer sounds in parallel from @sample regardless of what is selected --
+//     the selector is a view, never a mute. ---
+lay_sel = max(0, min(NLAYERS-1, slider33));
+last_lay_sel != lay_sel ? (
+  lay_db_base[last_lay_sel] = slider34;
+  last_lay_sel < N_CUSTOM ? ( lay_pick[last_lay_sel] = slider35; lay_semi[last_lay_sel] = slider36; );
+  slider34 = lay_db_base[lay_sel]; slider_automate(slider34);
+  // The interval controls only mean anything on a Custom layer; an octave's
+  // interval is fixed by which entry you picked. Load them anyway so the two
+  // sliders always show the layer you are actually looking at.
+  lay_sel < N_CUSTOM ? (
+    slider35 = lay_pick[lay_sel]; slider36 = lay_semi[lay_sel];
+    slider_automate(slider35); slider_automate(slider36);
+  );
+  last_lay_sel = lay_sel;
+) : (
+  lay_db_base[lay_sel] = slider34;
+  lay_sel < N_CUSTOM ? ( lay_pick[lay_sel] = slider35; lay_semi[lay_sel] = slider36; );
+);
+// --- Interval picker for the selected Custom layer. A change-triggered
+//     one-shot: move it and it writes the semitone slider, then gets out of the
+//     way (Custom writes nothing and leaves the semitones to you). lay_pick_last
+//     is PER LAYER, so merely switching the selector onto a layer never counts
+//     as a change -- only actually moving the picker does. The _inited guard
+//     stops a project that SAVED a picker position from overwriting its own
+//     hand-tuned semitones the instant it opens: the trap the Melody Phase
+//     host-ratio picker hit. The first @slider after load only adopts. ---
+lay_sel < N_CUSTOM ? (
   lay_pick_inited == 0 ? (
-    lay_pick_last[lp] = lay_pick[lp];
-  ) : lay_pick[lp] != lay_pick_last[lp] ? (
-    lay_pick_last[lp] = lay_pick[lp];
-    lay_pick[lp] > 0.5 ? (          // 0 = Custom: leave the semitone slider alone
-      lps = lay_pick_semi[floor(lay_pick[lp])];
-      lp == 0 ? ( slider42 = lps; slider_automate(slider42); ) :
-      lp == 1 ? ( slider45 = lps; slider_automate(slider45); ) :
-                ( slider48 = lps; slider_automate(slider48); );
+    lay_pick_last[lay_sel] = lay_pick[lay_sel];
+  ) : lay_pick[lay_sel] != lay_pick_last[lay_sel] ? (
+    lay_pick_last[lay_sel] = lay_pick[lay_sel];
+    lay_pick[lay_sel] > 0.5 ? (
+      lay_semi[lay_sel] = lay_pick_semi[floor(lay_pick[lay_sel])];
+      slider36 = lay_semi[lay_sel]; slider_automate(slider36);
     );
   );
-  lp += 1;
 );
 lay_pick_inited = 1;
-// The raw semitone slider is only worth reading when the picker can't say it.
-slider_show(slider42, lay_pick[0] < 0.5);
-slider_show(slider45, lay_pick[1] < 0.5);
-slider_show(slider48, lay_pick[2] < 0.5);
-lay_semi[0] = slider42; lay_semi[1] = slider45; lay_semi[2] = slider48;
-lay_db_base[N_OCT+0] = slider43; lay_db_base[N_OCT+1] = slider46; lay_db_base[N_OCT+2] = slider49;
+// Show the interval controls only where they mean something: the picker on a
+// Custom layer, and the raw semitones only when the picker can't say it.
+slider_show(slider35, lay_sel < N_CUSTOM);
+slider_show(slider36, lay_sel < N_CUSTOM && slider35 < 0.5);
+// --- Frequency ratios. The Custom layers come from their semitones; the octave
+//     stack is fixed and needs no arithmetic at all. ---
 lz = 0;
-loop(N_CUSTOM, layer_ratio[N_OCT+lz] = pow(2.0, lay_semi[lz]/12); lz += 1; );
-// Every layer's gain, octave stack and Custom alike. -60 is true off, and off
-// is what the whole layer is gated on downstream -- no DSP, not just no output.
+loop(N_CUSTOM, layer_ratio[lz] = pow(2.0, lay_semi[lz]/12); lz += 1; );
+layer_ratio[N_CUSTOM+0] = 0.0625; layer_ratio[N_CUSTOM+1] = 0.125;
+layer_ratio[N_CUSTOM+2] = 0.25;   layer_ratio[N_CUSTOM+3] = 0.5;
+layer_ratio[N_CUSTOM+4] = 2;      layer_ratio[N_CUSTOM+5] = 4;
+layer_ratio[N_CUSTOM+6] = 8;      layer_ratio[N_CUSTOM+7] = 16;
+// Every layer's gain, off the BANK rather than the visible slider -- the bank is
+// the source of truth now, and only one layer's value is on screen at a time.
+// -60 is true off, and off is what the whole layer is gated on downstream:
+// no DSP, not merely no output.
 lz = 0;
 loop(NLAYERS,
   layer_gain[lz] = lay_db_base[lz] <= -60 ? 0 : pow(10, lay_db_base[lz]/20);
@@ -1445,6 +1464,16 @@ file_var(0, ser_magic);
     sca = 0; loop(NSLOTS, slot_capavg[sca] = seed_ca; sca += 1; );
   );
 
+  // --- Layer banks, appended after Capture average. EOF-safe like every append
+  //     before it: a project saved before Layers existed reads past the end and
+  //     keeps the @init defaults, which are "every layer off" -- exactly how
+  //     those projects sound. Levels, then the Custom layers' semitones and
+  //     picker positions (only N_CUSTOM of those are ever meaningful). ---
+  file_mem(0, lay_db_base, NLAYERS);
+  file_mem(0, lay_semi,    N_CUSTOM);
+  file_mem(0, lay_pick,    N_CUSTOM);
+  file_var(0, last_lay_sel);
+
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
   // duplicate) file_avail(0) >= 0; on WRITE (save / undo) it's < 0. @serialize
   // is the one section guaranteed to run on both load AND duplicate, so after
@@ -1479,7 +1508,23 @@ file_var(0, ser_magic);
     // duplicate, so syncing here closes the case where an early @slider ran
     // against pre-restore values. Firing on load would call slider_automate
     // during project open -- writing into an automation lane nobody touched.
-    lay_pick_last[0] = slider41; lay_pick_last[1] = slider44; lay_pick_last[2] = slider47;
+    // Layer selector: same treatment as Drift/Ramp above. Force the visible
+    // sliders back to the restored selected layer and sync last_lay_sel, so the
+    // first @slider can't mistake a load for a selector switch and save the
+    // wrong layer's values over the right one's. This is the section that runs
+    // on a track DUPLICATE, where @init may not run at all -- without it the
+    // selected layer is the one that silently zeroes.
+    lsel = max(0, min(NLAYERS-1, slider33));
+    last_lay_sel = lsel;
+    slider34 = lay_db_base[lsel];
+    lsel < N_CUSTOM ? (
+      slider35 = lay_pick[lsel]; slider36 = lay_semi[lsel];
+      lay_pick_last[lsel] = lay_pick[lsel];
+    );
+    // Adopt every restored picker position rather than firing on it -- firing
+    // would call slider_automate during project open, writing into an
+    // automation lane nobody touched.
+    lpk = 0; loop(N_CUSTOM, lay_pick_last[lpk] = lay_pick[lpk]; lpk += 1; );
     lay_pick_inited = 1;
     sliderchange(-1);
   );
