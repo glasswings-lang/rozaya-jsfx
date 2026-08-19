@@ -763,26 +763,9 @@ lay_pick_inited = 1;
 // Custom layer, and the raw semitones only when the picker can't say it.
 slider_show(slider36, lay_sel < N_CUSTOM);
 slider_show(slider37, lay_sel < N_CUSTOM && slider36 < 0.5);
-// --- Frequency ratios. The Custom layers come from their semitones; the octave
-//     stack is fixed and needs no arithmetic at all. ---
-lz = 0;
-loop(N_CUSTOM, layer_ratio[lz] = pow(2.0, lay_semi[lz]/12); lz += 1; );
-layer_ratio[N_CUSTOM+0] = 0.0625; layer_ratio[N_CUSTOM+1] = 0.125;
-layer_ratio[N_CUSTOM+2] = 0.25;   layer_ratio[N_CUSTOM+3] = 0.5;
-layer_ratio[N_CUSTOM+4] = 2;      layer_ratio[N_CUSTOM+5] = 4;
-layer_ratio[N_CUSTOM+6] = 8;      layer_ratio[N_CUSTOM+7] = 16;
-// Every layer's gain, off the BANK rather than the visible slider -- the bank is
-// the source of truth now, and only one layer's value is on screen at a time.
-// -60 is true off, and off is what the whole layer is gated on downstream:
-// no DSP, not merely no output.
-lz = 0;
-loop(NLAYERS,
-  // Inactive is a gain of 0 and nothing else -- the dB the user set stays in
-  // the bank untouched, so switching back restores it exactly. Everything
-  // downstream already gates on gain, so an inactive layer costs no CPU.
-  layer_gain[lz] = (lay_active[lz] < 0.5 || lay_db_base[lz] <= -60) ? 0 : pow(10, lay_db_base[lz]/20);
-  lz += 1;
-);
+// Layer ratios and gains are DERIVED from the banks, so they are computed in
+// @block, not here -- see the note there. Deriving them in @slider is what
+// broke restore: @slider and @serialize have no guaranteed relative order.
 dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
 voice_db_base = slider5;                                    // base for Voice level drift
 voice_gain    = slider5 <= -60 ? 0 : pow(10, slider5/20);
@@ -866,14 +849,8 @@ last_ramp_target != rsel_target ? (
 );
 ramp_engaged = slider27;
 
-// Per-target flags. td_active gates the drift-advance loop; mod_active gates the
-// effective-value recompute (drift OR ramp configured). A target with neither
-// stays exactly at its base value — bit-identical to no modulation.
-i = 0; loop(N_TARGETS,
-  td_active[i]  = (target_drift_up[i] > 0 || target_drift_down[i] > 0) ? 1 : 0;
-  mod_active[i] = (td_active[i] || ramp_by_mem[i] != 0) ? 1 : 0;
-  i += 1;
-);
+// td_active / mod_active are derived from the drift and ramp banks, so they are
+// computed in @block too, for exactly the same reason.
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
 drift_restart_free = slider22;   // 0 = restart on play (sync), 1 = free-running
@@ -979,6 +956,59 @@ cap_dirty ? (
 
 (cap_trig > 0.5 && cap_last <= 0.5) ? ( capture(cap_slot); slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
 cap_last = cap_trig;
+
+// --- Everything DERIVED from a @serialize bank is computed here, every block,
+//     and deliberately not in @slider.
+//
+// This is the bug that ate an evening. @slider and @serialize restore state by
+// two independent paths with NO guaranteed relative order, and on a track
+// duplicate @init may not run at all. Deriving these in @slider meant that
+// whenever @slider ran first, they were computed from banks that were still at
+// their defaults -- every layer gain 0, every ratio 1, every drift target
+// inactive -- and then @serialize restored the banks underneath them and
+// nothing ever recomputed. The BANK was perfect and the arrays the audio engine
+// actually reads were empty, which is a horrible failure to diagnose: the
+// values are all still there, the plugin is simply not using them.
+//
+// Diagnostic signature, and it is a good one: the settings come back the moment
+// you touch ANY control, because that runs @slider. Transport play/stop does
+// not fix it (it never calls @slider), which is the tell that separates this
+// from an @init / ext_noinit problem. "Wiggling the slider brought them back"
+// is this bug and almost nothing else.
+//
+// @block has no such ordering problem: it runs every block forever, so by the
+// first sample of audio these are correct no matter which order anything else
+// happened in. The cost is 11 pow() and a 19-iteration loop per block, which
+// against a 32768-point FFT per grain does not register.
+//
+// RULE FOR THIS FILE: a value derived from a serialized bank belongs in @block.
+// Only values derived from a SLIDER may live in @slider, because those arrive
+// with the slider itself.
+lz = 0;
+loop(N_CUSTOM, layer_ratio[lz] = pow(2.0, lay_semi[lz]/12); lz += 1; );
+layer_ratio[N_CUSTOM+0] = 0.0625; layer_ratio[N_CUSTOM+1] = 0.125;
+layer_ratio[N_CUSTOM+2] = 0.25;   layer_ratio[N_CUSTOM+3] = 0.5;
+layer_ratio[N_CUSTOM+4] = 2;      layer_ratio[N_CUSTOM+5] = 4;
+layer_ratio[N_CUSTOM+6] = 8;      layer_ratio[N_CUSTOM+7] = 16;
+// Inactive is a gain of 0 and nothing else -- the dB the user set stays in the
+// bank untouched, so switching back restores it exactly. Everything downstream
+// gates on this gain, so an inactive layer costs no CPU.
+lz = 0;
+loop(NLAYERS,
+  layer_gain[lz] = (lay_active[lz] < 0.5 || lay_db_base[lz] <= -60) ? 0 : pow(10, lay_db_base[lz]/20);
+  lz += 1;
+);
+// td_active gates the drift-advance loop; mod_active gates the effective-value
+// recompute (drift OR ramp configured). A target with neither stays exactly at
+// its base value -- bit-identical to no modulation. Same restore hazard: drift
+// configured in a saved project simply would not run until you touched a
+// control, which has been true since the drift work and was never noticed
+// because touching a control is what you do next anyway.
+dvi = 0; loop(N_TARGETS,
+  td_active[dvi]  = (target_drift_up[dvi] > 0 || target_drift_down[dvi] > 0) ? 1 : 0;
+  mod_active[dvi] = (td_active[dvi] || ramp_by_mem[dvi] != 0) ? 1 : 0;
+  dvi += 1;
+);
 
 @sample
 inbuf[inpos] = (spl0 + spl1) * 0.5;
