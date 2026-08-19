@@ -52,10 +52,10 @@ slider13:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
 // --- BREATH ---
 slider14:0.5<0.0,1.0,0.01>Breath Volume
 slider15:0<0,1,1{Off,Solo}>Breath Solo
-slider16:4.0<0.5,20.0,0.1>Inhale Duration sec
-slider17:0.3<0.0,5.0,0.1>Top Pause sec
-slider18:4.0<0.5,20.0,0.1>Exhale Duration sec
-slider19:0.3<0.0,5.0,0.1>Bottom Pause sec
+slider16:4.0<0.5,20.0,0.1>Inhale Duration sec (shape only in Host x)
+slider17:0.3<0.0,5.0,0.1>Top Pause sec (shape only in Host x)
+slider18:4.0<0.5,20.0,0.1>Exhale Duration sec (shape only in Host x)
+slider19:0.3<0.0,5.0,0.1>Bottom Pause sec (shape only in Host x)
 slider20:250<50,2000,1>Inhale Frequency Hz
 slider21:170<50,2000,1>Exhale Frequency Hz
 slider22:80<20,800,1>Breath High-pass Hz
@@ -121,7 +121,7 @@ slider52:0<0,60,0.1>Speed ramp start delay (minutes)
 // Ramp TARGET (added v2.14), which modulates the breath rate over time
 // without touching the sliders. Use this to dial in a starting rate; use
 // the target to wander or wind it down while playing.
-slider53:0<0,30,0.1>Breaths per minute (0=off; rescales durations 16-19)
+slider53:0<0,30,0.1>Breaths per minute (Own BPM only; 0=off, rewrites the durations)
 
 // === Drift (nested-selector pattern, see header) ===
 // Pick a target, then sliders 55-58 hold THAT target's drift config.
@@ -149,9 +149,10 @@ slider61:1.5<1.0,3.0,0.05>Sigh depth multiplier
 // --- Host tempo sync (sliders 62-63) ------------------------------------
 // Own BPM: free-running, project tempo ignored -- original behaviour.
 // Host x:  BPM becomes a MULTIPLIER of the project tempo, and the BREATH
-//          follows the tempo with it, so the two layers keep their ratio.
-//          The four duration sliders then read as seconds at 60 BPM: they
-//          still set the shape of the breath, the project sets its length.
+//          follows too -- its cycle is set in beats by sliders 64-65, and
+//          sliders 16-19 become the shape fitted into it. This ONE switch
+//          is the only thing that decides which controls are truth, for
+//          both layers, and every slider it affects says so in its name.
 // Two entries, not four: only one unit here, so Seconds / Hz would be
 // meaningless. Appended at the END per the never-renumber rule.
 slider62:0<0,1,1{Own BPM,Host x}>Rate Mode
@@ -160,6 +161,26 @@ slider62:0<0,1,1{Own BPM,Host x}>Rate Mode
 // "Custom" (default) never writes. Not "Free" -- that means FREE-RUNNING
 // in sync UI, which Own BPM already is.
 slider63:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes BPM)
+
+// --- Breath rate in Host x (sliders 64-65) ------------------------------
+// The breath's half of tempo sync, and the reason it needed its own pair:
+// the heart has ONE number to multiply (BPM), so Host x fell out of it for
+// free. The breath's rate was an emergent sum of four duration sliders, so
+// there was nothing for the project tempo to take hold of.
+//
+// In Host x the breath cycle is set HERE, as a number of beats, and sliders
+// 16-19 become the SHAPE that gets fitted into it -- which is why all four
+// now say "shape only in Host x" in their own names. A unit that changes
+// meaning silently is the same problem wearing different clothes, whether a
+// mode gates it or not, so every slider involved announces it and the ones
+// that do not apply are hidden rather than left sitting there lying.
+//
+// In Own BPM none of this exists: sliders 16-19 are literal seconds, exactly
+// as they always were, and Breaths per minute is still the one-shot rescale.
+// Which control is truth depends on Rate Mode and ONLY on Rate Mode -- the
+// same single switch that already decides what the heart's BPM slider means.
+slider64:0<0,11,1{Custom,every 2 beats,every 3 beats,every 4 beats,every 6 beats,every 8 beats,every 12 beats,every 16 beats,every 24 beats,every 32 beats,every 48 beats,every 64 beats}>Breath rate (Host x; writes beats per breath)
+slider65:16<0.25,64,0.25>Beats per breath (Host x only)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -318,6 +339,7 @@ bpm_target               = slider1;
 // stay deltas in whatever unit slider1 is currently showing rather than being
 // raw BPM that means a different proportion at every tempo.
 host_mult = 1; breath_host_scale = 1;
+breath_beats = 16; breath_cycle_target = 1; breath_ratio_inited = 0; last_breath_ratio = 0;
 bpm_smoothed             = slider1;
 
 // Speed ramp state. ramp_t advances 0->1 over slider50 minutes while
@@ -483,9 +505,45 @@ last_rate_mode != rate_mode ? (
     slider_automate(slider63);
     slider_automate(slider1);
   );
+  // The breath side lands on CONTINUITY rather than on a fixed entry: seed
+  // beats-per-breath from the cycle the four sliders already describe, at the
+  // current tempo, so switching into Host x does not change what you hear. The
+  // heart cannot do this (a BPM of 70 read as a multiplier is nonsense, hence
+  // the landing above), but the breath can, and a mode switch that silently
+  // retimes your breath would be its own version of moving the user's values.
+  rate_mode == 1 && slider64 == 0 ? (
+    slider65 = max(0.25, min(64,
+      (slider16 + slider17 + slider18 + slider19) * max(tempo, 0.001) / 60));
+    slider_automate(slider65);
+  );
   last_rate_mode = rate_mode;
 );
 slider_show(slider1, rate_mode != 1 || slider63 == 0);
+
+// --- Breath rate picker (slider64), the breath's twin of the heart's above.
+//     Writes beats-per-breath and then gets out of the way; Custom leaves the
+//     number alone. Same load guard: only a real in-session move writes.
+brp = slider64;
+!breath_ratio_inited ? ( last_breath_ratio = brp; breath_ratio_inited = 1; );
+last_breath_ratio != brp ? (
+  last_breath_ratio = brp;
+  brp > 0.5 ? (
+    slider65 =
+      brp == 1 ? 2  : brp == 2 ? 3  : brp == 3 ? 4  : brp == 4 ? 6  :
+      brp == 5 ? 8  : brp == 6 ? 12 : brp == 7 ? 16 : brp == 8 ? 24 :
+      brp == 9 ? 32 : brp == 10 ? 48 : 64;
+    slider_automate(slider65);
+  );
+);
+breath_beats = max(0.25, slider65);
+// Show only what applies. Breaths per minute rewrites sliders 16-19, which
+// cannot be done per tempo change without writing automation on every one, so
+// it is an Own BPM control and is hidden in Host x rather than left present
+// and inert. The beats-per-breath number hides behind its own picker exactly
+// as the heart's multiplier hides behind its one.
+slider_show(slider53, rate_mode != 1);
+slider_show(slider64, rate_mode == 1);
+slider_show(slider65, rate_mode == 1 && slider64 == 0);
 
 // Host x: slider1 is a MULTIPLIER of the project tempo. bpm_target feeds
 // the per-sample smoother, and cycle_len / the drift period / Start Delay
@@ -691,21 +749,20 @@ rate_mode == 1 ? (
   // in a plugin whose whole subject is one body -- the heart and the lungs of
   // the same organism do not disagree about how fast time is passing.
   //
-  // The scale is tempo/60, against a NOMINAL 60 BPM, which is the idiom the
-  // rest of the Host x sweep uses (melody phase, and for the same reason:
-  // nothing to remember across a transport that re-runs @init). At 60 BPM it
-  // is exactly 1, so Host x at 60 sounds identical to Own BPM and the four
-  // duration sliders still mean the seconds printed on them.
+  // The first pass at this scaled the breath by tempo/60 against a nominal
+  // 60 BPM -- the idiom the rest of the Host x sweep uses. It worked, and it
+  // was still wrong, because it left the breath's rate as an emergent sum of
+  // four sliders with the tempo applied on top. Nothing NAMED the breath rate,
+  // so nothing could say what it was, and the four sliders quietly stopped
+  // meaning seconds with no way to tell by looking.
   //
-  // What makes this the right shape rather than merely a shape: the heart is
-  // slider1 * tempo and the breath cycle is cycle_seconds * 60/tempo, so
-  // heartbeats-per-breath comes out as slider1 * cycle_seconds -- the tempo
-  // cancels. The RATIO between the two layers, which is what the ear hears as
-  // "one body", is invariant under any tempo change. That also answers the
-  // objection that linking breath to the host makes the duration sliders
-  // meaningless: they keep setting the SHAPE of the breath (and its length at
-  // the reference tempo); the project only stretches it.
-  breath_host_scale = host_mult / 60;
+  // The breath cycle is now SET, not inferred: beats-per-breath against the
+  // project tempo gives the length it should take, and the scale is however
+  // much faster or slower than that the four shape sliders would run on their
+  // own. At the tempo where they already sum to the requested length the scale
+  // is exactly 1 -- which is what makes entering Host x silent.
+  breath_cycle_target = max(breath_beats * 60 / max(tempo, 0.001), 0.001);
+  breath_host_scale = max(slider16 + slider17 + slider18 + slider19, 0.001) / breath_cycle_target;
 ) : (
   breath_host_scale = 1;
 );
@@ -778,7 +835,15 @@ loop(N_TARGETS,
   drift_offset_local = 0;
   (up > 0 || down > 0) && per > 0 ? (
     // Period base: heartbeats for targets 0,1; breath cycles for 2-6.
-    period_base = i < 2 ? max(cycle_len_base, 1) : max(total_breath_samples, 1);
+    // Period base: heartbeats for targets 0,1; breath cycles for 2-6. The
+    // breath side divides by breath_host_scale because total_breath_samples is
+    // the length the four sliders describe, NOT the length actually played --
+    // in Host x the cycle is consumed at a different rate, so without this a
+    // drift period of "3 breath cycles" would be three cycles of a breath that
+    // is not the one you can hear. Heart periods need no equivalent: their base
+    // is cycle_len_base, which already scales. (1 in Own BPM, so untouched.)
+    period_base = i < 2 ? max(cycle_len_base, 1)
+                        : max(total_breath_samples / max(breath_host_scale, 0.0001), 1);
     period_samples = max(per * period_base, 1);
 
     new_phase = target_drift_phase[i] + 1.0 / period_samples;
