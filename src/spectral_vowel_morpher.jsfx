@@ -245,6 +245,8 @@ slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
 slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
 slot_capavg   = freemem; freemem += NSLOTS;    // Capture average (frames) per slot. The CONTROL is global -- every entry holds the same value -- but the storage stays per slot so compute_spectrum reads it the same way and the @serialize field keeps its byte format
 ot_gain   = freemem; freemem += NHARM;         // per-harmonic Overtone gain (1 = untouched)
+hmA_arr   = freemem; freemem += NHARM;         // per-sample partial magnitudes, voice A
+hmB_arr   = freemem; freemem += NHARM;         // ...and voice B. Hoisted out of the layer loops.
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
 // --- harmonic (voice) engine scratch ---
 hph       = freemem; freemem += NHARM;         // resynth phase accumulators (voice A, left)
@@ -372,6 +374,21 @@ i = 0; loop(N_LAY_SLOTS*NHARM,
   lay_hphR[i] = lay_hph[i];   lay_hphBR[i] = lay_hphB[i];
   i += 1;
 );
+// The ladder, in pitch order. Octaves are exact powers of two; fifths and
+// fourths are the equal-tempered 7 and 5 semitones; unison is the original.
+layer_ratio[0]  = 0.0625;              // 4 octaves down
+layer_ratio[1]  = 0.125;               // 3 octaves down
+layer_ratio[2]  = 0.25;                // 2 octaves down
+layer_ratio[3]  = 0.5;                 // 1 octave down
+layer_ratio[4]  = pow(2.0, -7/12);     // a fifth down
+layer_ratio[5]  = pow(2.0, -5/12);     // a fourth down
+layer_ratio[6]  = 1;                   // the original, by definition unshifted
+layer_ratio[7]  = pow(2.0,  5/12);     // a fourth up
+layer_ratio[8]  = pow(2.0,  7/12);     // a fifth up
+layer_ratio[9]  = 2;                   // 1 octave up
+layer_ratio[10] = 4;                   // 2 octaves up
+layer_ratio[11] = 8;                   // 3 octaves up
+layer_ratio[12] = 16;                  // 4 octaves up
 // --- Layer-order migration tables.
 // CANON is the order every layout up to 7700006 used: Custom 1..3, then the
 // twelve intervals low to high, then the original last. lay_perm maps a slot in
@@ -991,21 +1008,8 @@ cap_last = cap_trig;
 // RULE FOR THIS FILE: a value derived from a serialized bank belongs in @block.
 // Only values derived from a SLIDER may live in @slider, because those arrive
 // with the slider itself.
-// The ladder, in pitch order. Octaves are exact powers of two; fifths and
-// fourths are the equal-tempered 7 and 5 semitones; unison is the original.
-layer_ratio[0]  = 0.0625;              // 4 octaves down
-layer_ratio[1]  = 0.125;               // 3 octaves down
-layer_ratio[2]  = 0.25;                // 2 octaves down
-layer_ratio[3]  = 0.5;                 // 1 octave down
-layer_ratio[4]  = pow(2.0, -7/12);     // a fifth down
-layer_ratio[5]  = pow(2.0, -5/12);     // a fourth down
-layer_ratio[6]  = 1;                   // the original, by definition unshifted
-layer_ratio[7]  = pow(2.0,  5/12);     // a fourth up
-layer_ratio[8]  = pow(2.0,  7/12);     // a fifth up
-layer_ratio[9]  = 2;                   // 1 octave up
-layer_ratio[10] = 4;                   // 2 octaves up
-layer_ratio[11] = 8;                   // 3 octaves up
-layer_ratio[12] = 16;                  // 4 octaves up
+// The ladder's twelve fixed ratios are CONSTANTS -- seeded once in @init.
+// Only the three Custom slots are derived from a bank and belong here.
 lz = 0;
 loop(N_CUSTOM, layer_ratio[LAY_CUSTOM0+lz] = pow(2.0, lay_semi[lz]/12); lz += 1; );
 // Inactive is a gain of 0 and nothing else -- the dB the user set stays in the
@@ -1247,13 +1251,29 @@ audition_mode < 0.5 ? (
     // Every layer is a voice pair of its own, so every layer needs the same
     // handover -- otherwise the base voice steps through a slot change cleanly
     // and each raised layer clicks. One contiguous copy covers all of them.
-    nlay_on ? ( vcq = 0; loop(N_LAY_SLOTS*NHARM,
-      lay_hph[vcq]  = lay_hphB[vcq]; lay_hphR[vcq]  = lay_hphBR[vcq]; vcq += 1; ); );
+    // Per LAYER, and only the audible ones. This was a flat copy across all
+    // N_LAY_SLOTS*NHARM slots -- 1024 entries over two banks, 2048 writes, in a
+    // single sample, on every slot boundary, whether or not any layer was up.
+    // With Auto-morph running that is a spike on a fixed cycle: regular
+    // dropouts, worst at the voice end of Texture where the harmonic engine is
+    // already the expensive one. A silent layer's phases do not matter.
+    nlay_on ? ( vcl = 0; loop(N_LAY_SLOTS,
+      (vcl != LAY_ORIG && layer_gain[vcl] > 0.0001) ? (
+        vcb = vcl*NHARM; vcq = 0;
+        loop(NHARM, lay_hph[vcb+vcq]  = lay_hphB[vcb+vcq];
+                    lay_hphR[vcb+vcq] = lay_hphBR[vcb+vcq]; vcq += 1; );
+      );
+      vcl += 1; ); );
   ) : (
     (vsj == last_vsi && vsj != last_vsj) ? (
       vcp = 0; loop(NHARM, hphB[vcp] = hph[vcp];  hphBR[vcp] = hphR[vcp];  vcp += 1; );
-      nlay_on ? ( vcq = 0; loop(N_LAY_SLOTS*NHARM,
-        lay_hphB[vcq] = lay_hph[vcq];  lay_hphBR[vcq] = lay_hphR[vcq];  vcq += 1; ); );
+      nlay_on ? ( vcl = 0; loop(N_LAY_SLOTS,
+        (vcl != LAY_ORIG && layer_gain[vcl] > 0.0001) ? (
+          vcb = vcl*NHARM; vcq = 0;
+          loop(NHARM, lay_hphB[vcb+vcq]  = lay_hph[vcb+vcq];
+                      lay_hphBR[vcb+vcq] = lay_hphR[vcb+vcq]; vcq += 1; );
+        );
+        vcl += 1; ); );
     );
   );
   last_vsi = vsi; last_vsj = vsj;
@@ -1345,6 +1365,17 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
   fA = slot_f0[vsi] * pitch_ratio; normA = slot_hnorm[vsi]; normA <= 0 ? normA = 1;
   fB = slot_f0[vsj] * pitch_ratio; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1;
   bA = vsi*NHARM; bB = vsj*NHARM;
+  // Partial magnitudes depend only on the slot pair and the Overtone curve, so
+  // they are the same for the base voice and for every layer. Computed ONCE per
+  // sample instead of re-divided inside each layer's inner loop -- with several
+  // layers up that was hundreds of redundant divisions per sample, on the path
+  // that is already the expensive one at the voice end of Texture.
+  vn = 0;
+  loop(NHARM,
+    hmA_arr[vn] = slot_harm[bA+vn]/normA * ot_gain[vn];
+    hmB_arr[vn] = slot_harm[bB+vn]/normB * ot_gain[vn];
+    vn += 1;
+  );
   voice_detune > 0 ? (
     // Stereo: left slightly flat, right slightly sharp (symmetric, so the
     // perceived pitch centre is unchanged). Separate R phase banks (hphR/hphBR)
@@ -1353,7 +1384,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     fBL = fB*(1-voice_detune); fBR = fB*(1+voice_detune);
     vvAL = 0; vvAR = 0; vvBL = 0; vvBR = 0; vn = 0;
     loop(NHARM,
-      hmA = slot_harm[bA+vn]/normA * ot_gain[vn];   // Overtone: 1 everywhere when off
+      hmA = hmA_arr[vn];   // hoisted above; Overtone is already folded in
       // High cut: hcg fades a partial out across the top fifth of the cut, and
       // hc_bound stops computing it entirely. With High cut off hc_lo is huge and
       // hc_bound is srate*0.5, so hcg is exactly 1 and the test is the original
@@ -1373,7 +1404,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
       lypf = (vn+1)*fAR; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
       lypf < hc_bound ? ( vvAR += hmA*hcg*wtsin(hphR[vn]);
         hphR[vn]  += TWOPI*(vn+1)*fAR/srate; hphR[vn]  >= TWOPI ? hphR[vn]  -= TWOPI; );
-      hmB = slot_harm[bB+vn]/normB * ot_gain[vn];
+      hmB = hmB_arr[vn];
       lypf = (vn+1)*fBL; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
       lypf < hc_bound ? ( vvBL += hmB*hcg*wtsin(hphB[vn]);
         hphB[vn]  += TWOPI*(vn+1)*fBL/srate; hphB[vn]  >= TWOPI ? hphB[vn]  -= TWOPI; );
@@ -1390,10 +1421,10 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     loop(NHARM,
       // Phase advance moved inside the audibility guard -- see the stereo path.
       lypf = (vn+1)*fA; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
-      lypf < hc_bound ? ( vvA += (slot_harm[bA+vn]/normA)*ot_gain[vn]*hcg*wtsin(hph[vn]);
+      lypf < hc_bound ? ( vvA += hmA_arr[vn]*hcg*wtsin(hph[vn]);
         hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI; );
       lypf = (vn+1)*fB; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
-      lypf < hc_bound ? ( vvB += (slot_harm[bB+vn]/normB)*ot_gain[vn]*hcg*wtsin(hphB[vn]);
+      lypf < hc_bound ? ( vvB += hmB_arr[vn]*hcg*wtsin(hphB[vn]);
         hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI; );
       vn += 1;
     );
@@ -1423,8 +1454,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
           lyfbl = lyfb*(1-voice_detune); lyfbr = lyfb*(1+voice_detune);
           lyv_al = 0; lyv_ar = 0; lyv_bl = 0; lyv_br = 0; vn = 0;
           loop(NHARM,
-            hmA = slot_harm[bA+vn]/normA * ot_gain[vn];
-            hmB = slot_harm[bB+vn]/normB * ot_gain[vn];
+            hmA = hmA_arr[vn]; hmB = hmB_arr[vn];
             lypf = (vn+1)*lyfal; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
             lypf < hc_bound ? ( lyv_al += hmA*hcg*wtsin(lay_hph[lybo+vn]);
               lay_hph[lybo+vn]   += TWOPI*(vn+1)*lyfal/srate; lay_hph[lybo+vn]   >= TWOPI ? lay_hph[lybo+vn]   -= TWOPI; );
@@ -1446,10 +1476,10 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
           lyv_al = 0; lyv_bl = 0; vn = 0;
           loop(NHARM,
             lypf = (vn+1)*lyfa; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
-            lypf < hc_bound ? ( lyv_al += (slot_harm[bA+vn]/normA)*ot_gain[vn]*hcg*wtsin(lay_hph[lybo+vn]);
+            lypf < hc_bound ? ( lyv_al += hmA_arr[vn]*hcg*wtsin(lay_hph[lybo+vn]);
               lay_hph[lybo+vn]  += TWOPI*(vn+1)*lyfa/srate; lay_hph[lybo+vn]  >= TWOPI ? lay_hph[lybo+vn]  -= TWOPI; );
             lypf = (vn+1)*lyfb; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
-            lypf < hc_bound ? ( lyv_bl += (slot_harm[bB+vn]/normB)*ot_gain[vn]*hcg*wtsin(lay_hphB[lybo+vn]);
+            lypf < hc_bound ? ( lyv_bl += hmB_arr[vn]*hcg*wtsin(lay_hphB[lybo+vn]);
               lay_hphB[lybo+vn] += TWOPI*(vn+1)*lyfb/srate; lay_hphB[lybo+vn] >= TWOPI ? lay_hphB[lybo+vn] -= TWOPI; );
             vn += 1;
           );
