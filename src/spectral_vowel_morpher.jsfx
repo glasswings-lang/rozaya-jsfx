@@ -63,7 +63,7 @@ slider16:20<1,600,0.5>Auto-morph time (sec)
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. Added at the END of the range
 //     (slider IDs are primary keys — never renumber existing ones). ---
-slider17:0<0,22,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,Custom 1 level,Custom 2 level,Custom 3 level,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level}>Drift target
+slider17:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,Custom 1 level,Custom 2 level,Custom 3 level,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Original level}>Drift target
 slider18:0<0,300,0.1>Drift up amount (units match target)
 slider19:0<0,300,0.1>Drift down amount (units match target)
 slider20:30<1,600,0.5>Drift period (seconds)
@@ -78,7 +78,7 @@ slider22:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider23:0<0,22,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,Custom 1 level,Custom 2 level,Custom 3 level,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level}>Ramp target
+slider23:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,Custom 1 level,Custom 2 level,Custom 3 level,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Original level}>Ramp target
 slider24:0<-300,300,0.1>Ramp by (units match target)
 slider25:0<0,60,0.1>Ramp duration (minutes)
 slider26:0<0,60,0.1>Ramp start delay (minutes)
@@ -142,7 +142,7 @@ slider32:20000<200,20000,10>High cut (Hz, 20000 = off)
 //     very nearly they did. Putting them in the one list makes a fifth as
 //     reachable as an octave and gave the freed slider to Solo.
 //
-slider33:0<0,14,1{Custom 1,Custom 2,Custom 3,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up}>Layer
+slider33:0<0,15,1{Custom 1,Custom 2,Custom 3,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,Original (unshifted)}>Layer
 // Active/Inactive, per layer, and NOT the same thing as a level of -60.
 // -60 is "this layer is silent because that is the level I want"; Inactive is
 // "silence this layer and give it back to me later" -- the level you tuned is
@@ -172,7 +172,7 @@ slider37:-12<-96,96,0.1>Layer pitch (semitones, Custom layers)
 ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
-N_TARGETS = 23;  // Drift/Ramp targets. APPEND ONLY -- the index is saved in the project
+N_TARGETS = 24;  // Drift/Ramp targets. APPEND ONLY -- the index is saved in the project
                  // (slider17/23) AND is the bank position, so inserting one mid-list
                  // would silently repoint every saved selection above it:
                  // 0 Texture, 1 Spread, 2 Pitch, 3 Stereo width, 4 Low cut,
@@ -184,6 +184,13 @@ N_CUSTOM = 3;    // layers 0..2 are the free-interval Custom layers
                  // layers 3..14 are the fixed intervals, in selector order:
                  // -48 -36 -24 -12 semitones, -7 -5 +5 +7, then +12 +24 +36 +48
 LAY_T0   = 8;    // target index of layer 0 -- targets LAY_T0+i map to layer i
+// The ORIGINAL -- the unshifted morph every layer stacks around -- gets a bank
+// slot of its own at index NLAYERS, so Active, Level and Solo apply to it
+// exactly as they do to a layer. It is not synthesised by the layer loops (it
+// is the base path), so the synthesis loops still run 0..NLAYERS-1 while
+// anything reading the CONFIG banks runs 0..N_LAY_SLOTS-1.
+LAY_ORIG    = NLAYERS;      // bank index of the original
+N_LAY_SLOTS = NLAYERS + 1;  // config-bank entries: the layers, plus the original
 FFTSIZE = 32768; NBINS = 16385;
 // WA = analysis window length, FIXED and decoupled from Wash grain. The capture
 // analysis (heavy: FFT + YIN) happens at WA; Wash grain only rebuilds the cheap
@@ -317,10 +324,13 @@ slots_inited == 0 ? (
   // one-time guard for the same reason the captures do: they must survive the
   // transport, and @serialize overwrites them with the saved bank on load.
   lpi = 0; loop(NLAYERS, lay_db_base[lpi] = -60; lay_active[lpi] = 1; layer_gain[lpi] = 0; layer_ratio[lpi] = 1; lpi += 1; );
+  // The original defaults to UNITY, not off -- it is the sound, and a default
+  // of -60 here would open every existing project silent.
+  lay_db_base[LAY_ORIG] = 0; lay_active[LAY_ORIG] = 1; layer_gain[LAY_ORIG] = 1; layer_ratio[LAY_ORIG] = 1;
   // The three Custom layers start somewhere musical (an octave down, an octave
   // up, two octaves down) so that raising one is immediately worth hearing.
   lay_semi[0] = -12; lay_semi[1] = 12;  lay_semi[2] = -24;
-  lpi = 0; loop(NLAYERS, lay_solo[lpi] = 0; lpi += 1; );
+  lpi = 0; loop(N_LAY_SLOTS, lay_solo[lpi] = 0; lpi += 1; );
   last_lay_sel = 0;
   last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
 );
@@ -513,7 +523,7 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, l
     // to be built, rather than a second pair of FFTs per layer. They share this
     // bin's random phase, which is exactly right for a phase-randomised bed:
     // where two layers land on one bin they are noise either way.
-    m = m * base_gain;          // silenced while a layer is soloed
+    m = m * base_gain;          // the original's own level: its gain, or 0 when something else is soloed
     nlay_on ? (
       mb = m;                     // keep the un-layered magnitude for the auto-gain below
       lq = 0;
@@ -702,7 +712,7 @@ ot_width      = max(0.5, min(4, slider31));
 //     into them; otherwise it captures live edits to the selected layer. Every
 //     layer sounds in parallel from @sample regardless of what is selected --
 //     the selector is a view, never a mute. ---
-lay_sel = max(0, min(NLAYERS-1, slider33));
+lay_sel = max(0, min(N_LAY_SLOTS-1, slider33));
 last_lay_sel != lay_sel ? (
   lay_db_base[last_lay_sel] = slider35;
   lay_active[last_lay_sel]  = slider34;
@@ -975,15 +985,20 @@ layer_ratio[N_CUSTOM+11] = 16;                  // 4 octaves up
 // solo something in order to hear it, and a solo that returns silence because
 // the layer was also muted is a bad thirty seconds for anyone working by ear.
 // A level of -60 is still silent, because that is a level, not a mute.
+// The original is in the scan and in the gain loop, so soloing it works the
+// same way soloing a layer does -- and so does muting it, or turning it down
+// under an octave. It gets no interval because it IS the interval everything
+// else is measured from; its gain lands in layer_gain[LAY_ORIG] and the base
+// voice and base wash both read it as base_gain below.
 any_solo = 0;
-lz = 0; loop(NLAYERS, lay_solo[lz] >= 0.5 ? any_solo = 1; lz += 1; );
-base_gain = any_solo ? 0 : 1;
+lz = 0; loop(N_LAY_SLOTS, lay_solo[lz] >= 0.5 ? any_solo = 1; lz += 1; );
 lz = 0;
-loop(NLAYERS,
+loop(N_LAY_SLOTS,
   lay_audible = any_solo ? (lay_solo[lz] >= 0.5) : (lay_active[lz] >= 0.5);
   layer_gain[lz] = (lay_audible < 0.5 || lay_db_base[lz] <= -60) ? 0 : pow(10, lay_db_base[lz]/20);
   lz += 1;
 );
+base_gain = layer_gain[LAY_ORIG];
 // td_active gates the drift-advance loop; mod_active gates the effective-value
 // recompute (drift OR ramp configured). A target with neither stays exactly at
 // its base value -- bit-identical to no modulation. Same restore hazard: drift
@@ -1105,7 +1120,7 @@ hc_on ? (
 //     where you find out. (The wash needed a matching fix -- see gen_grain.) ---
 nlay_on = 0;
 lz = 0;
-loop(NLAYERS,
+loop(N_LAY_SLOTS,
   // Drift and Ramp move the level, never the switch: an Inactive layer stays
   // silent however far its level target wanders, so arming drift on a layer you
   // have muted cannot bring it back without you.
@@ -1113,9 +1128,12 @@ loop(NLAYERS,
     eff_ldb = max(-60, min(0, lay_db_base[lz] + target_drift_offset[LAY_T0+lz] + ramp_offset_mem[LAY_T0+lz]));
     layer_gain[lz] = eff_ldb <= -60 ? 0 : pow(10, eff_ldb/20);
   );
-  layer_gain[lz] > 0.0001 ? ( nlay_on = 1; );
+  // nlay_on gates the pitch-shifted synthesis only, so the original never sets
+  // it -- it is the base path, which always runs.
+  (lz < NLAYERS && layer_gain[lz] > 0.0001) ? ( nlay_on = 1; );
   lz += 1;
 );
+base_gain = layer_gain[LAY_ORIG];
 
 automorph_mode > 0.5 ? (
   automorph_mode == 1 ? (
@@ -1444,17 +1462,22 @@ spl1 = dryR + voutR;
 //              points at the parameter it was pointing at. (7700003 was an
 //              in-development layout with three layers and no octave stack; it
 //              never left this branch, so nothing reads it.)
-//   7700005 -- current. The named non-octave intervals moved onto the Layer
+//   7700006 -- current. The ORIGINAL gained a bank slot of its own (16 config
+//              entries, 24 targets) so it can be muted, levelled and SOLOED
+//              like any layer. A 7700005 blob is read at 15 and the original
+//              seeded to unity -- which is exactly how it sounded, since the
+//              base voice had no level of its own to have saved.
+//   7700005 -- The named non-octave intervals moved onto the Layer
 //              selector (15 layers, 23 targets), the interval picker became
 //              Solo, and a solo flag per layer joined the stream. 7700004 is
 //              still READ and migrated rather than dropped -- it existed for one
 //              evening on one machine, but layers had been dialled in against
 //              it, and resetting someone's work to save fifteen lines is the
 //              same disrespect as moving their values silently.
-ser_magic = 7700005;
+ser_magic = 7700006;
 file_var(0, ser_magic);
-(ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
-  n_ser_targets = ser_magic == 7700005 ? N_TARGETS :
+(ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
+  n_ser_targets = ser_magic == 7700006 ? N_TARGETS : ser_magic == 7700005 ? 23 :
                   ser_magic == 7700004 ? 19 : ser_magic == 7700002 ? 7 : 6;
   file_var(0, have);
   file_var(0, n_used);
@@ -1531,8 +1554,12 @@ file_var(0, ser_magic);
     file_mem(0, lay_semi,    N_CUSTOM);
     file_mem(0, ser_scratch, N_CUSTOM);   // the picker positions: read to keep the cursor aligned, then dropped
     file_var(0, last_lay_sel);
-  ) : (
+  ) : ser_magic == 7700005 ? (
     file_mem(0, lay_db_base, NLAYERS);
+    file_mem(0, lay_semi,    N_CUSTOM);
+    file_var(0, last_lay_sel);
+  ) : (
+    file_mem(0, lay_db_base, N_LAY_SLOTS);
     file_mem(0, lay_semi,    N_CUSTOM);
     file_var(0, last_lay_sel);
   );
@@ -1555,11 +1582,21 @@ file_var(0, ser_magic);
         mig -= 1;
       );
       last_lay_sel >= 7 ? last_lay_sel += 4;
-      mig = 0; loop(NLAYERS, lay_solo[mig] = 0; mig += 1; );   // solo did not exist yet
+      mig = 0; loop(N_LAY_SLOTS, lay_solo[mig] = 0; mig += 1; );   // solo did not exist yet
+      lay_db_base[LAY_ORIG] = 0; lay_active[LAY_ORIG] = 1;         // nor did the original's own slot
+    );
+  ) : ser_magic == 7700005 ? (
+    // 15 layers and no slot for the original. Read what is there, then seed the
+    // original to unity and audible -- which is what those projects sounded
+    // like, since the base voice had no level of its own to save.
+    file_mem(0, lay_active, NLAYERS);
+    file_mem(0, lay_solo,   NLAYERS);
+    file_avail(0) >= 0 ? (
+      lay_db_base[LAY_ORIG] = 0; lay_active[LAY_ORIG] = 1; lay_solo[LAY_ORIG] = 0;
     );
   ) : (
-    file_mem(0, lay_active,  NLAYERS);
-    file_mem(0, lay_solo,    NLAYERS);
+    file_mem(0, lay_active,  N_LAY_SLOTS);
+    file_mem(0, lay_solo,    N_LAY_SLOTS);
   );
 
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /
