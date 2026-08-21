@@ -24,7 +24,7 @@
 > of silence means a gap of four. Nothing about one slot's timing lives on a
 > different slot.
 >
-> **2. Every setting that describes a capture is per slot.** Voice level,
+> **2. Every setting that describes a capture is per slot.** Output level,
 > Texture, Spread, Pitch, Stereo width, Low cut and Denoise all belong to the
 > selected slot rather than being one global setting flattening every capture.
 > The morph crossfades them along with the spectra, so moving between two slots
@@ -130,8 +130,10 @@ re-analyzed, so every capture you already have — in this project or any older 
 **Input level (dry, dB)** `-60 to +12, default 0`
 The source passed straight through. −60 = silent.
 
-**Voice level (dB)** `-60 to +12, default 0`
-The resynthesized output. −60 = silent.
+**Output level (dB, per slot)** `-60 to +12, default 0`
+The level of everything this slot *makes* — both the voice and the wash. Not the voice engine's own level, despite what it was called until now: it sits after the voice/wash crossfade, so it moves the pair together. Per slot like the rest of the capture settings, so the morph crossfades it along with the spectra. The dry input is the one thing it doesn't touch; that has its own **Input level**.
+
+*(Renamed from “Voice level”. Same slider, same behaviour, same saved values — the name was simply describing one part of what it did.)*
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
@@ -273,7 +275,8 @@ is the spectral crossfade, which these curves don't touch.
 **Older projects need migrating.** These two shapes were added as sliders 10 and
 11, and **Capture average** later as slider 4 — and REAPER restores plugin values
 by slider *position*, so a project saved before either one opens with everything
-above the insert shifted along: Wash grain's 150 arriving as Voice level,
+above the insert shifted along: Wash grain's 150 arriving as Voice level
+(now Output level),
 Auto-morph landing on Audition, and so on. Your captures are safe regardless —
 they're stored separately and have no idea what a slider number is — so it is
 only the control values that move. Run `tools/passage_migrate_sliders.py` over any
@@ -382,7 +385,7 @@ The fix is one of:
 
 - **Configure the silent slot the same as your audio slots — ALL seven per-slot
   parameters, not just the one you noticed.** Select the silent slot via
-  **Capture slot** and walk down: **Voice level, Texture, Spread, Pitch, Stereo
+  **Capture slot** and walk down: **Output level, Texture, Spread, Pitch, Stereo
   width, Low cut, Denoise**. Set each to match your audio slots. Silence at
   any of these values sounds the same (silence is silence), but the moment the
   morph passes through the silent slot, each mismatched parameter animates
@@ -449,7 +452,7 @@ worth stating on its own:
 
 > **Every per-slot parameter crossfades with the audio.** Any difference
 > between two adjacent slots on any of the seven per-slot parameters —
-> Voice level, Texture, Spread, Pitch, Stereo width, Low cut, Denoise —
+> Output level, Texture, Spread, Pitch, Stereo width, Low cut, Denoise —
 > animates during the transition between them.
 
 This is a feature. It's a good part of why Passage exists at all. But it means
@@ -481,7 +484,7 @@ Since the split doesn't always match intuition, here is the plain list.
 **Per slot** (each slot carries its own):
 - Capture point; the five timing controls (Slot fade in, Slot hold, Slot fade
   out, Slot gap after, Slot crossfade into next); Slot mute
-- Voice level, Texture, Spread, Pitch, Stereo width, Low cut, Denoise
+- Output level, Texture, Spread, Pitch, Stereo width, Low cut, Denoise
   *(these seven — the sound of a slot — are the ones the morph crossfades
   between slots; the timing controls and mute shape the sequence rather than
   blend)*
@@ -640,7 +643,7 @@ drone.
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Denoise / Morph / Input level / Overtone harmonic / Slot fade in / Slot hold / Slot fade out / Slot gap, default Texture`
+**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Output level / Denoise / Morph / Input level / Overtone harmonic / Slot fade in / Slot hold / Slot fade out / Slot gap, default Texture`
 Which parameter the Drift sliders below are editing.
 
 **Drift is per slot, like everything else here.** The Drift sliders show the settings for *the selected Capture slot's* selected target — so slot 1's Texture can wander slowly while slot 4's barely moves, and each has its own period and shape. Two selectors reach it: **Capture slot** picks which slot, **Drift target** picks which parameter of it. Everything you configure keeps running in the background regardless of what's on screen.
@@ -671,11 +674,11 @@ Either way, a loop *repeating* never restarts the drift — it always flows acro
 
 ### Ramp (in-plugin slow ride)
 
-Ramp is a **one-time slow ride** of a parameter — you set where to move it and over how long, arm it, and it glides there once and holds. It's the one-directional partner to Drift (Drift wanders back and forth forever; Ramp makes a single slow arc), and it's built for the sleep wind-down: e.g. **ride Texture from voice to wash over 20 minutes** as someone drifts off, or **Voice level down to silence over 30 minutes** for a hands-free fade — no automation lane needed. *(This is the same feature the other plugins call "Speed Ramp." It's just called "Ramp" here because this plugin has no rate/speed to ramp — it rides a value instead.)*
+Ramp is a **one-time slow ride** of a parameter — you set where to move it and over how long, arm it, and it glides there once and holds. It's the one-directional partner to Drift (Drift wanders back and forth forever; Ramp makes a single slow arc), and it's built for the sleep wind-down: e.g. **ride Texture from voice to wash over 20 minutes** as someone drifts off, or **Output level down to silence over 30 minutes** for a hands-free fade — no automation lane needed. *(This is the same feature the other plugins call "Speed Ramp." It's just called "Ramp" here because this plugin has no rate/speed to ramp — it rides a value instead.)*
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Voice level / Denoise / Morph / Input level / Overtone harmonic / Slot fade in / Slot hold / Slot fade out / Slot gap, default Texture`
+**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Output level / Denoise / Morph / Input level / Overtone harmonic / Slot fade in / Slot hold / Slot fade out / Slot gap, default Texture`
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
 **Ramp by** `-300 to +300, units match the target, default 0`
@@ -688,16 +691,16 @@ How long the ride takes. 0 = this target doesn't ramp. Set it to, say, 20 and th
 Wait this many minutes after arming before the ride begins — e.g. "let me settle for 10 minutes, *then* start winding down."
 
 **Ramp engage** `Off / On, default Off`
-Arms every configured target at once. While On, each rides its own duration from where it is; flip Off and they freeze in place (flip back On and they resume). The ride starts fresh from the current values each time the transport begins playing. You can aim several targets at once (Texture *and* Voice level *and* Low cut, each over its own time) and one Engage winds them all down together.
+Arms every configured target at once. While On, each rides its own duration from where it is; flip Off and they freeze in place (flip back On and they resume). The ride starts fresh from the current values each time the transport begins playing. You can aim several targets at once (Texture *and* Output level *and* Low cut, each over its own time) and one Engage winds them all down together.
 
 ---
 
 ## Usage Notes
 
-- **The capture workflow.** Put audio on the track, Input level up and Voice level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment — and because each slot keeps its own point, you can go slot by slot and tune every capture to its own vowel without disturbing the ones you already set.
+- **The capture workflow.** Put audio on the track, Input level up and Output level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment — and because each slot keeps its own point, you can go slot by slot and tune every capture to its own vowel without disturbing the ones you already set.
 - **The voice end needs pitched material.** Texture 0 only sings on clearly pitched sources (a sustained vowel, organ, bowed note). On unpitched material it produces a tone — use the wash end (or the middle) there instead.
 - **Vowel + breath is the middle.** The pure voice end has no breath; the pure wash end has breath but de-voices. A blend around Texture 30–50 gives the vowel plus air.
-- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels, Stereo width, Low cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Nine of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, Voice level, Denoise, Morph and Input level — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
+- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels, Stereo width, Low cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Nine of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, Output level, Denoise, Morph and Input level — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
 - **Source-agnostic.** It freezes anything — synths, field recordings, strings, cymbals, even a whole mix via a track send. The wash texturizes any source.
 - **Captures persist** across save and reopen (the raw audio is stored in the project; both engines rebuild on load).
 - **Transport must be moving** for it to sound — it is a generator. Loop the transport, or arm the track and monitor.

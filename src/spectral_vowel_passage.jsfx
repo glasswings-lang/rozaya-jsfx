@@ -110,7 +110,12 @@ slider10:0<0,1,1{Off,On}>Slot mute (per slot: skip in morph)
 slider11:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade in shape (all slots)
 slider12:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade out shape (all slots)
 slider13:0<-60,12,0.1>Input level (dry, dB)
-slider14:0<-60,12,0.1>Voice level (dB)
+// Named "Voice level" since this plugin was born, and wrong the whole time: it
+// is applied to voutL/voutR, the equal-power crossfade of the voice AND the
+// wash, so it has always scaled both. PER SLOT here, unlike the Morpher's --
+// the morph crossfades it along with the spectra. Relabelled, not re-scoped:
+// the behaviour is right, the name described half of it.
+slider14:0<-60,12,0.1>Output level (dB, per slot)
 slider15:50<0,100,1>Texture (0 voice, 100 wash)
 slider16:150<5,680,1>Wash grain (ms)
 slider17:0<0,150,0.5>Spread (Hz)
@@ -125,7 +130,7 @@ slider24:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 //     Pick a target; it wanders by up/down amounts over a wall-clock period.
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
-slider25:0<0,13,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level,Overtone harmonic,Slot fade in,Slot hold,Slot fade out,Slot gap}>Drift target
+slider25:0<0,13,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Denoise,Morph,Input level,Overtone harmonic,Slot fade in,Slot hold,Slot fade out,Slot gap}>Drift target
 slider26:0<0,300,0.1>Drift up amount (units match target)
 slider27:0<0,300,0.1>Drift down amount (units match target)
 slider28:30<1,600,0.5>Drift period (seconds)
@@ -140,7 +145,7 @@ slider30:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider31:0<0,13,1{Texture,Spread,Pitch,Stereo width,Low cut,Voice level,Denoise,Morph,Input level,Overtone harmonic,Slot fade in,Slot hold,Slot fade out,Slot gap}>Ramp target
+slider31:0<0,13,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Denoise,Morph,Input level,Overtone harmonic,Slot fade in,Slot hold,Slot fade out,Slot gap}>Ramp target
 slider32:0<-300,300,0.1>Ramp by (units match target)
 slider33:0<0,60,0.1>Ramp duration (minutes)
 slider34:0<0,60,0.1>Ramp start delay (minutes)
