@@ -63,9 +63,25 @@ SEL_SLIDER = 33          # Layer selector
 TARGET_SLIDERS = (17, 23)  # Drift target, Ramp target
 LAY_T0 = 8               # first layer entry in the target list
 
-# magic -> (slots in the layer list, had an Original slot at the end)
-MIGRATABLE = {7700005: (15, False), 7700006: (16, True)}
-CURRENT = 7700007
+# CANON is the order every layout up to 7700006 used:
+#   0..2  Custom 1..3
+#   3..14 the twelve intervals, low to high
+#   15    the Original (absent in 7700005, which had only 15 slots)
+# The list is now a PITCH LADDER, and CANON_TO_LADDER[canon_index] is where that
+# entry sits in it.  Kept deliberately as a literal table rather than computed:
+# it has to agree, entry for entry, with lay_perm in the plugin's @init.
+CANON_TO_LADDER = {
+    0: 13, 1: 14, 2: 15,        # Custom 1..3 trail the ladder
+    3: 0,  4: 1,  5: 2,  6: 3,  # 4,3,2,1 octaves down
+    7: 4,  8: 5,                # a fifth down, a fourth down
+    9: 7,  10: 8,               # a fourth up, a fifth up
+    11: 9, 12: 10, 13: 11, 14: 12,   # 1,2,3,4 octaves up
+    15: 6,                      # the Original, at unison, mid-ladder
+}
+# 7700007 briefly put the Original FIRST; shift back by one to reach CANON.
+ROTATED = {7700007}
+MIGRATABLE = {7700005, 7700006, 7700007}
+CURRENT = 7700008
 
 
 def read_magic(b64):
@@ -79,15 +95,17 @@ def read_magic(b64):
     return int(round(struct.unpack("<f", raw[:4])[0]))
 
 
-def shift(value, slots, had_original, is_target):
-    """Move one index from the old list to the new one."""
+def shift(value, magic, is_target):
+    """Move one index from an old list into the pitch ladder."""
     base = LAY_T0 if is_target else 0
     if is_target and value < LAY_T0:
         return value                      # Texture..High cut: not layers
-    last = base + slots - 1
-    if had_original and value == last:
-        return base                       # the Original wraps to the front
-    return value + 1
+    canon = value - base
+    if magic in ROTATED:                  # Original-first: undo that rotate
+        canon = (canon - 1) % 16
+    if canon not in CANON_TO_LADDER:
+        return None                       # out of range for this layout
+    return base + CANON_TO_LADDER[canon]
 
 
 def rewrite_values(line, magic):
@@ -98,8 +116,6 @@ def rewrite_values(line, magic):
     values = [t for t in tokens if t != "-"]
     if values != tokens[: len(values)]:
         return line + eol, "SKIPPED (unexpected layout: '-' among the values)"
-    slots, had_original = MIGRATABLE[magic]
-
     need = max(SEL_SLIDER, max(TARGET_SLIDERS))
     if len(values) < need:
         return line + eol, ("SKIPPED (%d values, need at least %d -- blob says %d "
@@ -112,7 +128,9 @@ def rewrite_values(line, magic):
             v = int(float(values[i]))
         except ValueError:
             return line + eol, "SKIPPED (slider%d is not a number: %r)" % (sl, values[i])
-        nv = shift(v, slots, had_original, sl in TARGET_SLIDERS)
+        nv = shift(v, magic, sl in TARGET_SLIDERS)
+        if nv is None:
+            return line + eol, "SKIPPED (slider%d = %d is outside the old list)" % (sl, v)
         if nv != v:
             values[i] = str(nv)
             moved.append("slider%d %d->%d" % (sl, v, nv))

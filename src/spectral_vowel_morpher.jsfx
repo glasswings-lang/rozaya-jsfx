@@ -63,7 +63,7 @@ slider16:20<1,600,0.5>Auto-morph time (sec)
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. Added at the END of the range
 //     (slider IDs are primary keys — never renumber existing ones). ---
-slider17:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,Original level,Custom 1 level,Custom 2 level,Custom 3 level,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level}>Drift target
+slider17:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
 slider18:0<0,300,0.1>Drift up amount (units match target)
 slider19:0<0,300,0.1>Drift down amount (units match target)
 slider20:30<1,600,0.5>Drift period (seconds)
@@ -78,7 +78,7 @@ slider22:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider23:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,Original level,Custom 1 level,Custom 2 level,Custom 3 level,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level}>Ramp target
+slider23:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Ramp target
 slider24:0<-300,300,0.1>Ramp by (units match target)
 slider25:0<0,60,0.1>Ramp duration (minutes)
 slider26:0<0,60,0.1>Ramp start delay (minutes)
@@ -142,7 +142,7 @@ slider32:20000<200,20000,10>High cut (Hz, 20000 = off)
 //     very nearly they did. Putting them in the one list makes a fifth as
 //     reachable as an octave and gave the freed slider to Solo.
 //
-slider33:0<0,15,1{Original (unshifted),Custom 1,Custom 2,Custom 3,4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up}>Layer
+slider33:6<0,15,1{4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,Original (unison),a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,Custom 1,Custom 2,Custom 3}>Layer
 // Active/Inactive, per layer, and NOT the same thing as a level of -60.
 // -60 is "this layer is silent because that is the level I want"; Inactive is
 // "silence this layer and give it back to me later" -- the level you tuned is
@@ -189,10 +189,14 @@ LAY_T0   = 8;    // target index of layer 0 -- targets LAY_T0+i map to layer i
 // exactly as they do to a layer. It is not synthesised by the layer loops (it
 // is the base path), so the synthesis loops still run 0..NLAYERS-1 while
 // anything reading the CONFIG banks runs 0..N_LAY_SLOTS-1.
-LAY_ORIG    = 0;            // the original is FIRST -- it is what the rest stack around
-LAY_FIRST   = 1;            // ...so the pitch-shifted layers run 1..N_LAY_SLOTS-1
-LAY_CUSTOM0 = 1;            // Custom 1..3 at slots 1,2,3 (lay_semi is indexed slot-1)
-N_LAY_SLOTS = NLAYERS + 1;  // config-bank entries: the original, plus the layers
+// The list is a PITCH LADDER: four octaves down up to four octaves up, with the
+// original sitting at unison where it belongs -- between the fourth down and the
+// fourth up. Putting it at either END of the list was the same problem twice: an
+// entry out of musical order, just from opposite directions. The three Custom
+// slots trail the ladder because an arbitrary interval has no place in it.
+LAY_ORIG    = 6;            // unison, mid-ladder
+LAY_CUSTOM0 = 13;           // Custom 1..3 at slots 13,14,15 (lay_semi is indexed slot-LAY_CUSTOM0)
+N_LAY_SLOTS = NLAYERS + 1;  // config-bank entries: the ladder, plus the three Custom slots
 FFTSIZE = 32768; NBINS = 16385;
 // WA = analysis window length, FIXED and decoupled from Wash grain. The capture
 // analysis (heavy: FFT + YIN) happens at WA; Wash grain only rebuilds the cheap
@@ -263,6 +267,9 @@ lay_db_base = freemem; freemem += 32;   // level in dB, before Drift/Ramp
 lay_active  = freemem; freemem += 32;   // 1 = audible, 0 = muted but remembered
 lay_solo    = freemem; freemem += 32;   // 1 = audition this layer alone
 ser_scratch = freemem; freemem += 32;   // read-and-discard space for old @serialize layouts
+lay_perm    = freemem; freemem += 32;   // CANON layer order -> the pitch ladder
+lay_inv     = freemem; freemem += 32;   // ...and back, for the remembered selector positions
+lay_unrot   = freemem; freemem += 32;   // 7700007 (original first) -> CANON
 lpr         = freemem; freemem += 32;   // pitch_ratio * layer_ratio, per grain
 anbuf     = freemem; freemem += WHARM;         // mono analysis frame
 yin_df    = freemem; freemem += WHARM;         // YIN difference function
@@ -333,7 +340,7 @@ slots_inited == 0 ? (
   // up, two octaves down) so that raising one is immediately worth hearing.
   lay_semi[0] = -12; lay_semi[1] = 12;  lay_semi[2] = -24;
   lpi = 0; loop(N_LAY_SLOTS, lay_solo[lpi] = 0; lpi += 1; );
-  last_lay_sel = 0;
+  last_lay_sel = LAY_ORIG;
   last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
 );
 // Drift RUNTIME state (phase/prev/curr/offset) is reset here on load AND on the
@@ -365,6 +372,19 @@ i = 0; loop(N_LAY_SLOTS*NHARM,
   lay_hphR[i] = lay_hph[i];   lay_hphBR[i] = lay_hphB[i];
   i += 1;
 );
+// --- Layer-order migration tables.
+// CANON is the order every layout up to 7700006 used: Custom 1..3, then the
+// twelve intervals low to high, then the original last. lay_perm maps a slot in
+// the NEW pitch ladder to where that layer sat in CANON, so new[k] =
+// canon[lay_perm[k]]. lay_inv is the reverse, for remembered selector indices.
+lay_perm[0]  = 3;  lay_perm[1]  = 4;  lay_perm[2]  = 5;  lay_perm[3]  = 6;
+lay_perm[4]  = 7;  lay_perm[5]  = 8;  lay_perm[6]  = 15; lay_perm[7]  = 9;
+lay_perm[8]  = 10; lay_perm[9]  = 11; lay_perm[10] = 12; lay_perm[11] = 13;
+lay_perm[12] = 14; lay_perm[13] = 0;  lay_perm[14] = 1;  lay_perm[15] = 2;
+lpi = 0; loop(N_LAY_SLOTS, lay_inv[lay_perm[lpi]] = lpi; lpi += 1; );
+// 7700007 briefly put the original FIRST. Undo that rotate to reach CANON, then
+// the table above finishes the job -- two small steps instead of a second table.
+lpi = 0; loop(N_LAY_SLOTS, lay_unrot[lpi] = lpi >= N_LAY_SLOTS-1 ? 0 : lpi + 1; lpi += 1; );
 // High cut / Layers runtime defaults: OFF, and off means the arithmetic below
 // multiplies by exactly 1.0 -- bit-identical to the engine before they existed.
 hicut_hz = 20000; eff_hicut_hz = 20000; hc_on = 0;
@@ -528,9 +548,11 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, l
     m = m * base_gain;          // the original's own level: its gain, or 0 when something else is soloed
     nlay_on ? (
       mb = m;                     // keep the un-layered magnitude for the auto-gain below
-      lq = LAY_FIRST;             // slot 0 is the original, already in m above
-      loop(N_LAY_SLOTS-1,
-        layer_gain[lq] > 0.0001 ? (
+      lq = 0;
+      loop(N_LAY_SLOTS,
+        // LAY_ORIG is the original: it is already in m above, via the base
+        // lookup, so the ladder skips it rather than adding it twice.
+        (lq != LAY_ORIG && layer_gain[lq] > 0.0001) ? (
           srcb = i / lpr[lq];
           (srcb >= 0 && srcb < NBINS - 1) ? (
             b0 = floor(srcb); fr = srcb - b0;
@@ -664,6 +686,13 @@ function clear_accum() local(i) (
 // once per cycle (even coverage, random order) rather than a memoryless walk
 // that clusters in the middle. Avoids an immediate repeat across the reshuffle
 // seam (if the new first slot equals the one just visited, swap it back one).
+// Reorder one bank in place: dst[q] = src[tbl[q]], over N_LAY_SLOTS entries
+// starting at pb_off. Used only by the @serialize migration.
+function permute_bank(pb_base, pb_off, pb_tbl) local(pb_q) (
+  pb_q = 0; loop(N_LAY_SLOTS, ser_scratch[pb_q] = pb_base[pb_off + pb_q]; pb_q += 1; );
+  pb_q = 0; loop(N_LAY_SLOTS, pb_base[pb_off + pb_q] = ser_scratch[pb_tbl[pb_q]]; pb_q += 1; );
+);
+
 function shuffle_bag() local(i, j, t) (
   i = 0; loop(n_used, driftbag[i] = i; i += 1; );
   i = n_used - 1;
@@ -962,25 +991,23 @@ cap_last = cap_trig;
 // RULE FOR THIS FILE: a value derived from a serialized bank belongs in @block.
 // Only values derived from a SLIDER may live in @slider, because those arrive
 // with the slider itself.
-layer_ratio[LAY_ORIG] = 1;   // the original is, by definition, unshifted
+// The ladder, in pitch order. Octaves are exact powers of two; fifths and
+// fourths are the equal-tempered 7 and 5 semitones; unison is the original.
+layer_ratio[0]  = 0.0625;              // 4 octaves down
+layer_ratio[1]  = 0.125;               // 3 octaves down
+layer_ratio[2]  = 0.25;                // 2 octaves down
+layer_ratio[3]  = 0.5;                 // 1 octave down
+layer_ratio[4]  = pow(2.0, -7/12);     // a fifth down
+layer_ratio[5]  = pow(2.0, -5/12);     // a fourth down
+layer_ratio[6]  = 1;                   // the original, by definition unshifted
+layer_ratio[7]  = pow(2.0,  5/12);     // a fourth up
+layer_ratio[8]  = pow(2.0,  7/12);     // a fifth up
+layer_ratio[9]  = 2;                   // 1 octave up
+layer_ratio[10] = 4;                   // 2 octaves up
+layer_ratio[11] = 8;                   // 3 octaves up
+layer_ratio[12] = 16;                  // 4 octaves up
 lz = 0;
 loop(N_CUSTOM, layer_ratio[LAY_CUSTOM0+lz] = pow(2.0, lay_semi[lz]/12); lz += 1; );
-// The twelve named intervals, in selector order, after the three Custom slots.
-// Octaves are exact powers of two; fifths and fourths are the equal-tempered
-// 7 and 5 semitones.
-lz = LAY_CUSTOM0 + N_CUSTOM;
-layer_ratio[lz+0]  = 0.0625;              // 4 octaves down
-layer_ratio[lz+1]  = 0.125;               // 3 octaves down
-layer_ratio[lz+2]  = 0.25;                // 2 octaves down
-layer_ratio[lz+3]  = 0.5;                 // 1 octave down
-layer_ratio[lz+4]  = pow(2.0, -7/12);     // a fifth down
-layer_ratio[lz+5]  = pow(2.0, -5/12);     // a fourth down
-layer_ratio[lz+6]  = pow(2.0,  5/12);     // a fourth up
-layer_ratio[lz+7]  = pow(2.0,  7/12);     // a fifth up
-layer_ratio[lz+8]  = 2;                   // 1 octave up
-layer_ratio[lz+9]  = 4;                   // 2 octaves up
-layer_ratio[lz+10] = 8;                   // 3 octaves up
-layer_ratio[lz+11] = 16;                  // 4 octaves up
 // Inactive is a gain of 0 and nothing else -- the dB the user set stays in the
 // bank untouched, so switching back restores it exactly. Everything downstream
 // gates on this gain, so an inactive layer costs no CPU.
@@ -1135,7 +1162,7 @@ loop(N_LAY_SLOTS,
   );
   // nlay_on gates the pitch-shifted synthesis only, so the original never sets
   // it -- it is the base path, which always runs.
-  (lz >= LAY_FIRST && layer_gain[lz] > 0.0001) ? ( nlay_on = 1; );
+  (lz != LAY_ORIG && layer_gain[lz] > 0.0001) ? ( nlay_on = 1; );
   lz += 1;
 );
 base_gain = layer_gain[LAY_ORIG];
@@ -1384,10 +1411,11 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
   // Upward layers get CHEAPER as they rise -- their partials cross Nyquist (or
   // the High cut) and stop being computed at all. ---
   nlay_on ? (
-    lyk = LAY_FIRST;            // slot 0 is the original: the base path above
-    loop(N_LAY_SLOTS-1,
+    lyk = 0;
+    loop(N_LAY_SLOTS,
       lyg = layer_gain[lyk];
-      lyg > 0.0001 ? (
+      // LAY_ORIG is the original, synthesised by the base path above.
+      (lyk != LAY_ORIG && lyg > 0.0001) ? (
         lybo = lyk*NHARM;
         lyfa = fA*layer_ratio[lyk]; lyfb = fB*layer_ratio[lyk];
         voice_detune > 0 ? (
@@ -1467,7 +1495,10 @@ spl1 = dryR + voutR;
 //              points at the parameter it was pointing at. (7700003 was an
 //              in-development layout with three layers and no octave stack; it
 //              never left this branch, so nothing reads it.)
-//   7700007 -- current. The original moved to the FRONT of the Layer selector
+//   7700008 -- current. The list became a PITCH LADDER: the original sits at
+//              unison, mid-list, rather than at either end. Blobs permute
+//              themselves; the SLIDER LINE needs the migration script.
+//   7700007 -- The original moved to the FRONT of the Layer selector
 //              and of the Drift/Ramp target list, where it belongs by meaning.
 //              Blobs migrate themselves (a rotate, below); the SLIDER LINE does
 //              not and needs tools/morpher_migrate_layer_order.py.
@@ -1483,9 +1514,9 @@ spl1 = dryR + voutR;
 //              evening on one machine, but layers had been dialled in against
 //              it, and resetting someone's work to save fifteen lines is the
 //              same disrespect as moving their values silently.
-ser_magic = 7700007;
+ser_magic = 7700008;
 file_var(0, ser_magic);
-(ser_magic == 7700007 || ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
+(ser_magic == 7700008 || ser_magic == 7700007 || ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
   n_ser_targets = ser_magic >= 7700006 ? N_TARGETS : ser_magic == 7700005 ? 23 :
                   ser_magic == 7700004 ? 19 : ser_magic == 7700002 ? 7 : 6;
   file_var(0, have);
@@ -1609,49 +1640,53 @@ file_var(0, ser_magic);
   );
 
   // --- Layer order migration, walked LAST so every older layout above has
-  //     already been brought up to "the original lives at the end". Every blob
-  //     before 7700007 has that order; this one rotates it to "the original
-  //     lives at the FRONT", which is where it belongs by meaning -- it is the
-  //     thing the other fifteen are measured against, and having to arrow past
-  //     all of them to reach it was more to hold in your head than it was worth.
+  //     already been brought up to CANON: Custom 1..3, the twelve intervals low
+  //     to high, then the original at the end.
   //
-  //     The permutation is a rotate right by one across the 16 config slots:
-  //     old 15 (the original) becomes new 0, and old 0..14 become new 1..15.
-  //     The Drift/Ramp target banks carry the same permutation over targets
-  //     8..23, because target LAY_T0+i has always meant layer i.
+  //     The list is now a PITCH LADDER with the original at unison, mid-list,
+  //     which is where the ear expects it. 7700007 -- which put it first -- is
+  //     un-rotated back to CANON before the ladder permutation runs, so both
+  //     old shapes converge on one table.
+  //
+  //     Every per-layer bank and the layer range of every per-target bank get
+  //     the same treatment, because target LAY_T0+i has always meant layer i.
   //
   //     THE SLIDER LINE CANNOT BE FIXED FROM HERE. slider33, slider17 and
-  //     slider23 hold indices into these same lists and live in the project
-  //     file, not the blob -- run tools/morpher_migrate_layer_order.py over the
-  //     project folders to shift them. Without it the banks are correct but the
-  //     selector and the Drift/Ramp targets point one entry low.
-  (file_avail(0) >= 0 && ser_magic < 7700007) ? (
-    rot = 0; loop(N_LAY_SLOTS,
-      ser_scratch[rot] = lay_db_base[rot]; rot += 1; );
-    rot = 0; loop(N_LAY_SLOTS,
-      lay_db_base[rot == 0 ? 0 : rot] = ser_scratch[rot == 0 ? N_LAY_SLOTS-1 : rot-1]; rot += 1; );
-    rot = 0; loop(N_LAY_SLOTS, ser_scratch[rot] = lay_active[rot]; rot += 1; );
-    rot = 0; loop(N_LAY_SLOTS, lay_active[rot] = ser_scratch[rot == 0 ? N_LAY_SLOTS-1 : rot-1]; rot += 1; );
-    rot = 0; loop(N_LAY_SLOTS, ser_scratch[rot] = lay_solo[rot]; rot += 1; );
-    rot = 0; loop(N_LAY_SLOTS, lay_solo[rot] = ser_scratch[rot == 0 ? N_LAY_SLOTS-1 : rot-1]; rot += 1; );
-    // the same rotate over targets LAY_T0..LAY_T0+N_LAY_SLOTS-1 of every
-    // per-target bank; targets 0..7 are not layers and do not move.
-    rotb = 0;
-    loop(7,
-      rotbase = rotb == 0 ? target_drift_up : rotb == 1 ? target_drift_down :
-                rotb == 2 ? target_drift_per : rotb == 3 ? target_drift_shape :
-                rotb == 4 ? ramp_by_mem : rotb == 5 ? ramp_dur_mem : ramp_delay_mem;
-      rot = 0; loop(N_LAY_SLOTS, ser_scratch[rot] = rotbase[LAY_T0+rot]; rot += 1; );
-      rot = 0; loop(N_LAY_SLOTS,
-        rotbase[LAY_T0+rot] = ser_scratch[rot == 0 ? N_LAY_SLOTS-1 : rot-1]; rot += 1; );
-      rotb += 1;
+  //     slider23 hold indices into these lists and live in the project file --
+  //     run tools/morpher_migrate_layer_order.py over the project folders.
+  (file_avail(0) >= 0 && ser_magic < 7700008) ? (
+    ser_magic == 7700007 ? (
+      permute_bank(lay_db_base, 0, lay_unrot);
+      permute_bank(lay_active,  0, lay_unrot);
+      permute_bank(lay_solo,    0, lay_unrot);
+      permute_bank(target_drift_up,    LAY_T0, lay_unrot);
+      permute_bank(target_drift_down,  LAY_T0, lay_unrot);
+      permute_bank(target_drift_per,   LAY_T0, lay_unrot);
+      permute_bank(target_drift_shape, LAY_T0, lay_unrot);
+      permute_bank(ramp_by_mem,        LAY_T0, lay_unrot);
+      permute_bank(ramp_dur_mem,       LAY_T0, lay_unrot);
+      permute_bank(ramp_delay_mem,     LAY_T0, lay_unrot);
+      last_lay_sel = last_lay_sel <= 0 ? N_LAY_SLOTS-1 : last_lay_sel - 1;
+      last_target_select >= LAY_T0 ? (
+        last_target_select = last_target_select <= LAY_T0 ? N_TARGETS-1 : last_target_select - 1; );
+      last_ramp_target >= LAY_T0 ? (
+        last_ramp_target = last_ramp_target <= LAY_T0 ? N_TARGETS-1 : last_ramp_target - 1; );
     );
-    // and the three remembered selector positions
-    last_lay_sel = last_lay_sel >= N_LAY_SLOTS-1 ? 0 : last_lay_sel + 1;
+    permute_bank(lay_db_base, 0, lay_perm);
+    permute_bank(lay_active,  0, lay_perm);
+    permute_bank(lay_solo,    0, lay_perm);
+    permute_bank(target_drift_up,    LAY_T0, lay_perm);
+    permute_bank(target_drift_down,  LAY_T0, lay_perm);
+    permute_bank(target_drift_per,   LAY_T0, lay_perm);
+    permute_bank(target_drift_shape, LAY_T0, lay_perm);
+    permute_bank(ramp_by_mem,        LAY_T0, lay_perm);
+    permute_bank(ramp_dur_mem,       LAY_T0, lay_perm);
+    permute_bank(ramp_delay_mem,     LAY_T0, lay_perm);
+    last_lay_sel = lay_inv[max(0, min(N_LAY_SLOTS-1, last_lay_sel))];
     last_target_select >= LAY_T0 ? (
-      last_target_select = last_target_select >= N_TARGETS-1 ? LAY_T0 : last_target_select + 1; );
+      last_target_select = LAY_T0 + lay_inv[max(0, min(N_LAY_SLOTS-1, last_target_select - LAY_T0))]; );
     last_ramp_target >= LAY_T0 ? (
-      last_ramp_target = last_ramp_target >= N_TARGETS-1 ? LAY_T0 : last_ramp_target + 1; );
+      last_ramp_target = LAY_T0 + lay_inv[max(0, min(N_LAY_SLOTS-1, last_ramp_target - LAY_T0))]; );
   );
 
   // TRACK-DUPLICATE FIX (CLAUDE.md nested-selector gotcha). On READ (load /

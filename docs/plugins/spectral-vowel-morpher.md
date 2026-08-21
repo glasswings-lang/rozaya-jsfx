@@ -131,10 +131,12 @@ The point is the *lock*. Two instances of the plugin on Shuffle wander independe
 
 They work the way Drift target and Capture slot do: **every layer sounds at once**, and the selector only chooses which one the sliders below are editing. The selector is a view, never a mute.
 
-**Layer** `Original (unshifted) / Custom 1-3 / 4, 3, 2, 1 octaves down / a fifth down / a fourth down / a fourth up / a fifth up / 1, 2, 3, 4 octaves up, default Original`
+**Layer** `4, 3, 2, 1 octaves down / a fifth down / a fourth down / Original (unison) / a fourth up / a fifth up / 1, 2, 3, 4 octaves up / Custom 1-3, default Original`
 Which layer you are setting. For the twelve named entries the interval is decided by the name — there is nothing to convert and nothing else to set but the level.
 
-The first entry, **Original (unshifted)**, is the morph itself — the thing every layer stacks around. It takes Active, Level and Solo exactly like a layer does, so you can solo it to hear what the stack is built on, mute it to hear only the octaves, or pull it down and let an octave lead. It has no interval, because it *is* the interval everything else is measured from. It sits at the *front* of the list, because it's what everything else is measured against and arrowing past fifteen layers to reach it was more to track than the position was worth. That ordering cost an index shift on saved projects — see the migration note at the bottom of this page.
+The list is a **pitch ladder** — four octaves down at the top, four octaves up at the bottom, and the three Custom slots trailing it because an arbitrary interval has no place in a ladder. **Original (unison)** sits in the middle, between the fourth down and the fourth up, which is exactly where your ear puts it.
+
+The Original is the morph itself — the thing every layer stacks around. It takes Active, Level and Solo exactly like a layer does, so you can solo it to hear what the stack is built on, mute it to hear only the octaves, or pull it down and let an octave lead. It has no interval, because it *is* the interval everything else is measured from. Putting it at either *end* of the list was the same mistake twice — an entry out of musical order, just from opposite directions. Its position cost an index shift on saved projects; see the migration note at the bottom of this page.
 
 Its level defaults to **0 dB**, not off — it's the sound.
 
@@ -174,7 +176,7 @@ Four octaves each way is the usable span of a voice capture: four down is at the
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Output level / Overtone harmonic / High cut / Original level / Custom 1-3 level / the twelve named-interval levels, default Texture`
+**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Output level / Overtone harmonic / High cut / the sixteen layer levels in ladder order, default Texture`
 Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
 
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
@@ -199,7 +201,7 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Output level / Overtone harmonic / High cut / Original level / Custom 1-3 level / the twelve named-interval levels, default Texture`
+**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Output level / Overtone harmonic / High cut / the sixteen layer levels in ladder order, default Texture`
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
 **Ramp by** `-300 to +300, units match the target, default 0`
@@ -285,8 +287,10 @@ See [`docs/spectral-vowel-morpher.md`](spectral-vowel-morpher.md) for deeper des
 
 ## Migrating projects across the layer-order change
 
-The Layer selector originally listed the **Original** last; it now lists it first.
-That shifts every index in the Layer selector and in the Drift/Ramp target lists.
+The Layer selector is now a pitch ladder with the **Original** at unison, in the
+middle. It previously listed the Original at one end or the other, and the Custom
+slots first — so every index in the Layer selector and in the Drift/Ramp target
+lists has moved.
 
 The plugin migrates **its own `@serialize` blob** on load — per-layer levels,
 mutes, solos and every Drift/Ramp bank rotate themselves, and older blobs
@@ -302,7 +306,7 @@ one entry low. Run:
 python tools/morpher_migrate_layer_order.py PROJECT.RPP
 ```
 
-It touches only instances whose blob says 7700005 or 7700006 — read from the
+It touches only instances whose blob says 7700005, 7700006 or 7700007 — read from the
 project, not guessed — writes a `.pre-layer-order-bak` copy first, and refuses to
 clobber an existing one. **Close the project in REAPER first**, or REAPER writes
 its in-memory copy back over yours. Projects older than the layer feature have
