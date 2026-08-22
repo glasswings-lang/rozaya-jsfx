@@ -5,6 +5,24 @@ replaced by a successor in `src/`. They're not currently shipped — the
 file in `src/` is the canonical version — but they're preserved here
 so the history is recoverable without digging through git.
 
+## When something lands here
+
+Two tests, both of which must pass. The full standard is in `CLAUDE.md` under
+*Versioning: when to fork a plugin, when to archive it*.
+
+1. **A successor exists in `src/` and the version here is genuinely retired** —
+   not merely older. Parallel current versions stay in `src/`.
+2. **`grep -rl <plugin>.jsfx --include=*.RPP` over the project folders returns
+   ZERO.** Never archive on the assumption that a successor superseded it.
+   Melody Phase v1 was archived because v2 existed, while five projects were on
+   v1 and none were on v2 — it had to be brought back out. Run the grep.
+
+And the rule that keeps this folder small: **a new version must ship with a
+migration, or it does not ship.** A version nobody can cross to does not replace
+anything; it just becomes a second file to maintain. Where the migration lives
+depends on where the state lives — the `@serialize` blob can migrate itself via
+a version magic, while slider values need a script in `tools/`.
+
 ## Convention
 
 ```
@@ -55,9 +73,8 @@ here's the old one for recovery and reference."
   bitmask); left unfixed because they're frozen as-shipped. The fix, if
   ever needed, is the Park-Miller / MINSTD generator now used in the active
   plugins (see `src/breath_gen.jsfx`).
-- `melody_phase/v1.jsfx` — Melody Phase before the v2 rework that collapsed
-  the forty flat per-voice sliders (V1–V8 × five controls) behind a single
-  Voice selector. Same engine and feature set; the reorganisation just keeps
-  the parameter list short for linear / screen-reader navigation. Superseded
-  by `src/melody_phase_v2.jsfx` (archived 2026-07). `v1.md` beside it is v1's
-  manual, kept for anyone loading an old project on the archived plugin.
+*(Melody Phase v1 was listed here and is NOT here any more.* It was archived in
+2026-07 on the assumption that v2 superseded it, then brought back to
+`src/melody_phase.jsfx` on 2026-08-11 when the grep showed five projects on v1
+and none on v2. Both now live in `src/`. This is the worked example for test 2
+above, and the reason it exists.)
