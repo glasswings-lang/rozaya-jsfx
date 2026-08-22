@@ -211,6 +211,10 @@ CAPAVG_HOP = WA / 2; CAPAVG_MAX = 6;
 // top of the Window-size range). 2*MAXFFT is comfortable headroom.
 ACCLEN = 65536;
 NHARM = 64; WHARM = 3072;          // 64 harmonics; ~64 ms YIN analysis window
+// Magnitudes are peak-normalised, so this is roughly -66 dB below the loudest
+// partial: comfortably under anything audible under the rest of the series,
+// and conservative enough that a bright capture keeps its whole tail.
+HM_EPS = 0.0005;
 WTBL = 8192; WTSCALE = WTBL / TWOPI;
 // Voice stereo width: at full Stereo width the right-channel voice runs +-0.8%
 // (~14 cents) detuned from the left, so L/R beat slowly -> width + de-robot
@@ -407,7 +411,7 @@ lpi = 0; loop(N_LAY_SLOTS, lay_unrot[lpi] = lpi >= N_LAY_SLOTS-1 ? 0 : lpi + 1; 
 hicut_hz = 20000; eff_hicut_hz = 20000; hc_on = 0;
 hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;   // EEL2 has NO scientific notation -- 1e9 is a syntax error
 hcbin_hi = NBINS + 1; hcbin_lo = NBINS + 1; hcbin_inv = 0;
-nlay_on = 0; any_solo = 0; base_gain = 1;
+nlay_on = 0; any_solo = 0; base_gain = 1; nharm_used = NHARM;
 // Overtone: flat gains (off), smoothers settled, ~30 ms to take the step out
 // of a manual move -- each control is a gain change across dozens of partials.
 i = 0; loop(NHARM, ot_gain[i] = 1; i += 1; );
@@ -1246,36 +1250,32 @@ audition_mode < 0.5 ? (
 // both copies would feed each bank the other's already-overwritten values.
 // (Diagnosed and ear-tested in the sibling plugin, Passage, 2026-07-27.)
 (vsi != last_vsi || vsj != last_vsj) ? (
-  (vsi == last_vsj && vsi != last_vsi) ? (
-    vcp = 0; loop(NHARM, hph[vcp]  = hphB[vcp]; hphR[vcp]  = hphBR[vcp]; vcp += 1; );
-    // Every layer is a voice pair of its own, so every layer needs the same
-    // handover -- otherwise the base voice steps through a slot change cleanly
-    // and each raised layer clicks. One contiguous copy covers all of them.
-    // Per LAYER, and only the audible ones. This was a flat copy across all
-    // N_LAY_SLOTS*NHARM slots -- 1024 entries over two banks, 2048 writes, in a
-    // single sample, on every slot boundary, whether or not any layer was up.
-    // With Auto-morph running that is a spike on a fixed cycle: regular
-    // dropouts, worst at the voice end of Texture where the harmonic engine is
-    // already the expensive one. A silent layer's phases do not matter.
-    nlay_on ? ( vcl = 0; loop(N_LAY_SLOTS,
-      (vcl != LAY_ORIG && layer_gain[vcl] > 0.0001) ? (
-        vcb = vcl*NHARM; vcq = 0;
-        loop(NHARM, lay_hph[vcb+vcq]  = lay_hphB[vcb+vcq];
-                    lay_hphR[vcb+vcq] = lay_hphBR[vcb+vcq]; vcq += 1; );
-      );
-      vcl += 1; ); );
-  ) : (
-    (vsj == last_vsi && vsj != last_vsj) ? (
-      vcp = 0; loop(NHARM, hphB[vcp] = hph[vcp];  hphBR[vcp] = hphR[vcp];  vcp += 1; );
-      nlay_on ? ( vcl = 0; loop(N_LAY_SLOTS,
-        (vcl != LAY_ORIG && layer_gain[vcl] > 0.0001) ? (
-          vcb = vcl*NHARM; vcq = 0;
-          loop(NHARM, lay_hphB[vcb+vcq]  = lay_hph[vcb+vcq];
-                      lay_hphBR[vcb+vcq] = lay_hphR[vcb+vcq]; vcq += 1; );
-        );
-        vcl += 1; ); );
-    );
-  );
+  // SWAP the banks instead of copying them. The phase arrays are just base
+  // addresses, so exchanging which one is "A" and which is "B" is four
+  // assignments -- against the 2048 writes the copy version did in a single
+  // sample, on every slot boundary. That was a spike on a fixed cycle, which is
+  // exactly what "regular dropouts" sounds like once the steady load from a few
+  // raised layers has eaten the headroom that used to absorb it.
+  //
+  // It is EXACTLY equivalent, and it also collapses the two cases the copy
+  // version had to keep mutually exclusive:
+  //   forward step  -- A must resume the waveform B was mid-way through.
+  //                    Swap gives A = B's phases. B gets A's old ones, which do
+  //                    not matter: B re-enters at zero level and fades up, so
+  //                    any continuous phase will do.
+  //   backward step -- the mirror, and the same swap serves it.
+  // The copy version had to test which direction it was going and run one branch
+  // or the other, because running both fed each bank the other's already
+  // overwritten values. A swap has no such hazard -- there is nothing to
+  // overwrite -- so the direction test goes away with it.
+  //
+  // (The click this all exists to prevent is unchanged: hand the phase over with
+  // the slot, or every handoff steps the waveform. Diagnosed in Passage,
+  // 2026-07-27; see the crossfade gotcha in CLAUDE.md.)
+  swp = hph;       hph       = hphB;       hphB       = swp;
+  swp = hphR;      hphR      = hphBR;      hphBR      = swp;
+  swp = lay_hph;   lay_hph   = lay_hphB;   lay_hphB   = swp;
+  swp = lay_hphR;  lay_hphR  = lay_hphBR;  lay_hphBR  = swp;
   last_vsi = vsi; last_vsj = vsj;
 );
 
@@ -1370,10 +1370,24 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
   // sample instead of re-divided inside each layer's inner loop -- with several
   // layers up that was hundreds of redundant divisions per sample, on the path
   // that is already the expensive one at the voice end of Texture.
-  vn = 0;
+  // ...and while we are walking them, find the highest partial that actually
+  // carries anything. Captured voices put nearly all their energy in the low
+  // partials; the tail above some index sits at -70 dB and below relative to the
+  // peak, contributes nothing audible, and costs exactly as much to synthesise
+  // as the fundamental does -- times every layer, times four banks, every
+  // sample. Stopping the synthesis loops at nharm_used is where the headroom
+  // for a four-layer stack comes from.
+  //
+  // Contiguous by construction: this is the highest index above the threshold,
+  // not a per-partial skip, so nothing is punched out of the middle of the
+  // series. The dropped partials also stop advancing their phase, exactly as
+  // the ones above Nyquist and above the High cut already do -- an inaudible
+  // partial resuming from a stale phase is inaudible too.
+  vn = 0; nharm_used = 1;
   loop(NHARM,
     hmA_arr[vn] = slot_harm[bA+vn]/normA * ot_gain[vn];
     hmB_arr[vn] = slot_harm[bB+vn]/normB * ot_gain[vn];
+    (hmA_arr[vn] > HM_EPS || hmB_arr[vn] > HM_EPS) ? nharm_used = vn + 1;
     vn += 1;
   );
   voice_detune > 0 ? (
@@ -1383,7 +1397,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     fAL = fA*(1-voice_detune); fAR = fA*(1+voice_detune);
     fBL = fB*(1-voice_detune); fBR = fB*(1+voice_detune);
     vvAL = 0; vvAR = 0; vvBL = 0; vvBR = 0; vn = 0;
-    loop(NHARM,
+    loop(nharm_used,
       hmA = hmA_arr[vn];   // hoisted above; Overtone is already folded in
       // High cut: hcg fades a partial out across the top fifth of the cut, and
       // hc_bound stops computing it entirely. With High cut off hc_lo is huge and
@@ -1418,7 +1432,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
   ) : (
     // Mono (Stereo width 0): the exact original single-bank path, L = R.
     vvA = 0; vvB = 0; vn = 0;
-    loop(NHARM,
+    loop(nharm_used,
       // Phase advance moved inside the audibility guard -- see the stereo path.
       lypf = (vn+1)*fA; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
       lypf < hc_bound ? ( vvA += hmA_arr[vn]*hcg*wtsin(hph[vn]);
@@ -1453,7 +1467,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
           lyfal = lyfa*(1-voice_detune); lyfar = lyfa*(1+voice_detune);
           lyfbl = lyfb*(1-voice_detune); lyfbr = lyfb*(1+voice_detune);
           lyv_al = 0; lyv_ar = 0; lyv_bl = 0; lyv_br = 0; vn = 0;
-          loop(NHARM,
+          loop(nharm_used,
             hmA = hmA_arr[vn]; hmB = hmB_arr[vn];
             lypf = (vn+1)*lyfal; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
             lypf < hc_bound ? ( lyv_al += hmA*hcg*wtsin(lay_hph[lybo+vn]);
@@ -1474,7 +1488,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
         ) : (
           // Mono (Stereo width 0): one bank, L = R, mirroring the base voice.
           lyv_al = 0; lyv_bl = 0; vn = 0;
-          loop(NHARM,
+          loop(nharm_used,
             lypf = (vn+1)*lyfa; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
             lypf < hc_bound ? ( lyv_al += hmA_arr[vn]*hcg*wtsin(lay_hph[lybo+vn]);
               lay_hph[lybo+vn]  += TWOPI*(vn+1)*lyfa/srate; lay_hph[lybo+vn]  >= TWOPI ? lay_hph[lybo+vn]  -= TWOPI; );
