@@ -35,9 +35,11 @@ Veil when you want a *still, deep, wide muffle* (that can then breathe). They al
 - **Mono sum in.** The input is summed to mono, then fed to two independent filter
   chains — so a mono voice becomes stereo. (A lowpass alone can't do that; the
   width is *manufactured* by making the two channels differ.)
-- **Two independent lowpass chains (L / R).** Each is a cascade of 1–4
-  Chamberlin state-variable lowpass stages (Slope), with its own cutoff and its
-  own resonance.
+- **Two independent lowpass chains (L / R).** Each is a cascade of 1–6
+  two-pole state-variable lowpass stages (Slope), with its own cutoff and its
+  own resonance. The sections are zero-delay-feedback (TPT) rather than the
+  older Chamberlin form, which is what keeps a six-stage cascade stable — its
+  last section sits at Q 3.83 before Resonance touches it at all.
 - **Width = the cutoff difference.** Left at 480 and Right at 520 gives a gentle
   spread; pull them apart for more. Because the channels differ only in *spectral
   rolloff* (no phase or delay tricks), a mono sum just averages the two rolloffs —
@@ -58,9 +60,23 @@ plain soft muffle; higher = a resonant "throat" around the corner.
 
 **Right resonance** `0–1, default 0.15` — same, for the Right channel.
 
-**Slope (dB/oct)** `−12 / −24 / −36 / −48, default −12` — how many lowpass stages
-cascade (1–4). Steeper = more muffled, closer to the womb's real deep rolloff.
-−12 is closest to a plain stock lowpass; −48 is deeply submerged.
+**Slope (dB/oct)** `−12 / −24 / −36 / −48 / −60 / −72, default −12` — how many
+lowpass stages cascade (1–6 two-pole sections). Steeper = more muffled, closer to
+the womb's real deep rolloff. −12 is closest to a plain stock lowpass; −72 is a
+wall — past the corner almost nothing survives.
+
+Two things hold true at every slope, which is not automatic and took some care:
+
+- **The cutoff number is the actual corner.** It's −3 dB at the frequency you
+  set, at −12 and at −72 alike. Cascading identical filter stages — the obvious
+  way to build this — drags the real corner *below* the number as you get
+  steeper (at six stages, a cutoff set to 480 Hz would really corner near 168).
+  Each stage instead gets its own Butterworth Q, which is what keeps the corner
+  where you put it.
+- **Resonance means the same thing at every slope.** It's spread across the
+  stages rather than applied to each, so Resonance 1 asks for about the same
+  total emphasis whether that's one stage or six. Applied per stage, the peaks
+  would multiply — six mild peaks stacking into a wall.
 
 **Output (dB)** `−24 to +12, default 0` — level trim.
 
