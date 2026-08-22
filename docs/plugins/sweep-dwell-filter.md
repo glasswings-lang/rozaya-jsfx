@@ -24,6 +24,33 @@ Left and right channels have independent LFO phases. In **Independent L+R** mode
 
 ### Filter Range
 
+**Slope (dB/oct)** `−12 / −24 / −36 / −48 / −60 / −72, default −12`
+How steeply the filter falls away past the cutoff — 1 to 6 cascaded two-pole
+sections. −12 is the gentle slope this plugin has always had; −72 is a wall.
+
+Two things hold at every slope, which is not automatic:
+
+- **The cutoff number is the actual corner** — −3 dB at the frequency you set,
+  at −12 and at −72 alike. Each section gets its own Butterworth Q; cascading
+  identical sections instead would drag the real corner below the number,
+  further the steeper you went.
+- **Resonance means the same thing at every slope.** It is spread across the
+  sections rather than applied to each, so it asks for the same total emphasis
+  whether that is one section or six.
+
+> **The filter core changed, and old projects were migrated.** This plugin used
+> to use a two-pole Kellett cascade whose cutoff coefficient was `2*fc/srate`.
+> Measured, its real −3 dB corner sat at **0.21× to 0.77×** the number on the
+> slider — and it *moved with Resonance*, so turning resonance up slid the
+> corner nearly two octaves without touching the frequency control. Frequency Hz
+> was never Hz. Every project in the library was migrated by
+> `tools/sweepfilter_migrate_hz.py`, which rewrote each instance's Frequency
+> Low/High to the frequency its old filter was really cornering at, using that
+> instance's own Resonance. **The numbers changed a lot; the sound did not.**
+> What migration cannot carry across is the exact curve — the old filter had a
+> droopier passband and a softer knee — so expect a character shift near the
+> corner, not a tuning shift.
+
 **Frequency Low Hz** `20-20000 Hz, default 500`
 The cutoff frequency during the low-dwell segment — the resting state of the filter. If set higher than Frequency High, the two values are automatically swapped.
 
