@@ -150,6 +150,30 @@ slider38:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // three modes already are. Named for what you HEAR, not as note values.
 slider39:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
 
+// --- Slope, and an honest frequency axis -------------------------------------
+// This plugin used to be a fixed two-pole Kellett cascade -- two one-pole
+// sections with a resonance feedback path -- whose cutoff coefficient was
+// `cut = 2*fc/srate`. That is the standard musicdsp idiom for it and it is
+// approximately right at low frequencies, but measured, the real -3 dB corner
+// landed at 0.21x to 0.77x the number on the slider, DEPENDING ON RESONANCE:
+// at "500 Hz" the corner sat at 103 Hz with Resonance down and 382 Hz with it
+// up. So Frequency Hz was never Hz, and Resonance was secretly a second
+// frequency control -- sweeping it 0 to 1 moved the corner nearly two octaves.
+//
+// Replaced with a Butterworth cascade of TPT (zero-delay-feedback) state
+// variable sections, 1 to 6 of them, which fixes both and adds the slope
+// control this plugin never had. Each section gets its OWN Q from the pole
+// angle formula, which is what puts -3 dB exactly on the number at every slope;
+// cascading identical sections instead would slide the corner down by
+// sqrt(2^(1/N)-1) and the label would drift further from the truth the steeper
+// you went. Resonance is spread across the sections rather than applied to
+// each, because peaks add in dB -- six mild ones would stack into a wall.
+//
+// Existing projects are migrated by tools/sweepfilter_migrate_hz.py, which
+// rewrites each instance's Frequency Low/High so the real corner lands where it
+// used to. The numbers change a lot; the sound does not.
+slider41:0<0,5,1{-12,-24,-36,-48,-60,-72}>Slope (dB/oct)
+
 in_pin:left input
 in_pin:right input
 out_pin:left output
@@ -705,30 +729,6 @@ freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
 // own start delay; while Off, all clocks freeze and resume. Only transport
 // play (via @init) resets them.
 slider32 ? (
-
-// --- Slope, and an honest frequency axis -------------------------------------
-// This plugin used to be a fixed two-pole Kellett cascade -- two one-pole
-// sections with a resonance feedback path -- whose cutoff coefficient was
-// `cut = 2*fc/srate`. That is the standard musicdsp idiom for it and it is
-// approximately right at low frequencies, but measured, the real -3 dB corner
-// landed at 0.21x to 0.77x the number on the slider, DEPENDING ON RESONANCE:
-// at "500 Hz" the corner sat at 103 Hz with Resonance down and 382 Hz with it
-// up. So Frequency Hz was never Hz, and Resonance was secretly a second
-// frequency control -- sweeping it 0 to 1 moved the corner nearly two octaves.
-//
-// Replaced with a Butterworth cascade of TPT (zero-delay-feedback) state
-// variable sections, 1 to 6 of them, which fixes both and adds the slope
-// control this plugin never had. Each section gets its OWN Q from the pole
-// angle formula, which is what puts -3 dB exactly on the number at every slope;
-// cascading identical sections instead would slide the corner down by
-// sqrt(2^(1/N)-1) and the label would drift further from the truth the steeper
-// you went. Resonance is spread across the sections rather than applied to
-// each, because peaks add in dB -- six mild ones would stack into a wall.
-//
-// Existing projects are migrated by tools/sweepfilter_migrate_hz.py, which
-// rewrites each instance's Frequency Low/High so the real corner lands where it
-// used to. The numbers change a lot; the sound does not.
-slider41:0<0,5,1{-12,-24,-36,-48,-60,-72}>Slope (dB/oct)
   i = 0;
   loop(N_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
