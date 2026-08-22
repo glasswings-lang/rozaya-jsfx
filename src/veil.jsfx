@@ -53,7 +53,7 @@ slider1:480<100,2000,1>Left cutoff (Hz)
 slider2:520<100,2000,1>Right cutoff (Hz)
 slider3:0.15<0,1,0.01>Left resonance
 slider4:0.15<0,1,0.01>Right resonance
-slider5:0<0,3,1>{-12,-24,-36,-48}Slope (dB/oct)
+slider5:0<0,3,1{-12,-24,-36,-48}>Slope (dB/oct)
 slider6:0<-24,12,0.5>Output (dB)
 
 // --- Drift (nested selector) ---
