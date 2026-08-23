@@ -1698,7 +1698,14 @@ file_var(0, ser_magic);
   //     THE SLIDER LINE CANNOT BE FIXED FROM HERE. slider33, slider17 and
   //     slider23 hold indices into these lists and live in the project file --
   //     run tools/morpher_migrate_layer_order.py over the project folders.
-  (file_avail(0) >= 0 && ser_magic < 7700008) ? (
+  // Gated on the blob actually HAVING layer banks (7700004 was the first), not
+  // merely on being old. A 7700001/7700002 blob predates layers entirely, so
+  // those banks were never read and still hold the @init defaults -- which are
+  // laid out in the CURRENT order already. Permuting them moved the original's
+  // unity gain off its slot and dropped -60 dB in its place, so base_gain went
+  // to zero and the voice AND the wash base went silent on every pre-layers
+  // project. "Migrate what was restored" -- never what was defaulted.
+  (file_avail(0) >= 0 && ser_magic >= 7700004 && ser_magic < 7700008) ? (
     ser_magic == 7700007 ? (
       permute_bank(lay_db_base, 0, lay_unrot);
       permute_bank(lay_active,  0, lay_unrot);
