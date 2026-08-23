@@ -100,7 +100,11 @@ N_TARGETS = 4;   // Left cutoff, Right cutoff, Left resonance, Right resonance
 MAXSTAGES = 6;                 // 6 x 2 poles = 72 dB/oct
 // Total peak emphasis, in dB, that Resonance = 1 asks for. Spread across the
 // stages, so it means the same thing at -12 as at -72.
-RES_DB_MAX = 24;
+// 34 nominal, not a rounder 24, because the retired Kellett core reached ~+29 dB
+// of real peak at Resonance 0.98 and migrated projects need to be representable.
+// Nominal because a Butterworth section delivers a few dB less than it is asked
+// for -- 34 here is about +31 dB of actual peak at Resonance 1.
+RES_DB_MAX = 34;
 sv_L   = 0;                    // 0 .. 2*MAXSTAGES-1
 sv_R   = 2*MAXSTAGES;          // and the same again
 inv_qb = 4*MAXSTAGES;          // 1/Q per stage, Butterworth, set in @slider

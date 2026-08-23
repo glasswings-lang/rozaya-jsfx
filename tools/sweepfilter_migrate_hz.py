@@ -19,10 +19,17 @@ control.  Both plugins now use a Butterworth cascade whose corner sits exactly
 on the number at any slope.
 
 That fixes the label and would move the sound, so this script moves the numbers
-to compensate: for each instance it works out where the OLD filter actually
-cornered, given that instance's own Frequency and Resonance, and writes that
-frequency into the slider.  The value on screen changes a lot.  What you hear
-does not.
+to compensate.  For each instance it works out what the OLD filter was actually
+doing, given that instance's own Frequency and Resonance, and writes settings
+that reproduce it.  The values on screen change a lot.  What you hear does not.
+
+It matches the PEAK, not the corner -- an earlier version matched the corner and
+that was wrong wherever Resonance was up.  Above about Resonance 0.4 the old
+filter grows a resonant peak at roughly 0.32x the set frequency, well below its
+corner, and the peak grows very fast: +5 dB at 0.7, +14 at 0.9, +28 at 0.98.
+Corner-matching put those projects more than half an octave high and 8 dB quiet.
+Resonance is rewritten too, because the old control's response curve is nothing
+like the new one's -- 0.98 there is about 0.94 here.
 
 WHAT IT CANNOT PRESERVE
 -----------------------
@@ -61,6 +68,10 @@ PLUGINS = {
     "sweep-dwell-filter.jsfx":           (1, 2,  9, 26, 30, 4, (500.0, 5000.0, 0.7)),
 }
 BACKUP_SUFFIX = ".pre-hz-migrate-bak"
+
+# What Resonance = 1 asks for in the NEW filters, in dB of peak. Must match
+# RES_DB_MAX / FILT_RES_DB_MAX in the plugins.
+NEW_RES_DB_MAX = 34.0
 
 
 def old_response_db(fc, res, f):
@@ -117,6 +128,92 @@ def old_corner(fc, res):
     return hi
 
 
+def old_peak(fc, res):
+    """The retired core's resonant peak: (frequency, height in dB over DC).
+
+    Matching the -3 dB corner was the first attempt and it was the wrong
+    feature.  Above about Resonance 0.4 this filter grows a peak, and the peak
+    is what you hear -- it sits at roughly 0.32x the set frequency, well below
+    the corner, and it grows very fast: +5 dB at Resonance 0.7, +14 at 0.9, +28
+    at 0.98, running away past that.  Matching the corner put a project's
+    resonance more than half an octave high and 8 dB quiet.
+    """
+    ref = old_response_db(fc, res, 0.01)
+    lo, hi = fc * 0.02, min(fc * 2, SR * 0.49)
+    steps = 900
+    ratio = (hi / lo) ** (1.0 / steps)
+    f, best_f, best_d = lo, lo, ref
+    for _ in range(steps):
+        f *= ratio
+        d = old_response_db(fc, res, f)
+        if d > best_d:
+            best_f, best_d = f, d
+    return best_f, best_d - ref
+
+
+def new_peak_db(res, nst=1):
+    """Peak height of the NEW filter, in dB over DC, at a given Resonance.
+
+    Not simply NEW_RES_DB_MAX * res.  That is what the Resonance control ASKS
+    for; what a Butterworth section actually delivers is a few dB less, and the
+    shortfall varies with the setting.  Assuming the nominal left every migrated
+    project about 3 dB quiet, so this measures instead and match() inverts it.
+    """
+    order = 2 * nst
+    inv_qb = [2 * math.cos(math.pi * (2 * k + 1) / (2 * order)) for k in range(nst)]
+    inv_qm = math.exp(-(NEW_RES_DB_MAX / nst * (math.log(10) / 20)) * res)
+    fc = 1000.0
+    g = math.tan(math.pi * fc / SR)
+
+    def at(f):
+        z = cmath.exp(-2j * math.pi * f / SR)
+        H = 1 + 0j
+        for k in range(nst):
+            kk = inv_qb[k] * inv_qm
+            H *= (g * g * (1 + z) ** 2) / ((1 + g * g + g * kk)
+                                           + (2 * g * g - 2) * z
+                                           + (1 + g * g - g * kk) * z * z)
+        return 20 * math.log10(abs(H))
+
+    ref, best = at(1.0), at(1.0)
+    f, hi = fc * 0.2, fc * 2
+    ratio = (hi / f) ** (1.0 / 600)
+    for _ in range(600):
+        f *= ratio
+        best = max(best, at(f))
+    return best - ref
+
+
+def res_for_peak(target_db, nst=1):
+    """Invert new_peak_db: the Resonance that delivers this much peak."""
+    if target_db <= 0:
+        return 0.0
+    lo, hi = 0.0, 1.0
+    if new_peak_db(hi, nst) < target_db:
+        return 1.0
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        if new_peak_db(mid, nst) < target_db:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def match(fc, res):
+    """Where to put the new filter's cutoff and Resonance to sound like the old.
+
+    If the old filter had a real peak, match the PEAK -- its frequency and its
+    height.  If it had none (low Resonance), there is nothing to peak-match, so
+    match the corner and leave Resonance at zero, which is what a peakless
+    Butterworth is anyway.
+    """
+    pf, pdb = old_peak(fc, res)
+    if pdb < 0.5:
+        return old_corner(fc, res), 0.0
+    return pf, res_for_peak(pdb)
+
+
 def fmt(v):
     return str(int(round(v)))
 
@@ -161,13 +258,16 @@ def rewrite(line, spec):
         if present and int(v) == res_idx:
             swept = True
 
-    new_lo, new_hi = old_corner(lo, res), old_corner(hi, res)
+    new_lo, new_res = match(lo, res)
+    new_hi, _        = match(hi, res)
     if lo_set:
         tokens[lo_s - 1] = fmt(new_lo)
     if hi_set:
         tokens[hi_s - 1] = fmt(new_hi)
-    status = ("migrated (res %.2f: low %s->%s Hz, high %s->%s Hz)"
-              % (res, fmt(lo), fmt(new_lo), fmt(hi), fmt(new_hi)))
+    if res_s <= len(tokens):
+        tokens[res_s - 1] = "%.3f" % new_res
+    status = ("migrated (low %s->%s Hz, high %s->%s Hz, res %.2f->%.3f)"
+              % (fmt(lo), fmt(new_lo), fmt(hi), fmt(new_hi), res, new_res))
     return indent + " ".join(tokens) + eol, status, swept
 
 

@@ -47,6 +47,14 @@ Two things hold at every slope, which is not automatic:
 > `tools/sweepfilter_migrate_hz.py`, which rewrote each instance's Frequency
 > Low/High to the frequency its old filter was really cornering at, using that
 > instance's own Resonance. **The numbers changed a lot; the sound did not.**
+> **Resonance was rewritten by the migration too, and its numbers will look
+> unfamiliar.** The retired filter's Resonance curve was wildly non-linear — flat
+> until about 0.4, then +5 dB at 0.7, +14 at 0.9, +28 at 0.98, running away to
+> self-oscillation at 1.0. This one is even-handed across its range, so the same
+> peak needs a very different number: 0.98 there is about 0.91 here, and 0.70
+> there is about 0.22 here. The migration solved for whatever reproduces each
+> project's actual peak, so the sound is preserved and the number is not.
+
 > What migration cannot carry across is the exact curve — the old filter had a
 > droopier passband and a softer knee — so expect a character shift near the
 > corner, not a tuning shift.

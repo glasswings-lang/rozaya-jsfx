@@ -427,7 +427,10 @@ loop(N_TARGETS,
 // --- Butterworth cascade state. Two words per section, per channel, plus the
 //     per-section damping table (1/Q). ---
 FILT_MAXSTAGES = 6;                       // 6 x 2 poles = 72 dB/oct
-FILT_RES_DB_MAX = 24;                     // total emphasis Resonance = 1 asks for
+FILT_RES_DB_MAX = 34;                     // total emphasis Resonance = 1 asks for
+                                          // (34, not 24: the retired core hit ~+29 dB
+                                          //  at Resonance 0.98 and migrated projects
+                                          //  need to be representable)
 svf_l  = 1300;
 svf_r  = 1300 + 2*FILT_MAXSTAGES;
 svf_qb = 1300 + 4*FILT_MAXSTAGES;     // 1/Q per section
