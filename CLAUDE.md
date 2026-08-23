@@ -310,28 +310,35 @@ Re-measure with the grep above before acting; these were the counts on
     `startswith("slider")` putting a slider declaration inside `@sample`. The
     declaration form is `^slider<digits>:` and nothing else is. Now linted.
 
-  **EAR-TEST STATUS.** Confirmed working: Morpher Solo; the filter Hz migration
+  **EAR-TEST STATUS.** Confirmed working: the restore-order picker fix (2026-08-23, on `infantile` — Rate Value holds at 180 on load and on track duplicate); Morpher Solo; the filter Hz migration
   (`the-sound-of-a-drain`, five instances at Resonance 0.98, the extreme case);
   Morpher defaults. NOT YET HEARD: **Veil**, **Sweep Dwell Filter** (1 project),
   **Womb's Host x breath controls**, and the steeper slopes generally.
 
-  **OPEN AND UNRESOLVED: a fresh/duplicated Sweeping Filter had no LFO effect.**
-  Fixed defensively -- `filt_stages` (the cascade's loop count) moved from
-  `@slider` to `@block` with a floor of 1 in `@init`, so it is right under any
-  ordering. But the MECHANISM was never proved: a loop count of 0 makes the
-  cascade a straight wire, which matches the symptom exactly, yet it is unclear
-  why `@slider` would not have run. Ruled out: memory collision (the banks near
-  the new SVF state end at 1231, the state starts at 1300). **Retest a copy and
-  a duplicate; if it still fails, the diagnosis was wrong.**
-  A scan found the same shape -- a loop count set ONLY in `@slider`, with no
-  `@init` seed and no `@block` recompute -- in seven other plugins:
-  `polyrhythm_phase` and `_v3` (`n_voices`), `shepard-scale` and `shepard-tone`
-  (`num_osc`), `stereo-phaser` (`stages`), `sustain_looper` (`nv`), `veil`
-  (`n_stages`). DELIBERATELY NOT CHANGED: they are long-shipped and nobody has
-  ever reported silent-until-you-touch-a-slider, which is evidence `@slider`
-  does normally run on instantiation -- so the theory does not fit them, and
-  sweeping seven working plugins on an unconfirmed diagnosis is how you break
-  things that were fine. Confirm the mechanism on the filter first.
+  **RESOLVED 2026-08-23 — the "fresh/duplicated Sweeping Filter had no LFO
+  effect" report was the picker bug, not `filt_stages`.** The straight-wire
+  theory is now RULED OUT rather than merely unproved: the picker diagnosis
+  proved `@slider` DOES run on a fresh or duplicated instance, just early, with
+  the DEFAULT slider values still in place. With defaults, `filt_stages =
+  min(FILT_MAXSTAGES, slider41 + 1)` is `min(6, 1)` = **1**, never 0 — so the
+  cascade was never a straight wire and the loop count was never the fault.
+  What actually happened is that the Host ratio picker stamped Rate Value to
+  **0.5** on every fresh instance. In BPM mode that is one sweep every two
+  minutes, which is exactly what "the LFO does nothing" sounds like from the
+  listening chair, and it went away the moment you touched a slider because
+  touching one made the tracker match. Ear-confirmed by Rozaya after the
+  restore-order fix landed.
+  The `filt_stages` move to `@block` STAYS — it is correct under any ordering
+  and costs nothing — but it fixed a bug that was not there. **The seven other
+  plugins with the same shape** (`polyrhythm_phase` and `_v3` `n_voices`,
+  `shepard-scale` / `shepard-tone` `num_osc`, `stereo-phaser` `stages`,
+  `sustain_looper` `nv`, `veil` `n_stages`) **need no change, and the reasoning
+  that spared them was right**: "nobody has ever reported silent-until-you-
+  touch-a-slider" was correctly read as evidence that `@slider` does run on
+  instantiation. It does. Not sweeping seven working plugins on an unconfirmed
+  diagnosis was the right call, and is the general lesson worth keeping —
+  a symptom that matches your theory is not the same as your theory being true,
+  and "what else produces exactly this symptom?" is the cheaper question.
 
   **Open, and not a bug: ~4 layers is the CPU ceiling** even with Auto-morph off —
   five sources x 64 partials x 4 banks is ~1280 oscillators/sample. Two existing
