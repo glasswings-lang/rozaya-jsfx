@@ -159,7 +159,14 @@ slider33:6<0,15,1{4 octaves down,3 octaves down,2 octaves down,1 octave down,a f
 // group -- deliberately: that group is flat and every voice is on screen at
 // once, where this is a selector showing you exactly one layer at a time.
 slider34:1<0,1,1{Inactive,Active}>Layer active
-slider35:-60<-60,0,0.1>Layer level (dB, -60 = off)
+// Defaults to 0, NOT -60, because slider33 defaults to the Original and this
+// slider is stamped straight into whatever layer that selects. At -60 it muted
+// the Original on load -- on a fresh instance, and on every pre-layers project
+// too, where REAPER supplies this slider's declared default because the saved
+// line has no value for it. @init's 0 dB for the Original was overwritten
+// before the first sample either way. Two defaults that have to agree: the
+// level slider's default is the default-selected layer's level.
+slider35:0<-60,0,0.1>Layer level (dB, -60 = off)
 slider36:0<0,1,1{Off,Solo}>Layer solo
 slider37:-12<-96,96,0.1>Layer pitch (semitones, Custom layers)
 
