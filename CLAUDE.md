@@ -163,6 +163,18 @@ afternoon; this is not the barrier it looks like.
   the ones you actually read.
 - **Seed a new slider to whatever reproduces the OLD behaviour**, not to the
   plugin's default. The project should still sound like itself.
+- **When the migration preserves a SOUND rather than a number, match the feature
+  the ear uses, not the one the textbook names.** Migrating the sweeping filters
+  off their old core, I matched the -3 dB corner, which is the textbook
+  definition of a cutoff. At high Resonance that filter's audible feature is its
+  resonant PEAK, which sat at 0.32x the set frequency -- a different place
+  entirely. Every high-resonance project landed half an octave out and 8 dB
+  quiet, and it was obvious in one listen. Measure what the old thing actually
+  did across the range first; the salient feature may not be the named one.
+- **And solve for the target instead of assuming the control is linear.**
+  Setting Resonance to `wanted_dB / max_dB` left everything ~3 dB short, because
+  what a filter delivers is not what its control asks for. Measure the new
+  thing's response, then invert it.
 - **Snapshot the whole projects first**, into their own folder, before any
   in-place edit. Per-file `.bak` copies are the second line, not the first.
 - **Verify afterwards that only the intended tokens moved.** Diff the backup
