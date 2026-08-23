@@ -313,6 +313,24 @@ Re-measure with the grep above before acting; these were the counts on
   Morpher defaults. NOT YET HEARD: **Veil**, **Sweep Dwell Filter** (1 project),
   **Womb's Host x breath controls**, and the steeper slopes generally.
 
+  **OPEN AND UNRESOLVED: a fresh/duplicated Sweeping Filter had no LFO effect.**
+  Fixed defensively -- `filt_stages` (the cascade's loop count) moved from
+  `@slider` to `@block` with a floor of 1 in `@init`, so it is right under any
+  ordering. But the MECHANISM was never proved: a loop count of 0 makes the
+  cascade a straight wire, which matches the symptom exactly, yet it is unclear
+  why `@slider` would not have run. Ruled out: memory collision (the banks near
+  the new SVF state end at 1231, the state starts at 1300). **Retest a copy and
+  a duplicate; if it still fails, the diagnosis was wrong.**
+  A scan found the same shape -- a loop count set ONLY in `@slider`, with no
+  `@init` seed and no `@block` recompute -- in seven other plugins:
+  `polyrhythm_phase` and `_v3` (`n_voices`), `shepard-scale` and `shepard-tone`
+  (`num_osc`), `stereo-phaser` (`stages`), `sustain_looper` (`nv`), `veil`
+  (`n_stages`). DELIBERATELY NOT CHANGED: they are long-shipped and nobody has
+  ever reported silent-until-you-touch-a-slider, which is evidence `@slider`
+  does normally run on instantiation -- so the theory does not fit them, and
+  sweeping seven working plugins on an unconfirmed diagnosis is how you break
+  things that were fine. Confirm the mechanism on the filter first.
+
   **Open, and not a bug: ~4 layers is the CPU ceiling** even with Auto-morph off —
   five sources x 64 partials x 4 banks is ~1280 oscillators/sample. Two existing
   controls are also CPU dials and it is not obvious that they are: **High cut**
