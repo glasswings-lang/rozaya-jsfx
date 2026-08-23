@@ -426,7 +426,8 @@ loop(N_TARGETS,
 
 // --- Butterworth cascade state. Two words per section, per channel, plus the
 //     per-section damping table (1/Q). ---
-FILT_MAXSTAGES = 6;                       // 6 x 2 poles = 72 dB/oct
+FILT_MAXSTAGES = 6;
+filt_stages = 1; filt_res_k = 0;   // floor: never let the cascade be a wire                       // 6 x 2 poles = 72 dB/oct
 FILT_RES_DB_MAX = 34;                     // total emphasis Resonance = 1 asks for
                                           // (34, not 24: the retired core hit ~+29 dB
                                           //  at Resonance 0.98 and migrated projects
@@ -637,9 +638,18 @@ last_sr_target != sr_sel_target ? (
 );
 
 
-// --- Per-section Butterworth Q for the selected slope. Depends only on the
-//     Slope slider, so it belongs here; the Resonance multiplier varies per
-//     sample (it drifts) and is applied in @sample. ---
+
+
+@block
+// --- Per-section Butterworth Q for the selected slope. In @block, NOT in
+//     @slider: the audio path reads filt_stages as a loop count, and a loop
+//     count of 0 is not a quiet filter, it is a STRAIGHT WIRE. On a pasted
+//     or duplicated instance @slider has not necessarily run before the
+//     first block, so the cascade ran zero sections and passed the input
+//     through untouched -- which sounds exactly like 'the LFO does nothing',
+//     because the LFO was fine and had nothing to drive. @block runs every
+//     block regardless, so by the first sample this is always set.
+//     (The Resonance multiplier varies per sample and is applied in @sample.)
 filt_stages = min(FILT_MAXSTAGES, slider41 + 1);
 filt_order  = 2 * filt_stages;
 filt_i = 0;
@@ -650,8 +660,6 @@ loop(filt_stages,
 );
 // Resonance spread across the sections: the peak is the SUM of their dB.
 filt_res_k = FILT_RES_DB_MAX / filt_stages * (log(10) / 20);
-
-@block
 // Follow the project tempo while Host x is active. ABSOLUTE (tempo / 60), not
 // a ratio against a remembered reference -- @init re-runs on play and wipes
 // globals, so a reference would reset and silently discard the change.
