@@ -215,6 +215,113 @@ Re-measure with the grep above before acting; these were the counts on
 
 ## Recent session notes worth knowing
 
+- **2026-08-19..22 — the long one: Morpher Layers + Solo, a filter-rolloff overhaul that turned into a calibration bug hunt, Womb's breath following Host x, and a suite-wide restore-order sweep. All on `feature/morpher-layers`, UNMERGED. Partly ear-tested — see the status list at the end.**
+
+  **Spectral Vowel Morpher — Layers.** Sixteen copies of the whole morph (voice
+  *and* wash) at fixed intervals, behind one nested selector: a PITCH LADDER —
+  4/3/2/1 octaves down, a fifth down, a fourth down, **Original (unison)**, a
+  fourth up, a fifth up, 1/2/3/4 octaves up, then three free-interval Custom
+  slots. Five sliders total (Layer, Active, Level, Solo, Pitch). The point is the
+  LOCK: two instances on Shuffle land on different slots and clash, where a layer
+  is the same capture an octave away, so octaves stack consonantly. Also shipped:
+  **High cut** (absolute frequency, applied AFTER the pitch shift so a layer
+  transposes underneath it; also thins the voice's partials, making it cheaper),
+  **Solo** (overrides Inactive — you solo to hear a thing), and **Voice level →
+  Output level** in both Morpher and Passage, because it was never the voice's
+  level: it sits after the voice/wash crossfade and scales everything but the dry
+  input. Slider IDs 33-37; targets 24; blob magic **7700008**.
+
+  **The Original is a layer.** It has a bank slot (index 6) like everything else,
+  so it takes Active/Level/Solo and `base_gain = layer_gain[LAY_ORIG]` gates both
+  the voice engine and the wash's base term. That one line caused two silences —
+  see the bugs below.
+
+  **Filter rolloff — and REAPER's stock filters are miscalibrated.** Star noticed
+  the *filter* plugins had almost no slope control. Veil and both sweeping
+  filters now do **-12 through -72 dB/oct** (1-6 cascaded 2-pole TPT sections).
+  Three things had to be right and only the first is obvious: per-section
+  **Butterworth Q** (cascading identical sections drags the composite -3 dB point
+  down by `sqrt(2^(1/N)-1)` — at six stages a 480 Hz cutoff really corners near
+  168); **resonance spread across sections** (peaks add in dB, so per-section
+  resonance multiplies); and **TPT rather than Chamberlin** (a six-stage
+  Butterworth puts Q 3.83 on its last section before Resonance is touched).
+  Verified by simulating the exact arithmetic: -3.01 dB at the cutoff at every
+  slope, 2 through 12 poles.
+
+  **...and the sweeping filters' "Frequency Hz" was never Hz.** They shared
+  REAPER's stock `filters/resonantlowpass` core verbatim — Paul Kellett's
+  musicdsp #29 with `cut = 2*fc/srate`. Measured, the real -3 dB corner sat at
+  **0.21x to 0.77x** the number on the slider, *varying with Resonance* (so
+  Resonance was quietly a second frequency control, moving the corner nearly two
+  octaves). The error decomposes exactly: musicdsp documents `f = 2*sin(pi*fc/sr)`
+  ≈ `2*pi*fc/sr`, and REAPER's is that **with the pi dropped** (measured ratio
+  0.3184 vs 1/pi = 0.3183), compounded with the 0.644x from cascading two poles.
+  0.318 × 0.644 = 0.205, against 0.206 measured. **REAPER's stock Resonant
+  Lowpass and Sweeping Lowpass have this too** — if you ever use them, their Hz
+  reads 2-5x high. Nothing was copied from Liteon's GPL Apple 12-Pole (which is
+  where the 72 dB/oct idea came from, and whose cutoff is a MIDI note number
+  squashed onto 0-100); Butterworth is 1930s textbook and the pole angles are
+  computed, not tabled.
+
+  **Womb — the breath follows Host x now.** It didn't: the heart went through
+  `slider1 * tempo` while `breath_state_advance` was a bare `1`. The breath has
+  its own rate control (sliders 64/65: a picker + beats-per-breath), because the
+  heart had ONE number to multiply and the breath's rate was an emergent sum of
+  four sliders. Entering Host x is silent — beats-per-breath is seeded from the
+  cycle the four sliders already describe. Every slider whose meaning depends on
+  Rate Mode now says so in its own name, and Breaths-per-minute HIDES in Host x
+  rather than sitting there inert (Star: a silent unit change is "the same
+  problem wearing different clothes" whether a mode gates it or not).
+
+  **Migrations run against the real library** (all with backups; snapshot of the
+  9 filter projects in `E:\reaper\_pre-hz-migration`):
+  - `tools/morpher_migrate_layer_order.py` — layer/target indices, 2 projects.
+  - `tools/sweepfilter_migrate_hz.py` — 9 projects, 16 instances. Matches the old
+    filter's **PEAK**, not its corner: above ~0.4 Resonance that filter peaks at
+    0.32x the set frequency, well below its corner, and corner-matching put the
+    drain half an octave high and 8 dB quiet. Rewrites Resonance too (the old
+    curve is flat to 0.4 then vertical: +5 dB at 0.7, +28 at 0.98, +53 at 1.0).
+    Peak height within 0.10 dB across the library. RES_DB_MAX is 34 nominal
+    (~+31 dB actual) in all three filters so the drain was representable.
+  - `tools/morpher_repair_muted_original.py` — 9 instances the muted-Original bug
+    had baked in.
+  - `tools/jsfx_lint.py` — paren balance per section, empty `()`, case-folded
+    names, scientific notation, reserved-variable writes, and slider declarations
+    after an `@section`. Run it; REAPER tells you none of this until load.
+
+  **Four bugs worth remembering, all of them mine, all found by ear or by
+  measurement rather than by reading:**
+  - **Bank-derived values computed in `@slider`** — swept the suite; own gotcha
+    entry above. Symptom: touching any control fixes it, transport does not.
+  - **A version gate that migrated DEFAULTS.** The layer permutation was gated on
+    "blob is old" (`< 7700008`) rather than "blob HAS layer banks" (`>= 7700004`).
+    Pre-layers blobs never wrote those banks, so the `@init` defaults — already in
+    the current order — got permuted, moving the Original's unity gain off its
+    slot. **Migrate what was RESTORED, never what was DEFAULTED.**
+  - **A selector default and a value default are a PAIR.** `slider33` (Layer)
+    defaulted to the Original; `slider35` (Layer level) defaulted to -60; `@slider`
+    stamps the visible level into the selected layer, so every fresh instance
+    muted its own Original before the first sample. The value slider's default is
+    not a free choice — it is whatever the default-selected target holds.
+  - **Loose pattern matching, three times in two days**: `grep "^slider"` matching
+    `slider_show`, a `.count()` matching a deeper-indented superset line, and
+    `startswith("slider")` putting a slider declaration inside `@sample`. The
+    declaration form is `^slider<digits>:` and nothing else is. Now linted.
+
+  **EAR-TEST STATUS.** Confirmed working: Morpher Solo; the filter Hz migration
+  (`the-sound-of-a-drain`, five instances at Resonance 0.98, the extreme case);
+  Morpher defaults. NOT YET HEARD: **Veil**, **Sweep Dwell Filter** (1 project),
+  **Womb's Host x breath controls**, and the steeper slopes generally.
+
+  **Open, and not a bug: ~4 layers is the CPU ceiling** even with Auto-morph off —
+  five sources x 64 partials x 4 banks is ~1280 oscillators/sample. Two existing
+  controls are also CPU dials and it is not obvious that they are: **High cut**
+  stops partials being computed (6 kHz on a 200 Hz capture caps you at harmonic
+  30 instead of 64, ~half), and **Stereo width 0** runs a mono bank instead of a
+  detuned pair (half again) — together ~4x. If that is not enough, the honest
+  next step is a **Layer detail** control (layers synthesise fewer partials than
+  the Original, since they are support rather than focus). Not built.
+
 - **2026-08-11 Melody Phase v1 came BACK OUT of the archive, and Host x rate mode landed in both Melody Phases. On `feature/host-tempo-sync`, NOT ear-tested yet, NOT compiled — see the caveat at the end.**
   - **v1 was archived on a false premise.** The archive convention says a superseded version moves to `archive/versions/` and is frozen. But `grep -rl melody_phase.jsfx --include=*.RPP` over `E:/reaper` returns **five projects on v1 (`melodic`, `outcoming`, `slow-summer`, `upswing`, `simple-sequence`) and ZERO on v2.** Four of those are in `finished/`. v1 wasn't superseded in practice; it's the only Melody Phase actually in use, so it now lives at `src/melody_phase.jsfx` with its page restored to `docs/plugins/melody-phase.md`. **This is exactly the trap the slider-renumber note warns about** ("the assumption that lets you renumber freely expires silently") — run that grep before declaring anything superseded.
   - **v1 → v2 is NOT a filename swap, and nothing should ever suggest it is.** v2 collapsed the forty flat per-voice sliders (22–61) into six behind a Voice selector (22–27), so everything from 22 up shifts. Worse than the Passage case: v2's per-voice data lives in a `@serialize` bank rather than the slider line, so `tools/passage_migrate_sliders.py`'s "shift the slider line" approach does not transfer. A migration would have to synthesise a serialize blob. Not attempted.
