@@ -60,9 +60,14 @@ lyR = 128;  lxR = 192;   // right
 memset(0, 0, 256);
 
 @slider
+// True for the ONE @slider pass where Rate Mode really moved INTO the
+// tempo-following mode. The named pickers below use it to apply their ratio on
+// entry: the raw multiplier HIDES behind a picker, so a stale picker value left
+// unapplied would name one speed on screen while the plugin ran another.
+// rate_mode_inited gates it, so a half-restored instance can never see an edge.
+entered_host_mode = rate_mode_inited && slider8 == 1 && last_rate_mode != slider8;
 rate_mode = slider8;
-!host_ratio_inited ? ( host_ratio_sel = slider9; host_ratio_inited = 1; );
-host_ratio_sel != slider9 ? (
+host_ratio_inited && slider8 == 1 && (host_ratio_sel != slider9 || entered_host_mode) ? (
   host_ratio_sel = slider9;
   host_ratio_sel > 0 ? (
     slider1 =
@@ -95,8 +100,7 @@ slider_show(slider9, rate_mode == 1);
 // Guarded on a real in-session mode CHANGE. Adopting on load instead would
 // overwrite a hand-tuned rate the moment a saved project opened -- the same
 // trap the picker's own host_ratio_inited guard exists for.
-!rate_mode_inited ? ( last_rate_mode = rate_mode; rate_mode_inited = 1; );
-last_rate_mode != rate_mode ? (
+rate_mode_inited && last_rate_mode != rate_mode ? (
   rate_mode == 1 && slider9 == 0 ? (
     slider9 = 8;
     host_ratio_sel = 8;
@@ -130,6 +134,19 @@ dmin = min(dmin, dmax);
 lfoInc = 2 * $pi * rate / srate;
 
 @block
+// --- Restore-order guard for the change-detecting controls below -----------
+//     These trackers answer "did the user just move this control?". Adopted
+//     HERE, not in @slider: on a fresh or duplicated instance @slider runs
+//     while REAPER is still handing over the saved values, so a tracker
+//     adopted there takes a DEFAULT, and the real value arriving a moment
+//     later reads as a user edit -- the picker then fires and slider_automate()s
+//     its ratio over a rate that was set by hand. @block cannot run before the
+//     instance is configured, so adopting here is right whatever order the
+//     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
+//     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
+//     load and every track duplicate.)
+!host_ratio_inited ? ( host_ratio_sel = slider9; host_ratio_inited = 1; );
+!rate_mode_inited ? ( last_rate_mode = slider8; rate_mode_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run on a tempo
 // change, so the rate and the LFO increment are recomputed here.
 rate_mode == 1 ? (

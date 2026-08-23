@@ -498,8 +498,7 @@ slider_show(slider18, pan_enabled && (pan_mode == 10 || pan_mode == 11));
 slider_show(slider19, pan_enabled && (pan_mode == 10 || pan_mode == 11));
 // Linked Sweep pan-speed picker. Adopt-on-load so opening a project never
 // overwrites a hand-set multiplier; writes only on a real change.
-!pan_speed_inited ? ( pan_speed_sel = slider41; pan_speed_inited = 1; );
-pan_speed_sel != slider41 ? (
+pan_speed_inited && slider13 && slider14 == 12 && pan_speed_sel != slider41 ? (
   pan_speed_sel = slider41;
   pan_speed_sel > 0 ? (
     slider20 =
@@ -597,6 +596,18 @@ last_target_select != sel_target ? (
 
 
 @block
+// --- Restore-order guard for the change-detecting controls below -----------
+//     These trackers answer "did the user just move this control?". Adopted
+//     HERE, not in @slider: on a fresh or duplicated instance @slider runs
+//     while REAPER is still handing over the saved values, so a tracker
+//     adopted there takes a DEFAULT, and the real value arriving a moment
+//     later reads as a user edit -- the picker then fires and slider_automate()s
+//     its ratio over a rate that was set by hand. @block cannot run before the
+//     instance is configured, so adopting here is right whatever order the
+//     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
+//     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
+//     load and every track duplicate.)
+!pan_speed_inited ? ( pan_speed_sel = slider41; pan_speed_inited = 1; );
 // --- Per-section Butterworth Q for the selected slope. In @block, NOT in
 //     @slider: the audio path reads filt_stages as a loop count, and a loop
 //     count of 0 is not a quiet filter, it is a STRAIGHT WIRE. On a pasted

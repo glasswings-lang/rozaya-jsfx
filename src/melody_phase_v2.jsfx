@@ -754,6 +754,12 @@ function trigger_seq_voice(prev_idx) (
 );
 
 @slider
+// True for the ONE @slider pass where Rate Mode really moved INTO the
+// tempo-following mode. The named pickers below use it to apply their ratio on
+// entry: the raw multiplier HIDES behind a picker, so a stale picker value left
+// unapplied would name one speed on screen while the plugin ran another.
+// rate_mode_inited gates it, so a half-restored instance can never see an edge.
+entered_host_mode = rate_mode_inited && slider1 == 3 && last_rate_mode != slider1;
 rate_mode     = slider1;
 
 // --- Host ratio picker (slider77) -> Rate Value ---------------------------
@@ -765,11 +771,7 @@ rate_mode     = slider1;
 //
 // slider_automate (not sliderchange) because Rate Value is a real
 // automatable parameter and we want REAPER's own value to follow.
-!host_ratio_inited ? (
-  host_ratio_sel    = slider77;   // adopt on load, do not write
-  host_ratio_inited = 1;
-);
-host_ratio_sel != slider77 ? (
+host_ratio_inited && slider1 == 3 && (host_ratio_sel != slider77 || entered_host_mode) ? (
   host_ratio_sel = slider77;
   host_ratio_sel > 0 ? (
     slider2 =
@@ -813,8 +815,7 @@ slider_show(slider77, rate_mode == 3);
 // Guarded on a real in-session mode CHANGE. Adopting on load instead would
 // overwrite a hand-tuned rate the moment a saved project opened -- the same
 // trap the picker's own host_ratio_inited guard exists for.
-!rate_mode_inited ? ( last_rate_mode = rate_mode; rate_mode_inited = 1; );
-last_rate_mode != rate_mode ? (
+rate_mode_inited && last_rate_mode != rate_mode ? (
   rate_mode == 3 && slider77 == 0 ? (
     slider77 = 8;
     host_ratio_sel = 8;
@@ -1079,6 +1080,19 @@ last_sr_target != sr_sel_target ? (
 samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 
 @block
+// --- Restore-order guard for the change-detecting controls below -----------
+//     These trackers answer "did the user just move this control?". Adopted
+//     HERE, not in @slider: on a fresh or duplicated instance @slider runs
+//     while REAPER is still handing over the saved values, so a tracker
+//     adopted there takes a DEFAULT, and the real value arriving a moment
+//     later reads as a user edit -- the picker then fires and slider_automate()s
+//     its ratio over a rate that was set by hand. @block cannot run before the
+//     instance is configured, so adopting here is right whatever order the
+//     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
+//     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
+//     load and every track duplicate.)
+!host_ratio_inited ? ( host_ratio_sel = slider77; host_ratio_inited = 1; );
+!rate_mode_inited ? ( last_rate_mode = slider1; rate_mode_inited = 1; );
 // --- The whole per-voice configuration, DERIVED from the voice_bank_* banks
 //     that @serialize restores, and therefore computed here and not in @slider.
 //

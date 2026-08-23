@@ -72,8 +72,7 @@ host_ratio_inited = 0;
 
 @slider
 rate_mode = slider10;
-!host_ratio_inited ? ( host_ratio_sel = slider11; host_ratio_inited = 1; );
-host_ratio_sel != slider11 ? (
+host_ratio_inited && slider10 == 1 && host_ratio_sel != slider11 ? (
   host_ratio_sel = slider11;
   host_ratio_sel > 0 ? (
     slider1 =
@@ -104,6 +103,18 @@ outlev    = 2 ^ (slider9 / 6);
 meanIntv  = srate / rate;
 
 @block
+// --- Restore-order guard for the change-detecting controls below -----------
+//     These trackers answer "did the user just move this control?". Adopted
+//     HERE, not in @slider: on a fresh or duplicated instance @slider runs
+//     while REAPER is still handing over the saved values, so a tracker
+//     adopted there takes a DEFAULT, and the real value arriving a moment
+//     later reads as a user edit -- the picker then fires and slider_automate()s
+//     its ratio over a rate that was set by hand. @block cannot run before the
+//     instance is configured, so adopting here is right whatever order the
+//     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
+//     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
+//     load and every track duplicate.)
+!host_ratio_inited ? ( host_ratio_sel = slider11; host_ratio_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run when the
 // tempo changes, so the rate is recomputed here.
 rate_mode == 1 ? rate = max(max(tempo,0.001)/60*slider1, 0.0001);
