@@ -275,6 +275,11 @@ and the heart and lungs of one body don't disagree about how fast time is passin
 **Host sync target** `Heart rate / Breath` (default Heart rate)
 **Every N beats (Host x)** `0.25 to 64, step 0.01, default 1`
 
+Two sliders, and only two — the numbers themselves live in the plugin's own
+memory and are saved with your project, the same way Drift stores a setting for
+every one of its ten targets behind four sliders. The list grows by adding
+targets, not by adding controls.
+
 Two controls, sitting directly under Rate Mode, and they cover both rates. Pick
 the target, set how many project beats one cycle of it takes, move on. Pick the
 other target to set that one — the first keeps running exactly as you left it,
