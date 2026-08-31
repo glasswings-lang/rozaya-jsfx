@@ -513,6 +513,33 @@ hs_sel    = min(N_HS_TARGETS - 1, max(0, slider63));  // clamped: this indexes a
                                                      // and a project saved under the old
                                                      // Host ratio menu can hold up to 15
 
+// Adopt HERE as well as in @block, and this is the correction to a bug that
+// made the whole block dead while the transport was stopped.
+//
+// @block only runs when audio is being processed. Configuring a fresh instance
+// with the transport stopped, which is exactly how this plugin gets used, meant
+// hs_inited stayed 0, every case below was skipped, and moving 'Every N beats'
+// wrote nothing at all -- then pressing play adopted and case (d) dragged the
+// slider back to the bank. Set 5, press play, get the default back.
+//
+// Adopting in @slider is the pattern that is normally WRONG (CLAUDE.md,
+// 2026-08-23) because a tracker adopted there can capture a default during a
+// project restore and read the real value, arriving later, as a user edit. It
+// is safe HERE, and the difference is worth being precise about: that bug bites
+// controls which write a DIFFERENT slider through a lookup table, so a default
+// index maps to a wrong value that then sticks. Case (c) below copies the beats
+// value VERBATIM into a bank, and both sides are saved together -- so the worst
+// a mistimed restore can do is write the restored value over the identical
+// restored value. There is no table and no transformation to get wrong.
+//
+// The @block adopt stays as a backstop for whichever runs first.
+!hs_inited ? (
+  last_hs_sel   = hs_sel;
+  last_hs_beats = slider64;
+  hs_s1_shown   = slider1;
+  hs_inited     = 1;
+);
+
 (hs_inited && rate_mode == 1) ? (
   // (a) The heart's BPM slider moved by hand. hs_s1_shown is what WE last put
   //     there, so this fires only on a real move. The threshold is above the
