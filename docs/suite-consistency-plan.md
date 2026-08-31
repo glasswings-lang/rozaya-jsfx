@@ -1120,12 +1120,23 @@ ear along the way. Deployed to the Effects folder and verified byte-identical to
    strict superset of what the projects use, and the `@serialize` blobs are identical so
    drift and ramp configs cross untouched). **Both forks end.**
 3. **Scope.** Harmonic Sculptor is under an overhaul-or-drop question and Rozaya would not
-   reach for it; Sustain Looper is a sound-design tool. Both unresolved in Part 3.
-4. **Validation — the real hole.** JSFX cannot be compiled outside REAPER; Rozaya's
-   workflow (new project, fresh instance) never exercises reload or track duplicate; and
-   a clean script run proves nothing. Some things can be checked by simulating the
-   arithmetic, as the breath and systole numbers were. Some need ears. **Restore ordering
-   is currently covered by neither**, and it is historically where the worst bugs live.
+   reach for it — still open. **Sustain Looper is IN**, corrected 2026-08-31: excluding it
+   was Claude's judgement call, not Rozaya's, on the reasoning that it is a "sound-design
+   tool". It is not — it runs in a project and plays for the length of a piece, which is
+   exactly the profile drift and ramp exist for. Targets below.
+4. ~~**Validation — the real hole.**~~ **MOSTLY CLOSED 2026-08-31**, and the hole was
+   partly invented. Rozaya: *"I can reload a project if I need to. It's how these things
+   get checked easier anyway. I just couldn't be fucked to do it last night because
+   brain."* So reload and track-duplicate ARE testable — **ask for one** when a fix
+   depends on it rather than assuming the path is dark. What remains true: JSFX cannot be
+   compiled outside REAPER, and a clean script run proves nothing.
+
+   **The agreed approach:** ear-testing happens **over weeks of ordinary use**, with the
+   option of one set-aside day at the end for a deliberate pass. So the sweep does not
+   block on a testing phase; it ships in batches and gets confirmed as the plugins get
+   used. What I owe in return is that everything checkable *without* ears is checked
+   before it ships — arithmetic by simulation (as the breath and systole numbers were),
+   migrations by diffing actual output, and the standing lint checks.
 
 **Needed, not blocking:**
 
@@ -1150,3 +1161,23 @@ ear along the way. Deployed to the Effects folder and verified byte-identical to
 
 **Suggested next:** 10 first because it is cheap and protective, then 1 and 4, which
 shape everything else.
+
+### Sustain Looper — drift and ramp targets
+
+Added 2026-08-31 after Rozaya corrected the exclusion. Eight sliders; six are worth
+modulating, and one of them is the most valuable target in the plugin.
+
+| Target | Why |
+|---|---|
+| **Loop position (%)** | **The standout.** Drifting it wanders the loop slowly through the sample, so the timbre evolves instead of repeating. This is the direct answer to the note in CLAUDE.md that *"aliveness comes mostly from the SOURCE, not the plugin"* — it lets the plugin contribute aliveness by travelling through the source rather than sitting on one spot of it. |
+| **Pitch (semitones)** | Slow drift is tape-wobble / organic detune; as a ramp it is a long descent over a night. |
+| **Loop length (ms)** | Changes both the character and how often the repeat comes round. |
+| **Spread (detune amount)** | The ensemble opening and closing over time. |
+| **Output (dB)** | Ramp target: the hour-long fade for sleep use. |
+| Crossfade (% of loop) | Marginal but harmless. |
+| Voices (ensemble) | **No** — integer voice count; changing it mid-play adds and removes oscillators, which clicks. |
+| Sample | No — file selector. |
+
+**It should also gain the transport block** (Start delay, Play for, Rest for): a looper
+that plays for eight cycles and rests for four is an obvious and currently impossible
+thing to ask for.
