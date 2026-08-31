@@ -977,3 +977,63 @@ Womb currently has no way to make. Written up in `docs/planned-features.md` unde
 order. Also still true from R13a: there is **no amplitude component** — a
 real sigh is a bigger breath, not only a longer one, and `Sigh louder by (dB)` would make
 the feature honest.
+
+### R16. It is `Ramp`, not `Speed ramp`
+
+Star, 2026-08-31: *"It's not really speed anymore, is it."* Correct, and it has not been
+for a long time. The feature was born scaling a rate; it now rides **every** target on the
+drift list. Womb's ten include S1-S2 gap, RSA depth, the two breath filter frequencies and
+four segment durations. Sweep Dwell's include Resonance. Polyrhythm's include per-voice
+**Gain dB**. Calling all of that "speed" is a fossil of what it did in May.
+
+**And the decision is already made — it just never propagated.** `spectral_vowel_morpher`
+ships `Ramp target` / `Ramp by` / `Ramp duration` / `Ramp engage` / `Ramp start delay`
+today, renamed on exactly this reasoning ("honestly named for a value"). Every other
+plugin still says `Speed ramp`. This is the same failure mode as the multiplier: a good
+call made in one place, not carried across.
+
+**The block becomes**, combining with R14:
+
+```
+Ramp target      selector
+Ramp to          destination, in the target's own unit, seeded from where it is
+Ramp duration    minutes
+Ramp engage      Off / On
+Ramp start delay minutes
+```
+
+Renaming a slider is **free** (R-cost ladder, top row: REAPER restores by ID, never by
+name), so this is Phase 1 work and can ship ahead of any renumber. `Ramp to` needs R14's
+seeding and is Phase 2.
+
+### Breath features propagate to every plugin with a breath
+
+Star, 2026-08-31: *"any other plugin that uses breath should also get these."*
+
+Only **two** plugins have one — `womb_sound_generator_v3` and `breath_gen` — so the blast
+radius is small and there is no reason for them to diverge.
+
+| | Womb | Breath Generator |
+|---|---|---|
+| Four breath segments | yes | yes |
+| Fades + fade mode | yes | yes |
+| **Sigh** (interval + four sigh segments, R15) | has interval + the old multiplier | **has none at all** |
+| **Catches** (inhale + exhale, planned-features) | to add | to add |
+
+**The Breath Generator cannot sigh.** The dedicated breathing plugin has no sigh mechanism
+of any kind, while the womb — where breathing is one layer of three — does. That is
+backwards, and it is the kind of gap this sweep exists to find. It gains `Sigh interval`
+plus the four sigh segments, matching Womb exactly.
+
+**Both gain catches** on the inhale and the exhale once that design settles.
+
+**And both gain the new drift / ramp targets that follow from it** — the four sigh
+segments and the catch controls. Per the standing rule these **append** to the target
+enums and never insert, because per-target banks are indexed by target number. Breath
+Generator's list is only five entries today (`Inhale, Top pause, Exhale, Bottom pause,
+Breaths/min`), so it has the most to gain.
+
+**Catches as a ramp target is the strong one**, and worth stating plainly because it is
+the whole reason this matters: ramping inhale catches from four down to zero over twenty
+minutes **is** the dysregulated-to-coherent journey, expressed as one control instead of
+an envelope nobody can draw.
