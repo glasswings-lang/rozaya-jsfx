@@ -835,3 +835,76 @@ Three ceilings, two steps, no principle. That is what R8 and R12 exist to end.
 and the floor becomes "off" — which is what `-60 = off` already means everywhere else.
 
 Both are **Phase 2**, folded into each plugin's reorder, because they move ranges.
+
+### R13. No multipliers. Anywhere. (Host x is not a unit.)
+
+Decided 2026-08-31 with Star: *"That multiplier is gonna be the death of us."* It is
+already the direct cause of most of what went wrong in the Womb work, and it is still
+live in eight plugins.
+
+**The suite already made this decision once.** The Speed Ramp sweep (2026-05-30) removed
+every multiplier in favour of a **signed delta in the target's natural unit**, on Rozaya's
+objection that *"the multiplier is a dyscalculia accessibility problem."* Host sync was
+built afterwards and reintroduced exactly what that sweep removed.
+
+**What the tempo multiplier costs, itemised — every one of these was paid for in 2026-08:**
+
+- **The number means nothing alone.** `0.25` is not a rate. Knowing what it sounds like
+  requires holding the project tempo and multiplying — the one operation this suite
+  exists to never require.
+- **It reads backwards from everything else.** `x0.5` is slower; *"every 2 beats"* is also
+  slower. Two mental models for one idea, with a picker in between translating.
+- **It forces hiding, and hiding forces stamping.** `70` as a multiplier is seventy times
+  the tempo, so the rate slider had to disappear on entering Host x, which forced a
+  landing value, which forced a write on mode entry — and that write is the
+  `infantile.RPP` bug that cost a session.
+- **One slider means two incompatible things**, against the standing no-silent-unit-change
+  rule.
+
+**The replacement — and the key move is that sync stops being a unit.**
+
+Today `Rate Mode` is `{BPM, Seconds, Hz, Host x}`, so "synced" competes for the same slot
+as "what unit". Womb escaped this only because BPM was its sole unit. Instead:
+
+```
+Rate mode        {BPM, Seconds, Hz}   -- what UNIT the rate slider is in
+Sync to host     {Off, On}            -- whether the tempo drives it
+Host sync target selector             -- which rate (R11)
+Every N beats    free value           -- one cycle of it takes this many beats
+```
+
+With sync on, the rate slider keeps reading in the unit you chose, as a live honest
+number that follows the tempo — and stays settable, converting back into beats. Nothing
+hides, nothing is stamped, nothing multiplies. This is what Womb runs now, generalised.
+
+**Migration:** old `Rate Mode == 3 (Host x)` becomes `Sync to host = On` with the unit
+taken from what the value last meant, and the multiplier converted to beats
+(`beats = 1 / multiplier`). Exact, and the plugin can do it itself from the blob magic.
+
+**Affected:** Tremolo, Sweeping Filter, Sweep Dwell, Shepard Tone, Shepard Scale, Melody
+Phase v1/v2, Polyrhythm Phase v1/v3, Heartbeat, Rhythm Track, Bubbler, Dapple, Stereo
+Phaser. Womb is done.
+
+### R13a. The sigh multiplier is the same bug, wearing a different hat
+
+`Sigh depth multiplier` (Womb slider 61, `1.0..3.0`, step `0.05`) survived the 2026-05-30
+sweep because it was not a rate. It has three faults, and Star flagged it as its own
+problem on 2026-08-31:
+
+- **It is a multiplier.** `1.5` requires multiplying by the breath length to know what you
+  get, and the breath length is itself a sum of four sliders.
+- **Its range cannot express a short sigh.** Floored at `1.0`, so a breath *shorter* than
+  normal — a catch, a gasp, a held-in flinch — is unreachable. (Also noted under R12.)
+- **The name is wrong.** It does not touch depth. It scales DURATION, uniformly across all
+  four segments. A physiological sigh is deeper *and* longer; this one is only longer, and
+  the slider says the opposite of what it does.
+
+**Replacement, following the Speed Ramp precedent exactly:** a **signed delta in the
+breath's own unit** — `Sigh by (sec / beats in Host x)`, `0` = no change, negative =
+shorter. Same word, same shape and same semantics as `Speed ramp by`, so it is one idiom
+rather than a second thing to learn. Internally it still distributes proportionally across
+the four segments, preserving the I:E ratio as today; only the control changes.
+
+**Left open, deliberately:** there is no amplitude component at all, despite the current
+name promising one. A real sigh is a bigger breath, not merely a slower one. A separate
+`Sigh louder by (dB)` would make the feature honest — worth doing, not part of this.
