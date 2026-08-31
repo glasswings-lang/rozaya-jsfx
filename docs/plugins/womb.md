@@ -263,69 +263,88 @@ To make the RSA coupling itself feel alive rather than mechanically constant, se
 
 **Rate Mode** `Own BPM / Host x` (default Own BPM)
 **Own BPM** is the original behaviour — free-running, project tempo ignored.
-**Host x** makes BPM a **multiplier of the project tempo** instead: x1 follows
-it exactly, x2 is double speed, x0.5 half. Tempo changes apply live.
+**Host x** hands the timing to the project tempo. Tempo changes apply live.
 
-Only two entries rather than the four in Melody Phase / Polyrhythm, because
-this plugin only ever had one unit — "Seconds" and "Hz" would be meaningless.
+Only two entries rather than the four in Melody Phase / Polyrhythm, because this
+plugin only ever had one unit — "Seconds" and "Hz" would be meaningless here.
 
-**The breath follows the tempo too**, and it gets its own rate control to do it
-with. All three layers move together in Host x: the heart scales, bloodflow is
-locked to the heart, and the breath cycle is set in beats. This is one body, and
-the heart and lungs of one body don't disagree about how fast time is passing.
+**The whole body follows the tempo**, not just the heart: the heart scales,
+bloodflow is locked to the heart, and the breath cycle is set in beats. One body,
+and the heart and lungs of one body don't disagree about how fast time is passing.
 
-**Breath rate (Host x)** `Custom / every 2 beats … every 64 beats` (default Custom)
-**Beats per breath (Host x only)** `0.25 to 64, default 16`
-Shown only in Host x. The picker writes the number and gets out of the way, the
-same as the heart's Host ratio above it. One breath every 16 beats at 120 BPM is
-an 8-second breath; at 60 BPM it's sixteen seconds.
+**Host sync target** `Heart rate / Breath` (default Heart rate)
+**Every N beats (Host x)** `0.25 to 64, step 0.01, default 1`
 
-**Switching into Host x does not change what you hear.** If the picker is on
-Custom, the plugin seeds beats-per-breath from the cycle your four duration
-sliders already describe, at the current tempo. The heart can't do that — a BPM
-of 70 read as a multiplier is nonsense, so it lands on *1 per beat* instead —
-but the breath can, and a mode switch that silently retimed your breath would be
-its own way of moving your values around behind you.
+Two controls, sitting directly under Rate Mode, and they cover both rates. Pick
+the target, set how many project beats one cycle of it takes, move on. Pick the
+other target to set that one — the first keeps running exactly as you left it,
+the same way switching Drift's target doesn't stop the other drifts.
+
+One breath every 16 beats at 120 BPM is an 8-second breath; at 60 BPM it's
+sixteen seconds. A heartbeat every 1 beat at 70 BPM is 70 BPM.
+
+**It is not a grid.** The beats value is a plain continuous number, so one cycle
+every **5** beats of a 4/4 track is exactly as reachable as 4 — and so is 5.3,
+which is how you set two instances slipping slowly against each other. The step
+is 0.01 because in REAPER's parameter list you can only arrow, never type, so a
+value the step can't land on is a value that doesn't exist.
+
+**Heart rate stays visible and stays live.** It reads in BPM in Host x just as it
+does in Own BPM — it is never a multiplier of anything now — so it shows what the
+sync is actually running at, and it follows the project tempo as that moves.
+Moving it by hand converts back into beats rather than being ignored: the two are
+two views of one number and whichever you moved is the one that wins.
+
+**Switching into Host x does not change what you hear.** Both layers land on
+continuity: the heart converts the BPM it already had into the beats that
+reproduce it at this tempo, and the breath takes the cycle its four duration
+sliders already describe. The tempo simply takes over from there.
 
 ### Which controls are true, and when
 
-**Rate Mode is the only thing that decides this**, for both layers, and every
-slider it affects says so in its own name.
+**Rate Mode is the only thing that decides this**, for both layers.
 
 | | **Own BPM** | **Host x** |
 |---|---|---|
-| Heart rate | `BPM` is BPM | `BPM` is a multiplier of tempo (hidden behind *Host ratio*) |
-| Breath rate | the four durations add up to it | set by *Beats per breath* |
+| Heart rate | BPM you set | BPM, derived from beats × tempo — still shown, still settable |
+| Breath rate | the four durations add up to it | set in beats by *Every N beats* |
 | Inhale / Top / Exhale / Bottom | **literal seconds** | the **shape** fitted into the cycle |
 | Breaths per minute | rewrites the four durations | **hidden** — does not apply |
 
-Nothing is silently reinterpreted: in Own BPM the four sliders are seconds and
-always were, and in Host x they say *"shape only in Host x"* on the tin. The
-controls that don't apply in a mode are hidden rather than left present and
-inert, so there is never a live-looking slider that isn't doing anything.
+The four duration sliders are the one place a unit really does change meaning, and
+they say *"shape only in Host x"* on the tin. In Host x the cycle is however many
+beats you asked for, and those four numbers set only the **proportions** of it —
+inhale to top pause to exhale to bottom pause. Their ratio is what matters, not
+their absolute size.
 
 Drift and Speed Ramp keep working on every breath parameter in both modes, and
 breath drift periods are counted in the breath cycles you can actually hear. The
-sigh timer is the one deliberate exception to all of it: a 5-minute sigh interval
-is five real minutes at any tempo.
-
-> **Switching modes changes what BPM means, and nothing rescales it.** Set the
-> mode first, then the value — or use the picker below, which fills it in.
-
-**Host ratio (writes BPM)** `Custom / every 8 beats / … / 8 per beat` (default Custom)
-Shown only in Host x. Writes the multiplier and then gets out of the way, so you
-can still type or automate anything. **Custom** never writes anything, and is
-deliberately not called "Free" — in sync UI that means free-running, which Own
-BPM already is. Entries are named for what you hear, not as note values.
+sigh timer is the one deliberate exception: a 5-minute sigh interval is five real
+minutes at any tempo.
 
 ---
 
-#### Host x hands you the ratio list, not a multiplier
+#### What replaced the ratio menus (2026-08-30)
 
-Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw BPM number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat* — so setting a rate is picking a name rather than working out a number.
+Host x used to carry two named-ratio pickers — *Host ratio* for the heart and
+*Breath rate* for the breath — each writing into a number that hid behind it.
+Three problems, and the replacement above fixes all three:
 
-Set Host ratio to **Custom** and the number reappears, with whatever it last held, for ratios the list doesn't cover.
+- **A menu of ratios is a grid.** Its entries were fixed fractions of the beat, so
+  *every 5 beats* was not on the list at all — in a suite whose whole subject is
+  layers slipping against each other.
+- **A picker that hides its value is a gate, not a shortcut.** The free number was
+  reachable only by first finding the entry called *Custom*.
+- **One picker could only ever point at one rate.** The breath needed a second
+  pair of controls purely because the heart's picker couldn't point at it.
 
-This plugin needed it most: the BPM slider defaults to 70, and as a *multiplier* that's seventy times the project tempo. Switching mode used to hand you exactly that.
+**Existing projects migrate themselves.** In Host x the heart rate used to be a
+*multiplier* of the tempo; it is plain BPM now. A project saved under the old
+build is detected on load and converted — the heart keeps the rate it had, and
+the beats it implies are filled in for you. Nothing to run, and it works on any
+machine. Save the project once and the conversion stops happening.
 
-Landing on 1 per beat only happens when *you* change the mode — opening a saved project leaves your rate alone.
+Two things do need re-setting by hand in a project saved under the old build:
+the **Host sync target** may land somewhere arbitrary (it inherited the old
+*Host ratio* slider's slot), and if you had set a **breath** rate, check it.
+The heart's rate carries over untouched.

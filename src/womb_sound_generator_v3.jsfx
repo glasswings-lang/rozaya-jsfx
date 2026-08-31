@@ -33,7 +33,7 @@ desc: Womb Sound Generator v3
 // 0 disables.
 
 // --- GLOBAL ---
-slider1:70<20,200,1>BPM
+slider1:70<1,200,1>Heart rate (BPM)
 slider2:0<0,1,1{Normal,Flipped}>Master Stereo Flip
 
 // --- HEARTBEAT ---
@@ -146,41 +146,59 @@ slider59:0<0,30,0.1>Heart with breath (BPM peak-to-peak)
 slider60:0<0,30,0.1>Sigh interval (minutes, 0=off)
 slider61:1.5<1.0,3.0,0.05>Sigh depth multiplier
 
-// --- Host tempo sync (sliders 62-63) ------------------------------------
+// --- Host tempo sync (sliders 62-64) ------------------------------------
 // Own BPM: free-running, project tempo ignored -- original behaviour.
-// Host x:  BPM becomes a MULTIPLIER of the project tempo, and the BREATH
-//          follows too -- its cycle is set in beats by sliders 64-65, and
-//          sliders 16-19 become the shape fitted into it. This ONE switch
-//          is the only thing that decides which controls are truth, for
-//          both layers, and every slider it affects says so in its name.
-// Two entries, not four: only one unit here, so Seconds / Hz would be
-// meaningless. Appended at the END per the never-renumber rule.
+// Host x:  the rates named in the sync target list below are set in BEATS of
+//          the project tempo, and follow it when it changes.
+//
+// This block replaces the two named-ratio pickers it used to take (a "Host
+// ratio" menu for the heart, a "Breath rate" menu for the breath, and a raw
+// beats-per-breath number hidden behind the second one). Three reasons it is
+// shaped this way instead:
+//
+//   * A menu of ratios is a GRID. Its entries were fixed fractions of the
+//     beat, so one cycle every 5 beats of a 4/4 bar -- an ordinary want in
+//     phase music, and the reason this suite syncs by multiplier rather than
+//     by note value -- was not on the list at all. A plain number has no
+//     entries to be missing from.
+//   * One pair of controls covers every rate the plugin has, however many
+//     that turns out to be. The breath needed its own pair only because the
+//     heart's picker could not point at anything but the heart.
+//   * It is the shape Drift and Speed Ramp already use -- pick a target,
+//     set its value -- so it is the third instance of one idiom rather than
+//     a fourth thing to learn. This plugin is navigated one control at a
+//     time through REAPER's parameter list; a control saved is real.
+//
+// The rate slider each target owns STAYS VISIBLE and stays live. Heart rate
+// keeps reading in BPM in both modes (it is no longer a multiplier of the
+// tempo -- see the migration in @serialize), so it shows what the sync is
+// actually running at, and moving it by hand converts back into beats rather
+// than being ignored. Nothing here hides a control because a mode changed.
 slider62:0<0,1,1{Own BPM,Host x}>Rate Mode
 
-// Writes a multiplier into BPM on change then gets out of the way.
-// "Custom" (default) never writes. Not "Free" -- that means FREE-RUNNING
-// in sync UI, which Own BPM already is.
-slider63:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes BPM)
+// Which rate the beats value below is setting. Extend by APPENDING, never by
+// inserting -- these indices are stored in projects.
+slider63:0<0,1,1{Heart rate,Breath}>Host sync target
 
-// --- Breath rate in Host x (sliders 64-65) ------------------------------
-// The breath's half of tempo sync, and the reason it needed its own pair:
-// the heart has ONE number to multiply (BPM), so Host x fell out of it for
-// free. The breath's rate was an emergent sum of four duration sliders, so
-// there was nothing for the project tempo to take hold of.
+// One cycle of the selected target takes this many project beats. Free and
+// continuous on purpose: 5 beats is exactly as reachable as 4, and so is 5.3,
+// which is how two instances are made to slip against each other.
+// Step 0.01 -- in the parameter list you can only arrow, never type, so a
+// value the step cannot land on is a value that does not exist.
+slider64:1<0.25,64,0.01>Every N beats (Host x)
+
+// --- Where each target's beats value actually lives ----------------------
+// Slider 64 is the EDITOR; the number itself is stored per target, so
+// switching the selector never disturbs a rate you already set. The heart's
+// lives here; the breath's lives in slider 65, where it always has. Both are
+// hidden -- they are storage, and slider 64 plus the target's own rate
+// slider are the two ways to see and set them.
 //
-// In Host x the breath cycle is set HERE, as a number of beats, and sliders
-// 16-19 become the SHAPE that gets fitted into it -- which is why all four
-// now say "shape only in Host x" in their own names. A unit that changes
-// meaning silently is the same problem wearing different clothes, whether a
-// mode gates it or not, so every slider involved announces it and the ones
-// that do not apply are hidden rather than left sitting there lying.
-//
-// In Own BPM none of this exists: sliders 16-19 are literal seconds, exactly
-// as they always were, and Breaths per minute is still the one-shot rescale.
-// Which control is truth depends on Rate Mode and ONLY on Rate Mode -- the
-// same single switch that already decides what the heart's BPM slider means.
-slider64:0<0,11,1{Custom,every 2 beats,every 3 beats,every 4 beats,every 6 beats,every 8 beats,every 12 beats,every 16 beats,every 24 beats,every 32 beats,every 48 beats,every 64 beats}>Breath rate (Host x; writes beats per breath)
-slider65:16<0.25,64,0.25>Beats per breath (Host x only)
+// The heart cannot store its beats in its BPM slider the way the breath can,
+// because BPM has to be RECOMPUTED whenever the project tempo moves, and a
+// value that is recomputed cannot also be the thing being remembered.
+slider65:16<0.25,64,0.01>Beats per breath (Host x, storage)
+slider66:1<0.25,64,0.01>Beats per heartbeat (Host x, storage)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -194,7 +212,6 @@ slider65:16<0.25,64,0.25>Beats per breath (Host x only)
 // Host tempo capture. `tempo` is READ-ONLY in JSFX; read only, into a
 // global deliberately not named `tempo`. Nothing remembers it across play.
 host_bpm = max(tempo, 0.001);
-host_ratio_inited = 0;
 
 srate_inv = 1.0 / srate;
 two_pi = 2.0 * $pi;
@@ -333,13 +350,15 @@ pr_smooth = exp(-1 / (srate * 0.003));
 // BPM smoother state.
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 bpm_target               = slider1;
-// host_mult is what turns slider1's own unit into BPM: 1 in Own BPM mode, the
-// project tempo in Host x (where slider1 is a multiplier). Drift and Speed
-// Ramp offsets on the rate are scaled by it at the consumption site, so they
-// stay deltas in whatever unit slider1 is currently showing rather than being
-// raw BPM that means a different proportion at every tempo.
-host_mult = 1; breath_host_scale = 1;
-breath_beats = 16; breath_cycle_target = 1; breath_ratio_inited = 0; last_breath_ratio = 0;
+breath_host_scale = 1;
+breath_beats = 16; breath_cycle_target = 1;
+// Host-sync trackers. All of them are ADOPTED IN @block, not here and not in
+// @slider -- see the note at the top of @block. hs_inited stays 0 until then,
+// and while it is 0 the sync block in @slider writes nothing at all, which is
+// the safe direction to fail in.
+hs_inited = 0; last_hs_sel = 0; last_hs_beats = 1; hs_s1_shown = slider1;
+// Set by @serialize when the blob it just read predates heart-rate-in-BPM.
+host_bpm_migration_pending = 0;
 bpm_smoothed             = slider1;
 
 // Speed ramp state. ramp_t advances 0->1 over slider50 minutes while
@@ -465,95 +484,100 @@ sigh_time_since_last = 0;
 sigh_active          = 0;
 
 @slider
-// True for the ONE @slider pass where Rate Mode really moved INTO the
-// tempo-following mode. The named pickers below use it to apply their ratio on
-// entry: the raw multiplier HIDES behind a picker, so a stale picker value left
-// unapplied would name one speed on screen while the plugin ran another.
-// rate_mode_inited gates it, so a half-restored instance can never see an edge.
-entered_host_mode = rate_mode_inited && slider62 == 1 && last_rate_mode != slider62;
-rate_mode  = slider62;
-host_ratio_inited && slider62 == 1 && (host_ratio_sel != slider63 || entered_host_mode) ? (
-  host_ratio_sel = slider63;
-  host_ratio_sel > 0 ? (
-    slider1 =
-      host_ratio_sel ==  1 ? 0.125 : host_ratio_sel ==  2 ? 0.25  :
-      host_ratio_sel ==  3 ? 1/3   : host_ratio_sel ==  4 ? 0.5   :
-      host_ratio_sel ==  5 ? 0.618 : host_ratio_sel ==  6 ? 2/3   :
-      host_ratio_sel ==  7 ? 0.75  : host_ratio_sel ==  8 ? 1     :
-      host_ratio_sel ==  9 ? 4/3   : host_ratio_sel == 10 ? 1.5   :
-      host_ratio_sel == 11 ? 1.618 : host_ratio_sel == 12 ? 2     :
-      host_ratio_sel == 13 ? 3     : host_ratio_sel == 14 ? 4     : 8;
-    slider_automate(slider1);
+// --- Host tempo sync -------------------------------------------------------
+// The beats value (slider 64) and the selected target's own rate slider are
+// two views of ONE number, and whichever the user moved is the one that wins.
+// Every hs_* tracker is adopted in @block, never here: on a fresh or
+// duplicated instance @slider runs while REAPER is still handing over the
+// saved values, so a tracker adopted here takes a DEFAULT, and the real value
+// arriving a moment later reads as a user edit -- which is how a picker came
+// to stamp 0.5 over a hand-set rate on every load. (Proved 2026-08-23.)
+rate_mode = slider62;
+hs_sel    = slider63;
+
+(hs_inited && rate_mode == 1) ? (
+  // (a) The heart's BPM slider moved by hand. hs_s1_shown is what WE last put
+  //     there, so this fires only on a real move. The threshold is above the
+  //     slider's own step-rounding (step 1) and below any deliberate nudge,
+  //     so REAPER re-quantising our readout can never read as an edit.
+  abs(slider1 - hs_s1_shown) > 0.6 ? (
+    slider66 = max(0.25, min(64, max(tempo, 0.001) / max(slider1, 0.001)));
+    hs_s1_shown = slider1;
+  );
+
+  hs_sel != last_hs_sel ? (
+    // (b) Selector moved: show the new target's own number. Writes nothing --
+    //     the rate you set for the other target keeps running untouched, the
+    //     same way switching Drift's target does not stop the other drifts.
+    slider64 = hs_sel == 0 ? slider66 : slider65;
+    slider_automate(slider64);
+  ) : (
+    slider64 != last_hs_beats ? (
+      // (c) The beats value moved: it is the truth, so store it on the target.
+      hs_sel == 0 ? ( slider66 = slider64; ) : ( slider65 = slider64; );
+    ) : (
+      // (d) The stored value moved underneath us (case (a), or a project
+      //     load). Follow it, so the two views can never sit there
+      //     disagreeing about the same number.
+      (hs_sel == 0 ? slider66 : slider65) != slider64 ? (
+        slider64 = hs_sel == 0 ? slider66 : slider65;
+        slider_automate(slider64);
+      );
+    );
   );
 );
-slider_show(slider63, rate_mode == 1);
-// --- Landing in Host x, and keeping the multiplier out of the way ----------
+last_hs_sel   = hs_sel;
+last_hs_beats = slider64;
+
+// --- Landing in Host x, and landing SILENTLY -------------------------------
+// Both layers keep exactly what they were doing: the heart's current BPM is
+// converted into the beats that reproduce it at this tempo, and the breath
+// takes the cycle its four shape sliders already describe. Nothing you can
+// hear changes at the switch -- the tempo simply takes over from there.
 //
-// Same fix as the rest of the suite, and this plugin needed it most: the BPM
-// slider defaults to 70, which as a MULTIPLIER is seventy times the project
-// tempo. Switching mode used to hand you that.
-//
-// So: entering Host x lands on "1 per beat" (picker index 8) unless a ratio
-// was already chosen, and the raw multiplier HIDES unless the picker is on
-// Custom -- the named list becomes the way in, and the number only appears
-// when you deliberately want one the list doesn't have. The picker can't be
-// moved next to the rate slider because IDs can never be renumbered.
+// The old behaviour was worse and this is why the landing existed at all: BPM
+// used to become a MULTIPLIER in Host x, so 70 meant seventy times the project
+// tempo, and switching mode handed you that. Nothing multiplies now, so there
+// is no absurd value to defend against and continuity is available instead.
 //
 // Guarded on a real in-session mode CHANGE, so opening a saved project never
 // overwrites a hand-tuned rate.
 rate_mode_inited && last_rate_mode != rate_mode ? (
-  rate_mode == 1 && slider63 == 0 ? (
-    slider63 = 8;
-    host_ratio_sel = 8;
-    slider1 = 1;
-    slider_automate(slider63);
-    slider_automate(slider1);
-  );
-  // The breath side lands on CONTINUITY rather than on a fixed entry: seed
-  // beats-per-breath from the cycle the four sliders already describe, at the
-  // current tempo, so switching into Host x does not change what you hear. The
-  // heart cannot do this (a BPM of 70 read as a multiplier is nonsense, hence
-  // the landing above), but the breath can, and a mode switch that silently
-  // retimes your breath would be its own version of moving the user's values.
-  rate_mode == 1 && slider64 == 0 ? (
+  rate_mode == 1 ? (
+    slider66 = max(0.25, min(64, max(tempo, 0.001) / max(slider1, 0.001)));
     slider65 = max(0.25, min(64,
       (slider16 + slider17 + slider18 + slider19) * max(tempo, 0.001) / 60));
-    slider_automate(slider65);
+    slider64 = slider63 == 0 ? slider66 : slider65;
+    slider_automate(slider64);
+    last_hs_beats = slider64;
+    hs_s1_shown   = slider1;
   );
   last_rate_mode = rate_mode;
 );
-slider_show(slider1, rate_mode != 1 || slider63 == 0);
 
-// --- Breath rate picker (slider64), the breath's twin of the heart's above.
-//     Writes beats-per-breath and then gets out of the way; Custom leaves the
-//     number alone. Same load guard: only a real in-session move writes.
-brp = slider64;
-breath_ratio_inited && slider62 == 1 && (last_breath_ratio != brp || entered_host_mode) ? (
-  last_breath_ratio = brp;
-  brp > 0.5 ? (
-    slider65 =
-      brp == 1 ? 2  : brp == 2 ? 3  : brp == 3 ? 4  : brp == 4 ? 6  :
-      brp == 5 ? 8  : brp == 6 ? 12 : brp == 7 ? 16 : brp == 8 ? 24 :
-      brp == 9 ? 32 : brp == 10 ? 48 : 64;
-    slider_automate(slider65);
-  );
-);
 breath_beats = max(0.25, slider65);
-// Show only what applies. Breaths per minute rewrites sliders 16-19, which
-// cannot be done per tempo change without writing automation on every one, so
-// it is an Own BPM control and is hidden in Host x rather than left present
-// and inert. The beats-per-breath number hides behind its own picker exactly
-// as the heart's multiplier hides behind its one.
-slider_show(slider53, rate_mode != 1);
-slider_show(slider64, rate_mode == 1);
-slider_show(slider65, rate_mode == 1 && slider64 == 0);
 
-// Host x: slider1 is a MULTIPLIER of the project tempo. bpm_target feeds
-// the per-sample smoother, and cycle_len / the drift period / Start Delay
-// all derive from it, so feeding the right number in is the whole job.
-// A pulse locked to musical tempo is a deliberate creative option here.
-host_mult  = rate_mode == 1 ? max(tempo, 0.001) : 1;
-bpm_target = slider1 * host_mult;
+// --- Show only what applies ------------------------------------------------
+// Heart rate is NEVER hidden. It reads in BPM in both modes, so in Host x it
+// is the readout of what the sync is running at, and it is still a control --
+// moving it converts back into beats above. Hiding a rate because a mode
+// changed is what this whole block exists to undo.
+//
+// Sliders 65/66 are storage for the two targets and are never shown: slider 64
+// plus each target's own rate slider are the two ways to see and set them.
+// Breaths per minute rewrites sliders 16-19, which cannot be redone on every
+// tempo change without writing automation on all four, so it stays an Own BPM
+// control and hides rather than sitting there inert.
+slider_show(slider53, rate_mode != 1);
+slider_show(slider63, rate_mode == 1);
+slider_show(slider64, rate_mode == 1);
+slider_show(slider65, 0);
+slider_show(slider66, 0);
+
+// Heart rate is plain BPM in both modes. In Host x it is derived from the
+// beats value against the project tempo; @block repeats this so a tempo change
+// is followed live (@slider does not re-run for one).
+bpm_target = rate_mode == 1 ? max(tempo, 0.001) / max(slider66, 0.25) : slider1;
 systole_samples = floor(srate * slider5 * 0.001);
 s1_vol = slider6;
 s2_vol = slider7;
@@ -749,9 +773,38 @@ last_target_select != sel_target ? (
 //     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
 //     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
 //     load and every track duplicate.)
-!host_ratio_inited ? ( host_ratio_sel = slider63; host_ratio_inited = 1; );
 !rate_mode_inited ? ( last_rate_mode = slider62; rate_mode_inited = 1; );
-!breath_ratio_inited ? ( last_breath_ratio = slider64; breath_ratio_inited = 1; );
+!hs_inited ? (
+  last_hs_sel   = slider63;
+  last_hs_beats = slider64;
+  hs_s1_shown   = slider1;
+  hs_inited     = 1;
+);
+
+// --- One-shot migration: Host x heart rate used to be a MULTIPLIER ----------
+// Before this, slider1 in Host x meant "times the project tempo", so 0.5 was
+// half-tempo and the number on screen was not a heart rate at all. It is plain
+// BPM in both modes now, and the beats it implies live in slider66.
+//
+// Flagged by @serialize on reading an older blob, and performed HERE rather
+// than there because @serialize and the slider restore have no guaranteed
+// order -- reading slider62 inside @serialize could catch it before REAPER
+// had handed the saved mode over. @block cannot run before the instance is
+// configured. Migrate what was RESTORED, never what was DEFAULTED.
+//
+// If the project is loaded and not saved, the file still holds the old blob
+// and this runs again on the next load -- correctly. Save once and it stops.
+host_bpm_migration_pending && rate_mode_inited && hs_inited ? (
+  host_bpm_migration_pending = 0;
+  slider62 == 1 ? (
+    slider66      = max(0.25, min(64, 1 / max(slider1, 0.0001)));
+    slider1       = min(200, max(1, slider1 * max(tempo, 0.001)));
+    hs_s1_shown   = slider1;
+    slider64      = slider63 == 0 ? slider66 : slider65;
+    last_hs_beats = slider64;
+    sliderchange(-1);
+  );
+);
 // --- Gating flag DERIVED from the @serialize banks, and therefore computed
 //     here rather than in @slider.
 //
@@ -772,8 +825,18 @@ breath_freq_active = (target_drift_up[8] > 0 || target_drift_down[8] > 0 ||
 // Follow the project tempo live in Host x. @slider does not re-run on a
 // tempo change, so these repeat here; everything else is per-sample.
 rate_mode == 1 ? (
-  host_mult  = max(tempo, 0.001);
-  bpm_target = slider1 * host_mult;
+  bpm_target = max(tempo, 0.001) / max(slider66, 0.25);
+  // Keep the Heart rate slider showing what the sync is actually running at.
+  // Clamp FIRST and compare against the clamped value, or a rate outside the
+  // slider's range would be rewritten every block forever. The 0.6 threshold
+  // matches the hand-move test in @slider: below the slider's own step, so
+  // our own readout can never come back looking like a user edit.
+  hs_s1_want = min(200, max(1, bpm_target));
+  abs(hs_s1_want - hs_s1_shown) > 0.6 ? (
+    slider1     = hs_s1_want;
+    hs_s1_shown = hs_s1_want;
+    sliderchange(-1);
+  );
   start_delay_sec = slider41 * 60 / max(bpm_target, 0.001);
   // ...and the BREATH follows the tempo too. It did not, until now: the heart
   // scaled with the project and the breath state machine kept advancing one
@@ -1341,9 +1404,15 @@ slider2 == 0 ? (
 // per-target-timeline format (added the duration + start-delay banks). Older
 // (unversioned) blobs won't match and fall through to @init defaults — drift +
 // ramp reset on upgrade (accepted; pre-release). Marker is float32-exact.
-sr_magic = 2100000 + N_TARGETS;
+// Magic 2200000 marks heart-rate-as-BPM in Host x (it was a tempo multiplier
+// under 2100000). The PAYLOAD is identical between the two, so both are read
+// the same way and an upgrade keeps every drift and ramp config; only the
+// migration flag differs. Accepting the old magic rather than falling through
+// to defaults is the whole point -- a version bump that resets your settings
+// is not a migration.
+sr_magic = 2200000 + N_TARGETS;
 file_var(0, sr_magic);
-sr_magic == 2100000 + N_TARGETS ? (
+(sr_magic == 2200000 + N_TARGETS || sr_magic == 2100000 + N_TARGETS) ? (
   file_mem(0, target_drift_up,    N_TARGETS);
   file_mem(0, target_drift_down,  N_TARGETS);
   file_mem(0, target_drift_per,   N_TARGETS);
@@ -1367,6 +1436,10 @@ sr_magic == 2100000 + N_TARGETS ? (
     slider56 = target_drift_down[last_target_select];          // Drift down
     slider57 = target_drift_per[last_target_select];           // Drift period
     slider58 = target_drift_shape[last_target_select];         // Drift shape
+    // Old blob: the Host x heart rate it carries is a multiplier. Flag it and
+    // let @block do the conversion, where the restored slider values are
+    // guaranteed to have landed.
+    sr_magic == 2100000 + N_TARGETS ? ( host_bpm_migration_pending = 1; );
     sliderchange(-1);
   );
 );
