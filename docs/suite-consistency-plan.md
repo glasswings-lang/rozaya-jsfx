@@ -1237,3 +1237,47 @@ decorrelation, so at minimum `% of full width`).
 the missing sigh, and now this — each is a good decision made in ONE plugin and never
 carried to its siblings. The suite's real failure mode is not bad decisions, it is
 **unpropagated good ones**.
+
+### Three more unpropagated decisions, found by grepping for the pattern
+
+Once R17 named the failure mode — good decisions made in one plugin and never carried
+across — it became something searchable. Found 2026-08-31:
+
+**1. The waveform palette drifted, against an explicit written rule.** CLAUDE.md states:
+*"any new waveform added to Polyrhythm Phase or Melody Phase should land in all four
+plugins at the same slot index."* Measured:
+
+| | waveforms |
+|---|---|
+| Polyrhythm v1, Polyrhythm v3, Harmonic Sculptor | **14** |
+| Melody Phase v1, Melody Phase v2, Shepard Scale, Shepard Tone | **12** |
+
+**Square** and **Pulse** (slots 12–13) never propagated. Cheap to fix and completely safe:
+waveforms append to the end of the enum, so slots 0–11 keep their meaning and no project
+changes. Note this also explains a stale-docs finding already in the plan — both
+Polyrhythm pages document 12 against a source with 14.
+
+**2. Solo exists in two plugins out of six that need it.** This is the biggest of the
+three.
+
+| plugin | things to audition | Solo |
+|---|---|---|
+| Spectral Vowel Morpher | 16 layers | **yes** |
+| Womb | 3 layers | **yes** |
+| Polyrhythm v1 / v3 | 8 voices | no |
+| Melody Phase | 8 voices | no |
+| Shepard Tone | per-voice | no |
+| Resonance Bank | **16 bands** | no |
+
+Solo is not a luxury control, it is *how you hear what you are editing* — Rozaya on the
+Morpher's: *"you solo to hear a thing."* Without one, auditioning a single band in
+Resonance Bank means turning the other **fifteen** down to −60 dB and back afterwards.
+Every plugin with per-voice / per-band / per-layer anything should have Solo, and the
+Morpher's semantics are the reference: **Solo overrides Inactive**, because you solo in
+order to hear something.
+
+**3. `src/heartbeat gen.jsfx` is the only filename in the suite with a space in it.**
+Every other file is hyphenated or underscored. It broke two of my own scripts tonight.
+**Renaming is NOT free** — `.RPP` files reference the plugin by filename, so it needs a
+project rewrite like any migration. Fold it into Heartbeat's own batch rather than doing
+it loose.
