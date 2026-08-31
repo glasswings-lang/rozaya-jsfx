@@ -418,7 +418,46 @@ grep -rl <plugin>.jsfx --include=*.RPP /e/reaper
 ## Part 5 — Tooling, built first
 
 The tool is what makes a 22-plugin renumber survivable, and it is also what stops this
-rotting a fifth time. Build before touching any plugin.
+rotting a fifth time. Build before touching any plugin — subject to the boundary in the
+next section, which is not optional: tools apply authored decisions and report findings.
+They never make the decisions, and they never certify the result.
+
+### What tooling is allowed to be, and what it must never be
+
+Star, 2026-08-31: *"scripts are notoriously awful at introducing glitches that nobody
+thinks to check for, because the script seems like it works. So everybody assumes it
+worked and never double checks the output. As a noncoder, I need you to double check the
+output."*
+
+This repo already has the evidence — three bugs in two days from loose pattern matching:
+a `grep "^slider"` that also matched `slider_show`, a `.count()` that matched a longer
+line containing the target, and a `startswith("slider")` that dropped a declaration inside
+`@sample`. All three scripts ran clean and wrote a wrong file.
+
+**The line is between a script that DECIDES and a script that APPLIES.**
+
+- **Never let a script infer from source.** A regex over `.jsfx` that works out which
+  sliders to move, or what a name should become, is a script exercising judgment — and
+  when its pattern is subtly wrong it does not fail, it silently does the wrong thing to
+  the right-looking file.
+- **A script may apply an explicitly authored list.** The permutation table for each
+  plugin is written out by hand, slider by slider, and the script only carries it out
+  over the `.RPP` files. The plan already relies on this: the old→new mapping is
+  *authored*, not inferred. Eight project files at sixty-odd tokens each is precisely
+  the work a machine should do and a human should not.
+- **The safe form of an edit is an exact literal match with a count assertion.** Match the
+  full text, assert it occurred exactly once, fail loudly otherwise. That cannot silently
+  hit the wrong line — which is the entire failure mode above.
+
+**And the report is about the OUTPUT, never the run.** "The script completed" and "the
+linter says zero problems" are not results. What counts is: diff the before and after,
+assert only the intended tokens moved, read a sample by hand, and say what was actually
+looked at. A clean exit is the weakest possible evidence, and a lint that reports nothing
+is the easiest thing in the world to trust wrongly.
+
+**Which downgrades Part 5's linter from a safety net to a lead generator.** Its checks are
+worth having because a false report costs a glance while a missed one costs a session —
+but nothing may be declared correct because a tool did not object.
 
 ### `tools/suite_layout.py`
 
