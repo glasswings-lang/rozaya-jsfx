@@ -394,12 +394,15 @@ speed_ramp_delay_elapsed_mem = 8384;  // delay sample counter per target (RUNTIM
 // the editor over it, exactly as Drift's amount sliders edit their banks.
 // 16-slot-aligned like the rest, so targets can be APPENDED later -- and they
 // will be; two is where this starts, not where it stops.
+// CONTENTS are seeded in the drift_cfg_inited guard below, NOT here: this
+// plugin has no ext_noinit, so @init re-runs on every transport play, and a
+// default written here would reset the heart to one-per-beat and the breath to
+// sixteen every time you pressed play. (Which is exactly what it did -- found
+// by ear, 2026-08-30. The address itself is fine unguarded; it is a constant.)
 N_HS_TARGETS  = 2;      // 0 = Heart rate, 1 = Breath
 HS_HEART      = 0;
 HS_BREATH     = 1;
 host_beats_mem = 8400;
-host_beats_mem[HS_HEART]  = 1;    // one heartbeat per beat
-host_beats_mem[HS_BREATH] = 16;   // one breath per 16 beats
 
 // --- v3 Drift target memory banks ---
 //
@@ -456,6 +459,9 @@ drift_cfg_inited != 1 ? (
     i += 1;
   );
   last_target_select = 0;
+  // Host-sync beats: CONFIG, same as everything else in this guard.
+  host_beats_mem[HS_HEART]  = 1;    // one heartbeat per beat
+  host_beats_mem[HS_BREATH] = 16;   // one breath per 16 beats
   drift_cfg_inited = 1;
 );
 
@@ -1464,6 +1470,8 @@ file_var(0, sr_magic);
   // destination untouched and raises nothing, so this cannot corrupt them.
   sr_magic == 2300000 + N_TARGETS ? (
     file_mem(0, host_beats_mem, N_HS_TARGETS);
+    file_var(0, last_hs_sel);   // which target slider 64 was showing, as the
+                                // drift and ramp banks save their selectors
   ) : (
     file_avail(0) >= 0 ? ( host_beats_seed_pending = 1; );
   );
@@ -1481,6 +1489,13 @@ file_var(0, sr_magic);
     slider56 = target_drift_down[last_target_select];          // Drift down
     slider57 = target_drift_per[last_target_select];           // Drift period
     slider58 = target_drift_shape[last_target_select];         // Drift shape
+    // Host-sync beats. Same invariant as the lines above, and it needs the
+    // same repair: @slider and this section restore by two independent paths
+    // with no guaranteed order, so an @slider pass that ran while the bank was
+    // still empty could have dragged slider 64 down to a default. Whatever
+    // happened when, the bank is authoritative by the time we are here.
+    last_hs_sel = min(N_HS_TARGETS - 1, max(0, last_hs_sel));
+    slider64 = host_beats_mem[last_hs_sel];
     // Old blob: the Host x heart rate it carries is a multiplier. Flag it and
     // let @block do the conversion, where the restored slider values are
     // guaranteed to have landed.
