@@ -3,7 +3,7 @@
 Written by hand 2026-08-31, not generated. Per the tooling boundary in
 `suite-consistency-plan.md`: the permutation is authored, a script only applies it.
 
-**Status: DRAFT, awaiting Rozaya's review of the reading order. Nothing built.**
+**Status: reading order APPROVED by Rozaya 2026-08-31. Nothing built yet.**
 
 ## What changes, and why each one
 
@@ -16,6 +16,19 @@ Melody Phase v1 is already one of the better-ordered plugins. Four real problems
    what it modifies.
 4. **`Master Gain dB` is at 8**, in the middle of the sound controls rather than
    at the end of them.
+
+5. **`Loop` is renamed `Loop sequence`.** The position was right — the code
+   settles it, since `loop_enabled` is read *inside* the direction-stepping
+   logic: it decides whether Up wraps back to the start or stops, and it bounds
+   the bounce count in the Up-Down modes. It is welded to Direction, not merely
+   near it. So the three read as one sentence: how many steps (Sequence length),
+   in what order (Direction), and does it go round again (Loop sequence).
+
+   But the NAME was the actual problem. In REAPER "loop" already means the
+   transport loop over a time selection, so a plugin slider called just `Loop`
+   is ambiguous — loop what? Sitting among the sound controls at 7, it read as
+   though it might loop a sample or an envelope. Rozaya: *"loop is a fuzzy one
+   for us."* The fuzziness was the name, not the position, and renaming is free.
 
 Plus the two things this bump carries:
 
@@ -57,7 +70,7 @@ Plus the two things this bump carries:
 | 22 | Pan increment per voice (Increment mode) | 19 |
 | 23 | Sequence length | 14 |
 | 24 | Direction | 63 |
-| 25 | Loop | 7 |
+| 25 | Loop sequence | 7, renamed |
 | 26–65 | V1..V8: Note, Next voice in, Note duration, Gain dB, Active | 22–61 |
 | 66 | Master gain (dB) | 8 |
 | 67 | Start delay (in rate mode units) | 62 |
