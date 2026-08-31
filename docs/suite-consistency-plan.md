@@ -1113,9 +1113,12 @@ ear along the way. Deployed to the Effects folder and verified byte-identical to
    (Star: the blocks "were arbitrary as shit"). Every per-plugin layout is measured
    against Part 2, so it is rewritten first. Drift and Ramp stay shared — their selectors
    span targets across layers, so splitting them costs fifteen sliders where five do.
-2. **The version forks.** Melody v1 has 5 projects and v2 zero; Polyrhythm v1 has 18 and
-   v3 has 5. Sweeping all four means doing this twice for two plugins forever, and one of
-   the four has no users. Decide before batch 3.
+2. ~~**The version forks.**~~ **CLOSED 2026-08-31.** Melody: archive v2, its note picker
+   moves to v1 (`docs/layouts/melody-phase.md`). Polyrhythm: migrate v1's projects up to
+   v3, archive v1 — evidenced in `docs/layouts/polyrhythm-phase.md`, and cheaper than
+   assumed on all three counts (the project count is a backlog not a preference, v3 is a
+   strict superset of what the projects use, and the `@serialize` blobs are identical so
+   drift and ramp configs cross untouched). **Both forks end.**
 3. **Scope.** Harmonic Sculptor is under an overhaul-or-drop question and Rozaya would not
    reach for it; Sustain Looper is a sound-design tool. Both unresolved in Part 3.
 4. **Validation — the real hole.** JSFX cannot be compiled outside REAPER; Rozaya's
@@ -1136,4 +1139,14 @@ ear along the way. Deployed to the Effects folder and verified byte-identical to
 8. **Open Questions 1 and 3** — selector-backed target names, and 0- vs 1-based selectors.
 9. **Per-plugin layouts** — 22 hand-authored orders. The bulk of the work, done per batch.
 
-**Suggested next:** 1 and 4. They shape everything else.
+10. **Nothing is merged or released.** `feature/morpher-layers` is **98 commits ahead of
+    master**, master is 4 ahead of `origin/master`, and the last tag is **v2.20
+    (2026-07-29) — 102 commits ago.** Every plugin Rozaya is currently using was
+    hand-copied into the Effects folder from an unmerged branch, so there is no clean
+    release to fall back to if something turns out wrong. This is not a consistency
+    problem and it is not in the plan, which is exactly why it kept not getting noticed.
+    Merging and tagging is cheap and it is the only thing on this list that reduces risk
+    rather than adding scope.
+
+**Suggested next:** 10 first because it is cheap and protective, then 1 and 4, which
+shape everything else.
