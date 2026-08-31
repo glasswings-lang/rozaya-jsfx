@@ -1076,3 +1076,49 @@ Breaths/min`), so it has the most to gain.
 the whole reason this matters: ramping inhale catches from four down to zero over twenty
 minutes **is** the dysregulated-to-coherent journey, expressed as one control instead of
 an envelope nobody can draw.
+
+---
+
+## Where to pick this up (as of 2026-08-31)
+
+**Shipped and ear-tested in Womb**, on `feature/morpher-layers`: the host-sync block
+(target selector + free `Every N beats`), heart rate as plain BPM in both modes, the
+breath's four sliders as beats in Host x, systole in beats, and four bug fixes found by
+ear along the way. Deployed to the Effects folder and verified byte-identical to source.
+
+**Designed, not built:** R11–R16, the `0..1` writeup, and breath catches in
+`docs/planned-features.md`.
+
+### What is still unplanned, in the order things block each other
+
+**Blocking:**
+
+1. **Part 2's canonical layout is stale.** It still describes the A/B/C/D block structure;
+   2026-08-31 replaced that with *everything belonging to a layer lives with that layer*
+   (Star: the blocks "were arbitrary as shit"). Every per-plugin layout is measured
+   against Part 2, so it is rewritten first. Drift and Ramp stay shared — their selectors
+   span targets across layers, so splitting them costs fifteen sliders where five do.
+2. **The version forks.** Melody v1 has 5 projects and v2 zero; Polyrhythm v1 has 18 and
+   v3 has 5. Sweeping all four means doing this twice for two plugins forever, and one of
+   the four has no users. Decide before batch 3.
+3. **Scope.** Harmonic Sculptor is under an overhaul-or-drop question and Rozaya would not
+   reach for it; Sustain Looper is a sound-design tool. Both unresolved in Part 3.
+4. **Validation — the real hole.** JSFX cannot be compiled outside REAPER; Rozaya's
+   workflow (new project, fresh instance) never exercises reload or track duplicate; and
+   a clean script run proves nothing. Some things can be checked by simulating the
+   arithmetic, as the breath and systole numbers were. Some need ears. **Restore ordering
+   is currently covered by neither**, and it is historically where the worst bugs live.
+
+**Needed, not blocking:**
+
+5. **Drift period units under host sync.** Periods count heartbeats or breath cycles —
+   should they be beats when synced? Same question already answered twice elsewhere.
+6. **R12 vs Open Question 2.** OQ2 said size drift amounts to the largest sensible
+   *wander*; R12 says everything is 0–1000. R12 probably wins now that fine steps make
+   small values reachable, but two rules currently point different ways.
+7. **The `0..1` inventory.** 176 sliders suite-wide top out at 1.0 or less. Minus enums,
+   they split into dB and percent, and nobody has listed which is which.
+8. **Open Questions 1 and 3** — selector-backed target names, and 0- vs 1-based selectors.
+9. **Per-plugin layouts** — 22 hand-authored orders. The bulk of the work, done per batch.
+
+**Suggested next:** 1 and 4. They shape everything else.
