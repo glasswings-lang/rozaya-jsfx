@@ -966,10 +966,14 @@ sigh segments at the saved multiplier times the normal four. Every existing proj
 identical on load, and from then on the exhale can be pulled long without touching the
 inhale.
 
-**Still open, and worth its own look:** the classic augmented sigh is *biphasic* — an
-inhale, a brief catch, then a second inhale stacked on top of the first, before the long
-release. Four sections in the normal breath's shape cannot express the stacked second
-inhale. Whether that is worth a fifth segment is a question for when the four are in and
-audible, not before. Also still true from R13a: there is **no amplitude component** — a
+**Still open, and it may SIMPLIFY this rather than extend it:** the classic augmented
+sigh is *biphasic* — an inhale, a brief catch, then a second inhale stacked on the first,
+before the long release. Four sections cannot express the stacked second inhale. But a
+catch is arguably an **inhale** feature rather than a sigh one, in which case a sigh is
+just its own four segments plus one deep inhale catch, and no fifth phase is needed. The
+same mechanism also produces the shuddering post-crying breath, which is the distress cue
+Womb currently has no way to make. Written up in `docs/planned-features.md` under
+**Breath catches**. Build the four segments, hear them, then try a catch — in that
+order. Also still true from R13a: there is **no amplitude component** — a
 real sigh is a bigger breath, not only a longer one, and `Sigh louder by (dB)` would make
 the feature honest.
