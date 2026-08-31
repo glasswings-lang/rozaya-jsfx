@@ -52,10 +52,10 @@ slider13:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
 // --- BREATH ---
 slider14:0.5<0.0,1.0,0.01>Breath Volume
 slider15:0<0,1,1{Off,Solo}>Breath Solo
-slider16:4.0<0.5,20.0,0.1>Inhale (sec, ratio in Host x)
-slider17:0.3<0.0,5.0,0.1>Top pause (sec, ratio in Host x)
-slider18:4.0<0.5,20.0,0.1>Exhale (sec, ratio in Host x)
-slider19:0.3<0.0,5.0,0.1>Bottom pause (sec, ratio in Host x)
+slider16:4.0<0.02,64.0,0.01>Inhale (sec / beats in Host x)
+slider17:0.3<0.0,64.0,0.01>Top pause (sec / beats in Host x)
+slider18:4.0<0.02,64.0,0.01>Exhale (sec / beats in Host x)
+slider19:0.3<0.0,64.0,0.01>Bottom pause (sec / beats in Host x)
 slider20:250<50,2000,1>Inhale Frequency Hz
 slider21:170<50,2000,1>Exhale Frequency Hz
 slider22:80<20,800,1>Breath High-pass Hz
@@ -178,7 +178,7 @@ slider62:0<0,1,1{Own BPM,Host x}>Rate Mode
 
 // Which rate the beats value below is setting. Extend by APPENDING, never by
 // inserting -- these indices are stored in projects.
-slider63:0<0,1,1{Heart rate,Breath}>Host sync target
+slider63:0<0,0,1{Heart rate}>Host sync target
 
 // One cycle of the selected target takes this many project beats. Free and
 // continuous on purpose: 5 beats is exactly as reachable as 4, and so is 5.3,
@@ -347,7 +347,7 @@ pr_smooth = exp(-1 / (srate * 0.003));
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 bpm_target               = slider1;
 breath_host_scale = 1;
-breath_beats = 16; breath_cycle_target = 1;
+
 // Host-sync trackers. All of them are ADOPTED IN @block, not here and not in
 // @slider -- see the note at the top of @block. hs_inited stays 0 until then,
 // and while it is 0 the sync block in @slider writes nothing at all, which is
@@ -399,9 +399,13 @@ speed_ramp_delay_elapsed_mem = 8384;  // delay sample counter per target (RUNTIM
 // default written here would reset the heart to one-per-beat and the breath to
 // sixteen every time you pressed play. (Which is exactly what it did -- found
 // by ear, 2026-08-30. The address itself is fine unguarded; it is a constant.)
-N_HS_TARGETS  = 2;      // 0 = Heart rate, 1 = Breath
+// One target today. The breath used to be the second, until it turned out the
+// breath does not want a cycle LENGTH at all -- it wants its four segments to
+// be in beats, which is Model B below. Targets APPEND here as they arrive
+// (Sigh interval is the obvious next one).
+N_HS_TARGETS  = 1;      // 0 = Heart rate
 HS_HEART      = 0;
-HS_BREATH     = 1;
+HS_BANK_SLOTS = 2;      // serialised width, frozen so the blob format holds
 host_beats_mem = 8400;
 
 // --- v3 Drift target memory banks ---
@@ -460,8 +464,8 @@ drift_cfg_inited != 1 ? (
   );
   last_target_select = 0;
   // Host-sync beats: CONFIG, same as everything else in this guard.
-  host_beats_mem[HS_HEART]  = 1;    // one heartbeat per beat
-  host_beats_mem[HS_BREATH] = 16;   // one breath per 16 beats
+  host_beats_mem[HS_HEART] = 1;     // one heartbeat per beat
+  host_beats_mem[1]        = 0;     // retired slot, kept for blob width
   drift_cfg_inited = 1;
 );
 
@@ -580,10 +584,11 @@ last_hs_sel   = hs_sel;
 last_hs_beats = slider64;
 
 // --- Landing in Host x, and landing SILENTLY -------------------------------
-// Both layers keep exactly what they were doing: the heart's current BPM is
-// converted into the beats that reproduce it at this tempo, and the breath
-// takes the cycle its four shape sliders already describe. Nothing you can
-// hear changes at the switch -- the tempo simply takes over from there.
+// Both layers keep exactly what they were doing. The heart's current BPM is
+// converted into the beats that reproduce it at this tempo; the breath's four
+// segments are converted from seconds into the beats of the same length.
+// Nothing you can hear changes at the switch -- the tempo takes over, and the
+// numbers keep reading in whatever unit their names now claim.
 //
 // The old behaviour was worse and this is why the landing existed at all: BPM
 // used to become a MULTIPLIER in Host x, so 70 meant seventy times the project
@@ -595,12 +600,29 @@ last_hs_beats = slider64;
 rate_mode_inited && last_rate_mode != rate_mode ? (
   rate_mode == 1 ? (
     host_beats_mem[HS_HEART] = max(0.25, min(64, max(tempo, 0.001) / max(slider1, 0.001)));
-    host_beats_mem[HS_BREATH] = max(0.25, min(64,
-      (slider16 + slider17 + slider18 + slider19) * max(tempo, 0.001) / 60));
     slider64 = host_beats_mem[min(N_HS_TARGETS-1, max(0, slider63))];
     slider_automate(slider64);
     last_hs_beats = slider64;
     hs_s1_shown   = slider1;
+    // The four breath sliders change UNIT here, so convert them, or a 4-second
+    // inhale would silently become a 4-BEAT one. Seconds -> beats at the
+    // current tempo keeps the breath sounding identical across the switch,
+    // and the numbers stay readable in the unit their name now claims.
+    br_u = max(tempo, 0.001) / 60;
+    slider16 = min(64, max(0.02, slider16 * br_u));
+    slider17 = min(64, max(0,    slider17 * br_u));
+    slider18 = min(64, max(0.02, slider18 * br_u));
+    slider19 = min(64, max(0,    slider19 * br_u));
+    sliderchange(-1);
+  );
+  // ...and back the other way, for the same reason.
+  rate_mode == 0 ? (
+    br_u = 60 / max(tempo, 0.001);
+    slider16 = min(64, max(0.02, slider16 * br_u));
+    slider17 = min(64, max(0,    slider17 * br_u));
+    slider18 = min(64, max(0.02, slider18 * br_u));
+    slider19 = min(64, max(0,    slider19 * br_u));
+    sliderchange(-1);
   );
   last_rate_mode = rate_mode;
 );
@@ -611,8 +633,6 @@ rate_mode_inited && last_rate_mode != rate_mode ? (
 // moving it converts back into beats above. Hiding a rate because a mode
 // changed is what this whole block exists to undo.
 //
-// Sliders 65/66 are storage for the two targets and are never shown: slider 64
-// plus each target's own rate slider are the two ways to see and set them.
 // Breaths per minute rewrites sliders 16-19, which cannot be redone on every
 // tempo change without writing automation on all four, so it stays an Own BPM
 // control and hides rather than sitting there inert.
@@ -859,8 +879,16 @@ host_beats_seed_pending && rate_mode_inited && hs_inited ? (
       host_beats_mem[HS_HEART] =
         max(0.25, min(64, max(tempo, 0.001) / max(slider1, 0.001)));
     );
-    host_beats_mem[HS_BREATH] = max(0.25, min(64,
-      (slider16 + slider17 + slider18 + slider19) * max(tempo, 0.001) / 60));
+    // Old blobs held the breath as a RATIO plus a separate cycle length. The
+    // four sliders are beats now, so convert them the same way entering Host x
+    // does: whatever they read as seconds becomes the same duration in beats
+    // at this tempo. That reproduces what the sliders SAY, which is the thing
+    // the user has been reading and adjusting.
+    br_u = max(tempo, 0.001) / 60;
+    slider16 = min(64, max(0.02, slider16 * br_u));
+    slider17 = min(64, max(0,    slider17 * br_u));
+    slider18 = min(64, max(0.02, slider18 * br_u));
+    slider19 = min(64, max(0,    slider19 * br_u));
     hs_s1_shown   = slider1;
     slider64      = host_beats_mem[min(N_HS_TARGETS-1, max(0, slider63))];
     last_hs_beats = slider64;
@@ -892,7 +920,7 @@ rate_mode == 1 ? (
   // BANK-derived, so it belongs here and not in @slider: @slider and
   // @serialize restore in no guaranteed order, so a value derived there can be
   // computed from an empty bank and never recomputed once the bank lands.
-  breath_beats = max(0.25, host_beats_mem[HS_BREATH]);
+
   // Keep the Heart rate slider showing what the sync is actually running at.
   // Clamp FIRST and compare against the clamped value, or a rate outside the
   // slider's range would be rewritten every block forever. The 0.6 threshold
@@ -923,8 +951,24 @@ rate_mode == 1 ? (
   // much faster or slower than that the four shape sliders would run on their
   // own. At the tempo where they already sum to the requested length the scale
   // is exactly 1 -- which is what makes entering Host x silent.
-  breath_cycle_target = max(breath_beats * 60 / max(tempo, 0.001), 0.001);
-  breath_host_scale = max(slider16 + slider17 + slider18 + slider19, 0.001) / breath_cycle_target;
+  // MODEL B. Sliders 16-19 ARE BEATS in Host x, and the breath is simply their
+  // sum -- exactly as in Own BPM they are seconds and the breath is their sum.
+  // One mental model, one unit swap, and nothing seeded behind the user.
+  //
+  // The mechanism is unchanged and costs nothing: segment lengths stay
+  // floor(srate * slider), and the state machine advances at tempo/60 samples
+  // per sample. A 4-beat inhale is 4*srate length consumed at tempo/60, which
+  // is 4*60/tempo seconds. Four beats, at any tempo, immediately -- a tempo
+  // change retimes the breath mid-segment because it changes the advance
+  // rather than the length.
+  //
+  // What this replaced: the four sliders were a RATIO and a separate value set
+  // the total. It fitted the shape correctly and was still wrong, because
+  // 4-0.5-8-1 stopped meaning anything you could count, halving the in and out
+  // did not shorten the breath (it only gave the pauses a bigger share), and
+  // the total was seeded from the tempo you happened to switch modes at.
+  // (Rozaya, three separate reports, 2026-08-30/31.)
+  breath_host_scale = max(tempo, 0.001) / 60;
 ) : (
   breath_host_scale = 1;
 );
@@ -1082,9 +1126,9 @@ breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_brea
 // Breaths/min aggregate scale. Drift wanders each segment cycle-to-cycle;
 // Speed Ramp adds a one-way movement over the configured duration; the
 // aggregate scales the whole breath rate.
-effective_inhale_sec = max((slider16 + target_drift_offset[2] + speed_ramp_inhale_offset) / breath_rate_scale, 0.1);
+effective_inhale_sec = max((slider16 + target_drift_offset[2] + speed_ramp_inhale_offset) / breath_rate_scale, 0.01);
 effective_top_sec    = max((slider17 + target_drift_offset[3] + speed_ramp_top_offset)    / breath_rate_scale, 0);
-effective_exhale_sec = max((slider18 + target_drift_offset[4] + speed_ramp_exhale_offset) / breath_rate_scale, 0.1);
+effective_exhale_sec = max((slider18 + target_drift_offset[4] + speed_ramp_exhale_offset) / breath_rate_scale, 0.01);
 effective_bot_sec    = max((slider19 + target_drift_offset[5] + speed_ramp_bot_offset)    / breath_rate_scale, 0);
 inhale_len = max(floor(srate * effective_inhale_sec), 1);
 top_len    = max(floor(srate * effective_top_sec), 1);
@@ -1496,7 +1540,7 @@ file_var(0, sr_magic);
   // instead of being trusted. Read past the end of a stream leaves the
   // destination untouched and raises nothing, so this cannot corrupt them.
   sr_magic == 2300000 + N_TARGETS ? (
-    file_mem(0, host_beats_mem, N_HS_TARGETS);
+    file_mem(0, host_beats_mem, HS_BANK_SLOTS);
     file_var(0, last_hs_sel);   // which target slider 64 was showing, as the
                                 // drift and ramp banks save their selectors
   ) : (

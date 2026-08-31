@@ -272,21 +272,33 @@ plugin only ever had one unit — "Seconds" and "Hz" would be meaningless here.
 bloodflow is locked to the heart, and the breath cycle is set in beats. One body,
 and the heart and lungs of one body don't disagree about how fast time is passing.
 
-**Host sync target** `Heart rate / Breath` (default Heart rate)
+**Host sync target** `Heart rate` (default Heart rate)
 **Every N beats (Host x)** `0.25 to 64, step 0.01, default 1`
 
-Two sliders, and only two — the numbers themselves live in the plugin's own
-memory and are saved with your project, the same way Drift stores a setting for
-every one of its ten targets behind four sliders. The list grows by adding
-targets, not by adding controls.
+The numbers live in the plugin's own memory and are saved with your project,
+the same way Drift stores a setting for each of its ten targets behind four
+sliders. One target today; the list grows by adding targets, not controls.
+
+**The breath is not on this list, and does not need to be** — see below.
 
 Two controls, sitting directly under Rate Mode, and they cover both rates. Pick
 the target, set how many project beats one cycle of it takes, move on. Pick the
 other target to set that one — the first keeps running exactly as you left it,
 the same way switching Drift's target doesn't stop the other drifts.
 
-One breath every 16 beats at 120 BPM is an 8-second breath; at 60 BPM it's
-sixteen seconds. A heartbeat every 1 beat at 70 BPM is 70 BPM.
+**The breath works differently, and more simply: its four sliders ARE beats in
+Host x.** Inhale 4, top pause 0.5, exhale 8, bottom pause 1 is a breath of 13.5
+beats — four beats in, eight beats out, exactly as written. Nothing to set the
+total with, because the total is the sum, which is the same rule Own BPM has
+always used with seconds.
+
+That is the whole unit change: **seconds when free-running, beats when synced**,
+and the slider names say so. Slow the project from 120 to 30 and that breath
+stretches from 6.75 seconds to 27 — same 4-and-8, more real time each.
+
+**Switching modes converts them for you**, so entering or leaving Host x sounds
+identical: a 4-second inhale at 120 BPM becomes an 8-beat inhale, which is the
+same 4 seconds. The numbers move because their unit moved; the breath does not. A heartbeat every 1 beat at 70 BPM is 70 BPM.
 
 **It is not a grid.** The beats value is a plain continuous number, so one cycle
 every **5** beats of a 4/4 track is exactly as reachable as 4 — and so is 5.3,
