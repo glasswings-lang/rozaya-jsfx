@@ -169,6 +169,15 @@ slider34:1<0,1,1{Inactive,Active}>Layer active
 slider35:0<-60,0,0.1>Layer level (dB, -60 = off)
 slider36:0<0,1,1{Off,Solo}>Layer solo
 slider37:-12<-96,96,0.1>Layer pitch (semitones, Custom layers)
+// CPU control, not a tone control. Every layer is its own set of oscillators --
+// nothing about them can be shared with the main voice or with each other, so
+// cost is layers x harmonics. A background layer rarely needs the same harmonic
+// count as the lead voice to read as "there." 0 = uncapped (this layer gets
+// whatever the source has, same as before this slider existed -- so it defaults
+// to no change in sound for every project saved before this landed). A plain
+// number, nudged by ear against CPU meter or crackle; no unit conversion, no
+// percentage, the machine does the min() against what the source actually has.
+slider38:0<0,64,1>Layer harmonics (0 = full)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -279,6 +288,7 @@ lay_semi    = freemem; freemem += 32;   // interval in semitones (the raw slider
 lay_db_base = freemem; freemem += 32;   // level in dB, before Drift/Ramp
 lay_active  = freemem; freemem += 32;   // 1 = audible, 0 = muted but remembered
 lay_solo    = freemem; freemem += 32;   // 1 = audition this layer alone
+lay_nharm   = freemem; freemem += 32;   // per-layer harmonic cap, raw slider (0 = uncapped)
 ser_scratch = freemem; freemem += 32;   // read-and-discard space for old @serialize layouts
 lay_perm    = freemem; freemem += 32;   // CANON layer order -> the pitch ladder
 lay_inv     = freemem; freemem += 32;   // ...and back, for the remembered selector positions
@@ -352,7 +362,7 @@ slots_inited == 0 ? (
   // The three Custom layers start somewhere musical (an octave down, an octave
   // up, two octaves down) so that raising one is immediately worth hearing.
   lay_semi[0] = -12; lay_semi[1] = 12;  lay_semi[2] = -24;
-  lpi = 0; loop(N_LAY_SLOTS, lay_solo[lpi] = 0; lpi += 1; );
+  lpi = 0; loop(N_LAY_SLOTS, lay_solo[lpi] = 0; lay_nharm[lpi] = 0; lpi += 1; );
   last_lay_sel = LAY_ORIG;
   last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
 );
@@ -776,10 +786,12 @@ last_lay_sel != lay_sel ? (
   lay_db_base[last_lay_sel] = slider35;
   lay_active[last_lay_sel]  = slider34;
   lay_solo[last_lay_sel] = slider36;
+  lay_nharm[last_lay_sel] = slider38;
   (last_lay_sel >= LAY_CUSTOM0 && last_lay_sel < LAY_CUSTOM0+N_CUSTOM) ? ( lay_semi[last_lay_sel-LAY_CUSTOM0] = slider37; );
   slider35 = lay_db_base[lay_sel]; slider_automate(slider35);
   slider34 = lay_active[lay_sel];  slider_automate(slider34);
   slider36 = lay_solo[lay_sel];    slider_automate(slider36);
+  slider38 = lay_nharm[lay_sel];   slider_automate(slider38);
   // The interval controls only mean anything on a Custom layer; an octave's
   // interval is fixed by which entry you picked. Load them anyway so the two
   // sliders always show the layer you are actually looking at.
@@ -791,6 +803,7 @@ last_lay_sel != lay_sel ? (
   lay_db_base[lay_sel] = slider35;
   lay_active[lay_sel]  = slider34;
   lay_solo[lay_sel] = slider36;
+  lay_nharm[lay_sel] = slider38;
   (lay_sel >= LAY_CUSTOM0 && lay_sel < LAY_CUSTOM0+N_CUSTOM) ? ( lay_semi[lay_sel-LAY_CUSTOM0] = slider37; );
 );
 // Show the interval controls only where they mean something: the picker on a
@@ -1470,11 +1483,15 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
       (lyk != LAY_ORIG && lyg > 0.0001) ? (
         lybo = lyk*NHARM;
         lyfa = fA*layer_ratio[lyk]; lyfb = fB*layer_ratio[lyk];
+        // Layer harmonics (slider38, per layer, 0 = uncapped): a plain count,
+        // never above what the source actually has (nharm_used). A layer with
+        // no cap set costs exactly what it always cost -- this is opt-in only.
+        lynh = lay_nharm[lyk] > 0 ? min(nharm_used, lay_nharm[lyk]) : nharm_used;
         voice_detune > 0 ? (
           lyfal = lyfa*(1-voice_detune); lyfar = lyfa*(1+voice_detune);
           lyfbl = lyfb*(1-voice_detune); lyfbr = lyfb*(1+voice_detune);
           lyv_al = 0; lyv_ar = 0; lyv_bl = 0; lyv_br = 0; vn = 0;
-          loop(nharm_used,
+          loop(lynh,
             hmA = hmA_arr[vn]; hmB = hmB_arr[vn];
             lypf = (vn+1)*lyfal; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
             lypf < hc_bound ? ( lyv_al += hmA*hcg*wtsin(lay_hph[lybo+vn]);
@@ -1495,7 +1512,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
         ) : (
           // Mono (Stereo width 0): one bank, L = R, mirroring the base voice.
           lyv_al = 0; lyv_bl = 0; vn = 0;
-          loop(nharm_used,
+          loop(lynh,
             lypf = (vn+1)*lyfa; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
             lypf < hc_bound ? ( lyv_al += hmA_arr[vn]*hcg*wtsin(lay_hph[lybo+vn]);
               lay_hph[lybo+vn]  += TWOPI*(vn+1)*lyfa/srate; lay_hph[lybo+vn]  >= TWOPI ? lay_hph[lybo+vn]  -= TWOPI; );
@@ -1688,6 +1705,16 @@ file_var(0, ser_magic);
     file_mem(0, lay_solo,    N_LAY_SLOTS);
   );
 
+  // --- Per-layer harmonic cap, appended after Solo. EOF-safe like every append
+  //     before it (Drift, Ramp, Capture point/average): a project saved before
+  //     this existed reads past the end here and lay_nharm keeps its @init
+  //     default of 0 (uncapped) for every layer -- exactly how those projects
+  //     already sound, so nothing changes on load. No magic bump needed and no
+  //     entry in the layer-order permutation below: it was introduced at the
+  //     current (already-canonical) layer order, so there is no older ordering
+  //     for it to need migrating from. ---
+  file_mem(0, lay_nharm, N_LAY_SLOTS);
+
   // --- Layer order migration, walked LAST so every older layout above has
   //     already been brought up to CANON: Custom 1..3, the twelve intervals low
   //     to high, then the original at the end.
@@ -1799,10 +1826,11 @@ file_var(0, ser_magic);
     // last_cap_slot is not in the stream, so the slider is its only source.)
     slider34 = lay_active[last_lay_sel];
     slider35 = lay_db_base[last_lay_sel];
-    last_lay_sel < N_CUSTOM ? (
-      slider37 = lay_semi[last_lay_sel];
+    (last_lay_sel >= LAY_CUSTOM0 && last_lay_sel < LAY_CUSTOM0+N_CUSTOM) ? (
+      slider37 = lay_semi[last_lay_sel-LAY_CUSTOM0];
     );
     slider36 = lay_solo[last_lay_sel];
+    slider38 = lay_nharm[last_lay_sel];
     sliderchange(-1);
   );
 );

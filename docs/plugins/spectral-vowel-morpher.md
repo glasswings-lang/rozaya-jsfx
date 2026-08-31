@@ -164,11 +164,14 @@ While soloing, the wash's per-grain auto-gain brings a quiet layer up to a norma
 **Layer pitch (semitones, Custom layers)** `-96 to +96` — *shown only on a Custom layer*
 The interval by hand, for anything the selector doesn't name — a seventh, six octaves, or a fractional offset for a slow beating unison. Same eight-octave range as Pitch itself.
 
+**Layer harmonics (0 = full)** `0 to 64, default 0`
+Caps how many partials *this one layer* synthesises on the voice engine, independent of the main voice's own detail. 0 means uncapped — the layer gets whatever the source has, exactly as before this control existed, so no saved project changes sound on load. A plain count, nothing to convert: set it lower and the layer gets simpler; the plugin never lets it exceed what the source actually has, so raising it past that point does nothing further. A background/support layer usually doesn't need the same partial count as the layer you're actually listening to, so this is where to spend a CPU cut before touching High cut or Stereo width, which affect every layer and the main voice at once.
+
 #### Cost, and how deep you can go
 
-Near enough free on the wash — one extra spectrum read per bin, inside a grain that was being built anyway, with no second FFT.
+Near enough free on the wash — one extra spectrum read per bin, inside a grain that was being built anyway, with no second FFT. Layer harmonics doesn't apply there; wash cost doesn't scale with partial count.
 
-On the voice each raised layer is another 64 partials, but the **upward** layers get cheaper the higher they go, because their partials cross Nyquist (or your High cut) and stop being computed at all. On a capture around 200 Hz, an octave up is 60 partials, two up is 30, three up is 15, four up is 7. The downward layers are the expensive ones — each is a full 64. Four octaves down all at once is real CPU; the same four upward is close to free.
+On the voice each raised layer is another 64 partials, but the **upward** layers get cheaper the higher they go, because their partials cross Nyquist (or your High cut) and stop being computed at all. On a capture around 200 Hz, an octave up is 60 partials, two up is 30, three up is 15, four up is 7. The downward layers are the expensive ones — each is a full 64. Four octaves down all at once is real CPU; the same four upward is close to free. Layer harmonics is the direct lever on that: pull a downward layer's count down by hand instead of waiting for High cut to do it for every layer at once.
 
 Four octaves each way is the usable span of a voice capture: four down is at the floor of hearing, four up is past where a captured harmonic series has much content left. Anything wider is a Custom layer — **and depth is free, but watch your meters.** The Custom range goes to eight octaves either way because nothing in the engine cares. Past about five octaves down, though, a layer is below hearing: inaudible, but still eating headroom and moving speaker cones. A subsonic layer you can't hear is still on the meter.
 

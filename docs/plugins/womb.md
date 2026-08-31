@@ -298,7 +298,25 @@ stretches from 6.75 seconds to 27 — same 4-and-8, more real time each.
 
 **Switching modes converts them for you**, so entering or leaving Host x sounds
 identical: a 4-second inhale at 120 BPM becomes an 8-beat inhale, which is the
-same 4 seconds. The numbers move because their unit moved; the breath does not. A heartbeat every 1 beat at 70 BPM is 70 BPM.
+same 4 seconds. The numbers move because their unit moved; the breath does not.
+
+**Systole works the same way.** `Systole (ms / beats in Host x)` is the gap
+between the lub and the dub. In Host x it is in beats, so both halves of the
+heartbeat land where you put them: `0.25` puts the dub a quarter-beat after the
+lub, `0.5` exactly halfway to the next beat — and that stays true at any tempo,
+which is the thing a millisecond value can never do. The default 120 ms converts
+to 0.24 beats at 120 BPM, so switching modes changes nothing you can hear.
+
+| in beats | what you hear | at 60 BPM | at 120 | at 180 |
+|---|---|---|---|---|
+| 0.125 | an eighth of a beat after the lub | 125 ms | 62 ms | 42 ms |
+| 0.25 | a quarter-beat after | 250 ms | 125 ms | 83 ms |
+| 0.5 | halfway to the next beat | 500 ms | 250 ms | 167 ms |
+
+Note the physiological caveat: a real systole stays roughly constant as heart
+rate changes rather than scaling with it, so a beats value is the *musical*
+choice, not the anatomical one. Own BPM keeps milliseconds for when you want the
+body to be right. A heartbeat every 1 beat at 70 BPM is 70 BPM.
 
 **It is not a grid.** The beats value is a plain continuous number, so one cycle
 every **5** beats of a 4/4 track is exactly as reachable as 4 — and so is 5.3,

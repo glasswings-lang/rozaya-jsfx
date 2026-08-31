@@ -39,7 +39,19 @@ slider2:0<0,1,1{Normal,Flipped}>Master Stereo Flip
 // --- HEARTBEAT ---
 slider3:1.0<0.0,1.0,0.01>HB Master Volume
 slider4:0<0,1,1{Off,Solo}>Heartbeat Solo
-slider5:120<50,400,1>Systole ms (S1->S2 gap)
+// The lub-dub gap, and in Host x it is IN BEATS -- so both halves of the
+// heartbeat land where you put them on the grid, instead of the lub landing on
+// the beat and the dub falling wherever a fixed millisecond count happens to
+// put it at this tempo. It also retires the one control in the plugin whose
+// number lived in a different order of magnitude from everything near it:
+// 0.25 of a beat means a quarter of a beat at any tempo, where 120 ms only
+// means something once you also hold the heart rate in your head.
+//
+// One slider serves both units because typing works (FX box, or Tab in the
+// parameter list), so 100,000 positions is not a navigation problem -- type
+// it, then nudge by ear. The step is what decides which values EXIST, and
+// 0.01 reaches everything either unit needs.
+slider5:120<0.01,1000,0.01>Systole (ms / beats in Host x)
 slider6:1.0<0.0,1.0,0.01>S1 Volume
 slider7:0.7<0.0,1.0,0.01>S2 Volume
 slider8:0.3<0.0,1.0,0.01>Brightness
@@ -221,6 +233,7 @@ s2_phase_osc_near = 0; s2_phase_osc_far = 0;
 cycle_len_base = floor(srate * 60.0 / 70.0);
 cycle_len = cycle_len_base;
 systole_samples = floor(srate * 120.0 * 0.001);
+sys_unit_sec    = 0.001;
 s1_vol = 1.0;
 s2_vol = 0.7;
 s1_decay = exp(-srate_inv / 0.060);
@@ -613,6 +626,8 @@ rate_mode_inited && last_rate_mode != rate_mode ? (
     slider17 = min(64, max(0,    slider17 * br_u));
     slider18 = min(64, max(0.02, slider18 * br_u));
     slider19 = min(64, max(0,    slider19 * br_u));
+    // Systole too: milliseconds -> beats of the same length.
+    slider5 = min(1000, max(0.01, slider5 * br_u * 0.001));
     sliderchange(-1);
   );
   // ...and back the other way, for the same reason.
@@ -622,6 +637,7 @@ rate_mode_inited && last_rate_mode != rate_mode ? (
     slider17 = min(64, max(0,    slider17 * br_u));
     slider18 = min(64, max(0.02, slider18 * br_u));
     slider19 = min(64, max(0,    slider19 * br_u));
+    slider5  = min(1000, max(0.01, slider5 * br_u * 1000));
     sliderchange(-1);
   );
   last_rate_mode = rate_mode;
@@ -646,7 +662,7 @@ slider_show(slider64, rate_mode == 1);
 bpm_target = rate_mode == 1
   ? max(tempo, 0.001) / max(host_beats_mem[HS_HEART], 0.25)
   : slider1;
-systole_samples = floor(srate * slider5 * 0.001);
+systole_samples = floor(srate * slider5 * (rate_mode == 1 ? 60 / max(tempo, 0.001) : 0.001));
 s1_vol = slider6;
 s2_vol = slider7;
 s1_freq = slider11; s2_freq = slider12;
@@ -889,6 +905,7 @@ host_beats_seed_pending && rate_mode_inited && hs_inited ? (
     slider17 = min(64, max(0,    slider17 * br_u));
     slider18 = min(64, max(0.02, slider18 * br_u));
     slider19 = min(64, max(0,    slider19 * br_u));
+    slider5  = min(1000, max(0.01, slider5 * br_u * 0.001));
     hs_s1_shown   = slider1;
     slider64      = host_beats_mem[min(N_HS_TARGETS-1, max(0, slider63))];
     last_hs_beats = slider64;
@@ -969,8 +986,11 @@ rate_mode == 1 ? (
   // the total was seeded from the tempo you happened to switch modes at.
   // (Rozaya, three separate reports, 2026-08-30/31.)
   breath_host_scale = max(tempo, 0.001) / 60;
+  // Systole rides the same unit swap: beats in Host x, milliseconds in Own BPM.
+  sys_unit_sec = 60 / max(tempo, 0.001);
 ) : (
   breath_host_scale = 1;
+  sys_unit_sec = 0.001;          // milliseconds
 );
 
 @sample
@@ -1108,8 +1128,11 @@ effective_bpm  = max(bpm_smoothed + target_drift_offset[0] + heart_with_breath_o
 cycle_len_base = floor(srate * 60.0 / effective_bpm);
 
 // Apply systole drift (target 1) + Speed Ramp offset: baseline ms + drift + ramp.
-effective_systole_ms = max(slider5 + target_drift_offset[1] + speed_ramp_systole_offset, 1);
-systole_samples      = floor(srate * effective_systole_ms * 0.001);
+// Drift and Speed Ramp offsets are in the slider's own unit, so they ride the
+// conversion with it. The floor is 0.001 of a unit rather than 1: in Host x a
+// floor of 1 would be a whole beat.
+effective_systole = max(slider5 + target_drift_offset[1] + speed_ramp_systole_offset, 0.001);
+systole_samples   = floor(srate * effective_systole * sys_unit_sec);
 
 // Breaths/min aggregate (target 7): a proportional scale across ALL four
 // segments in lockstep, preserving the I:E ratio — the ratio-based

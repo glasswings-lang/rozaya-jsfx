@@ -175,10 +175,24 @@ An earlier draft of this rule said the opposite — that a slider should land in
 100–1000 positions, and that a million positions meant the precision was fictional. That
 was wrong, and the reason it was wrong matters:
 
-**In REAPER's parameter list you can only arrow, not type.** So a step of 0.1 where 0.05
-is needed does not mean "slightly clumsy" — it means that value **does not exist** in the
-parameter list, and the only way to reach it is to leave the list and type into the FX
-window instead. Coarse steps do not tidy the interface; they eject you from it.
+**CORRECTED 2026-08-31 (Star).** An earlier version of this paragraph claimed you can
+only arrow in the parameter list, never type. That is wrong: focus a parameter, Tab, and
+there is an editable value field — and in the FX dialog you can type into the box beside
+the slider. **Typing is available in both places.**
+
+The rule survives the correction, but for a different and better reason. What a step
+controls is not how far you have to travel — you can always type — it is **which values
+exist at all**. A step of 0.1 where 0.05 is needed means 0.05 cannot be set by any means,
+typed or arrowed, because the control quantises to the step. So a coarse step does not
+make a value awkward to reach; it deletes it.
+
+And the position count stops mattering entirely. A slider spanning 0.01 to 1000 at step
+0.01 is 100,000 positions and is perfectly usable: you type the number you want, then
+nudge by ear from there. This is what makes **one slider serve two units** viable —
+Systole as milliseconds in Own BPM and beats in Host x on a single 0.01–1000 range —
+where an arrow-only reading of the constraint said it needed two sliders.
+(Star, 2026-08-31: *"you don't need extra sliders or anything. You can just trust the
+ears."*)
 (Rozaya, 2026-08-28: *"I want the full range of stuff, and I want it to have the fine
 grain control, not the hundredfold bullshit."*)
 
