@@ -1434,8 +1434,8 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
         hphBR[vn] += TWOPI*(vn+1)*fBR/srate; hphBR[vn] >= TWOPI ? hphBR[vn] -= TWOPI; );
       vn += 1;
     );
-    hVL = ((1-vmfr)*vvAL + vmfr*vvBL) * 0.08;   // ~match the wash's ~0.1 RMS
-    hVR = ((1-vmfr)*vvAR + vmfr*vvBR) * 0.08;
+    hVL = base_gain * ((1-vmfr)*vvAL + vmfr*vvBL) * 0.08;   // ~match the wash's ~0.1 RMS
+    hVR = base_gain * ((1-vmfr)*vvAR + vmfr*vvBR) * 0.08;
   ) : (
     // Mono (Stereo width 0): the exact original single-bank path, L = R.
     vvA = 0; vvB = 0; vn = 0;
@@ -1449,7 +1449,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
         hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI; );
       vn += 1;
     );
-    hVL = ((1-vmfr)*vvA + vmfr*vvB) * 0.08;
+    hVL = base_gain * ((1-vmfr)*vvA + vmfr*vvB) * 0.08;
     hVR = hVL;
   );
   // --- Layers: the same two morph voices again, at each layer's frequency
@@ -1512,8 +1512,6 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     );
   );
 ) : ( hVL = 0; hVR = 0; );
-// Base voice out of the way while a layer is soloed (exactly 1.0 otherwise).
-hVL *= base_gain; hVR *= base_gain;
 
 // --- crossfade voice <-> wash (equal-power), gate on having a capture ---
 have > 0 ? (
