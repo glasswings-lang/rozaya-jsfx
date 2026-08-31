@@ -589,22 +589,36 @@ from 2026-08-22 and the note there is explicit that the assumption expires silen
 
    **The actual fix is two changes, and neither takes anything away.**
 
-   **(a) Size the amount slider to the largest sensible WANDER, not the largest target.**
-   Womb's `Drift up amount` reaches 2000 because breath frequency reaches 2000 Hz — but
-   drift is a wander around a baseline and nobody wanders a parameter across its entire
-   existence. A realistic ceiling is a fraction of the range. Womb drops from 0–2000 to
-   roughly 0–200, and the step gets ten times finer at the same navigability. This is the
-   assumption that produced every oversized amount slider in the suite, and it was never
-   examined.
+   **(a) RETRACTED 2026-08-31, superseded by R12.** This clause said to size the amount
+   slider to "the largest sensible WANDER, not the largest target", on the reasoning that
+   *"nobody wanders a parameter across its entire existence."*
+
+   That is condescension dressed as design (Star, 2026-08-31: *"'sensible wander' was
+   Claude's condescension toward Rozaya. I'm surprised it stuck around."*), and it is the
+   same move as the rejected "a million positions means the precision is fictional"
+   argument two rules earlier — deciding in advance what someone would plausibly want and
+   then building that ceiling into the control so they cannot exceed it.
+
+   It is also simply **wrong on the music**: sweeping a filter across its entire range
+   over an hour is an ordinary ambient/drone gesture, and the clause would have made it
+   unreachable. The whole point of drift is that it replaces automation envelopes, and an
+   envelope has no such cap.
+
+   **R12 governs instead:** the range is 0–1000 or wider, and reachability of small values
+   is the STEP's job, not the ceiling's. Note the pattern for catching the next one — this
+   clause survived a rewrite because it sounded like restraint. Any rule justified by what
+   the user would "realistically" want is the suspect kind.
 
    **(b) Where a target is written as a fraction, write it as a percent** (R9).
    `Random HRV depth` at `0..0.08` becomes `0..8`; `Breath HRV depth` at `0..0.25`
    becomes `0..25`. Same control, same precision, *larger* numbers — and a drift step of
    0.1 now lands eighty times inside the small one instead of overshooting it.
 
-   Together these bring every target on a given selector into a comparable magnitude,
-   which is what makes one shared amount slider workable at all. Note this changes target
-   sliders' **ranges**, so it is Phase 2 work with a migration, not Phase 1.
+   **(b) stands** — it is R9, and it takes nothing away: writing a fraction as a percent
+   is the same control with larger, whole numbers. Together with R12 it brings every
+   target on a selector into a comparable magnitude, which is what makes one shared amount
+   slider workable. This changes target sliders' **ranges**, so it is Phase 2 work with a
+   migration, not Phase 1.
 
 3. **`Capture slot` display base.** Both spectral pages document 1–8; source is 0–7
    since the 2026-07-09 change, with no display remapping. The docs are stale rather
