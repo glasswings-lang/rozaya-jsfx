@@ -459,6 +459,21 @@ is the easiest thing in the world to trust wrongly.
 worth having because a false report costs a glance while a missed one costs a session —
 but nothing may be declared correct because a tool did not object.
 
+### `docs/layouts/<plugin>.md` — one authored layout per plugin
+
+**Where the per-plugin work lives.** Each plugin gets a file holding, together:
+
+- **what changes and why**, one numbered reason per problem being fixed
+- **the new reading order** as a table, new number against old
+- **the migration** — both halves, positions and any values whose meaning changes
+- **status**: draft / order approved / built / ear-tested
+
+Written **by hand**, per the boundary above. This is the artefact that gets reviewed
+before anything is touched, and reviewing a reading order is something Rozaya can do
+directly — it needs no code reading, which is exactly why it is the review gate.
+
+Done: `melody-phase.md` (order approved 2026-08-31, not built).
+
 ### `tools/suite_layout.py`
 
 Holds the canonical layout and, per plugin, the section assignment for each slider.
