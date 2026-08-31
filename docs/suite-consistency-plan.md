@@ -744,3 +744,54 @@ R2 for those four, and R6's mixed phrasing is gone from this plugin.
 between modes is a naming problem first. Reach for a redesign only after checking
 that the redesign can still be *entered* in the numbers the user actually thinks
 in -- scaling behaviour is easy to verify and entry cost is easy to forget.
+
+### R12. Ranges are 0–1000, or −1000–1000 where the sign means something
+
+Decided 2026-08-31 with Star. Unconventional and deliberate: **stop hand-picking a
+range per control.** Today's ranges are authorial accident in exactly the way R8's step
+sizes are — `0..30`, `1..3`, `0..5`, `50..400` — each one somebody's guess at what would
+ever be wanted, and each one a ceiling nobody agreed to.
+
+**The rule:** a numeric slider spans **0 to 1000**, or **−1000 to 1000** where a negative
+value does something real. Pick the step from the finest adjustment ever wanted (R8), and
+let the position count be whatever it is.
+
+**Why the position count stopped mattering** — this is what makes the rule possible, and
+it is a correction, not a preference. Typing works: the FX dialog has a box beside the
+slider, and in the parameter list you focus a parameter, press Tab, and there is an
+editable field. So you type the value and nudge by ear from there. An earlier draft of R8
+argued the opposite from an arrow-only premise that was simply wrong.
+
+**Three carve-outs, and the first one has teeth:**
+
+1. **"1000 or wider" — never a ceiling.** Narrowing a range **permanently clamps saved
+   values**. Several controls are already past 1000 and must stay: breath frequencies
+   (`50..2000`), the post-filter (`50..4000`), `Drift up/down` (`0..2000`), `Speed ramp by`
+   (`-2000..2000`). The rule raises floors and ceilings; it never lowers them.
+2. **Enums are exempt.** Rate Mode, Fade Mode, drift shapes, target selectors.
+3. **The `0..1` controls need a UNIT change, not just a range change.** Volumes, fades and
+   the bloodflow proportions all live in `0..1`. Making them `0..1000` means deciding what
+   1000 *is*. The honest answer is percent with 100 = unity, which also buys up to 10×
+   boost where today nothing can exceed 1.0 — and it satisfies R9 (whole numbers over
+   decimals). But it changes what every one of those sliders MEANS, so it is called out
+   here rather than sliding in under a range sweep.
+
+**Negatives are added only where they do something.** Not as symmetry.
+
+| Control | Verdict |
+|---|---|
+| `Heart with breath (BPM peak-to-peak)`, Womb | **Yes** — negative is *inverted RSA*, the heart slowing on the inhale. Normal RSA is a coherence signature and its inversion is a dysregulation one, which is the exact axis the nervous-system-states work runs on. Today you can depict "no RSA" and not "backwards RSA". |
+| `HB Stereo Width ms`, Womb | Already signed, and correctly — the sign picks which side the heart sits on. |
+| `Sigh depth multiplier`, Womb | Not a negative: it wants a **floor below 1**. `1..3` cannot express a breath *shorter* than normal — a catch, a gasp, a held-in flinch. |
+| Any volume / level | **No.** Negative means polarity inversion, which reads as nothing alone and cancels when layers sum — against the suite's mono-compatibility rule. A trap, not a feature. |
+
+**Automation risk: measured, and it is zero.** Changing a range rescales any existing
+envelope, because REAPER stores envelope points normalised. Grepped the whole library on
+2026-08-31: **`PARMENV` appears in no `.RPP` at all**, so no parameter on any plugin
+carries an envelope. Re-run before the sweep, but the finding also stands as evidence that
+Drift and Speed Ramp replaced envelopes outright rather than supplementing them.
+
+**Sequencing.** A range change is the one thing R8's cost ladder puts in the *risky* row,
+so this is **Phase 2 work, folded into each plugin's reorder** — one migration per plugin,
+never two. Womb's own list (RSA to signed, sigh depth floor, systole already done at
+`0.01..1000`, the `0..1` group pending the percent decision) rides its reorder.
