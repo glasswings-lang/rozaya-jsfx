@@ -769,7 +769,13 @@ argued the opposite from an arrow-only premise that was simply wrong.
    (`50..2000`), the post-filter (`50..4000`), `Drift up/down` (`0..2000`), `Speed ramp by`
    (`-2000..2000`). The rule raises floors and ceilings; it never lowers them.
 2. **Enums are exempt.** Rate Mode, Fade Mode, drift shapes, target selectors.
-3. **The `0..1` controls need a UNIT change, not just a range change.** Volumes, fades and
+3. **dB is exempt: its range comes from audibility.** A level slider wants roughly
+   `-60..+12`, not a house number — `-60` is already inaudible and `+1000 dB` is not a
+   quantity. Where a control is in dB, the range is set by what can be heard, and the
+   suite's existing convention holds: **`-60 = off`** (`Layer level (dB, -60 = off)`,
+   `V1 Gain dB` at `-60..6`). This matters because R12 and the level conversion in the
+   note below would otherwise collide the moment Womb's volumes convert.
+4. **The `0..1` controls need a UNIT change, not just a range change.** Volumes, fades and
    the bloodflow proportions all live in `0..1`. Making them `0..1000` means deciding what
    1000 *is*. The honest answer is percent with 100 = unity, which also buys up to 10×
    boost where today nothing can exceed 1.0 — and it satisfies R9 (whole numbers over
@@ -795,3 +801,37 @@ Drift and Speed Ramp replaced envelopes outright rather than supplementing them.
 so this is **Phase 2 work, folded into each plugin's reorder** — one migration per plugin,
 never two. Womb's own list (RSA to signed, sigh depth floor, systole already done at
 `0.01..1000`, the `0..1` group pending the percent decision) rides its reorder.
+
+### The `0..1` group — three families, not one
+
+Written up 2026-08-31 after Star asked what the deal with them was. Sixteen sliders in
+Womb alone once the on/off enums are stripped, and they look uniform while being three
+different kinds of quantity.
+
+**Family 1 — LEVELS.** Womb: HB Master / S1 / S2 / Breath / Bloodflow Volume. These are
+**linear gain**, which is perceptually skewed: the top *half* of the control buys 6 dB,
+while everything from quiet to silent is crammed into the bottom tenth (0.1 is −20 dB,
+0.01 is −40). They also cannot exceed unity, so making one layer louder means turning
+every other layer down.
+
+**The suite already decided this** — Morpher's `Input level (dry, dB)` and `Output level
+(dB)`, Polyrhythm's `V1 Gain dB` at `-60..6`, the Morpher layers' `-60 = off`. Womb's
+volumes are linear only because Womb predates the decision. → **dB, `-60 = off`.**
+
+**Family 2 — REAL PROPORTIONS.** The four breath fades, plus Bloodflow Attack and Decay
+(two of which already say *"proportion of cycle"* in their names). → **percent.** `30`
+rather than `0.3`; same control, same precision, no decimals. Pure R9.
+
+**Family 3 — ABSTRACT AMOUNTS.** Brightness, both Stereo Widths, Dicrotic Level,
+Resonance. Not a fraction of anything nameable; `0..1` is where somebody landed.
+→ **percent**, for the same reason.
+
+**The incoherent caps are the evidence.** Three neighbouring bloodflow sliders:
+Resonance `0..0.95`, Attack `0.005..0.5` step `0.005`, Decay `0.05..0.95` step `0.01`.
+Three ceilings, two steps, no principle. That is what R8 and R12 exist to end.
+
+**Migration.** Percent is `x100` — exact, sound identical, nothing to decide. dB is
+`20*log10(v)`, also exact, with one wrinkle: 0 has no dB value, so it maps to the floor
+and the floor becomes "off" — which is what `-60 = off` already means everywhere else.
+
+Both are **Phase 2**, folded into each plugin's reorder, because they move ranges.
