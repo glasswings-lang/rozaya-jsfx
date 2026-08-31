@@ -908,3 +908,68 @@ the four segments, preserving the I:E ratio as today; only the control changes.
 **Left open, deliberately:** there is no amplitude component at all, despite the current
 name promising one. A real sigh is a bigger breath, not merely a slower one. A separate
 `Sigh louder by (dB)` would make the feature honest — worth doing, not part of this.
+
+### R14. Speed Ramp states a DESTINATION, not a delta
+
+Decided 2026-08-31 with Star. `Speed ramp by -35` requires knowing where the parameter
+is and adding. `Speed ramp to 35 BPM` is the end goal stated outright, with no arithmetic
+in it at all. For a control whose whole purpose is *"wind down over the next hour while I
+fall asleep"*, the destination **is** the thing already in mind; the delta is a conversion
+forced on the user to express it. Star, on why this matters more than it looks: *"it's
+more fucking adding than we can deal with sometimes because our cognitive lag is so bad."*
+
+**This reverses a 2026-06-09 decision, and the reason it was reversed the first time is
+the reason it can be reversed back.** Womb v3 originally had destination semantics and
+Rozaya rejected them — because the amount defaulted to 0, so engaging the ramp meant
+"take the heart to 0 BPM" and the sound died. That was a **default problem misdiagnosed as
+a semantics problem**, and we threw out the semantics to fix the default.
+
+**The fix for the actual problem:** on first selecting a target, its destination **seeds
+to where that parameter already is**. "Ramp to where I am" is no change, safely, and any
+move from there states a goal. Identical continuity trick to the one that makes entering
+Host x silent, which the suite has now implemented twice and trusts.
+
+Consequences:
+- The slider becomes `Speed ramp to`, in the **target's own unit** — which R12's
+  `-1000..1000` already accommodates for every target in the suite.
+- Seeding is per target and belongs in `@block` (it reads a bank), per the standing rule.
+- `Speed ramp engage` still gates whether the ramp advances; nothing about the
+  freeze/resume behaviour changes.
+
+**Naming note that generalises:** `by` only reads as a sentence *because a selector sits
+next to it finishing it* — "speed ramp by −35, target Heart rate." Anywhere there is no
+selector to complete the phrase, `by` dangles. This is why `Sigh by` was proposed and
+immediately failed the read-aloud test (*"sigh by... what. what?"*). **Test a slider name
+by saying it aloud with its value and nothing else.**
+
+### R15. The sigh gets its own four segments, and the multiplier goes
+
+Star, 2026-08-31: *"we're trying to apply a very coarse control to a very dynamic thing.
+Because we have the four sections of the normal breath, we don't have the four sections of
+the sigh. And if you look at actual sighing, there is four sections. It's very distinct.
+It's not just a computery shift in the normal breath."*
+
+That is the correct diagnosis and it supersedes R13a's replacement. Scaling all four
+segments by one number preserves the proportions exactly and only stretches time — so what
+comes out is the same breath, slower. A sigh differs in **shape**, not size: a bigger
+inhale against a longer, more passive exhale and a longer settle after it. Different
+ratios, not a different tempo. No single multiplier or delta can express that, which is
+why every naming attempt for one felt wrong.
+
+**Replacement:** `Sigh depth multiplier` is deleted, and the sigh gets **Sigh inhale / Sigh
+top pause / Sigh exhale / Sigh bottom pause**, in the same units as the normal four
+(`sec / beats in Host x`), sitting immediately after `Sigh interval` in the breath group.
+Four plain numbers in a unit already learned. Net +3 sliders in that group.
+
+**Migration is exact and free.** Today's sigh is `normal x multiplier`, so seed the four
+sigh segments at the saved multiplier times the normal four. Every existing project sounds
+identical on load, and from then on the exhale can be pulled long without touching the
+inhale.
+
+**Still open, and worth its own look:** the classic augmented sigh is *biphasic* — an
+inhale, a brief catch, then a second inhale stacked on top of the first, before the long
+release. Four sections in the normal breath's shape cannot express the stacked second
+inhale. Whether that is worth a fifth segment is a question for when the four are in and
+audible, not before. Also still true from R13a: there is **no amplitude component** — a
+real sigh is a bigger breath, not only a longer one, and `Sigh louder by (dB)` would make
+the feature honest.
