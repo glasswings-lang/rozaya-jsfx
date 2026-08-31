@@ -503,6 +503,7 @@ hs_sel    = slider63;
   abs(slider1 - hs_s1_shown) > 0.6 ? (
     slider66 = max(0.25, min(64, max(tempo, 0.001) / max(slider1, 0.001)));
     hs_s1_shown = slider1;
+    sliderchange(-1);
   );
 
   hs_sel != last_hs_sel ? (
@@ -514,7 +515,23 @@ hs_sel    = slider63;
   ) : (
     slider64 != last_hs_beats ? (
       // (c) The beats value moved: it is the truth, so store it on the target.
+      //
+      // sliderchange() is NOT optional here. Assigning to sliderN sets the
+      // variable, but REAPER keeps its own copy of every parameter and hands
+      // that copy back on the next @slider -- so an unannounced write is
+      // reverted a moment later, and never saved with the project either.
+      // That is exactly how this shipped broken: the breath's beats were
+      // written, snapped back on the next pass, and case (d) then dragged the
+      // visible value back to the old one. The heart hid the bug because
+      // @block refreshes its BPM readout with sliderchange(-1) every block,
+      // and -1 means ALL sliders, which incidentally flushed the heart's
+      // store. The breath had no such refresh. (Found by ear, 2026-08-30.)
+      //
+      // sliderchange rather than slider_automate: these are hidden storage,
+      // and slider_automate would write automation for a control the user
+      // cannot see.
       hs_sel == 0 ? ( slider66 = slider64; ) : ( slider65 = slider64; );
+      sliderchange(-1);
     ) : (
       // (d) The stored value moved underneath us (case (a), or a project
       //     load). Follow it, so the two views can never sit there
@@ -549,6 +566,7 @@ rate_mode_inited && last_rate_mode != rate_mode ? (
       (slider16 + slider17 + slider18 + slider19) * max(tempo, 0.001) / 60));
     slider64 = slider63 == 0 ? slider66 : slider65;
     slider_automate(slider64);
+    sliderchange(-1);          // 65 and 66 were just written -- announce them
     last_hs_beats = slider64;
     hs_s1_shown   = slider1;
   );
