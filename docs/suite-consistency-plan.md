@@ -110,7 +110,8 @@ A target list may not offer something the user cannot see or set. Two consequenc
 ### R4. Units go in parentheses at the end of the name
 
 `Frequency low (Hz)`, not `Frequency Low Hz`. Currently the suite runs both forms, plus
-a mixed form (`Inhale Duration sec (shape only in Host x)`). Four different spellings
+a mixed form (`Inhale Duration sec (shape only in Host x)` -- since fixed, see the
+2026-08-30 addendum). Four different spellings
 exist for a cutoff frequency in Hz across four plugins.
 
 Additional qualifiers go inside the same parenthetical after the unit:
@@ -702,3 +703,30 @@ replacement is in — so it does not force the Phase 2 renumber to happen first.
 **Build order:** Womb first — it has the most rates, it is the one that exposed the
 problem, and it has just been ear-tested, so a regression there is legible. Then the rest
 by family, following the Phase 2 batches.
+
+### Womb's breath sliders stay in SECONDS -- decided 2026-08-30
+
+The addendum above offered two ways to stop the four breath duration sliders
+reading as seconds when Host x makes them proportional. A third was proposed in
+conversation and is the one worth recording, because it is attractive and wrong:
+make them **shares** (or percentages), identical in both modes, with the cycle
+length coming from `Breaths per minute` in Own BPM and `Every N beats` in Host x.
+It unifies the two modes, untangles speed from shape, and needs no annotation.
+
+**Rejected, by Rozaya, on entry cost.** A 4-0.5-8-1 breath is four numbers you can
+feel and type. The same breath in shares is 29.6 / 3.7 / 59.3 / 7.4, reachable
+only by dividing each one by 13.5 -- the conversion barrier
+`docs/dyscalculia-accessibility-sweep.md` exists to refuse. Shares would have
+scaled with the project tempo perfectly well; they simply could not be entered.
+
+**What shipped instead is only a rename**, because the behaviour was already
+right: `Inhale (sec, ratio in Host x)` and its three siblings. Seconds when
+free-running, ratio when synced, and a tempo change stretches the whole shape in
+proportion. Two things fell out for free -- the four target strings in the Drift
+and Ramp lists now match their slider labels minus the parenthetical, satisfying
+R2 for those four, and R6's mixed phrasing is gone from this plugin.
+
+**The general lesson for the rest of the sweep:** a unit that changes meaning
+between modes is a naming problem first. Reach for a redesign only after checking
+that the redesign can still be *entered* in the numbers the user actually thinks
+in -- scaling behaviour is easy to verify and entry cost is easy to forget.

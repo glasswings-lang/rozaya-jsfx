@@ -52,10 +52,10 @@ slider13:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
 // --- BREATH ---
 slider14:0.5<0.0,1.0,0.01>Breath Volume
 slider15:0<0,1,1{Off,Solo}>Breath Solo
-slider16:4.0<0.5,20.0,0.1>Inhale Duration sec (shape only in Host x)
-slider17:0.3<0.0,5.0,0.1>Top Pause sec (shape only in Host x)
-slider18:4.0<0.5,20.0,0.1>Exhale Duration sec (shape only in Host x)
-slider19:0.3<0.0,5.0,0.1>Bottom Pause sec (shape only in Host x)
+slider16:4.0<0.5,20.0,0.1>Inhale (sec, ratio in Host x)
+slider17:0.3<0.0,5.0,0.1>Top pause (sec, ratio in Host x)
+slider18:4.0<0.5,20.0,0.1>Exhale (sec, ratio in Host x)
+slider19:0.3<0.0,5.0,0.1>Bottom pause (sec, ratio in Host x)
 slider20:250<50,2000,1>Inhale Frequency Hz
 slider21:170<50,2000,1>Exhale Frequency Hz
 slider22:80<20,800,1>Breath High-pass Hz

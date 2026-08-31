@@ -308,14 +308,26 @@ sliders already describe. The tempo simply takes over from there.
 |---|---|---|
 | Heart rate | BPM you set | BPM, derived from beats × tempo — still shown, still settable |
 | Breath rate | the four durations add up to it | set in beats by *Every N beats* |
-| Inhale / Top / Exhale / Bottom | **literal seconds** | the **shape** fitted into the cycle |
+| Inhale / Top pause / Exhale / Bottom pause | **literal seconds** | the **ratio** fitted into the cycle |
 | Breaths per minute | rewrites the four durations | **hidden** — does not apply |
 
-The four duration sliders are the one place a unit really does change meaning, and
-they say *"shape only in Host x"* on the tin. In Host x the cycle is however many
-beats you asked for, and those four numbers set only the **proportions** of it —
-inhale to top pause to exhale to bottom pause. Their ratio is what matters, not
-their absolute size.
+The four breath sliders say it on the tin: **`Inhale (sec, ratio in Host x)`**.
+Free-running, they're literal seconds. Synced, the cycle is however many beats you
+asked for and those four numbers set the **ratio** of it — inhale to top pause to
+exhale to bottom pause. What matters is 4:0.5:8:1, not that it adds to 13.5.
+
+**This is why a tempo change stretches your breath instead of breaking it.**
+Slow the project down and the cycle gets longer, so every part of the shape grows
+in proportion — a 4-0.5-8-1 breath stays a 4-0.5-8-1 breath, just slower. The
+inhale passes 4 seconds, the exhale passes 8, and the pauses stretch with them.
+Nothing about the feel of it changes; only the clock does.
+
+They stay in **seconds** rather than becoming percentages for a reason worth
+recording: 4, 0.5, 8 and 1 are numbers you can feel and enter directly. The same
+breath written as shares is 29.6 / 3.7 / 59.3 / 7.4, and the only way to reach
+those is to divide each one by 13.5. The seconds are the interface; converting
+them away to make the internals tidier would be paying in arithmetic for nothing.
+(Decided 2026-08-30, after exactly that change was proposed and rejected.)
 
 Drift and Speed Ramp keep working on every breath parameter in both modes, and
 breath drift periods are counted in the breath cycles you can actually hear. The
