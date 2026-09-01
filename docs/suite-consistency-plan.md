@@ -1350,8 +1350,17 @@ no saved value changes**. Ship it as one batch, not per plugin.
 - **All step sizes** (R8) — always the finer of whatever is in use.
 - **Defaults** — Polyrhythm's V2–V8 gain to −6 dB. Free: defaults only affect unsaved
   instances.
-- **Enum options only** — `Square` and `Pulse` waveforms in Melody, Shepard Scale and
-  Shepard Tone. These append (see R18) and cost nothing.
+- ~~**Enum options only** — `Square` and `Pulse` waveforms in Melody, Shepard Scale and
+  Shepard Tone.~~ **DONE and ear-tested ✓ 2026-09-01** (commit `4f7eb14`). All three pass,
+  Shepard Tone included — which was the one worth testing, since its oscillators sweep
+  continuously and would show aliasing first. Each plugin also gained a **PolyBLEP** helper
+  and a **Pulse width** slider (hidden unless Waveform is Pulse), so the "enum options only,
+  costs nothing" estimate was very slightly wrong: Pulse needs a duty control, which is a
+  new slider. Appended, harmless, and it moves into place in each plugin's Phase 2 reorder.
+  The two Shepards share one `wave_sample(ph)`, which gained a second argument for the
+  per-sample phase increment that PolyBLEP needs. Both Polyrhythm pages were also corrected
+  — they had documented 12 waveforms against a 14-waveform source. **Not** applied to
+  `melody_phase_v2`, which is being archived.
 - **NOT new sliders.** Solo, Breath Generator's sigh, and the missing drift/ramp blocks
   move to each plugin's Phase 2 reorder, where they land in their proper positions rather
   than being bolted onto the end. See R18.

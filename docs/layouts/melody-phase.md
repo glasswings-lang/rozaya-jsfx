@@ -52,44 +52,48 @@ Plus the two things this bump carries:
 | 4 | Host sync target (Rate value / Pan base rate) | NEW (replaces 77) |
 | 5 | Every N beats | NEW |
 | 6 | Waveform | 3 |
-| 7 | Tuning reference (Hz) | 4 |
-| 8 | Root note | 5 |
-| 9 | Center octave | 6 |
-| 10 | Transpose (half steps) | NEW |
-| 11 | Binaural beat (Hz, L/R offset) | 9 |
-| 12 | Attack (% of note duration) | 10 |
-| 13 | Attack shape | 12 |
-| 14 | Release (% of note duration) | 11 |
-| 15 | Release shape | 13 |
-| 16 | Glide time (seconds; 0 = off) | 20 |
-| 17 | Legato glide | 21 |
-| 18 | Pan enabled | 15 |
-| 19 | Pan mode | 16 |
-| 20 | Pan spread (%) | 17 |
-| 21 | Pan base rate (Tremolo / Increment modes) | 18 |
-| 22 | Pan increment per voice (Increment mode) | 19 |
-| 23 | Sequence length | 14 |
-| 24 | Direction | 63 |
-| 25 | Loop sequence | 7, renamed |
-| 26–65 | V1..V8: Note, Next voice in, Note duration, Gain dB, Active | 22–61 |
-| 66 | Master gain (dB) | 8 |
-| 67 | Start delay (in rate mode units) | 62 |
-| 68 | Play for (steps) | 64 |
-| 69 | Rest for (steps) | 65 |
-| 70 | Rest mode | 66 |
-| 71 | Drift target | 72 |
-| 72 | Drift up amount | 73 |
-| 73 | Drift down amount | 74 |
-| 74 | Drift period (cycles) | 75 |
-| 75 | Drift shape | 76 |
-| 76 | Ramp target | 67 |
-| 77 | Ramp to | 68 |
-| 78 | Ramp duration (minutes) | 69 |
-| 79 | Ramp engage | 70 |
-| 80 | Ramp start delay (minutes) | 71 |
+| 7 | Pulse width (%, 50 = square) | 78, added 2026-09-01 with the Square/Pulse waveforms |
+| 8 | Tuning reference (Hz) | 4 |
+| 9 | Root note | 5 |
+| 10 | Center octave | 6 |
+| 11 | Transpose (half steps) | NEW |
+| 12 | Binaural beat (Hz, L/R offset) | 9 |
+| 13 | Attack (% of note duration) | 10 |
+| 14 | Attack shape | 12 |
+| 15 | Release (% of note duration) | 11 |
+| 16 | Release shape | 13 |
+| 17 | Glide time (seconds; 0 = off) | 20 |
+| 18 | Legato glide | 21 |
+| 19 | Pan enabled | 15 |
+| 20 | Pan mode | 16 |
+| 21 | Pan spread (%) | 17 |
+| 22 | Pan base rate (Tremolo / Increment modes) | 18 |
+| 23 | Pan increment per voice (Increment mode) | 19 |
+| 24 | Sequence length | 14 |
+| 25 | Direction | 63 |
+| 26 | Loop sequence | 7, renamed |
+| 27–66 | V1..V8: Note, Next voice in, Note duration, Gain dB, Active | 22–61 |
+| 67 | Master gain (dB) | 8 |
+| 68 | Start delay (in rate mode units) | 62 |
+| 69 | Play for (steps) | 64 |
+| 70 | Rest for (steps) | 65 |
+| 71 | Rest mode | 66 |
+| 72 | Drift target | 72 |
+| 73 | Drift up amount | 73 |
+| 74 | Drift down amount | 74 |
+| 75 | Drift period (cycles) | 75 |
+| 76 | Drift shape | 76 |
+| 77 | Ramp target | 67 |
+| 78 | Ramp to | 68 |
+| 79 | Ramp duration (minutes) | 69 |
+| 80 | Ramp engage | 70 |
+| 81 | Ramp start delay (minutes) | 71 |
 
-80 sliders, from 77: `Transpose`, `Sync to host` and `Every N beats` are added,
-`Host ratio` is replaced by the sync target.
+81 sliders, from 78: `Transpose`, `Sync to host` and `Every N beats` are added,
+`Host ratio` is replaced by the sync target. `Pulse width` is already in the file --
+it arrived with the Square and Pulse waveforms on 2026-09-01, appended at 78 -- and
+this layout is where it stops being appended and goes next to the Waveform slider it
+belongs to.
 
 ## Migration — five projects on v1, zero on v2
 
