@@ -1350,10 +1350,11 @@ no saved value changes**. Ship it as one batch, not per plugin.
 - **All step sizes** (R8) — always the finer of whatever is in use.
 - **Defaults** — Polyrhythm's V2–V8 gain to −6 dB. Free: defaults only affect unsaved
   instances.
-- **Appended sliders**, which cost nothing because absent values take their default:
-  **Solo** everywhere it is missing (Polyrhythm, Melody, Shepard Tone, Resonance Bank);
-  **Square and Pulse** waveforms in Melody, Shepard Scale, Shepard Tone; Breath Generator's
-  sigh; drift and ramp for Bubbler, Dapple, Stereo Phaser, Sustain Looper.
+- **Enum options only** — `Square` and `Pulse` waveforms in Melody, Shepard Scale and
+  Shepard Tone. These append (see R18) and cost nothing.
+- **NOT new sliders.** Solo, Breath Generator's sigh, and the missing drift/ramp blocks
+  move to each plugin's Phase 2 reorder, where they land in their proper positions rather
+  than being bolted onto the end. See R18.
 - **A version stamp in every `@serialize`** — free, silent, and the prerequisite for every
   self-migration in Phase 2. It must be in the field *before* the renumbers.
 
@@ -1388,3 +1389,45 @@ Ordered this way, an abrupt end leaves: a tagged release (Phase 0), a suite that
 consistently *named* and has its missing controls (Phase 1), and migrations completed for
 the most-used plugins first. The documents carry every decision and the reasoning behind
 it, which is the part that cannot be reconstructed from the source.
+
+### R18. New sliders go where they belong. Only enum OPTIONS append.
+
+Decided 2026-08-31 with Rozaya, correcting a rule I was about to apply past its purpose:
+*"the rule for appending to the end is if it's a new feature, not if it's an extension of
+a thing that should have been there all along... we're doing a big reorder of all the
+things. We shouldn't be pushing them one by one. That's kind of an embarrassment."*
+
+**Is append-at-the-end a real convention outside this repo?** Yes — and the reason it
+exists is the whole point. VST, AU and CLAP identify parameters by index or ID, and hosts
+save automation and preset state against those. Insert a parameter mid-list and every
+saved preset and automation lane silently points at the wrong control. VST3's stable
+parameter IDs exist specifically to escape this; CLAP has its own scheme for the same
+reason.
+
+**So the convention is a workaround for not being able to migrate saved state.** Where
+the state CAN be migrated — and this suite migrates it, deliberately, as the entire
+purpose of this document — the reason evaporates. Applying it during a reorder would bake
+the ordering problem into the release meant to fix it.
+
+**What protects a third party is the self-migration, not the append rule.** The plugin
+detects an old project on load from the blob's version magic and repairs the values in
+memory, on any machine, with nothing for anyone to run (Part 4). Someone with no old
+projects simply gets the clean layout. **That mechanism must be built and verified before
+any renumber ships** — it is the gate, and Rozaya's concern is exactly right: *"the last
+thing I want is for some motherfucker to be shipped a bullshit plugin and think it doesn't
+work and think the rest of them are like that."*
+
+**The one genuine exception, for a different reason.** An enum **option** is stored as an
+index *inside* a slider's value. Insert `Square` into the middle of the waveform list and
+every saved project's waveform changes character; insert a drift target and every
+per-target bank points at the wrong parameter. No slider-line migration fixes that
+cheaply, so **enum options always append** — waveforms at the end of the list, drift and
+ramp targets at the end of theirs.
+
+**The rule, then:**
+
+| thing | where it goes |
+|---|---|
+| a new slider | **its logical position** in the layout |
+| a new enum option (waveform, drift target, mode) | **the end of the list** |
+| an existing slider | wherever the authored layout puts it |
