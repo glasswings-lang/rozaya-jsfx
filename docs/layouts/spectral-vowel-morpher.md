@@ -1,7 +1,11 @@
 # Spectral Vowel Morpher — authored layout
 
 Written by hand 2026-08-31, not generated. Reading order **approved by Rozaya**.
-**Status: order approved, nothing built.**
+**Status: BUILT and MIGRATED 2026-09-01** (commit `340fd4e`). 122 instances across
+38 projects migrated with 0 problems; the capture inventory is byte-identical before
+and after -- 848 slots, every peak, RMS and detected pitch unchanged. **Not yet
+ear-tested.** `Layer overtone harmonic` shipped voice-side only; the wash follows the
+global, because per-layer there would cost an extra spectral pass per layer per grain.
 
 **This is the most-used plugin in the suite — 38 projects, more than double anything
 else — and the riskiest migration in it**, because its `@serialize` blob carries actual

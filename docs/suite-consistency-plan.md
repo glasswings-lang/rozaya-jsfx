@@ -1376,7 +1376,7 @@ Measured across 91 projects, 2026-08-31:
 
 | order | plugin | projects | note |
 |---|---|---|---|
-| 1 | **spectral_vowel_morpher** | **38** | most-used in the suite by 2x, least swept; highest-risk blob (holds captured analysis) |
+| 1 | ~~**spectral_vowel_morpher**~~ **DONE 2026-09-01** | **38** | 122 instances migrated, 0 problems; 848 captures verified byte-identical. Awaiting ears. |
 | 2 | polyrhythm_phase v1 → v3 | 17 (+5) | fork closes; migrate templates too |
 | 3 | full-feature-sweeping-filter | 11 | |
 | 4 | spectral_vowel_passage | 10 | |
