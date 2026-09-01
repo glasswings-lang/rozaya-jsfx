@@ -251,4 +251,19 @@ already happening there -- same order as what the loop does today, and no new
 transforms. Worth precomputing each active layer's window across output bins once per
 grain rather than re-evaluating it per bin.
 
-**Not built. This is the next thing on the Morpher.**
+**BUILT 2026-09-01, same day.** Applied inline in `build_spectrum`'s bin loop rather
+than through a helper -- that loop runs FFTSIZE/2+1 times, times every audible layer,
+twice per grain, and is the hottest in the file. Away from the window the factor is
+just the layer's power normalisation, so a range test skips the window arithmetic for
+nearly every bin: one compare and one multiply. Not ear-tested.
+
+### And it turned up a real bug, by reading
+
+The wash overtone's centre was computed as `f0 x harmonic x pitch_ratio` -- an OUTPUT
+bin -- and then used to index `curmag`, which is in SOURCE bins. At Pitch 0 the two
+coincide, which is why it has never been noticed. At any other Pitch the wash lifted
+harmonic `n x pitch_ratio` instead of harmonic `n`: at +12 semitones, the 2nd harmonic
+when you asked for the 1st. Moving the window into source bins -- which the per-layer
+work required anyway, since every layer reads that one spectrum at its own scale --
+corrects it. **Found by reading, NOT confirmed by ear**, and it changes the sound of
+any project using Overtone and Pitch together. Documented on the plugin page.

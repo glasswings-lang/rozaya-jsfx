@@ -113,7 +113,7 @@ slider20:1<0.5,4,0.1>Overtone width (harmonics either side)
 //     stack consonantly and Shuffle stays usable. Layers ride Pitch (and its
 //     Drift/Ramp) as offsets from it, so the stack transposes as one.
 //
-//     SIXTEEN layers behind SIX sliders, via the suite's nested-selector
+//     SIXTEEN layers behind SEVEN sliders, via the suite's nested-selector
 //     pattern (the same shape as Drift target and Capture slot): every layer
 //     sounds at once, and the selector only chooses which one the sliders below
 //     are editing. Thirteen of them are fixed intervals named on the selector --
@@ -218,16 +218,19 @@ ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
 N_TARGETS = 24;  // Drift/Ramp targets. APPEND ONLY -- the index is saved in the project
-                 // (slider30/23) AND is the bank position, so inserting one mid-list
-                 // would silently repoint every saved selection above it:
+                 // (Drift target and Ramp target) AND is the bank position, so inserting
+                 // one mid-list would silently repoint every saved selection above it:
                  // 0 Texture, 1 Spread, 2 Pitch, 3 Stereo width, 4 Low cut,
-                 // 5 Voice level, 6 Overtone harmonic, 7 High cut, 8..18 layer levels
-                 // (in layer order: the three Custom layers, then the eight octaves --
-                 // the same order the Layer selector lists them in).
+                 // 5 Output level, 6 Overtone harmonic, 7 High cut, 8..23 layer levels
+                 // in PITCH-LADDER order -- four octaves down up to four octaves up with
+                 // the Original at unison, then the three Custom slots -- which is the
+                 // order the Layer selector lists them in.
 NLAYERS  = 15;   // pitch-shifted copies of the morph, all behind one selector
-N_CUSTOM = 3;    // layers 0..2 are the free-interval Custom layers
-                 // layers 3..14 are the fixed intervals, in selector order:
-                 // -48 -36 -24 -12 semitones, -7 -5 +5 +7, then +12 +24 +36 +48
+N_CUSTOM = 3;    // slots 0..12 are the fixed intervals, in pitch order:
+                 // -48 -36 -24 -12 semitones, -7 -5, unison, +5 +7, +12 +24 +36 +48.
+                 // The three free-interval Custom slots trail them at LAY_CUSTOM0.
+                 // (This said 'layers 0..2 are the Custom layers' until 2026-09-01 --
+                 // true of CANON, wrong since the list became a pitch ladder.)
 LAY_T0   = 8;    // target index of layer 0 -- targets LAY_T0+i map to layer i
 // The ORIGINAL -- the unshifted morph every layer stacks around -- gets a bank
 // slot of its own at index NLAYERS, so Active, Level and Solo apply to it
@@ -294,6 +297,8 @@ slot_f0   = freemem; freemem += NSLOTS;        // detected fundamentals (Hz)
 slot_hnorm= freemem; freemem += NSLOTS;        // voice peak normalization
 slot_capavg   = freemem; freemem += NSLOTS;    // Capture average (frames) per slot. The CONTROL is global -- every entry holds the same value -- but the storage stays per slot so compute_spectrum reads it the same way and the @serialize field keeps its byte format
 ot_gain   = freemem; freemem += NHARM;         // per-harmonic Overtone gain (1 = untouched)
+hm_rawA   = freemem; freemem += NHARM;         // partial magnitudes BEFORE any Overtone, voice A
+hm_rawB   = freemem; freemem += NHARM;         // ...and voice B. The divisions live here once.
 hmA_arr   = freemem; freemem += NHARM;         // per-sample partial magnitudes, voice A
 hmB_arr   = freemem; freemem += NHARM;         // ...and voice B. Hoisted out of the layer loops.
 slot_cappoint = freemem; freemem += NSLOTS;    // PER-SLOT capture point (0..1): where in each slot's grab to analyze. Each slot remembers its own scrub position.
@@ -323,6 +328,8 @@ lay_ot_harm = freemem; freemem += 32;   // per-layer Overtone harmonic (-1 = fol
 // global harmonic use their slice; the rest read the shared arrays, so a
 // project that never touches this pays nothing for it beyond the allocation.
 lay_ot_gain = freemem; freemem += N_LAY_SLOTS*NHARM;   // that layer's per-harmonic gain
+lay_ot_norm = freemem; freemem += 32;   // that layer's power normalisation (wash reads it)
+lot_bin     = freemem; freemem += 32;   // wash: that layer's overtone centre, in SOURCE bins
 lay_hmA     = freemem; freemem += N_LAY_SLOTS*NHARM;   // ...and its partial magnitudes, bank A
 lay_hmB     = freemem; freemem += N_LAY_SLOTS*NHARM;   //                                bank B
 ser_scratch = freemem; freemem += 32;   // read-and-discard space for old @serialize layouts
@@ -399,6 +406,9 @@ slots_inited == 0 ? (
   // up, two octaves down) so that raising one is immediately worth hearing.
   lay_semi[0] = -12; lay_semi[1] = 12;  lay_semi[2] = -24;
   lpi = 0; loop(N_LAY_SLOTS, lay_solo[lpi] = 0; lay_nharm[lpi] = 0; lay_ot_harm[lpi] = -1; lpi += 1; );
+  // Unity, not zero: the wash multiplies by this, and `ot_wash` gating every
+  // read is a guard, not a reason to leave a gain bank at silence.
+  lpi = 0; loop(N_LAY_SLOTS, lay_ot_norm[lpi] = 1; lot_bin[lpi] = 0; lpi += 1; );
   last_lay_sel = LAY_ORIG;
   last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
 );
@@ -604,7 +614,17 @@ function capture(slot) (
   (slot + 1) > n_used ? n_used = slot + 1;
 );
 
-function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, lq, mb, hcw) (
+// Per-layer Overtone on the wash is applied INLINE in the bin loop below, at the
+// point each layer reads the captured spectrum. It is written out twice rather
+// than put in a function on purpose: this loop runs FFTSIZE/2+1 times, times
+// every audible layer, twice per grain, and it is the hottest loop in the file.
+//
+// The three rules match the voice curve: scale by that layer's power
+// normalisation everywhere, lift inside the window, and never lift below the
+// fundamental's own peak. Away from the window the factor is JUST the
+// normalisation, so the range test skips all the window arithmetic for the
+// overwhelming majority of bins -- one compare and one multiply.
+function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, lq, mb, hcw, lm, od, ow) (
   bsum_base = 0; bsum_all = 0;   // per-call totals, read by gen_grain after the L pass
   woff = eff_stereo_width * 0.01 * PI;   // eff_ = base + Drift offset (set per-sample)
   // Build a Hermitian-symmetric spectrum so ifft() returns a REAL signal:
@@ -612,7 +632,19 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, l
   i = 0;
   loop(FFTSIZE/2 + 1,
     srcb = i / pitch_ratio;
-    (srcb >= 0 && srcb < NBINS - 1) ? ( b0 = floor(srcb); fr = srcb - b0; m = curmag[b0]*(1-fr) + curmag[b0+1]*fr; ) : ( m = 0; );
+    (srcb >= 0 && srcb < NBINS - 1) ? (
+      b0 = floor(srcb); fr = srcb - b0; m = curmag[b0]*(1-fr) + curmag[b0+1]*fr;
+      // The Original is a layer like any other, so it takes LAY_ORIG's overtone.
+      ot_wash ? (
+        (srcb > ot_f0bin && abs(srcb - lot_bin[LAY_ORIG]) < ot_binw) ? (
+          od = abs(srcb - lot_bin[LAY_ORIG]) / ot_binw;
+          ow = 0.5 + 0.5*wtsin(od*PI + PI*0.5);
+          m = m * (1 + (ot_boost - 1)*ow) * lay_ot_norm[LAY_ORIG];
+        ) : (
+          m = m * lay_ot_norm[LAY_ORIG];
+        );
+      );
+    ) : ( m = 0; );
     // Layers on the wash: the same magnitude spectrum read again at each layer's
     // own bin scale and summed in. This is why layers are nearly free here --
     // one extra interpolated read per bin, inside a grain that was already going
@@ -630,7 +662,17 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, l
           srcb = i / lpr[lq];
           (srcb >= 0 && srcb < NBINS - 1) ? (
             b0 = floor(srcb); fr = srcb - b0;
-            m += layer_gain[lq] * (curmag[b0]*(1-fr) + curmag[b0+1]*fr);
+            lm = curmag[b0]*(1-fr) + curmag[b0+1]*fr;
+            ot_wash ? (
+              (srcb > ot_f0bin && abs(srcb - lot_bin[lq]) < ot_binw) ? (
+                od = abs(srcb - lot_bin[lq]) / ot_binw;
+                ow = 0.5 + 0.5*wtsin(od*PI + PI*0.5);
+                lm = lm * (1 + (ot_boost - 1)*ow) * lay_ot_norm[lq];
+              ) : (
+                lm = lm * lay_ot_norm[lq];
+              );
+            );
+            m += layer_gain[lq] * lm;
           );
         );
         lq += 1;
@@ -689,24 +731,20 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   i = 0;
   loop(NBINS,
     i < cutbin ? ( curmag[i] = 0; ) : ( curmag[i] = max(0, curmag[i] - thr); );
-    // Overtone on the wash. The harmonic peaks are still in the magnitude
-    // spectrum, phase-randomised into narrow noise bands, so isolating one leaves
-    // a pitched BAND rather than nothing -- breathier than the voice engine's
-    // pure partial, still a definite note. Bins under the fundamental's own peak
-    // are never lifted, mirroring harmonic 1 in the voice -- but they still take
-    // ot_norm, so the whole wash recedes together rather than the band alone
-    // rising out of an untouched bed.
-    ot_wash ? (
-      i > ot_f0bin ? (
-        od = abs(i - ot_bin) / ot_binw;
-        ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
-        curmag[i] = curmag[i] * (1 + (ot_boost - 1)*ow) * ot_norm;
-      ) : (
-        curmag[i] = curmag[i] * ot_norm;
-      );
-    );
     i += 1;
   );
+  // Overtone on the wash is NOT applied here any more. It used to be folded
+  // into curmag once, which made it one setting for the whole instrument --
+  // every layer reads this same array, so every layer got the same harmonic.
+  // It now happens inside build_spectrum, per layer, at the point each layer
+  // reads the spectrum, so `Layer overtone harmonic` reaches the wash as well
+  // as the voice. curmag stays the clean captured spectrum.
+  //
+  // The move also corrects the domain. The centre was computed as f0 x harmonic
+  // x pitch_ratio -- an OUTPUT bin -- and then used to index curmag, which is in
+  // SOURCE bins. With Pitch at 0 the two coincide and it was right; at any other
+  // Pitch the wash lifted harmonic n x pitch_ratio instead of harmonic n. Found
+  // by reading on 2026-09-01, NOT yet confirmed by ear.
   // Per-grain derivations for the two things build_spectrum needs beyond curmag:
   // where the High cut sits in output bins, and each layer's source-bin scale.
   // Both are read from the per-sample globals as they stand at grain time --
@@ -905,7 +943,8 @@ slider_show(slider8, automorph_mode > 0.5);
 slider_show(slider9, automorph_mode > 0.5);
 
 // --- Drift target selector save/restore (nested-selector pattern, matching the
-//     rest of the suite). Switching slider30 saves sliders 18-21 into the OLD
+//     rest of the suite). Switching the target saves the four amount/period/shape
+//     sliders into the OLD
 //     target's bank slot, then loads the NEW target's stored config into the
 //     visible sliders. Otherwise it captures live edits to the current target.
 //     All targets drift in parallel from @sample regardless of what's selected. ---
@@ -938,8 +977,8 @@ last_target_select != sel_target ? (
 // per-sample effective-value recompute (and keep the exact original CPU/output)
 // for any target with no drift configured.
 // --- Ramp target selector save/restore (nested-selector, mirrors Drift).
-//     slider36 = target; 24 = per-target `by`; 25 = duration; 26 = start delay.
-//     slider39 (Engage) is GLOBAL. All targets ride in parallel from @sample. ---
+//     Ramp target selects; `by`, duration and start delay are per target.
+//     Ramp engage is GLOBAL. All targets ride in parallel from @sample. ---
 rsel_target = slider36;
 rsel_by     = slider37;
 rsel_dur    = slider38;
@@ -1224,7 +1263,7 @@ mod_active[2] ? (   // Pitch (semitones)
 eff_stereo_width = max(0,  min(100, stereo_width + (mod_active[3] ? target_drift_offset[3] + ramp_offset_mem[3] : 0)));
 mod_active[3] ? ( voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX; );
 eff_lowcut_hz    = max(0,  min(500, lowcut_hz    + (mod_active[4] ? target_drift_offset[4] + ramp_offset_mem[4] : 0)));
-mod_active[5] ? (   // Voice level (dB)
+mod_active[5] ? (   // Output level (dB) -- target 5, named Voice level until 2026-08
   eff_vdb = max(-60, min(12, voice_db_base + target_drift_offset[5] + ramp_offset_mem[5]));
   voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
 );
@@ -1244,7 +1283,7 @@ hc_on ? (
 ) : (
   hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;   // EEL2 has NO scientific notation -- 1e9 is a syntax error
 );
-// --- Layer levels (targets LAY_T0..LAY_T0+NLAYERS-1, one per layer in layer
+// --- Layer levels (targets LAY_T0..LAY_T0+N_LAY_SLOTS-1, one per layer in ladder
 //     order). Recomputed per sample only for a layer whose level is actually
 //     being driven; otherwise @slider's value stands.
 //     There is deliberately NO normalisation here. An earlier build held total
@@ -1443,23 +1482,42 @@ ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
         opw = 0; oi = 0; loop(NHARM, opw += lay_ot_gain[lobo+oi]*lay_ot_gain[lobo+oi]; oi += 1; );
         lonm = opw > 0 ? sqrt(NHARM / opw) : 1;
         oi = 0; loop(NHARM, lay_ot_gain[lobo+oi] = lay_ot_gain[lobo+oi] * lonm; oi += 1; );
+        lay_ot_norm[lok] = lonm;      // the wash applies this itself, per layer
+      ) : (
+        lay_ot_norm[lok] = ot_norm;   // follower: the global curve, so the global norm
       );
       lok += 1;
     );
   ) : (
     oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );
     ot_boost = 1; ot_norm = 1;
+    lok = 0; loop(N_LAY_SLOTS, lay_ot_norm[lok] = 1; lok += 1; );
   );
   ot_on_last = ot_on; ot_h_last = ot_h_smooth; ot_db_last = ot_db_smooth; ot_w_last = ot_w_smooth;
 );
 // Wash-side position, in bins, off the morph-blended fundamental. Width is in
 // harmonics for both engines, so here it becomes width x f0 in Hz.
+//
+// SOURCE bins, not output bins. `curmag` is the captured spectrum, and every
+// layer -- the Original included -- reads it at its own scale (`i / lpr[lq]`)
+// inside build_spectrum. Putting the window in source bins is what lets each
+// layer pick its own harmonic of the SAME spectrum, and it is also the only
+// domain in which the arithmetic is right: this used to fold `pitch_ratio` in
+// and then index `curmag` with the result, which is an output-bin position
+// applied to a source-bin array. See the note in gen_grain.
 (ot_on && have > 0) ? (
-  ot_f0mix = ((1-vmfr)*slot_f0[vsi] + vmfr*slot_f0[vsj]) * pitch_ratio;
+  ot_f0src = (1-vmfr)*slot_f0[vsi] + vmfr*slot_f0[vsj];   // SOURCE fundamental, un-shifted
   ot_bpf   = FFTSIZE / srate;
-  ot_bin   = ot_f0mix * ot_h_smooth * ot_bpf;
-  ot_binw  = max(1, ot_f0mix * max(0.5, ot_w_smooth) * ot_bpf);
-  ot_f0bin = ot_f0mix * 1.5 * ot_bpf;
+  ot_binw  = max(1, ot_f0src * max(0.5, ot_w_smooth) * ot_bpf);
+  ot_f0bin = ot_f0src * 1.5 * ot_bpf;
+  ot_bin   = ot_f0src * ot_h_smooth * ot_bpf;   // the global position, for followers
+  // ...and one centre per layer, so a layer running its own harmonic lifts a
+  // different partial of the same captured spectrum.
+  lok = 0;
+  loop(N_LAY_SLOTS,
+    lot_bin[lok] = ot_f0src * (lay_ot_harm[lok] >= 0 ? lay_ot_harm[lok] : ot_h_smooth) * ot_bpf;
+    lok += 1;
+  );
 ) : ( ot_bin = 0; );
 
 dryL = spl0 * dry_gain; dryR = spl1 * dry_gain;
@@ -1508,24 +1566,33 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
   // series. The dropped partials also stop advancing their phase, exactly as
   // the ones above Nyquist and above the High cut already do -- an inaudible
   // partial resuming from a stale phase is inaudible too.
+  // The divisions happen ONCE, into hm_raw*, and everything downstream is a
+  // multiply against them -- the base voice's Overtone curve here, and each
+  // overriding layer's curve below.
   vn = 0; nharm_used = 1;
   loop(NHARM,
-    hmA_arr[vn] = slot_harm[bA+vn]/normA * ot_gain[vn];
-    hmB_arr[vn] = slot_harm[bB+vn]/normB * ot_gain[vn];
+    hm_rawA[vn] = slot_harm[bA+vn]/normA;
+    hm_rawB[vn] = slot_harm[bB+vn]/normB;
+    hmA_arr[vn] = hm_rawA[vn] * ot_gain[vn];
+    hmB_arr[vn] = hm_rawB[vn] * ot_gain[vn];
     (hmA_arr[vn] > HM_EPS || hmB_arr[vn] > HM_EPS) ? nharm_used = vn + 1;
     vn += 1;
   );
-  // The same magnitudes again for any layer running its own Overtone harmonic,
-  // built once per FRAME rather than per sample -- nothing is added to the
-  // per-sample path, which is the only place cost would show. Layers with no
-  // override are skipped entirely and read the shared arrays below.
+  // The same magnitudes again for any layer running its OWN Overtone harmonic.
+  // This runs PER SAMPLE -- it is inside @sample, like the loop above it. An
+  // earlier comment here claimed it ran per frame and cost nothing; that was
+  // wrong, and it was copied out of a design note about the wash. What it
+  // actually costs is two multiplies per harmonic per OVERRIDING layer, which
+  // is small beside that layer's own synthesis loop (four phase banks) and is
+  // exactly zero for a layer at the default -1, which is every layer until you
+  // change one. Only audible layers are built.
   lok = 0;
   loop(N_LAY_SLOTS,
     (lay_ot_harm[lok] >= 0 && layer_gain[lok] > 0.0001) ? (
       lobo = lok*NHARM; vn = 0;
-      loop(NHARM,
-        lay_hmA[lobo+vn] = slot_harm[bA+vn]/normA * lay_ot_gain[lobo+vn];
-        lay_hmB[lobo+vn] = slot_harm[bB+vn]/normB * lay_ot_gain[lobo+vn];
+      loop(nharm_used,
+        lay_hmA[lobo+vn] = hm_rawA[vn] * lay_ot_gain[lobo+vn];
+        lay_hmB[lobo+vn] = hm_rawB[vn] * lay_ot_gain[lobo+vn];
         vn += 1;
       );
     );
