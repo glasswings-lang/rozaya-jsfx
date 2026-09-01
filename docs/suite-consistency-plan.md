@@ -1431,3 +1431,28 @@ ramp targets at the end of theirs.
 | a new slider | **its logical position** in the layout |
 | a new enum option (waveform, drift target, mode) | **the end of the list** |
 | an existing slider | wherever the authored layout puts it |
+
+### Decisions approved 2026-08-31
+
+Rozaya approved all of the following leans in one pass. Recorded here so none of them has
+to be re-decided.
+
+| # | Decision | Status |
+|---|---|---|
+| 1 | Heartbeat's `Breath HRV Depth` and `Random HRV Depth` become **BPM peak-to-peak**, matching Womb's `Heart with breath` | approved — Phase 2 (changes range) |
+| 2 | `Bloodflow Resonance` becomes **dB of peak**, as the filters already did | approved — Phase 2 |
+| 3 | Both `Stereo Width` controls become **% of full width** | approved — Phase 2 |
+| 4 | `Brightness` — unit unknown until the code is traced | **not yet a decision**; read first |
+| 5 | `Bloodflow Dicrotic Level` — same | **not yet a decision**; read first |
+| 6 | **Harmonic Sculptor drops out of the sweep.** Zero projects and Rozaya would not reach for it; its overhaul-or-drop question is settled separately | approved |
+| 7 | **Veil is swept anyway.** Zero projects but cheap, and worth learning why it never got used | approved |
+| 8 | **Drift periods stay in cycles**, not beats, under host sync — a cycle is the musically meaningful unit for a wander, and beats would make it drift against itself | approved |
+| 9 | The sigh gains a **loudness** component eventually, not now — a real sigh is a bigger breath, not only a longer one | approved, deferred |
+| 10 | **Capture slots display 1-based.** Disagrees with every other selector in the suite, which is why it was open; people count slots from one | approved — closes Open Question 3 |
+
+Rozaya, on 4 and 5: *"the ones I need to make decisions about I'll do when I can actually
+think."* Those two are mine to research before they become questions at all.
+
+Note 8 closes a question that had been asked and answered twice already in other forms —
+and note 10 deliberately accepts an inconsistency, because matching how a person counts
+beats matching the rest of the suite.
