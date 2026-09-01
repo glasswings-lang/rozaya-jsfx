@@ -53,51 +53,51 @@ slider11:440<400,480,0.1>Tuning Reference Hz
 
 // ===== NOTES — C through B (3 sliders each: Active, Gain dB, Pan) =====
 slider12:1<0,1,1{Off,On}>C Active
-slider13:0<-60,6,0.1>C Gain dB
+slider13:0<-60,6,0.01>C Gain dB
 slider14:0<-100,100,0.1>C Pan
 
 slider15:1<0,1,1{Off,On}>C# Active
-slider16:0<-60,6,0.1>C# Gain dB
+slider16:0<-60,6,0.01>C# Gain dB
 slider17:0<-100,100,0.1>C# Pan
 
 slider18:1<0,1,1{Off,On}>D Active
-slider19:0<-60,6,0.1>D Gain dB
+slider19:0<-60,6,0.01>D Gain dB
 slider20:0<-100,100,0.1>D Pan
 
 slider21:1<0,1,1{Off,On}>D# Active
-slider22:0<-60,6,0.1>D# Gain dB
+slider22:0<-60,6,0.01>D# Gain dB
 slider23:0<-100,100,0.1>D# Pan
 
 slider24:1<0,1,1{Off,On}>E Active
-slider25:0<-60,6,0.1>E Gain dB
+slider25:0<-60,6,0.01>E Gain dB
 slider26:0<-100,100,0.1>E Pan
 
 slider27:1<0,1,1{Off,On}>F Active
-slider28:0<-60,6,0.1>F Gain dB
+slider28:0<-60,6,0.01>F Gain dB
 slider29:0<-100,100,0.1>F Pan
 
 slider30:1<0,1,1{Off,On}>F# Active
-slider31:0<-60,6,0.1>F# Gain dB
+slider31:0<-60,6,0.01>F# Gain dB
 slider32:0<-100,100,0.1>F# Pan
 
 slider33:1<0,1,1{Off,On}>G Active
-slider34:0<-60,6,0.1>G Gain dB
+slider34:0<-60,6,0.01>G Gain dB
 slider35:0<-100,100,0.1>G Pan
 
 slider36:1<0,1,1{Off,On}>G# Active
-slider37:0<-60,6,0.1>G# Gain dB
+slider37:0<-60,6,0.01>G# Gain dB
 slider38:0<-100,100,0.1>G# Pan
 
 slider39:1<0,1,1{Off,On}>A Active
-slider40:0<-60,6,0.1>A Gain dB
+slider40:0<-60,6,0.01>A Gain dB
 slider41:0<-100,100,0.1>A Pan
 
 slider42:1<0,1,1{Off,On}>A# Active
-slider43:0<-60,6,0.1>A# Gain dB
+slider43:0<-60,6,0.01>A# Gain dB
 slider44:0<-100,100,0.1>A# Pan
 
 slider45:1<0,1,1{Off,On}>B Active
-slider46:0<-60,6,0.1>B Gain dB
+slider46:0<-60,6,0.01>B Gain dB
 slider47:0<-100,100,0.1>B Pan
 
 // Sit silent for N beats after playback starts, then begin normally.

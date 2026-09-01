@@ -29,7 +29,7 @@ slider2:50<0,100,0.1>Loop position (%)
 slider3:500<5,4000,1>Loop length (ms)
 slider4:40<0,100,1>Crossfade (% of loop)
 slider5:0<-24,24,0.1>Pitch (semitones)
-slider6:0<-24,12,0.1>Output (dB)
+slider6:0<-24,12,0.01>Output (dB)
 slider7:6<0,12,1>Voices (ensemble)
 slider8:50<0,100,1>Spread (detune amount)
 

@@ -43,14 +43,14 @@ desc: Resonance Bank
 //   Order 4: -24 dB/oct
 //   Order 8: -48 dB/oct (near brick-wall)
 
-slider1:0.0<-24.0,24.0,0.1>Input Gain (dB)
+slider1:0.0<-24.0,24.0,0.01>Input Gain (dB)
 
 slider2:0<0,15,1>Band selector (0-15)
 
 slider3:500<0,20000,1>Frequency (Hz)
 slider4:250<1,5000,1>Width up (Hz above center)
 slider5:250<1,5000,1>Width down (Hz below center)
-slider6:-60<-60,24,0.1>Gain (dB; -60 = off)
+slider6:-60<-60,24,0.01>Gain (dB; -60 = off)
 slider7:0<-1,1,0.01>Pan (-1=L, 0=center, +1=R)
 slider8:0<0,3,1{1 (-6 dB/oct),2 (-12 dB/oct),4 (-24 dB/oct),8 (-48 dB/oct)}>Order (parallel mode only)
 slider9:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Drift target

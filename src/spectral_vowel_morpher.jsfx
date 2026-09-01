@@ -39,14 +39,14 @@ desc: Spectral Vowel Morpher - voice<->wash capture instrument
 slider1:0<0,7,1>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture spectrum
 slider3:0<0,100,1>Capture point (per slot: earliest .. at press)
-slider4:0<-60,12,0.1>Input level (dry, dB)
+slider4:0<-60,12,0.01>Input level (dry, dB)
 // Named "Voice level" since this plugin was born, and wrong the whole time: it
 // is applied to voutL/voutR, which is the equal-power crossfade of the voice
 // AND the wash, after every layer has been summed into both. So it has always
 // scaled the wash too, and now it scales all fifteen layers as well. The only
 // thing it does not touch is the dry input, which has its own Input level.
 // Relabelled rather than re-scoped -- the behaviour is right, the name was not.
-slider5:0<-60,12,0.1>Output level (dB, everything but the dry input)
+slider5:0<-60,12,0.01>Output level (dB, everything but the dry input)
 slider6:50<0,100,1>Texture (0 voice, 100 wash)
 slider7:150<5,680,1>Wash grain (ms)
 slider8:0<0,150,0.5>Spread (Hz)
@@ -105,7 +105,7 @@ slider28:1<1,6,1>Capture average (1 = one frame, higher = smoother)
 // resonance physically does, and it means the control can only make the voice
 // quieter. Harmonic 1 is exempt at any depth -- it is the drone.
 slider29:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
-slider30:24<0,48,0.5>Overtone lift (dB the chosen harmonic rises by)
+slider30:24<0,48,0.01>Overtone lift (dB the chosen harmonic rises by)
 slider31:1<0.5,4,0.1>Overtone width (harmonics either side)
 
 // --- High cut. The mirror of Low cut, and the thing that makes an octave-up
@@ -166,7 +166,7 @@ slider34:1<0,1,1{Inactive,Active}>Layer active
 // line has no value for it. @init's 0 dB for the Original was overwritten
 // before the first sample either way. Two defaults that have to agree: the
 // level slider's default is the default-selected layer's level.
-slider35:0<-60,0,0.1>Layer level (dB, -60 = off)
+slider35:0<-60,0,0.01>Layer level (dB, -60 = off)
 slider36:0<0,1,1{Off,Solo}>Layer solo
 slider37:-12<-96,96,0.1>Layer pitch (semitones, Custom layers)
 // CPU control, not a tone control. Every layer is its own set of oscillators --

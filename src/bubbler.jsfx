@@ -30,7 +30,7 @@ slider5:12<0,36,1>Rise (semitones)
 slider6:150<5,1000,1>Bubble length (ms)
 slider7:80<0,100,1>Stereo width %
 slider8:100<0,100,1>Dry/Wet %
-slider9:0<-24,12,0.1>Output (dB)
+slider9:0<-24,12,0.01>Output (dB)
 
 in_pin:left input
 in_pin:right input

@@ -59,11 +59,11 @@ slider1:2<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,H
 // the labels get approximate; those harmonics also often sit above the
 // Nyquist ceiling and won't play at higher fundamentals anyway.
 slider2:0<0,63,1{H1 root,H2 octave,H3 oct+5th,H4 2 octaves,H5 +maj3rd (flat),H6 +5th,H7 +min7th (flat),H8 3 octaves,H9 +maj2nd,H10 +maj3rd,H11 between 4th and tritone,H12 +5th,H13 between 5th and 6th,H14 +min7th (flat),H15 +maj7th,H16 4 octaves,H17 +min2nd,H18 +maj2nd,H19 +min3rd,H20 +maj3rd,H21 +sharp 4th,H22 +tritone,H23 +flat 5th,H24 +5th,H25 +sharp 5th,H26 +min6th,H27 +maj6th,H28 +min7th (flat),H29 +min7th,H30 +maj7th,H31 +sharp 7th,H32 5 octaves,H33 +min2nd,H34 +flat maj2nd,H35 +maj2nd,H36 +min3rd,H37 +flat maj3rd,H38 +maj3rd,H39 near 4th,H40 +4th,H41 +sharp 4th,H42 +tritone,H43 +flat 5th,H44 near 5th,H45 +5th,H46 +sharp 5th,H47 +min6th,H48 +maj6th,H49 +maj6th,H50 +min7th (flat),H51 +min7th,H52 near maj7th,H53 +maj7th,H54 +sharp 7th,H55 near octave,H56 near octave,H57 +min2nd top,H58 +2nd top,H59 +2nd top,H60 +min3rd top,H61 +maj3rd top,H62 +maj3rd top,H63 +4th top,H64 6 octaves}>Harmonic Select
-slider3:0<-60,12,0.1>Harmonic Level dB (of selected)
+slider3:0<-60,12,0.01>Harmonic Level dB (of selected)
 
 // ===== GLOBAL =====
 slider4:110<20,2000,0.01>Fundamental Hz
-slider5:-12<-60,0,0.1>Master Gain dB
+slider5:-12<-60,0,0.01>Master Gain dB
 slider6:1<0,1,1{Off,On}>Normalize loudness
 slider7:0.5<0,10,0.01>Attack (sec)
 slider8:1.5<0,10,0.01>Release (sec)

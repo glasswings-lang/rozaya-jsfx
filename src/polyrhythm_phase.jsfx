@@ -24,7 +24,7 @@ slider6:0<0,100,0.1>Attack % of Cycle
 slider7:100<0,100,0.1>Release % of Cycle
 slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider9:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
-slider10:-6<-60,0,0.1>Depth dB
+slider10:-6<-60,0,0.01>Depth dB
 slider11:440<400,480,0.1>Tuning Reference Hz
 
 // ===== BASE PITCH =====
@@ -49,56 +49,56 @@ slider19:0<-1000,1000,0.001>Pan Increment per Voice
 //
 // Phase Offset unit follows Rate Mode: BPM = beats, Seconds = seconds, Hz = cycles.
 // Values wrap freely — there is no clamping. Voice 1 default is 0 (no offset).
-slider20:-6<-60,6,0.1>V1 Gain dB
+slider20:-6<-60,6,0.01>V1 Gain dB
 slider21:0<-1000,1000,0.1>V1 Semitones
 slider22:0<-1000,1000,0.001>V1 Drift / Rate
 slider23:0<-1000,1000,0.001>V1 Phase Offset
 slider24:1<0,1,1{Off,On}>V1 Active (Off = no CPU cost)
 
 // ===== VOICE 2 =====
-slider25:-6<-60,6,0.1>V2 Gain dB
+slider25:-6<-60,6,0.01>V2 Gain dB
 slider26:0<-1000,1000,0.1>V2 Semitones
 slider27:0<-1000,1000,0.001>V2 Drift / Rate
 slider28:0<-1000,1000,0.001>V2 Phase Offset
 slider29:0<0,1,1{Off,On}>V2 Active (Off = no CPU cost)
 
 // ===== VOICE 3 =====
-slider30:-6<-60,6,0.1>V3 Gain dB
+slider30:-6<-60,6,0.01>V3 Gain dB
 slider31:0<-1000,1000,0.1>V3 Semitones
 slider32:0<-1000,1000,0.001>V3 Drift / Rate
 slider33:0<-1000,1000,0.001>V3 Phase Offset
 slider34:0<0,1,1{Off,On}>V3 Active (Off = no CPU cost)
 
 // ===== VOICE 4 =====
-slider35:-6<-60,6,0.1>V4 Gain dB
+slider35:-6<-60,6,0.01>V4 Gain dB
 slider36:0<-1000,1000,0.1>V4 Semitones
 slider37:0<-1000,1000,0.001>V4 Drift / Rate
 slider38:0<-1000,1000,0.001>V4 Phase Offset
 slider39:0<0,1,1{Off,On}>V4 Active (Off = no CPU cost)
 
 // ===== VOICE 5 =====
-slider40:-6<-60,6,0.1>V5 Gain dB
+slider40:-6<-60,6,0.01>V5 Gain dB
 slider41:0<-1000,1000,0.1>V5 Semitones
 slider42:0<-1000,1000,0.001>V5 Drift / Rate
 slider43:0<-1000,1000,0.001>V5 Phase Offset
 slider44:0<0,1,1{Off,On}>V5 Active (Off = no CPU cost)
 
 // ===== VOICE 6 =====
-slider45:-6<-60,6,0.1>V6 Gain dB
+slider45:-6<-60,6,0.01>V6 Gain dB
 slider46:0<-1000,1000,0.1>V6 Semitones
 slider47:0<-1000,1000,0.001>V6 Drift / Rate
 slider48:0<-1000,1000,0.001>V6 Phase Offset
 slider49:0<0,1,1{Off,On}>V6 Active (Off = no CPU cost)
 
 // ===== VOICE 7 =====
-slider50:-6<-60,6,0.1>V7 Gain dB
+slider50:-6<-60,6,0.01>V7 Gain dB
 slider51:0<-1000,1000,0.1>V7 Semitones
 slider52:0<-1000,1000,0.001>V7 Drift / Rate
 slider53:0<-1000,1000,0.001>V7 Phase Offset
 slider54:0<0,1,1{Off,On}>V7 Active (Off = no CPU cost)
 
 // ===== VOICE 8 =====
-slider55:-6<-60,6,0.1>V8 Gain dB
+slider55:-6<-60,6,0.01>V8 Gain dB
 slider56:0<-1000,1000,0.1>V8 Semitones
 slider57:0<-1000,1000,0.001>V8 Drift / Rate
 slider58:0<-1000,1000,0.001>V8 Phase Offset

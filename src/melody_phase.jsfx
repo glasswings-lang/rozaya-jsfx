@@ -33,7 +33,7 @@ slider4:440<400,480,0.1>Tuning Reference Hz
 slider5:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
 slider6:4<0,8,1>Center Octave
 slider7:1<0,1,1{Off,On}>Loop
-slider8:-6<-60,0,0.1>Master Gain dB
+slider8:-6<-60,0,0.01>Master Gain dB
 slider9:0<0,100,0.1>Binaural Beat Hz (L/R offset)
 slider10:10<0,100,0.1>Attack % of Note duration
 slider11:30<0,100,0.1>Release % of Note duration
@@ -61,49 +61,49 @@ slider21:0<0,1,1{Off,On}>Legato glide
 slider22:0<-24,24,1>V1 Semitones from root
 slider23:1<0.01,16,0.01>V1 Next voice in (cycles)
 slider24:1<0,16,0.01>V1 Note duration (cycles; 0 = silent)
-slider25:-6<-60,6,0.1>V1 Gain dB
+slider25:-6<-60,6,0.01>V1 Gain dB
 slider26:1<0,1,1{Off,On}>V1 Active
 
 slider27:2<-24,24,1>V2 Semitones from root
 slider28:1<0.01,16,0.01>V2 Next voice in (cycles)
 slider29:1<0,16,0.01>V2 Note duration (cycles; 0 = silent)
-slider30:-6<-60,6,0.1>V2 Gain dB
+slider30:-6<-60,6,0.01>V2 Gain dB
 slider31:1<0,1,1{Off,On}>V2 Active
 
 slider32:4<-24,24,1>V3 Semitones from root
 slider33:1<0.01,16,0.01>V3 Next voice in (cycles)
 slider34:1<0,16,0.01>V3 Note duration (cycles; 0 = silent)
-slider35:-6<-60,6,0.1>V3 Gain dB
+slider35:-6<-60,6,0.01>V3 Gain dB
 slider36:1<0,1,1{Off,On}>V3 Active
 
 slider37:5<-24,24,1>V4 Semitones from root
 slider38:1<0.01,16,0.01>V4 Next voice in (cycles)
 slider39:1<0,16,0.01>V4 Note duration (cycles; 0 = silent)
-slider40:-6<-60,6,0.1>V4 Gain dB
+slider40:-6<-60,6,0.01>V4 Gain dB
 slider41:1<0,1,1{Off,On}>V4 Active
 
 slider42:7<-24,24,1>V5 Semitones from root
 slider43:1<0.01,16,0.01>V5 Next voice in (cycles)
 slider44:1<0,16,0.01>V5 Note duration (cycles; 0 = silent)
-slider45:-6<-60,6,0.1>V5 Gain dB
+slider45:-6<-60,6,0.01>V5 Gain dB
 slider46:0<0,1,1{Off,On}>V5 Active
 
 slider47:9<-24,24,1>V6 Semitones from root
 slider48:1<0.01,16,0.01>V6 Next voice in (cycles)
 slider49:1<0,16,0.01>V6 Note duration (cycles; 0 = silent)
-slider50:-6<-60,6,0.1>V6 Gain dB
+slider50:-6<-60,6,0.01>V6 Gain dB
 slider51:0<0,1,1{Off,On}>V6 Active
 
 slider52:11<-24,24,1>V7 Semitones from root
 slider53:1<0.01,16,0.01>V7 Next voice in (cycles)
 slider54:1<0,16,0.01>V7 Note duration (cycles; 0 = silent)
-slider55:-6<-60,6,0.1>V7 Gain dB
+slider55:-6<-60,6,0.01>V7 Gain dB
 slider56:0<0,1,1{Off,On}>V7 Active
 
 slider57:12<-24,24,1>V8 Semitones from root
 slider58:1<0.01,16,0.01>V8 Next voice in (cycles)
 slider59:1<0,16,0.01>V8 Note duration (cycles; 0 = silent)
-slider60:-6<-60,6,0.1>V8 Gain dB
+slider60:-6<-60,6,0.01>V8 Gain dB
 slider61:0<0,1,1{Off,On}>V8 Active
 
 // --- Start Delay (slider 62) ---

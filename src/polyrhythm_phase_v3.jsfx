@@ -27,7 +27,7 @@ slider6:0<0,100,0.1>Attack % of Cycle
 slider7:100<0,100,0.1>Release % of Cycle
 slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider9:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
-slider10:-6<-60,0,0.1>Depth dB
+slider10:-6<-60,0,0.01>Depth dB
 slider11:440<400,480,0.1>Tuning Reference Hz
 
 // ===== BASE PITCH =====
@@ -96,7 +96,7 @@ slider24:0<-1000,1000,0.001>Pan Increment per Voice
 //
 // Phase Offset unit follows Rate Mode: BPM = beats, Seconds = seconds, Hz = cycles.
 // Values wrap freely — there is no clamping. Voice 1 default is 0 (no offset).
-slider25:-6<-60,6,0.1>V1 Gain dB
+slider25:-6<-60,6,0.01>V1 Gain dB
 slider26:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V1 Note
 slider27:0<-100,100,1>V1 Fine tune (cents)
 slider28:0<-1000,1000,0.001>V1 Drift / Rate
@@ -104,7 +104,7 @@ slider29:0<-1000,1000,0.001>V1 Phase Offset
 slider30:1<0,1,1{Off,On}>V1 Active (Off = no CPU cost)
 
 // ===== VOICE 2 =====
-slider31:-6<-60,6,0.1>V2 Gain dB
+slider31:-6<-60,6,0.01>V2 Gain dB
 slider32:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V2 Note
 slider33:0<-100,100,1>V2 Fine tune (cents)
 slider34:0<-1000,1000,0.001>V2 Drift / Rate
@@ -112,7 +112,7 @@ slider35:0<-1000,1000,0.001>V2 Phase Offset
 slider36:0<0,1,1{Off,On}>V2 Active (Off = no CPU cost)
 
 // ===== VOICE 3 =====
-slider37:-6<-60,6,0.1>V3 Gain dB
+slider37:-6<-60,6,0.01>V3 Gain dB
 slider38:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V3 Note
 slider39:0<-100,100,1>V3 Fine tune (cents)
 slider40:0<-1000,1000,0.001>V3 Drift / Rate
@@ -120,7 +120,7 @@ slider41:0<-1000,1000,0.001>V3 Phase Offset
 slider42:0<0,1,1{Off,On}>V3 Active (Off = no CPU cost)
 
 // ===== VOICE 4 =====
-slider43:-6<-60,6,0.1>V4 Gain dB
+slider43:-6<-60,6,0.01>V4 Gain dB
 slider44:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V4 Note
 slider45:0<-100,100,1>V4 Fine tune (cents)
 slider46:0<-1000,1000,0.001>V4 Drift / Rate
@@ -128,7 +128,7 @@ slider47:0<-1000,1000,0.001>V4 Phase Offset
 slider48:0<0,1,1{Off,On}>V4 Active (Off = no CPU cost)
 
 // ===== VOICE 5 =====
-slider49:-6<-60,6,0.1>V5 Gain dB
+slider49:-6<-60,6,0.01>V5 Gain dB
 slider50:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V5 Note
 slider51:0<-100,100,1>V5 Fine tune (cents)
 slider52:0<-1000,1000,0.001>V5 Drift / Rate
@@ -136,7 +136,7 @@ slider53:0<-1000,1000,0.001>V5 Phase Offset
 slider54:0<0,1,1{Off,On}>V5 Active (Off = no CPU cost)
 
 // ===== VOICE 6 =====
-slider55:-6<-60,6,0.1>V6 Gain dB
+slider55:-6<-60,6,0.01>V6 Gain dB
 slider56:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V6 Note
 slider57:0<-100,100,1>V6 Fine tune (cents)
 slider58:0<-1000,1000,0.001>V6 Drift / Rate
@@ -144,7 +144,7 @@ slider59:0<-1000,1000,0.001>V6 Phase Offset
 slider60:0<0,1,1{Off,On}>V6 Active (Off = no CPU cost)
 
 // ===== VOICE 7 =====
-slider61:-6<-60,6,0.1>V7 Gain dB
+slider61:-6<-60,6,0.01>V7 Gain dB
 slider62:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V7 Note
 slider63:0<-100,100,1>V7 Fine tune (cents)
 slider64:0<-1000,1000,0.001>V7 Drift / Rate
@@ -152,7 +152,7 @@ slider65:0<-1000,1000,0.001>V7 Phase Offset
 slider66:0<0,1,1{Off,On}>V7 Active (Off = no CPU cost)
 
 // ===== VOICE 8 =====
-slider67:-6<-60,6,0.1>V8 Gain dB
+slider67:-6<-60,6,0.01>V8 Gain dB
 slider68:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V8 Note
 slider69:0<-100,100,1>V8 Fine tune (cents)
 slider70:0<-1000,1000,0.001>V8 Drift / Rate

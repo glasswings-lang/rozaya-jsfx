@@ -109,13 +109,13 @@ slider10:0<0,1,1{Off,On}>Slot mute (per slot: skip in morph)
 //     by these. Global on purpose -- a house style, not a per-moment knob. ---
 slider11:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade in shape (all slots)
 slider12:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade out shape (all slots)
-slider13:0<-60,12,0.1>Input level (dry, dB)
+slider13:0<-60,12,0.01>Input level (dry, dB)
 // Named "Voice level" since this plugin was born, and wrong the whole time: it
 // is applied to voutL/voutR, the equal-power crossfade of the voice AND the
 // wash, so it has always scaled both. PER SLOT here, unlike the Morpher's --
 // the morph crossfades it along with the spectra. Relabelled, not re-scoped:
 // the behaviour is right, the name described half of it.
-slider14:0<-60,12,0.1>Output level (dB, per slot)
+slider14:0<-60,12,0.01>Output level (dB, per slot)
 slider15:50<0,100,1>Texture (0 voice, 100 wash)
 slider16:150<5,680,1>Wash grain (ms)
 slider17:0<0,150,0.5>Spread (Hz)
@@ -181,7 +181,7 @@ slider35:0<0,1,1{Off,On}>Ramp engage
 //     controls and the same blended fundamental, so they stay in step through a
 //     Texture blend instead of describing two different overtones.
 slider36:0<0,64,1>Overtone harmonic (per slot: 0 = off, 1 = fundamental)
-slider37:24<0,48,0.5>Overtone lift (per slot: dB the chosen harmonic rises by)
+slider37:24<0,48,0.01>Overtone lift (per slot: dB the chosen harmonic rises by)
 slider38:1<0.5,4,0.1>Overtone width (all slots: harmonics either side)
 
 @init

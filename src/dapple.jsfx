@@ -39,7 +39,7 @@ slider5:0.85<0,0.97,0.01>Resonance (noise voice)
 slider6:120<5,1000,1>Bubble length (ms)
 slider7:40<0,100,1>Rise %
 slider8:80<0,100,1>Stereo width %
-slider9:0<-24,12,0.1>Output (dB)
+slider9:0<-24,12,0.01>Output (dB)
 slider10:50<0,100,1>Tone vs Noise % (0=noise, 100=tone plink)
 slider11:0<0,100,1>Excite from input % (0=internal noise, 100=input)
 

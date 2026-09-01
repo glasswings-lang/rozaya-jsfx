@@ -33,7 +33,7 @@ slider4:440<400,480,0.1>Tuning Reference Hz
 slider5:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
 slider6:4<0,8,1>Center Octave
 slider7:1<0,1,1{Off,On}>Loop
-slider8:-6<-60,0,0.1>Master Gain dB
+slider8:-6<-60,0,0.01>Master Gain dB
 slider9:0<0,100,0.1>Binaural Beat Hz (L/R offset)
 slider10:10<0,100,0.1>Attack % of Note duration
 slider11:30<0,100,0.1>Release % of Note duration
@@ -69,7 +69,7 @@ slider22:1<1,8,1>Voice (which voice the controls below edit)
 slider23:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>Note (selected voice)
 slider24:1<0.01,16,0.01>Next voice in (cycles) (selected voice)
 slider25:1<0,16,0.01>Note duration (cycles; 0 = silent) (selected voice)
-slider26:-6<-60,6,0.1>Gain dB (selected voice)
+slider26:-6<-60,6,0.01>Gain dB (selected voice)
 slider27:1<0,1,1{Off,On}>Active (selected voice)
 
 // --- Start Delay (slider 62) ---

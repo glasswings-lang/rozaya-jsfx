@@ -7,7 +7,7 @@ desc: Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation
 slider1:2<0.001,1000,0.001>Rate Value
 slider2:0<0,3,1{Hz,Seconds,BPM,Host x}>Rate Mode
 slider3:50<0,100,0.1>On Duration % of Cycle
-slider4:-6<-60,0,0.1>Depth dB
+slider4:-6<-60,0,0.01>Depth dB
 slider5:0<0,100,0.1>Attack %
 slider6:0<0,100,0.1>Release %
 slider7:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape

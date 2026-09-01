@@ -69,7 +69,7 @@ slider12:9<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V1 Note
 slider13:0<-100,100,0.1>V1 Pan (neg=left, pos=right)
 slider14:0<0,1,1{Asc,Desc}>V1 Direction
 slider15:0<-1000,1000,0.001>V1 Drift (Synced: cents) / Rate (Indep)
-slider16:0<-60,6,0.1>V1 Gain dB
+slider16:0<-60,6,0.01>V1 Gain dB
 slider17:1<0,1,1{Off,On}>V1 Active
 
 // ===== VOICE 2 =====
@@ -77,7 +77,7 @@ slider18:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V2 Note
 slider19:0<-100,100,0.1>V2 Pan (neg=left, pos=right)
 slider20:0<0,1,1{Asc,Desc}>V2 Direction
 slider21:0<-1000,1000,0.001>V2 Drift (Synced: cents) / Rate (Indep)
-slider22:0<-60,6,0.1>V2 Gain dB
+slider22:0<-60,6,0.01>V2 Gain dB
 slider23:0<0,1,1{Off,On}>V2 Active
 
 // ===== VOICE 3 =====
@@ -85,7 +85,7 @@ slider24:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V3 Note
 slider25:0<-100,100,0.1>V3 Pan (neg=left, pos=right)
 slider26:0<0,1,1{Asc,Desc}>V3 Direction
 slider27:0<-1000,1000,0.001>V3 Drift (Synced: cents) / Rate (Indep)
-slider28:0<-60,6,0.1>V3 Gain dB
+slider28:0<-60,6,0.01>V3 Gain dB
 slider29:0<0,1,1{Off,On}>V3 Active
 
 // ===== VOICE 4 =====
@@ -93,7 +93,7 @@ slider30:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V4 Note
 slider31:0<-100,100,0.1>V4 Pan (neg=left, pos=right)
 slider32:0<0,1,1{Asc,Desc}>V4 Direction
 slider33:0<-1000,1000,0.001>V4 Drift (Synced: cents) / Rate (Indep)
-slider34:0<-60,6,0.1>V4 Gain dB
+slider34:0<-60,6,0.01>V4 Gain dB
 slider35:0<0,1,1{Off,On}>V4 Active
 
 // ===== VOICE 5 =====
@@ -101,7 +101,7 @@ slider36:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V5 Note
 slider37:0<-100,100,0.1>V5 Pan (neg=left, pos=right)
 slider38:0<0,1,1{Asc,Desc}>V5 Direction
 slider39:0<-1000,1000,0.001>V5 Drift (Synced: cents) / Rate (Indep)
-slider40:0<-60,6,0.1>V5 Gain dB
+slider40:0<-60,6,0.01>V5 Gain dB
 slider41:0<0,1,1{Off,On}>V5 Active
 
 // ===== VOICE 6 =====
@@ -109,7 +109,7 @@ slider42:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V6 Note
 slider43:0<-100,100,0.1>V6 Pan (neg=left, pos=right)
 slider44:0<0,1,1{Asc,Desc}>V6 Direction
 slider45:0<-1000,1000,0.001>V6 Drift (Synced: cents) / Rate (Indep)
-slider46:0<-60,6,0.1>V6 Gain dB
+slider46:0<-60,6,0.01>V6 Gain dB
 slider47:0<0,1,1{Off,On}>V6 Active
 
 // ===== VOICE 7 =====
@@ -117,7 +117,7 @@ slider48:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V7 Note
 slider49:0<-100,100,0.1>V7 Pan (neg=left, pos=right)
 slider50:0<0,1,1{Asc,Desc}>V7 Direction
 slider51:0<-1000,1000,0.001>V7 Drift (Synced: cents) / Rate (Indep)
-slider52:0<-60,6,0.1>V7 Gain dB
+slider52:0<-60,6,0.01>V7 Gain dB
 slider53:0<0,1,1{Off,On}>V7 Active
 
 // ===== VOICE 8 =====
@@ -125,7 +125,7 @@ slider54:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V8 Note
 slider55:0<-100,100,0.1>V8 Pan (neg=left, pos=right)
 slider56:0<0,1,1{Asc,Desc}>V8 Direction
 slider57:0<-1000,1000,0.001>V8 Drift (Synced: cents) / Rate (Indep)
-slider58:0<-60,6,0.1>V8 Gain dB
+slider58:0<-60,6,0.01>V8 Gain dB
 slider59:0<0,1,1{Off,On}>V8 Active
 
 // Sit silent for N units after playback starts, then begin normally.
