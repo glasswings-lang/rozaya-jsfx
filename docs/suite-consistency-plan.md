@@ -1281,3 +1281,34 @@ Every other file is hyphenated or underscored. It broke two of my own scripts to
 **Renaming is NOT free** — `.RPP` files reference the plugin by filename, so it needs a
 project rewrite like any migration. Fold it into Heartbeat's own batch rather than doing
 it loose.
+
+### Polyrhythm's per-voice gain default — free to fix, and its sibling already did
+
+Rozaya, 2026-08-31: *"we need a better default for polyrhythm. Bumping gain down is easier
+than raising it every time from 60."*
+
+| | per-voice gain defaults |
+|---|---|
+| Melody Phase | all **−6 dB**; `Active` decides who plays |
+| Shepard Tone | all **0 dB** |
+| **Polyrhythm v1 and v3** | V1 = −6, **V2–V8 = −60** |
+
+**Two faults.** Activating a voice hands you silence and a 54 dB climb, when the plugin
+already has a dedicated on/off (`Active`) so gain never needed to double as one. And
+**V2 ships Active = On with its gain at −60** — a voice paying CPU and counting in the
+active-voice normalizer while being inaudible.
+
+It is also the bug the Morpher already hit and fixed (2026-08-19, in CLAUDE.md):
+`Layer level` defaulted to −60 and every fresh instance muted its own Original before the
+first sample. Same shape, same cause — **−60 used as a default on a control that has a
+separate on/off** — and Melody Phase already carries the corrected form.
+
+**Fix:** V2–V8 default to **−6 dB**, matching Melody. `Active` stays the on/off.
+
+**Cost: nothing.** A default only applies to instances that have never been saved, so no
+existing project changes in any way. **Phase 1, no migration**, and it improves the
+most-used plugin in the suite immediately.
+
+**General rule this yields:** where a control has a dedicated on/off beside it, its value
+must default to a *usable* setting, never to the off sentinel. The sentinel is for the
+user to reach deliberately, not somewhere to be stranded on arrival.
