@@ -1496,3 +1496,32 @@ a nameable thing, which R17 allows.
 Note the asymmetry, which is R17 working as intended: one turned out to be a real
 measurement wearing a normalised disguise, and the other turned out to be an honest
 proportion that simply never said what it was a proportion of. The test told them apart.
+
+### No releases until the sweep is finished
+
+Rozaya, 2026-08-31: *"We're not tagging releases until this is done. It's bad enough that
+the previous release is what I'd consider half-done. We can absolutely push stuff to
+remote. Just not make a release out of it. That's what people grab when they don't want to
+deal with source code."*
+
+**Pushing to `origin` is fine and should continue** — it is what makes the work survive a
+dead disk, and it is addressed to us. **Tagging and publishing a release is a different
+act**: it is a distribution artefact aimed at someone who will never read the source, and
+shipping one mid-sweep hands a stranger a suite that is half-renamed, half-reordered and
+inconsistent with its own documentation.
+
+This corrects Phase 0 as I originally wrote it. Phase 0's value was the **push** — the
+tag and the release added nothing to "if this stops, is the work safe." I bundled three
+different actions under one heading and only one of them was protective.
+
+**Standing rule for the rest of this work:**
+
+| action | during the sweep |
+|---|---|
+| commit | freely |
+| push to `origin` | freely |
+| annotated tag | no |
+| GitHub release | **no** |
+
+The next release is the one that ships the finished sweep, and it should be the first
+thing a stranger could download and find self-consistent.
