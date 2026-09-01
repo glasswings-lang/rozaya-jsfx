@@ -94,8 +94,13 @@ opposite end of the scale. "phi slow" is x0.618, "phi fast" is x1.618.
 > jump hard. Set the mode first, then set the rate (or reach for the Host ratio
 > picker, which does the sum for you).
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine / Square / Pulse`
 Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions, including the back-compat note on the Golden / Phi family. Note that Half-sine sounds an octave higher than the others at the same note + Center Octave setting (full-wave-rectified spectrum has no fundamental).
+
+**Pulse width (%, 50 = square)** `1 – 99, step 0.1, default 25`
+Duty cycle for the **Pulse** waveform — the fraction of each cycle the wave spends high before snapping low. 50 is a square wave and sounds identical to the Square slot. Narrower values get thinner and more nasal; wider values mirror the same character back the other way, so 25 and 75 sound alike. The default of 25 is deliberately off-square so Pulse sounds distinct from Square the moment you select it. The range stops short of 0 and 100, which would be silence and DC respectively.
+
+Only meaningful when Waveform is set to **Pulse**, and hidden from the parameter list entirely on every other waveform.
 
 **Tuning Reference Hz** `400 – 480`
 Frequency of A4. Standard concert pitch is 440.

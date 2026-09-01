@@ -157,7 +157,7 @@ Enables or disables the voice. Off bypasses oscillator computation entirely (no 
 
 ### Waveform
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine / Square / Pulse`
 The oscillator waveform used by all voices simultaneously.
 
 > **A note on the Golden / Phi family.** Polyrhythm Phase shipped with three "Golden" waveforms whose audible behavior didn't match the names a strict reading would expect — slot 3 ("Golden TS") was a phi-warped sine, not a phi-warped triangle; slot 4 ("Golden SG") added an extra sine pre-warp before the phi-warp. Those sounds are preserved here as Golden TS / SG for back-compat with existing projects. The two **Phi Triangle / Phi Sine** slots at the end of the list are the strict-reading versions (phi-warp into triangle, and phi-warp into clean sine with no pre-warp) — pick those if you want the cleaner interpretations.
@@ -174,6 +174,8 @@ The oscillator waveform used by all voices simultaneously.
 - **Phi-cascade** — additive harmonics with golden-ratio-decreasing amplitudes: `fundamental + (1/φ)·2nd + (1/φ²)·3rd`. On theme with the Golden TS/SG/GS family but uses pure additive synthesis rather than phase warping. Gives a brighter, more "stacked" character than the phase-warped Goldens.
 - **Phi Triangle** — golden-ratio phase warp (same as Golden TS) fed into a TRIANGLE output instead of a sine. Brighter and harmonically richer than Golden TS — triangles carry odd harmonics that the sine-output version smooths over.
 - **Phi Sine** — golden-ratio phase warp (same as Golden TS) fed into a clean sine output, with **no** sine pre-warp. The minimalist version of Golden SG: same warp shape, no added prewarp brightness.
+- **Square** — the hard-edged classic: full up for the first half of each cycle, full down for the second. Odd harmonics only, hollow and reedy, and much brighter than anything above it in this list. Band-limited (PolyBLEP) at both edges so it stays clean rather than gritty at high pitches.
+- **Pulse** — the same shape, but you choose where the fall happens rather than taking the halfway point. See **Pulse width** below. At 50 it is identical to Square; move away from that and the tone thins toward a nasal, reedy buzz.
 
 **Pulse Width %** `1-99%, step 0.1, default 25`
 Duty cycle for the **Pulse** waveform — the fraction of each cycle the wave

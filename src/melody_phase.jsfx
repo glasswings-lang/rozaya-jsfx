@@ -28,7 +28,7 @@ desc:Melody Phase
 // --- Global sliders (1-14) ---
 slider1:1<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
 slider2:1<0.001,1000,0.001>Rate Value
-slider3:0<0,11,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine}>Waveform
+slider3:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
 slider4:440<400,480,0.1>Tuning Reference Hz
 slider5:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
 slider6:4<0,8,1>Center Octave
@@ -274,6 +274,15 @@ slider76:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // point is to move the ARITHMETIC, not to take away the precise control —
 // you can still type 0.618 into Rate Value yourself.
 slider77:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
+
+// ===== PULSE WIDTH (Waveform slot 13 only) =====
+// Duty cycle for the Pulse waveform: the fraction of each cycle the wave
+// spends high before snapping low. 50 is a square wave (and equals the
+// Square slot); narrower values get thinner and more nasal, wider values
+// mirror the same back the other way. Hidden unless Waveform is Pulse.
+// Default 25 so Pulse sounds audibly distinct from Square on first
+// selection. The range stops short of 0/100, which would be silence/DC.
+slider78:25<1,99,0.1>Pulse width (%, 50 = square)
 
 @init
 // Rate drift and Speed Ramp are in BPM in EVERY mode, Host x included --
@@ -579,6 +588,24 @@ function rate_to_cycle_seconds(raw_rate, rmode) (
                1 / max(raw_rate, 0.001)
 );
 
+// PolyBLEP: band-limited step correction for the Square and Pulse
+// waveforms (slots 12-13). At each discontinuity the naive wave jumps
+// instantly, which is infinite bandwidth and aliases badly. This adds a
+// small correction over the one sample either side of the edge. bdt is
+// the phase increment per sample, so the correction scales with pitch.
+// Returns 0 away from an edge, so it costs nothing for other waveforms.
+function polyblep(bt, bdt) local(bs) (
+  bt < bdt ? (
+    bs = bt / bdt;
+    bs + bs - bs * bs - 1;
+  ) : bt > 1 - bdt ? (
+    bs = (bt - 1) / bdt;
+    bs * bs + bs + bs + 1;
+  ) : (
+    0;
+  );
+);
+
 function db_to_lin(db) (
   pow(10, db / 20)
 );
@@ -837,6 +864,10 @@ slider_show(slider2, rate_mode != 3 || slider77 == 0);
 
 rate_value    = slider2;
 waveform      = slider3;
+// Pulse duty as a 0..1 fraction of the cycle. Only read by waveform
+// slot 13, and the slider only shows there.
+pulse_duty    = slider78 * 0.01;
+slider_show(slider78, waveform == 13);
 tuning_ref    = slider4;
 base_note     = slider5;
 center_octave = slider6;
@@ -1958,6 +1989,34 @@ loop(8,
         wr = pr < inv_phi ? pr / inv_phi * 0.5 : 0.5 + (pr - inv_phi) / (1 - inv_phi) * 0.5;
         osc_l = sin(2 * $pi * wl);
         osc_r = sin(2 * $pi * wr);
+      ) :
+      waveform == 12 ? (  // Square — +1 for the first half of the cycle,
+                          //   -1 for the second. PolyBLEP-corrected at
+                          //   both edges (the wrap at 0 and the fall at
+                          //   0.5) so it stays clean at high pitches.
+                          //   Matches the Square slot in Polyrhythm Phase.
+        dtl = v_freq_current_l[i] / srate;
+        dtr = v_freq_current_r[i] / srate;
+        sql = pl < 0.5 ? 1 : -1;
+        tdl = pl - 0.5; tdl < 0 ? tdl += 1;
+        osc_l = sql + polyblep(pl, dtl) - polyblep(tdl, dtl);
+        sqr = pr < 0.5 ? 1 : -1;
+        tdr = pr - 0.5; tdr < 0 ? tdr += 1;
+        osc_r = sqr + polyblep(pr, dtr) - polyblep(tdr, dtr);
+      ) : (  // Pulse — same shape, but the falling edge sits at
+             //   pulse_duty instead of 0.5. At duty 0.5 this is
+             //   identical to Square; narrower gets thinner and more
+             //   nasal. A duty other than 50 introduces a DC offset,
+             //   which is inaudible and attenuated by the envelope —
+             //   the same accepted tradeoff as Half-sine.
+        dtl = v_freq_current_l[i] / srate;
+        dtr = v_freq_current_r[i] / srate;
+        sql = pl < pulse_duty ? 1 : -1;
+        tdl = pl - pulse_duty; tdl < 0 ? tdl += 1;
+        osc_l = sql + polyblep(pl, dtl) - polyblep(tdl, dtl);
+        sqr = pr < pulse_duty ? 1 : -1;
+        tdr = pr - pulse_duty; tdr < 0 ? tdr += 1;
+        osc_r = sqr + polyblep(pr, dtr) - polyblep(tdr, dtr);
       );
 
       // Apply this voice's smoothed envelope, per-voice gain, and

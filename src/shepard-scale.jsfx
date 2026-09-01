@@ -47,7 +47,7 @@ slider5:10<0,100,0.1>Release %
 slider6:100<1,100,0.1>Note Length %
 slider7:8<2,12,1>Octave Count
 slider8:4<0,8,1>Center Octave
-slider9:0<0,11,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine}>Waveform
+slider9:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
 slider10:0<0,100,0.1>Binaural Beat Hz
 slider11:440<400,480,0.1>Tuning Reference Hz
 
@@ -182,6 +182,15 @@ slider62:0<0,1,1{Own BPM,Host x}>Rate Mode
 // FREE-RUNNING in sync UI, which Own BPM already is.
 slider63:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes BPM)
 
+// ===== PULSE WIDTH (Waveform slot 13 only) =====
+// Duty cycle for the Pulse waveform: the fraction of each cycle the wave
+// spends high before snapping low. 50 is a square wave (and equals the
+// Square slot); narrower values get thinner and more nasal, wider values
+// mirror the same back the other way. Hidden unless Waveform is Pulse.
+// Default 25 so Pulse sounds audibly distinct from Square on first
+// selection. The range stops short of 0/100, which would be silence/DC.
+slider64:25<1,99,0.1>Pulse width (%, 50 = square)
+
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
 // NO ext_noinit: REAPER re-runs @init on every transport play / render
@@ -260,7 +269,25 @@ function note_to_hz(semitone, oct, tref) (
 // Golden TS / SG slots are the polyrhythm-compatible (sine-output)
 // versions, not the manual's strict reading — Phi Triangle / Phi Sine
 // are the strict-reading variants. See rozaya-jsfx/CLAUDE.md for why.
-function wave_sample(ph) (
+// PolyBLEP: band-limited step correction for the Square and Pulse
+// waveforms (slots 12-13). At each discontinuity the naive wave jumps
+// instantly, which is infinite bandwidth and aliases badly. This adds a
+// small correction over the one sample either side of the edge. bdt is
+// the phase increment per sample, so the correction scales with pitch.
+// Returns 0 away from an edge, so it costs nothing for other waveforms.
+function polyblep(bt, bdt) local(bs) (
+  bt < bdt ? (
+    bs = bt / bdt;
+    bs + bs - bs * bs - 1;
+  ) : bt > 1 - bdt ? (
+    bs = (bt - 1) / bdt;
+    bs * bs + bs + bs + 1;
+  ) : (
+    0;
+  );
+);
+
+function wave_sample(ph, pbdt) (
   waveform == 0 ? sin(ph * 2 * $pi) :
   waveform == 1 ? (ph < 0.25 ? ph*4 : ph < 0.75 ? 2-ph*4 : ph*4-4) :
   waveform == 2 ? (ps = ph+0.5; ps-=floor(ps); ps*2-1) :
@@ -291,10 +318,28 @@ function wave_sample(ph) (
     // Phi Triangle — manual-correct "Golden TS" (warp → triangle)
     pg = ph<(1/PHI) ? ph*PHI*0.5 : 0.5+(ph-1/PHI)/(1-1/PHI)*0.5;
     pg < 0.5 ? 4*pg - 1 : 3 - 4*pg
-  ) : (
+  ) :
+  waveform == 11 ? (
     // Phi Sine — manual-correct "Golden SG" (clean warp → sine, no prewarp)
     pg = ph<(1/PHI) ? ph*PHI*0.5 : 0.5+(ph-1/PHI)/(1-1/PHI)*0.5;
     sin(pg*2*$pi)
+  ) :
+  waveform == 12 ? (
+    // Square — +1 for the first half of the cycle, -1 for the second,
+    // PolyBLEP-corrected at both edges (the wrap at 0 and the fall at
+    // 0.5). Matches the Square slot in Polyrhythm Phase.
+    pusq = ph < 0.5 ? 1 : -1;
+    putd = ph - 0.5; putd < 0 ? putd += 1;
+    pusq + polyblep(ph, pbdt) - polyblep(putd, pbdt)
+  ) : (
+    // Pulse — same shape with the falling edge at pulse_duty instead of
+    // 0.5. At duty 0.5 this is identical to Square; narrower gets
+    // thinner and more nasal. A duty other than 50 introduces a DC
+    // offset, inaudible and attenuated downstream — the same accepted
+    // tradeoff as Half-sine.
+    pusq = ph < pulse_duty ? 1 : -1;
+    putd = ph - pulse_duty; putd < 0 ? putd += 1;
+    pusq + polyblep(ph, pbdt) - polyblep(putd, pbdt)
   )
 );
 
@@ -510,6 +555,10 @@ note_len_frac = slider6 / 100.0;
 num_osc       = max(2, min(12, floor(slider7 + 0.5)));
 center_oct    = floor(slider8 + 0.5);
 waveform      = slider9;
+// Pulse duty as a 0..1 fraction of the cycle. Only read by waveform
+// slot 13, and the slider only shows there.
+pulse_duty    = slider64 * 0.01;
+slider_show(slider64, waveform == 13);
 binaural_hz   = slider10;
 tuning_ref    = slider11;
 
@@ -949,8 +998,8 @@ loop(12,
       osc_phase_r[oi] += (osc_freq[oi] + binaural_hz) / srate;
       osc_phase_r[oi] >= 1 ? osc_phase_r[oi] -= 1;
 
-      out_l += wave_sample(osc_phase_l[oi]) * osc_gain[oi] * pan_l_amt;
-      out_r += wave_sample(osc_phase_r[oi]) * osc_gain[oi] * pan_r_amt;
+      out_l += wave_sample(osc_phase_l[oi], osc_freq[oi] / srate) * osc_gain[oi] * pan_l_amt;
+      out_r += wave_sample(osc_phase_r[oi], (osc_freq[oi] + binaural_hz) / srate) * osc_gain[oi] * pan_r_amt;
 
       o += 1;
     );

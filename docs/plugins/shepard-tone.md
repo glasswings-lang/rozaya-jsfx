@@ -91,8 +91,13 @@ The fraction of each sweep cycle spent fading out at the top of the pitch window
 
 > If Fade In % + Fade Out % exceeds 100%, both are scaled down proportionally.
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine`
+**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine / Square / Pulse`
 The oscillator waveform used by all voices simultaneously. Sine produces the purest Shepard illusion — fewer harmonics means a cleaner register-wrap. The richer waveforms (Bell, Phi-cascade, etc.) are available if you want the illusion to sit inside a more textured tone. See Polyrhythm Phase for waveform descriptions, including the back-compat note on the Golden / Phi family.
+
+**Pulse width (%, 50 = square)** `1 – 99, step 0.1, default 25`
+Duty cycle for the **Pulse** waveform — the fraction of each cycle the wave spends high before snapping low. 50 is a square wave and sounds identical to the Square slot. Narrower values get thinner and more nasal; wider values mirror the same character back the other way, so 25 and 75 sound alike. The default of 25 is deliberately off-square so Pulse sounds distinct from Square the moment you select it. The range stops short of 0 and 100, which would be silence and DC respectively.
+
+Only meaningful when Waveform is set to **Pulse**, and hidden from the parameter list entirely on every other waveform.
 
 **Binaural Beat Hz** `0-100 Hz, default 0`
 Offsets the right channel oscillator frequencies by this many Hz, adding a binaural beat across all voices and oscillators simultaneously.
