@@ -142,7 +142,9 @@ Landing on 1 per beat only happens when *you* change the mode. Opening a saved p
 
 Each voice has six parameters. By default V1 is audible (Gain -6 dB, Active On), V2 is active but silent (Gain -60 dB, Active On — counted in normalization but contributes nothing audibly until you raise its gain), and V3-V8 are inactive (Active Off — bypassed entirely with no CPU cost).
 
-**Vn Gain dB** `-60 to +6 dB, default -6 for V1 and -60 for V2-V8`
+**Vn Gain dB** `-60 to +6 dB, default -6 for every voice`
+
+Changed 2026-08-31. Every voice used to default to -60 (silence) except V1, so activating a voice handed you nothing and a 54 dB climb to get it back. `Vn Active` is the on/off; the gain never needed to be one too. A fresh instance still sounds identical -- only V1 is Active by default -- but any voice you switch on is now audible straight away, and you trim down rather than build up.
 Per-voice output level applied before the voice is summed into the mix. -60 dB is effectively silent. Use this to balance voices relative to one another. To fully cut a voice with no CPU cost, prefer Vn Active = Off rather than gain at -60.
 
 **Vn Note** `C2 to C6, default C4`
