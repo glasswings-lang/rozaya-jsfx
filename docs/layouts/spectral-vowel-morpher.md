@@ -4,8 +4,9 @@ Written by hand 2026-08-31, not generated. Reading order **approved by Rozaya**.
 **Status: BUILT and MIGRATED 2026-09-01** (commit `340fd4e`). 122 instances across
 38 projects migrated with 0 problems; the capture inventory is byte-identical before
 and after -- 848 slots, every peak, RMS and detected pitch unchanged. **Not yet
-ear-tested.** `Layer overtone harmonic` shipped voice-side only; the wash follows the
-global, because per-layer there would cost an extra spectral pass per layer per grain.
+ear-tested.** `Layer overtone harmonic` shipped voice-side only; the wash still
+follows the global. **The reason first given for that was wrong** -- see the last
+section of this file.
 
 **This is the most-used plugin in the suite — 38 projects, more than double anything
 else — and the riskiest migration in it**, because its `@serialize` blob carries actual
@@ -204,3 +205,50 @@ you are typing in changes.
 
 **None.** `Sync to host` is a new slider defaulting to Off, and every existing project
 keeps reading in seconds. It is the append case, and it costs nothing.
+
+## The wash half of `Layer overtone harmonic` is OWED, not declined
+
+Written 2026-09-01, correcting myself the same day I shipped it.
+
+I built the per-layer overtone on the voice only, and justified leaving the wash out
+by saying per-layer there would cost an extra spectral pass per layer per grain on a
+plugin "already at its CPU ceiling around four layers." Rozaya challenged both halves
+and was right about both.
+
+**The `~4 layers` figure is a CALCULATION, not a measurement**, and it is about the
+VOICE: CLAUDE.md derives it as *five sources x 64 partials x 4 banks = ~1280
+oscillators/sample*. Oscillators are the voice engine. Nobody has ever measured a
+layer ceiling on the wash. This is the third time in this repo a mechanism has been
+quoted back as a finding, and this one is mine.
+
+**And the wash does not build per-layer FFTs at all.** `build_spectrum` sums every
+layer into ONE spectrum -- two inverse FFTs per grain, whatever the layer count. The
+function's own comment says so: *"This is why layers are nearly free here -- one extra
+interpolated read per bin, inside a grain that was already going to be built, rather
+than a second pair of FFTs per layer."* I wrote a cost claim that the function I was
+editing contradicts in a comment three lines above the code I changed.
+
+**It also happens to be the half that matters.** Rozaya, 2026-09-01: *"wash is where I
+live anyway."* And at the wash end the voice engine is skipped entirely -- it is gated
+on `hlevel > 0.0001` -- so the per-layer overtone as shipped does nothing at all where
+this plugin actually gets used.
+
+### What building it actually costs
+
+The global overtone is currently baked into `curmag` in `gen_grain`, before
+`build_spectrum` reads it. Per layer it has to move INTO the per-bin layer loop that
+already runs:
+
+- stop baking the overtone into `curmag`; keep `curmag` clean
+- in `build_spectrum`, multiply each layer's contribution by that layer's own overtone
+  window, and the base term by the global one
+- per-layer power normalisation, as the voice already does
+- `ot_wash`'s sub-fundamental rule (bins under f0 take the normalisation but not the
+  lift) applies per layer too, against that layer's own shifted fundamental
+
+Cost is a window evaluation per bin per ACTIVE layer, alongside the interpolated read
+already happening there -- same order as what the loop does today, and no new
+transforms. Worth precomputing each active layer's window across output bins once per
+grain rather than re-evaluating it per bin.
+
+**Not built. This is the next thing on the Morpher.**

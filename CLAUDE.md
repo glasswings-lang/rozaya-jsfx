@@ -365,8 +365,15 @@ Re-measure with the grep above before acting; these were the counts on
   a symptom that matches your theory is not the same as your theory being true,
   and "what else produces exactly this symptom?" is the cheaper question.
 
-  **Open, and not a bug: ~4 layers is the CPU ceiling** even with Auto-morph off —
-  five sources x 64 partials x 4 banks is ~1280 oscillators/sample. Two existing
+  **Open, and not a bug: ~4 layers is the CPU ceiling -- PREDICTED, never
+  measured, and about the VOICE only** (flagged 2026-09-01) even with Auto-morph off —
+  five sources x 64 partials x 4 banks is ~1280 oscillators/sample. That is arithmetic over OSCILLATORS, so it says
+  nothing about the WASH -- where layers are extra reads inside a grain that was
+  already being built, not extra transforms (`build_spectrum`'s own comment: "this
+  is why layers are nearly free here"), and where the voice engine is skipped
+  entirely via its `hlevel` guard. It got quoted back on 2026-09-01 as a measured
+  ceiling, to justify not building the wash half of the per-layer overtone. It is
+  not evidence for that or anything else about the wash. Two existing
   controls are also CPU dials and it is not obvious that they are: **High cut**
   stops partials being computed (6 kHz on a 200 Hz capture caps you at harmonic
   30 instead of 64, ~half), and **Stereo width 0** runs a mono bank instead of a
