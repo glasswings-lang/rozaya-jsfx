@@ -1312,3 +1312,79 @@ most-used plugin in the suite immediately.
 **General rule this yields:** where a control has a dedicated on/off beside it, its value
 must default to a *usable* setting, never to the off sentinel. The sentinel is for the
 user to reach deliberately, not somewhere to be stranded on arrival.
+
+---
+
+## Part 6 (revised 2026-08-31) — ordered for durability first, then use
+
+Two constraints replace the old family-based batching:
+
+- **Rozaya's testing energy is the only real time constraint.** Not authoring, not
+  building. So the work is ordered to spend as little of it as possible per unit of
+  benefit, and batched so one listening session covers many changes.
+- **This may not have a year.** Rozaya, 2026-08-31, on the possible collapse of frontier
+  models: *"we may not have the year I hope for."* Treat AI availability as a resource
+  that could end abruptly. **The plan must therefore be ordered so that stopping at any
+  point leaves something whole**, and so that whatever is left undone is the kind of work
+  a person — or a future model with no memory of this — can pick up from the documents.
+
+### Phase 0 — make what already exists durable. Do this first.
+
+Nothing new; purely protective, and currently the weakest link.
+
+- **Merge `feature/morpher-layers` to master, push, tag, release.** 98 commits ahead of
+  master; last tag v2.20 is 102 commits back; master is 4 ahead of origin. Everything in
+  use was hand-copied from an unmerged branch. **If work stopped tonight, there would be
+  no release containing any of it.**
+- Commit the outstanding Morpher `Layer harmonics` work, or drop it deliberately.
+- Confirm `docs/plugins/*` matches what actually shipped for the plugins already changed.
+
+**Test cost: none.** It is all already in use.
+
+### Phase 1 — everything that needs no migration, across every plugin at once
+
+This is where most of the value is, and it is nearly test-free because **nothing moves and
+no saved value changes**. Ship it as one batch, not per plugin.
+
+- **All naming** — R1–R6, R16 (`Ramp`), R17 (units), target strings, `Loop sequence`.
+- **All step sizes** (R8) — always the finer of whatever is in use.
+- **Defaults** — Polyrhythm's V2–V8 gain to −6 dB. Free: defaults only affect unsaved
+  instances.
+- **Appended sliders**, which cost nothing because absent values take their default:
+  **Solo** everywhere it is missing (Polyrhythm, Melody, Shepard Tone, Resonance Bank);
+  **Square and Pulse** waveforms in Melody, Shepard Scale, Shepard Tone; Breath Generator's
+  sigh; drift and ramp for Bubbler, Dapple, Stereo Phaser, Sustain Looper.
+- **A version stamp in every `@serialize`** — free, silent, and the prerequisite for every
+  self-migration in Phase 2. It must be in the field *before* the renumbers.
+
+**Test cost: low.** One pass through the plugins actually in use, listening for anything
+that changed audibly — which nothing should.
+
+### Phase 2 — the migrations, ordered by USE, not by family
+
+Measured across 91 projects, 2026-08-31:
+
+| order | plugin | projects | note |
+|---|---|---|---|
+| 1 | **spectral_vowel_morpher** | **38** | most-used in the suite by 2x, least swept; highest-risk blob (holds captured analysis) |
+| 2 | polyrhythm_phase v1 → v3 | 17 (+5) | fork closes; migrate templates too |
+| 3 | full-feature-sweeping-filter | 11 | |
+| 4 | spectral_vowel_passage | 10 | |
+| 5 | womb_sound_generator_v3 | 8 | partly done already |
+| 6 | Full_Feature_Tremolo | 7 | |
+| 7 | melody_phase | 5 | layout already authored and approved |
+| 8 | breath_gen, bubbler, dapple | 3, 3, 2 | |
+| 9 | heartbeat, resonance_bank, stereo-phaser, sustain_looper, sweep-dwell | 1 each | heartbeat also gets its filename despaced |
+
+**Zero-project plugins go last, or not at all:** harmonic_sculptor, rhythm-track,
+shepard-scale, shepard-tone, veil (melody_phase_v2 is being archived). Veil is the
+interesting one — it shipped in July, was ear-tested and liked, and has still never been
+used in a project. That is a discoverability signal, not a quality one, and it is worth
+asking about before spending a migration on it.
+
+### If it stops
+
+Ordered this way, an abrupt end leaves: a tagged release (Phase 0), a suite that is
+consistently *named* and has its missing controls (Phase 1), and migrations completed for
+the most-used plugins first. The documents carry every decision and the reasoning behind
+it, which is the part that cannot be reconstructed from the source.
