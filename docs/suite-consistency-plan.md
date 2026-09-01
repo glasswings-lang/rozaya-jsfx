@@ -1525,3 +1525,46 @@ different actions under one heading and only one of them was protective.
 
 The next release is the one that ships the finished sweep, and it should be the first
 thing a stranger could download and find self-consistent.
+
+### CORRECTION to Part 5 — most of the tooling already exists
+
+Rozaya, 2026-08-31: *"didn't we have a script for exactly this?"* Yes, and more of it than
+Part 5 assumed. It says to **build** `tools/migrate_layout.py`; that would have rebuilt
+working code badly. Read `tools/README.md` before writing anything new.
+
+**`tools/passage_migrate_sliders.py` is the layout migrator already.** It solves every
+fiddly part: token-position indexing (never "values with `-` stripped"), CRLF preserved,
+backups first, gating so it is safe to re-run over a folder, and a `HOPS` table walked
+oldest-first so a project several layouts behind migrates through in a single pass. Its
+docstring carries the reasoning too, including why the blob is untouched by a renumber.
+
+**The one thing it cannot do:** its hops are **inserts** — `(count, keep, inserted)`,
+meaning "keep N values, splice these in, shift the rest up." A reorder is an arbitrary
+**permutation**. So the work is to generalise it to accept an authored old→new mapping
+alongside the existing insert hops, not to write a new tool.
+
+**Two others that matter more than I had credited:**
+
+- **`tools/passage_captures.py`** — lists and extracts the captures stored inside a
+  Morpher/Passage `@serialize` blob. This makes the riskiest migration in the suite
+  *checkable*: inventory the captures in all 38 Morpher projects before touching them,
+  and verify afterwards that every one came through. Checking rather than hoping.
+- **`tools/morpher_to_passage.py`** — copies a project from one plugin to a different
+  one. That is exactly the shape the Polyrhythm v1 → v3 migration needs, which was being
+  treated as unbuilt.
+
+**Revised Part 5:**
+
+| need | status |
+|---|---|
+| `.RPP` slider-line rewriting, safely | **exists** — `passage_migrate_sliders.py` |
+| arbitrary permutation (not just inserts) | **generalise the above** |
+| cross-plugin project conversion | **exists in shape** — `morpher_to_passage.py` |
+| blob inspection / verification | **exists** — `passage_captures.py` |
+| enum-index migration | **exists** — `morpher_migrate_layer_order.py` |
+| per-plugin authored layouts | `docs/layouts/*.md`, hand-written |
+| linter | exists; corrected 2026-08-31; a lead generator, not a safety net |
+
+**The general lesson, and it is the same one as the unpropagated decisions:** this repo
+keeps containing the answer already. Check `tools/README.md` and `git log` before
+estimating that something needs building.
