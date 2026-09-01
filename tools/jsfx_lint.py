@@ -21,8 +21,17 @@ while i < len(sections):
     bal_total += abs(b)
     i += 2
 
-# empty () blocks -- the comment-only-branch trap
+# empty () BLOCKS -- the comment-only-branch trap.
+#
+# Only a BLOCK counts. `function foo()` and `foo()` are zero-argument
+# declarations and calls: legal, ubiquitous, and flagging them made this check
+# fire 22 times across four shipped, working plugins -- which teaches everyone
+# to ignore the whole linter. An empty block is a "()" NOT preceded by an
+# identifier; it follows ? : = ( , or ; instead. (Fixed 2026-08-31.)
 for m in re.finditer(r"\(\s*\)", code):
+    before = code[:m.start()].rstrip()
+    if before and (before[-1].isalnum() or before[-1] == "_"):
+        continue          # foo() / function foo() -- a call, not an empty block
     ln = code[:m.start()].count("\n") + 1
     print("EMPTY PARENS at line", ln, "->", lines[ln-1].strip()[:80])
     bal_total += 1
