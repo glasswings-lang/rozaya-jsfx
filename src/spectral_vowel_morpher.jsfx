@@ -36,55 +36,12 @@ desc: Spectral Vowel Morpher - voice<->wash capture instrument
 //                   without drawing REAPER automation. All targets drift at once.
 // =====================================================================
 
-slider1:0<0,7,1>Capture slot
-slider2:0<0,1,1{Off,Capture now}>Capture spectrum
-slider3:0<0,100,1>Capture point (per slot: earliest .. at press)
-slider4:0<-60,12,0.01>Input level (dry, dB)
-// Named "Voice level" since this plugin was born, and wrong the whole time: it
-// is applied to voutL/voutR, which is the equal-power crossfade of the voice
-// AND the wash, after every layer has been summed into both. So it has always
-// scaled the wash too, and now it scales all fifteen layers as well. The only
-// thing it does not touch is the dry input, which has its own Input level.
-// Relabelled rather than re-scoped -- the behaviour is right, the name was not.
-slider5:0<-60,12,0.01>Output level (dB, everything but the dry input)
-slider6:50<0,100,1>Texture (0 voice, 100 wash)
-slider7:150<5,680,1>Wash grain (ms)
-slider8:0<0,150,0.5>Spread (Hz)
-slider9:0<-96,96,0.1>Pitch (semitones)
-slider10:50<0,100,1>Stereo width
-slider11:0<0,500,1>Low cut (Hz)
-slider12:0<0,100,0.1>Denoise
-slider13:1<0,1,1{Focused slot,Morph}>Audition
-slider14:0<0,100,0.1>Morph (across captured slots)
-slider15:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
-slider16:20<1,600,0.5>Auto-morph time (sec)
-// --- Drift: suite-wide automation replacement (nested-selector pattern).
-//     Pick a target; it wanders by up/down amounts over a wall-clock period.
-//     All targets drift in parallel; the selector only chooses which one the
-//     amount/period/shape sliders are editing. Added at the END of the range
-//     (slider IDs are primary keys — never renumber existing ones). ---
-slider17:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
-slider18:0<0,300,0.01>Drift up amount (units match target)
-slider19:0<0,300,0.01>Drift down amount (units match target)
-slider20:30<1,600,0.5>Drift period (seconds)
-slider21:0<0,2,1{Sine,Triangle,Random}>Drift shape
-// Restart on play = drift jumps to the start of its cycle when the transport
-// begins (so multiple tracks reset together and stay in sync). Free-running =
-// drift ignores the transport and evolves continuously (loop under/over an
-// unbroken drift). A loop repeat is never a restart in either mode.
-slider22:0<0,1,1{Restart on play,Free-running}>Drift restart
-// --- Ramp: the suite's "Speed Ramp" under an honest name (this plugin has no
-//     speed to ramp). A one-time slow RIDE of a parameter: pick a target, how
-//     far to move it (signed) and over how long, arm Engage, and it glides there
-//     once and holds. Nested-selector like Drift; all targets ride in parallel
-//     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider23:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Ramp target
-slider24:0<-300,300,0.001>Ramp by (units match target)
-slider25:0<0,60,0.1>Ramp duration (minutes)
-slider26:0<0,60,0.1>Ramp start delay (minutes)
-slider27:0<0,1,1{Off,On}>Ramp engage
-// --- Ported from Spectral Vowel Passage. Appended rather than grouped: 18 saved
-//     projects use this plugin, and appending costs them nothing at all. ---
+// --- Capture. Pick a slot, grab into it, then say where in the grab to look
+//     and how much to smooth. Slots are numbered 1-8 to match how they are
+//     spoken about; the engine is 0-based underneath and subtracts one. ---
+slider1:1<1,8,1>Capture slot
+slider2:0<0,1,1{Off,Capture now}>Capture now
+slider3:0<0,100,1>Capture point (%, per slot: earliest .. at press)
 // Capture average: how many analysis frames the WASH spectrum is averaged over.
 // GLOBAL here, unlike Passage -- for the same reason Overtone below is. It first
 // landed per slot only because it was ported wholesale from Passage, where per
@@ -97,17 +54,34 @@ slider27:0<0,1,1{Off,On}>Ramp engage
 // another that costs far less than it would on Passage's separate stops -- which
 // is exactly why Passage keeps it per slot.
 // 1 is the original single-frame behaviour and the default.
-slider28:1<1,6,1>Capture average (1 = one frame, higher = smoother)
-// Overtone: bring one partial out far enough to be heard as a note of its own.
-// GLOBAL here, unlike Passage -- this plugin is a field you sit inside, with one
-// setting across the morph, rather than a route whose stops each have a character.
-// Attenuates the others rather than boosting the chosen one: that is what a tract
-// resonance physically does, and it means the control can only make the voice
-// quieter. Harmonic 1 is exempt at any depth -- it is the drone.
-slider29:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
-slider30:24<0,48,0.01>Overtone lift (dB the chosen harmonic rises by)
-slider31:1<0.5,4,0.1>Overtone width (harmonics either side)
+slider4:1<1,6,1>Capture average (frames, 1 = one frame)
 
+// --- The morph. Which slot you are hearing, where between them you are, and
+//     whether that position moves on its own. ---
+slider5:1<0,1,1{Focused slot,Morph}>Audition
+slider6:0<0,100,0.1>Morph (% across captured slots)
+slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
+// Sync to host. Auto-morph time is a DURATION, and a duration's two honest units
+// are seconds and beats -- so this is one switch, not a unit picker with a single
+// entry, and not a ratio menu. Per R13 sync is not a unit. Per R11 there is no
+// target selector either: R11 pairs one with "Every N beats" for rates expressed
+// AS rates (Womb's heart is a BPM and needs somewhere to say how many beats one
+// of its beats takes). A duration under sync is simply read as beats.
+// Sits ABOVE the value it governs, so you meet the unit before the number.
+// Flipping it converts the value at the current tempo, so nothing changes
+// audibly at the moment you switch -- only the unit you type in.
+slider8:0<0,1,1{Off,On}>Sync to host
+slider9:20<0.01,1000,0.01>Auto-morph time (sec / beats when synced)
+
+// --- The sound of the morph. Everything from here to High cut shapes what the
+//     captured spectra become; all of it is global, across every slot. ---
+slider10:50<0,100,1>Texture (% wash)
+slider11:150<5,680,1>Wash grain (ms)
+slider12:0<0,150,0.5>Spread (Hz)
+slider13:0<-96,96,0.1>Pitch (semitones)
+slider14:50<0,100,1>Stereo width (%)
+slider15:0<0,100,0.1>Denoise (%)
+slider16:0<0,500,1>Low cut (Hz)
 // --- High cut. The mirror of Low cut, and the thing that makes an octave-up
 //     Layer usable at all. Two deliberate differences from Low cut, both worth
 //     knowing before you reach for it:
@@ -119,7 +93,19 @@ slider31:1<0.5,4,0.1>Overtone width (harmonics either side)
 //       * it shapes the VOICE as well as the wash -- partials fade out as they
 //         cross it -- which makes the voice engine cheaper, not dearer.
 //     20000 means off, and off is bit-identical to this control not existing.
-slider32:20000<200,20000,10>High cut (Hz, 20000 = off)
+slider17:20000<200,20000,10>High cut (Hz, 20000 = off)
+
+// Overtone: bring one partial out far enough to be heard as a note of its own.
+// GLOBAL here, unlike Passage -- this plugin is a field you sit inside, with one
+// setting across the morph, rather than a route whose stops each have a character.
+// Lifts the chosen partial and renormalises the bank by total power, so the
+// output never gets louder. Harmonic 1 is exempt at any depth -- it is the drone.
+// The HARMONIC is also a per-layer choice (see Layer overtone harmonic); lift and
+// width stay global, because they are character and character can be uniform.
+slider18:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
+slider19:24<0,48,0.01>Overtone lift (dB the chosen harmonic rises by)
+slider20:1<0.5,4,0.1>Overtone width (harmonics either side)
+
 // --- Layers: extra copies of the WHOLE morph -- voice and wash both -- at a
 //     fixed interval from the main pitch, locked to the same morph position.
 //     That lock is the entire point. Two instances on Shuffle land on different
@@ -127,13 +113,13 @@ slider32:20000<200,20000,10>High cut (Hz, 20000 = off)
 //     stack consonantly and Shuffle stays usable. Layers ride Pitch (and its
 //     Drift/Ramp) as offsets from it, so the stack transposes as one.
 //
-//     FIFTEEN layers behind FIVE sliders, via the suite's nested-selector
+//     SIXTEEN layers behind SIX sliders, via the suite's nested-selector
 //     pattern (the same shape as Drift target and Capture slot): every layer
 //     sounds at once, and the selector only chooses which one the sliders below
-//     are editing. Twelve of them are fixed intervals named on the selector --
-//     four octaves each way, plus fifths and fourths -- so there is no
-//     arithmetic and nothing to convert: you pick the interval and set a dB.
-//     The first three are Custom, for anything the list does not name.
+//     are editing. Thirteen of them are fixed intervals named on the selector --
+//     four octaves each way, plus fifths and fourths, plus the Original -- so
+//     there is no arithmetic and nothing to convert: you pick the interval and
+//     set a dB. The last three are Custom, for anything the list does not name.
 //
 //     The named intervals live on the SELECTOR rather than behind a picker of
 //     their own. They used to be a second nested list on every Custom layer,
@@ -142,7 +128,7 @@ slider32:20000<200,20000,10>High cut (Hz, 20000 = off)
 //     very nearly they did. Putting them in the one list makes a fifth as
 //     reachable as an octave and gave the freed slider to Solo.
 //
-slider33:6<0,15,1{4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,Original (unison),a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,Custom 1,Custom 2,Custom 3}>Layer
+slider21:6<0,15,1{4 octaves down,3 octaves down,2 octaves down,1 octave down,a fifth down,a fourth down,Original (unison),a fourth up,a fifth up,1 octave up,2 octaves up,3 octaves up,4 octaves up,Custom 1,Custom 2,Custom 3}>Layer
 // Active/Inactive, per layer, and NOT the same thing as a level of -60.
 // -60 is "this layer is silent because that is the level I want"; Inactive is
 // "silence this layer and give it back to me later" -- the level you tuned is
@@ -152,23 +138,17 @@ slider33:6<0,15,1{4 octaves down,3 octaves down,2 octaves down,1 octave down,a f
 // gate is the layer's gain and the whole layer's DSP is skipped when it is 0.
 // Sits directly under the selector, ahead of the level: "is this layer in
 // play" is the first question you ask about a layer, and it is a binary you
-// can hear the answer to instantly. It also groups the two controls that
-// apply to EVERY layer (active, level) ahead of the two that only apply to a
-// Custom one (interval, pitch), so the always-present block is contiguous.
-// This diverges from polyrhythm, where Vn Active comes last in the per-voice
-// group -- deliberately: that group is flat and every voice is on screen at
-// once, where this is a selector showing you exactly one layer at a time.
-slider34:1<0,1,1{Inactive,Active}>Layer active
-// Defaults to 0, NOT -60, because slider33 defaults to the Original and this
-// slider is stamped straight into whatever layer that selects. At -60 it muted
-// the Original on load -- on a fresh instance, and on every pre-layers project
-// too, where REAPER supplies this slider's declared default because the saved
-// line has no value for it. @init's 0 dB for the Original was overwritten
-// before the first sample either way. Two defaults that have to agree: the
-// level slider's default is the default-selected layer's level.
-slider35:0<-60,0,0.01>Layer level (dB, -60 = off)
-slider36:0<0,1,1{Off,Solo}>Layer solo
-slider37:-12<-96,96,0.1>Layer pitch (semitones, Custom layers)
+// can hear the answer to instantly.
+slider22:1<0,1,1{Inactive,Active}>Layer active
+// Defaults to 0, NOT -60, because the Layer selector defaults to the Original
+// and this slider is stamped straight into whatever layer that selects. At -60
+// it muted the Original on load -- on a fresh instance, and on every pre-layers
+// project too, where REAPER supplies this slider's declared default because the
+// saved line has no value for it. Two defaults that have to agree: the level
+// slider's default is the default-selected layer's level.
+slider23:0<-60,0,0.01>Layer level (dB, -60 = off)
+slider24:0<0,1,1{Off,Solo}>Layer solo
+slider25:-12<-96,96,0.1>Layer pitch (semitones, Custom layers)
 // CPU control, not a tone control. Every layer is its own set of oscillators --
 // nothing about them can be shared with the main voice or with each other, so
 // cost is layers x harmonics. A background layer rarely needs the same harmonic
@@ -177,7 +157,56 @@ slider37:-12<-96,96,0.1>Layer pitch (semitones, Custom layers)
 // to no change in sound for every project saved before this landed). A plain
 // number, nudged by ear against CPU meter or crackle; no unit conversion, no
 // percentage, the machine does the min() against what the source actually has.
-slider38:0<0,64,1>Layer harmonics (0 = full)
+slider26:0<0,64,1>Layer harmonics (0 = full)
+// Per-layer overtone harmonic. The global Overtone harmonic above is folded into
+// the shared magnitude array, so one setting applied to every layer at once, by
+// harmonic INDEX -- with Overtone harmonic 8 the lift lands at 8*f0 in the
+// Original, 4*f0 an octave down, 16*f0 an octave up. Consonant, because the
+// layers are octaves and fifths, but not controllable: there was no way to say
+// "overtone on the lead, none on the drone", which is what a throat-singing
+// patch actually wants. The harmonic is the melodic choice -- it is a Drift and
+// Ramp target, which is how the overtone melody gets played -- so it is the half
+// that goes per layer. Lift and width stay global.
+// -1 = follow the global, and is the default, so every layer behaves exactly as
+// it did before this slider existed until you say otherwise.
+slider27:-1<-1,64,1>Layer overtone harmonic (-1 = follow the global)
+
+// --- Levels. Both are global and both belong at the end of the sound section,
+//     after everything they scale. ---
+slider28:0<-60,12,0.01>Input level (dry, dB)
+// Named "Voice level" since this plugin was born, and wrong the whole time: it
+// is applied to voutL/voutR, which is the equal-power crossfade of the voice
+// AND the wash, after every layer has been summed into both. So it has always
+// scaled the wash too, and now it scales all sixteen layers as well. The only
+// thing it does not touch is the dry input, which has its own Input level.
+// Relabelled rather than re-scoped -- the behaviour is right, the name was not.
+slider29:0<-60,12,0.01>Output level (dB, everything but the dry input)
+
+// --- Drift: suite-wide automation replacement (nested-selector pattern).
+//     Pick a target; it wanders by up/down amounts over a wall-clock period.
+//     All targets drift in parallel; the selector only chooses which one the
+//     amount/period/shape sliders are editing. ---
+slider30:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
+slider31:0<0,300,0.01>Drift up amount (units match target)
+slider32:0<0,300,0.01>Drift down amount (units match target)
+slider33:30<1,600,0.5>Drift period (seconds)
+slider34:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Restart on play = drift jumps to the start of its cycle when the transport
+// begins (so multiple tracks reset together and stay in sync). Free-running =
+// drift ignores the transport and evolves continuously (loop under/over an
+// unbroken drift). A loop repeat is never a restart in either mode.
+slider35:0<0,1,1{Restart on play,Free-running}>Drift restart
+
+// --- Ramp: the suite's "Speed Ramp" under an honest name (this plugin has no
+//     speed to ramp). A one-time slow RIDE of a parameter: pick a target, how
+//     far to move it (signed) and over how long, arm Engage, and it glides there
+//     once and holds. Nested-selector like Drift; all targets ride in parallel
+//     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
+slider36:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Ramp target
+slider37:0<-300,300,0.001>Ramp by (units match target)
+slider38:0<0,60,0.1>Ramp duration (minutes)
+slider39:0<0,1,1{Off,On}>Ramp engage
+slider40:0<0,60,0.1>Ramp start delay (minutes)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -189,7 +218,7 @@ ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
 N_TARGETS = 24;  // Drift/Ramp targets. APPEND ONLY -- the index is saved in the project
-                 // (slider17/23) AND is the bank position, so inserting one mid-list
+                 // (slider30/23) AND is the bank position, so inserting one mid-list
                  // would silently repoint every saved selection above it:
                  // 0 Texture, 1 Spread, 2 Pitch, 3 Stereo width, 4 Low cut,
                  // 5 Voice level, 6 Overtone harmonic, 7 High cut, 8..18 layer levels
@@ -289,6 +318,13 @@ lay_db_base = freemem; freemem += 32;   // level in dB, before Drift/Ramp
 lay_active  = freemem; freemem += 32;   // 1 = audible, 0 = muted but remembered
 lay_solo    = freemem; freemem += 32;   // 1 = audition this layer alone
 lay_nharm   = freemem; freemem += 32;   // per-layer harmonic cap, raw slider (0 = uncapped)
+lay_ot_harm = freemem; freemem += 32;   // per-layer Overtone harmonic (-1 = follow the global)
+// Per-layer Overtone working space. Only layers that actually override the
+// global harmonic use their slice; the rest read the shared arrays, so a
+// project that never touches this pays nothing for it beyond the allocation.
+lay_ot_gain = freemem; freemem += N_LAY_SLOTS*NHARM;   // that layer's per-harmonic gain
+lay_hmA     = freemem; freemem += N_LAY_SLOTS*NHARM;   // ...and its partial magnitudes, bank A
+lay_hmB     = freemem; freemem += N_LAY_SLOTS*NHARM;   //                                bank B
 ser_scratch = freemem; freemem += 32;   // read-and-discard space for old @serialize layouts
 lay_perm    = freemem; freemem += 32;   // CANON layer order -> the pitch ladder
 lay_inv     = freemem; freemem += 32;   // ...and back, for the remembered selector positions
@@ -362,7 +398,7 @@ slots_inited == 0 ? (
   // The three Custom layers start somewhere musical (an octave down, an octave
   // up, two octaves down) so that raising one is immediately worth hearing.
   lay_semi[0] = -12; lay_semi[1] = 12;  lay_semi[2] = -24;
-  lpi = 0; loop(N_LAY_SLOTS, lay_solo[lpi] = 0; lay_nharm[lpi] = 0; lpi += 1; );
+  lpi = 0; loop(N_LAY_SLOTS, lay_solo[lpi] = 0; lay_nharm[lpi] = 0; lay_ot_harm[lpi] = -1; lpi += 1; );
   last_lay_sel = LAY_ORIG;
   last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
 );
@@ -745,7 +781,28 @@ function shuffle_bag() local(i, j, t) (
 @slider
 // Every slider read into a named global here; nothing downstream references a
 // sliderN directly, so the layout can be reordered without desyncing the engine.
-cap_slot      = max(0, min(NSLOTS-1, slider1));
+
+// --- Sync to host: convert Auto-morph time when the switch actually moves.
+//     Same shape as Womb's Rate Mode conversion, which is the ear-tested one.
+//     Gated on `auto_sync_inited`, which is adopted in @block and NOT here:
+//     on a fresh or duplicated instance @slider runs while REAPER is still
+//     handing over saved values, so a tracker adopted here would capture a
+//     DEFAULT and then read the real value arriving as a user edit -- which
+//     is exactly the bug that stamped 0.5 over a hand-set rate on every load
+//     (2026-08-23). While the flag is still 0 this fires nothing at all, and
+//     that is the safe direction. `sliderchange`, not `slider_automate`: this
+//     is a unit conversion, not something to write into automation.
+auto_sync_inited && last_auto_sync != slider8 ? (
+  slider8 > 0.5 ? (
+    slider9 = min(1000, max(0.01, slider9 * max(tempo, 0.001) / 60));   // seconds -> beats
+  ) : (
+    slider9 = min(1000, max(0.01, slider9 * 60 / max(tempo, 0.001)));   // beats -> seconds
+  );
+  sliderchange(-1);
+  last_auto_sync = slider8;
+);
+
+cap_slot      = max(0, min(NSLOTS-1, slider1 - 1));   // slider is 1-8, engine is 0-7
 cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0; );  // first @slider after load: sync cap_last so a saved-ON Capture-now never fires a silent capture on reload
 // --- Per-slot Capture point (nested-selector, like Drift/Ramp targets). The
 //     Capture-point slider is now PER SLOT: switching Capture slot saves the
@@ -769,99 +826,107 @@ cap_point01   = slider3 * 0.01;
 // reads and as the @serialize field (byte format unchanged) -- it just never
 // holds eight different values any more. Stamping every @slider is also what
 // flattens a project that was saved back when this WAS per slot.
-cap_avg       = max(1, min(CAPAVG_MAX, slider28));
+cap_avg       = max(1, min(CAPAVG_MAX, slider4));
 sca2 = 0; loop(NSLOTS, slot_capavg[sca2] = cap_avg; sca2 += 1; );
 // Overtone is GLOBAL in this plugin -- see the slider block.
-ot_harm_base  = max(0, min(NHARM, slider29));
-ot_depth_db   = max(0, min(48, slider30));
-ot_width      = max(0.5, min(4, slider31));
+ot_harm_base  = max(0, min(NHARM, slider18));
+ot_depth_db   = max(0, min(48, slider19));
+ot_width      = max(0.5, min(4, slider20));
 // --- Layer selector (nested-selector pattern, exactly like Drift/Ramp target
-//     and Capture slot). Switching slider33 saves the visible sliders into the
+//     and Capture slot). Switching slider21 saves the visible sliders into the
 //     OUTGOING layer's bank slot and loads the INCOMING layer's stored config
 //     into them; otherwise it captures live edits to the selected layer. Every
 //     layer sounds in parallel from @sample regardless of what is selected --
 //     the selector is a view, never a mute. ---
-lay_sel = max(0, min(N_LAY_SLOTS-1, slider33));
+lay_sel = max(0, min(N_LAY_SLOTS-1, slider21));
 last_lay_sel != lay_sel ? (
-  lay_db_base[last_lay_sel] = slider35;
-  lay_active[last_lay_sel]  = slider34;
-  lay_solo[last_lay_sel] = slider36;
-  lay_nharm[last_lay_sel] = slider38;
-  (last_lay_sel >= LAY_CUSTOM0 && last_lay_sel < LAY_CUSTOM0+N_CUSTOM) ? ( lay_semi[last_lay_sel-LAY_CUSTOM0] = slider37; );
-  slider35 = lay_db_base[lay_sel]; slider_automate(slider35);
-  slider34 = lay_active[lay_sel];  slider_automate(slider34);
-  slider36 = lay_solo[lay_sel];    slider_automate(slider36);
-  slider38 = lay_nharm[lay_sel];   slider_automate(slider38);
+  lay_db_base[last_lay_sel] = slider23;
+  lay_active[last_lay_sel]  = slider22;
+  lay_solo[last_lay_sel] = slider24;
+  lay_nharm[last_lay_sel] = slider26;
+  lay_ot_harm[last_lay_sel] = slider27;
+  (last_lay_sel >= LAY_CUSTOM0 && last_lay_sel < LAY_CUSTOM0+N_CUSTOM) ? ( lay_semi[last_lay_sel-LAY_CUSTOM0] = slider25; );
+  slider23 = lay_db_base[lay_sel]; slider_automate(slider23);
+  slider22 = lay_active[lay_sel];  slider_automate(slider22);
+  slider24 = lay_solo[lay_sel];    slider_automate(slider24);
+  slider26 = lay_nharm[lay_sel];   slider_automate(slider26);
+  slider27 = lay_ot_harm[lay_sel]; slider_automate(slider27);
   // The interval controls only mean anything on a Custom layer; an octave's
   // interval is fixed by which entry you picked. Load them anyway so the two
   // sliders always show the layer you are actually looking at.
   (lay_sel >= LAY_CUSTOM0 && lay_sel < LAY_CUSTOM0+N_CUSTOM) ? (
-    slider37 = lay_semi[lay_sel-LAY_CUSTOM0]; slider_automate(slider37);
+    slider25 = lay_semi[lay_sel-LAY_CUSTOM0]; slider_automate(slider25);
   );
   last_lay_sel = lay_sel;
 ) : (
-  lay_db_base[lay_sel] = slider35;
-  lay_active[lay_sel]  = slider34;
-  lay_solo[lay_sel] = slider36;
-  lay_nharm[lay_sel] = slider38;
-  (lay_sel >= LAY_CUSTOM0 && lay_sel < LAY_CUSTOM0+N_CUSTOM) ? ( lay_semi[lay_sel-LAY_CUSTOM0] = slider37; );
+  lay_db_base[lay_sel] = slider23;
+  lay_active[lay_sel]  = slider22;
+  lay_solo[lay_sel] = slider24;
+  lay_nharm[lay_sel] = slider26;
+  lay_ot_harm[lay_sel] = slider27;
+  (lay_sel >= LAY_CUSTOM0 && lay_sel < LAY_CUSTOM0+N_CUSTOM) ? ( lay_semi[lay_sel-LAY_CUSTOM0] = slider25; );
 );
 // Show the interval controls only where they mean something: the picker on a
 // Custom layer, and the raw semitones only when the picker can't say it.
 // Solo applies to every layer; the raw semitones only to a Custom one, whose
 // interval is not named on the selector.
-slider_show(slider37, lay_sel >= LAY_CUSTOM0 && lay_sel < LAY_CUSTOM0+N_CUSTOM);
+slider_show(slider25, lay_sel >= LAY_CUSTOM0 && lay_sel < LAY_CUSTOM0+N_CUSTOM);
 // Layer ratios and gains are DERIVED from the banks, so they are computed in
 // @block, not here -- see the note there. Deriving them in @slider is what
 // broke restore: @slider and @serialize have no guaranteed relative order.
-dry_gain      = slider4 <= -60 ? 0 : pow(10, slider4/20);   // -60 = true silence
-voice_db_base = slider5;                                    // base for Voice level drift
-voice_gain    = slider5 <= -60 ? 0 : pow(10, slider5/20);
-texture       = slider6 * 0.01;                              // 0 voice .. 1 wash
+dry_gain      = slider28 <= -60 ? 0 : pow(10, slider28/20);   // -60 = true silence
+voice_db_base = slider29;                                    // base for Voice level drift
+voice_gain    = slider29 <= -60 ? 0 : pow(10, slider29/20);
+texture       = slider10 * 0.01;                              // 0 voice .. 1 wash
 hlevel        = cos(texture * PI * 0.5);                     // equal-power crossfade
 wlevel        = sin(texture * PI * 0.5);
-grain_ms        = slider7;
-spread_hz     = slider8;
-pitch_semi    = slider9;                                    // base for Pitch drift
-pitch_ratio   = pow(2.0, slider9/12);
-stereo_width  = slider10;
+grain_ms        = slider11;
+spread_hz     = slider12;
+pitch_semi    = slider13;                                    // base for Pitch drift
+pitch_ratio   = pow(2.0, slider13/12);
+stereo_width  = slider14;
 voice_detune  = stereo_width * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
-lowcut_hz     = slider11;
-hicut_hz      = slider32;                                    // base for High cut drift (20000 = off)
-denoise_amt   = slider12;
-audition_mode = slider13;                                   // 0 focused slot, 1 morph
-morph01       = slider14 * 0.01;
-automorph_mode = slider15;
-auto_time     = max(0.1, slider16);
+lowcut_hz     = slider16;
+hicut_hz      = slider17;                                    // base for High cut drift (20000 = off)
+denoise_amt   = slider15;
+audition_mode = slider5;                                   // 0 focused slot, 1 morph
+morph01       = slider6 * 0.01;
+automorph_mode = slider7;
+// Auto-morph time. The RAW slider is read here; the seconds it actually means
+// are derived in @block, because under sync it follows the project tempo and a
+// tempo change does not re-run @slider.
+auto_sync     = slider8 > 0.5;
+auto_time_raw = max(0.01, slider9);
 automorph_mode != last_automode ? (
   last_automode = automorph_mode; morph_phase = 0;
   drift_primed = 0;   // force Drift to (re)build its shuffle bag on the next sample
 );
-slider_show(slider16, automorph_mode > 0.5);
+slider_show(slider8, automorph_mode > 0.5);
+slider_show(slider9, automorph_mode > 0.5);
 
 // --- Drift target selector save/restore (nested-selector pattern, matching the
-//     rest of the suite). Switching slider17 saves sliders 18-21 into the OLD
+//     rest of the suite). Switching slider30 saves sliders 18-21 into the OLD
 //     target's bank slot, then loads the NEW target's stored config into the
 //     visible sliders. Otherwise it captures live edits to the current target.
 //     All targets drift in parallel from @sample regardless of what's selected. ---
-sel_target = slider17;
-sel_up     = slider18;
-sel_down   = slider19;
-sel_per    = slider20;
-sel_shape  = slider21;
+sel_target = slider30;
+sel_up     = slider31;
+sel_down   = slider32;
+sel_per    = slider33;
+sel_shape  = slider34;
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
   target_drift_down[last_target_select]  = sel_down;
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
-  slider18 = target_drift_up[sel_target];
-  slider19 = target_drift_down[sel_target];
-  slider20 = target_drift_per[sel_target];
-  slider21 = target_drift_shape[sel_target];
-  slider_automate(slider18);
-  slider_automate(slider19);
-  slider_automate(slider20);
-  slider_automate(slider21);
+  slider31 = target_drift_up[sel_target];
+  slider32 = target_drift_down[sel_target];
+  slider33 = target_drift_per[sel_target];
+  slider34 = target_drift_shape[sel_target];
+  slider_automate(slider31);
+  slider_automate(slider32);
+  slider_automate(slider33);
+  slider_automate(slider34);
   last_target_select = sel_target;
 ) : (
   target_drift_up[sel_target]    = sel_up;
@@ -873,37 +938,48 @@ last_target_select != sel_target ? (
 // per-sample effective-value recompute (and keep the exact original CPU/output)
 // for any target with no drift configured.
 // --- Ramp target selector save/restore (nested-selector, mirrors Drift).
-//     slider23 = target; 24 = per-target `by`; 25 = duration; 26 = start delay.
-//     slider27 (Engage) is GLOBAL. All targets ride in parallel from @sample. ---
-rsel_target = slider23;
-rsel_by     = slider24;
-rsel_dur    = slider25;
-rsel_delay  = slider26;
+//     slider36 = target; 24 = per-target `by`; 25 = duration; 26 = start delay.
+//     slider39 (Engage) is GLOBAL. All targets ride in parallel from @sample. ---
+rsel_target = slider36;
+rsel_by     = slider37;
+rsel_dur    = slider38;
+rsel_delay  = slider40;
 last_ramp_target != rsel_target ? (
   ramp_by_mem[last_ramp_target]    = rsel_by;
   ramp_dur_mem[last_ramp_target]   = rsel_dur;
   ramp_delay_mem[last_ramp_target] = rsel_delay;
-  slider24 = ramp_by_mem[rsel_target];
-  slider25 = ramp_dur_mem[rsel_target];
-  slider26 = ramp_delay_mem[rsel_target];
-  slider_automate(slider24);
-  slider_automate(slider25);
-  slider_automate(slider26);
+  slider37 = ramp_by_mem[rsel_target];
+  slider38 = ramp_dur_mem[rsel_target];
+  slider40 = ramp_delay_mem[rsel_target];
+  slider_automate(slider37);
+  slider_automate(slider38);
+  slider_automate(slider40);
   last_ramp_target = rsel_target;
 ) : (
   ramp_by_mem[rsel_target]    = rsel_by;
   ramp_dur_mem[rsel_target]   = rsel_dur;
   ramp_delay_mem[rsel_target] = rsel_delay;
 );
-ramp_engaged = slider27;
+ramp_engaged = slider39;
 
 // td_active / mod_active are derived from the drift and ramp banks, so they are
 // computed in @block too, for exactly the same reason.
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
-drift_restart_free = slider22;   // 0 = restart on play (sync), 1 = free-running
+drift_restart_free = slider35;   // 0 = restart on play (sync), 1 = free-running
 
 @block
+// Adopt the Sync-to-host tracker here rather than in @slider -- see the note
+// on the conversion block in @slider for why. @block cannot run before the
+// instance is configured, so this adopts a settled value whatever order the
+// restore paths ran in.
+!auto_sync_inited ? ( last_auto_sync = slider8; auto_sync_inited = 1; );
+// Auto-morph time in SECONDS, derived every block. Under sync the slider is a
+// beat count, so this is where the project tempo enters; @slider would go
+// stale the moment the tempo changed, since a tempo change does not re-run it.
+auto_time = max(0.01, auto_sync ? auto_time_raw * 60 / max(tempo, 0.001)
+                                : auto_time_raw);
+
 // Transport play-edge: immediate runtime setup -- rebuild window, clear the
 // accumulator, reset runtime (captures themselves are NOT touched). With
 // ext_noinit, @init no longer does this on play, so it's explicit here. The
@@ -1341,6 +1417,35 @@ ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
     ot_norm = opw > 0 ? sqrt(NHARM / opw) : 1;
     oi = 0; loop(NHARM, ot_gain[oi] = ot_gain[oi] * ot_norm; oi += 1; );
     ot_boost = otg;                            // the wash rebuilds the window itself
+    // Per-layer harmonics. Same curve and the same power normalisation, but
+    // centred on that layer's own harmonic. Lift and width stay global -- they
+    // are character, and character can reasonably be uniform across a stack;
+    // the HARMONIC is the melodic choice, which is why it is the half that
+    // goes per layer. Runs only for layers that actually override, so the
+    // usual cost of this loop is zero.
+    lok = 0;
+    loop(N_LAY_SLOTS,
+      lay_ot_harm[lok] >= 0 ? (
+        lobo = lok*NHARM;
+        oi = 0; loop(NHARM, lay_ot_gain[lobo+oi] = 1; oi += 1; );
+        lay_ot_harm[lok] > 0 ? (
+          olo = max(1, ceil(lay_ot_harm[lok] - otw));
+          ohi = min(NHARM, floor(lay_ot_harm[lok] + otw));
+          oi = olo;
+          loop(max(0, ohi - olo + 1),
+            od = abs(oi - lay_ot_harm[lok]) / otw;
+            ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
+            lay_ot_gain[lobo+oi-1] = 1 + (otg - 1)*ow;
+            oi += 1;
+          );
+          lay_ot_gain[lobo] = 1;   // the fundamental is never lifted here either
+        );
+        opw = 0; oi = 0; loop(NHARM, opw += lay_ot_gain[lobo+oi]*lay_ot_gain[lobo+oi]; oi += 1; );
+        lonm = opw > 0 ? sqrt(NHARM / opw) : 1;
+        oi = 0; loop(NHARM, lay_ot_gain[lobo+oi] = lay_ot_gain[lobo+oi] * lonm; oi += 1; );
+      );
+      lok += 1;
+    );
   ) : (
     oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );
     ot_boost = 1; ot_norm = 1;
@@ -1409,6 +1514,22 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     hmB_arr[vn] = slot_harm[bB+vn]/normB * ot_gain[vn];
     (hmA_arr[vn] > HM_EPS || hmB_arr[vn] > HM_EPS) ? nharm_used = vn + 1;
     vn += 1;
+  );
+  // The same magnitudes again for any layer running its own Overtone harmonic,
+  // built once per FRAME rather than per sample -- nothing is added to the
+  // per-sample path, which is the only place cost would show. Layers with no
+  // override are skipped entirely and read the shared arrays below.
+  lok = 0;
+  loop(N_LAY_SLOTS,
+    (lay_ot_harm[lok] >= 0 && layer_gain[lok] > 0.0001) ? (
+      lobo = lok*NHARM; vn = 0;
+      loop(NHARM,
+        lay_hmA[lobo+vn] = slot_harm[bA+vn]/normA * lay_ot_gain[lobo+vn];
+        lay_hmB[lobo+vn] = slot_harm[bB+vn]/normB * lay_ot_gain[lobo+vn];
+        vn += 1;
+      );
+    );
+    lok += 1;
   );
   voice_detune > 0 ? (
     // Stereo: left slightly flat, right slightly sharp (symmetric, so the
@@ -1483,16 +1604,21 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
       (lyk != LAY_ORIG && lyg > 0.0001) ? (
         lybo = lyk*NHARM;
         lyfa = fA*layer_ratio[lyk]; lyfb = fB*layer_ratio[lyk];
-        // Layer harmonics (slider38, per layer, 0 = uncapped): a plain count,
+        // Layer harmonics (slider26, per layer, 0 = uncapped): a plain count,
         // never above what the source actually has (nharm_used). A layer with
         // no cap set costs exactly what it always cost -- this is opt-in only.
         lynh = lay_nharm[lyk] > 0 ? min(nharm_used, lay_nharm[lyk]) : nharm_used;
+        // Which magnitude bank this layer sounds from: its own if it overrides
+        // the Overtone harmonic, the shared one otherwise. A memory index is
+        // just a number in EEL2, so this is one select per layer per sample.
+        lyhA = lay_ot_harm[lyk] >= 0 ? (lay_hmA + lybo) : hmA_arr;
+        lyhB = lay_ot_harm[lyk] >= 0 ? (lay_hmB + lybo) : hmB_arr;
         voice_detune > 0 ? (
           lyfal = lyfa*(1-voice_detune); lyfar = lyfa*(1+voice_detune);
           lyfbl = lyfb*(1-voice_detune); lyfbr = lyfb*(1+voice_detune);
           lyv_al = 0; lyv_ar = 0; lyv_bl = 0; lyv_br = 0; vn = 0;
           loop(lynh,
-            hmA = hmA_arr[vn]; hmB = hmB_arr[vn];
+            hmA = lyhA[vn]; hmB = lyhB[vn];
             lypf = (vn+1)*lyfal; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
             lypf < hc_bound ? ( lyv_al += hmA*hcg*wtsin(lay_hph[lybo+vn]);
               lay_hph[lybo+vn]   += TWOPI*(vn+1)*lyfal/srate; lay_hph[lybo+vn]   >= TWOPI ? lay_hph[lybo+vn]   -= TWOPI; );
@@ -1514,10 +1640,10 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
           lyv_al = 0; lyv_bl = 0; vn = 0;
           loop(lynh,
             lypf = (vn+1)*lyfa; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
-            lypf < hc_bound ? ( lyv_al += hmA_arr[vn]*hcg*wtsin(lay_hph[lybo+vn]);
+            lypf < hc_bound ? ( lyv_al += lyhA[vn]*hcg*wtsin(lay_hph[lybo+vn]);
               lay_hph[lybo+vn]  += TWOPI*(vn+1)*lyfa/srate; lay_hph[lybo+vn]  >= TWOPI ? lay_hph[lybo+vn]  -= TWOPI; );
             lypf = (vn+1)*lyfb; hcg = lypf > hc_lo ? (hc_top - lypf)*hc_inv : 1;
-            lypf < hc_bound ? ( lyv_bl += hmB_arr[vn]*hcg*wtsin(lay_hphB[lybo+vn]);
+            lypf < hc_bound ? ( lyv_bl += lyhB[vn]*hcg*wtsin(lay_hphB[lybo+vn]);
               lay_hphB[lybo+vn] += TWOPI*(vn+1)*lyfb/srate; lay_hphB[lybo+vn] >= TWOPI ? lay_hphB[lybo+vn] -= TWOPI; );
             vn += 1;
           );
@@ -1641,7 +1767,7 @@ file_var(0, ser_magic);
   // single-frame analysis it was built on -- but it also means the setting
   // can be dialled in from outside without surgery on the saved blob.
   (file_avail(0) >= 0 && slot_capavg[0] == -999) ? (
-    seed_ca = max(1, min(CAPAVG_MAX, slider28));
+    seed_ca = max(1, min(CAPAVG_MAX, slider4));
     sca = 0; loop(NSLOTS, slot_capavg[sca] = seed_ca; sca += 1; );
   );
 
@@ -1714,6 +1840,15 @@ file_var(0, ser_magic);
   //     current (already-canonical) layer order, so there is no older ordering
   //     for it to need migrating from. ---
   file_mem(0, lay_nharm, N_LAY_SLOTS);
+  // Appended, exactly as lay_nharm itself was. A blob written before this
+  // existed simply runs out here; file_mem leaves the destination untouched
+  // past EOF, so the array keeps @init's -1 (follow the global) and every
+  // older project sounds precisely as it did. No magic bump needed, and none
+  // wanted -- a bump would make every 7700008 blob fall through to defaults.
+  // NOT added to the layer-order permutation below: it is only ever RESTORED
+  // from blobs already in ladder order, and migrating a DEFAULTED bank is the
+  // mistake that moved the Original's unity gain off its slot last time.
+  file_mem(0, lay_ot_harm, N_LAY_SLOTS);
 
   // --- Layer order migration, walked LAST so every older layout above has
   //     already been brought up to CANON: Custom 1..3, the twelve intervals low
@@ -1727,8 +1862,8 @@ file_var(0, ser_magic);
   //     Every per-layer bank and the layer range of every per-target bank get
   //     the same treatment, because target LAY_T0+i has always meant layer i.
   //
-  //     THE SLIDER LINE CANNOT BE FIXED FROM HERE. slider33, slider17 and
-  //     slider23 hold indices into these lists and live in the project file --
+  //     THE SLIDER LINE CANNOT BE FIXED FROM HERE. slider21, slider30 and
+  //     slider36 hold indices into these lists and live in the project file --
   //     run tools/morpher_migrate_layer_order.py over the project folders.
   // Gated on the blob actually HAVING layer banks (7700004 was the first), not
   // merely on being old. A 7700001/7700002 blob predates layers entirely, so
@@ -1780,17 +1915,17 @@ file_var(0, ser_magic);
   // restoring the "visible slider == bank[selected]" invariant. sliderchange
   // (NOT slider_automate) here -- automate would write automation on load.
   file_avail(0) >= 0 ? (
-    slider18 = target_drift_up[last_target_select];
-    slider19 = target_drift_down[last_target_select];
-    slider20 = target_drift_per[last_target_select];
-    slider21 = target_drift_shape[last_target_select];
-    slider24 = ramp_by_mem[last_ramp_target];
-    slider25 = ramp_dur_mem[last_ramp_target];
-    slider26 = ramp_delay_mem[last_ramp_target];
+    slider31 = target_drift_up[last_target_select];
+    slider32 = target_drift_down[last_target_select];
+    slider33 = target_drift_per[last_target_select];
+    slider34 = target_drift_shape[last_target_select];
+    slider37 = ramp_by_mem[last_ramp_target];
+    slider38 = ramp_dur_mem[last_ramp_target];
+    slider40 = ramp_delay_mem[last_ramp_target];
     // Per-slot Capture point: force slider3 to the restored slot's stored point,
     // and sync last_cap_slot so the first @slider doesn't mistake load for a
     // slot-switch (which would save the visible point into the wrong slot).
-    cps = max(0, min(NSLOTS-1, slider1));
+    cps = max(0, min(NSLOTS-1, slider1 - 1));   // slider is 1-8, engine is 0-7
     last_cap_slot = cps;
     slider3 = slot_cappoint[cps] * 100;
     // Capture average is GLOBAL now, so this stamps the visible slider onto every
@@ -1798,7 +1933,7 @@ file_var(0, ser_magic);
     // back when it was per slot flattens to the value the slider shows -- which
     // is the one its owner sees, and now the one they hear. @slider stamps too,
     // so it converges whichever of the two restore paths REAPER runs first.
-    sca3 = max(1, min(CAPAVG_MAX, slider28));
+    sca3 = max(1, min(CAPAVG_MAX, slider4));
     sca4 = 0; loop(NSLOTS, slot_capavg[sca4] = sca3; sca4 += 1; );
     // Layer interval pickers: ADOPT the restored positions, never fire on them.
     // The guard in @slider covers the ordinary load, but @serialize's read
@@ -1812,7 +1947,7 @@ file_var(0, ser_magic);
     // wrong layer's values over the right one's. This is the section that runs
     // on a track DUPLICATE, where @init may not run at all -- without it the
     // selected layer is the one that silently zeroes.
-    // Index off the BLOB's own last_lay_sel, NEVER off slider33 -- this is the
+    // Index off the BLOB's own last_lay_sel, NEVER off slider21 -- this is the
     // whole point of doing it here. Reading the slider assumes REAPER has
     // already restored the slider line, and the two restore paths have no
     // guaranteed order: if the slider is still at its default the visible
@@ -1824,13 +1959,14 @@ file_var(0, ser_magic);
     // one correct copy of the index we had just read back.
     // (The Capture-slot block below DOES read its slider -- correctly, because
     // last_cap_slot is not in the stream, so the slider is its only source.)
-    slider34 = lay_active[last_lay_sel];
-    slider35 = lay_db_base[last_lay_sel];
+    slider22 = lay_active[last_lay_sel];
+    slider23 = lay_db_base[last_lay_sel];
     (last_lay_sel >= LAY_CUSTOM0 && last_lay_sel < LAY_CUSTOM0+N_CUSTOM) ? (
-      slider37 = lay_semi[last_lay_sel-LAY_CUSTOM0];
+      slider25 = lay_semi[last_lay_sel-LAY_CUSTOM0];
     );
-    slider36 = lay_solo[last_lay_sel];
-    slider38 = lay_nharm[last_lay_sel];
+    slider24 = lay_solo[last_lay_sel];
+    slider26 = lay_nharm[last_lay_sel];
+    slider27 = lay_ot_harm[last_lay_sel];
     sliderchange(-1);
   );
 );
