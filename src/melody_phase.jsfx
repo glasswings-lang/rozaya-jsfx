@@ -201,11 +201,11 @@ slider66:0<0,1,1{Walk through,Freeze in place}>Rest mode
 // NVDA order). Old projects' Speed Ramp + Drift configs reset to defaults
 // on load (the @serialize version guard forces this); reconfigure. The
 // plugin's SOUND sliders (1-66) are untouched.
-slider67:0<0,27,1{Rate Value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan Rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note dur,V2 Note dur,V3 Note dur,V4 Note dur,V5 Note dur,V6 Note dur,V7 Note dur,V8 Note dur,Attack %,Release %}>Speed ramp target
-slider68:0<-1000,1000,0.001>Speed ramp by (units match target)
-slider69:0<0,60,0.1>Speed ramp duration (minutes)
-slider70:0<0,1,1{Off,On}>Speed ramp engage
-slider71:0<0,60,0.1>Speed ramp start delay (minutes)
+slider67:0<0,27,1{Rate Value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan Rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note dur,V2 Note dur,V3 Note dur,V4 Note dur,V5 Note dur,V6 Note dur,V7 Note dur,V8 Note dur,Attack %,Release %}>Ramp target
+slider68:0<-1000,1000,0.001>Ramp by (units match target)
+slider69:0<0,60,0.1>Ramp duration (minutes)
+slider70:0<0,1,1{Off,On}>Ramp engage
+slider71:0<0,60,0.1>Ramp start delay (minutes)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / the
 // rest of the v2.9 sweep. Pick a target (slider72), then sliders 73-76

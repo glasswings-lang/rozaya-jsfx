@@ -52,11 +52,11 @@ slider16:0<0,1000,1>Rest for (beats)
 // their Speed Ramp + Drift configs on upgrade (both are off-by-default; the
 // metronome sound on sliders 1-16 is untouched). Re-add the instance for
 // clean defaults, or reconfigure. See the manual's migration note.
-slider17:0<0,1,1{Tempo,Swing amount}>Speed ramp target
-slider18:0<-300,300,0.1>Speed ramp by (units match target)
-slider19:0<0,60,0.1>Speed ramp duration (minutes)
-slider20:0<0,1,1{Off,On}>Speed ramp engage
-slider21:0<0,60,0.1>Speed ramp start delay (minutes)
+slider17:0<0,1,1{Tempo,Swing amount}>Ramp target
+slider18:0<-300,300,0.1>Ramp by (units match target)
+slider19:0<0,60,0.1>Ramp duration (minutes)
+slider20:0<0,1,1{Off,On}>Ramp engage
+slider21:0<0,60,0.1>Ramp start delay (minutes)
 
 // Per-target drift: nested-selector pattern matching Womb v3 /
 // breath gen / heartbeat. Pick a target (slider22), then sliders 23-26

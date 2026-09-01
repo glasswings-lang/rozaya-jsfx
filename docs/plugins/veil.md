@@ -44,7 +44,7 @@ Veil when you want a *still, deep, wide muffle* (that can then breathe). They al
   spread; pull them apart for more. Because the channels differ only in *spectral
   rolloff* (no phase or delay tricks), a mono sum just averages the two rolloffs —
   **no comb-notch cancellation, safe on a single speaker / phone / HomePod.**
-- **Per-channel Drift + Speed Ramp** on both cutoffs and both resonances, so the
+- **Per-channel Drift + Ramp** on both cutoffs and both resonances, so the
   muffle can move (see below).
 
 ## Parameters
@@ -115,29 +115,29 @@ Drift period. REAPER orders controls by slider number and moving an existing one
 would scramble saved projects, so new controls always land at the end.
 
 Nothing else in Veil follows the tempo, deliberately. The cutoffs are pitch, and
-Speed ramp duration / start delay are wall-clock on purpose — a wind-down is how
+Ramp duration / start delay are wall-clock on purpose — a wind-down is how
 long until you're asleep, not a musical length.
 
-### Speed Ramp (nested selector)
+### Ramp (nested selector)
 
 A **one-time** signed ride on a parameter over N minutes — for a slow, hands-off
 change while you settle. Unlike Drift (which repeats forever), the Ramp moves once
 and holds. All targets ramp in parallel on their own clocks.
 
-**Speed ramp target** `Left / Right cutoff / resonance` — which parameter rides.
+**Ramp target** `Left / Right cutoff / resonance` — which parameter rides.
 
-**Speed ramp by** `units match target` — the signed amount to move by. **Positive
+**Ramp by** `units match target` — the signed amount to move by. **Positive
 on both cutoffs = the voice slowly CLEARING** (the muffle opening, as if the baby
 were growing); negative = deepening / darkening.
 
-**Speed ramp duration (minutes)** `0–60, default 0` — how long the ride takes.
+**Ramp duration (minutes)** `0–60, default 0` — how long the ride takes.
 `0` = off.
 
-**Speed ramp engage** `Off / On, default Off` — a freeze/resume gate. While On the
+**Ramp engage** `Off / On, default Off` — a freeze/resume gate. While On the
 ramp advances; flip Off and it freezes where it is; back On and it resumes (it does
 *not* restart). Only pressing transport Play restarts a ramp from the beginning.
 
-**Speed ramp start delay (minutes)** `0–60, default 0` — wait this long after
+**Ramp start delay (minutes)** `0–60, default 0` — wait this long after
 engaging before the ride begins. "Let me settle first, then start clearing."
 
 ## Usage Notes
@@ -150,7 +150,7 @@ engaging before the ride begins. "Let me settle first, then start clearing."
 - **Breathing width:** drift Left cutoff and Right cutoff on *different* periods.
   The gap between them wobbles, so the stereo image gently opens and closes — the
   thing the Sweeping Filter can't do.
-- **The clearing:** target both cutoffs with a positive Speed ramp `by` over a
+- **The clearing:** target both cutoffs with a positive Ramp `by` over a
   long duration — the voice slowly emerges from behind the veil.
 - **Pairs with** the [Womb Sound Generator](womb.md) (heartbeat / breath bed
   underneath), and [Bubbler](bubbler.md) / [Dapple](dapple.md) for fluid texture.

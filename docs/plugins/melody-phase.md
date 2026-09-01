@@ -241,27 +241,27 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Changing Rest mode mid-rest** is an edge case the code handles defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unpredictably.
 
-### Speed Ramp (v2.14 multi-target, selector-first)
+### Ramp (v2.14 multi-target, selector-first)
 
 A **one-time signed-delta ride** on any target over a set duration — the in-plugin substitute for a REAPER automation envelope, the "wind down / wind up once" move (vs Drift's endless wander). As of v2.14 it reaches **all 28 Drift targets** (same target set), each on its own timeline, using the same nested-selector pattern as Drift and the rest of the suite. Pick a target, set its `by` / duration / start delay; one global **engage** arms every configured target's ramp at once.
 
-**Speed ramp target (slider 67)** `28 options, default Rate Value`
+**Ramp target (slider 67)** `28 options, default Rate Value`
 Which parameter this ramp acts on — identical list to the Drift target selector (Rate Value, V1–V8 Timing, Pan Rate, V1–V8 Gain, V1–V8 Note dur, Attack %, Release %). Switching it saves the three per-target sliders (68/69/71) into the old target's slot and loads the new target's stored values. All 28 targets ramp in parallel; the selector only chooses which one you're editing.
 
-**Speed ramp by (slider 68)** `-1000 to +1000, step 0.001, default 0` (units match target)
+**Ramp by (slider 68)** `-1000 to +1000, step 0.001, default 0` (units match target)
 Signed delta the target moves by over the duration (from 0 at the start to the full `by` at the end, then held). Units follow the target: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. **0** = no ramp for this target. For Rate Value / Pan Rate the sign follows Rate Mode — in BPM/Hz modes negative `by` = slower, in Seconds mode (period) positive `by` = slower.
 
-**Speed ramp duration (slider 69)** `0–60 minutes, default 0` · **Speed ramp start delay (slider 71)** `0–60 minutes, default 0`
+**Ramp duration (slider 69)** `0–60 minutes, default 0` · **Ramp start delay (slider 71)** `0–60 minutes, default 0`
 Per-target. Each target waits out its own start delay, then rides its `by` over its own duration. Because both are per-target, different targets can wind down over **different timelines** from a single engage (e.g. slow the tempo over 10 minutes while softening Attack over the first 2). Duration 0 = that target's ramp is off.
 
-**Speed ramp engage (slider 70)** `Off / On, default Off` — **GLOBAL**
+**Ramp engage (slider 70)** `Off / On, default Off` — **GLOBAL**
 One switch arms every configured target. It's a freeze/resume gate (NOT a restart edge): while On, each target's ramp clock advances toward completion; while Off, all clocks freeze and resume from where they are on re-engage.
 
-**Granularity mirrors Drift:** Rate Value + Pan Rate convert the delta to a mode-aware ratio; per-voice Timing + Gain add per sample; the articulation targets (Note dur, Attack %, Release %) sample the ramp offset **once per note at trigger** so a ringing note's length/shape stay fixed. Speed Ramp and Drift compose at the same consumption site — you can ramp a target down once *and* drift it at the same time.
+**Granularity mirrors Drift:** Rate Value + Pan Rate convert the delta to a mode-aware ratio; per-voice Timing + Gain add per sample; the articulation targets (Note dur, Attack %, Release %) sample the ramp offset **once per note at trigger** so a ringing note's length/shape stay fixed. Ramp and Drift compose at the same consumption site — you can ramp a target down once *and* drift it at the same time.
 
 **Transport behavior:** every target's ramp progress resets to 0 on every transport play edge — the only thing that resets it. Slider changes adjust the trajectory live without resetting. Duration is wall-clock minutes (an absolute real-time ride), unlike Drift's rate-relative period.
 
-**Migration from v2.13:** Speed Ramp was single-target (Rate Value only) on sliders 67–70. It's now 5 sliders (67–71) reaching 28 targets, and the Drift block shifted to **72–76** (selector-first renumber so the target selector reads above its controls in NVDA order). On load, old projects' Speed Ramp **and** Drift configs reset to defaults (the save-format version guard forces this) — reconfigure after upgrade. The plugin's *sound* sliders (1–66) are untouched. Re-adding the plugin instance gives clean defaults.
+**Migration from v2.13:** Ramp was single-target (Rate Value only) on sliders 67–70. It's now 5 sliders (67–71) reaching 28 targets, and the Drift block shifted to **72–76** (selector-first renumber so the target selector reads above its controls in NVDA order). On load, old projects' Ramp **and** Drift configs reset to defaults (the save-format version guard forces this) — reconfigure after upgrade. The plugin's *sound* sliders (1–66) are untouched. Re-adding the plugin instance gives clean defaults.
 
 ### Drift (v2.9 nested-selector)
 
@@ -269,7 +269,7 @@ Slow organic wander applied independently to any of **28 targets** — the full 
 
 The target set is built to let a sequence *breathe*: timing (rubato), dynamics (per-voice volume swell), and articulation (note length, onset/tail softness) all wander on independent slow schedules, the way a live player phrases rather than a loop repeats.
 
-Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 73-76 into the old target's memory slot, then loads the new target's saved values. All 28 configurations persist across project save/load. (Sliders 72–76 as of v2.14 — the block shifted up by one to make room for the Speed Ramp target selector at 67.)
+Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 73-76 into the old target's memory slot, then loads the new target's saved values. All 28 configurations persist across project save/load. (Sliders 72–76 as of v2.14 — the block shifted up by one to make room for the Ramp target selector at 67.)
 
 **Drift target** `28 options, default Rate Value`
 - **Rate Value** — wanders the global melody rate; stretches the whole timeline (sequencer + envelopes + pan together). The old single drift target.
@@ -286,7 +286,7 @@ How far above the target's baseline the drift wanders at its peak. Units: the ra
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (cycles)** `1–1000, default 8`
-How many global rate cycles one full drift wave takes for this target. All 28 targets use rate cycles as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
+How many global rate cycles one full drift wave takes for this target. All 28 targets use rate cycles as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
@@ -304,11 +304,11 @@ Rate Value, the per-voice Timing targets, Pan Rate, and the per-voice Gain targe
 
 #### Transport behavior (v2.9)
 
-On every transport play press, drift cycle restarts: all 28 targets' phase counters → 0. The sequencer resets to the first voice (not yet started), every voice goes silent with cleared envelopes / oscillator phases / pan state, glide bookkeeping resets, and the Play/Rest gate resets. Drift CONFIG is preserved across stop/play and project save/load. Speed Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+On every transport play press, drift cycle restarts: all 28 targets' phase counters → 0. The sequencer resets to the first voice (not yet started), every voice goes silent with cleared envelopes / oscillator phases / pan state, glide bookkeeping resets, and the Play/Rest gate resets. Drift CONFIG is preserved across stop/play and project save/load. Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
 
 #### Migration from v2.8
 
-The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 71-77) was 7 sliders covering Rate Value only. v2.9 made it 5 sliders covering 28 independent targets; v2.14 shifted those IDs to **72–76** (from 71–75) so the Speed Ramp target selector could take 67. On upgrade, old projects' Drift + Speed Ramp configs reset to defaults (the save-format version guard forces this) — reconfigure under the nested-selector pattern.
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 71-77) was 7 sliders covering Rate Value only. v2.9 made it 5 sliders covering 28 independent targets; v2.14 shifted those IDs to **72–76** (from 71–75) so the Ramp target selector could take 67. On upgrade, old projects' Drift + Ramp configs reset to defaults (the save-format version guard forces this) — reconfigure under the nested-selector pattern.
 
 ## Usage Notes
 
@@ -354,7 +354,7 @@ Placed **once**, on transport start or when you move the playhead, then left to 
 
 **The Play / Rest gate is placed too**, in both rest modes. In **Walk** the sequencer keeps stepping through rest, so the gate is just a second wrap running alongside the first. In **Freeze** the sequencer stops while the clock keeps going, so each rest injects time in which nothing advances — the plugin accounts for that, and if you land inside a rest it sits frozen on the right voice with the right amount of rest still to run.
 
-One thing is not placed, and it starts from the top as before: **per-voice timing Drift or Speed Ramp**. The step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer — the same rule the sweeping effects follow, where anything modulating the rate hands back to free-running.
+One thing is not placed, and it starts from the top as before: **per-voice timing Drift or Ramp**. The step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer — the same rule the sweeping effects follow, where anything modulating the rate hands back to free-running.
 
 Nothing is lost in that case; it behaves exactly as it always has.
 

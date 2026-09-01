@@ -103,11 +103,11 @@ slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 // Ramp + Drift configs on upgrade (both off-by-default; the tremolo sound on
 // sliders 1-23 is untouched). Re-add the instance for clean defaults, or
 // reconfigure. See the manual's migration note.
-slider24:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Speed ramp target
-slider25:0<-1000,1000,0.001>Speed ramp by (units match target)
-slider26:0<0,60,0.1>Speed ramp duration (minutes)
-slider27:0<0,1,1{Off,On}>Speed ramp engage
-slider28:0<0,60,0.1>Speed ramp start delay (minutes)
+slider24:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Ramp target
+slider25:0<-1000,1000,0.001>Ramp by (units match target)
+slider26:0<0,60,0.1>Ramp duration (minutes)
+slider27:0<0,1,1{Off,On}>Ramp engage
+slider28:0<0,60,0.1>Ramp start delay (minutes)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / the rest of
 // the sweep. Pick a target (slider29), then sliders 30-33 hold THAT target's

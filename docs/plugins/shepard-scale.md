@@ -105,21 +105,21 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 **Changing Rest mode mid-rest** is handled defensively but not gracefully — the safest move is to flip the slider while the gate is in its play period, or to press stop/play to reset cleanly. The plugin won't crash but the current rest period may stretch or compress unexpectedly.
 
-### Speed Ramp (v2.14 nested-selector)
+### Ramp (v2.14 nested-selector)
 
-In-plugin one-time morph over time, without automation envelopes. As of v2.14 Speed Ramp is nested-selector (same shape as Drift) and reaches the **same four targets as Drift** — BPM, Note Length %, Attack %, Release %. It is **fully per-target**: each target has its own `by`, its own duration, and its own start delay, so different targets can wind down over different timelines from a single engage. Only **engage** is global.
+In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same four targets as Drift** — BPM, Note Length %, Attack %, Release %. It is **fully per-target**: each target has its own `by`, its own duration, and its own start delay, so different targets can wind down over different timelines from a single engage. Only **engage** is global.
 
-**Speed ramp target (slider 52)** `Tempo / Note Length % / Attack % / Release %, default Tempo`
-Picks which target the `by`, duration, and start delay sliders are currently editing. Switching the selector saves those three into the old target's memory slot, then loads the new target's stored values. Sits at the top of the Speed Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
+**Ramp target (slider 52)** `Tempo / Note Length % / Attack % / Release %, default Tempo`
+Picks which target the `by`, duration, and start delay sliders are currently editing. Switching the selector saves those three into the old target's memory slot, then loads the new target's stored values. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-**Speed ramp by (slider 53)** `-300 to +300, step 0.1, default 0` (units match the selected target)
+**Ramp by (slider 53)** `-300 to +300, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over that target's duration. **0** = no change (safe default). For **Note Length / Attack / Release** it's in percentage points. The wide ±300 range is headroom shared across targets — only the target's own sensible span is meaningful (e.g. a note-length ramp beyond ±100 is clamped).
 
 For **Tempo** the delta is in **BPM**, in every Rate Mode (`-60` ramps 120 → 60).
 
 In **Host x** the delta stays in this plugin's own unit — it does **not** become a multiplier. That means a ramp does not stretch when the project tempo changes: `-60` is `-60 BPM` whatever the tempo does. That's a deliberate limitation. The alternative was tried and rejected: these amount sliders step in 0.1, a grain chosen for BPM, and in multiplier terms 0.1 is a 10% wander with nothing finer reachable — so the value you'd actually want stops being settable.
 
-**Speed ramp duration (slider 54)** `0–60 minutes, default 0` — **per-target.** How long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 does not ramp (set a duration for every target you want to move). · **Speed ramp start delay (slider 56)** `0–60 minutes, default 0` — **per-target.** Wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). · **Speed ramp engage (slider 55)** `Off / On, default Off` — **global.** One switch arms the whole wind-down; each configured target then rides its own duration after its own start delay.
+**Ramp duration (slider 54)** `0–60 minutes, default 0` — **per-target.** How long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 does not ramp (set a duration for every target you want to move). · **Ramp start delay (slider 56)** `0–60 minutes, default 0` — **per-target.** Wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). · **Ramp engage (slider 55)** `Off / On, default Off` — **global.** One switch arms the whole wind-down; each configured target then rides its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its duration; while Off, all clocks freeze and resume on re-engage. The Freeze-mode Play/Rest rest timer scales with the BPM ramp so rest duration tracks the same effective tempo as the play period.
 
@@ -127,7 +127,7 @@ Example (one engage): BPM `by -40`, duration 20 min, delay 0; Note Length % `by 
 
 **Transport behavior:** every target's ramp clock resets to 0 on the transport play edge (via `@init`). That is the ONLY thing that resets the ramps — slider changes (engage toggle, selector switch, anything) don't.
 
-**Migration to v2.14 (reorganization + renumber):** Speed Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Speed Ramp block (now sliders 52–56) and the Drift block (now sliders 57–61). **Existing Shepard Scale projects lose their Speed Ramp and Drift settings on upgrade** — both are off-by-default, and the scale sound itself (sliders 1–51) is untouched. Re-add the plugin instance for clean defaults, or re-enter your Speed Ramp / Drift settings. *(Older history: pre-v2.14 Speed Ramp was single-target BPM on slider 52; and pre-v2.8 it was a multiplier 0.1–4.0.)*
+**Migration to v2.14 (reorganization + renumber):** Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Ramp block (now sliders 52–56) and the Drift block (now sliders 57–61). **Existing Shepard Scale projects lose their Ramp and Drift settings on upgrade** — both are off-by-default, and the scale sound itself (sliders 1–51) is untouched. Re-add the plugin instance for clean defaults, or re-enter your Ramp / Drift settings. *(Older history: pre-v2.14 Ramp was single-target BPM on slider 52; and pre-v2.8 it was a multiplier 0.1–4.0.)*
 
 ### Drift (v2.9 nested-selector)
 
@@ -147,14 +147,14 @@ How far above the target's baseline the drift wanders at its peak. Units are BPM
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (slider 60, beats)** `1–1000, default 8`
-How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Speed Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
+How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
 **Drift shape (slider 61)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Transport behavior (v2.9)
 
-On every transport play press, drift cycle restarts: all 4 targets' phase counters → 0 (drift offset = 0 at the first sample, wanders out from there). Sequencer also resets to first note + clean envelopes + oscillator re-init. Drift CONFIG (up/down/per/shape values per target) is preserved across stop/play and across project save/load. Speed Ramp progress also resets on transport play. This makes renders deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+On every transport play press, drift cycle restarts: all 4 targets' phase counters → 0 (drift offset = 0 at the first sample, wanders out from there). Sequencer also resets to first note + clean envelopes + oscillator re-init. Drift CONFIG (up/down/per/shape values per target) is preserved across stop/play and across project save/load. Ramp progress also resets on transport play. This makes renders deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
 
 #### Migration from v2.8
 

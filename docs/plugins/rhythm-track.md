@@ -62,7 +62,7 @@ Two hidden floors went with it: the effective tempo used to be clamped to a
 minimum of **10 BPM** in two places internally, so anything slower than that
 silently snapped back up. Now floored only at 0.001, which exists purely to
 avoid dividing by zero.
-The tempo of the beat track in beats per minute. Range matches Shepard Scale's BPM slider for consistency across the suite's BPM-style rate controls. Internal floors clamp at 10 BPM at every consumption site so a heavy Drift down or Speed Ramp delta can't drive tempo below the slider's stated minimum.
+The tempo of the beat track in beats per minute. Range matches Shepard Scale's BPM slider for consistency across the suite's BPM-style rate controls. Internal floors clamp at 10 BPM at every consumption site so a heavy Drift down or Ramp delta can't drive tempo below the slider's stated minimum.
 
 **Beats per bar** `1-20, default 4`
 The number of beats in each bar. Beat index 0 is the strong (accented) beat; all others are weak beats. With a value of 1, every beat is a strong beat.
@@ -168,27 +168,27 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (beat phase back to 1.0 for the immediate downbeat, period counter, rest state) and starts fresh from beat 1.
 
-### Speed Ramp (v2.14 nested-selector)
+### Ramp (v2.14 nested-selector)
 
-In-plugin one-time morph over time, without automation envelopes. As of v2.14 Speed Ramp is nested-selector (same shape as Drift) and reaches **both** targets — Tempo and Swing amount — matching Drift's target set. Both targets ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
+In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches **both** targets — Tempo and Swing amount — matching Drift's target set. Both targets ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Speed ramp target (slider 17)** `Tempo / Swing amount, default Tempo`
-Picks which target the `by` amount applies to. Switching the selector saves slider 18 into the old target's memory slot, then loads the new target's stored `by`. This selector sits at the top of the Speed Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
+**Ramp target (slider 17)** `Tempo / Swing amount, default Tempo`
+Picks which target the `by` amount applies to. Switching the selector saves slider 18 into the old target's memory slot, then loads the new target's stored `by`. This selector sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-**Speed ramp by (slider 18)** `-300 to +300, step 0.1, default 0` (units match the selected target)
+**Ramp by (slider 18)** `-300 to +300, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit. **0** = no change (safe default — engaging at 0 produces no effect).
 - **Target = Tempo:** the delta is in **BPM**, in every Rate Mode. `-60` ramps Tempo from 120 → 60 over the duration; positive speeds up. (The wide ±300 range is here for this.)
 
 In **Host x** the delta stays in this plugin's own unit — it does **not** become a multiplier. That means a ramp does not stretch when the project tempo changes: `-60` is `-60 BPM` whatever the tempo does. That's a deliberate limitation. The alternative was tried and rejected: these amount sliders step in 0.1, a grain chosen for BPM, and in multiplier terms 0.1 is a 10% wander with nothing finer reachable — so the value you'd actually want stops being settable.
 - **Target = Swing amount:** the delta is in the same **swing fraction** as the Swing amount slider (−1…+1, where 0 = straight and ±1 = full triplet shuffle). So a `by` of `+0.8` gradually swings the groove from wherever it starts toward heavily swung; `-0.5` gradually straightens it. Only roughly ±2 of the slider's range is meaningful for this target (swing is clamped to ±1 at the consumer); the rest of the range is just headroom shared with the BPM target.
 
-**Speed ramp duration (slider 19)** `0–60 minutes, default 0` — **per-target** (as of v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 doesn't ramp. · **Speed ramp start delay (slider 21)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target begins moving. · **Speed ramp engage (slider 20)** `Off / On, default Off` — **global**: one switch arms both targets, each then riding its own duration after its own delay. (Duration and start delay are saved/loaded per target by the selector, exactly like `by`.)
+**Ramp duration (slider 19)** `0–60 minutes, default 0` — **per-target** (as of v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 doesn't ramp. · **Ramp start delay (slider 21)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target begins moving. · **Ramp engage (slider 20)** `Off / On, default Off` — **global**: one switch arms both targets, each then riding its own duration after its own delay. (Duration and start delay are saved/loaded per target by the selector, exactly like `by`.)
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its duration; while Off, all clocks freeze and resume on re-engage.
 
 **Transport behavior:** every target's ramp clock resets to 0 on the transport play edge. This is the ONLY thing that resets the ramps — slider changes (engage toggle, selector switch, anything) don't restart them. The accent grid, swing, and drift wave all follow the effective values automatically.
 
-**Migration to v2.14 (reorganization + renumber):** Speed Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Speed Ramp block (now sliders 17–21) and the Drift block (now sliders 22–26). **Existing Rhythm Track projects lose their Speed Ramp and Drift settings on upgrade** — both are off-by-default, and the metronome sound itself (sliders 1–16: tempo, swing, tone, pan, start delay, play/rest) is untouched. Re-add the plugin instance for clean defaults, or re-enter your Speed Ramp / Drift settings. *(Older history: pre-v2.14 Speed Ramp was single-target Tempo on slider 17; and pre-v2.8 it was a multiplier 0.1–4.0.)*
+**Migration to v2.14 (reorganization + renumber):** Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Ramp block (now sliders 17–21) and the Drift block (now sliders 22–26). **Existing Rhythm Track projects lose their Ramp and Drift settings on upgrade** — both are off-by-default, and the metronome sound itself (sliders 1–16: tempo, swing, tone, pan, start delay, play/rest) is untouched. Re-add the plugin instance for clean defaults, or re-enter your Ramp / Drift settings. *(Older history: pre-v2.14 Ramp was single-target Tempo on slider 17; and pre-v2.8 it was a multiplier 0.1–4.0.)*
 
 ### Drift (v2.9 nested-selector)
 
@@ -198,7 +198,7 @@ Same pattern as Womb v3's drift and the matching block in Heartbeat / Breath Gen
 
 For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (beats), and you express the timescale you want with the period value.
 
-Note: as of v2.14 both Drift and Speed Ramp reach the same 2 targets (Tempo, Swing amount). Wandering (or ramping) Swing while the tempo stays put is a useful musical effect on its own — it loosens the groove cycle-to-cycle without changing the beat clock.
+Note: as of v2.14 both Drift and Ramp reach the same 2 targets (Tempo, Swing amount). Wandering (or ramping) Swing while the tempo stays put is a useful musical effect on its own — it loosens the groove cycle-to-cycle without changing the beat clock.
 
 **Drift target (slider 22)** `Tempo / Swing amount, default Tempo`
 Picks which target's drift configuration sliders 23-26 reflect. Switching the selector saves and loads automatically — no live edits are lost.
@@ -210,7 +210,7 @@ How far above the target's baseline the drift wanders at its peak. Units are **B
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (slider 25, beats)** `1–1000, default 8`
-How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Speed Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
+How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
 **Drift shape (slider 26)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.

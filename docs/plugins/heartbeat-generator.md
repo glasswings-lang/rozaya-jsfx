@@ -110,20 +110,20 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (cycle phase, period counter, resting state) and starts a fresh play period from beat 1.
 
-### Speed Ramp
+### Ramp
 
 Nested-selector pattern matching Womb v3. Pick one of 4 targets (Heart rate, S1-S2 gap, Breath HRV depth, Random HRV depth) on slider 29, then set a signed `by` amount on slider 30. All 4 targets ramp in parallel; the selector just changes which one you're editing.
 
-*(v2.14 reorg: the Speed Ramp block is now a contiguous selector-first group at sliders **29–33** — target 29, by 30, duration 31, engage 32, start-delay 33 — so it tabs together. Old IDs 17–20 + 28 are retired; Speed Ramp configs reset on upgrade.)*
+*(v2.14 reorg: the Ramp block is now a contiguous selector-first group at sliders **29–33** — target 29, by 30, duration 31, engage 32, start-delay 33 — so it tabs together. Old IDs 17–20 + 28 are retired; Ramp configs reset on upgrade.)*
 
-**Speed ramp target (slider 29)** `Heart rate / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart rate`
+**Ramp target (slider 29)** `Heart rate / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart rate`
 The 4-option selector. Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 4 targets ramp regardless of which one is selected.
 
-**Speed ramp duration (slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Speed ramp engage (slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
+**Ramp duration (slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage. Only transport play resets the ramps.
 
-**Speed ramp by (slider 30)** `-400 to +400, step 0.01, default 0`
+**Ramp by (slider 30)** `-400 to +400, step 0.01, default 0`
 Signed delta in the selected target's natural unit. **0** = no change. Examples:
 - Heart rate target, by -35: heart ramps from 70 → 35 BPM over the duration.
 
@@ -136,19 +136,19 @@ This matters more here than elsewhere: HRV figures are real quantities you'd rea
 
 Slider range is intentionally wide (-400 to +400) to span every target's natural range. Step is 0.01 to give fine control on the HRV targets (which have natural step 0.005-0.01). For BPM/ms targets you'd type a coarser value (e.g. -35 for BPM); for HRV targets you'd type something like 0.05.
 
-**Speed ramp start delay (slider 33)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Part of the contiguous 29–33 block. Saved/loaded per target by the selector, like `by` and duration.
+**Ramp start delay (slider 33)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Part of the contiguous 29–33 block. Saved/loaded per target by the selector, like `by` and duration.
 
 A small ~100 ms smoother sits between the BPM slider and the audio, so manual BPM tweaks don't click. This is always on.
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge — the ONLY thing that resets ramp progress. Slider changes (selector switch, engage toggle, anything) don't restart it.
 
-**Migration history.** *v2.7:* the old single "Speed ramp" multiplier (0.1–4.0) on slider 17 became a target selector with a signed `by` amount (additive, not a multiplier). *v2.14:* the whole block was renumbered into the contiguous selector-first group at sliders **29–33** (old IDs 17–20 + 28 retired). Speed Ramp configs reset to defaults on upgrade — reconfigure after loading.
+**Migration history.** *v2.7:* the old single "Ramp" multiplier (0.1–4.0) on slider 17 became a target selector with a signed `by` amount (additive, not a multiplier). *v2.14:* the whole block was renumbered into the contiguous selector-first group at sliders **29–33** (old IDs 17–20 + 28 retired). Ramp configs reset to defaults on upgrade — reconfigure after loading.
 
 ### Drift (v2.9 nested-selector)
 
 Slow organic wander applied independently to any of four targets: Heart rate, S1-S2 gap, Breath HRV depth, or Random HRV depth. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-Same pattern as Womb v3's drift and the Speed Ramp block above. The 4 drift targets are intentionally the same set as the 4 Speed Ramp targets and use the same selector indices, so once you've decided "I want to wind down the heart over 30 min and wander the systole gap a bit" you can configure both blocks on the same target indices.
+Same pattern as Womb v3's drift and the Ramp block above. The 4 drift targets are intentionally the same set as the 4 Ramp targets and use the same selector indices, so once you've decided "I want to wind down the heart over 30 min and wander the systole gap a bit" you can configure both blocks on the same target indices.
 
 Switching the **Drift target** selector saves the current sliders 22-25 into the old target's memory slot, then loads the new target's saved values. All four configurations persist across project save/load.
 
@@ -171,7 +171,7 @@ Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random
 
 #### Transport behavior (v2.9)
 
-On every transport play press, drift cycle restarts: all 4 targets' phase counters → 0 (drift offset = 0 at the first sample, wanders out from there). Drift CONFIG (up/down/per/shape values per target) is preserved across stop/play and across project save/load. Speed Ramp progress also resets on transport play. This makes renders deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+On every transport play press, drift cycle restarts: all 4 targets' phase counters → 0 (drift offset = 0 at the first sample, wanders out from there). Drift CONFIG (up/down/per/shape values per target) is preserved across stop/play and across project save/load. Ramp progress also resets on transport play. This makes renders deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
 
 #### Migration from v2.8
 

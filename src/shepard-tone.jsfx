@@ -183,11 +183,11 @@ slider63:0<0,1,1{Walk through,Freeze in place}>Rest mode
 // Speed Ramp + Drift configs on upgrade (both off-by-default; the tone sound
 // on sliders 1-63 is untouched). Re-add the instance for clean defaults, or
 // reconfigure. See the manual's migration note.
-slider64:0<0,10,1{Rate Value,V1 Rate/Cents,V2 Rate/Cents,V3 Rate/Cents,V4 Rate/Cents,V5 Rate/Cents,V6 Rate/Cents,V7 Rate/Cents,V8 Rate/Cents,Fade In %,Fade Out %}>Speed ramp target
-slider65:0<-1000,1000,0.001>Speed ramp by (units match target)
-slider66:0<0,60,0.1>Speed ramp duration (minutes)
-slider67:0<0,1,1{Off,On}>Speed ramp engage
-slider68:0<0,60,0.1>Speed ramp start delay (minutes)
+slider64:0<0,10,1{Rate Value,V1 Rate/Cents,V2 Rate/Cents,V3 Rate/Cents,V4 Rate/Cents,V5 Rate/Cents,V6 Rate/Cents,V7 Rate/Cents,V8 Rate/Cents,Fade In %,Fade Out %}>Ramp target
+slider65:0<-1000,1000,0.001>Ramp by (units match target)
+slider66:0<0,60,0.1>Ramp duration (minutes)
+slider67:0<0,1,1{Off,On}>Ramp engage
+slider68:0<0,60,0.1>Ramp start delay (minutes)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / the rest of
 // the sweep. Pick a target (slider69), then sliders 70-73 hold THAT target's

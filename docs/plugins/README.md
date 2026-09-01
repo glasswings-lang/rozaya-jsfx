@@ -8,7 +8,7 @@ the same way: **grab the plugin you want, read its page, done.** You never have
 to wade through docs for plugins you don't have.
 
 Each page is self-contained: it covers that plugin's own controls, including
-how shared features like Drift and Speed Ramp behave *for that plugin*. There's
+how shared features like Drift and Ramp behave *for that plugin*. There's
 nothing else to open.
 
 ---

@@ -148,11 +148,11 @@ slider51:0<0,1,1{Walk through,Freeze in place}>Rest mode
 // Speed Ramp + Drift configs on upgrade (both off-by-default; the scale
 // sound on sliders 1-51 is untouched). Re-add the instance for clean
 // defaults, or reconfigure. See the manual's migration note.
-slider52:0<0,3,1{Tempo,Note Length %,Attack %,Release %}>Speed ramp target
-slider53:0<-300,300,0.1>Speed ramp by (units match target)
-slider54:0<0,60,0.1>Speed ramp duration (minutes)
-slider55:0<0,1,1{Off,On}>Speed ramp engage
-slider56:0<0,60,0.1>Speed ramp start delay (minutes)
+slider52:0<0,3,1{Tempo,Note Length %,Attack %,Release %}>Ramp target
+slider53:0<-300,300,0.1>Ramp by (units match target)
+slider54:0<0,60,0.1>Ramp duration (minutes)
+slider55:0<0,1,1{Off,On}>Ramp engage
+slider56:0<0,60,0.1>Ramp start delay (minutes)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / breath gen /
 // heartbeat. Pick a target (slider57), then sliders 58-61 hold THAT target's

@@ -121,11 +121,11 @@ slider47:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // the pulse wave) so there's no bloodflow target — see CLAUDE.md for
 // the design point on whether bloodflow should ever be an independent
 // layer.
-slider48:0<0,9,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Speed ramp target
-slider49:0<-2000,2000,0.1>Speed ramp by
-slider50:0<0,60,0.1>Speed ramp duration (minutes)
-slider51:0<0,1,1{Off,On}>Speed ramp engage
-slider52:0<0,60,0.1>Speed ramp start delay (minutes)
+slider48:0<0,9,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Ramp target
+slider49:0<-2000,2000,0.1>Ramp by
+slider50:0<0,60,0.1>Ramp duration (minutes)
+slider51:0<0,1,1{Off,On}>Ramp engage
+slider52:0<0,60,0.1>Ramp start delay (minutes)
 
 // Breaths per minute: one-way SETUP rescale tool for the four breath
 // durations — it rewrites sliders 16-19 once, preserving their I:E ratio,

@@ -114,14 +114,14 @@ Curve shape applied to the fade-up transition. Same options as Fade Down Shape. 
 
 Fit is the plugin's own way of thinking, just expressed in beats instead of seconds — Sweep Dwell has never had a rate slider; it has four times whose sum *is* the cycle. That's how envelopes work too (attack, decay, release — nobody sets a total). Set in beats is the LFO family's convention, borrowed in for when it's the more useful one.
 
-Either way, Fit uses your four **slider** values, never the drifted ones. Drift and Speed Ramp still only move the shape and can't make the cycle wander in length.
+Either way, Fit uses your four **slider** values, never the drifted ones. Drift and Ramp still only move the shape and can't make the cycle wander in length.
 
 **Cycle length (beats)** `0.25–128, default 12` *(hidden unless Cycle length mode is Set in beats)*
 How many beats one full dwell pattern takes. The default 12 matches the default durations (4 + 1 + 6 + 1) so the two modes agree out of the box.
 
 Two more things worth knowing before you reach for Host x:
 
-- **In Set in beats, the dwell sliders become shape controls, not length controls.** Doubling High Dwell doesn't make the cycle longer — it makes the high hold take a bigger share of the same cycle, and everything else shrinks to fit. Same for Drift and Speed Ramp aimed at any of the four. (In Fit to durations they stay length controls, which is the point of it.)
+- **In Set in beats, the dwell sliders become shape controls, not length controls.** Doubling High Dwell doesn't make the cycle longer — it makes the high hold take a bigger share of the same cycle, and everything else shrinks to fit. Same for Drift and Ramp aimed at any of the four. (In Fit to durations they stay length controls, which is the point of it.)
 - **Start Delay stays in literal seconds.** It's a "wait before the effect arrives" control rather than musical pacing, so it doesn't follow the tempo. If you're staggering two instances against each other, that's the one to watch.
 
 Switching Cycle mode changes what the dwell numbers *mean*, and nothing rescales them for you. Nothing is lost — flip back and the seconds are still there — but the sound will jump.
@@ -135,7 +135,7 @@ That's the behaviour tempo-synced effects are expected to have, and it's the rea
 Two exceptions, both deliberate:
 
 - **Stopped or paused**, the project position doesn't move, so the cycle free-runs instead. Otherwise it would sit frozen for anyone monitoring live.
-- **Pan Sweep** (modes 10 and 11) always free-runs, even on the Host x unit, because Drift and Speed Ramp can move its rate — and positioning from the project assumes a rate that isn't being modulated underneath. **Linked Sweep** does lock, since its multiplier is fixed. The rule across the plugin is: lock what's constant, accumulate what's modulated.
+- **Pan Sweep** (modes 10 and 11) always free-runs, even on the Host x unit, because Drift and Ramp can move its rate — and positioning from the project assumes a rate that isn't being modulated underneath. **Linked Sweep** does lock, since its multiplier is fixed. The rule across the plugin is: lock what's constant, accumulate what's modulated.
 
 Every other rate mode is unchanged and still starts from zero on play.
 
@@ -265,25 +265,25 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
 
-### Speed Ramp
+### Ramp
 
-Nested-selector pattern matching Womb v3 / breath_gen. Pick a target and set a signed `by` amount. As of v2.14 Speed Ramp reaches the **same 6 targets as Drift** — the four dwell phases (High dwell / Fade down / Low dwell / Fade up) plus **Pan Sweep Rate** and **Resonance** (previously Speed Ramp had only the four dwells). All 6 ramp in parallel; the selector just changes which one you're editing.
+Nested-selector pattern matching Womb v3 / breath_gen. Pick a target and set a signed `by` amount. As of v2.14 Ramp reaches the **same 6 targets as Drift** — the four dwell phases (High dwell / Fade down / Low dwell / Fade up) plus **Pan Sweep Rate** and **Resonance** (previously Ramp had only the four dwells). All 6 ramp in parallel; the selector just changes which one you're editing.
 
-**Speed ramp target (slider 26)** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
+**Ramp target (slider 26)** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
 The 6-option selector (matches Drift). Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 6 targets ramp regardless of which one is selected. The `by` (slider 29) is in seconds for the dwell targets, the Pan Sweep Rate's own unit for that target, and a 0–1 fraction for Resonance.
 
-**Speed ramp duration (slider 27)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Speed ramp engage (slider 28)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
+**Ramp duration (slider 27)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (slider 28)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off all freeze and resume on re-engage. As of v2.14 each target has its own duration + start delay (previously shared) — different dwell phases can ramp on different timelines from one engage.
 
-**Speed ramp by (slider 29)** `-60 to +60 seconds, step 0.001, default 0`
+**Ramp by (slider 29)** `-60 to +60 seconds, step 0.001, default 0`
 Signed delta in seconds for the selected dwell phase. **0** = no change. **Negative** = shorten that phase (shorter cycle if that's High/Low dwell; quicker fade if that's a fade phase). **Positive** = lengthen. Example: target High dwell with `by +4` stretches high dwell from 4 sec → 8 sec over the duration; combined with target Low dwell with `by +2`, both phases ramp together as a coordinated wind-down.
 
-**Speed ramp start delay (slider 37)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. Lives at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
+**Ramp start delay (slider 37)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. Lives at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. The existing ~3 ms cutoff smoother absorbs any per-sample step changes, so manual dwell-slider tweaks remain click-free.
 
-**Migration from v2.7:** slider 26 changed from multiplier (0.1–4.0) to a 4-option selector. Existing projects' multiplier value rounds down to a target index, and slider 29 (the new amount) defaults to 0 — Speed Ramp produces no effect on reload until reconfigured.
+**Migration from v2.7:** slider 26 changed from multiplier (0.1–4.0) to a 4-option selector. Existing projects' multiplier value rounds down to a target index, and slider 29 (the new amount) defaults to 0 — Ramp produces no effect on reload until reconfigured.
 
 ### Drift (v2.9 nested-selector)
 
@@ -291,7 +291,7 @@ Slow organic wander applied independently to any of six targets: High dwell, Fad
 
 Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 31-34 into the old target's memory slot, then loads the new target's saved values. All six configurations persist across project save/load.
 
-The four dwell-phase targets are the same set as the Speed Ramp targets and use the same selector indices, so you can configure a coordinated drift + ramp on the same dwell phase. Drift on a dwell phase is **additive in seconds** (like the Speed Ramp `by`) — drift each phase independently and the pattern's shape itself wanders, not just its overall pace.
+The four dwell-phase targets are the same set as the Ramp targets and use the same selector indices, so you can configure a coordinated drift + ramp on the same dwell phase. Drift on a dwell phase is **additive in seconds** (like the Ramp `by`) — drift each phase independently and the pattern's shape itself wanders, not just its overall pace.
 
 **Drift target** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
 Picks which target's drift configuration sliders 31-34 reflect. Switching the selector saves and loads automatically — no live edits are lost.
@@ -303,7 +303,7 @@ How far above the target's baseline the drift wanders at its peak. Units: second
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (cycles)** `1–1000, default 8`
-How many dwell patterns one full drift wave takes for this target. All six targets use dwell patterns as their period unit, scaled by Speed Ramp so the wave-per-pattern relationship stays constant under wind-down.
+How many dwell patterns one full drift wave takes for this target. All six targets use dwell patterns as their period unit, scaled by Ramp so the wave-per-pattern relationship stays constant under wind-down.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
@@ -315,11 +315,11 @@ Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random
 
 #### Transport behavior (v2.9)
 
-On every transport play press, drift cycle restarts: all six targets' phase counters → 0. Dwell LFO phases, filter state + cutoff smoothers, pan state, and the Play/Rest gate also reset. Drift CONFIG (and the Speed Ramp config bank) is preserved across stop/play and project save/load. Speed Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+On every transport play press, drift cycle restarts: all six targets' phase counters → 0. Dwell LFO phases, filter state + cutoff smoothers, pan state, and the Play/Rest gate also reset. Drift CONFIG (and the Ramp config bank) is preserved across stop/play and project save/load. Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
 
 #### Migration from v2.8
 
-The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 30-36) was 7 sliders covering the whole dwell period. v2.9 is 5 sliders covering 6 independent targets, reusing slider IDs 30-34; sliders 35 and 36 are no longer declared (slider 37, Speed ramp start delay, is unchanged). Old project values get reinterpreted (selector defaults to High dwell; non-zero amounts on sliders 31-32 will produce drift on the High dwell phase). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 30-36) was 7 sliders covering the whole dwell period. v2.9 is 5 sliders covering 6 independent targets, reusing slider IDs 30-34; sliders 35 and 36 are no longer declared (slider 37, Ramp start delay, is unchanged). Old project values get reinterpreted (selector defaults to High dwell; non-zero amounts on sliders 31-32 will produce drift on the High dwell phase). After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had.
 
 ---
 

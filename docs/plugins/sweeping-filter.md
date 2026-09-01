@@ -115,7 +115,7 @@ It also can't slowly drift out over a long session, and it follows seeking and l
 Two exceptions, both deliberate:
 
 - **Stopped or paused**, the project position isn't advancing, so it free-runs instead — otherwise it would sit frozen for anyone monitoring live.
-- **Drift or Speed Ramp on the rate hands it back to free-running.** Positioning from the project answers "where would this be if it had run at this rate all along," which stops being the right question the moment something is changing the rate. There's no jump at the handover, and it stays free until the next transport start rather than lurching back onto the grid mid-play. Which is what you asked for anyway — putting drift on the rate *is* asking for it off the grid.
+- **Drift or Ramp on the rate hands it back to free-running.** Positioning from the project answers "where would this be if it had run at this rate all along," which stops being the right question the moment something is changing the rate. There's no jump at the handover, and it stays free until the next transport start rather than lurching back onto the grid mid-play. Which is what you asked for anyway — putting drift on the rate *is* asking for it off the grid.
 
 Every other rate mode is unchanged and still starts from zero on play.
 
@@ -286,17 +286,17 @@ The two sliders are orthogonal — all four combinations work. Walk + Silence ke
 
 **Transport behavior**: conventional. Stop passes through dry; play re-initializes everything and starts fresh in its play period from cycle 0.
 
-### Speed Ramp (v2.14 nested-selector)
+### Ramp (v2.14 nested-selector)
 
-In-plugin one-time morph over time, without automation envelopes. As of v2.14 Speed Ramp is nested-selector (same shape as Drift) and reaches the **same six targets as Drift** — Sweep Rate, Frequency Low, Frequency High, Pan Sweep Rate, Resonance, Wet/Dry. All six ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
+In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same six targets as Drift** — Sweep Rate, Frequency Low, Frequency High, Pan Sweep Rate, Resonance, Wet/Dry. All six ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Speed ramp target (slider 29)** `Sweep Rate / Frequency Low / Frequency High / Pan Sweep Rate / Resonance / Wet/Dry, default Sweep Rate`
-Picks which target the `by` amount applies to. Switching the selector saves slider 30 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Speed Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
+**Ramp target (slider 29)** `Sweep Rate / Frequency Low / Frequency High / Pan Sweep Rate / Resonance / Wet/Dry, default Sweep Rate`
+Picks which target the `by` amount applies to. Switching the selector saves slider 30 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-**Speed ramp by (slider 30)** `-5000 to +5000, step 0.01, default 0` (units match the selected target)
+**Ramp by (slider 30)** `-5000 to +5000, step 0.01, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over the duration. **0** = no change. For the rate-type targets (Sweep Rate, Pan Sweep Rate) the delta is in **that rate's currently-displayed unit** (Hz / Seconds / BPM): in BPM/Hz modes negative `by` = slower, in Seconds mode positive `by` = slower (longer period). Frequency Low/High are in Hz (the ±5000 range gives up to ±5 kHz ramps); Resonance and Wet/Dry are 0-1 fractions (use the low end of the range).
 
-**Speed ramp duration (slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Speed ramp start delay (slider 33)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves (stagger targets by giving them different delays). · **Speed ramp engage (slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
+**Ramp duration (slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp start delay (slider 33)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves (stagger targets by giving them different delays). · **Ramp engage (slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage.
 
@@ -304,13 +304,13 @@ A ~100 ms smoother sits between the Rate slider and the audio so manual Rate twe
 
 **Transport behavior:** every target's ramp clock resets to 0 on the transport play edge. This is the ONLY thing that resets the ramps — slider changes (engage toggle, selector switch, anything) don't.
 
-**Migration to v2.14 (reorganization + renumber):** Speed Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Speed Ramp block (now sliders 29–33) and the Drift block (now sliders 34–38). **Existing Sweeping Filter projects lose their Speed Ramp and Drift settings on upgrade** — both are off-by-default, and the filter sound itself (sliders 1–28) is untouched. Re-add the plugin instance for clean defaults, or re-enter your settings. *(Older history: pre-v2.14 Speed Ramp was single-target Sweep Rate on slider 29; and pre-v2.8 it was a multiplier 0.1–4.0.)*
+**Migration to v2.14 (reorganization + renumber):** Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Ramp block (now sliders 29–33) and the Drift block (now sliders 34–38). **Existing Sweeping Filter projects lose their Ramp and Drift settings on upgrade** — both are off-by-default, and the filter sound itself (sliders 1–28) is untouched. Re-add the plugin instance for clean defaults, or re-enter your settings. *(Older history: pre-v2.14 Ramp was single-target Sweep Rate on slider 29; and pre-v2.8 it was a multiplier 0.1–4.0.)*
 
 ### Drift (v2.9 nested-selector)
 
 Slow organic wander applied independently to any of six targets: Sweep Rate, Frequency Low, Frequency High, Pan Sweep Rate, Resonance, or Wet/Dry. Each target can have its own drift configuration; all six drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-Same pattern as Womb v3's drift and the rest of the sweep (target list now shared with Speed Ramp as of v2.14). Switching the **Drift target** selector saves the current sliders 35-38 into the old target's memory slot, then loads the new target's saved values. All six configurations persist across project save/load.
+Same pattern as Womb v3's drift and the rest of the sweep (target list now shared with Ramp as of v2.14). Switching the **Drift target** selector saves the current sliders 35-38 into the old target's memory slot, then loads the new target's saved values. All six configurations persist across project save/load.
 
 The two Frequency targets are what make this the most evolving of the filter effects: drift Frequency Low on one period and Frequency High on another, and the sweep band itself wanders and breathes — its edges moving independently, the center and width shifting over time. Layer a slow Resonance drift on top and the filter's character moves too.
 
@@ -324,7 +324,7 @@ How far above the target's baseline the drift wanders at its peak. Units: the ra
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (slider 37, cycles)** `1–1000, default 8`
-How many filter LFO cycles one full drift wave takes for this target. All six targets use LFO cycles as their period unit, scaled by Speed Ramp so the wave-per-cycle relationship stays constant under wind-down.
+How many filter LFO cycles one full drift wave takes for this target. All six targets use LFO cycles as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
 **Drift shape (slider 38)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
@@ -337,7 +337,7 @@ Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random
 
 #### Transport behavior (v2.9)
 
-On every transport play press, drift cycle restarts: all six targets' phase counters → 0. The filter LFO restarts from the configured **LFO Start Phase**, the filter state and cutoff smoothers clear, pan state and the Play/Rest gate reset, and the rate smoother re-seeds from the current Rate slider. Drift CONFIG is preserved across stop/play and project save/load. Speed Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
+On every transport play press, drift cycle restarts: all six targets' phase counters → 0. The filter LFO restarts from the configured **LFO Start Phase**, the filter state and cutoff smoothers clear, pan state and the Play/Rest gate reset, and the rate smoother re-seeds from the current Rate slider. Drift CONFIG is preserved across stop/play and project save/load. Ramp progress also resets. Renders are deterministic for Sine and Triangle shapes (Random remains non-deterministic per render by design).
 
 #### Migration from v2.8
 

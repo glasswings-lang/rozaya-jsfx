@@ -53,10 +53,10 @@ slider16:0<0,1000,1>Rest for (beats)
 // start-delay was stranded at slider28. Old IDs 17-20 + 28 are now unused;
 // Speed Ramp configs reset on this upgrade (magic already bumped). Declared
 // here for context; REAPER orders by ID so they appear grouped at 29-33.
-slider29:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Speed ramp target
-slider30:0<-400,400,0.01>Speed ramp by
-slider31:0<0,60,0.1>Speed ramp duration (minutes)
-slider32:0<0,1,1{Off,On}>Speed ramp engage
+slider29:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Ramp target
+slider30:0<-400,400,0.01>Ramp by
+slider31:0<0,60,0.1>Ramp duration (minutes)
+slider32:0<0,1,1{Off,On}>Ramp engage
 
 // Per-target drift: nested-selector pattern matching Womb v3 / breath
 // gen v2.9. Pick a target (slider21), then sliders 22-25 hold THAT
@@ -89,7 +89,7 @@ slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // Speed ramp start delay — part of the v2.14 selector-first block (appears at
 // 33 in the UI, right after engage/32).
-slider33:0<0,60,0.1>Speed ramp start delay (minutes)
+slider33:0<0,60,0.1>Ramp start delay (minutes)
 
 // --- Host tempo sync (sliders 34-35) ------------------------------------
 // Own BPM: free-running, project tempo ignored -- original behaviour.

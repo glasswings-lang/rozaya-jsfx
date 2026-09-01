@@ -56,10 +56,10 @@ slider16:0<0,1000,1>Rest for (breaths)
 // stranded at slider29. Old IDs 17-20 + 29 are now unused; Speed Ramp configs
 // reset on this upgrade (magic already bumped). REAPER orders by ID, so they
 // appear grouped at 30-34.
-slider30:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Speed ramp target
-slider31:0<-20,20,0.1>Speed ramp by
-slider32:0<0,60,0.1>Speed ramp duration (minutes)
-slider33:0<0,1,1{Off,On}>Speed ramp engage
+slider30:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Ramp target
+slider31:0<-20,20,0.1>Ramp by
+slider32:0<0,60,0.1>Ramp duration (minutes)
+slider33:0<0,1,1{Off,On}>Ramp engage
 
 // Per-target drift: nested-selector pattern matching Womb v3. Pick a
 // target (slider21), then sliders 22-25 hold THAT target's drift
@@ -89,7 +89,7 @@ slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // Speed ramp start delay — part of the v2.14 selector-first block (appears at
 // 34 in the UI, right after engage/33). Per-target.
-slider34:0<0,60,0.1>Speed ramp start delay (minutes)
+slider34:0<0,60,0.1>Ramp start delay (minutes)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).

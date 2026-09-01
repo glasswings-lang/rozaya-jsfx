@@ -301,7 +301,7 @@ slider82:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Base-Rate ramp keeps working unchanged. Lives at 79 (a slider ID
 // freed when the v2.8 flat-drift block collapsed); the other four
 // Speed Ramp sliders stay at 65-68.
-slider83:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Speed ramp target
+slider83:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Ramp target
 
 // Speed ramp: a one-time ride of a chosen parameter over a duration —
 // the in-plugin stand-in for drawing an automation envelope. v2.10
@@ -338,10 +338,10 @@ slider83:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 R
 // Migration: v2.7 multiplier → v2.9 single-target → v2.10 multi-target →
 // v2.14 per-target timelines + reorg. Existing Speed Ramp configs reset on
 // this upgrade (the @serialize magic bumped for the per-target format).
-slider84:0<-1000,1000,0.001>Speed ramp by (units match target)
-slider85:0<0,60,0.1>Speed ramp duration (minutes)
-slider86:0<0,1,1{Off,On}>Speed ramp engage
-slider87:0<0,60,0.1>Speed ramp start delay (minutes)
+slider84:0<-1000,1000,0.001>Ramp by (units match target)
+slider85:0<0,60,0.1>Ramp duration (minutes)
+slider86:0<0,1,1{Off,On}>Ramp engage
+slider87:0<0,60,0.1>Ramp start delay (minutes)
 
 // Convenience picker for Host x, not a grid: WRITES a multiplier into Rate
 // Value on change, then gets out of the way. "Custom" (default) never writes.

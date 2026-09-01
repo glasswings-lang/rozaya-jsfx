@@ -68,11 +68,11 @@ slider10:20<1,600,0.1>Drift period
 slider11:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // --- Speed Ramp (nested selector; signed delta) ---
-slider12:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Speed ramp target
-slider13:0<-1000,1000,0.1>Speed ramp by (units match target)
-slider14:0<0,60,0.1>Speed ramp duration (minutes)
-slider15:0<0,1,1{Off,On}>Speed ramp engage
-slider16:0<0,60,0.1>Speed ramp start delay (minutes)
+slider12:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Ramp target
+slider13:0<-1000,1000,0.1>Ramp by (units match target)
+slider14:0<0,60,0.1>Ramp duration (minutes)
+slider15:0<0,1,1{Off,On}>Ramp engage
+slider16:0<0,60,0.1>Ramp start delay (minutes)
 
 // Host tempo sync. Veil has no rate — the only musical length in it is the
 // drift period, so that is the only thing Host x touches. Seconds (default)

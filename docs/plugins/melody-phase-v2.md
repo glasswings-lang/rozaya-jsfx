@@ -9,7 +9,7 @@
 > **Voice** selector: pick a voice, and five controls below show and edit *that*
 > voice. **All eight voices still play** — the selector is an editing cursor,
 > not a mute. Everything else — rate, waveforms, pan, glide, legato, direction,
-> play/rest gating, Speed Ramp and Drift — is carried over unchanged. (The flat-slider version is still
+> play/rest gating, Ramp and Drift — is carried over unchanged. (The flat-slider version is still
 > maintained as `melody_phase.jsfx` — see [melody-phase.md](melody-phase.md).
 > It came back out of the archive on 2026-08-11 because every project on disk
 > uses it and none use v2.)
@@ -215,16 +215,16 @@ A per-step cyclic gate: the sequencer fires **Play for** notes, sits silent for 
 
 Rest duration is the same wall-clock time in both modes. Tails finish naturally (in Legato mode the sustaining voice is forced into release at the rest boundary so it doesn't ring forever). Changing Rest mode mid-rest is handled defensively but not gracefully — flip it during a play period, or stop/play to reset cleanly.
 
-### Speed Ramp (multi-target, selector-first)
+### Ramp (multi-target, selector-first)
 
 A **one-time signed-delta ride** on any target over a set duration — the in-plugin substitute for a REAPER automation envelope, the "wind down / wind up once" move (vs Drift's endless wander). Reaches all 28 targets (Rate Value, V1–V8 Timing, Pan Rate, V1–V8 Gain, V1–V8 Note dur, Attack %, Release %), each on its own timeline, via the suite's nested-selector pattern.
 
-**Speed ramp target** — which parameter this ramp acts on (same list as Drift). Switching it saves the three per-target sliders into the old target's slot and loads the new one's; all 28 ramp in parallel.
-**Speed ramp by** `-1000 – +1000` (units match target) — signed delta the target moves by over the duration, then holds. 0 = no ramp for that target.
-**Speed ramp duration (minutes)** `0 – 60` · **Speed ramp start delay (minutes)** `0 – 60` — per-target; each waits its delay then rides its `by` over its duration, so different targets wind down on different timelines from one engage.
-**Speed ramp engage** `Off / On` — **GLOBAL**. One switch arms every configured target; a freeze/resume gate (Off freezes each clock, On resumes). Every ramp's progress resets on the transport play edge.
+**Ramp target** — which parameter this ramp acts on (same list as Drift). Switching it saves the three per-target sliders into the old target's slot and loads the new one's; all 28 ramp in parallel.
+**Ramp by** `-1000 – +1000` (units match target) — signed delta the target moves by over the duration, then holds. 0 = no ramp for that target.
+**Ramp duration (minutes)** `0 – 60` · **Ramp start delay (minutes)** `0 – 60` — per-target; each waits its delay then rides its `by` over its duration, so different targets wind down on different timelines from one engage.
+**Ramp engage** `Off / On` — **GLOBAL**. One switch arms every configured target; a freeze/resume gate (Off freezes each clock, On resumes). Every ramp's progress resets on the transport play edge.
 
-Granularity mirrors Drift: rates convert to a mode-aware ratio; per-voice Timing / Gain add per sample; the articulation targets (Note dur, Attack %, Release %) sample once per note at trigger so a ringing note's length/shape stay fixed. Speed Ramp and Drift compose on the same target.
+Granularity mirrors Drift: rates convert to a mode-aware ratio; per-voice Timing / Gain add per sample; the articulation targets (Note dur, Attack %, Release %) sample once per note at trigger so a ringing note's length/shape stay fixed. Ramp and Drift compose on the same target.
 
 ### Drift (nested-selector)
 
@@ -284,7 +284,7 @@ Placed **once**, on transport start or when you move the playhead, then left to 
 
 **The Play / Rest gate is placed too**, in both rest modes. In **Walk** the sequencer keeps stepping through rest, so the gate is just a second wrap running alongside the first. In **Freeze** the sequencer stops while the clock keeps going, so each rest injects time in which nothing advances — the plugin accounts for that, and if you land inside a rest it sits frozen on the right voice with the right amount of rest still to run.
 
-One thing is not placed, and it starts from the top as before: **per-voice timing Drift or Speed Ramp**. The step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer — the same rule the sweeping effects follow, where anything modulating the rate hands back to free-running.
+One thing is not placed, and it starts from the top as before: **per-voice timing Drift or Ramp**. The step lengths at bar 40 aren't the ones a walk from bar 0 would have used, so placing would be a confident guess rather than an answer — the same rule the sweeping effects follow, where anything modulating the rate hands back to free-running.
 
 Nothing is lost in that case; it behaves exactly as it always has.
 
