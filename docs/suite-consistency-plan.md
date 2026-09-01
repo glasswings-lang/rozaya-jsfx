@@ -1456,3 +1456,43 @@ think."* Those two are mine to research before they become questions at all.
 Note 8 closes a question that had been asked and answered twice already in other forms —
 and note 10 deliberately accepts an inconsistency, because matching how a person counts
 beats matching the rest of the suite.
+
+### Items 4 and 5, traced — they are answerable now
+
+Both were held back on 2026-08-31 as "not yet a decision" because I could not say what the
+control scaled. Traced in source; both now have a real answer, and neither needs Rozaya to
+work anything out.
+
+**4. `Brightness` (Womb slider 8, `0..1`) is a lowpass cutoff in Hz.**
+
+```
+lp_cutoff_near = 200.0 + slider8 * 250.0;    ->  200..450 Hz
+lp_cutoff_far  = 175.0 + slider8 * 220.0;    ->  175..395 Hz
+```
+
+It sets the heartbeat's near and far channel cutoffs together. So the honest unit is
+**Hz** — and the useful discovery is that the two curves are **the same ratio the whole way
+along**: `far/near` runs 0.8750 to 0.8778, constant to within 0.002. One Hz control can
+drive both as `far = near * 0.877`, and the difference is inaudible.
+
+→ **Proposal: `Heart lowpass (Hz)`, `175..1000`, replacing `Brightness`.** The user sets a
+frequency, which is a real quantity they can reason about and drift in its own units,
+instead of a 0-to-1 abstraction over two hidden numbers. Migration is exact:
+`Hz = 200 + old * 250`.
+
+**5. `Bloodflow Dicrotic Level` (Womb slider 32, `0..1`) is a proportion of the pulse.**
+
+```
+bf_env_dicrotic = bf_dicrotic_level * (0.5 + 0.5*cos(...));
+bf_env_pulse    = bf_env_main + bf_env_dicrotic;
+```
+
+`bf_env_main` peaks at exactly 1.0, so the dicrotic level is literally the height of the
+secondary bump **as a fraction of the main pulse's peak**. That is a genuine proportion of
+a nameable thing, which R17 allows.
+
+→ **Proposal: `Dicrotic notch (% of pulse height)`, `0..100`.** Migration is `x100`.
+
+Note the asymmetry, which is R17 working as intended: one turned out to be a real
+measurement wearing a normalised disguise, and the other turned out to be an honest
+proportion that simply never said what it was a proportion of. The test told them apart.
