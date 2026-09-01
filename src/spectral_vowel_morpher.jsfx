@@ -64,8 +64,8 @@ slider16:20<1,600,0.5>Auto-morph time (sec)
 //     amount/period/shape sliders are editing. Added at the END of the range
 //     (slider IDs are primary keys — never renumber existing ones). ---
 slider17:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
-slider18:0<0,300,0.1>Drift up amount (units match target)
-slider19:0<0,300,0.1>Drift down amount (units match target)
+slider18:0<0,300,0.01>Drift up amount (units match target)
+slider19:0<0,300,0.01>Drift down amount (units match target)
 slider20:30<1,600,0.5>Drift period (seconds)
 slider21:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Restart on play = drift jumps to the start of its cycle when the transport
@@ -79,7 +79,7 @@ slider22:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
 slider23:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Ramp target
-slider24:0<-300,300,0.1>Ramp by (units match target)
+slider24:0<-300,300,0.001>Ramp by (units match target)
 slider25:0<0,60,0.1>Ramp duration (minutes)
 slider26:0<0,60,0.1>Ramp start delay (minutes)
 slider27:0<0,1,1{Off,On}>Ramp engage

@@ -54,12 +54,12 @@ slider2:520<100,2000,1>Right cutoff (Hz)
 slider3:0.15<0,1,0.01>Left resonance
 slider4:0.15<0,1,0.01>Right resonance
 slider5:0<0,5,1{-12,-24,-36,-48,-60,-72}>Slope (dB/oct)
-slider6:0<-24,12,0.5>Output (dB)
+slider6:0<-24,12,0.1>Output (dB)
 
 // --- Drift (nested selector) ---
 slider7:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Drift target
-slider8:0<0,1000,0.1>Drift up amount (units match target)
-slider9:0<0,1000,0.1>Drift down amount (units match target)
+slider8:0<0,1000,0.01>Drift up amount (units match target)
+slider9:0<0,1000,0.01>Drift down amount (units match target)
 // Unit is set by slider17 (Drift period unit) — seconds by default, beats in
 // Host-synced projects. The unit is deliberately NOT in this label: NVDA
 // re-reads the parameter name on every arrow step, and a name that lies half
@@ -69,7 +69,7 @@ slider11:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // --- Speed Ramp (nested selector; signed delta) ---
 slider12:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Ramp target
-slider13:0<-1000,1000,0.1>Ramp by (units match target)
+slider13:0<-1000,1000,0.001>Ramp by (units match target)
 slider14:0<0,60,0.1>Ramp duration (minutes)
 slider15:0<0,1,1{Off,On}>Ramp engage
 slider16:0<0,60,0.1>Ramp start delay (minutes)

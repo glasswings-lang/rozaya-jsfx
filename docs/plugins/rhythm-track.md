@@ -145,7 +145,7 @@ Inverts all pan positions. In Normal mode beat 0 anchors to the left in directio
 
 ### Start Delay
 
-**Start Delay (beats)** `0–1000, default 0`
+**Start delay (beats)** `0–1000, default 0`
 
 How long the metronome sits silent at the start of playback before ticks begin. Counted in beats at the current Tempo (so at 120 BPM, "4 beats" = 2 seconds). 0 disables the delay entirely.
 

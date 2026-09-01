@@ -228,7 +228,7 @@ Most of the pan modes follow the tempo for free once **Cycle mode** is Host x, b
 
 ### Start Delay
 
-**Start Delay (seconds)** `0–1000, default 0`
+**Start delay (seconds)** `0–1000, default 0`
 
 Pass-through for N seconds after playback starts, then applies the sweep-dwell filter + pan effect normally. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Sweep state and filter buffers stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 

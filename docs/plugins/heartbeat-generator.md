@@ -91,7 +91,7 @@ Adds a slowly wandering random offset to heart rate on top of the breath modulat
 
 ### Start Delay
 
-**Start Delay (beats)** `0–1000, default 0`
+**Start delay (beats)** `0–1000, default 0`
 
 Silent for N heartbeats after playback starts, then the heartbeat begins normally. Beats are counted at the current BPM (the same slider that sets the heart rate) — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. Internal state (cycle phase, breath modulation, HRV smoothing) stays frozen during the delay so the first beat lands cleanly at delay-end rather than mid-cycle. Re-arms on every transport stop/start. 0 disables the delay.
 

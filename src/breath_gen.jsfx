@@ -5,9 +5,9 @@ desc: Breath Generator
 // https://creativecommons.org/publicdomain/zero/1.0/
 
 slider1:4.0<0.5,20.0,0.1>Inhale Duration (sec)
-slider2:0.3<0.0,5.0,0.1>Top Pause (sec)
+slider2:0.3<0.0,5.0,0.01>Top pause (sec)
 slider3:4.0<0.5,20.0,0.1>Exhale Duration (sec)
-slider4:0.3<0.0,5.0,0.1>Bottom Pause (sec)
+slider4:0.3<0.0,5.0,0.01>Bottom pause (sec)
 slider5:800<50,2000,1>Inhale Frequency Hz
 slider6:600<50,2000,1>Exhale Frequency Hz
 slider7:0.3<0.0,1.0,0.01>Inhale Fade In
@@ -20,7 +20,7 @@ slider13:0<0,1,1{Normal,Flipped}>Stereo Flip
 
 // Sit silent for N seconds after playback starts, then begin normally.
 // Re-arms on every transport stop/start. 0 disables the delay.
-slider14:0<0,1000,0.001>Start Delay (seconds)
+slider14:0<0,1000,0.001>Start delay (seconds)
 
 // Per-breath Play/Rest gate. Runs N full breath cycles, then sits
 // silent for M breath cycles' worth of time, then resumes — repeats
@@ -57,7 +57,7 @@ slider16:0<0,1000,1>Rest for (breaths)
 // reset on this upgrade (magic already bumped). REAPER orders by ID, so they
 // appear grouped at 30-34.
 slider30:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Ramp target
-slider31:0<-20,20,0.1>Ramp by
+slider31:0<-20,20,0.001>Ramp by
 slider32:0<0,60,0.1>Ramp duration (minutes)
 slider33:0<0,1,1{Off,On}>Ramp engage
 
@@ -82,8 +82,8 @@ slider33:0<0,1,1{Off,On}>Ramp engage
 // old block. Sliders 26 and 27 are no longer declared — their old
 // values are silently discarded on project load.
 slider21:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Drift target
-slider22:0<0,10,0.1>Drift up amount (seconds)
-slider23:0<0,10,0.1>Drift down amount (seconds)
+slider22:0<0,10,0.01>Drift up amount (seconds)
+slider23:0<0,10,0.01>Drift down amount (seconds)
 slider24:8<1,1000,1>Drift period (breath cycles)
 slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
 

@@ -104,7 +104,7 @@ slider47:0<-100,100,0.1>B Pan
 // Beats are counted at the current scale BPM (slider1) so a delay
 // value of 4 at 60 BPM is 4 seconds; at 120 BPM it's 2 seconds.
 // Re-arms on every transport stop/start. 0 disables the delay.
-slider48:0<0,1000,0.01>Start Delay (beats)
+slider48:0<0,1000,0.001>Start delay (beats)
 
 // Per-beat Play/Rest gate. Plays N notes normally, then sits silent
 // for M beats' worth of time, then resumes — repeats forever. The
@@ -149,7 +149,7 @@ slider51:0<0,1,1{Walk through,Freeze in place}>Rest mode
 // sound on sliders 1-51 is untouched). Re-add the instance for clean
 // defaults, or reconfigure. See the manual's migration note.
 slider52:0<0,3,1{Tempo,Note Length %,Attack %,Release %}>Ramp target
-slider53:0<-300,300,0.1>Ramp by (units match target)
+slider53:0<-300,300,0.001>Ramp by (units match target)
 slider54:0<0,60,0.1>Ramp duration (minutes)
 slider55:0<0,1,1{Off,On}>Ramp engage
 slider56:0<0,60,0.1>Ramp start delay (minutes)
@@ -164,8 +164,8 @@ slider56:0<0,60,0.1>Ramp start delay (minutes)
 // (~960 beats ≈ 8 min at 120 BPM). (Drift IDs shifted +1 from the old 56-60
 // layout in the v2.14 reorg above — same reset story.)
 slider57:0<0,3,1{Tempo,Note Length %,Attack %,Release %}>Drift target
-slider58:0<0,100,0.1>Drift up amount (units match target)
-slider59:0<0,100,0.1>Drift down amount (units match target)
+slider58:0<0,100,0.01>Drift up amount (units match target)
+slider59:0<0,100,0.01>Drift down amount (units match target)
 slider60:8<1,1000,1>Drift period (beats)
 slider61:0<0,2,1{Sine,Triangle,Random}>Drift shape
 

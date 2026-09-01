@@ -131,8 +131,8 @@ slider24:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
 slider25:0<0,13,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Denoise,Morph,Input level,Overtone harmonic,Slot fade in,Slot hold,Slot fade out,Slot gap}>Drift target
-slider26:0<0,300,0.1>Drift up amount (units match target)
-slider27:0<0,300,0.1>Drift down amount (units match target)
+slider26:0<0,300,0.01>Drift up amount (units match target)
+slider27:0<0,300,0.01>Drift down amount (units match target)
 slider28:30<1,600,0.5>Drift period (seconds)
 slider29:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Restart on play = drift jumps to the start of its cycle when the transport
@@ -146,7 +146,7 @@ slider30:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
 slider31:0<0,13,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Denoise,Morph,Input level,Overtone harmonic,Slot fade in,Slot hold,Slot fade out,Slot gap}>Ramp target
-slider32:0<-300,300,0.1>Ramp by (units match target)
+slider32:0<-300,300,0.001>Ramp by (units match target)
 slider33:0<0,60,0.1>Ramp duration (minutes)
 slider34:0<0,60,0.1>Ramp start delay (minutes)
 slider35:0<0,1,1{Off,On}>Ramp engage

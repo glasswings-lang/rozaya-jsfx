@@ -47,7 +47,7 @@ slider41:0<0,8,1{Custom,every 8 cycles,every 4 cycles,every 2 cycles,same as fil
 // sweep-dwell filter + pan effect normally. As an EFFECT plugin the
 // dry signal passes through during the delay. Re-arms on every
 // transport stop/start. 0 disables the delay.
-slider21:0<0,1000,0.001>Start Delay (seconds)
+slider21:0<0,1000,0.001>Start delay (seconds)
 
 // Per-cycle Play/Rest gate. Effect is applied normally for N
 // cycles, then enters its rest period for M cycles, then resumes

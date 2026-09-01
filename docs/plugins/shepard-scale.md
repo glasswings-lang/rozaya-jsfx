@@ -78,7 +78,7 @@ Stereo position of this note. Negative values place it left, positive values rig
 
 ### Start Delay
 
-**Start Delay (beats)** `0–1000, default 0`
+**Start delay (beats)** `0–1000, default 0`
 
 Silent for N beats after playback starts, then the scale begins normally. Beats are counted at the BPM slider (the same slider that sets the note pacing) — at 60 BPM, "4 beats" is 4 seconds; at 120 BPM it's 2 seconds. Oscillator phases and note-step state stay frozen during the delay so the first note of the scale lands cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 

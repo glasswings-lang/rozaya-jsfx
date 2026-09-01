@@ -22,7 +22,7 @@ slider13:0.02<0.0,0.08,0.005>Random HRV Depth
 // normally. Beats are counted at the current BPM (slider1) so a delay
 // value of 4 at 60 BPM is 4 seconds; at 120 BPM it's 2 seconds.
 // Re-arms on every transport stop/start. 0 disables the delay.
-slider14:0<0,1000,0.01>Start Delay (beats)
+slider14:0<0,1000,0.001>Start delay (beats)
 
 // Per-beat Play/Rest gate. Fires beats normally for N beats, then
 // suppresses the next M beat triggers (silent), then resumes —
@@ -54,7 +54,7 @@ slider16:0<0,1000,1>Rest for (beats)
 // Speed Ramp configs reset on this upgrade (magic already bumped). Declared
 // here for context; REAPER orders by ID so they appear grouped at 29-33.
 slider29:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Ramp target
-slider30:0<-400,400,0.01>Ramp by
+slider30:0<-400,400,0.001>Ramp by
 slider31:0<0,60,0.1>Ramp duration (minutes)
 slider32:0<0,1,1{Off,On}>Ramp engage
 
@@ -82,8 +82,8 @@ slider32:0<0,1,1{Off,On}>Ramp engage
 // drift sliders to defaults after upgrade and reconfigure if you'd
 // used the old block.
 slider21:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Drift target
-slider22:0<0,50,0.1>Drift up amount (units match target)
-slider23:0<0,50,0.1>Drift down amount (units match target)
+slider22:0<0,50,0.01>Drift up amount (units match target)
+slider23:0<0,50,0.01>Drift down amount (units match target)
 slider24:8<1,1000,1>Drift period (heartbeats)
 slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
 

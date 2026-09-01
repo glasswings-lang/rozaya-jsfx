@@ -54,8 +54,8 @@ slider6:-60<-60,24,0.1>Gain (dB; -60 = off)
 slider7:0<-1,1,0.01>Pan (-1=L, 0=center, +1=R)
 slider8:0<0,3,1{1 (-6 dB/oct),2 (-12 dB/oct),4 (-24 dB/oct),8 (-48 dB/oct)}>Order (parallel mode only)
 slider9:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Drift target
-slider10:0<0,1000,0.1>Drift up amount (units match target)
-slider11:0<0,1000,0.1>Drift down amount (units match target)
+slider10:0<0,1000,0.01>Drift up amount (units match target)
+slider11:0<0,1000,0.01>Drift down amount (units match target)
 slider12:0<0,1000,0.001>Drift period (interpret by mode; 0 = off)
 // NOTE the ordering here is {BPM,Hz,Seconds} -- a THIRD variant. Melody Phase
 // and Polyrhythm use {BPM,Seconds,Hz}; Tremolo and the sweeping filter use

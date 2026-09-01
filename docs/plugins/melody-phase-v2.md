@@ -189,7 +189,7 @@ When > 0, each new voice's pitch starts at the previous voice's target and slide
 
 ### Start Delay
 
-**Start Delay (in Rate Mode units)** `0 – 1000` (default 0)
+**Start delay (in rate mode units)** `0 – 1000` (default 0)
 How long the plugin sits silent at the start of playback before the sequencer begins. Units match Rate Mode. During the delay the sequencer stays frozen at its start position, then begins cleanly from the first active voice. Re-arms on every transport stop/start. 0 disables it.
 
 ### Direction

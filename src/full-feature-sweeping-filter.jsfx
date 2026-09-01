@@ -46,7 +46,7 @@ slider40:0<0,8,1{Custom,every 8 cycles,every 4 cycles,every 2 cycles,same as fil
 // beats / Seconds / Hz cycles), interpreted against Rate Value. As an
 // EFFECT plugin the dry signal passes through during the delay. Re-
 // arms on every transport stop/start. 0 disables the delay.
-slider24:0<0,1000,0.001>Start Delay (in Rate Mode units)
+slider24:0<0,1000,0.001>Start delay (in rate mode units)
 
 // Per-cycle Play/Rest gate. Effect is applied normally for N cycles
 // of the Rate Value, then bypassed (dry signal passes through
@@ -108,7 +108,7 @@ slider28:0<0,1,1{Pass-through,Silence}>Output at rest
 // sound on sliders 1-28 is untouched). Re-add the instance for clean
 // defaults, or reconfigure. See the manual's migration note.
 slider29:0<0,5,1{Sweep Rate,Frequency Low,Frequency High,Pan Sweep Rate,Resonance,Wet/Dry}>Ramp target
-slider30:0<-5000,5000,0.01>Ramp by (units match target)
+slider30:0<-5000,5000,0.001>Ramp by (units match target)
 slider31:0<0,60,0.1>Ramp duration (minutes)
 slider32:0<0,1,1{Off,On}>Ramp engage
 slider33:0<0,60,0.1>Ramp start delay (minutes)

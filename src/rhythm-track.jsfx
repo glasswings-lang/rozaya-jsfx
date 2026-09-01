@@ -21,7 +21,7 @@ slider13:0<0,1,1{Normal,Flipped}>Pan direction
 // Sit silent for N beats after playback starts, then resume normally.
 // Counted at the current Tempo. 0 disables the delay. Re-arms on every
 // transport stop/start.
-slider14:0<0,1000,0.01>Start Delay (beats)
+slider14:0<0,1000,0.001>Start delay (beats)
 
 // Per-beat Play/Rest gate. Plays N ticks normally, then suppresses
 // the next M tick triggers (silent), then resumes — repeats forever.
@@ -53,7 +53,7 @@ slider16:0<0,1000,1>Rest for (beats)
 // metronome sound on sliders 1-16 is untouched). Re-add the instance for
 // clean defaults, or reconfigure. See the manual's migration note.
 slider17:0<0,1,1{Tempo,Swing amount}>Ramp target
-slider18:0<-300,300,0.1>Ramp by (units match target)
+slider18:0<-300,300,0.001>Ramp by (units match target)
 slider19:0<0,60,0.1>Ramp duration (minutes)
 slider20:0<0,1,1{Off,On}>Ramp engage
 slider21:0<0,60,0.1>Ramp start delay (minutes)
@@ -68,8 +68,8 @@ slider21:0<0,60,0.1>Ramp start delay (minutes)
 // at 120 BPM). (Drift IDs shifted +1 from the old 21-25 layout in the v2.14
 // reorg above — same reset story.)
 slider22:0<0,1,1{Tempo,Swing amount}>Drift target
-slider23:0<0,50,0.1>Drift up amount (units match target)
-slider24:0<0,50,0.1>Drift down amount (units match target)
+slider23:0<0,50,0.01>Drift up amount (units match target)
+slider24:0<0,50,0.01>Drift down amount (units match target)
 slider25:8<1,1000,1>Drift period (beats)
 slider26:0<0,2,1{Sine,Triangle,Random}>Drift shape
 

@@ -207,7 +207,7 @@ slider74:0<-1000,1000,0.001>Reverse Drift Offset
 // entirely so the per-voice phase counters stay at their play-start
 // reset positions — when the delay ends, voices begin cleanly from
 // phase 0 (or their phase offsets) rather than mid-fade.
-slider75:0<0,1000,0.001>Start Delay (in Rate Mode units)
+slider75:0<0,1000,0.001>Start delay (in rate mode units)
 
 // ===== PLAY / REST GATING =====
 // Per-voice cyclic gate. Each voice plays for `Play for` cycles of

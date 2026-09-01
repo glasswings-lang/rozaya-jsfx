@@ -29,13 +29,13 @@ The envelope applied to each phase is a simple amplitude shape — fade in from 
 **Inhale Duration (sec)** `0.5-20.0 sec, default 4.0`
 Length of the inhale phase. The breath cycle advances through inhale → top pause → exhale → bottom pause in sequence, then loops. Changing this value mid-cycle takes effect at the next state transition; if the new duration is shorter than the current position, the position is immediately clamped to the end of the state.
 
-**Top Pause (sec)** `0.0-5.0 sec, default 0.3`
+**Top pause (sec)** `0.0-5.0 sec, default 0.3`
 Silence between the end of inhale and the start of exhale. Simulates the natural breath hold at the top of a breath. Set to 0 for an immediate inhale-to-exhale transition.
 
 **Exhale Duration (sec)** `0.5-20.0 sec, default 4.0`
 Length of the exhale phase.
 
-**Bottom Pause (sec)** `0.0-5.0 sec, default 0.3`
+**Bottom pause (sec)** `0.0-5.0 sec, default 0.3`
 Silence between the end of exhale and the start of the next inhale. Simulates the natural rest at the bottom of a breath. Set to 0 for an immediate exhale-to-inhale transition.
 
 ---
@@ -86,7 +86,7 @@ Swaps the left and right output channels. Useful for adjusting orientation when 
 
 ### Start Delay
 
-**Start Delay (seconds)** `0–1000, default 0`
+**Start delay (seconds)** `0–1000, default 0`
 
 Silent for N seconds after playback starts, then the breath cycle begins normally. State machine and filter state stay frozen during the delay so the inhale starts cleanly at delay-end rather than mid-cycle. Re-arms on every transport stop/start. 0 disables the delay.
 

@@ -43,7 +43,7 @@ slider35:0<0,8,1{Custom,every 8 cycles,every 4 cycles,every 2 cycles,same as fil
 // delay rather than being silenced — silence-during-delay would mute
 // the dry track too, which is rarely what you want. Re-arms on every
 // transport stop/start. 0 disables the delay.
-slider19:0<0,1000,0.001>Start Delay (in Rate Mode units)
+slider19:0<0,1000,0.001>Start delay (in rate mode units)
 
 // Per-cycle Play/Rest gate. Effect is applied normally for N cycles
 // of the Rate Value, then bypassed (dry signal passes through
