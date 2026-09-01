@@ -136,3 +136,67 @@ Two more that are not selector-specific but bite in the same place:
   the global control becomes the Original's own), or accept a documented change. The first
   is almost certainly right.
 - **The blob is untouched by a renumber.** Verify anyway, with `passage_captures.py`.
+
+
+## Tempo sync — added 2026-09-01, Rozaya's request
+
+Rozaya, 2026-09-01: *"[it] absolutely could do with ... a rate mode ... right now it just
+uses seconds ... I know hertz isn't in time, for instance, but beats is and seconds are."*
+
+Correct on both counts, including the doubt. **Hz and BPM do not apply to either of these
+plugins**, because neither has a *rate* — both have **durations**. A duration's two honest
+units are seconds and beats, and that is the whole choice.
+
+### The control
+
+Per **R13**, sync is not a unit, so it is not an entry in a unit picker:
+
+```
+Sync to host      {Off, On}
+```
+
+One switch, and **no `Rate mode` enum** — a unit picker with one entry (Seconds) would be
+a control that cannot be set. This is R13 applied exactly, and it comes out smaller here
+than in Womb because there is only ever one unit to leave.
+
+**No `Host sync target` selector either, and this is the part worth reading.** R11 pairs
+the selector with `Every N beats` for plugins whose rates are expressed *as rates* — Womb's
+heart is a BPM, so it needs somewhere to say how many beats one beat-of-the-heart takes.
+**`Auto-morph time` is** a duration durations already. Under sync they are simply **read as beats**, exactly as
+Womb's four breath sliders are, and their sum is the cycle by the same rule. There is
+nothing left for a selector to select.
+
+Womb's built shape confirms this rather than contradicting it: its `Host sync target` has
+**one** option, `{Heart rate}` — the only thing in the plugin expressed as a rate.
+
+### What changes unit, and what deliberately does not
+
+| control | when Sync to host is On |
+|---|---|
+| Auto-morph time | reads as **beats per morph** |
+| Drift period | unchanged — already in its own musical unit |
+| Ramp duration, Ramp start delay | unchanged — a wall-clock wind-down, suite-wide |
+
+Ramp is the wind-down you set in minutes because you are going to sleep. Tying it to the
+project tempo would be answering a question nobody asked.
+
+### Naming, and the rule it obeys
+
+Every affected slider says so in its own name — `Auto-morph time (sec / beats when synced)` — per the standing
+rule that a control may never change what it means without saying so on the control
+itself. The switch is named in the label so the two read as a pair.
+
+The labels get longer, which the layout above otherwise works to avoid. That is the cost
+of the rule and it is worth paying: a silent unit change is the failure this suite has
+already been bitten by.
+
+### Entering and leaving are both silent
+
+On the switch, the affected values **convert** at the current tempo, so the sound does not
+change at the moment you flip it — the same behaviour Womb's Host x has. Only the unit
+you are typing in changes.
+
+### Migration
+
+**None.** `Sync to host` is a new slider defaulting to Off, and every existing project
+keeps reading in seconds. It is the append case, and it costs nothing.
