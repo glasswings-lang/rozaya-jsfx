@@ -148,6 +148,16 @@ def rewrite_values(line, magic, mtime):
     # slider after it, so refuse rather than rewrite the wrong controls.
     if values != tokens[: len(values)]:
         return line + eol, "SKIPPED (a '-' sits among the values)", None
+    # ...and the same for the `""` marker REAPER writes after slider 64. The
+    # Morpher has 40 sliders so it never appears here, and all 122 instances in
+    # the library were checked for it on 2026-09-02. But a plugin that grows
+    # past 64 gets one, and reading it as a value shifts every slider after it
+    # -- which is exactly what happened to Melody Phase that day. If one ever
+    # turns up, stop: tools/rpp_sliders.py is the code that knows the format,
+    # and this tool should be rebuilt on it rather than guessing.
+    if any(t.startswith('"') for t in tokens):
+        return line + eol, ("SKIPPED (quoted token on the line -- use "
+                            "tools/rpp_sliders.py, see its docstring)"), None
     if len(values) >= OLD_COUNT + 1:
         return line + eol, "already migrated (%d values)" % len(values), None
     if not values:

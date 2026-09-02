@@ -56,6 +56,9 @@ import re
 import shutil
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import rpp_sliders as R
+
 PLUGIN = "melody_phase.jsfx"
 BACKUP_SUFFIX = ".pre-layout-bak"
 OLD_COUNT = 78
@@ -109,9 +112,7 @@ assert sorted(list(OLD_TO_NEW.values()) + list(NEW_SLIDERS)) == list(range(1, NE
 assert sorted(OLD_DEFAULTS) == list(range(1, OLD_COUNT + 1))
 
 
-def fmt(x):
-    """Match REAPER's own style: integers without a trailing .0."""
-    return str(int(x)) if float(x) == int(float(x)) else repr(round(float(x), 6))
+fmt = R.fmt
 
 
 def project_tempo(text):
@@ -120,72 +121,78 @@ def project_tempo(text):
 
 
 def rewrite_values(line, tempo):
-    eol = "\r" if line.endswith("\r") else ""
-    line = line[: len(line) - len(eol)]
-    indent = line[: len(line) - len(line.lstrip())]
-    tokens = line.strip().split()
-    values = [t for t in tokens if t != "-"]
+    """Permute one instance's slider line into the new layout.
 
-    if values != tokens[: len(values)]:
-        return line + eol, "SKIPPED (a '-' sits among the values)", None
-    if len(values) >= OLD_COUNT + 1:
-        return line + eol, "already migrated (%d values)" % len(values), None
-    if not values:
-        return line + eol, "SKIPPED (no values on the line)", None
+    Slider ids come from rpp_sliders, which knows that REAPER puts a `""` marker
+    after slider 64 -- indexing the raw tokens instead is what shifted every
+    slider from 65 upward on 2026-09-02.
+    """
+    try:
+        slots = R.parse_line(line)
+    except R.SliderLineError as e:
+        return line, "SKIPPED (%s)" % e, None
 
-    old = [values[i] if i < len(values) else OLD_DEFAULTS[i + 1] for i in range(OLD_COUNT)]
-    filled = OLD_COUNT - len(values)
+    if max(slots) > OLD_COUNT:
+        return line, "already migrated (slider %d present)" % max(slots), None
 
-    def num(idx1):
-        try:
-            return float(old[idx1 - 1])
-        except ValueError:
-            return None
-
-    new = [None] * NEW_COUNT
-    for o, n in OLD_TO_NEW.items():
-        new[n - 1] = old[o - 1]
-
-    # --- Vn Semitones -> Vn Note (index 24 == C4 == old zero) -----------------
-    for o in NOTE_SLIDERS_OLD:
-        v = num(o)
+    # Anything this save predates gets what REAPER was handing it.
+    old = {}
+    filled = 0
+    for i in range(1, OLD_COUNT + 1):
+        v = slots.get(i)
         if v is None:
-            return line + eol, "SKIPPED (V-note slider%d not numeric)" % o, None
-        new[OLD_TO_NEW[o] - 1] = fmt(max(0, min(48, v + 24)))
+            v = OLD_DEFAULTS[i]
+            filled += 1
+        old[i] = v
 
-    # --- Root note -> Transpose, Center octave -> Octave shift ----------------
-    root, cent = num(ROOT_NOTE_OLD), num(CENTER_OCT_OLD)
-    if root is None or cent is None:
-        return line + eol, "SKIPPED (root/octave not numeric)", None
-    new[OLD_TO_NEW[ROOT_NOTE_OLD] - 1] = fmt(max(-12, min(12, root)))
-    new[OLD_TO_NEW[CENTER_OCT_OLD] - 1] = fmt(max(-4, min(4, cent - 4)))
+    def num(i, what):
+        return R.as_float(old[i], what)
 
-    # --- Host x -> Sync to host ----------------------------------------------
-    note = None
-    mode, rate = num(RATE_MODE_OLD), num(RATE_VALUE_OLD)
-    if mode is None or rate is None:
-        return line + eol, "SKIPPED (rate mode/value not numeric)", None
-    if int(mode) == HOST_X:
-        rate = rate if rate > 0 else 1.0
-        beats = max(0.25, min(1000, 1.0 / rate))
-        bpm = max(0.001, min(1000, tempo * rate))
-        new[1] = "0"                    # Rate mode -> BPM
-        new[0] = fmt(bpm)               # Rate value -> a real BPM
-        new[2] = "1"                    # Sync to host = On
-        new[3] = "0"                    # target = Rate value
-        new[4] = fmt(beats)             # Every N beats
-        note = ("Host x -> synced: every %s beats, rate reads %s BPM (was x%s at %g BPM)"
-                % (fmt(beats), fmt(bpm), fmt(rate), tempo))
-    else:
-        new[2] = "0"
-        new[3] = "0"
-        new[4] = "4"
+    try:
+        new = {}
+        for o, n in OLD_TO_NEW.items():
+            new[n] = old[o]
 
-    assert all(v is not None for v in new)
-    pad = max(0, len(tokens) - NEW_COUNT)
-    status = "migrated (%d values%s)" % (
-        len(values), ", %d filled from defaults" % filled if filled else "")
-    return indent + " ".join(new + ["-"] * pad) + eol, status, note
+        # Vn Semitones -> Vn Note (index 24 == C4 == the old zero)
+        for o in NOTE_SLIDERS_OLD:
+            v = num(o, "V-note slider%d" % o)
+            new[OLD_TO_NEW[o]] = fmt(max(0, min(48, v + 24)))
+
+        # Root note -> Transpose, Center octave -> Octave shift
+        root = num(ROOT_NOTE_OLD, "Root note")
+        cent = num(CENTER_OCT_OLD, "Center octave")
+        new[OLD_TO_NEW[ROOT_NOTE_OLD]] = fmt(max(-12, min(12, root)))
+        new[OLD_TO_NEW[CENTER_OCT_OLD]] = fmt(max(-4, min(4, cent - 4)))
+
+        # Host x -> Sync to host
+        note = None
+        mode = num(RATE_MODE_OLD, "Rate mode")
+        rate = num(RATE_VALUE_OLD, "Rate value")
+        if int(mode) == HOST_X:
+            rate = rate if rate > 0 else 1.0
+            beats = max(0.25, min(1000, 1.0 / rate))
+            bpm = max(0.001, min(1000, tempo * rate))
+            new[2] = "0"                 # Rate mode -> BPM
+            new[1] = fmt(bpm)            # Rate value -> a real BPM
+            new[3] = "1"                 # Sync to host = On
+            new[4] = "0"                 # target = Rate value
+            new[5] = fmt(beats)
+            note = ("Host x -> synced: every %s beats, rate reads %s BPM "
+                    "(was x%s at %g BPM)" % (fmt(beats), fmt(bpm), fmt(rate), tempo))
+        else:
+            new[3] = "0"
+            new[4] = "0"
+            new[5] = "4"
+
+        missing = [i for i in range(1, NEW_COUNT + 1) if i not in new]
+        assert not missing, "unfilled new sliders: %s" % missing
+        out = R.render_line(line, new, NEW_COUNT)
+    except (R.SliderLineError, AssertionError) as e:
+        return line, "SKIPPED (%s)" % e, None
+
+    status = "migrated (%d stored%s)" % (
+        OLD_COUNT - filled, ", %d filled from defaults" % filled if filled else "")
+    return out, status, note
 
 
 def migrate(text):
