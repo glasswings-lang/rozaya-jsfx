@@ -339,8 +339,11 @@ effect_mix        = 1;
 // from 0 (would otherwise produce ~100 ms of wrong-rate modulation at
 // every transport start since @init re-runs on play).
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
+// Host x (3) was MISSING from this list and fell through to the BPM branch,
+// seeding the smoother 60x too slow in that mode. It matches @sample now.
 slider2 == 0 ? (freq_smoothed = slider1) :
 slider2 == 1 ? (freq_smoothed = 1 / max(slider1, 0.001)) :
+slider2 == 3 ? (freq_smoothed = slider1) :
                (freq_smoothed = slider1 / 60);
 // Speed Ramp state. Engage (global) is a freeze/resume gate, not an edge;
 // only transport play resets the per-target ramp clocks. As of v2.14 the
@@ -706,7 +709,17 @@ rate_mode == 3 ? (freq_raw = rate_val) :
 
 // Smooth the rate slider so manual tweaks don't click, then advance
 // the speed ramp. Drift offsets are added below.
-freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
+// While the configuration has not settled, TRACK the rate instead of smoothing
+// toward it. @init seeds freq_smoothed from the sliders -- but on project load
+// @init runs before REAPER hands the saved values over, so it seeds from
+// DEFAULTS and the LFO then GLIDES from the default rate to the real one over
+// the smoother's 100 ms. That glide is the drag, and it is why gating the
+// phase advance did nothing for it: the phase was fine, the SPEED was sliding.
+// The smoother exists to stop clicks when the user moves the rate by hand; a
+// value arriving from the project restore is not a hand movement.
+cfg_stable < CFG_HOLD_BLOCKS ?
+  freq_smoothed = freq_raw :
+  freq_smoothed += (freq_raw - freq_smoothed) * rate_smoother_coeff;
 
 // Advance each target's own ramp clock (v2.14 per-target timeline). Engage
 // (slider27, GLOBAL) is the freeze/resume gate: while On, each target whose
