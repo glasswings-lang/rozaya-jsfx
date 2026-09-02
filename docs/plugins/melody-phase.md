@@ -390,6 +390,29 @@ On a mid-song seek, the note you land on **retriggers from the start of its enve
 
 ---
 
+## If something sounds wrong
+
+**Several instances come in slightly out of step when you open the project.**
+
+Switch away from REAPER and back again — click any other window, then click back
+on REAPER. Alt-Tab out and in does the same thing. They lock together straight
+away.
+
+Pressing play and then stop puts them back out of step, so do the switch *last*
+if you have been using the transport.
+
+Nothing is broken while they are out of step. Your project is fine, your
+settings are fine, and renders are unaffected — it just sounds a little loose.
+It happens because each instance starts counting from the moment REAPER creates
+it, and REAPER creates them one after another as the project opens. There is
+nothing to set and nothing to repair.
+
+**A note runs longer than it should, and the instances never quite catch up.**
+
+Same fix, same cause. Switch away and back.
+
+---
+
 *Melody Phase is part of the Rozaya JSFX plugin suite.*
 *Designed by Rozaya — Developed with Claude (Anthropic)*
 

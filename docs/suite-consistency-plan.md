@@ -1577,3 +1577,77 @@ alongside the existing insert hops, not to write a new tool.
 **The general lesson, and it is the same one as the unpropagated decisions:** this repo
 keeps containing the answer already. Check `tools/README.md` and `git log` before
 estimating that something needs building.
+
+---
+
+# R19 — Pan modes need one canonical order (raised 2026-09-02)
+
+**Rozaya:** *"the types of panning are just kinda pell mell put in there, and
+that's confusing as shit. I'm not gonna ship something like that on any plugin
+... I don't wanna make a release like that. That's kind of embarrassing."*
+
+**Blocks a release. Does not block pushing to master.**
+
+## What the mess actually is
+
+Every plugin's Pan Mode list grew by appending, so each one is in the order its
+features happened to arrive rather than any order a person could reason about.
+
+- **Polyrhythm** now reads: Tremolo, Increment, Spread, Spread Reversed,
+  Alternating, Alternating (Flipped), Distributed, Distributed (Flipped),
+  Distributed (Ping-pong), Converging, Converging (Ping-pong), Diverging,
+  Diverging (Ping-pong), **Alternating every 2, every 4, every 8**. The three
+  extra Alternating variants are at 13-15, with the whole Distributed /
+  Converging / Diverging family sitting between them and the Alternating they
+  belong to. That was done on 2026-09-02 and it is the clearest example.
+- **Full Feature Tremolo** has no `Alternating (Flipped)`; both sweeping filters
+  do.
+- **rhythm-track** has a shorter list in a different order, plus `Accent L /
+  Weak R` which exists nowhere else.
+- The oscillator plugins lead with four modes (Tremolo / Increment / Spread /
+  Spread Reversed) that no effect plugin has.
+
+## Proposed order — group by WHAT THE PAN DOES
+
+Three groups, in this order, each plugin including only the members it has:
+
+1. **Still** — the pan does not move on its own.
+   `Mono` · `Spread` · `Spread Reversed` · `Accent L / Weak R`
+2. **Stepped** — the pan moves one position per cycle / note. Two-position
+   members first, then multi-position.
+   `Alternating` · `Alternating (Flipped)` · `Alternating every 2` ·
+   `Alternating every 4` · `Alternating every 8` · `Distributed` ·
+   `Distributed (Flipped)` · `Distributed (Ping-pong)` · `Converging` ·
+   `Converging (Ping-pong)` · `Diverging` · `Diverging (Ping-pong)`
+3. **Continuous** — the pan travels on a clock of its own.
+   `Tremolo` · `Increment` · `Pan Sweep` · `Pan Sweep (Flipped)` ·
+   `Linked Sweep`
+
+The grouping is the useful part: **still / stepped / continuous** is the
+distinction a listener actually hears, and it tells you immediately whether a
+mode can drift against the material (only group 3 can).
+
+## Cost, measured 2026-09-02 — and it is asymmetric
+
+The stored value is the POSITION, so reordering moves every saved project's pan
+mode to a different mode. Measured across the whole library:
+
+| plugin | stored values | reorder cost |
+|---|---|---|
+| `melody_phase` | 64 at Pan Mode 2, 8 at 3, **1 at 4** | 0-3 must not move; 4+ costs one control in `simple-sequence` |
+| `polyrhythm_phase` | 35 at 0, 16 at 1, 18 at 2, 15 at 3 | 0-3 must not move |
+| `polyrhythm_phase_v3` | 6 at 0, 2 at 2 | 0-3 must not move |
+
+So **the new modes (4 and up) are effectively free to reorder right now** — one
+instance to re-set, and that window closes as soon as anyone saves a project
+using them. The old 0-3 need a value remap per plugin, which is a small `.RPP`
+script of the same shape as the existing migrations.
+
+The effect plugins (`Full_Feature_Tremolo`, both filters, `rhythm-track`) have
+not been measured yet — run the same count before touching them.
+
+## Do the free half first
+
+Reorder positions 4+ into the proposed order now, while it costs one control.
+Leave 0-3 alone until the migration is written. That leaves each list
+*internally* sensible from 4 up, and defers the part that needs a script.
