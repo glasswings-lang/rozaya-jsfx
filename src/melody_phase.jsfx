@@ -382,6 +382,27 @@ bounce_count_total = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
+// The sequencer must not start before this instance has been configured.
+// @sample has no transport test (deliberately -- the plugin has to sound with
+// the transport stopped), so on project load it begins advancing the moment
+// audio flows, which can be BEFORE REAPER has handed over the saved slider
+// values. In that window v_step_seconds is still @init's 1.0 and, in the
+// pre-reorder build, host_scale was 1 instead of tempo/60 -- the TIME BASE
+// itself was wrong, so the first note ran long by (1 - 1/host_scale) * T,
+// with T differing per instance. Every note after it was correct, which left
+// the instances permanently offset from each other by that one bad note.
+//   Rozaya, 2026-09-02: "the first note failing to come in on beat, it was
+//   much longer than the rest... and then when everything synced up, it
+//   synced up in each instance's own time."
+// This build already reads the sync state from the raw sliders in @block, so
+// the host_scale half cannot happen here -- but v_step_seconds would still be
+// 1.0, which fires the first handoff early instead. Same fault, other sign.
+// cfg_ready is set in @block, the one section proved not to run before the
+// instance is configured (2026-08-23, the restore-order fix), and it runs
+// BEFORE @sample within the same block -- so this costs no audio, and it
+// gates on CONFIGURATION, never on the transport.
+cfg_ready = 0;
+
 // Play/Rest gate state. pr_step counts sequencer steps elapsed in
 // the current play (or rest) period; threshold compare flips the
 // period at each handoff. Init to 0 because the first trigger
@@ -1142,6 +1163,9 @@ seq_synced && transport_moving
 predicted_beat_pos = beat_position + samplesblock * max(tempo, 0.001) / (60 * srate);
 was_moving = transport_moving;
 
+// Configured. Release the sequencer (see the cfg_ready note in @init).
+cfg_ready = 1;
+
 @sample
 // Advance speed ramp every sample, then compute musical + slow
 // drift offsets to the effective rate. combined_scale stretches
@@ -1293,7 +1317,7 @@ start_delay_elapsed < start_delay_sec ? (
 // the oscillator's sample value at full gain for one sample, then
 // silence. Skipping the trigger for rest voices fixes that — a
 // rest is now truly silent for its entire step.
-seq_started == 0 ? (
+seq_started == 0 && cfg_ready ? (
   // Pick starting direction + first voice based on Direction mode.
   // Up / Up-Down: start at the first active voice walking forward
   // from index 0. Down / Down-Up: start at the last active voice
