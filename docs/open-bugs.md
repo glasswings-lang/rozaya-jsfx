@@ -7,7 +7,13 @@ only when it has been fixed *and* heard.
 
 ## 1. Melody Phase instances come in out of alignment on project open
 
-**Status: OPEN, and much smaller than it looked.** Cause unknown.
+**Status: OPEN — no fix, but the cause is no longer unknown and the workaround
+is reliable.**
+
+**Workaround: after opening the project, press play and stop once.** Alt-tabbing
+out of REAPER and back does the same thing. Both re-run `@init` on every instance
+at the same sample, so they all restart together and stay together. Renders were
+never affected. Ear-confirmed repeatedly by Rozaya on 2026-09-02.
 
 ### What is left of it
 
@@ -36,6 +42,60 @@ drift bug and should be treated as withdrawn** unless it is heard again.
   absolute offset is a large fraction of a step — which is why it would be
   audible there and not in a project with 4-second steps.
 
+### What the 2026-09-02 measurement established
+
+The installed build was temporarily instrumented to record, per instance, what it
+could actually see at two moments: the sample it played its first note, and the
+moment it stops trusting the remembered tempo. The values were appended to the end
+of the `@serialize` blob (magic unchanged, so an ordinary build simply stops
+reading before them) and read back out of the saved project. All twelve instances
+of `simple-sequence`, project tempo 205:
+
+- **At the first note**, every instance used **205**, not 120. `host_scale` was
+  **3.4167** in all twelve, identical to four decimal places. Eleven fired at
+  block 3 (16 ms); the twelfth is the one carrying `Start delay = 8` and fired
+  later, as intended.
+- REAPER itself was still reporting **120** to eleven of them at that moment. The
+  remembered-tempo guard did its job and they ignored it.
+- **At the handover** — where the settle window lapses and the live reading takes
+  over — every instance saw **205** and remembered **205**. No divergence there
+  either.
+
+**So the tempo is correct at every measured point and the clock rate is identical
+across instances.** The tempo path is ruled out as the cause. That also retires
+the PREDICTED `host_scale` defect below: whatever that code can do in principle,
+it is not doing it here.
+
+**And the decisive one, by ear:** the scatter is present at a project tempo of
+**120** too — where the placeholder and the real tempo are the same number and
+there is nothing available to get wrong. **Tempo is not the variable.** The
+earlier 120 test appeared to exonerate it only because it checked whether the
+instances *started* together; the scatter develops later, and that was missed.
+
+What the measurement CANNOT see: each instance counts blocks in its own lifetime,
+so "block 3" for one and "block 3" for another say nothing about whether those
+were the same wall-clock moment. An instantiation-order offset is fully
+consistent with every number above.
+
+### The standing explanation (Rozaya, 2026-09-02, by ear)
+
+> "two plugins coming in on, in theory, dead-on start delays, that don't quite
+> line up because independent clocks ... it reminds me of someone having to adjust
+> midi I gave them because my clock ran weirdly compared to theirs. it was a
+> daw-side problem."
+
+With the transport stopped there is no shared position to reference —
+`play_position` does not advance — so each instance free-runs from its own
+instantiation moment. REAPER creates them one after another during project load,
+so they are born milliseconds apart and nothing ever pulls them back into line.
+Two instances with identical Start delays stay offset by however far apart they
+were born. A transport edge is the only event that restarts them all on the same
+sample, which is exactly why play/stop cures it.
+
+**A real fix means giving synced instances a shared time origin**, and that is a
+design change rather than a patch. It is the same gap already flagged above: only
+`polyrhythm_phase` and `_v3` test `play_state`; fourteen plugins with sync do not.
+
 ### Theories already burned — do not resubmit
 
 1. **"The sequence-placement feature is not firing."** Rejected: placement only
@@ -46,6 +106,14 @@ drift bug and should be treated as withdrawn** unless it is heard again.
    (`dcfeead`). **A fix of this shape is forbidden** — Rozaya must be able to
    hear the plugin with the transport stopped: *"now you take that away for what?
    To force me to play the project if I wanna hear something happening. No."*
+4. **"The remembered tempo arrives too late, so the first note is played at
+   120."** Tested 2026-09-02 by gating the sequencer's start on the blob having
+   arrived (installed build only, reverted afterwards). No audible change, and
+   the instrumentation then showed the premise was false: the blob had already
+   arrived and 205 was already in use at the first note.
+5. **"Instances hand over from remembered to live tempo at different moments,
+   and some do it while REAPER still says 120."** Measured 2026-09-02: every
+   instance saw 205 at its handover. False.
 
 ### A real defect found while looking, not shown to be this bug
 

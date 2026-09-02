@@ -1102,3 +1102,66 @@ decide whether anything needs a fifth phase.
   mirrored hitch — it tends to be more abrupt.
 - No **amplitude** component exists anywhere in the sigh yet (carried over from R13a): a
   real sigh is a bigger breath, not only a longer one.
+
+---
+
+# Bilateral / note-locked pan modes for the sequencer plugins (captured 2026-09-02)
+
+**Rozaya, at the end of the Melody scatter session:** *"I wouldn't need to do it
+that way if we had pan modes within the thing that let you do bilateral, you
+know, just alternating notes. Poly[rhythm] needs it. Shepard scale needs it."*
+
+## The problem it actually solves
+
+Bilateral panning — alternating left / right — is currently built by running a
+**Full Feature Tremolo** alongside a sequencer and hand-matching its LFO rate to
+the note rate. That cannot be made to hold, for three separate reasons:
+
+- The two plugins have **independent clocks and no shared time origin while the
+  transport is stopped** — the same fault as `docs/open-bugs.md` #1. They are
+  born milliseconds apart during project load and nothing pulls them back.
+- Even at a nominally correct rate the LFO does not land on the note-transition
+  boundaries. Rozaya: *"it's doing it such that it's not quite landing on the
+  boundaries of note transitions."*
+- Tremolo's rate smoother glides from its seeded value on load (`c102aac`), so
+  the first ~100 ms runs at the wrong rate and leaves a permanent phase offset
+  behind.
+
+**A pan mode driven by the note trigger cannot have any of these faults, because
+it is not a second clock at all.** The pan moves *because* a note started.
+Nothing to sync, nothing to drift, and a transport restart is irrelevant to it.
+
+## Proposed modes
+
+Note-indexed, not time-indexed. All advance on the note trigger.
+
+1. **Bilateral** — successive notes alternate L, R, L, R.
+2. **Bilateral every N** — alternate every N notes (N=2 gives L L R R). For slow
+   bilateral work where flipping at the note rate is too fast.
+3. **Note walk** — pan steps one position per note and turns around at the ends
+   (L, mid, R, mid, L …): a triangle over notes rather than a flip.
+4. **Note walk, wrapping** — the same, jumping back instead of turning around.
+
+## Controls and details that matter
+
+- **Pan width %** — how far out the extremes sit. Bilateral at 40% is a gentle
+  sway; at 100% it is hard alternation. Default well short of hard.
+- **Use the existing per-plugin pan smoother** on the transition. A hard pan step
+  at a note boundary is exactly the transient the suite's "gentle by default"
+  rule exists to avoid.
+- **Rests must advance the counter.** If a rest does not consume its place in the
+  pattern, the alternation inverts every time one occurs.
+
+## Scope
+
+- `melody_phase` — the case that prompted this.
+- `polyrhythm_phase` and `polyrhythm_phase_v3` — named by Rozaya. Both already
+  have four pan modes (Tremolo / Increment / Spread / Spread Reversed).
+- `shepard-scale` — named by Rozaya.
+
+## Why this is cheap, which matters after 2026-09-02
+
+Every one of these plugins already has a pan-mode selector, and **adding options
+to the END of an existing enum moves no slider**. No migration, and it cannot
+break a saved project — the one shape of change this suite can make freely (R18).
+Only Pan width needs a new slider, and that goes at the END of the range.
