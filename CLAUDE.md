@@ -251,17 +251,13 @@ Re-measure with the grep above before acting; these were the counts on
 ## Open bugs
 
 `docs/open-bugs.md` — known-broken, not fixed. **Read it before touching the
-plugin it names.** Two entries, both Melody Phase:
-
-1. **Wrong note durations in `upswing` and `outcoming` — CAUSE FOUND, REPAIRED
-   2026-09-02, NOT YET HEARD.** The 2026-07-02 mid-list slider insert turned
-   drift on in projects that never used it. See the gotcha above.
-2. **Instances come in out of alignment on project open — still OPEN**, but now
-   only against `simple-sequence`, which the slider shift never touched. Cause
-   UNKNOWN; **three wrong theories already burned** and the doc lists them so
-   they are not tried again. One of them was shipped and reverted, and a fix of
-   that shape (holding the sequencer until the transport moves) is **forbidden**
-   — the plugin must keep sounding with the transport stopped.
+plugin it names.** One entry: **Melody Phase instances come in out of alignment
+on project open** — now only against `simple-sequence`, since the loud half of
+that report turned out to be the 2026-07-02 slider-insert bug (fixed and heard,
+`353c8d1`). Cause UNKNOWN; **three wrong theories already burned** and the doc
+lists them so they are not tried again. One was shipped and reverted, and a fix
+of that shape (holding the sequencer until the transport moves) is **forbidden**
+— the plugin must keep sounding with the transport stopped.
 
 ## Recent session notes worth knowing
 
