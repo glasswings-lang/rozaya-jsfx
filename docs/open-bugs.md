@@ -86,7 +86,7 @@ shape`'s 0 landed on `Drift period`, which made the drift gate
 `(up > 0 || down > 0)` go true at a one-cycle period on plugins nobody had ever
 configured drift on — the rate swinging down by up to 8 units every cycle.
 
-Repaired in `353c8d1`: 37 instances (36 Melody Phase across `upswing` and
+Repaired in `9a84e87`: 37 instances (36 Melody Phase across `upswing` and
 `outcoming`, 1 Full Feature Tremolo in `upswing`). Ear-confirmed by Rozaya the
 same day — *"Melody phase sounds back to normal."*
 

@@ -254,7 +254,7 @@ Re-measure with the grep above before acting; these were the counts on
 plugin it names.** One entry: **Melody Phase instances come in out of alignment
 on project open** — now only against `simple-sequence`, since the loud half of
 that report turned out to be the 2026-07-02 slider-insert bug (fixed and heard,
-`353c8d1`). Cause UNKNOWN; **three wrong theories already burned** and the doc
+`9a84e87`). Cause UNKNOWN; **three wrong theories already burned** and the doc
 lists them so they are not tried again. One was shipped and reverted, and a fix
 of that shape (holding the sequencer until the transport moves) is **forbidden**
 — the plugin must keep sounding with the transport stopped.
