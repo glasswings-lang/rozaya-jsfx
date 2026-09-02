@@ -3,7 +3,42 @@
 Written by hand 2026-08-31, not generated. Per the tooling boundary in
 `suite-consistency-plan.md`: the permutation is authored, a script only applies it.
 
-**Status: reading order APPROVED by Rozaya 2026-08-31. Nothing built yet.**
+**Status: BUILT and MIGRATED 2026-09-02.** 58 instances across 5 projects, 0
+problems, verified independently of the tool that wrote them. **Not ear-tested.**
+
+### Three corrections to this layout, made while building it
+
+**1. It is 80 sliders, not 81, and `Root note` / `Center octave` are gone.**
+The layout kept both and added `Transpose`, which leaves them with no job: once a
+voice names its own note, there is nothing left to count from. Rozaya reasoned to
+the fix on 2026-09-01 -- name the note, and say how far the whole set has moved,
+because that relationship never changes -- and it is what Polyrhythm v3 already
+does. So the two are REPLACED one-for-one by `Transpose (half steps)` and
+`Octave shift`, which feed the same conversion. Values carry across exactly
+(Transpose = old Root note; Octave shift = old Center octave - 4), nothing moves
+in pitch, and no control is left doing nothing.
+
+It also answers the range worry: C2..C6 is the picker, not the reach. Four
+octaves and twelve half steps each way land well past anything audible.
+
+**2. The plugin CANNOT self-migrate the notes.** This doc said it could, from the
+blob magic. v1 keeps every per-voice value in the project's SLIDER LINE -- the
+blob holds only Drift and Ramp -- so the note conversion has to be the `.RPP`
+script, and is (`tools/melody_migrate_layout.py`).
+
+**3. `Ramp by` did NOT become `Ramp to`.** R14 is a semantics change -- delta to
+destination -- needing a per-target base value and R14's seed-on-first-selection
+rule. Renaming the label alone would have made it lie about what the number does,
+which is precisely the bug found in v2 that morning. Deferred, and it costs no
+migration later: the value lives in a bank the plugin can migrate itself, and all
+58 instances have it at 0 with duration 0, so nothing is riding on it.
+
+### And one thing the build turned up
+
+**Sequence placement was welded to Host x.** A well-built feature -- on transport
+start or a seek it walks the sequence to where the project says it should be --
+gated on `rate_mode == 3`. Deleting Host x would have silently killed it. It now
+follows the sync switch, which is the same idea under its new name.
 
 ## What changes, and why each one
 

@@ -1382,7 +1382,7 @@ Measured across 91 projects, 2026-08-31:
 | 4 | spectral_vowel_passage | 10 | |
 | 5 | womb_sound_generator_v3 | 8 | partly done already |
 | 6 | Full_Feature_Tremolo | 7 | |
-| 7 | melody_phase | 5 | layout already authored and approved |
+| 7 | ~~melody_phase~~ **DONE 2026-09-02** | 5 | 58 instances migrated, 0 problems, verified. v2 archived. Awaiting ears. |
 | 8 | breath_gen, bubbler, dapple | 3, 3, 2 | |
 | 9 | heartbeat, resonance_bank, stereo-phaser, sustain_looper, sweep-dwell | 1 each | heartbeat also gets its filename despaced |
 
