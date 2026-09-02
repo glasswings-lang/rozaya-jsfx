@@ -238,6 +238,13 @@ Re-measure with the grep above before acting; these were the counts on
   exists to prevent.
 - **Everything else** is single-version and fine.
 
+## Open bugs
+
+`docs/open-bugs.md` — known-broken, not fixed. **Read it before touching the
+plugin it names.** Currently one entry: Melody Phase instances come in out of
+alignment on project open (predates 2026-09-02, cause UNKNOWN, three wrong
+theories already burned — the doc lists them so they are not tried again).
+
 ## Recent session notes worth knowing
 
 - **2026-08-30/31 — Womb's tempo sync rebuilt and ear-tested, the whole consistency sweep DESIGNED, and Phase 0 + most of Phase 1 shipped. Everything merged to master and pushed. `docs/suite-consistency-plan.md` is the authoritative document; read it before doing anything here.**
