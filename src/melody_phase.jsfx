@@ -272,7 +272,13 @@ hs_cfg_inited == 0 ? (
   hsi = 0; loop(N_HS_TARGETS, hs_beats[hsi] = 4; hsi += 1; );
 );
 hs_inited = 0; last_hs_sel = 0; last_sync_on = 0;
-seq_synced = 0; pan_synced = 0; pan_host_scale = 1;
+// NOT seq_synced / pan_synced. @init re-runs on every transport play and
+// @slider does NOT, so zeroing them here left the sequence-placement gate
+// false on every play press -- the placement never ran, and the instances
+// started from the top of the sequence instead of from where the project
+// says they are. They are derived in @block instead, below, which runs
+// before the placement test in the same block.
+pan_host_scale = 1;
 host_scale   = 1;
 
 // Memory layout per voice (16 slots each — V0 starts at the
@@ -1114,6 +1120,13 @@ host_bpm = max(tempo, 0.001);
 !hs_inited ? ( last_hs_sel = slider4; last_sync_on = slider3 > 0.5; hs_inited = 1; );
 // host_scale carries the live tempo into dt for whichever rate is synced.
 // Derived from a BANK, so it belongs here rather than in @slider.
+// Which rates are following the tempo. Derived HERE as well as in @slider,
+// and this is the copy that matters: @block runs every block forever, so the
+// gate is right on the first block after a transport play, when @slider has
+// not run and never will. Must sit above the sequence-placement test below,
+// which reads seq_synced in this same block.
+seq_synced = (slider3 > 0.5) && slider4 < 0.5;
+pan_synced = (slider3 > 0.5) && slider4 >= 0.5;
 host_scale     = seq_synced ? host_bpm / 60 : 1;
 pan_host_scale = pan_synced ? host_bpm / 60 : 1;
 
