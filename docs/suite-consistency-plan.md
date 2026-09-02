@@ -1646,8 +1646,24 @@ script of the same shape as the existing migrations.
 The effect plugins (`Full_Feature_Tremolo`, both filters, `rhythm-track`) have
 not been measured yet — run the same count before touching them.
 
-## Do the free half first
+## Decision, 2026-09-02: all of it waits for Phase 2
 
-Reorder positions 4+ into the proposed order now, while it costs one control.
-Leave 0-3 alone until the migration is written. That leaves each list
-*internally* sensible from 4 up, and defers the part that needs a script.
+An earlier draft of this section said to reorder positions 4+ immediately, while
+it cost one control, and leave 0-3 for later. **Rozaya overruled that and was
+right:** *"I say we bloody save it until phase 2. I don't plan to use these
+until this is done. I can't be fucked to keep scraping my figurative skin on
+sharp edges."*
+
+The "do it now while it's free" argument only holds if the new modes are about
+to be used. They are not going to be, so nothing gets saved onto positions 4+
+and **the free window stays open indefinitely** rather than closing. Doing half
+of it now would buy nothing and leave a list that is tidy from 4 up and
+arbitrary below it -- a state someone has to hold in their head, for no gain.
+
+So: **one reorder, in Phase 2, across every plugin that has a Pan Mode**, with
+the value remap for 0-3 written at the same time. The new modes ship in their
+final order or they do not ship.
+
+**Before starting it,** re-run the stored-value count in the table above --
+including the effect plugins, which have never been measured -- because the
+"nothing is saved on 4+" fact expires the moment anyone uses one.
