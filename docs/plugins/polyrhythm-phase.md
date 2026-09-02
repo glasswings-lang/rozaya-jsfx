@@ -196,11 +196,33 @@ list entirely on every other waveform.
 **Pan Enabled** `Off / On`
 Enables per-voice pan modulation. When on, each voice is panned independently using a sine LFO before being summed into the output. When off, all pan controls are hidden and voices sum directly to their L/R oscillator channels.
 
-**Pan Mode** `Tremolo / Increment / Spread / Spread Reversed`
+**Pan Mode** `Tremolo / Increment / Spread / Spread Reversed / Alternating / Alternating (Flipped) / Distributed / Distributed (Flipped) / Distributed (Ping-pong) / Converging / Converging (Ping-pong) / Diverging / Diverging (Ping-pong)`
 - **Tremolo** — each voice's pan LFO runs at the same rate as that voice's tremolo LFO. The pan and amplitude modulation are locked in phase.
 - **Increment** — all voices use a shared Pan Base Rate as their pan foundation, with each voice's rate offset by Pan Increment × voice index. Voice 1 pans at the base rate, voice 2 at base + 1×increment, voice 3 at base + 2×increment, and so on.
 - **Spread** — *static* positions, no LFO motion. Active voices are ranked and placed evenly across the stereo field. With four active voices you get four evenly spaced positions; with two active voices, hard left and hard right (scaled by Pan Spread %); with one active voice, dead center. The lowest-numbered active voice goes leftmost. Pan Base Rate and Pan Increment have no effect.
 - **Spread Reversed** — same as Spread but with the order flipped: the lowest-numbered active voice goes rightmost.
+
+**Per-cycle pan modes** (`Alternating` through `Alternating every 8`)
+
+Twelve modes that move the pan **one step per tremolo cycle** rather than on an LFO of their own. This is the same set, under the same names, that Full Feature Tremolo, the Resonant Sweeping Filter and the Sweep Dwell Filter already have — only the tick differs.
+
+- **Alternating** — hard left, hard right, left, right.
+- **Alternating (Flipped)** — the same, starting on the other side. Two instances set to opposite flips move against each other.
+- **Distributed** — walks evenly across the stereo field over one position per active voice, then jumps back.
+- **Distributed (Flipped)** — the same walk, right to left.
+- **Distributed (Ping-pong)** — walks across and back rather than jumping.
+- **Converging** — starts hard left, then closes inward toward centre in alternating steps.
+- **Converging (Ping-pong)** — the same, bouncing rather than restarting.
+- **Diverging** — starts at centre and opens outward in alternating steps.
+- **Diverging (Ping-pong)** — the same, bouncing.
+- **Alternating every 2 / every 4 / every 8** — the same flip, but it holds each side for 2, 4 or 8 cycles before crossing. This is the one to reach for when the cycles themselves are fast: at 205 BPM a flip on every cycle is far too quick to feel bilateral, where holding for four gives a slow sway that still lands exactly on the boundaries.
+
+**Why use these instead of a separate tremolo plugin panning alongside?** Because they cannot drift. A second plugin panning in time with this one has its own clock, no shared start, and no way to land exactly on a tremolo boundary — so it slides out of alignment and stays there. These move *because the tremolo wrapped*, so there is nothing to hand-match and nothing to fall out of step with.
+
+The Distributed / Converging / Diverging modes walk through as many positions as you have **active voices** — the same geometry Spread already uses, so there is no extra number to set. Use **Pan Spread %** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. The existing pan smoother turns each step into a short sweep, so even hard alternation does not click.
+
+
+
 
 **Pan Spread %** `0-100%, default 100`
 Scales the width of pan movement (or for Spread / Spread Reversed, the maximum distance from center). At 100% panning reaches hard left and hard right. At 0% all voices remain centered regardless of mode.

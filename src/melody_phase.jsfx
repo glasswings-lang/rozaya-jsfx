@@ -91,7 +91,7 @@ slider17:0<0,1,1{Off,On}>Legato glide
 
 // --- Pan -- mirrors Polyrhythm Phase. ---
 slider18:0<0,1,1{Off,On}>Pan enabled
-slider19:2<0,3,1{Tremolo,Increment,Spread,Spread Reversed}>Pan mode
+slider19:2<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
 slider20:100<0,100,0.1>Pan spread (%)
 slider21:1<0.001,1000,0.001>Pan base rate (Tremolo / Increment modes)
 slider22:0<-1000,1000,0.001>Pan increment per voice (Increment mode)
@@ -340,6 +340,7 @@ loop(8,
   v_gain[i]            = 1;
   pan_phase[i]         = 0;
   pan_smooth[i]        = 0;
+  v_pan_cycle_pos[i]   = 0;
   v_pan_freq[i]        = 1;
   v_pan_static[i]      = 0;
   v_freq_current_l[i]  = 440;
@@ -367,6 +368,10 @@ prev_seq_index      = -1;
 seq_index        = 0;
 seq_step_elapsed = 0;
 seq_started      = 0;
+// Per-cycle pan runtime. Reset on every @init, so a transport play restarts the
+// pan pattern along with the sequence, exactly like the filter plugins.
+pan_cycle_index = 0;
+pan_cycle_dir   = 1;
 seq_finished     = 0;  // set when Loop=Off and we've walked off the end
 
 // Direction state. seq_dir is +1 for Up walks, -1 for Down walks; it
@@ -532,7 +537,11 @@ speed_ramp_by_mem            = 768;  // signed delta per target (CONFIG)
 speed_ramp_dur_mem           = 800;  // duration minutes per target (CONFIG)
 speed_ramp_delay_mem         = 832;  // start-delay minutes per target (CONFIG)
 speed_ramp_ramp_t_mem        = 864;  // ramp progress 0..1 per target (RUNTIME)
-speed_ramp_delay_elapsed_mem = 896;  // delay sample counter per target (RUNTIME)
+speed_ramp_delay_elapsed_mem = 896;
+// Per-cycle pan: the position each voice was HANDED at its own trigger. Held
+// for the life of that note, so a voice still releasing keeps where it was put
+// instead of jumping when the next note advances the pattern.
+v_pan_cycle_pos = 928;  // delay sample counter per target (RUNTIME)
 
 // Drift CONFIG (up/down/period/shape) + selector tracker — initialized
 // ONCE per plugin instance, guarded by drift_cfg_inited so @init
@@ -750,6 +759,66 @@ local(saved_dir, saved_bounce, sim_idx, total_sec, ran_out, next_idx, wrap_start
   total_sec
 );
 
+// ---------------------------------------------------------------------------
+// Per-cycle pan. Behaviour PORTED from the sweeping filter / sweep dwell /
+// tremolo pan block so the same mode NAMES mean the same thing across the
+// suite -- the concept already existed in four plugins and the oscillator
+// plugins were the ones missing it. Only the TICK differs: there it advances
+// on the filter LFO wrap, here on the NOTE TRIGGER. That is
+// the point of it -- the pan moves because the sound did, so there is no
+// second clock to fall out of step with, and nothing to hand-match.
+//
+// The filter numbers these 1-9 with Mono at 0. Here they are appended after
+// this plugin's existing four modes, so pan_mode 4..12 maps onto its 1..9 --
+// hence the -3. Modes 0-3 are untouched and no saved project moves.
+function percycle_pan(idx, n_steps) local(steps, step, pos, m) (
+  n_steps = max(n_steps, 1);
+  steps   = max(ceil((n_steps - 1) / 2.0), 1);
+  m       = pan_mode - 3;
+
+  m == 1 ? (
+    pos = (idx % 2 == 0) ? -1 : 1;
+  ) : m == 2 ? (
+    pos = (idx % 2 == 0) ? 1 : -1;
+  ) : m == 3 ? (
+    n_steps > 1 ? (pos = (idx % n_steps) / (n_steps - 1.0) * 2.0 - 1.0) : (pos = 0);
+  ) : m == 4 ? (
+    n_steps > 1 ? (pos = 1.0 - (idx % n_steps) / (n_steps - 1.0) * 2.0) : (pos = 0);
+  ) : m == 5 ? (
+    n_steps > 1 ? (pos = idx / (n_steps - 1.0) * 2.0 - 1.0) : (pos = 0);
+  ) : (m == 6 || m == 7) ? (
+    idx = idx % n_steps;
+    idx == 0 ? (
+      pos = -1.0;
+    ) : (
+      step = ceil((idx + 1) / 2);
+      pos = (idx % 2 == 1) ?  (1.0 - (step - 1.0) / steps)
+                            : -(1.0 - (step - 1.0) / steps);
+      pos = max(-1.0, min(1.0, pos));
+    );
+  ) : (m == 8 || m == 9) ? (
+    idx = idx % n_steps;
+    idx == 0 ? (
+      pos = 0.0;
+    ) : (
+      step = floor((idx + 1) / 2);
+      pos = (idx % 2 == 1) ? -(step / steps)
+                            :  (step / steps);
+      pos = max(-1.0, min(1.0, pos));
+    );
+  ) : (m == 10 || m == 11 || m == 12) ? (
+    // Alternating every N. Same flip, but it holds each side for N cycles --
+    // so bilateral stays usable when the notes themselves are fast. Still
+    // driven by the cycle, so it lands exactly on the boundaries.
+    step = m == 10 ? 2 : m == 11 ? 4 : 8;
+    pos  = (floor(idx / step) % 2 == 0) ? -1 : 1;
+  ) : (
+    pos = 0;
+  );
+
+  pos * pan_spread
+);
+
 function trigger_seq_voice(prev_idx) (
   // Fire whatever voice seq_index points to. Shared by three call
   // sites: the first-ever trigger (seq_started == 0 branch, passes
@@ -758,6 +827,23 @@ function trigger_seq_voice(prev_idx) (
   // pr_frozen_prev_voice). Encapsulates the Legato handoff branch,
   // the glide source setup, and the prev_trigger_freq bookkeeping
   // so all three sites stay in sync.
+  // Per-cycle pan advances HERE, on the note trigger -- which is what makes
+  // these modes immune to the drift that a separate tremolo plugin suffers:
+  // the pan moves because a note started, not because a clock said so.
+  // Deliberately ABOVE the note-length test, so a rest still consumes its
+  // place in the pattern; otherwise the alternation inverts at every rest.
+  // Ping-pong modes are 8 / 10 / 12 here, the filter's 5 / 7 / 9.
+  pan_mode >= 4 ? (
+    (pan_mode == 8 || pan_mode == 10 || pan_mode == 12) ? (
+      pan_cycle_index += pan_cycle_dir;
+      (pan_cycle_index >= pan_cycle_mod - 1 || pan_cycle_index <= 0) ?
+        pan_cycle_dir = -pan_cycle_dir;
+    ) : (
+      pan_cycle_index = (pan_cycle_index + 1) % pan_cycle_mod;
+    );
+    v_pan_cycle_pos[seq_index] = percycle_pan(pan_cycle_index, pan_cycle_steps);
+  );
+
   v_note_seconds[seq_index] > 0.0001 ? (
     // Sample this note's expressive drift at trigger time and recompute
     // its envelope segments. Note duration drift (targets 18-25, in
@@ -909,6 +995,7 @@ release_shape = slider15;
 seq_length_cfg = slider23;
 pan_enabled    = slider18;
 pan_mode       = slider19;
+
 pan_spread     = slider20 / 100;
 pan_base_rate  = slider21;
 pan_increment  = slider22;
@@ -1031,7 +1118,16 @@ loop(8,
   v_active[i] ? total_active += 1;
   i += 1;
 );
-pan_mode >= 2 ? (
+
+// Per-cycle pan: the positions are the ACTIVE VOICES, the same geometry Spread
+// already uses -- the plugin knows how many places there are, so nothing needs
+// to be typed. Floored at 2 so Alternating still alternates with one voice up.
+pan_cycle_steps = max(2, total_active);
+// The every-N alternations count in their own pattern length (2N), not in
+// voices -- otherwise a four-voice project could never reach the second half
+// of an "every 4" and would sit on one side forever.
+pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : pan_cycle_steps;
+(pan_mode == 2 || pan_mode == 3) ? (
   rank = 0;
   i = 0;
   loop(8,
@@ -2125,7 +2221,13 @@ loop(8,
       // across the pan — collapsing osc_l + osc_r before panning
       // would destroy that.
       pan_enabled ? (
-        pan_mode < 2 ? (
+        pan_mode >= 4 ? (
+          // Per-cycle modes: one shared position, already scaled by Pan spread
+          // inside percycle_pan, held until the next note moves it. The pan
+          // smoother below turns each step into a short sweep, so even hard
+          // Alternating at 100% spread cannot click.
+          raw_pan = v_pan_cycle_pos[i];
+        ) : pan_mode < 2 ? (
           // Tremolo / Increment: pan position oscillates via LFO.
           // pan_rate_mult carries the Pan Rate drift (target 9).
           // * host_scale so pan follows the project tempo in Host x mode. Pan
