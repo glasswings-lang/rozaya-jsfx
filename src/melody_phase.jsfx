@@ -1266,28 +1266,7 @@ pan_rate_off != 0 ? (
 // (seq_started, voice envelopes, etc.) doesn't advance, so when the
 // delay elapses the sequencer kicks in cleanly from V1 as if just
 // loaded. After the gate releases the rest of @sample runs normally.
-// --- Hold until the transport actually moves, when synced ------------------
-// @sample has no transport test at all: the sequencer advances from the moment
-// the instance is INSTANTIATED. Opening a project therefore starts each copy
-// running at whatever moment REAPER got round to loading it, and REAPER loads
-// them one after another -- so eight instances come in eight slightly
-// different distances apart. Pressing play re-runs @init on all of them at one
-// transport edge, which is why play/stop 'fixes' it, and why a render (which
-// begins with an edge) was always fine.
-//
-// This is old behaviour and it was harmless while nothing was synced: the whole
-// suite is phase music, and instances drifting apart is the point. It only
-// became wrong when Sync to host arrived, because a synced instance is claiming
-// to sit on the project's grid, and one with no transport has no grid to sit on.
-//
-// So the hold is gated on being SYNCED. An unsynced instance free-runs exactly
-// as it always has, including sounding with the transport stopped, which is a
-// real way to audition it. A synced one waits, and every synced instance in the
-// project then starts on the same edge, together.
-seq_synced && !transport_moving ? (
-  spl0 = 0;
-  spl1 = 0;
-) : start_delay_elapsed < start_delay_sec ? (
+start_delay_elapsed < start_delay_sec ? (
   // * host_scale so the delay is counted in the SAME time base the cycle
   // lengths are. When synced, cycle_seconds is deliberately nominal
   // (60 BPM) with the real tempo applied as host_scale, so a wall-clock
