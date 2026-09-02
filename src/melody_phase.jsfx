@@ -418,6 +418,27 @@ cfg_ready = 0;
 tempo_settle_limit = 2;
 tempo_settle_sec = 0;
 
+// --- Wait for the CONFIGURATION to settle, not just to arrive ---------------
+// slider_ran is set by the FIRST @slider pass -- and on project load that pass
+// runs with the DEFAULT slider values, before REAPER has handed over the saved
+// ones. So it releases the sequencer too early and the first note runs on
+// defaults: Rate mode Seconds, Rate value 1, a 1.0 s step where the project
+// wants 0.585. Then the real values land and it snaps. That is the drag.
+//
+// The tell that pinned it (Rozaya, 2026-09-02): "the drag only shows up on
+// project first-load, not alt+tab." Alt-tab is a SAMPLERATE CHANGE -- @init
+// re-runs, but memory is not cleared (Cockos: a non-empty @serialize prevents
+// that) and @slider does not re-run, so every derived value is already right
+// and the sequencer restarts cleanly. First load is the only case where it
+// starts on defaults.
+//
+// So: watch the values the sequencer actually uses, and hold until they have
+// stopped moving. Deliberately NOT the raw sliders -- these are the derived
+// numbers, identical in both builds, and they cover any layout.
+cfg_sig       = -1;
+cfg_stable    = 0;
+CFG_HOLD_BLOCKS = 2;
+
 // Play/Rest gate state. pr_step counts sequencer steps elapsed in
 // the current play (or rest) period; threshold compare flips the
 // period at each handoff. Init to 0 because the first trigger
@@ -1234,6 +1255,14 @@ was_moving = transport_moving;
 // Configured. Release the sequencer (see the cfg_ready note in @init).
 cfg_ready = 1;
 
+// Has the configuration stopped changing? On load these move once, when the
+// project's values arrive; on alt-tab and on transport play they never move,
+// so this costs two blocks and nothing else.
+cfg_sig_now = cycle_seconds + host_scale * 7
+            + v_step_seconds[0] * 13 + v_step_seconds[1] * 17;
+cfg_sig_now != cfg_sig ? ( cfg_sig = cfg_sig_now; cfg_stable = 0; )
+                       : cfg_stable < CFG_HOLD_BLOCKS ? cfg_stable += 1;
+
 @sample
 // Advance speed ramp every sample, then compute musical + slow
 // drift offsets to the effective rate. combined_scale stretches
@@ -1385,7 +1414,7 @@ start_delay_elapsed < start_delay_sec ? (
 // the oscillator's sample value at full gain for one sample, then
 // silence. Skipping the trigger for rest voices fixes that — a
 // rest is now truly silent for its entire step.
-seq_started == 0 && cfg_ready && slider_ran ? (
+seq_started == 0 && cfg_ready && slider_ran && cfg_stable >= CFG_HOLD_BLOCKS ? (
   // Pick starting direction + first voice based on Direction mode.
   // Up / Up-Down: start at the first active voice walking forward
   // from index 0. Down / Down-Up: start at the last active voice
