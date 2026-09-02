@@ -255,10 +255,7 @@ function host_bpm_delta(bpm_amt) (
 // READ it, into our own global, and the global is deliberately NOT called
 // `tempo`. The live tempo is applied as host_scale in @block; nothing
 // here needs to remember it (see the rate_to_cycle_seconds note).
-// `tempo` is documented valid in @block and @sample ONLY -- the community
-// report is that it reads zero in @init, and Womb never touches it here.
-// @block owns host_bpm now; seed a neutral value.
-host_bpm     = 120;
+host_bpm     = max(tempo, 0.001);
 // --- Tempo sync (R11). Two syncable rates -- the sequencer and the pan --
 //     behind one selector, with `Every N beats` stored PER TARGET in a bank
 //     exactly as Drift's amounts are, so a synced sequencer and a synced pan
@@ -405,14 +402,6 @@ start_delay_sec     = 0;
 // BEFORE @sample within the same block -- so this costs no audio, and it
 // gates on CONFIGURATION, never on the transport.
 cfg_ready = 0;
-
-// How long after @init to prefer the remembered tempo over REAPER's live one.
-// The measured placeholder window on a 12-track project was ~0.67 s; 2 s is
-// comfortably past it and still short enough that an unsaved tempo change
-// takes effect almost immediately. host_bpm_saved is deliberately NOT reset
-// here -- @serialize owns it, and @init re-runs on every transport play.
-TEMPO_SETTLE_SEC = 2;
-tempo_settle_sec = 0;
 
 // Play/Rest gate state. pr_step counts sequencer steps elapsed in
 // the current play (or rest) period; threshold compare flips the
@@ -1172,6 +1161,7 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 //
 // Transport-edge detection belongs in @block, not @sample (play_state
 // only updates per block) — same reasoning applies to tempo.
+host_bpm = max(tempo, 0.001);
 // Adopt the sync trackers HERE, not in @slider: on a fresh or duplicated
 // instance @slider runs while REAPER is still handing over saved values, so a
 // tracker adopted there captures a default and then reads the real value
@@ -1187,31 +1177,6 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 // which reads seq_synced in this same block.
 seq_synced = (slider3 > 0.5) && slider4 < 0.5;
 pan_synced = (slider3 > 0.5) && slider4 >= 0.5;
-// --- Which tempo to trust, and for how long ---------------------------------
-// REAPER reports `tempo` as its 120 placeholder for the first stretch after a
-// project opens, before the project's own tempo is applied. host_scale is
-// tempo/60, and the sequencer COUNTS against it -- so unlike Womb, where a
-// briefly-wrong tempo just makes the heart beat slow for a moment and then
-// corrects, here it shifts a step boundary and every boundary after it
-// inherits the shift. Measured: 276.4 ms late, on every instance.
-//
-// So while the transport is stopped and we are still inside the settle window,
-// use the tempo this instance last saw settled (restored from @serialize).
-// The project already knows its own tempo; there is nothing to guess.
-//
-// Deliberately limited two ways:
-//   * play_state must be stopped/paused. During playback AND during an offline
-//     RENDER the transport is moving and `tempo` is already correct, so those
-//     paths are untouched -- a render cannot be affected by this either way.
-//   * it lapses after TEMPO_SETTLE_SEC, so changing the project tempo without
-//     saving still takes effect; it is a head start, not an override.
-host_bpm_live = max(tempo, 0.001);
-tempo_settle_sec < TEMPO_SETTLE_SEC ? tempo_settle_sec += samplesblock / srate;
-host_bpm =
-  (host_bpm_saved > 0 && tempo_settle_sec < TEMPO_SETTLE_SEC
-   && (play_state == 0 || play_state == 2)) ? host_bpm_saved : host_bpm_live;
-// Once settled, remember what we actually see, so the blob saves the truth.
-tempo_settle_sec >= TEMPO_SETTLE_SEC ? host_bpm_saved = host_bpm_live;
 host_scale     = seq_synced ? host_bpm / 60 : 1;
 pan_host_scale = pan_synced ? host_bpm / 60 : 1;
 
@@ -2150,24 +2115,9 @@ spl1 = out_r;
 // "old configs reset, reconfigure" migration policy. A drift-only v2.9 blob
 // leads with 1000028 ≠ 2100028, and a legacy pre-magic blob leads with
 // up[0] in [0,20]; both deterministically fall through to defaults.
-// v2.22 adds ONE float to the end of the stream: the project tempo this
-// instance last saw settled. On load, REAPER reports `tempo` as 120 -- its
-// placeholder -- for the first stretch of a project open, and host_scale is
-// tempo/60, so a synced sequencer counts at the wrong speed until the real
-// tempo arrives. Measured on simple-sequence (a 205 BPM project): eleven of
-// twelve instances read 120 at their first note and came in 276.4 ms late.
-// The twelfth read 205 and was exact -- it has a Start delay, so its first
-// note fell after the window. Remembering the tempo removes the guess: the
-// project already knows what it is, so start from that.
-//
-// The magic goes 2100000 -> 2200000, and the READ accepts BOTH so existing
-// projects keep their Drift and Ramp configs. The extra float is only read
-// when the blob actually carries it; an older blob leaves host_bpm_saved at
-// 0, which the @block guard reads as "nothing remembered, use live tempo" --
-// i.e. exactly today's behaviour.
-ser_magic = 2200000 + N_TARGETS;   // 2200028 for this 28-target build
+ser_magic = 2100000 + N_TARGETS;   // 2100028 for this 28-target build
 file_var(0, ser_magic);
-(ser_magic == 2200000 + N_TARGETS || ser_magic == 2100000 + N_TARGETS) ? (
+ser_magic == 2100000 + N_TARGETS ? (
   file_mem(0, target_drift_up,    N_TARGETS);
   file_mem(0, target_drift_down,  N_TARGETS);
   file_mem(0, target_drift_per,   N_TARGETS);
@@ -2177,10 +2127,6 @@ file_var(0, ser_magic);
   file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
   file_mem(0, speed_ramp_delay_mem, N_TARGETS);
   file_var(0, last_sr_target);
-  // Only the 2200000 format carries this. On WRITE ser_magic is the new value
-  // so it is always written; on READ of a 2100000 blob it is skipped and
-  // host_bpm_saved stays 0.
-  ser_magic == 2200000 + N_TARGETS ? file_var(0, host_bpm_saved);
   // Tempo-sync beat counts, APPENDED rather than given a new magic. A bump
   // would make every existing 2100028 blob fall through to defaults, which
   // would silently reset Drift and Ramp configs across the whole library to
