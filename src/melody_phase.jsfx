@@ -436,6 +436,31 @@ pr_frozen_prev_voice     = -1;
 // the per-target clocks (via the @init runtime reset).
 speed_scale_current = 1.0;
 
+// NOTE what is deliberately NOT set here: rate_mode and rate_value. They are set
+// only in the slider section, and seeding them here would CLOBBER the project's
+// real rate on every transport play -- @init re-runs on play, the slider section
+// does not. (Same trap as the remembered-reference-tempo bug.) The two
+// consequences of them being 0 before the first slider pass are handled where
+// they arise instead:
+//   * @sample's `effective_rate_val_ramp / rate_value` was a division by zero.
+//     EEL2 returns 0 for that, so speed_scale_current became 0, combined_scale
+//     became 0, and dt became 0 -- seq_step_elapsed stopped advancing entirely.
+//     The first note of a freshly loaded project therefore lasted for the WHOLE
+//     window before the first slider pass, then snapped to its correct length.
+//     Every note after it was right, so each instance ended up permanently
+//     offset by however long its own window happened to be. That is the stagger.
+//       Rozaya, 2026-09-02: "the first note failing to come in on beat. It was
+//       much longer than the rest. And then, of course, when everything synced
+//       up, it synced up in each instance's own time."
+//     The symptom picks the direction for us: had EEL2 returned infinity there,
+//     dt would be enormous and the sequence would rip through instantly. It was
+//     slow. Now guarded with max(rate_value, 0.001) at the division itself.
+//   * the sequencer must not start before the slider section has run at all,
+//     which slider_ran (set there, never reset) answers exactly.
+// NOT host-sync-specific and NOT new -- it is in every build back to before host
+// sync. It hid wherever steps are long (upswing's are 4 s, so the freeze is a
+// few percent) and is glaring in simple-sequence, whose steps are 0.585 s.
+
 // --- v2.9 Drift target memory banks ---
 //
 // 28 targets × 8 fields. Each array is 32-slot-spaced (must exceed the
@@ -760,6 +785,10 @@ function trigger_seq_voice(prev_idx) (
 );
 
 @slider
+// The slider section has now run at least once for this instance. Never reset:
+// @init re-running on transport play must not re-arm it, because the slider
+// section does NOT re-run on play and the sequencer would never start again.
+slider_ran = 1;
 // True for the ONE @slider pass where Rate Mode really moved INTO the
 // tempo-following mode. The named pickers below use it to apply their ratio on
 // entry: the raw multiplier HIDES behind a picker, so a stale picker value left
@@ -1207,7 +1236,7 @@ slider79 ? (
 effective_rate_val_ramp = max(rate_value + host_bpm_delta(speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0]), 0.001);
 rate_mode == 1 ?
   speed_scale_current = rate_value / effective_rate_val_ramp :
-  speed_scale_current = effective_rate_val_ramp / rate_value;
+  speed_scale_current = effective_rate_val_ramp / max(rate_value, 0.001);
 
 // Per-target drift wave computation. 10 targets (0=Rate Value,
 // 1-8=V1-V8 Timing, 9=Pan Rate). Each gets a phase counter advancing
@@ -1317,7 +1346,7 @@ start_delay_elapsed < start_delay_sec ? (
 // the oscillator's sample value at full gain for one sample, then
 // silence. Skipping the trigger for rest voices fixes that — a
 // rest is now truly silent for its entire step.
-seq_started == 0 && cfg_ready ? (
+seq_started == 0 && cfg_ready && slider_ran ? (
   // Pick starting direction + first voice based on Direction mode.
   // Up / Up-Down: start at the first active voice walking forward
   // from index 0. Down / Down-Up: start at the last active voice
