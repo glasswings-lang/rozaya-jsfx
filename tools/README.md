@@ -475,3 +475,22 @@ rather than guessed, so nothing else moves.
 
 Close the projects in REAPER first. Wildcards are fine — quote them so the script
 expands them rather than the shell.
+
+## Slider-layout repair (2026-09-02)
+
+A mid-list slider insert shifts every saved value one place, silently, because
+REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
+
+- **`scan_slider_ranges.py`** — range-checks every stored value in every project
+  against the INSTALLED plugin. The cheapest detector for a shifted map, and the
+  one that actually found the bug after a day of reasoning had not. Start here.
+  `python tools/scan_slider_ranges.py E:/reaper/finished`
+- **`migrate_speedramp_insert.py`** — repairs the 2026-07-02 `Speed ramp target`
+  insert across the six plugins it hit. Table-driven, gated on the `@serialize`
+  magic, idempotent, dry-run by default.
+- **`melody_migrate_drift_shift.py`** — the Melody-specific form of the same
+  repair, kept because it is the one that was verified line by line.
+- **`melody_verify_drift_shift.py`** — verifies the OUTPUT against a snapshot AND
+  against each instance's untouched `@serialize` blob. Verify the result, never
+  the exit code: the first run of the migration exited cleanly while silently
+  eating one line per instance.

@@ -51,7 +51,19 @@ class SliderLineError(ValueError):
 
 
 def _split(line):
-    eol = "\r" if line.endswith("\r") else ""
+    # Handle every ending, including a real '\n'. This used to notice only a
+    # trailing '\r', on the assumption that callers passed lines already
+    # stripped of their ending -- so a caller using splitlines(keepends=True)
+    # got a rendered line with NO ending at all, which welded itself onto the
+    # next line of the .RPP and silently dropped a line per instance. Caught on
+    # 2026-09-02 by verifying the output; the caller was fixed too, but the
+    # trap belonged here.
+    for cand in ("\r\n", "\n", "\r"):
+        if line.endswith(cand):
+            eol = cand
+            break
+    else:
+        eol = ""
     body = line[: len(line) - len(eol)]
     indent = body[: len(body) - len(body.lstrip())]
     return indent, body.strip().split(), eol

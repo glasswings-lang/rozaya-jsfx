@@ -69,6 +69,16 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
 
   **Fix: `tools/rpp_sliders.py`.** One module that parses a value line into `{slider_id: token}` and renders it back, marker and padding handled, with a round-trip check inside `render_line` so a shifted line cannot be written silently. It round-trips all 377 lines in the library byte-identically. **Every migration script uses it; none re-derives the format.** `morpher_migrate_layout.py` predates it, is correct because the Morpher has 40 sliders, and now refuses outright if it ever meets a quoted token.
 
+  **`render_line`'s round-trip check does NOT cover the line ENDING, and that ate a line per instance on 2026-09-02.** `_split` originally noticed only a trailing `\r`, on the assumption callers passed lines already stripped of their ending. A caller using `splitlines(keepends=True)` therefore got back a line with **no ending at all**, which welded itself onto the `>` that closes the `<JS>` block — 17 lines silently lost in `upswing`, 19 in `outcoming`. The round-trip check passed the whole time, because the tokens were perfect. `_split` now handles `\r\n` / `\n` / `\r`, but the general lesson is the one that matters: **assert the line count and the instance count before writing.** Both Melody migration scripts do now, and it is a two-line check that turns a silent corruption into a refusal.
+
+- **NEVER insert a slider in the middle of the list — and Melody Phase already had it done to it, which cost two projects three months of wrong sound.** (Diagnosed 2026-09-02; full writeup in `docs/open-bugs.md`.) The rule is stated twice above and it was still broken: commit `ac7f125` (2026-07-02, "Speed Ramp reaches all 28 targets") added **`Ramp target` at position 67**, count 75 → 76, pushing every control above it up one place. REAPER restores by POSITION, so every project saved before that date fed the **default Drift period of 8 into `Drift down`** and Drift shape's 0 into `Drift period`. Because the drift gate is `(up > 0 || down > 0)` and the period is `max(per, 1)`, drift went **ON, at a one-cycle period, on a plugin nobody had ever configured drift on** — the rate swinging down by up to 8 units every single cycle. At `upswing`'s 15 BPM that is 15 → 7 BPM, note by note.
+  **Symptom signature, and it is a good one: the durations are wrong and the fault lands at the passage from one note to the next** (that is exactly where `cur_step` is sampled), plus **a value that cannot fit its control** — here `Drift period = 0` against a declared minimum of 1. Range-checking the decoded values found it in one look, after a day of reasoning had not. Rozaya localised it by ear before the code did: *"it's not in the start delay, it's in the passage from one note to the next."*
+  **What made it survivable:** the same commit bumped the `@serialize` magic (`1000000+N` → `2100000+N`), so the blob's leading float32 is an EXACT gate for which layout an instance was saved on — and the blob itself, which a renumber cannot touch, is an independent witness for what the values should have been (every drift bank read `up=0, down=0, per=8, shape=0`, i.e. off). **If you ever do change a slider layout, bump the blob magic in the same commit.** It is the only thing that made this repairable without guessing.
+  **Repair:** `tools/melody_migrate_drift_shift.py` (shift 67-75 → 68-76, seed the new 67 to 0 = Rate Value, which is what the old single-target Speed Ramp always acted on) and `tools/melody_verify_drift_shift.py` (5643 checks against the snapshot AND the untouched blob).
+  **Audit — run it before believing any plugin is safe:** `for c in $(git log --format=%h -- src/<plugin>.jsfx); do echo "$c $(git show $c:src/<plugin>.jsfx | grep -cE '^slider[0-9]+:')"; done` — a count that goes UP is fine only if the new IDs are all at the END; check the boundary with `git show <c>:src/<plugin>.jsfx | grep -E '^slider(6[5-9]|7[0-9]):'` across the step.
+  **It happened to EIGHT plugins, not one. I asserted "Melody Phase was the only plugin" in this file before running the audit; that was false, and the audit took two minutes.** The 2026-05-30 Speed Ramp sweep inserted `Speed ramp target` mid-list in **six** plugins in one pass — `melody_phase` (`ac7f125`), `Full_Feature_Tremolo` + `full-feature-sweeping-filter` (`d062bc6`), `rhythm-track` (`03470b5`), `shepard-scale` (`9c04c4a`), `shepard-tone` (`0e57cae`) — each shifting 8 sliders, all with the identical `Speed ramp duration -> Speed ramp by` signature. Separately: `full-feature-sweeping-filter` `d19873f -> ae4a655` (18 sliders, `LFO Start Phase` inserted), `shepard-tone` `d19873f -> 9cb8ecf` (**49 sliders**, `Root Note` inserted), `spectral_vowel_morpher` `62c1a47 -> bde91ba` (4, `Layer active`), `spectral_vowel_passage` `7abb9cd -> 0800774` (31, `Capture average`). The last two already have migrations (`morpher_migrate_layout.py`, `passage_migrate_sliders.py`); **the six-plugin Speed Ramp insert does not, and no project has ever been checked against it.**
+  **The audit that found this is worth keeping as a standing check** — it walks every commit of every `src/*.jsfx` and flags any slider whose name became its neighbour's: that is the fingerprint of an insert, as distinct from an honest rename. Run it after any slider-layout change.
+
 - **EEL2 has NO scientific notation — `1e9` is a syntax error, not a big number.** Every other C-family language accepts it, so it gets typed on autopilot when you want "effectively infinity" as a sentinel (here: a High-cut fade threshold that no frequency can reach, so the fade multiplier is always exactly 1 when the control is off). REAPER reports it clearly — `@init:360: syntax error: 'hc_lo = 1 <!> e9;'` — but only when the plugin is loaded, so it survives every desk check. **Fix:** write the digits out, `1000000000`. **Audit:** `grep -nE '(?<![A-Za-z0-9_])[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+' src/*.jsfx` (ripgrep needs `-P` for the lookbehind) — should return nothing across the suite. Worth running alongside the paren-balance and empty-`()` checks, since none of those catch it. (Hit 2026-08-19 adding High cut to spectral_vowel_morpher; the whole suite was scanned and this was the only instance.)
 
 - **Polyrhythm Phase voice memory layout** (16 slots each):
@@ -241,9 +251,17 @@ Re-measure with the grep above before acting; these were the counts on
 ## Open bugs
 
 `docs/open-bugs.md` — known-broken, not fixed. **Read it before touching the
-plugin it names.** Currently one entry: Melody Phase instances come in out of
-alignment on project open (predates 2026-09-02, cause UNKNOWN, three wrong
-theories already burned — the doc lists them so they are not tried again).
+plugin it names.** Two entries, both Melody Phase:
+
+1. **Wrong note durations in `upswing` and `outcoming` — CAUSE FOUND, REPAIRED
+   2026-09-02, NOT YET HEARD.** The 2026-07-02 mid-list slider insert turned
+   drift on in projects that never used it. See the gotcha above.
+2. **Instances come in out of alignment on project open — still OPEN**, but now
+   only against `simple-sequence`, which the slider shift never touched. Cause
+   UNKNOWN; **three wrong theories already burned** and the doc lists them so
+   they are not tried again. One of them was shipped and reverted, and a fix of
+   that shape (holding the sequencer until the transport moves) is **forbidden**
+   — the plugin must keep sounding with the transport stopped.
 
 ## Recent session notes worth knowing
 
