@@ -349,6 +349,7 @@ slider87:0<0,60,0.1>Ramp start delay (minutes)
 // other three Rate Modes already are. Labelled by what you HEAR, never as
 // note values ("1/4" is a quarter NOTE everywhere else -- the opposite end).
 slider88:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
+slider89:10<0,100,0.1>Pan Glide ms (0=instant)
 
 
 @init
@@ -990,6 +991,7 @@ slider_show(slider74, is_both);
 
 // Show/hide pan controls
 slider_show(slider21, pan_enabled);
+slider_show(slider89, pan_enabled);
 slider_show(slider22, pan_enabled);
 slider_show(slider23, pan_enabled && pan_mode == 1);
 slider_show(slider24, pan_enabled && pan_mode == 1);
@@ -1097,6 +1099,14 @@ i = 0; loop(n_voices, v_active[i] ? total_active += 1; i += 1;);
 // together and move as one pulse already, which is the same thing a switch
 // would have bought, without a control to explain.
 pan_cycle_steps = max(2, total_active);
+// Pan glide. Was hardcoded at 10 ms here while Full Feature Tremolo and both
+// sweeping filters exposed it -- and 0 (an instant switch) is a genuinely
+// different result, not a nicety: bilateral alternation is meant to be a cut,
+// not a sweep. Default 10 reproduces the old hardcoded behaviour exactly, so
+// no saved project moves. A coefficient of 0 makes the smoother pass its input
+// straight through, which IS the instant case.
+pan_glide_sec    = slider89 / 1000;
+pan_smooth_coeff = pan_glide_sec <= 0 ? 0 : exp(-1 / (srate * pan_glide_sec));
 // The every-N alternations count in their own pattern length (2N), not in
 // voices -- otherwise a four-voice project could never reach the second half
 // of an "every 4" and would sit on one side forever.
@@ -1748,7 +1758,6 @@ loop(n_voices,
         raw_pan = v_pan_static[i] * pan_spread;
       );
 
-      pan_smooth_coeff = exp(-1 / (srate * 0.010));
       pan_smooth[i] = pan_smooth[i] * pan_smooth_coeff + raw_pan * (1 - pan_smooth_coeff);
 
       // Apply pan as separate L/R multipliers — keeps osc_l and osc_r independent

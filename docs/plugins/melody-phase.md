@@ -165,7 +165,10 @@ Twelve modes that move the pan **one step per note** rather than on an LFO of th
 
 **Why use these instead of a separate tremolo plugin panning alongside?** Because they cannot drift. A second plugin panning in time with this one has its own clock, no shared start, and no way to land exactly on a note transition — so it slides out of alignment and stays there. These move *because a note started*, so there is nothing to hand-match and nothing to fall out of step with.
 
-The Distributed / Converging / Diverging modes walk through as many positions as you have **active voices** — the same geometry Spread already uses, so there is no extra number to set. Use **Pan Spread %** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. The existing pan smoother turns each step into a short sweep, so even hard alternation does not click.
+The Distributed / Converging / Diverging modes walk through as many positions as you have **active voices** — the same geometry Spread already uses, so there is no extra number to set. Use **Pan Spread %** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. Set **Pan Glide ms** to 0 for a hard switch, or leave it at 10 ms for a short sweep between sides.
+**Pan Glide ms** `0-100 ms, default 10`
+How long the pan takes to travel between positions. **0 is an instant switch** — the sound cuts from one side to the other with no slide, which is what bilateral alternation is supposed to be. Anything above 0 sweeps instead. The default of 10 ms is what this plugin used to do with no way to change it; Full Feature Tremolo and both sweeping filters have had this control all along.
+
 
 
 **Pan Spread %** `0 – 100`

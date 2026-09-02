@@ -215,6 +215,7 @@ slider77:0<-1000,1000,0.001>Ramp by (units match target)
 slider78:0<0,60,0.1>Ramp duration (minutes)
 slider79:0<0,1,1{Off,On}>Ramp engage
 slider80:0<0,60,0.1>Ramp start delay (minutes)
+slider81:10<0,100,0.1>Pan Glide ms (0=instant)
 
 @init
 // Rate drift and Ramp are in BPM in EVERY mode -- "BPM is BPM". This mattered
@@ -1018,8 +1019,16 @@ glide_coeff   = glide_time > 0.0001 ? exp(-1 / max(srate * glide_time, 1)) : 0;
 // them together makes the whole transition feel like one
 // coherent slide. Floor stays at 10ms so non-Legato use and
 // Glide-off still get the snappy-but-click-free behavior.
-pan_smooth_time = (legato_enabled && glide_time > 0.0001) ? max(0.010, glide_time) : 0.010;
-pan_smooth_coeff_global = exp(-1 / (srate * pan_smooth_time));
+// Pan glide. Was hardcoded at 10 ms here while Full Feature Tremolo and both
+// sweeping filters exposed it -- and 0 (an instant switch) is a genuinely
+// different result, not a nicety: bilateral alternation is meant to be a cut,
+// not a sweep. Default 10 reproduces the old behaviour exactly, including the
+// legato coupling; only an explicit 0 overrides it, so a legato project can
+// still reach a hard switch if it asks for one.
+pan_glide_sec   = slider81 / 1000;
+pan_smooth_time = pan_glide_sec <= 0 ? 0 :
+  ((legato_enabled && glide_time > 0.0001) ? max(pan_glide_sec, glide_time) : pan_glide_sec);
+pan_smooth_coeff_global = pan_smooth_time <= 0 ? 0 : exp(-1 / (srate * pan_smooth_time));
 
 // Synced: the cycle is `Every N beats`, held as NOMINAL seconds (beats at 60
 // BPM) with the live tempo applied as host_scale in @block. That is exactly
@@ -1150,6 +1159,7 @@ pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : 
 // Show pan sub-sliders only when pan is enabled, and only the
 // ones relevant to the chosen mode (matches PRP's UX).
 slider_show(slider19, pan_enabled);
+slider_show(slider81, pan_enabled);
 slider_show(slider20, pan_enabled);
 slider_show(slider21, pan_enabled && (pan_mode == 0 || pan_mode == 1));
 slider_show(slider22, pan_enabled && pan_mode == 1);
