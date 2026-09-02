@@ -158,6 +158,28 @@ slider34:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats
 // global deliberately not named `tempo`. Nothing remembers it across play.
 host_bpm   = max(tempo, 0.001);
 host_scale = 1;
+
+// --- Wait for the CONFIGURATION to settle before the LFO starts moving ------
+// On project load the sliders are read while they still hold their DEFAULTS --
+// REAPER hands the saved values over a moment later. `freq` is derived from
+// them, so the LFO spends that window running at the wrong rate and then
+// snaps: the first tremolo cycle drags. The phase-lock below cannot save it,
+// because host_pos_locked is only true while the transport is MOVING, and this
+// happens with it stopped.
+//
+// Alt-tab does NOT show it, which is what identified the window: that is a
+// samplerate change, so @init re-runs but memory is not cleared (Cockos: a
+// non-empty @serialize prevents that) and @slider does not re-run -- every
+// derived value is already correct. First load is the only case that starts on
+// defaults. (Rozaya, 2026-09-02, on Melody Phase: "the drag only shows up on
+// project first-load, not alt+tab." Same fix, same reason.)
+//
+// So hold the LFO until the rate has stopped CHANGING, not merely arrived.
+// Costs a few blocks, identical on every instance, and gates on
+// CONFIGURATION -- never on the transport, so it still runs while stopped.
+cfg_sig         = -1;
+cfg_stable      = 0;
+CFG_HOLD_BLOCKS = 2;
 host_ratio_inited = 0;
 
 phase_l = 0;
@@ -627,6 +649,12 @@ host_beat_pos   = beat_position;
 host_pos_locked = (play_state == 1 || play_state == 5);
 blk_sample      = 0;
 
+// Has the rate stopped changing? Moves once on load, when the project's values
+// arrive; never on alt-tab or transport play, so this costs a few blocks.
+cfg_sig_now = slider1 + slider2 * 7 + host_scale * 13;
+cfg_sig_now != cfg_sig ? ( cfg_sig = cfg_sig_now; cfg_stable = 0; )
+                       : cfg_stable < CFG_HOLD_BLOCKS ? cfg_stable += 1;
+
 @sample
 
 // (No transport-edge reset here — Path A. REAPER re-runs @init on every
@@ -883,8 +911,9 @@ rate_pos_lock = (rate_mode == 3) && host_pos_locked
                 && rate_drift_hz == 0
                 && speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0] == 0;
 
-// Advance tremolo phases unless Freeze rest is pinning them.
-!in_frozen_rest ? (
+// Advance tremolo phases unless Freeze rest is pinning them -- or the
+// configuration has not settled yet (see the cfg_sig note in @init).
+!in_frozen_rest && cfg_stable >= CFG_HOLD_BLOCKS ? (
   rate_pos_lock ? (
     // rate_val is cycles per beat in Host x, so this is simply how far
     // through the cycle the project position is.
