@@ -1,12 +1,18 @@
 # Spectral Vowel Morpher — authored layout
 
 Written by hand 2026-08-31, not generated. Reading order **approved by Rozaya**.
-**Status: BUILT and MIGRATED 2026-09-01** (commit `340fd4e`). 122 instances across
-38 projects migrated with 0 problems; the capture inventory is byte-identical before
-and after -- 848 slots, every peak, RMS and detected pitch unchanged. **Not yet
-ear-tested.** `Layer overtone harmonic` shipped voice-side only; the wash still
-follows the global. **The reason first given for that was wrong** -- see the last
-section of this file.
+**Status: BUILT, MIGRATED and EAR-TESTED 2026-09-01.** 122 instances across 38
+projects migrated with 0 problems; the capture inventory is byte-identical before and
+after -- 848 slots, every peak, RMS and detected pitch unchanged. Rozaya then opened
+an **existing, already-migrated project**: it loaded correctly and the reorder was
+right, which is the migration proving itself on real data rather than on a diff.
+Overtone confirmed working.
+
+**Still unheard, and worth naming rather than letting the pass cover them:**
+`Sync to host`; the per-layer overtone specifically at the WASH end; the Pitch +
+Overtone correction below (which changes the sound of any project using both); and
+the other 37 projects, which will be confirmed by ordinary use over weeks, as agreed. `Layer overtone harmonic` shipped voice-side only; the wash followed the global
+until later the same day, when the wash half landed too -- see the last section.
 
 **This is the most-used plugin in the suite — 38 projects, more than double anything
 else — and the riskiest migration in it**, because its `@serialize` blob carries actual

@@ -1376,7 +1376,7 @@ Measured across 91 projects, 2026-08-31:
 
 | order | plugin | projects | note |
 |---|---|---|---|
-| 1 | ~~**spectral_vowel_morpher**~~ **DONE 2026-09-01** | **38** | 122 instances migrated, 0 problems; 848 captures verified byte-identical. Awaiting ears. |
+| 1 | ~~**spectral_vowel_morpher**~~ **DONE + EAR-TESTED 2026-09-01** | **38** | 122 instances migrated, 0 problems; 848 captures byte-identical; an existing project reopened correctly. Sync to host and the Pitch+Overtone fix still unheard. |
 | 2 | polyrhythm_phase v1 → v3 | 17 (+5) | fork closes; migrate templates too |
 | 3 | full-feature-sweeping-filter | 11 | |
 | 4 | spectral_vowel_passage | 10 | |
