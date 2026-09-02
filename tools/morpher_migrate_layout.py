@@ -247,6 +247,21 @@ def main():
         for note in notes:
             print("   ! %s" % note)
             all_notes.append("%s: %s" % (os.path.basename(path), note))
+        # ALL OR NOTHING PER FILE. Without this, one skipped instance still let
+        # every other instance in the same project be rewritten -- a half-migrated
+        # file, and an unfixable one: re-running finds the backup already there
+        # and refuses, while the skipped instance is still on the old layout.
+        # A project is either fully migrated or left completely untouched.
+        # (Caught by Rozaya on 2026-09-02, reading the code rather than my
+        # description of it.)
+        skipped = [n for n, st in enumerate(report, 1) if st.startswith("SKIPPED")]
+        if skipped:
+            print("   NOT WRITING: instance(s) %s could not be migrated, so this"
+                  % ", ".join(str(x) for x in skipped))
+            print("   file is left completely untouched rather than half-done.")
+            # nothing was written, so nothing in this file counts as migrated
+            migrated -= sum(1 for st in report if st.startswith("migrated"))
+            continue
         if args.dry_run or new_text == text:
             continue
         target = args.out or path
