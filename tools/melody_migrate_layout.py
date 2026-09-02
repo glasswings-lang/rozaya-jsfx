@@ -115,6 +115,74 @@ assert sorted(OLD_DEFAULTS) == list(range(1, OLD_COUNT + 1))
 fmt = R.fmt
 
 
+
+# --- which layout is this line on? -------------------------------------------
+# Ranges come from the plugin's own slider declarations -- read from git and
+# from the working tree, NOT from a table authored beside the permutation map.
+# The 2026-09-02 writeup records a verification that compared output against the
+# same authored table the migration used, so it agreed with itself perfectly
+# while every value sat one place out.
+import subprocess
+
+_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _decl_ranges(src):
+    out = {}
+    for m in re.finditer(r"(?m)^slider(\d+):([^<]*)<([^>]*)>", src):
+        spec = m.group(3).split("{")[0].split(",")
+        try:
+            out[int(m.group(1))] = (float(spec[0]), float(spec[1]))
+        except (ValueError, IndexError):
+            pass
+    return out
+
+
+def _read(ref):
+    if ref is None:
+        with open(os.path.join(_REPO, "src", "melody_phase.jsfx"),
+                  encoding="utf-8", errors="replace") as fh:
+            return fh.read()
+    return subprocess.run(["git", "show", ref], cwd=_REPO, capture_output=True,
+                          encoding="utf-8", errors="replace").stdout
+
+
+OLD_RANGES = _decl_ranges(_read("25a1a40~1:src/melody_phase.jsfx"))
+NEW_RANGES = _decl_ranges(_read(None))
+assert len(OLD_RANGES) >= 70 and len(NEW_RANGES) >= 70, "could not read both layouts"
+
+# Enum OPTIONS only ever append in this suite, so a control's list can have grown
+# since a project was last saved and that project is still on the OLD layout.
+# Concretely: `Pan Mode` went from four options to sixteen on 2026-09-02, and a
+# simple-sequence instance was then saved holding 4 (Alternating) -- a value the
+# pre-reorder build never offered. Widening the OLD bound to cover the NEW one
+# wherever the new is wider keeps that from reading as corruption. It can only
+# make the old-layout test more permissive, which is safe here: migration still
+# requires the line to FAIL the new-layout test, and anything fitting both is
+# reported AMBIGUOUS and left alone.
+for _o, _n in OLD_TO_NEW.items():
+    if _o in OLD_RANGES and _n in NEW_RANGES:
+        _lo, _hi = OLD_RANGES[_o]
+        _nlo, _nhi = NEW_RANGES[_n]
+        OLD_RANGES[_o] = (min(_lo, _nlo), max(_hi, _nhi))
+
+
+def _misfits(slots, ranges):
+    """Every stored value that cannot fit the control at that position."""
+    bad = []
+    for sid, tok in sorted(slots.items()):
+        if sid not in ranges or tok is None or tok == "-" or tok.startswith('"'):
+            continue
+        try:
+            v = float(tok)
+        except ValueError:
+            continue
+        lo, hi = ranges[sid]
+        if v < lo or v > hi:
+            bad.append("slider %d holds %s, allowed %g..%g" % (sid, tok, lo, hi))
+    return bad
+
+
 def project_tempo(text):
     m = re.search(r'^\s*TEMPO\s+([0-9.]+)', text, re.M)
     return float(m.group(1)) if m else 120.0
@@ -132,8 +200,28 @@ def rewrite_values(line, tempo):
     except R.SliderLineError as e:
         return line, "SKIPPED (%s)" % e, None
 
-    if max(slots) > OLD_COUNT:
-        return line, "already migrated (slider %d present)" % max(slots), None
+    # Is this instance ALREADY on the new layout?
+    #
+    # This used to ask "does it store more than OLD_COUNT values?" -- a count
+    # gate, which CLAUDE.md says outright cannot answer this. It was already
+    # wrong for two projects storing 84 values, and adding `Pan Glide ms` to the
+    # installed build on 2026-09-02 pushed a third un-migrated project to 79.
+    # Three projects, 27 instances, would have been silently left on the old
+    # layout while the other four moved.
+    #
+    # Ask what the values MEAN instead. Range-check every stored value against
+    # BOTH layouts and act only on an unambiguous answer. `simple-sequence`
+    # decides on one value: position 2 holds 0.5, and in the new layout that is
+    # Rate mode, which accepts only 0, 1 or 2.
+    old_bad = _misfits(slots, OLD_RANGES)
+    new_bad = _misfits(slots, NEW_RANGES)
+    if not old_bad and not new_bad:
+        return line, "AMBIGUOUS: fits both layouts, not touched", None
+    if old_bad and new_bad:
+        return line, ("SKIPPED: fits neither layout (old: %s; new: %s)"
+                      % (old_bad[0], new_bad[0])), None
+    if not new_bad:
+        return line, "already migrated (every value fits the new layout)", None
 
     # Anything this save predates gets what REAPER was handing it.
     old = {}
