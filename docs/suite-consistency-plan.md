@@ -1789,6 +1789,17 @@ rate — it is always visible now.
 explanation, retire the Host ratio entry, and delete any section teaching the
 old ratio-list workflow.
 
+**Step 2a — guard the zero end, and this one nearly shipped.** Beats-per-cycle
+INVERTS, so a naive `1 / max(raw, 0.001)` clamps the DENOMINATOR and turns 0
+into 1000 Hz. Under the old multiplier 0 clamped to 0.001 and meant "effectively
+stopped"; it must keep meaning that, not the exact opposite. This bites wherever
+the rate can arrive from a SIGNED slider: in Polyrhythm, `Vn Drift / Rate` spans
+-1000..1000, defaults to 0, and in Independent mode IS the voice's rate -- so a
+fresh voice would have screamed at audio rate. Write it as
+`raw > 0.001 ? 1 / raw : 0.001`. Dapple and Bubbler are exempt only because
+their rate slider's declared minimum is 0.001 and it can never reach zero.
+Caught by Rozaya asking "is that every 4 beats per voice?".
+
 **Verify each one:** slider count unchanged, all five sections paren-balanced,
 lint problem count unchanged from before the edit, and the arithmetic sanity
 check — at 205 BPM a value of 4 must give one cycle every 1.171 s.

@@ -710,7 +710,13 @@ function rate_to_hz(raw_rate, rmode) (
   // it tempo/(60*N), which is exactly "one cycle every N beats". Same shape as
   // Seconds mode, which is the point -- Host x is a rate mode like any other,
   // and Rate Value simply carries the mode's unit as it always has.
-  rmode == 3 ? 1 / max(raw_rate, 0.001) :
+  // Guard the zero and negative end. Beats-per-cycle inverts, so clamping the
+  // DENOMINATOR turns 0 into 1000 Hz -- and `Vn Drift / Rate` defaults to 0,
+  // which in Independent mode IS the voice's rate. Under the old multiplier 0
+  // clamped to 0.001 and meant "effectively stopped"; it has to keep meaning
+  // that, not the exact opposite. Anything at or below zero returns the same
+  // floor the other modes land on.
+  rmode == 3 ? (raw_rate > 0.001 ? 1 / raw_rate : 0.001) :
                max(raw_rate, 0.001)
 );
 
