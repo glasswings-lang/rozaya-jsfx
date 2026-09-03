@@ -1667,3 +1667,73 @@ final order or they do not ship.
 **Before starting it,** re-run the stored-value count in the table above --
 including the effect plugins, which have never been measured -- because the
 "nothing is saved on 4+" fact expires the moment anyone uses one.
+
+---
+
+# R13 REVISED — Host x stays a rate mode; Rate Value means BEATS there (2026-09-02)
+
+**This supersedes R13's "split Rate mode from a Sync to host switch" for every
+plugin with a single sync target.** Rozaya raised it and the reasoning is
+better than the original.
+
+## What R13 got right and what it got wrong
+
+Right: the **multiplier** was dishonest. In Host x, Rate Value silently became a
+factor on the project tempo and nothing on the control said so.
+
+Wrong: the diagnosis. R13 blamed Host x's *position* -- "sync is not a unit" --
+and moved it out of the rate mode list into its own switch. But **Host x is a
+rate mode.** It is one of the ways you say what the rate is. Rozaya:
+
+> "specify that rate value doesn't apply to host x, and/or make it mean every n
+> beats in host x and specify that, while leaving host x where it is, as what it
+> is -- a rate mode"
+
+## The revision
+
+Leave `Host x` in the Rate Mode enum. In that mode, **Rate Value means beats per
+cycle**, and the label says so.
+
+This is not a new pattern, it is the existing one continued. Rate Value already
+changes unit with the mode: BPM, then seconds, then Hz. Beats is the fourth. It
+also satisfies the standing rule that a control must never change meaning
+without saying so on the control itself.
+
+**It keeps what the multiplier was for.** Rate Value is a free float, so *every
+3.7 beats* stays reachable. The original argument for a multiplier was that a
+note-division grid would take the irrational ratios away and this suite is phase
+music -- "I'm not just designing for locks." A free beat count loses nothing.
+
+**And it costs no new sliders.** No `Sync to host`, no `Host sync target`, no
+`Every N beats`. The `Host ratio` multiplier picker becomes redundant.
+
+## Where the heavier R13 shape still earns its keep
+
+Only where a plugin has **more than one thing to sync independently**. Melody
+Phase syncs the sequencer and the pan separately, which needs a target selector
+and a per-target beat count; one Rate Value cannot express two. Melody keeps
+what it has. Womb has one sync target and should move to the revised shape,
+which also finishes it -- it currently has `Every N beats (Host x)` bolted on
+beside a Host x it never removed.
+
+## Cost, and why it is much smaller than R13's
+
+Nothing moves position, so **most instances need no migration at all** -- a
+relabel and a changed interpretation. Only instances actually **on Host x** need
+their Rate Value converted, and the conversion is a reciprocal: a stored
+multiplier of 0.5 (half tempo) becomes 2 beats per cycle.
+
+**Next step: count how many instances in the library are on Host x, per plugin.**
+Where the answer is zero, the change is free.
+
+## The four shapes this is cleaning up (audited 2026-09-02)
+
+- `melody_phase` -- sync switch + target + Every N beats. Keeps it.
+- `womb_sound_generator_v3` -- `Every N beats (Host x)` AND Host x still in the
+  enum, no switch. Half converted.
+- `spectral_vowel_morpher` -- a sync switch and no Every N beats. Half converted
+  the other way.
+- Twelve others -- Host x in the enum plus a Host ratio multiplier picker:
+  both Polyrhythms, both Shepards, Full Feature Tremolo, both sweeping filters,
+  `sweep-dwell-filter`, `heartbeat gen`, `rhythm-track`, `dapple`, `bubbler`,
+  `stereo-phaser`, `resonance_bank`.
