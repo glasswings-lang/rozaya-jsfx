@@ -1793,6 +1793,30 @@ old ratio-list workflow.
 lint problem count unchanged from before the edit, and the arithmetic sanity
 check — at 205 BPM a value of 4 must give one cycle every 1.171 s.
 
+### The recipe's line-level anchors DO NOT generalise — checked 2026-09-02
+
+Do not batch this. Measured across the nine free plugins:
+
+| plugin | uses the nominal-60 `host_scale` pattern | has the `rmode == 3 ? max(raw_rate,...)` line |
+|---|---|---|
+| `rhythm-track`, `shepard-scale`, `shepard-tone` | yes | only `shepard-tone` |
+| `dapple`, `bubbler`, `stereo-phaser`, `resonance_bank`, `sweep-dwell-filter`, `heartbeat gen` | **no** | no |
+
+`dapple` and `heartbeat gen` have no `== 3` branch at all, so **Host x is not at
+index 3 in their enums** — their rate mode lists are shaped differently. Six of
+the nine apply the tempo somewhere other than a `host_scale` in `@block`, which
+means step 2's one-line conversion is wrong for them and would need working out
+against whatever they actually do.
+
+So the five edits are the right SHAPE for every plugin, but only the two
+Polyrhythms and possibly `shepard-tone` share the exact anchors. For each of the
+others: find its Host x enum index, find where the tempo is applied, and derive
+the beats conversion from that before touching anything. The arithmetic check is
+the same everywhere and does not care how it is implemented — **at 205 BPM a
+value of 4 must give one cycle every 1.171 s.**
+
+The caveat in step 2 caught this on the first batch attempt. Keep it.
+
 **Order.** Do the nine free plugins first (`dapple`, `bubbler`, `stereo-phaser`,
 `resonance_bank`, `sweep-dwell-filter`, `heartbeat gen`, `rhythm-track`,
 `shepard-scale`, `shepard-tone`) — nothing stored is on Host x, so no migration
