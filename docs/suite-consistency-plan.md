@@ -1723,8 +1723,24 @@ relabel and a changed interpretation. Only instances actually **on Host x** need
 their Rate Value converted, and the conversion is a reciprocal: a stored
 multiplier of 0.5 (half tempo) becomes 2 beats per cycle.
 
-**Next step: count how many instances in the library are on Host x, per plugin.**
-Where the answer is zero, the change is free.
+**Counted 2026-09-02, across every project in the library:**
+
+| plugin | instances | on Host x |
+|---|---|---|
+| `full-feature-sweeping-filter` | 20 | **6** — `as-things-are`, `bilateral-with-binaurals`, `noisescape-august-18-2026`, `womb-and-baby-heartbeats-with-bloodflow` |
+| `Full_Feature_Tremolo` | 11 | **4** — `simple-sequence`, `simple-sequence-check` |
+| `womb_sound_generator_v3` | 8 | **1** — `womb-and-baby-heartbeats-with-bloodflow` |
+| `polyrhythm_phase` | 84 | 0 |
+| `dapple` / `bubbler` / `polyrhythm_phase_v3` / `stereo-phaser` / `resonance_bank` / `sweep-dwell-filter` | 37 | 0 |
+| `heartbeat gen` / `rhythm-track` / `shepard-scale` / `shepard-tone` | none in any project | 0 |
+
+**So it is three plugins and eleven instances, not twelve plugins.** Everything
+else is a relabel with nothing stored to convert. Worth noting that
+`polyrhythm_phase` is the suite's most-used plugin by a wide margin — 84
+instances — and not one of them uses host sync.
+
+Do the free ones first: they need no migration, no snapshot, and no ear test
+beyond confirming the label reads right.
 
 ## The four shapes this is cleaning up (audited 2026-09-02)
 
