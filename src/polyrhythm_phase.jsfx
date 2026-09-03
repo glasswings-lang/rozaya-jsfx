@@ -809,10 +809,23 @@ slider_show(slider84, 0);   // retired, see above
 // Guarded on a real in-session mode CHANGE. Adopting on load instead would
 // overwrite a hand-tuned rate the moment a saved project opened -- the same
 // trap the picker's own host_ratio_inited guard exists for.
-// Landing in Host x used to stamp the picker to "1 per beat" and the rate to
-// its multiplier, because meeting a bare multiplier first was the trap. With
-// beats there is no trap to avoid: the number you type is the number of beats.
-// Nothing is stamped, and Rate Value is always visible.
+// Landing in Host x still has to hand you a usable number, and deleting this
+// block on 2026-09-02 was wrong. The trap the original guarded against is
+// unchanged; only the unit moved. Rate Value defaults to 60 because 60 BPM is
+// one cycle per second -- as a BEAT COUNT that is one cycle every sixty beats,
+// thirty seconds at 120 BPM, which is slow enough that you cannot tell what the
+// control is doing. Exactly the complaint the original comment described.
+//
+// So on a real in-session switch INTO Host x, land on 4 -- one cycle per bar in
+// 4/4, audible immediately and an obvious number to change. Guarded on a mode
+// change, never on load: adopting on load would overwrite a hand-set rate the
+// moment a saved project opened, which is the restore-order trap.
+rate_mode_inited && last_rate_mode != rate_mode ? (
+  rate_mode == 3 && last_rate_mode != 3 ? (
+    slider3 = 4;
+    slider_automate(slider3);
+  );
+);
 rate_mode_inited ? last_rate_mode = rate_mode;
 
 

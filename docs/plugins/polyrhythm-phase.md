@@ -59,7 +59,9 @@ four beats; set it to 0.5 and you get two cycles per beat. It follows the
 project tempo, and tempo changes carry the setting with them.
 
 Fractions are free: *every 3.7 beats* is as reachable as *every 4*, which is the
-point. This suite is phase music — the value in layers slipping against each
+point.
+
+**Switching into Host x lands Rate Value on 4** — one cycle per bar in 4/4 — because the slider's default of 60 was chosen for BPM mode and means *one cycle every sixty beats* when read as beats, which is half a minute at 120 BPM and too slow to identify by ear. It only does this when you actually change mode, never when a project opens, so a rate you set by hand is never overwritten. This suite is phase music — the value in layers slipping against each
 other — so nothing here forces you onto a note grid.
 
 **Host ratio** — *retired 2026-09-02.* It existed to spare you arithmetic on a multiplier; with Rate Value in beats, *every 4 beats* is typing 4. The control is hidden and does nothing. It stays in the parameter list only because slider IDs can never be renumbered.
