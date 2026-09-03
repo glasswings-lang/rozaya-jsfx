@@ -1013,8 +1013,12 @@ slider_show(slider61, is_both);
 
 // Show/hide pan controls
 slider_show(slider16, pan_enabled);
-// Only the walks distribute positions; Alternating and every-N are two-sided.
-slider_show(slider86, pan_enabled && pan_mode >= 6 && pan_mode <= 12);
+// Shown for every per-cycle mode from Alternating up, matching the filters.
+// It is NOT only the walks: the cycle index wraps at Cycle Steps, so an ODD
+// value makes Alternating limp -- 0,1,2,0,1,2 gives -1,+1,-1,-1,+1,-1. Hiding
+// the control would hide the cause. The every-N modes are excluded because they
+// count in their own pattern length (2N) and genuinely ignore this.
+slider_show(slider86, pan_enabled && pan_mode >= 4 && pan_mode <= 12);
 slider_show(slider85, pan_enabled);
 slider_show(slider17, pan_enabled);
 slider_show(slider18, pan_enabled && pan_mode == 1);
