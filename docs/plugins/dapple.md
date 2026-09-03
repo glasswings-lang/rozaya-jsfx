@@ -26,7 +26,16 @@ Each event blends two voices, set by the **Tone vs Noise** knob: a **noise** bur
 
 ## Parameters
 
-**Bubble rate (per second)** `0.2–40, default 6` — average events per second. Low = distinct drips; high = they overlap into a continuous gurgle.
+**Bubble rate** `0.001–1000, default 6` — what this means depends on Rate Mode.
+
+- In **Own rate**, it is average events per second. Low = distinct drips; high = they overlap into a continuous gurgle.
+- In **Host x**, it is **beats per bubble**. Set 4 and you get one bubble every four beats; set 0.5 and you get two per beat. It follows the project tempo, so changing the tempo carries the setting with it.
+
+Fractions are free — *every 3.7 beats* is as reachable as *every 4*. Nothing forces you onto a note grid.
+
+**Rate Mode** `Own rate / Host x` — whether the bubbles run on their own clock or follow the project tempo. Bubble rate carries the mode's unit, per second or in beats.
+
+**Host ratio** — *retired 2026-09-02.* It existed to spare you arithmetic back when Host x made Bubble rate a multiplier of the tempo; now that the control is in beats, *every 4 beats* is simply typing 4. It is hidden and does nothing, and stays in the parameter list only because slider IDs can never be renumbered without scrambling saved projects.
 
 **Timing randomness %** `0–100, default 70` — spacing irregularity. 0 = metronomic; high = naturally scattered.
 
