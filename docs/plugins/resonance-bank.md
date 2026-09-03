@@ -120,7 +120,9 @@ Maximum downward excursion. Asymmetric Up vs Down lets the drift sit slightly of
 **Drift period** `0 to 1000, default 0`
 Length of one drift cycle, interpreted by Drift period mode. **A period of 0 disables this drift target for this band**, even if Drift up and Drift down are non-zero.
 
-**Drift period mode** `BPM / Hz / Seconds, default Seconds`
+**Drift period mode** `BPM / Hz / Seconds / Host x, default Seconds`
+
+**Host x** follows the project tempo: Drift period becomes a multiplier of it, so 1 is one drift cycle per beat and 2 is two per beat. *(This is the last plugin still using the multiplier form — the rest of the suite is moving to a plain beat count, where you type the number of beats instead. See R13 in the consistency plan.)*
 - BPM — Drift period is in beats per minute; cycles per second = period / 60.
 - Hz — Drift period is in Hz; cycles per second = period.
 - Seconds — Drift period is in seconds; cycles per second = 1 / period.

@@ -44,6 +44,8 @@ When pan is enabled, each voice's left and right oscillator outputs are panned i
 Sets how each voice's tremolo rate is determined.
 
 - **Drift** — all voices share a single global rate (set by Rate Value and Rate Mode), with each voice adding its own Drift / Rate value as an offset. A voice with a drift of +5 runs slightly faster than the global rate; one with -5 runs slightly slower. This creates organic polyrhythmic drift from a common tempo anchor.
+
+> **Direction reverses in Host x.** Rate Value and Drift are in *beats* there, and more beats means slower — so a **positive** drift makes a voice **slower**, not faster. That is the same way Seconds mode already behaves, where a bigger number is a longer period. BPM and Hz go the other way. Worth knowing before you tune drift by ear in a synced project.
 - **Independent** — the global Rate Value is hidden. Each voice's Drift / Rate slider sets that voice's tremolo rate directly in the units selected by Rate Mode. Voices can run at entirely different rates with no shared reference.
 
 **Rate Mode** `BPM / Seconds / Hz / Host x` — Rate Value carries the mode's unit: BPM, seconds, Hz, or beats per cycle.
@@ -142,6 +144,8 @@ the further apart, the faster the beating. Set it by ear — nudge until it sits
 where you want. Whole numbers throughout, no decimal point.
 
 **Vn Drift / Rate** `-1000 to +1000, default 0`
+
+In **Host x** this is a beat count, so a bigger number is a *slower* voice. A value of 0 (the default) means effectively stopped, not infinitely fast.
 In Drift mode: an offset added to the global Rate Value to determine this voice's tremolo rate. Positive values make the voice run faster than the global rate; negative values slower. 0 means the voice runs at exactly the global rate.
 In Independent mode: this voice's tremolo rate directly, in the units set by Rate Mode.
 
