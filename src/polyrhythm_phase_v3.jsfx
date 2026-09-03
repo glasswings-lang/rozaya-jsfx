@@ -20,7 +20,7 @@ desc: Binaural Polyrhythm Oscillator v3 (note-based)
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
 slider2:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
-slider3:60<0.001,1000,0.001>Rate Value (Drift only)
+slider3:60<0.001,1000,0.001>Rate Value (Drift only: BPM / sec / Hz / beats per cycle)
 slider4:4<0,100,0.1>Binaural Beat Hz (L/R offset)
 slider5:100<0,100,0.1>On Duration % of Cycle
 slider6:0<0,100,0.1>Attack % of Cycle
@@ -704,7 +704,13 @@ function rate_to_hz(raw_rate, rmode) (
   // still described the old one. Melody Phase shipped that bug.
   rmode == 0 ? max(raw_rate, 0.001) / 60 :
   rmode == 1 ? 1 / max(raw_rate, 0.001) :
-  rmode == 3 ? max(raw_rate, 0.001) :
+  // Host x: Rate Value is BEATS PER CYCLE, not a multiplier (R13 revised,
+  // 2026-09-02). At the nominal 60 BPM one beat is one second, so N beats per
+  // cycle is 1/N cycles per second; host_scale = tempo/60 in @block then makes
+  // it tempo/(60*N), which is exactly "one cycle every N beats". Same shape as
+  // Seconds mode, which is the point -- Host x is a rate mode like any other,
+  // and Rate Value simply carries the mode's unit as it always has.
+  rmode == 3 ? 1 / max(raw_rate, 0.001) :
                max(raw_rate, 0.001)
 );
 
@@ -752,7 +758,11 @@ rate_mode     = slider2;
 // --- Host ratio picker (slider88) -> Rate Value -------------------------
 // Change-triggered one-shot; adopts on load rather than firing, so a saved
 // picker position never overwrites a hand-set Rate Value on open.
-host_ratio_inited && slider2 == 3 && (host_ratio_sel != slider88 || entered_host_mode) ? (
+// RETIRED 2026-09-02 (R13 revised). This picker existed to spare you arithmetic
+// on a multiplier; Rate Value now means beats per cycle, so "every 4 beats" is
+// typing 4. It writes nothing and is hidden. The slider stays declared because
+// ids can never be renumbered -- see the slider-id rule in CLAUDE.md.
+0 ? (
   host_ratio_sel = slider88;
   host_ratio_sel > 0 ? (
     slider3 =
@@ -766,7 +776,7 @@ host_ratio_inited && slider2 == 3 && (host_ratio_sel != slider88 || entered_host
     slider_automate(slider3);
   );
 );
-slider_show(slider88, rate_mode == 3);
+slider_show(slider88, 0);   // retired, see above
 // --- Landing in Host x, and keeping the multiplier out of the way ----------
 //
 // Two problems, one fix. (a) The rate slider's default was chosen for its own
@@ -785,17 +795,10 @@ slider_show(slider88, rate_mode == 3);
 // Guarded on a real in-session mode CHANGE. Adopting on load instead would
 // overwrite a hand-tuned rate the moment a saved project opened -- the same
 // trap the picker's own host_ratio_inited guard exists for.
-rate_mode_inited && last_rate_mode != rate_mode ? (
-  rate_mode == 3 && slider88 == 0 ? (
-    slider88 = 8;
-    host_ratio_sel = 8;
-    slider3 = 1;
-    slider_automate(slider88);
-    slider_automate(slider3);
-  );
-  last_rate_mode = rate_mode;
-);
-slider_show(slider3, rate_mode != 3 || slider88 == 0);
+// Landing in Host x used to stamp the picker and the rate, because meeting a
+// bare multiplier first was the trap. With beats there is no trap: the number
+// you type is the number of beats. Nothing is stamped, rate is always visible.
+rate_mode_inited ? last_rate_mode = rate_mode;
 
 
 rate_val      = slider3;

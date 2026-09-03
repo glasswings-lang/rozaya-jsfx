@@ -46,7 +46,7 @@ Sets how each voice's tremolo rate is determined.
 - **Drift** — all voices share a single global rate (set by Rate Value and Rate Mode), with each voice adding its own Drift / Rate value as an offset. A voice with a drift of +5 runs slightly faster than the global rate; one with -5 runs slightly slower. This creates organic polyrhythmic drift from a common tempo anchor.
 - **Independent** — the global Rate Value is hidden. Each voice's Drift / Rate slider sets that voice's tremolo rate directly in the units selected by Rate Mode. Voices can run at entirely different rates with no shared reference.
 
-**Rate Mode** `BPM / Seconds / Hz / Host x`
+**Rate Mode** `BPM / Seconds / Hz / Host x` — Rate Value carries the mode's unit: BPM, seconds, Hz, or beats per cycle.
 
 ### Host x — following the project tempo
 
@@ -57,33 +57,16 @@ change the speed of a whole arrangement: nudging each one by hand changes the
 start scattering. Restarting the transport can't fix that — restart resets
 phase, not ratio.
 
-**Host x** makes Rate Value a **multiplier of the project tempo**. x1 = one
-cycle per beat, x2 = twice as fast, x0.5 = half. Higher is faster, same as BPM
-and Hz (only Seconds inverts). Move the tempo and everything moves with it, in
-proportion.
+**Host x** makes Rate Value mean **beats per cycle** — the same way it means BPM
+in BPM mode and seconds in Seconds mode. Set it to 4 and you get one cycle every
+four beats; set it to 0.5 and you get two cycles per beat. It follows the
+project tempo, and tempo changes carry the setting with them.
 
-This is **not** quantising — Rate Value stays continuous, so deliberately
-unlocked relationships survive a tempo change just as locked ones do. `x1` and
-`x0.5` nest forever; `x1` against `x0.618` never resolves, and keeps not
-resolving in the same way at any tempo.
+Fractions are free: *every 3.7 beats* is as reachable as *every 4*, which is the
+point. This suite is phase music — the value in layers slipping against each
+other — so nothing here forces you onto a note grid.
 
-All eight voices follow together, along with the Play/Rest counters, the drift
-period and Start Delay. **Pitch does not** — a tempo change moves the pulse, it
-doesn't transpose the tone.
-
-**Host ratio (writes Rate Value)** `Custom / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Custom)
-Shown only in Host x mode. Choosing an entry writes that multiplier into Rate
-Value and then gets out of the way — it doesn't hold the value, so you can
-still type or automate anything. **Custom** never writes anything. It's
-deliberately not called "Free", because in sync UI that means free-running,
-which is what the other three modes already are. Entries are named for what you
-HEAR, not as note values: "every 4 beats" is one cycle across four beats, and
-is deliberately *not* written `1/4`, which everywhere else means a quarter NOTE
-and sits at the opposite end of the scale.
-
-> **Switching Rate Mode changes what Rate Value means, and nothing rescales it
-> for you.** Set the mode first, then the rate — or use the picker.
-Unit for interpreting rate values, both global and per-voice.
+**Host ratio** — *retired 2026-09-02.* It existed to spare you arithmetic on a multiplier; with Rate Value in beats, *every 4 beats* is typing 4. The control is hidden and does nothing. It stays in the parameter list only because slider IDs can never be renumbered.
 
 **Rate Value (Drift only)** `0.001-1000, default 60`
 The global base tremolo rate, in the units set by Rate Mode. Only visible in Drift mode. Individual voice drift values are added to this.
@@ -126,15 +109,6 @@ octave and back up two steps.
 The reference pitch used to calculate all voice frequencies. At 440 Hz, A4 = 440 Hz and all other pitches follow standard equal temperament from that anchor. Adjusting this shifts all voices simultaneously without changing their relative intervals.
 
 
-#### Host x hands you the ratio list, not a multiplier
-
-Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw rate number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat*, and so on — so setting a rate is picking a name, never working out a number.
-
-Set Host ratio to **Custom** and the rate value reappears, with whatever it last held. That's the way in for ratios the list doesn't cover, which is most of the point of a multiplier rather than a note grid.
-
-Two things this fixes. The rate slider's default was chosen for its own unit, so switching mode used to hand you a speed you never asked for — in the effects, a default of 2 meant *double time* the moment you selected Host x. And the picker sits at the far end of the parameter list (slider IDs can never be renumbered without scrambling saved projects), so you met the multiplier first and the cure last.
-
-Landing on 1 per beat only happens when *you* change the mode. Opening a saved project leaves your rate exactly as you set it.
 
 ---
 
