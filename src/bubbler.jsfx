@@ -22,7 +22,7 @@ desc: Bubbler
 // POLYPHONIC: 16 voices per channel, each with its own captured grain; a new
 // bubble takes the quietest voice. Effect, NOT a generator — needs input.
 
-slider1:6<0.001,1000,0.001>Bubble rate (per second, or multiplier in Host x)
+slider1:6<0.001,1000,0.001>Bubble rate (per second, or beats per bubble in Host x)
 slider2:70<0,100,1>Timing randomness %
 slider3:12<-36,36,1>Transpose (semitones)
 slider4:7<0,24,1>Pitch spread (semitones)
@@ -40,7 +40,7 @@ out_pin:right output
 
 // --- Host tempo sync (sliders 10-11) ------------------------------------
 // Own rate: free-running bubbles per second -- the original behaviour.
-// Host x:   Bubble rate becomes a MULTIPLIER of the project tempo, so x1
+// Host x:   Bubble rate becomes beats per bubble, so 4 is one bubble every
 //           is one bubble per beat. Two entries only; this plugin has one
 //           unit. Appended at the END per the never-renumber rule.
 slider10:0<0,1,1{Own rate,Host x}>Rate Mode
@@ -72,7 +72,11 @@ host_ratio_inited = 0;
 
 @slider
 rate_mode = slider10;
-host_ratio_inited && slider10 == 1 && host_ratio_sel != slider11 ? (
+// RETIRED 2026-09-02 (R13 revised). This picker spared you arithmetic on a
+// multiplier; Bubble rate now means beats per bubble, so "every 4 beats" is
+// typing 4. Inert and hidden; the slider stays declared because ids can never
+// be renumbered.
+0 ? (
   host_ratio_sel = slider11;
   host_ratio_sel > 0 ? (
     slider1 =
@@ -86,11 +90,11 @@ host_ratio_inited && slider10 == 1 && host_ratio_sel != slider11 ? (
     slider_automate(slider1);
   );
 );
-slider_show(slider11, rate_mode == 1);
-// Host x: slider1 is a multiplier of the project tempo, converted to
-// bubbles-per-second here (tempo/60 = beats per second). @block repeats
-// this so a tempo change lands live.
-rate      = rate_mode == 1 ? max(max(tempo,0.001)/60*slider1, 0.0001)
+slider_show(slider11, 0);   // retired, see above
+// Host x: slider1 is beats per bubble. tempo/60 is beats per second, so
+// dividing by the beat count gives bubbles per second -- one bubble every N
+// beats. @block repeats this so a tempo change lands live.
+rate      = rate_mode == 1 ? max((max(tempo,0.001)/60)/max(slider1,0.001), 0.0001)
                            : max(slider1, 0.01);
 jitter    = slider2 * 0.01;
 transpose = slider3;
@@ -117,7 +121,7 @@ meanIntv  = srate / rate;
 !host_ratio_inited ? ( host_ratio_sel = slider11; host_ratio_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run when the
 // tempo changes, so the rate is recomputed here.
-rate_mode == 1 ? rate = max(max(tempo,0.001)/60*slider1, 0.0001);
+rate_mode == 1 ? rate = max((max(tempo,0.001)/60)/max(slider1,0.001), 0.0001);
 
 @sample
 dryL = spl0;

@@ -23,7 +23,16 @@ Pitch a clean tone **down** (negative Transpose) and it turns deeply, wonderfull
 
 ## Parameters
 
-**Bubble rate (per second)** `0.2–40, default 6` — average events per second.
+**Bubble rate** `0.001–1000, default 6` — what this means depends on Rate Mode.
+
+- In **Own rate**, it is average events per second.
+- In **Host x**, it is **beats per bubble**. Set 4 and you get one bubble every four beats; 0.5 gives two per beat. It follows the project tempo.
+
+Fractions are free — *every 3.7 beats* is as reachable as *every 4*.
+
+**Rate Mode** `Own rate / Host x` — whether the bubbles run on their own clock or follow the project tempo. Bubble rate carries the mode's unit.
+
+**Host ratio** — *retired 2026-09-02.* It spared you arithmetic when Host x made Bubble rate a multiplier; in beats, *every 4 beats* is typing 4. Hidden and inert; it stays in the parameter list only because slider IDs can never be renumbered.
 
 **Timing randomness %** `0–100, default 70` — spacing irregularity. High = naturally scattered.
 
