@@ -186,7 +186,7 @@ Twelve modes that move the pan **one step per tremolo cycle** rather than on an 
 
 - **Alternating** — hard left, hard right, left, right.
 - **Alternating (Flipped)** — the same, starting on the other side. Two instances set to opposite flips move against each other.
-- **Distributed** — walks evenly across the stereo field over one position per active voice, then jumps back.
+- **Distributed** — walks evenly across the stereo field over `Cycle Steps` positions, then jumps back.
 - **Distributed (Flipped)** — the same walk, right to left.
 - **Distributed (Ping-pong)** — walks across and back rather than jumping.
 - **Converging** — starts hard left, then closes inward toward centre in alternating steps.
@@ -197,7 +197,12 @@ Twelve modes that move the pan **one step per tremolo cycle** rather than on an 
 
 **Why use these instead of a separate tremolo plugin panning alongside?** Because they cannot drift. A second plugin panning in time with this one has its own clock, no shared start, and no way to land exactly on a tremolo boundary — so it slides out of alignment and stays there. These move *because the tremolo wrapped*, so there is nothing to hand-match and nothing to fall out of step with.
 
-The Distributed / Converging / Diverging modes walk through as many positions as you have **active voices** — the same geometry Spread already uses, so there is no extra number to set. Use **Pan Spread %** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. Set **Pan Glide ms** to 0 for a hard switch, or leave it at 10 ms for a short sweep between sides.
+**Cycle Steps** `2–32, default 8`
+How many positions the Distributed / Converging / Diverging walks step through before the pattern repeats. This is the length of a *temporal* pattern and has nothing to do with how many voices you have running.
+
+It matters more than it sounds: **at 2 positions every one of those modes collapses into Alternating** — a walk across two places is a flip. Eight gives Distributed a genuine sweep across the field and Converging a real closing-in. Alternating and the every-N modes ignore it, being two-sided by definition, and it hides for them.
+
+Use **Pan Spread %** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. Set **Pan Glide ms** to 0 for a hard switch, or leave it at 10 ms for a short sweep between sides.
 **Pan Glide ms** `0-100 ms, default 10`
 How long the pan takes to travel between positions. **0 is an instant switch** — the sound cuts from one side to the other with no slide, which is what bilateral alternation is supposed to be. Anything above 0 sweeps instead. The default of 10 ms is what this plugin used to do with no way to change it; Full Feature Tremolo and both sweeping filters have had this control all along.
 

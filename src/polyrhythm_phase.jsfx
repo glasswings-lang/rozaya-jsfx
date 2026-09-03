@@ -239,6 +239,7 @@ slider83:0<0,60,0.1>Ramp start delay (minutes)
 // values ("1/4" means a quarter NOTE everywhere else, the opposite end).
 slider84:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
 slider85:10<0,100,0.1>Pan Glide ms (0=instant)
+slider86:8<2,32,1>Cycle Steps (per-cycle modes)
 
 // ===== CHARACTER (global post-effects) =====
 // Four sliders that adjust the character of WHATEVER waveform is
@@ -1012,6 +1013,8 @@ slider_show(slider61, is_both);
 
 // Show/hide pan controls
 slider_show(slider16, pan_enabled);
+// Only the walks distribute positions; Alternating and every-N are two-sided.
+slider_show(slider86, pan_enabled && pan_mode >= 6 && pan_mode <= 12);
 slider_show(slider85, pan_enabled);
 slider_show(slider17, pan_enabled);
 slider_show(slider18, pan_enabled && pan_mode == 1);
@@ -1112,14 +1115,13 @@ loop(n_voices,
 // 16 voices spread evenly across the field rather than 8 + 8 stacked.
 total_active = 0;
 i = 0; loop(n_voices, v_active[i] ? total_active += 1; i += 1;);
-// Per-cycle pan: the positions are the ACTIVE VOICES, the same geometry Spread
-// already uses -- the plugin knows how many places there are, so nothing needs
-// to be typed. Floored at 2 so Alternating still alternates with one voice up.
-//
-// There is deliberately no "linked" switch: voices sharing a tremolo rate wrap
-// together and move as one pulse already, which is the same thing a switch
-// would have bought, without a control to explain.
-pan_cycle_steps = max(2, total_active);
+// How many positions the Distributed / Converging / Diverging walks step
+// through. This is a TEMPORAL pattern length and has nothing to do with how
+// many voices exist -- deriving it from the active voice count was wrong, and
+// collapsed all seven walk modes into Alternating whenever few voices were up.
+// Spread uses the voice count because Spread ranks VOICES across the field;
+// that is a different question with a coincidentally similar answer.
+pan_cycle_steps = max(2, slider86);
 // Pan glide. Was hardcoded at 10 ms here while Full Feature Tremolo and both
 // sweeping filters exposed it -- and 0 (an instant switch) is a genuinely
 // different result, not a nicety: bilateral alternation is meant to be a cut,

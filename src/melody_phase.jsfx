@@ -216,6 +216,7 @@ slider78:0<0,60,0.1>Ramp duration (minutes)
 slider79:0<0,1,1{Off,On}>Ramp engage
 slider80:0<0,60,0.1>Ramp start delay (minutes)
 slider81:10<0,100,0.1>Pan Glide ms (0=instant)
+slider82:8<2,32,1>Cycle Steps (per-cycle modes)
 
 @init
 // Rate drift and Ramp are in BPM in EVERY mode -- "BPM is BPM". This mattered
@@ -1128,10 +1129,13 @@ loop(8,
   i += 1;
 );
 
-// Per-cycle pan: the positions are the ACTIVE VOICES, the same geometry Spread
-// already uses -- the plugin knows how many places there are, so nothing needs
-// to be typed. Floored at 2 so Alternating still alternates with one voice up.
-pan_cycle_steps = max(2, total_active);
+// How many positions the Distributed / Converging / Diverging walks step
+// through. This is a TEMPORAL pattern length and has nothing to do with how
+// many voices exist -- deriving it from the active voice count was wrong, and
+// collapsed all seven walk modes into Alternating whenever few voices were up.
+// Spread uses the voice count because Spread ranks VOICES across the field;
+// that is a different question with a coincidentally similar answer.
+pan_cycle_steps = max(2, slider82);
 // The every-N alternations count in their own pattern length (2N), not in
 // voices -- otherwise a four-voice project could never reach the second half
 // of an "every 4" and would sit on one side forever.
@@ -1159,6 +1163,8 @@ pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : 
 // Show pan sub-sliders only when pan is enabled, and only the
 // ones relevant to the chosen mode (matches PRP's UX).
 slider_show(slider19, pan_enabled);
+// Only the walks distribute positions; Alternating and every-N are two-sided.
+slider_show(slider82, pan_enabled && pan_mode >= 6 && pan_mode <= 12);
 slider_show(slider81, pan_enabled);
 slider_show(slider20, pan_enabled);
 slider_show(slider21, pan_enabled && (pan_mode == 0 || pan_mode == 1));
