@@ -18,7 +18,7 @@ slider11:0<-180,180,0.1>Stereo Phase Offset degrees
 slider12:0<0,1,1{Independent L+R,Offset from L}>Phase Mode
 // ===== PAN BLOCK SLIDERS START =====
 slider13:0<0,1,1{Off,On}>Pan Enabled
-slider14:0<0,12,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep}>Pan Mode
+slider14:0<0,15,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan Mode
 slider15:1<0,1,0.01>Pan Spread (0=mono, 1=full)
 slider16:5<0,100,0.1>Pan Glide ms (0=instant)
 slider17:8<2,32,1>Cycle Steps (per-cycle modes)
@@ -336,6 +336,11 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
                             :  (step / steps);
       pos = max(-1.0, min(1.0, pos));
     );
+  ) : (pan_mode == 13 || pan_mode == 14 || pan_mode == 15) ? (
+    // Alternating every N. The same flip, held for N cycles a side, so
+    // bilateral stays usable when the cycles themselves are fast.
+    step = pan_mode == 13 ? 2 : pan_mode == 14 ? 4 : 8;
+    pos  = (floor(idx / step) % 2 == 0) ? -1 : 1;
   ) : (
     pos = 0;
   );
@@ -486,6 +491,10 @@ pan_mode        = slider14;
 pan_spread      = slider15;
 pan_glide_ms    = slider16;
 pan_cycle_steps = slider17;
+// The every-N alternations count in their own pattern length (2N). Cycle Steps
+// says how many positions the Distributed / Converging / Diverging walks use
+// and has nothing to say about a two-sided flip.
+pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : pan_cycle_steps;
 pan_sweep_val   = slider18;
 pan_sweep_mode  = slider19;
 pan_sweep_ratio = slider20;
@@ -701,6 +710,10 @@ pan_mode        = slider14;
 pan_spread      = slider15;
 pan_glide_ms    = slider16;
 pan_cycle_steps = slider17;
+// The every-N alternations count in their own pattern length (2N). Cycle Steps
+// says how many positions the Distributed / Converging / Diverging walks use
+// and has nothing to say about a two-sided flip.
+pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : pan_cycle_steps;
 pan_sweep_val   = slider18;
 pan_sweep_mode  = slider19;
 pan_sweep_ratio = slider20;
@@ -965,14 +978,17 @@ pan_enabled ? (
   cycle_fired  = (phase_l < last_phase_l);
   last_phase_l = phase_l;
 
-  pan_mode <= 9 ? (
+  // 13-15 are the every-N alternations, appended after the sweeps because enum
+  // options can only ever be added at the end. They are per-cycle modes, so
+  // they belong in this branch despite sitting above the sweep indices.
+  (pan_mode <= 9 || pan_mode >= 13) ? (
     cycle_fired ? (
       pan_mode == 5 || pan_mode == 7 || pan_mode == 9 ? (
         pan_cycle_index += pan_cycle_dir;
         (pan_cycle_index >= pan_cycle_steps - 1 || pan_cycle_index <= 0) ?
           pan_cycle_dir = -pan_cycle_dir;
       ) : (
-        pan_cycle_index = (pan_cycle_index + 1) % pan_cycle_steps;
+        pan_cycle_index = (pan_cycle_index + 1) % pan_cycle_mod;
       );
     );
     cur_pan = percycle_pan(pan_cycle_index, pan_cycle_steps);

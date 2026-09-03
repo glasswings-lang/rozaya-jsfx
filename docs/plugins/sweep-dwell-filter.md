@@ -185,6 +185,9 @@ Pan position updates once per LFO cycle. **Cycle Steps** controls the sequence l
 
 **Diverging (Ping-pong)** — diverges to extremes then reverses back inward, bouncing.
 
+- **Alternating every 2 / every 4 / every 8** — the same left/right flip, but it holds each side for 2, 4 or 8 cycles before crossing. Reach for these when the cycles themselves are fast: at a quick rate a flip every cycle is too brisk to feel bilateral, where holding for four gives a slow sway that still lands exactly on the cycle boundary. `Cycle Steps` does not apply to them — a two-sided flip has no positions to distribute.
+
+
 ---
 
 #### Continuous Pan Modes
