@@ -1753,3 +1753,56 @@ beyond confirming the label reads right.
   both Polyrhythms, both Shepards, Full Feature Tremolo, both sweeping filters,
   `sweep-dwell-filter`, `heartbeat gen`, `rhythm-track`, `dapple`, `bubbler`,
   `stereo-phaser`, `resonance_bank`.
+
+## The recipe — how R13-revised is applied to one plugin
+
+Proven on `polyrhythm_phase` and `polyrhythm_phase_v3` (commit `9302c01`).
+Five edits, none of which move a slider id.
+
+**1. The label carries the unit.** The Rate Value declaration gains
+`: BPM / sec / Hz / beats per cycle`. This is the standing rule that a control
+never changes meaning without saying so on itself.
+
+**2. The conversion, one line.** In the plugin's rate function:
+
+    rmode == 3 ? max(raw_rate, 0.001) :        ->   rmode == 3 ? 1 / max(raw_rate, 0.001) :
+
+At the nominal 60 BPM one beat is one second, so N beats per cycle is 1/N
+cycles per second; `host_scale = tempo/60` in `@block` then makes it
+`tempo/(60*N)`. **Check the plugin actually uses the nominal-60 pattern before
+assuming this line is right** — grep for `host_scale` and confirm the tempo is
+applied in `@block` rather than inside the rate function.
+
+**3. Retire the Host ratio picker.** Change its guard to `0 ? (` with a comment
+saying why, and its `slider_show(...)` to `slider_show(sliderN, 0)`. **Do not
+delete the slider** — ids can never be renumbered. It existed only to spare you
+arithmetic on a multiplier, and "every 4 beats" is now typing 4.
+
+**4. Drop the landing block.** The `rate_mode_inited && last_rate_mode !=
+rate_mode ? (...)` block stamped the picker to "1 per beat" and the rate to its
+multiplier, because meeting a bare multiplier first was the trap. There is no
+trap now. Replace the whole block with `rate_mode_inited ? last_rate_mode =
+rate_mode;`, and delete the `slider_show(rate slider, ...)` line that hid the
+rate — it is always visible now.
+
+**5. The plugin page.** Replace the "multiplier of the project tempo"
+explanation, retire the Host ratio entry, and delete any section teaching the
+old ratio-list workflow.
+
+**Verify each one:** slider count unchanged, all five sections paren-balanced,
+lint problem count unchanged from before the edit, and the arithmetic sanity
+check — at 205 BPM a value of 4 must give one cycle every 1.171 s.
+
+**Order.** Do the nine free plugins first (`dapple`, `bubbler`, `stereo-phaser`,
+`resonance_bank`, `sweep-dwell-filter`, `heartbeat gen`, `rhythm-track`,
+`shepard-scale`, `shepard-tone`) — nothing stored is on Host x, so no migration
+and no snapshot. Commit each. Then the three with real instances
+(`full-feature-sweeping-filter` 6, `Full_Feature_Tremolo` 4,
+`womb_sound_generator_v3` 1), which need a snapshot and a **reciprocal** value
+conversion: a stored multiplier of 0.5 becomes 2 beats per cycle. Do not start
+those without room to snapshot, migrate, verify independently and ear-test.
+
+**Womb is a special case:** it already has `Every N beats (Host x)` as a
+separate slider, gated on its rate mode. Converting it means Rate Value takes
+that job and the extra slider retires the same way the picker does — check
+which of the two the project instances actually rely on before touching it.
