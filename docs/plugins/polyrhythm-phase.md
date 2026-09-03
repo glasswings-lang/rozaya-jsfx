@@ -37,7 +37,11 @@ When pan is enabled, each voice's left and right oscillator outputs are panned i
 **Tremolo Mode** `Drift / Independent`
 Sets how each voice's tremolo rate is determined.
 
-- **Drift** — all voices share a single global rate (set by Rate Value and Rate Mode), with each voice adding its own Drift / Rate value as an offset. A voice with a drift of +5 runs slightly faster than the global rate; one with -5 runs slightly slower. This creates organic polyrhythmic drift from a common tempo anchor.
+- **Drift** — all voices share a base value (Rate Value, read in whatever unit Rate Mode selects), and each voice adds its own Drift / Rate on top. **This voice's value = Rate Value + that voice's Drift.** So in Host x with Rate Value 4, a voice at 0 cycles every 4 beats and a voice at +1 cycles every 5.
+
+  **Which direction that moves depends on the mode.** In BPM and Hz a bigger number is faster, so positive drift speeds a voice up. In Seconds and Host x a bigger number is a longer gap, so positive drift **slows it down**. The offset is always added; what adding means changes with the unit.
+
+  **With every voice's Drift at 0 — the default — all eight voices are identical** and cycle in lockstep, which sounds like one voice rather than a polyrhythm. The drift values are what create the polyrhythm; without them there isn't one.
 
 > **Direction reverses in Host x.** Rate Value and Drift are in *beats* there, and more beats means slower — so a **positive** drift makes a voice **slower**, not faster. That is the same way Seconds mode already behaves, where a bigger number is a longer period. BPM and Hz go the other way. Worth knowing before you tune drift by ear in a synced project.
 - **Independent** — the global Rate Value is hidden. Each voice's Drift / Rate slider sets that voice's tremolo rate directly in the units selected by Rate Mode. Voices can run at entirely different rates with no shared reference.
@@ -123,9 +127,9 @@ The voice's pitch offset in semitones from the global Base Note + Center Octave 
 
 **Vn Drift / Rate** `-1000 to +1000, default 0`
 
-In **Host x** this is a beat count, so a bigger number is a *slower* voice. A value of 0 (the default) means effectively stopped, not infinitely fast.
-In Drift mode: an offset added to the global Rate Value to determine this voice's tremolo rate. Positive values make the voice run faster than the global rate; negative values slower. 0 means the voice runs at exactly the global rate.
-In Independent mode: this voice's tremolo rate directly, in the units set by Rate Mode.
+**In Drift mode** this is an *offset* added to Rate Value, never a value on its own. 0 means this voice runs at exactly the base — not stopped. Whether a positive offset speeds the voice up or slows it down depends on the unit: faster in BPM and Hz, **slower in Seconds and Host x**, where a bigger number means a longer gap.
+
+**In Independent mode** this *is* the voice's value, directly, in whatever unit Rate Mode selects — Rate Value is ignored entirely. Here 0 does mean effectively stopped, in every mode. In Host x it is a beat count: 4 is one cycle every four beats.
 
 **Vn Phase Offset** `-1000 to +1000, default 0`
 When this voice becomes audible within its tremolo cycle, in the units set by Rate Mode (BPM = beats, Seconds = seconds, Hz = cycles). Offset 0 fires the voice immediately at playback start; offset 8 in Seconds mode means the voice waits 8 seconds before becoming audible. Values wrap freely — there is no clamping.
