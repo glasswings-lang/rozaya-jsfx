@@ -251,7 +251,11 @@ Re-measure with the grep above before acting; these were the counts on
   `src/` as a permanent second option.
 - **Polyrhythm Phase** — v1 18 projects, v3 5. Both genuinely live, so this one
   is permanent until someone writes the migration. This is the case rule 2
-  exists to prevent.
+  exists to prevent. **Direction: v1 migrates UP to v3, then v1 retires.**
+  (Confirmed by Rozaya 2026-09-02.) So **v3 is where a new feature gets built
+  and judged; v1 gets only what keeps it working** until its projects cross
+  over. Defaulting to v1 because it has more instances is backwards — that
+  count is the migration backlog, not a vote.
 - **Everything else** is single-version and fine.
 
 ## Open bugs
@@ -266,6 +270,24 @@ of that shape (holding the sequencer until the transport moves) is **forbidden**
 — the plugin must keep sounding with the transport stopped.
 
 ## Recent session notes worth knowing
+
+- **2026-09-02 — the long repair day. Melody's layout migration finally ran; per-cycle pan modes reached the oscillator plugins; Host x started becoming a real unit. On `feature/melody-reorder`, ~40 commits, UNPUSHED, unmerged.**
+
+  **Melody layout migration: DONE and verified.** 73 instances across 7 projects. The script existed and had run once in August, but the projects were restored from backup afterwards for the line-eating defect and nobody re-ran it. Its gate was the problem: it asked "does this store more than OLD_COUNT values", and a count cannot answer that — it was already wrong for two projects storing 84, and adding `Pan Glide ms` that morning pushed a third un-migrated project to 79 and made it look done. **It now range-checks every value against BOTH layouts' declared ranges, read from git and the working tree rather than from a table authored beside the permutation map.** Verification decodes each instance by CONTROL NAME on both sides against a pre-migration snapshot: 4632 comparisons, plus line counts, instance counts, and a range check. Snapshot at `E:eaper\_pre-melody-layout-20260902-1503`.
+
+  **Per-cycle pan modes** (`Alternating`, `Distributed`, `Converging`, `Diverging`, ping-pong variants, plus new `Alternating every 2/4/8`) now exist in all six plugins that have pan modes. `percycle_pan()` is byte-identical across the oscillator sources. **The tick differs and that is the whole point:** filters advance on their LFO wrap, Polyrhythm on the voice's TREMOLO wrap, Melody on the NOTE TRIGGER — so the pan moves because the sound did and there is no second clock to drift. In Polyrhythm the cycle index is **per voice**; a single shared index panned everything at the base rate and Rozaya heard it instantly: *"it was using the base rate, and ignoring the rest."*
+
+  **`Pan Glide ms` propagated** to the oscillator plugins (was hardcoded at 10 ms while three effect plugins exposed it). **0 = instant is not a nicety** — bilateral alternation is a cut, not a sweep, and that difference is why a Tremolo instance could not be swapped for Melody's own pan: *"you're asking me to replace apples with cake."*
+
+  **R13 REVISED — Host x stays a rate mode.** The original R13 said "sync is not a unit" and split it into a switch. Rozaya inverted the diagnosis: Host x IS a rate mode; what was dishonest was Rate Value silently becoming a multiplier there. So leave it in the enum and make **Rate Value mean beats per cycle**, with the label saying so. No new sliders, and irrational ratios survive. Done in both Polyrhythms, Dapple and Bubbler. **The counts that rank the rest: only `full-feature-sweeping-filter` (6), `Full_Feature_Tremolo` (4) and `womb_sound_generator_v3` (1) have any instance on Host x — 11 instances, not twelve plugins.** Full recipe, per-plugin shapes and the guard below are in `docs/suite-consistency-plan.md`.
+
+  **Two bugs I introduced and Rozaya caught by asking, both worth generalising:**
+  - **Inverting a unit inverts its edge cases.** `1 / max(raw, 0.001)` clamps the DENOMINATOR, so 0 became 1000 Hz where it used to mean "stopped". `Vn Drift / Rate` spans −1000..1000 and defaults to 0, so every fresh voice would have screamed. Write `raw > 0.001 ? 1/raw : 0.001`. **Whenever a control's unit inverts, re-check zero and negative.**
+  - **Two numbers that look alike can answer different questions.** I removed `Cycle Steps` and derived it from the active-voice count, because Spread uses that count. But Spread ranks VOICES across the field; a per-cycle walk is a TEMPORAL pattern length. At 2 steps every walk mode returns `[-1,1,-1,1]` — seven modes silently collapsed into Alternating. **And `Cycle Steps` is not a parameter of the shape function, it is the wrap length of the INDEX feeding it**, which is why it affects Alternating too (an odd value makes it limp). Reading `percycle_pan` alone cannot show that; you have to read the advance and the function together.
+
+  **The process lesson, and Rozaya put it hardest: "THIS IS WHY SCRIPTS WILL END A PROJECT."** A scripted edit applies one wrong assumption to every file instantly, and every structural check still passes — paren balance, lint, slider counts — because nothing is malformed. It is semantically gutted and syntactically perfect. **The check that catches it is simulating the function and looking at the output numbers.** Seven modes returning `[-1,1,-1,1]` is visible in one line.
+
+  **Still open:** R19 (pan mode lists are in arrival order across four different inventories — blocks a RELEASE, not a push); `rhythm-track` has six pan modes, no per-cycle machinery and no Pan Glide; Tremolo lacks `Alternating (Flipped)` both filters have; nine plugins still on the Host x multiplier. **Nothing in this session has been ear-tested except Pan Glide 0** (*"no click, no weird shit"*).
 
 - **2026-08-30/31 — Womb's tempo sync rebuilt and ear-tested, the whole consistency sweep DESIGNED, and Phase 0 + most of Phase 1 shipped. Everything merged to master and pushed. `docs/suite-consistency-plan.md` is the authoritative document; read it before doing anything here.**
 
