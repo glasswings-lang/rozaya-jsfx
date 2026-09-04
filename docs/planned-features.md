@@ -2141,8 +2141,24 @@ the propagation work: the trick only exists if two separate things can each do
 both the smooth and the stepped version. A feature present in two plugins out of
 fifteen cannot be played this way.
 
-**Open, and the reason the next step is blocked on one word:** whether the effect
-reads as a *pulse* riding on the glide, or as the two *pulling apart and catching
-up* -- the gap between them being the instrument. Those propagate differently
-(ratio-against-ramp-length versus arrival-time offset). Asked 2026-09-04; do not
-guess.
+**Resolved 2026-09-04, and the mechanism is confirmed in the code, not guessed.**
+Rozaya: *"I imagine it did its ramp in the bursts that it could. It didn't feel
+like it was pulling apart. It would, then it'd catch up, then it would, then it'd
+catch up."* That is exactly what `src/veil.jsfx` does. In `@block`:
+
+```
+sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * ramp_time_scale);
+sr_pr_on ? sr_step *= (sr_pl + sr_rs) / sr_pl;
+```
+
+**The ramp keeps its total duration; play/rest changes its SHAPE, not its arrival
+time.** During a rest the progress freezes; during a play burst it advances by
+`(play+rest)/play` times the smooth rate -- at play 2 / rest 2, double speed. So
+the stepped ramp falls behind, sprints, falls behind, sprints, and lands on its
+destination at the same moment a smooth twin does.
+
+**This invariant is why the technique works and it MUST survive propagation.** If
+a plugin's play/rest merely paused the ramp without the speed compensation, the
+stepped one would arrive late and keep drifting -- which is the 'pulling apart'
+reading Rozaya explicitly did not hear. Two ramps arriving together, one smooth
+and one in bursts, is the whole effect.
