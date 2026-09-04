@@ -22,25 +22,27 @@ desc: Stereo Phaser
 // between the copies so they drift apart instead of reinforcing, OR put a
 // limiter after them. It's specifically the stacked-AND-identical-AND-hot case.
 
+// THE RATE TRIPLE IS CONTIGUOUS (R7). Rate, the mode that says what Rate
+// MEANS, and the picker that writes it, sit together. They used to be at 1, 8
+// and 9 -- the control seven places from the thing that defines it, which is
+// the single clearest argument in the whole consistency plan. Reordered
+// 2026-09-04; old projects repair themselves on load, see @block.
 slider1:0.3<0.001,1000,0.001>Rate Hz (or multiplier in Host x)
-slider2:300<40,20000,1>Range Min Hz
-slider3:1500<40,20000,1>Range Max Hz
-slider4:0.6<0,0.95,0.01>Feedback
-slider5:6<2,64,2>Stages
-slider6:90<0,180,1>Stereo Spread (degrees)
-slider7:0.5<0,1,0.01>Wet/Dry Mix
-
-// --- Host tempo sync (sliders 8-9) --------------------------------------
 // Own Hz: free-running at Rate Hz -- the original behaviour.
-// Host x: Rate becomes a MULTIPLIER of the project tempo (x1 = one LFO
-//         sweep per beat). Two entries, not four: this plugin only ever had
-//         one unit. Appended at the END per the never-renumber rule.
-slider8:0<0,1,1{Own Hz,Host x}>Rate Mode
+// Host x: Rate becomes a MULTIPLIER of the project tempo (x1 = one LFO sweep
+//         per beat). Two entries, not four: this plugin only ever had one unit.
+slider2:0<0,1,1{Own Hz,Host x}>Rate Mode
+// Writes a multiplier into Rate on change then gets out of the way. "Custom"
+// (default) never writes. Not "Free" -- that means FREE-RUNNING in sync UI,
+// which Own Hz already is.
+slider3:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate)
 
-// Writes a multiplier into Rate on change then gets out of the way.
-// "Custom" (default) never writes. Not "Free" -- that means FREE-RUNNING in
-// sync UI, which Own Hz already is.
-slider9:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate)
+slider4:300<40,20000,1>Range Min Hz
+slider5:1500<40,20000,1>Range Max Hz
+slider6:0.6<0,0.95,0.01>Feedback
+slider7:6<2,64,2>Stages
+slider8:90<0,180,1>Stereo Spread (degrees)
+slider9:0.5<0,1,0.01>Wet/Dry Mix
 
 in_pin:left input
 in_pin:right input
@@ -65,10 +67,10 @@ memset(0, 0, 256);
 // entry: the raw multiplier HIDES behind a picker, so a stale picker value left
 // unapplied would name one speed on screen while the plugin ran another.
 // rate_mode_inited gates it, so a half-restored instance can never see an edge.
-entered_host_mode = rate_mode_inited && slider8 == 1 && last_rate_mode != slider8;
-rate_mode = slider8;
-host_ratio_inited && slider8 == 1 && (host_ratio_sel != slider9 || entered_host_mode) ? (
-  host_ratio_sel = slider9;
+entered_host_mode = rate_mode_inited && slider2 == 1 && last_rate_mode != slider2;
+rate_mode = slider2;
+host_ratio_inited && slider2 == 1 && (host_ratio_sel != slider3 || entered_host_mode) ? (
+  host_ratio_sel = slider3;
   host_ratio_sel > 0 ? (
     slider1 =
       host_ratio_sel ==  1 ? 0.125 : host_ratio_sel ==  2 ? 0.25  :
@@ -81,7 +83,7 @@ host_ratio_inited && slider8 == 1 && (host_ratio_sel != slider9 || entered_host_
     slider_automate(slider1);
   );
 );
-slider_show(slider9, rate_mode == 1);
+slider_show(slider3, rate_mode == 1);
 // --- Landing in Host x, and keeping the multiplier out of the way ----------
 //
 // Two problems, one fix. (a) The rate slider's default was chosen for its own
@@ -101,27 +103,27 @@ slider_show(slider9, rate_mode == 1);
 // overwrite a hand-tuned rate the moment a saved project opened -- the same
 // trap the picker's own host_ratio_inited guard exists for.
 rate_mode_inited && last_rate_mode != rate_mode ? (
-  rate_mode == 1 && slider9 == 0 ? (
-    slider9 = 8;
+  rate_mode == 1 && slider3 == 0 ? (
+    slider3 = 8;
     host_ratio_sel = 8;
     slider1 = 1;
-    slider_automate(slider9);
+    slider_automate(slider3);
     slider_automate(slider1);
   );
   last_rate_mode = rate_mode;
 );
-slider_show(slider1, rate_mode != 1 || slider9 == 0);
+slider_show(slider1, rate_mode != 1 || slider3 == 0);
 
 // Host x: Rate is a multiplier of the project tempo, converted to Hz here
 // (tempo/60 = beats per second). lfoInc below is the only thing that uses
 // it, and @block repeats this so a tempo change lands live.
 rate      = rate_mode == 1 ? max(tempo, 0.001) / 60 * slider1 : slider1;
-rangeMin  = min(slider2, slider3);
-rangeMax  = max(slider2, slider3);
-fb        = slider4;
-stages    = slider5;
-spreadRad = slider6 * $pi / 180;
-wet       = slider7;
+rangeMin  = min(slider4, slider5);
+rangeMax  = max(slider4, slider5);
+fb        = slider6;
+stages    = slider7;
+spreadRad = slider8 * $pi / 180;
+wet       = slider9;
 dry       = 1 - wet;
 
 // LFO sweeps the allpass corner between the two range edges. Working in the
@@ -134,6 +136,34 @@ dmin = min(dmin, dmax);
 lfoInc = 2 * $pi * rate / srate;
 
 @block
+// ---- SELF-REPAIR for the 2026-09-04 reorder. -------------------------------
+// The flag is RAISED in @serialize and acted on HERE, never both in the same
+// place. @serialize and REAPER's restore of the slider LINE are independent
+// paths with no guaranteed order, so a permute inside @serialize can read
+// values that have not arrived yet and shuffle the @init DEFAULTS instead --
+// which is "migrate what was DEFAULTED", the failure CLAUDE.md names. @block
+// cannot run before the instance is configured, so what it reads is real.
+//
+// Note the flag is NOT cleared in @init. @init re-runs on every transport play
+// here (no ext_noinit), and clearing it there would let a play press eat a
+// migration that had not happened yet.
+pending_layout_migration ? (
+  // Read all nine in OLD positions first. Writing in place would clobber a
+  // value before a later line needs it -- s2 must survive until s4 is written.
+  o1 = slider1; o2 = slider2; o3 = slider3; o4 = slider4; o5 = slider5;
+  o6 = slider6; o7 = slider7; o8 = slider8; o9 = slider9;
+  slider1 = o1;   // Rate            stayed put
+  slider2 = o8;   // Rate Mode       was 8
+  slider3 = o9;   // Host ratio      was 9
+  slider4 = o2;   // Range Min       was 2
+  slider5 = o3;   // Range Max       was 3
+  slider6 = o4;   // Feedback        was 4
+  slider7 = o5;   // Stages          was 5
+  slider8 = o6;   // Stereo Spread   was 6
+  slider9 = o7;   // Wet/Dry Mix     was 7
+  sliderchange(-1);        // NEVER slider_automate -- that writes automation
+  pending_layout_migration = 0;
+);
 // --- Restore-order guard for the change-detecting controls below -----------
 //     These trackers answer "did the user just move this control?". Adopted
 //     HERE, not in @slider: on a fresh or duplicated instance @slider runs
@@ -145,8 +175,8 @@ lfoInc = 2 * $pi * rate / srate;
 //     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
 //     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
 //     load and every track duplicate.)
-!host_ratio_inited ? ( host_ratio_sel = slider9; host_ratio_inited = 1; );
-!rate_mode_inited ? ( last_rate_mode = slider8; rate_mode_inited = 1; );
+!host_ratio_inited ? ( host_ratio_sel = slider3; host_ratio_inited = 1; );
+!rate_mode_inited ? ( last_rate_mode = slider2; rate_mode_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run on a tempo
 // change, so the rate and the LFO increment are recomputed here.
 rate_mode == 1 ? (
@@ -211,3 +241,29 @@ loop(stages,
 );
 fbR = x;
 spl1 = dry * spl1 + wet * x;
+
+@serialize
+// This plugin had NO @serialize before 2026-09-04, and that absence is exactly
+// what makes the reorder repairable. A project saved by the old build carries
+// no blob at all, so on read file_avail(0) is 0 -- and "no blob" is a perfect,
+// unambiguous signal for "these slider values are in the old order". A project
+// saved by this build carries the magic and needs no repair.
+//
+// Read the whole thing in ONE go. Sequential file_var advances a cursor that
+// cannot be rewound, so a plugin that guesses wrong about the format has
+// already destroyed its own ability to fall back.
+//
+// This section only RAISES A FLAG. It touches no sliders -- see @block.
+sp_avail = file_avail(0);
+sp_avail >= 0 ? (
+  // READ (load or track duplicate).
+  sp_avail == 0 ? (
+    pending_layout_migration = 1;   // pre-reorder project: no blob, old order
+  ) : (
+    file_var(0, sp_magic);
+  );
+) : (
+  // WRITE (save or undo point). Stamp the current layout.
+  sp_magic = 4100001;
+  file_var(0, sp_magic);
+);
