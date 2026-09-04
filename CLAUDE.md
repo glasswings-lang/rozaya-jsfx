@@ -40,6 +40,23 @@ future session needs is the requirement; whose it is, is not.)
   ear is fine. `0.0625 ÷ 2` breaks; `480 − 440 = 40` does not. The machine does
   the maths and the owner keeps precise control. Do not hide numbers behind mood
   labels — that is a different mistake and it has already been rejected.
+- **HALF-DONE IS UNUSABLE, AND "ask Claude when you hit it" IS NOT A PLAN.**
+  Rozaya will not build with a plugin that cannot do the thing they reach for,
+  and reaching for it mid-project is exactly when they cannot stop to have it
+  built -- because a feature added on demand lands in ONE plugin and not in the
+  others they will want it in next. Under that sits the real constraint, and it
+  is not a mood: **they cannot code, and I may not exist in five years.**
+  Rozaya, 2026-09-04: *"in five years, I'm gonna open this up and get an error
+  in Claude Code or whatever saying the service is not available. I have to be
+  ready for that."* So the target is a suite that is **self-sufficient without
+  me** -- feature-complete and CONSISTENT, so that a thing learned on one
+  plugin is true of all of them.
+  **What this changes about my judgement:** "ship it now, fold the rest in
+  later" is the wrong recommendation here, and I made it on 2026-09-04 and it
+  landed as blaming Rozaya's own plan for the delay. When they say *it is not
+  ready yet*, that is a design judgement about fitness for use from the only
+  person who uses it -- take it as given, the same way an ear-test report is
+  taken as given. **Propagation is not polish. It is the deliverable.**
 - **Leave no debris in the folders they open.** `E:/reaper` and
   `E:/reaper/finished` are working areas. A `.pre-something-bak` beside a
   project is a monument to a migration that went wrong, and by screen reader
