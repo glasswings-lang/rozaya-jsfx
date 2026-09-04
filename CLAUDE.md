@@ -92,11 +92,26 @@ in the same commit as any entry you add to `docs/session-log.md`** — that log 
 append-only history; this is the only part of the repo that claims to describe
 *now*.
 
-*Checked against the tree 2026-09-03.*
+*Checked against the tree 2026-09-04.*
 
-- **Branch `feature/melody-reorder`, 42 commits ahead of `master`, unpushed and
-  unmerged.** `master` itself is in sync with `origin/master` — the session log
-  still says the 2026-07 run is unpushed, and that is no longer true.
+- **Branch `feature/melody-reorder`, 65 commits ahead of `master`, PUSHED,
+  unmerged.** `master` is in sync with `origin/master`. The branch is on
+  GitHub, so nothing lives only on the one drive.
+
+- **⚠ ONE THING IS DELIBERATELY HALF-LANDED — read this before installing
+  anything.** `src/stereo-phaser.jsfx` has had its rate triple reordered
+  (Rate / Rate Mode / Host ratio were at 1, 8, 9 and are now 1, 2, 3) and is
+  **NOT installed**. The installed copy is still the old build, and that is
+  the only file in the suite where `src/` and the effects folder differ.
+  **Installing it alone would break `strangeness.RPP`.** The two go together:
+  1. `python tools/phaser_migrate_rate_triple.py` — writes a MIGRATED COPY of
+     the project to TEMP, never touching the original.
+  2. Put that copy in place of `E:/reaper/finished/strangeness.RPP` (keep the
+     original), and copy `src/stereo-phaser.jsfx` into the effects folder.
+  3. Open it and listen. If it is wrong, put both originals back.
+  Already verified without REAPER: 27 controls decoded by NAME old-vs-new, 0
+  mismatches, 0 values outside their new declared ranges, 3 changed lines out
+  of 192 with the rest byte-identical.
 - **`v2.21` is the newest tag and sits 23 commits back on `master`**, so
   everything on `master` since it, plus all 42 branch commits, is unreleased.
   Per the session log, v2.21 is marked *pre-release* on GitHub and v2.20 is
