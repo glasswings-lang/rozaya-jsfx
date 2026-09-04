@@ -335,12 +335,19 @@ slider21 ? (
       speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
         speed_ramp_delay_elapsed_mem[i] += 1;
       ) : (
-        // Staircase (sliders 18/19). The ramp advances for `play` minutes,
-        // holds for `rest`, and repeats. The rests come OUT of the duration:
-        // the advancing step is scaled by (play+rest)/play, so the ramp still
-        // completes in exactly `duration` minutes of wall clock. Ramp duration
-        // keeps meaning "you arrive in this long" -- the staircase changes
-        // only HOW you get there. Off unless BOTH are > 0.
+        // Staircase (sliders 19/20). The ramp advances for `play`, holds for
+        // `rest`, and repeats, in whatever unit slider17 selects. The holds
+        // come OUT of the duration rather than extending it -- the advancing
+        // step is scaled by (play+rest)/play -- so Ramp duration goes on
+        // meaning "you arrive in about this long" and the staircase changes
+        // only HOW you get there.
+        //
+        // It finishes ONE HOLD EARLY, and that is a fencepost rather than a
+        // fault: N steps have only N-1 gaps between them, so the trailing
+        // hold falls after arrival, where holding still and being finished
+        // are the same thing. Measured, not reasoned -- a 64-beat ramp with
+        // 4-beat steps and 4-beat holds lands at beat 60. An earlier version
+        // of this comment claimed exact arrival. Off unless BOTH are > 0.
         sr_pl = sr_play_mem[i];
         sr_rs = sr_rest_mem[i];
         sr_pr_on = sr_pl > 0 && sr_rs > 0;
