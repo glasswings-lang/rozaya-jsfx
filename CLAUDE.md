@@ -170,14 +170,21 @@ append-only history; this is the only part of the repo that claims to describe
   reads correctly, and `Ramp time unit` / the beat-counted staircase do what
   they say. **The steeper slopes are confirmed too** — *"rolloff works"* —
   which closes the last item outstanding from the August rolloff overhaul.
-- **Where Drift play/rest earns its keep, and where it does not.** Rozaya, on
-  hearing it in Veil: *"filters are hard to hear a semi-beat pause on."* A
-  pause inside a slow cutoff wander is barely perceptible, because a filter
-  has no articulation of its own to interrupt. **So when this propagates,
-  aim it at parameters with an attack**: tremolo depth and rate, note timing,
-  breath and heart segments. On the filters it is correct and nearly
-  inaudible, which is not a reason to remove it but is a reason not to lead
-  with it.
+- **A FEATURE GOES EVERYWHERE ITS PARENT ALREADY IS. No triage.** Rozaya,
+  2026-09-04, overruling exactly the kind of note this file is full of:
+  *"Anything that has Ramp should have all the controls that go with Ramp. End
+  of fucking story."* If a plugin has Ramp it gets every Ramp control; if it
+  has Drift it gets every Drift control. **Do not decide on my own hearing --
+  which I do not have -- that some plugin will not benefit and skip it.**
+  Consistency is the point: a thing learned on one plugin has to be true of all
+  of them, because Rozaya may not have me around to explain the exceptions.
+  What this replaced, and why it is worth naming: a bullet that took Rozaya's
+  real observation (*"filters are hard to hear a semi-beat pause on"* -- still
+  true, still theirs) and grew a Claude-authored conclusion onto it, that
+  propagation should be *aimed* at parameters with an attack. Then I quoted
+  that conclusion back to Rozaya as though it were their guidance.
+  **Everything in these docs that is not inside quote marks is Claude-to-Claude
+  and may simply be wrong. Never hand it back to Rozaya as their own view.**
 - **EAR-TESTED 2026-09-04 ✓ — Drift play/rest on Full Feature Tremolo.**
   *"It's definitely doing something... it goes real slow, then speeds up...
   it's really hard to tell exactly what it'll do next, which is the point."*
