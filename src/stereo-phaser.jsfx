@@ -26,7 +26,9 @@ desc: Stereo Phaser
 // MEANS, and the picker that writes it, sit together. They used to be at 1, 8
 // and 9 -- the control seven places from the thing that defines it, which is
 // the single clearest argument in the whole consistency plan. Reordered
-// 2026-09-04; old projects repair themselves on load, see @block.
+// 2026-09-04. Old projects are repaired IN THE PROJECT FILE by
+// tools/phaser_migrate_rate_triple.py -- there is no runtime self-repair, and
+// there deliberately isn't one (see the note above @serialize).
 slider1:0.3<0.001,1000,0.001>Rate Hz (or multiplier in Host x)
 // Own Hz: free-running at Rate Hz -- the original behaviour.
 // Host x: Rate becomes a MULTIPLIER of the project tempo (x1 = one LFO sweep
