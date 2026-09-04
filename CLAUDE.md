@@ -121,6 +121,11 @@ append-only history; this is the only part of the repo that claims to describe
   script whose earlier run had a wrong gate and had once eaten a line per
   instance. It had been verified by DECODING — 4632 comparisons against the
   snapshot at `_pre-melody-layout-20260902-1503` — and never played. Now both.
+- **EAR-TESTED 2026-09-04 ✓ — Veil's rebuilt layout and the Ramp in beats.**
+  *"Slider layout? Excellent. Ramp stuff? Works."* So the 22-slider reorder
+  reads correctly, and `Ramp time unit` / the beat-counted staircase do what
+  they say. **Not separately confirmed:** Drift play/rest, and the steeper
+  slopes, which have been on the unheard list since the August rolloff work.
 - **Still unheard:** the Host x beats-per-cycle conversion in four plugins, and
   the per-cycle pan tick in Melody (note trigger) and the filters (LFO wrap) —
   Polyrhythm's tremolo-wrap tick passed on 09-04 but the others advance on a
