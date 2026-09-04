@@ -83,13 +83,34 @@ slider12:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // wander while Right cutoff holds, which makes the WIDTH itself move in steps
 // rather than continuously. Both must be > 0 or the gate is off (the default),
 // which is bit-identical to the old always-drifting behaviour.
-slider13:0<0,64,0.25>Drift play for (periods, 0 = always)
-slider14:0<0,64,0.25>Drift rest for (periods, 0 = always)
+slider13:0<0,64,0.01>Drift play for (periods, 0 = always)
+slider14:0<0,64,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp (nested selector; signed delta) ---
 slider15:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Ramp target
 slider16:0<-1000,1000,0.001>Ramp by (units match target)
-slider17:0<0,60,0.1>Ramp duration (minutes)
+// Ramp time unit. REAPER is a DAW and counts in beats, and this suite has
+// three rate modes -- yet the Ramp ignored all of them and was hardwired to
+// wall clock. The comment that used to sit here argued a wind-down is
+// wall-clock time, how long until you are asleep. True of a wind-down, and
+// it does not generalise: 'descend one step per beat' is a RHYTHM, and this
+// suite is about layers slipping against each other. Drift got a unit
+// selector in the Host x sweep and the Ramp did not -- the same decision
+// propagated to one of the two.
+//
+// Beats, never bars. Bars would need the time signature (ts_num/ts_denom --
+// exposed by REAPER and read by NOTHING in this suite), so the number would
+// silently mean something different in 3/4 than in 4/4 and would change
+// under you if the signature did. Beats is what REAPER actually counts and
+// needs no conversion. In Beats the ramp follows a live tempo change,
+// because the scale is recomputed per sample from the host tempo.
+//
+// GLOBAL, like Drift period unit: one clock for the whole Ramp block. And
+// like it, the unit is NOT in the four labels below -- NVDA re-reads the
+// parameter name on every arrow step, and a name that lies half the time is
+// worse than a short one.
+slider17:0<0,1,1{Minutes,Beats}>Ramp time unit
+slider18:0<0,1000,0.01>Ramp duration
 // Ramp Play/Rest — the STAIRCASE. The ramp advances for `play` minutes, holds
 // still for `rest` minutes, and repeats: descend, settle, descend, settle.
 // The rests come OUT of the duration, they do NOT extend it — Ramp duration
@@ -100,10 +121,10 @@ slider17:0<0,60,0.1>Ramp duration (minutes)
 // the same idea: engage Off freezes the ramp where it stands and On resumes.
 // Both must be > 0 or the gate is off (the default) and the ramp is a smooth
 // slide exactly as before.
-slider18:0<0,60,0.1>Ramp play for (minutes, 0 = smooth)
-slider19:0<0,60,0.1>Ramp rest for (minutes, 0 = smooth)
-slider20:0<0,1,1{Off,On}>Ramp engage
-slider21:0<0,60,0.1>Ramp start delay (minutes)
+slider19:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider20:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider21:0<0,1,1{Off,On}>Ramp engage
+slider22:0<0,1000,0.01>Ramp start delay
 
 @init
 // NO ext_noinit: REAPER re-runs @init on every transport play / render
@@ -235,32 +256,32 @@ out_gain = 10 ^ (slider6 / 20);
 // (qL/qR are computed per-sample in @sample now — resonance drifts/ramps too.)
 
 // Speed Ramp target selector save/restore. slider15 = target; slider16 =
-// per-target `by`; slider17 = per-target duration; slider21 = per-target
-// start delay. slider20 (engage) stays GLOBAL.
+// per-target `by`; slider18 = per-target duration; slider22 = per-target
+// start delay. slider21 (engage) stays GLOBAL.
 sel_speed_target = slider15;
 last_speed_target != sel_speed_target ? (
   speed_ramp_by_mem[last_speed_target]    = slider16;
-  speed_ramp_dur_mem[last_speed_target]   = slider17;
-  speed_ramp_delay_mem[last_speed_target] = slider21;
-  sr_play_mem[last_speed_target]          = slider18;
-  sr_rest_mem[last_speed_target]          = slider19;
+  speed_ramp_dur_mem[last_speed_target]   = slider18;
+  speed_ramp_delay_mem[last_speed_target] = slider22;
+  sr_play_mem[last_speed_target]          = slider19;
+  sr_rest_mem[last_speed_target]          = slider20;
   slider16 = speed_ramp_by_mem[sel_speed_target];
-  slider17 = speed_ramp_dur_mem[sel_speed_target];
-  slider21 = speed_ramp_delay_mem[sel_speed_target];
-  slider18 = sr_play_mem[sel_speed_target];
-  slider19 = sr_rest_mem[sel_speed_target];
+  slider18 = speed_ramp_dur_mem[sel_speed_target];
+  slider22 = speed_ramp_delay_mem[sel_speed_target];
+  slider19 = sr_play_mem[sel_speed_target];
+  slider20 = sr_rest_mem[sel_speed_target];
   slider_automate(slider16);
-  slider_automate(slider17);
-  slider_automate(slider21);
   slider_automate(slider18);
+  slider_automate(slider22);
   slider_automate(slider19);
+  slider_automate(slider20);
   last_speed_target = sel_speed_target;
 ) : (
   speed_ramp_by_mem[sel_speed_target]    = slider16;
-  speed_ramp_dur_mem[sel_speed_target]   = slider17;
-  speed_ramp_delay_mem[sel_speed_target] = slider21;
-  sr_play_mem[sel_speed_target]          = slider18;
-  sr_rest_mem[sel_speed_target]          = slider19;
+  speed_ramp_dur_mem[sel_speed_target]   = slider18;
+  speed_ramp_delay_mem[sel_speed_target] = slider22;
+  sr_play_mem[sel_speed_target]          = slider19;
+  sr_rest_mem[sel_speed_target]          = slider20;
 );
 
 // Drift target selector save/restore (same nested-selector pattern).
@@ -298,15 +319,19 @@ last_target_select != sel_target ? (
 // mono-sum the source (handles dual-mono or single-sided mono cleanly)
 mono_in = (spl0 + spl1) * 0.5;
 
-// --- Advance each target's own ramp clock. Engage (slider20) is a
+// --- Advance each target's own ramp clock. Engage (slider21) is a
 //     freeze/resume gate: while Off, ramp_t holds; only transport play
 //     (via @init) resets it. Each target waits its own start-delay, then
 //     advances its own ramp_t 0->1 over its own duration. ---
-slider20 ? (
+// One factor converts the Ramp block's four time values into seconds:
+// a minute is 60 s; a beat is 60/tempo s. Recomputed per sample so a tempo
+// change is followed live in Beats mode.
+ramp_time_scale = slider17 == 1 ? 60 / host_bpm : 60;
+slider21 ? (
   i = 0;
   loop(N_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
-      sr_delay_samples = speed_ramp_delay_mem[i] * 60 * srate;
+      sr_delay_samples = speed_ramp_delay_mem[i] * ramp_time_scale * srate;
       speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
         speed_ramp_delay_elapsed_mem[i] += 1;
       ) : (
@@ -322,7 +347,7 @@ slider20 ? (
         sr_pr_on ? (
           sr_win = sr_pr_resting_mem[i] ? sr_rs : sr_pl;
           sr_pr_accum_mem[i] += 1;
-          sr_pr_accum_mem[i] >= sr_win * 60 * srate ? (
+          sr_pr_accum_mem[i] >= sr_win * ramp_time_scale * srate ? (
             sr_pr_accum_mem[i] = 0;
             sr_pr_resting_mem[i] = 1 - sr_pr_resting_mem[i];
           );
@@ -330,7 +355,7 @@ slider20 ? (
         // Advance only while not holding. One-armed on purpose -- an empty
         // else-branch is a silent compile failure in eel2 (CLAUDE.md).
         !(sr_pr_on && sr_pr_resting_mem[i]) ? (
-          sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * 60);
+          sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * ramp_time_scale);
           sr_pr_on ? sr_step *= (sr_pl + sr_rs) / sr_pl;
           speed_ramp_ramp_t_mem[i] += sr_step;
           speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
@@ -517,10 +542,10 @@ wv_magic == 3200000 + N_TARGETS ? (
   // clobber. (sliderchange, NOT slider_automate — no automation write.)
   file_avail(0) >= 0 ? (
     slider16 = speed_ramp_by_mem[last_speed_target];
-    slider17 = speed_ramp_dur_mem[last_speed_target];
-    slider21 = speed_ramp_delay_mem[last_speed_target];
-    slider18 = sr_play_mem[last_speed_target];
-    slider19 = sr_rest_mem[last_speed_target];
+    slider18 = speed_ramp_dur_mem[last_speed_target];
+    slider22 = speed_ramp_delay_mem[last_speed_target];
+    slider19 = sr_play_mem[last_speed_target];
+    slider20 = sr_rest_mem[last_speed_target];
     slider8  = drift_up_mem[last_target_select];
     slider9  = drift_down_mem[last_target_select];
     slider10 = drift_per_mem[last_target_select];
