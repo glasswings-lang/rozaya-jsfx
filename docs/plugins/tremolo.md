@@ -294,6 +294,73 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 ---
 
+
+#### Drift play for / Drift rest for
+
+The drift wanders for `play` periods, then **freezes exactly where it stands**
+for `rest` periods, then wanders on. Without these, drift never settles — the
+only way to stop it was to switch it off, so stillness was not available as a
+musical choice. Both must be above 0 or the gate is off, which is the default
+and behaves exactly as it always did.
+
+Counted in **drift periods**, so there is no second unit and no arithmetic: set
+the period once, then say how many of them.
+
+**The fraction decides where it parks, and that is the whole control.** A whole
+number always stops at the same point in the wave — the neutral one — so the
+pause is nearly inaudible. Add a fraction and it stops somewhere with a value:
+
+| play | where it parks |
+|---|---|
+| `2` | neutral, every time — effectively invisible |
+| `2.25` | the crest — drifted fully **up** |
+| `2.75` | the trough — drifted fully **down** |
+| `2.5` | neutral again (the other zero crossing) |
+
+**And the park point rotates.** Each freeze lands further round the wave than
+the last, so a fraction like `1.75` cycles through four positions before it
+repeats, and only one of those is dramatic. `1.2` gives five positions with two
+different partial parks. That rotation is why the result is hard to predict by
+ear, and it is the reason to prefer an awkward fraction over a tidy one.
+
+**Set both `up` and `down` amounts to get the full effect.** With only `down`
+set, every park on the positive half of the wave lands at no-change, so half the
+holds do nothing.
+
+
+#### Ramp time unit
+
+**Minutes** (default) is wall-clock, and keeps every existing project
+bit-identical. **Beats** reads the Ramp's four time values — duration, start
+delay, play, rest — as beats instead, following the project tempo live, so a
+tempo change mid-ramp is tracked rather than ignored.
+
+Beats, never bars: bars would need the time signature, so the same number would
+mean different things in different meters and would shift under you if the meter
+changed. Beats is what REAPER actually counts.
+
+The four sliders it governs deliberately do not name the unit. A screen reader
+re-reads a parameter's name on every arrow step, and a name that is wrong half
+the time is worse than a short one.
+
+#### Ramp play for / Ramp rest for
+
+The **staircase**: the ramp climbs for `play`, holds still for `rest`, and
+repeats — climb, settle, climb, settle — instead of one smooth slide. Read in
+whatever `Ramp time unit` selects, so `1` is one minute or one beat.
+
+**The holds come out of the duration, they do not extend it.** A 10-minute ramp
+with holds is still a 10-minute ramp; the staircase changes only *how* you get
+there, never *when*. Both values must be above 0 or the ramp is smooth, which is
+the default.
+
+The last climb puts you on the **landing**, and the landing is part of the
+staircase — a 32-beat ramp stepping 2 and holding 2 reaches its destination on
+beat 30 and stands there for the last 2.
+
+Note this is not the same as **Ramp engage**, which is the manual version of the
+same idea: engage off freezes the ramp where it stands, engage on resumes it.
+
 ## Usage Notes
 
 - **Pan block sums to mono before panning.** This is intentional — pan modulation is applied to a unified signal. If the source is stereo, the two channels are averaged before any pan position is applied.

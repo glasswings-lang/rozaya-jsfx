@@ -134,6 +134,19 @@ append-only history; this is the only part of the repo that claims to describe
   breath and heart segments. On the filters it is correct and nearly
   inaudible, which is not a reason to remove it but is a reason not to lead
   with it.
+- **EAR-TESTED 2026-09-04 ✓ — Drift play/rest on Full Feature Tremolo.**
+  *"It's definitely doing something... it goes real slow, then speeds up...
+  it's really hard to tell exactly what it'll do next, which is the point."*
+  Rozaya's causal read was right: with `play 1.75` it freezes at the trough,
+  which with `Drift down 1.5` on a 2 Hz rate parks it at 0.5 Hz.
+- **And the park point ROTATES — that is the feature, not an accident.** Each
+  freeze lands further round the wave than the last, so `play 1.75` cycles
+  through four positions before repeating and only ONE is dramatic; `1.2`
+  gives five with two partial parks at different depths. Simulated, not
+  reasoned. **So an awkward fraction beats a tidy one**, a whole number parks
+  at neutral every time and is nearly inaudible, and setting only `down`
+  wastes half the holds (every park on the positive half lands at no-change).
+  Written up on both plugin pages.
 - **Still unheard:** the Host x beats-per-cycle conversion in four plugins, and
   the per-cycle pan tick in Melody (note trigger) and the filters (LFO wrap) —
   Polyrhythm's tremolo-wrap tick passed on 09-04 but the others advance on a
