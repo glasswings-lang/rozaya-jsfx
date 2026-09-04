@@ -37,7 +37,15 @@ for m in re.finditer(r"\(\s*\)", code):
     bal_total += 1
 
 # case-variant identifier collisions (EEL2 folds case)
-ids = re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", code)
+#
+# Scan CODE ONLY. A slider declaration's label and enum options are TEXT,
+# not identifiers. Scanning them fired this check on all 21 plugins, 3 to 24
+# times each -- {Minutes,Beats} beside a parameter named `play`, and so on.
+# Never once actionable, which is the tell: a check nobody can act on is a
+# check everybody learns to skip, exactly as happened with the empty-parens
+# check above. (Fixed 2026-09-04.)
+code_ids = re.sub(r"(?m)^\s*slider\d+:.*$", "", code)
+ids = re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", code_ids)
 byfold = collections.defaultdict(set)
 for t in ids:
     byfold[t.lower()].add(t)

@@ -34,6 +34,36 @@ slider18:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 // never writes, and is what a project saved before this slider existed lands
 // on, so nothing already tuned by hand is touched.
 slider35:0<0,8,1{Custom,every 8 cycles,every 4 cycles,every 2 cycles,same as filter,2 per cycle,3 per cycle,4 per cycle,8 per cycle}>Pan speed (Linked Sweep)
+
+// Drift Play/Rest. The drift wanders for `play` periods, then FREEZES where
+// it stands for `rest`, then wanders on -- so stillness becomes reachable
+// without switching drift off. Counted in drift periods (slider32), which
+// are themselves counted in tremolo cycles, so the whole thing rides the rate
+// and follows the tempo in Host x for free. The FRACTION picks where it
+// parks: x.25 at the crest, x.75 at the trough, x.0 and x.5 at neutral.
+// PER TARGET, like the rest of the drift block. Both must be > 0 or the gate
+// is off (the default), which is bit-identical to always-drifting.
+// Proven in Veil first. Unlike a filter, a tremolo has an attack for the
+// pause to interrupt, which is where this feature actually earns its keep.
+slider36:0<0,64,0.01>Drift play for (periods, 0 = always)
+slider37:0<0,64,0.01>Drift rest for (periods, 0 = always)
+
+// Ramp time unit. REAPER counts in beats and this plugin already has a Host x
+// rate mode, yet the Ramp was hardwired to wall clock. Minutes keeps every
+// existing project bit-identical; Beats reads duration / start delay / play /
+// rest as beats and follows a live tempo change. Beats, never bars -- bars
+// would need the time signature and would mean something different per meter.
+// The four labels it governs still say (minutes); renaming a SHIPPED slider
+// is a separate job and belongs with the naming sweep, not smuggled in here.
+slider38:0<0,1,1{Minutes,Beats}>Ramp time unit
+
+// Ramp Play/Rest -- the staircase: climb, settle, climb, settle. The holds
+// come out of the duration rather than extending it, so Ramp duration still
+// says when you arrive. The last climb lands on the LANDING, which is part of
+// the staircase -- a 32-unit ramp stepping 2 and holding 2 arrives at 30 and
+// stands there for the last 2. Read in whatever slider38 selects.
+slider39:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider40:0<0,1000,0.01>Ramp rest for (0 = smooth)
 // ===== PAN BLOCK SLIDERS END =====
 
 // Pass-through for N units after playback starts, then apply the
@@ -153,6 +183,27 @@ slider34:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats
 // rate smoother re-seeded from the slider, drift runtime, Speed Ramp,
 // Start Delay, Play/Rest + effect mix). Only the drift CONFIG bank must
 // survive the re-run; it's guarded by drift_cfg_inited below.
+
+// ---- Play/Rest alternation, ONE implementation, shared by Drift and Ramp.
+// Both alternate between a running window and a frozen one and the flip logic
+// is identical; only the CLOCK and the thing being frozen differ. `tick` is
+// how much of ONE WINDOW passes per sample, which is what lets each caller
+// keep its own units: Drift passes 1/period_samples (windows are drift
+// periods), Ramp passes 1/(unit_seconds*srate) (windows are minutes or
+// beats). Returns 1 while frozen, 0 while running, and 0 always unless BOTH
+// values are > 0. What freezing DOES stays with each caller, because those
+// genuinely differ -- Drift holds its wave where it stands, the Ramp halts
+// its progress toward a destination. Same function as in veil.jsfx.
+function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
+  play > 0 && rest > 0 ? (
+    accum_bank[idx] += tick;
+    accum_bank[idx] >= (resting_bank[idx] ? rest : play) ? (
+      accum_bank[idx] = 0;
+      resting_bank[idx] = 1 - resting_bank[idx];
+    );
+    resting_bank[idx];
+  ) : ( 0; );
+);
 
 // Host tempo capture. `tempo` is READ-ONLY in JSFX; we only read it, into a
 // global deliberately not named `tempo`. Nothing remembers it across play.
@@ -389,6 +440,15 @@ speed_ramp_dur_mem           = 1168;  // duration minutes per target (CONFIG)
 speed_ramp_delay_mem         = 1184;  // start-delay minutes per target (CONFIG)
 speed_ramp_ramp_t_mem        = 1200;  // ramp progress 0..1 per target (RUNTIME)
 speed_ramp_delay_elapsed_mem = 1216;  // delay sample counter per target (RUNTIME)
+// Play/Rest banks, per target, for both features.
+drift_play_mem               = 1232;  // CONFIG (drift periods; 0 = gate off)
+drift_rest_mem               = 1248;  // CONFIG
+drift_pr_resting_mem         = 1264;  // RUNTIME (1 = frozen)
+drift_pr_accum_mem           = 1280;  // RUNTIME (fraction of the current window)
+sr_play_mem                  = 1296;  // CONFIG (Ramp time units; 0 = gate off)
+sr_rest_mem                  = 1312;  // CONFIG
+sr_pr_resting_mem            = 1328;  // RUNTIME (1 = holding)
+sr_pr_accum_mem              = 1344;  // RUNTIME
 
 // CONFIG banks (drift up/down/period/shape + speed-ramp by/duration/start-delay
 // + selector trackers) — guarded by drift_cfg_inited so the @init re-run on
@@ -404,6 +464,10 @@ drift_cfg_inited != 1 ? (
     speed_ramp_by_mem[i]    = 0;
     speed_ramp_dur_mem[i]   = 0;
     speed_ramp_delay_mem[i] = 0;
+    drift_play_mem[i]       = 0;
+    drift_rest_mem[i]       = 0;
+    sr_play_mem[i]          = 0;
+    sr_rest_mem[i]          = 0;
     i += 1;
   );
   last_target_select = 0;
@@ -420,6 +484,10 @@ loop(N_TARGETS,
   target_drift_offset[i] = 0;
   speed_ramp_ramp_t_mem[i]        = 0;
   speed_ramp_delay_elapsed_mem[i] = 0;
+  drift_pr_resting_mem[i] = 0;
+  drift_pr_accum_mem[i]   = 0;
+  sr_pr_resting_mem[i]    = 0;
+  sr_pr_accum_mem[i]      = 0;
   i += 1;
 );
 
@@ -573,17 +641,25 @@ sel_up     = slider30;
 sel_down   = slider31;
 sel_per    = slider32;
 sel_shape  = slider33;
+sel_dpl    = slider36;
+sel_drs    = slider37;
 
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
   target_drift_down[last_target_select]  = sel_down;
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
+  drift_play_mem[last_target_select]     = sel_dpl;
+  drift_rest_mem[last_target_select]     = sel_drs;
 
   slider30 = target_drift_up[sel_target];
   slider31 = target_drift_down[sel_target];
   slider32 = target_drift_per[sel_target];
   slider33 = target_drift_shape[sel_target];
+  slider36 = drift_play_mem[sel_target];
+  slider37 = drift_rest_mem[sel_target];
+  slider_automate(slider36);
+  slider_automate(slider37);
   slider_automate(slider30);
   slider_automate(slider31);
   slider_automate(slider32);
@@ -595,6 +671,8 @@ last_target_select != sel_target ? (
   target_drift_down[sel_target]  = sel_down;
   target_drift_per[sel_target]   = sel_per;
   target_drift_shape[sel_target] = sel_shape;
+  drift_play_mem[sel_target]     = sel_dpl;
+  drift_rest_mem[sel_target]     = sel_drs;
 );
 
 // Speed ramp target selector save/restore (nested-selector, mirrors the drift
@@ -606,6 +684,8 @@ last_target_select != sel_target ? (
 // parallel from @sample, each on its own duration/delay clock.
 sr_sel_target = slider24;
 sr_sel_by     = slider25;
+sr_sel_pl     = slider39;
+sr_sel_rs     = slider40;
 sr_sel_dur    = slider26;
 sr_sel_delay  = slider28;
 
@@ -613,6 +693,12 @@ last_sr_target != sr_sel_target ? (
   speed_ramp_by_mem[last_sr_target]    = sr_sel_by;
   speed_ramp_dur_mem[last_sr_target]   = sr_sel_dur;
   speed_ramp_delay_mem[last_sr_target] = sr_sel_delay;
+  sr_play_mem[last_sr_target]          = sr_sel_pl;
+  sr_rest_mem[last_sr_target]          = sr_sel_rs;
+  slider39 = sr_play_mem[sr_sel_target];
+  slider40 = sr_rest_mem[sr_sel_target];
+  slider_automate(slider39);
+  slider_automate(slider40);
   slider25 = speed_ramp_by_mem[sr_sel_target];
   slider26 = speed_ramp_dur_mem[sr_sel_target];
   slider28 = speed_ramp_delay_mem[sr_sel_target];
@@ -624,6 +710,8 @@ last_sr_target != sr_sel_target ? (
   speed_ramp_by_mem[sr_sel_target]    = sr_sel_by;
   speed_ramp_dur_mem[sr_sel_target]   = sr_sel_dur;
   speed_ramp_delay_mem[sr_sel_target] = sr_sel_delay;
+  sr_play_mem[sr_sel_target]          = sr_sel_pl;
+  sr_rest_mem[sr_sel_target]          = sr_sel_rs;
 );
 
 
@@ -739,16 +827,35 @@ cfg_stable < CFG_HOLD_BLOCKS ?
 // duration > 0 advances its own ramp_t 0->1 over its own duration, after its
 // own start delay; while Off, all clocks freeze and resume. Only transport
 // play (via @init) resets them.
+// One factor converts the Ramp block's four time values into seconds: a
+// minute is 60 s, a beat is 60/tempo s. Recomputed per sample, so Beats mode
+// follows a live tempo change instead of remembering one (CLAUDE.md: with
+// @init re-running per play, anything remembered across transport is wrong).
+ramp_time_scale = slider38 == 1 ? 60 / host_bpm : 60;
 slider27 ? (
   i = 0;
   loop(N_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
-      sr_delay_samples = speed_ramp_delay_mem[i] * 60 * srate;
+      sr_delay_samples = speed_ramp_delay_mem[i] * ramp_time_scale * srate;
       speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
         speed_ramp_delay_elapsed_mem[i] += 1;
       ) : (
-        speed_ramp_ramp_t_mem[i] += 1.0 / (srate * speed_ramp_dur_mem[i] * 60);
-        speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+        // Staircase. Holds come OUT of the duration -- the step is scaled
+        // by (play+rest)/play -- so Ramp duration still says when you
+        // arrive, and the last climb lands on the landing.
+        sr_pl = sr_play_mem[i];
+        sr_rs = sr_rest_mem[i];
+        sr_hold = pr_frozen(sr_pr_accum_mem, sr_pr_resting_mem, i,
+                            1.0 / (ramp_time_scale * srate),
+                            sr_pl, sr_rs);
+        // One-armed on purpose -- an empty else-branch is a silent compile
+        // failure in eel2 (CLAUDE.md).
+        !sr_hold ? (
+          sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * ramp_time_scale);
+          sr_pl > 0 && sr_rs > 0 ? sr_step *= (sr_pl + sr_rs) / sr_pl;
+          speed_ramp_ramp_t_mem[i] += sr_step;
+          speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+        );
       );
     );
     i += 1;
@@ -806,15 +913,27 @@ loop(N_TARGETS,
   drift_offset_local = 0;
   (up > 0 || down > 0) && per > 0 ? (
     period_samples = max(per * srate / drift_ref_freq, 1);
-    new_phase = target_drift_phase[i] + 1.0 / period_samples;
-    new_phase >= 1.0 ? (
-      new_phase -= 1.0;
-      shape == 2 ? (
-        target_drift_prev[i] = target_drift_curr[i];
-        target_drift_curr[i] = rand(2) - 1;
+
+    // Play/Rest. Windows are drift PERIODS. Frozen means the phase does not
+    // advance, so shape_val below is recomputed from the held phase and the
+    // offset simply stays where it stopped -- freeze in place, not a return
+    // to centre.
+    d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,
+                         1.0 / period_samples,
+                         drift_play_mem[i], drift_rest_mem[i]);
+    d_frozen ? (
+      new_phase = target_drift_phase[i];
+    ) : (
+      new_phase = target_drift_phase[i] + 1.0 / period_samples;
+      new_phase >= 1.0 ? (
+        new_phase -= 1.0;
+        shape == 2 ? (
+          target_drift_prev[i] = target_drift_curr[i];
+          target_drift_curr[i] = rand(2) - 1;
+        );
       );
+      target_drift_phase[i] = new_phase;
     );
-    target_drift_phase[i] = new_phase;
 
     shape == 0 ? (
       shape_val = sin(2 * $pi * new_phase);
@@ -1073,9 +1192,19 @@ pan_enabled ? (
 // and falls through to @init defaults (drift + ramp reset — acceptable, this
 // is pre-release). Marker is well above any plausible first-field value and
 // float32-exact (< 2^24).
-sr_magic = 2100000 + N_TARGETS;
+// Magic bumped to 2200000 in 2026-09-04 when Play/Rest banks were added.
+// BOTH magics are handled, and that matters: eight shipped projects hold
+// 2100000 blobs, and a single-magic gate would drop them to @init defaults
+// -- silently discarding every drift and ramp config in the library. So the
+// old format restores everything it has and the new banks keep their
+// defaults (0 = gate off), which is exactly what those projects already do.
+// This is the CLAUDE.md rule in its literal form: migrate what was RESTORED,
+// never what was DEFAULTED.
+sr_magic = 2200000 + N_TARGETS;
 file_var(0, sr_magic);
-sr_magic == 2100000 + N_TARGETS ? (
+sr_new = sr_magic == 2200000 + N_TARGETS;
+sr_old = sr_magic == 2100000 + N_TARGETS;
+sr_new || sr_old ? (
   file_mem(0, target_drift_up,     N_TARGETS);
   file_mem(0, target_drift_down,   N_TARGETS);
   file_mem(0, target_drift_per,    N_TARGETS);
@@ -1085,6 +1214,14 @@ sr_magic == 2100000 + N_TARGETS ? (
   file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
   file_mem(0, speed_ramp_delay_mem, N_TARGETS);
   file_var(0, last_sr_target);
+  // Only the new format carries these. On an old blob they stay at their
+  // @init defaults, so the plugin behaves exactly as that project expects.
+  sr_new ? (
+    file_mem(0, drift_play_mem, N_TARGETS);
+    file_mem(0, drift_rest_mem, N_TARGETS);
+    file_mem(0, sr_play_mem,    N_TARGETS);
+    file_mem(0, sr_rest_mem,    N_TARGETS);
+  );
 
   // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
   // on WRITE (save/undo) it is < 0. @serialize is the only section guaranteed
@@ -1100,6 +1237,10 @@ sr_magic == 2100000 + N_TARGETS ? (
     slider31 = target_drift_down[last_target_select];    // Drift down
     slider32 = target_drift_per[last_target_select];     // Drift period
     slider33 = target_drift_shape[last_target_select];   // Drift shape
+    slider36 = drift_play_mem[last_target_select];       // Drift play for
+    slider37 = drift_rest_mem[last_target_select];       // Drift rest for
+    slider39 = sr_play_mem[last_sr_target];              // Ramp play for
+    slider40 = sr_rest_mem[last_sr_target];              // Ramp rest for
     sliderchange(-1);
   );
 );
