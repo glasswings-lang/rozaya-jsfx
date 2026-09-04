@@ -392,6 +392,44 @@ files on disk are correct too, but nothing depends on remembering to run it.
 - **Idempotence falls out for free.** If the project is loaded and not saved, the file on
   disk still holds the old layout and the old magic, so the next load permutes again —
   correctly. Save once and both the slider line and the magic are current.
+- **CORRECTION 2026-09-04 — the permute must happen in `@block`, NOT in
+  `@serialize`, and this section as written would have shipped the bug it warns
+  about two bullets earlier.** `@serialize` and REAPER's restore of the slider
+  LINE are two independent paths with no guaranteed relative order (the
+  nested-selector gotcha in CLAUDE.md, and the adopt-on-first-`@slider` gotcha
+  that followed it). A permute running inside `@serialize` can therefore read
+  slider values that have not been restored yet, permute the `@init` DEFAULTS,
+  and push them back with `sliderchange(-1)` — which is exactly "migrate what
+  was DEFAULTED", the failure this document already tells you to avoid.
+
+  **The shape that works, and it is the one already proven here for the picker
+  bug:** `@serialize` only READS the blob and RAISES A FLAG. It touches no
+  sliders. Then the first `@block` after that does the permute and the
+  `sliderchange(-1)`. `@block` cannot run before the instance is configured, so
+  whatever order the restore paths ran in, the values it sees are the real ones.
+
+  ```
+  @serialize
+    n = file_avail(0);
+    n > 0 ? (
+      file_mem(0, scratch, n);          // whole blob, one read, cursor-safe
+      scratch[0] == OLD_MAGIC ? pending_layout_migration = 1;
+    );
+    // ... normal restore ...
+
+  @block
+    pending_layout_migration ? (
+      // permute the visible sliders old -> new, THEN:
+      sliderchange(-1);                 // never slider_automate
+      pending_layout_migration = 0;
+    );
+  ```
+
+  **`pending_layout_migration` must be set in `@serialize` and cleared in
+  `@block`, and must NOT be initialised in `@init`** — `@init` re-runs on every
+  transport play in most of this suite, and clearing the flag there would let a
+  play press eat a migration that had not happened yet.
+
 - **Projects with no blob at all** cannot be identified this way. Those need the bulk
   script. Worth measuring how many exist before assuming it is nobody.
 
