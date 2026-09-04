@@ -114,8 +114,17 @@ append-only history; this is the only part of the repo that claims to describe
   across the oscillator plugins, but what ADVANCES it differs on purpose —
   Melody steps on the note trigger, the filters on their LFO wrap. Those are
   still unheard.
-- **The rest of the 2026-09-02 work is still unheard**, including the Host x
-  beats-per-cycle conversion in four plugins and the Melody reorder.
+- **EAR-TESTED 2026-09-04 ✓ — the Melody layout migration, on the finished work.**
+  All four finished projects (`melodic`, `outcoming`, `slow-summer`, `upswing`)
+  played and correct. *"They came out perfectly."* **This was the highest-stakes
+  unverified thing in the repo**: 73 instances across 7 projects, rewritten by a
+  script whose earlier run had a wrong gate and had once eaten a line per
+  instance. It had been verified by DECODING — 4632 comparisons against the
+  snapshot at `_pre-melody-layout-20260902-1503` — and never played. Now both.
+- **Still unheard:** the Host x beats-per-cycle conversion in four plugins, and
+  the per-cycle pan tick in Melody (note trigger) and the filters (LFO wrap) —
+  Polyrhythm's tremolo-wrap tick passed on 09-04 but the others advance on a
+  different clock. Plus tests 3-5 of `docs/host-sync-ear-test.md`.
 - **The suite consistency sweep is mid-flight.** `docs/suite-consistency-plan.md`
   is the authoritative document for it — read it before touching interface
   naming, ordering, ranges or units anywhere in the suite. Phase 0 and most of
