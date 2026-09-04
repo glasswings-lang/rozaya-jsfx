@@ -342,12 +342,15 @@ slider21 ? (
         // meaning "you arrive in about this long" and the staircase changes
         // only HOW you get there.
         //
-        // It finishes ONE HOLD EARLY, and that is a fencepost rather than a
-        // fault: N steps have only N-1 gaps between them, so the trailing
-        // hold falls after arrival, where holding still and being finished
-        // are the same thing. Measured, not reasoned -- a 64-beat ramp with
-        // 4-beat steps and 4-beat holds lands at beat 60. An earlier version
-        // of this comment claimed exact arrival. Off unless BOTH are > 0.
+        // The last climb lands you on the LANDING, and the landing is part of
+        // the staircase. A 32-beat ramp stepping 2 and holding 2 reaches its
+        // destination on beat 30 and stands there for the last 2 -- so the
+        // duration covers the whole thing, climb and landing, and is not
+        // short by anything. (Two earlier versions of this comment got this
+        // wrong in both directions: one claimed exact arrival, the next
+        // called the same behaviour a fencepost fault to be disclosed. It is
+        // just what a staircase is. -- Rozaya, 2026-09-04.)
+        // Off unless BOTH are > 0.
         sr_pl = sr_play_mem[i];
         sr_rs = sr_rest_mem[i];
         sr_pr_on = sr_pl > 0 && sr_rs > 0;
