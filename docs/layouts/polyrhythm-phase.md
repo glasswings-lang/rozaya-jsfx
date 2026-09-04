@@ -22,7 +22,8 @@ or because of sheer habit."* Correct. v3 was created **2026-07-23**.
 
 **One confound, and it was mine.** `surges` showed 2026-08-22, which looks like recent
 v1 use. That is the date `sweepfilter_migrate_hz.py` rewrote it. Its last human edit was
-07-20. Checking the `_pre-hz-migration` snapshot folder is what caught it — without that,
+07-20. Checking the `_pre-hz-migration` snapshot folder (now under
+`E:/reaper/finished/backups/snapshots/`) is what caught it — without that,
 my own script would have counted as evidence about Rozaya's habits. **Any future
 date-based argument has to exclude files a migration touched.**
 

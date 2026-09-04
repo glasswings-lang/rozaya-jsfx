@@ -136,7 +136,7 @@ append-only history; this is the only part of the repo that claims to describe
   unverified thing in the repo**: 73 instances across 7 projects, rewritten by a
   script whose earlier run had a wrong gate and had once eaten a line per
   instance. It had been verified by DECODING — 4632 comparisons against the
-  snapshot at `_pre-melody-layout-20260902-1503` — and never played. Now both.
+  snapshot at `backups/snapshots/_pre-melody-layout-20260902-1503` — and never played. Now both.
 - **EAR-TESTED 2026-09-04 ✓ — Veil's rebuilt layout and the Ramp in beats.**
   *"Slider layout? Excellent. Ramp stuff? Works."* So the 22-slider reorder
   reads correctly, and `Ramp time unit` / the beat-counted staircase do what
@@ -219,6 +219,18 @@ older docs can lag too. Two renames matter when reading any of them:
 - `tools/` — Python utilities, all run from outside REAPER. Two families worth knowing: **`jsfx_lint.py`** (paren balance per section, empty `()` branches, case-folded names, scientific notation, reserved-variable writes, slider declarations after an `@section` — REAPER tells you none of this until load, so run it), and the **`.RPP` migration scripts**, which all build on `rpp_sliders.py` for parsing a project's slider line. `tools/README.md` indexes them. See also the standing rule that a script may *apply* an authored list but must never *infer* one.
 - `archive/exploration/` — work that never shipped. Experiments, abandoned approaches, discarded design directions (tract waveguide diagnostics, vowel shapers, the polyrhythm_tremolo decomposition experiment, the standalone drone synths). Preserved as reference, not maintained.
 - `archive/versions/<plugin>/v<N>.jsfx` — prior shipped versions that have since been replaced. Distinct from `exploration/` (which holds never-shipped work). See `archive/versions/README.md` for the convention.
+- **Nothing of ours lives loose in Rozaya's folders.** `E:/reaper` and
+  `E:/reaper/finished` are WORKING areas and are kept clear: a folder full of
+  `.pre-something-bak` files is a wall of reminders of migrations that went
+  wrong, and it had already cost Rozaya the will to open the project. Backups
+  go to **`E:/reaper/finished/backups/`** (projects and plugin builds), and
+  whole-tree pre-migration snapshots to **`.../backups/snapshots/`** -- the
+  seven `_pre-*` folders that used to sit at the root of `E:/reaper` were moved
+  there 2026-09-04, 165 files, counted before and after. Effects-folder `.jsfx`
+  backups go to `C:/Users/solst/jsfx-backups/`, never inside
+  `Effects/glasswings/` (a renamed twin there loads as a second plugin
+  forever). **A `-TEST` or `-MIGRATED` copy gets promoted or deleted before the
+  end of the exchange that made it** -- never left "for now".
 - `LICENSE` — CC0.
 - `README.md` — top-level overview.
 
