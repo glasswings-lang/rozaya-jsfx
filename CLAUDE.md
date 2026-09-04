@@ -102,11 +102,14 @@ append-only history; this is the only part of the repo that claims to describe
   `src/stereo-phaser.jsfx` and the effects folder now MATCH — that half-landed
   state is closed. Its rate triple (Rate / Rate Mode / Host ratio) is contiguous
   at 1, 2, 3. `E:/reaper/finished/strangeness.RPP` **is the migrated file**; the
-  pre-reorder original sits beside it as `strangeness.PRE-PHASER-REORDER.RPP`,
-  and the old plugin build is at
-  `<REAPER resource>/_plugin-backups/stereo-phaser.PRE-REORDER-20260904.jsfx`
-  (outside the effects folder on purpose — a renamed twin inside it is the
-  stale-twin trap). **Verified by decoding, NOT ear-tested**: 27 controls by
+  pre-reorder original and the old plugin build are both in
+  **`E:/reaper/finished/backups/`** — `strangeness.PRE-PHASER-REORDER.RPP` and
+  `stereo-phaser.PRE-REORDER-20260904.jsfx`. **That folder is where backups go**
+  (Rozaya, 2026-09-04); it already held 44 of them, so it is an existing
+  convention, not a new one. Note the plugin build lives there too rather than
+  anywhere under the REAPER resource folder — a renamed twin left in
+  `Effects/glasswings/` is the stale-twin trap and would show as a second
+  Phaser forever. **Verified by decoding, NOT ear-tested**: 27 controls by
   name old-vs-new across 3 instances, 0 mismatches; 21 stored values in range
   after promotion; 192 lines unchanged. Nobody has played it since the swap.
   If it is ever wrong, put both backups back.
