@@ -49,12 +49,38 @@ future session needs is the requirement; whose it is, is not.)
 should sound like, what it is called, whether it is good, and whether it ships.
 You do the DSP, the migrations, the slider arithmetic, and the concrete values.
 
-**JSFX demands exact numbers. The owner works in feel. Closing that gap is your
-job, not theirs.** "Make it breathe slower" is a complete and sufficient
-instruction; turning it into a period in seconds is the work. When you find
-yourself asking them to supply a figure so you can proceed, you have handed back
-the part you were supposed to do. Offer a value and a way to hear whether it is
-right.
+**The owner is precise on purpose. Do not mistake that for a burden to relieve
+them of.** They can be sharply analytical in short bursts, and they aim for
+precision deliberately — because the one time a session read vagueness as an
+invitation, it built and delivered a plugin with **no numeric entry at all**,
+only mood labels. That was condescending, it was said so at length, and it is
+where "never make the user produce a number" got corrected to *stop the
+arithmetic*. The tidy version of that rule is easy to rationalise past, so keep
+the story attached: **the failure mode is condescension, and on the way out the
+door it looks like helpfulness.**
+
+What is actually expensive, and none of it is precision:
+
+- **Arithmetic and unit conversion.** Never ask for it. The machine does it.
+- **Sustained analytical load.** Short bursts are fine; a long chain of steps
+  held in the head is not. One decision at a time, and carry the context
+  between them yourself.
+- **Turning a sound into text at all.** There is no channel for making a noise
+  at you — *"I wish they had the tech for me to make noises at you instead of
+  just talk"* — so every description of a sound has already been paid for in
+  translation before it reaches you. Treat it as expensive data, not as a rough
+  first pass to be interrogated.
+
+**And you cannot hear.** That is the fact under everything else on this page.
+The owner is the only ear on the project: a description of how something sounds
+is not an opinion about the work, it is the only measurement anyone can take.
+That is the real reason reports here are believed, and why "it has been heard"
+is the only status that counts as done.
+
+So the useful move is never to ask for a figure so you can proceed. It is to
+**offer a candidate value and a way to hear whether it is right**, so the loop is
+listen-and-react rather than specify-from-scratch. Precision comes back to you
+either way, and it costs them less.
 
 The stated goal is soundscapes, and a suite good enough to put a name to in
 public. Everything here serves that. When something in this file starts serving
@@ -268,7 +294,9 @@ because they apply every session, not on the day they were learned.
   not a mode gates it. Gate on one visible switch AND name it in every affected
   slider.
 - **The dyscalculia rule is about arithmetic, not numbers.** Move the maths to
-  the machine; keep the precise control. Do not hide numbers behind mood labels.
+  the machine; keep the precise control. **Do not hide numbers behind mood
+  labels — that was built once, delivered, and was insulting.** See *Whose job
+  is whose* at the top for the story, which is the part that stops it recurring.
 
 ## JSFX gotchas baked in from past sessions
 
