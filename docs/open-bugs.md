@@ -5,55 +5,69 @@ only when it has been fixed *and* heard.
 
 ---
 
-## 2. Shepard Tone / Shepard Scale had one variable where they needed two
+## 2. Shepard Tone / Shepard Scale share one variable where two are intended
 
-**Status: FIXED 2026-09-04, NOT HEARD.** The fix CHANGES how both plugins
-sound, and that needs saying plainly: it changes them *to what was intended*,
-which nobody has ever heard.
+**Status: DEFECT CONFIRMED BY READING. AUDIBLE CONSEQUENCE UNCONFIRMED, AND THE
+ONE TEST SO FAR SAYS THERE ISN'T ONE.** A fix was written and REVERTED on
+2026-09-04, pending an ear-test. Do not re-apply it without running the test
+below first.
+
+### What is a fact
 
 `NUM_OSC` (the fixed maximum, used as the memory stride) and `num_osc` (the
 user's Octave Count, set in `@slider`) differ only by case, and **EEL2 folds
-case** — so they were one variable.
+case** — so they are one variable. The author intended two: the placement loop
+reads `loop(NUM_OSC, ... o < num_osc ? (real oscillator) : (park this slot
+silent))`, and that else-branch, written deliberately with a comment, can never
+execute, because inside `loop(NUM_OSC)` the guard is `o < NUM_OSC`.
 
-**The tell was dead code, not reasoning.** The placement loop reads
-`loop(NUM_OSC, ... o < num_osc ? (place a real oscillator) : (park this slot
-silent))`. That else-branch was written deliberately, with a comment, and
-could never execute: inside `loop(NUM_OSC)` the guard is `o < NUM_OSC`, always
-true. A design that needs two values, given one.
+Note shepard-tone's own source warns about this exact trap, for a different
+variable, twelve lines above the declaration.
 
-**Why it reached the ear.** Neither plugin sets `ext_noinit` — deliberately, as
-the v2.10 render fix — so `@init` re-runs on every transport play and reset the
-shared variable to the maximum. `@slider`, the only thing that sets the user's
-count, does not re-run. And `@sample` re-places the oscillators on every play
-via `needs_init`. So **Octave Count held until you pressed play, then silently
-became the maximum, with the pitch window still sized to the number you chose.**
-Touching any control restored it until the next play.
+### What is only a PREDICTION
 
-**Why nobody noticed, measured rather than guessed.** These are generators: you
-only hear them after a play, so the broken state was the only state ever heard.
-And at Shepard Tone's default Octave Count of 8 against a max of 16, the damage
-cancels EXACTLY — 16 oscillators over an 8-octave window is two copies per
-octave at the same frequency and phase, summing to 2x, while the normaliser
-divides by 16 instead of 8. Identical audio, double the CPU. Rozaya's report
-that it "comes in at defaults perfectly" was correct, and is not evidence
-against the bug.
+That any of it is audible. The reasoning: neither plugin sets `ext_noinit` (by
+design, the v2.10 render fix), so `@init` re-runs on transport play and resets
+the shared variable to the maximum; `@slider` does not re-run; and `@sample`
+re-places the oscillators on every play via `needs_init`. Octave Count would
+therefore hold until you pressed play and then silently become the maximum,
+with the pitch window still sized to the number you chose.
 
-It only cancels where the count divides the maximum. Simulated:
+### Why this is flagged rather than fixed
 
-- **Tone (max 16):** counts 2, 4, 8, 16 cancel exactly. 3, 5, 6, 7, 9-15 land
-  unevenly — some octaves doubled, some not.
-- **Scale (max 12):** counts 2, 3, 4, 6, 12 cancel. **Its own default of 8 does
-  not** — 12 oscillators over 8 octaves, four doubled and four single.
+**Rozaya tested both plugins on 2026-09-04 and reported them fine — "they come
+in at defaults perfectly" — and I explained that result away instead of letting
+it count.** The explanation offered was that Tone's default 8 against a max of
+16 cancels exactly: two copies per octave at identical frequency and phase sum
+to 2x while the normaliser divides by 16 instead of 8.
 
-**Fix:** renamed to `MAX_OSC` in both. Five references each, lint clean.
+That much is arithmetically true. **But it does not cover Shepard Scale**, whose
+default of 8 against a max of 12 does NOT divide — by the same simulation it
+should have sounded uneven, four octaves doubled and four single, and it did
+not. So the theory contradicted half the available evidence and the change was
+made anyway. That is the error being recorded here, not the collision.
 
-**What to listen for:** both should now sound *thinner* than you remember at
-non-dividing counts, because they are finally rendering the number of octaves
-you asked for. Shepard Tone at the default 8 should be unchanged. Shepard Scale
-at its default 8 SHOULD change, and that change is the fix working.
+### The test that settles it, and it needs no theory
+
+On the CURRENT (reverted) build, in Shepard Tone or Shepard Scale:
+
+1. Set **Octave Count** to `3` — a value that divides neither maximum, so any
+   effect is at its largest.
+2. Listen.
+3. Stop the transport. Press play again. Listen.
+
+**If the sound thickens or changes weight on the second play, the prediction is
+real** and the rename (`NUM_OSC` → `MAX_OSC`, five references each) should be
+restored from git — see the reverted commit `1cc177d`.
+
+**If it does not change, the prediction is wrong**, the collision is harmless in
+practice, and this entry should say so. Leave the code alone; a rename that
+changes what a plugin sounds like is not free just because it is tidy.
+
+Either way the collision is worth removing eventually, but on a day when the
+result can be heard rather than argued.
 
 ---
-
 ## 1. Melody Phase instances come in out of alignment on project open
 
 **Status: OPEN — no fix, but the cause is no longer unknown and the workaround
