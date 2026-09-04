@@ -98,20 +98,18 @@ append-only history; this is the only part of the repo that claims to describe
   unmerged.** `master` is in sync with `origin/master`. The branch is on
   GitHub, so nothing lives only on the one drive.
 
-- **⚠ ONE THING IS DELIBERATELY HALF-LANDED — read this before installing
-  anything.** `src/stereo-phaser.jsfx` has had its rate triple reordered
-  (Rate / Rate Mode / Host ratio were at 1, 8, 9 and are now 1, 2, 3) and is
-  **NOT installed**. The installed copy is still the old build, and that is
-  the only file in the suite where `src/` and the effects folder differ.
-  **Installing it alone would break `strangeness.RPP`.** The two go together:
-  1. `python tools/phaser_migrate_rate_triple.py` — writes a MIGRATED COPY of
-     the project to TEMP, never touching the original.
-  2. Put that copy in place of `E:/reaper/finished/strangeness.RPP` (keep the
-     original), and copy `src/stereo-phaser.jsfx` into the effects folder.
-  3. Open it and listen. If it is wrong, put both originals back.
-  Already verified without REAPER: 27 controls decoded by NAME old-vs-new, 0
-  mismatches, 0 values outside their new declared ranges, 3 changed lines out
-  of 192 with the rest byte-identical.
+- **The Phaser reorder is LANDED, and it is the suite's first Phase 2 change.**
+  `src/stereo-phaser.jsfx` and the effects folder now MATCH — that half-landed
+  state is closed. Its rate triple (Rate / Rate Mode / Host ratio) is contiguous
+  at 1, 2, 3. `E:/reaper/finished/strangeness.RPP` **is the migrated file**; the
+  pre-reorder original sits beside it as `strangeness.PRE-PHASER-REORDER.RPP`,
+  and the old plugin build is at
+  `<REAPER resource>/_plugin-backups/stereo-phaser.PRE-REORDER-20260904.jsfx`
+  (outside the effects folder on purpose — a renamed twin inside it is the
+  stale-twin trap). **Verified by decoding, NOT ear-tested**: 27 controls by
+  name old-vs-new across 3 instances, 0 mismatches; 21 stored values in range
+  after promotion; 192 lines unchanged. Nobody has played it since the swap.
+  If it is ever wrong, put both backups back.
 - **`v2.21` is the newest tag and sits 23 commits back on `master`**, so
   everything on `master` since it, plus all 42 branch commits, is unreleased.
   Per the session log, v2.21 is marked *pre-release* on GitHub and v2.20 is

@@ -80,6 +80,45 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-04 (later) — the Phaser reorder LANDED: plugin installed, project migrated and promoted. Verified by decoding; NOT ear-tested.**
+
+  The rate triple (Rate / Rate Mode / Host ratio) had been reordered in `src/`
+  on 2026-09-04 and deliberately left uninstalled, because installing it alone
+  would have made `strangeness.RPP` read its numbers off the wrong controls.
+  Both halves are now in place: `src/stereo-phaser.jsfx` is copied into the
+  effects folder, and the migrated project has been promoted to
+  `E:/reaper/finished/strangeness.RPP` with the pre-reorder original kept beside
+  it as `strangeness.PRE-PHASER-REORDER.RPP`. The old plugin build is backed up
+  OUTSIDE the effects folder, at
+  `<REAPER resource>/_plugin-backups/stereo-phaser.PRE-REORDER-20260904.jsfx` —
+  outside on purpose, because a renamed twin left inside that folder is its own
+  documented trap here and would have shown up as a second Phaser forever.
+
+  **Evidence, and its limit.** Decoded control-by-control by NAME, old layout
+  against new, across all three instances: 27 comparisons, 0 mismatches. After
+  promotion, re-checked in place: 21 stored values, 0 outside their declared
+  ranges, 192 lines unchanged. **It has not been heard.** Rozaya listened to
+  `leaning into strange.opus` (an August render that is probably this project)
+  and called it close enough — but the new build was not installed at that
+  moment, so nothing was A/B'd. Recorded as decoded, not eared, because that is
+  what happened.
+
+  **Two process notes, both mine to own.** I asked for a two-render before/after
+  comparison for a change already verified by decoding, which was ceremony on
+  top of sufficient evidence and cost the session its patience. And when asked
+  whether a reference render existed, I searched `E:/reaper` only, found nothing,
+  and reported "there isn't one" as though I had looked everywhere — there are
+  426 renders on that drive, under `E:/renders/finished projects/` and
+  `E:/renders-opus/`. The conclusion happened to hold; the method did not. **A
+  negative from a search is only worth its scope, so state the scope or widen
+  it.**
+
+  Also fixed: the reorder's header comment still promised that old projects
+  "repair themselves on load, see @block", pointing at a runtime repair that had
+  been deleted the day before *on purpose* (a migrated project has no blob
+  either, so it would have permuted a correct file a second time). A comment
+  pointing at absent code is how a future session re-adds it.
+
 - **2026-09-04 — five ear-tests passed, drift and ramp learned to rest, and I spent the day overriding the person who could see. On `feature/melody-reorder`, 65 commits, PUSHED, unmerged.**
 
   **Heard and passing, all by Rozaya:** the Melody layout migration on all four *finished* projects (`melodic`, `outcoming`, `slow-summer`, `upswing` — 73 instances that had been verified by decoding and never played); per-cycle pan on Polyrhythm, each voice stepping on its own tremolo wrap; Veil's 22-slider rebuild and the beat-counted Ramp; the -12..-72 dB/oct rolloff, closing the last item from the August overhaul; and Tremolo's drift play/rest.
