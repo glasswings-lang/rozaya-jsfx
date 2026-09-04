@@ -165,7 +165,20 @@ seconds-thinking.
 
 ## Reporting back
 
-Per test, all I need is which number and what it did. "3 wandered but the ramp
-didn't lock at the bottom" is plenty — I can find it from that. Don't try to
-diagnose; the last time a symptom got theorised from the code instead of heard,
-it cost a session chasing CPU that turned out to be dropped phases.
+Per test, the floor is which number and what it did. "3 wandered but the ramp
+didn't lock at the bottom" is plenty — I can find it from that.
+
+**And if you have a read on WHY, say that too.** An earlier version of this
+section said "don't try to diagnose", which was wrong and would have cost real
+time. Rozaya's diagnoses have repeatedly been right and faster than mine —
+*"it's not in the start delay, it's in the passage from one note to the next"*,
+*"it was using the base rate"*, *"I suspect the problem is in the rate mode
+units stuff"* — and on 2026-09-04 a correction to a test's own settings caught a
+**false fail** before it happened: I had specified a Depth dB that leaves almost
+no tremolo, so the pan steps would have been inaudible and I would have gone
+hunting a bug that was not there.
+
+What actually went wrong in the CPU case was not that a theory was offered. It
+was that I acted on the theory and never asked for the observation. **So: both.**
+Say what you heard and say what you think, and I will hold them apart — the
+observation as evidence, the mechanism as a lead worth checking first.

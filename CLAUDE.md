@@ -104,10 +104,18 @@ append-only history; this is the only part of the repo that claims to describe
   `gh release list` rather than trusting the line. And **`git fetch --tags`
   before assuming the next version number**; stale local tags have already
   caused one misnumbered release.
-- **Almost none of the 2026-09-02 work has been ear-tested.** The exception is
-  `Pan Glide 0` (heard, clean). The per-cycle pan modes, the Host x
-  beats-per-cycle conversion in four plugins, and the Melody reorder are all
-  unheard.
+- **EAR-TESTED 2026-09-04 ✓ — per-cycle pan on Polyrhythm Phase.** Independent
+  tremolo mode, two voices at 60 and 24 BPM, Depth dB 0, Pan mode `Alternating`:
+  each voice steps its pan on **its own** tremolo wrap, at its own rate.
+  *"It works perfectly."* That clears the per-cycle shape functions, the
+  per-voice cycle index (the regression Rozaya caught by ear on 09-02, where a
+  single shared index panned everything at the base rate), and `Pan Glide`.
+  **It does NOT clear the other ticks:** `percycle_pan()` is byte-identical
+  across the oscillator plugins, but what ADVANCES it differs on purpose —
+  Melody steps on the note trigger, the filters on their LFO wrap. Those are
+  still unheard.
+- **The rest of the 2026-09-02 work is still unheard**, including the Host x
+  beats-per-cycle conversion in four plugins and the Melody reorder.
 - **The suite consistency sweep is mid-flight.** `docs/suite-consistency-plan.md`
   is the authoritative document for it — read it before touching interface
   naming, ordering, ranges or units anywhere in the suite. Phase 0 and most of
@@ -252,6 +260,15 @@ because they apply every session, not on the day they were learned.
   2026-07-27 Passage case is the whole lesson: the report said a real bug, in the
   harmonics engine, varying run to run — all three true — and I spent the session
   optimising CPU instead of asking.
+- **Ask for the observation AND the read on it. Never for one instead of the
+  other.** "Just tell me what it did, don't diagnose" sounds like it protects
+  their time and actually throws away the best input the project has. The
+  diagnoses here have repeatedly been right and faster than mine, and on
+  2026-09-04 a correction to a test's own settings caught a **false fail** before
+  it happened. What went wrong in the case that produced the rule was not that a
+  theory was offered — it was that I acted on the theory and never asked what it
+  sounded like. Hold the two apart: observation as evidence, mechanism as the
+  lead worth checking first.
 - **When a fix lands near an open bug, re-test the open bug.** One sat on the
   books for two weeks after being silently fixed, and a diagnostic plan was
   written for a problem that no longer existed.
