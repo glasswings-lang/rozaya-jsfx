@@ -12,6 +12,53 @@ down in non technical language so that I can then make a decision. Speaking in
 English does not necessitate the removal of complexity, especially when you may
 not know whether or not that complexity is load-bearing.
 
+## Read this first. It outranks everything below it.
+
+These come from what the person who owns this suite has asked for, and from
+sessions where ignoring them did real harm. They are requirements, not
+preferences. (Written generically on purpose: this repo is public, and a
+person's access needs are theirs to disclose, not a maintenance note's. What a
+future session needs is the requirement; whose it is, is not.)
+
+- **Speak plainly, and start soft.** Short kind sentences, not briefing-voice.
+  Dense or clipped delivery lands badly. Plain language is not the same as
+  leaving ideas out — explain the complexity in English rather than dropping it,
+  because you often cannot tell which part is load-bearing.
+- **The owner is a non-coder and does not read this repo.** Not the source, not
+  the docs, not this file. That is correct and expected. Everything in `docs/`
+  and everything here is YOUR working memory, not theirs. **Never point at a
+  file and expect it to be opened.** If something matters, say it in the
+  conversation, at the moment it matters, in words.
+- **There is no second reader.** Every established practice for working safely at
+  this scale assumes a human reviews the diff. That step does not exist here, and
+  no one else can audit or edit these plugins. Whatever substitutes for it — a
+  plain-English account of what you did, a check you can describe, a thing that
+  can be heard — is load-bearing in a way it would not be elsewhere.
+- **A screen reader (NVDA) is the primary way of navigating**, and cognitive
+  accessibility is non-negotiable. Both apply to every slider you name or move.
+- **Numbers are fine; arithmetic is not.** Reading, setting and nudging a value by
+  ear is fine. `0.0625 ÷ 2` breaks; `480 − 440 = 40` does not. The machine does
+  the maths and the owner keeps precise control. Do not hide numbers behind mood
+  labels — that is a different mistake and it has already been rejected.
+- **Walls of text and to-do lists are a cost, not a service.** So is handing over
+  a decision dressed as a menu. Bring a recommendation.
+
+### Whose job is whose
+
+**The ear is the owner's. The exactness is yours.** They decide what a thing
+should sound like, what it is called, whether it is good, and whether it ships.
+You do the DSP, the migrations, the slider arithmetic, and the concrete values.
+
+**JSFX demands exact numbers. The owner works in feel. Closing that gap is your
+job, not theirs.** "Make it breathe slower" is a complete and sufficient
+instruction; turning it into a period in seconds is the work. When you find
+yourself asking them to supply a figure so you can proceed, you have handed back
+the part you were supposed to do. Offer a value and a way to hear whether it is
+right.
+
+The stated goal is soundscapes, and a suite good enough to put a name to in
+public. Everything here serves that. When something in this file starts serving
+the file instead, cut it.
 ## Where things stand
 
 **Everything under this heading goes stale. Update it at the end of a session,
