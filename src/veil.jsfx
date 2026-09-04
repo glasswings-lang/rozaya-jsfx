@@ -178,6 +178,32 @@ sr_rest_mem                  = 4400;   // CONFIG (minutes; 0 = gate off)
 sr_pr_resting_mem            = 4416;   // RUNTIME (1 = holding)
 sr_pr_accum_mem              = 4432;   // RUNTIME (samples into this window)
 
+// ---- Play/Rest alternation, ONE implementation, shared by Drift and Ramp.
+// Both features alternate between a running window and a frozen one, and the
+// flip logic is identical; only the CLOCK and the thing being frozen differ.
+// Written twice it would become 28 copies once this reaches the other 14
+// plugins -- 28 chances at a typo no linter can see. So it is written once.
+//
+// `tick` is how much of ONE WINDOW passes per sample, which is what lets each
+// caller keep its own units: Drift passes 1/period_samples, so its windows are
+// drift periods; Ramp passes 1/(unit_seconds*srate), so its windows are
+// minutes or beats. Returns 1 while frozen, 0 while running, and 0 always
+// unless BOTH values are > 0.
+//
+// What is deliberately NOT shared is what freezing DOES -- Drift holds its
+// wave where it stands, the Ramp halts its progress toward a destination.
+// Those genuinely differ, and each still has to be heard on its own.
+function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
+  play > 0 && rest > 0 ? (
+    accum_bank[idx] += tick;
+    accum_bank[idx] >= (resting_bank[idx] ? rest : play) ? (
+      accum_bank[idx] = 0;
+      resting_bank[idx] = 1 - resting_bank[idx];
+    );
+    resting_bank[idx];
+  ) : ( 0; );
+);
+
 // CONFIG defaults — one-time only, so transport re-runs of @init don't
 // wipe user setup. @serialize overwrites these on project reload.
 drift_cfg_inited != 1 ? (
@@ -354,17 +380,13 @@ slider21 ? (
         sr_pl = sr_play_mem[i];
         sr_rs = sr_rest_mem[i];
         sr_pr_on = sr_pl > 0 && sr_rs > 0;
-        sr_pr_on ? (
-          sr_win = sr_pr_resting_mem[i] ? sr_rs : sr_pl;
-          sr_pr_accum_mem[i] += 1;
-          sr_pr_accum_mem[i] >= sr_win * ramp_time_scale * srate ? (
-            sr_pr_accum_mem[i] = 0;
-            sr_pr_resting_mem[i] = 1 - sr_pr_resting_mem[i];
-          );
-        );
+        // Windows here are whole Ramp time units -- a minute, or a beat.
+        sr_hold = pr_frozen(sr_pr_accum_mem, sr_pr_resting_mem, i,
+                            1.0 / (ramp_time_scale * srate),
+                            sr_pl, sr_rs);
         // Advance only while not holding. One-armed on purpose -- an empty
         // else-branch is a silent compile failure in eel2 (CLAUDE.md).
-        !(sr_pr_on && sr_pr_resting_mem[i]) ? (
+        !sr_hold ? (
           sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * ramp_time_scale);
           sr_pr_on ? sr_step *= (sr_pl + sr_rs) / sr_pl;
           speed_ramp_ramp_t_mem[i] += sr_step;
@@ -401,13 +423,9 @@ loop(N_TARGETS,
     // interval needs its own clock precisely because the phase is frozen.
     // Off unless BOTH are > 0, which is the default and is bit-identical
     // to the old always-wandering behaviour.
-    d_pl = drift_play_mem[i];
-    d_rs = drift_rest_mem[i];
-    d_pr_on = d_pl > 0 && d_rs > 0;
-
-    // ONE accumulator counting fractional periods in whichever state we are
-    // in, ticked every sample whether frozen or not. Two reasons it is not
-    // a whole-period counter checked on the phase wrap: that can only ever
+    // Windows here are drift PERIODS, and pr_frozen is ticked every sample
+    // whether frozen or not. Two reasons this is not a whole-period counter
+    // checked on the phase wrap: that can only ever
     // switch state ON a boundary, and phase 0 is the zero crossing of both
     // Sine and Triangle -- so every freeze landed at NO drift, which is the
     // least interesting point in the cycle and the exact opposite of the
@@ -418,15 +436,11 @@ loop(N_TARGETS,
     // version of this comment claimed 2.5 was the crest, and 2.5 is a zero
     // crossing. (Random shape was the one that already worked, since at
     // phase 0 it reads the previous random target rather than zero.)
-    d_pr_on ? (
-      drift_pr_accum_mem[i] += 1.0 / period_samples;
-      drift_pr_accum_mem[i] >= (drift_pr_resting_mem[i] ? d_rs : d_pl) ? (
-        drift_pr_accum_mem[i]   = 0;
-        drift_pr_resting_mem[i] = 1 - drift_pr_resting_mem[i];
-      );
-    );
+    d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,
+                         1.0 / period_samples,
+                         drift_play_mem[i], drift_rest_mem[i]);
 
-    d_pr_on && drift_pr_resting_mem[i] ? (
+    d_frozen ? (
       new_phase = drift_phase_mem[i];   // FROZEN: hold wherever we stopped
     ) : (
       new_phase = drift_phase_mem[i] + 1.0 / period_samples;
