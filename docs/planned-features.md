@@ -2113,3 +2113,36 @@ Every one of these plugins already has a pan-mode selector, and **adding options
 to the END of an existing enum moves no slider**. No migration, and it cannot
 break a saved project — the one shape of change this suite can make freely (R18).
 Only Pan width needs a new slider, and that goes at the END of the range.
+
+## A techniques page -- deferred, but the material is already arriving (captured 2026-09-04)
+
+Not a plugin feature. A page (or a section of `docs/plugins/`) for **things you
+can DO with these**, as distinct from what each control means. Rozaya: *"we need
+a techniques page, but that can come way later."* Deferred on purpose -- it is
+written down here so the entries stop evaporating in the meantime.
+
+**Why it exists at all:** the first entry came out of an ear-test, and only
+because Rozaya volunteered it after the fact. I had taken *"the ramp worked"* as
+a pass/fail and moved on. Rozaya: *"the thing I was hearing was actually pretty
+fucking cool... but I wasn't asked about that. I was just kinda taken as a
+fucking briefing."* **An ear-test report is the only measurement anyone on this
+project can take. Harvesting a yes/no out of it and discarding the rest throws
+away the best input the suite has.** Ask what it SOUNDED like, every time.
+
+### Entry 1 -- two ramps to the same place, one gliding and one stepped
+
+Heard on Veil, 2026-09-04. Two filter cutoffs, both ramping 100 Hz -> 500 Hz over
+the same span. One set to glide continuously; the other given **Ramp play 2 /
+rest 2**, so it climbs in two-and-two steps to the same destination.
+Rozaya: *"That was a cool fucking noise."*
+
+**It requires the controls to be EVERYWHERE**, which is the general argument for
+the propagation work: the trick only exists if two separate things can each do
+both the smooth and the stepped version. A feature present in two plugins out of
+fifteen cannot be played this way.
+
+**Open, and the reason the next step is blocked on one word:** whether the effect
+reads as a *pulse* riding on the glide, or as the two *pulling apart and catching
+up* -- the gap between them being the instrument. Those propagate differently
+(ratio-against-ramp-length versus arrival-time offset). Asked 2026-09-04; do not
+guess.
