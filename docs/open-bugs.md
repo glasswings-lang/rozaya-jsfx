@@ -5,67 +5,46 @@ only when it has been fixed *and* heard.
 
 ---
 
-## 2. Shepard Tone / Shepard Scale share one variable where two are intended
+## 2. Shepard Tone / Shepard Scale — CLOSED, prediction refuted by ear
 
-**Status: DEFECT CONFIRMED BY READING. AUDIBLE CONSEQUENCE UNCONFIRMED, AND THE
-ONE TEST SO FAR SAYS THERE ISN'T ONE.** A fix was written and REVERTED on
-2026-09-04, pending an ear-test. Do not re-apply it without running the test
-below first.
+**Status: NOT A BUG. Tested 2026-09-04 by Rozaya and closed the same day.**
+*"The two plugins that are in there now are fine. Tested scale. Whatever other
+versions exist, the ones in the glasswings folder are fine."*
 
-### What is a fact
+**Do not re-apply the rename.** A change was written, reverted, and is not to
+be restored: commit `1cc177d`, left in history deliberately.
 
-`NUM_OSC` (the fixed maximum, used as the memory stride) and `num_osc` (the
-user's Octave Count, set in `@slider`) differ only by case, and **EEL2 folds
-case** — so they are one variable. The author intended two: the placement loop
-reads `loop(NUM_OSC, ... o < num_osc ? (real oscillator) : (park this slot
-silent))`, and that else-branch, written deliberately with a comment, can never
-execute, because inside `loop(NUM_OSC)` the guard is `o < NUM_OSC`.
+### What was true, and is still true
 
-Note shepard-tone's own source warns about this exact trap, for a different
-variable, twelve lines above the declaration.
+`NUM_OSC` and `num_osc` in both plugins differ only by case, and EEL2 folds
+case, so they are one variable. The author intended two — the placement loop's
+`o < num_osc` guard has an else-branch that can never execute. That much is a
+language fact and is not in dispute.
 
-### What is only a PREDICTION
+### What was wrong
 
-That any of it is audible. The reasoning: neither plugin sets `ext_noinit` (by
-design, the v2.10 render fix), so `@init` re-runs on transport play and resets
-the shared variable to the maximum; `@slider` does not re-run; and `@sample`
-re-places the oscillators on every play via `needs_init`. Octave Count would
-therefore hold until you pressed play and then silently become the maximum,
-with the pitch window still sized to the number you chose.
+The claim that it was AUDIBLE. Predicted from reading: `@init` re-runs on
+transport play with no `ext_noinit`, `@slider` does not re-run, `@sample`
+re-places oscillators via `needs_init` — therefore Octave Count should silently
+jump to the maximum on every play. **It does not.** Tested directly, twice, on
+both plugins. One of those premises is false and I have not established which,
+and that is the honest state of it — a mechanism that reads convincingly and
+does not happen.
 
-### Why this is flagged rather than fixed
+### The part worth keeping
 
-**Rozaya tested both plugins on 2026-09-04 and reported them fine — "they come
-in at defaults perfectly" — and I explained that result away instead of letting
-it count.** The explanation offered was that Tone's default 8 against a max of
-16 cancels exactly: two copies per octave at identical frequency and phase sum
-to 2x while the normaliser divides by 16 instead of 8.
+Rozaya tested it and said it was fine BEFORE the change was written. I produced
+a cancellation theory that made the negative result compatible with the bug
+still existing, and shipped on the theory. The theory did not even cover both
+plugins: it explains Tone's default 8 against max 16 exactly, and fails for
+Scale's 8 against 12, which should have sounded uneven and did not.
 
-That much is arithmetically true. **But it does not cover Shepard Scale**, whose
-default of 8 against a max of 12 does NOT divide — by the same simulation it
-should have sounded uneven, four octaves doubled and four single, and it did
-not. So the theory contradicted half the available evidence and the change was
-made anyway. That is the error being recorded here, not the collision.
+**A negative test result is a result.** When a prediction is tested and does not
+appear, that is evidence against the prediction — not a puzzle to be explained
+until the prediction survives. The rescuing explanation is the tell.
 
-### The test that settles it, and it needs no theory
-
-On the CURRENT (reverted) build, in Shepard Tone or Shepard Scale:
-
-1. Set **Octave Count** to `3` — a value that divides neither maximum, so any
-   effect is at its largest.
-2. Listen.
-3. Stop the transport. Press play again. Listen.
-
-**If the sound thickens or changes weight on the second play, the prediction is
-real** and the rename (`NUM_OSC` → `MAX_OSC`, five references each) should be
-restored from git — see the reverted commit `1cc177d`.
-
-**If it does not change, the prediction is wrong**, the collision is harmless in
-practice, and this entry should say so. Leave the code alone; a rename that
-changes what a plugin sounds like is not free just because it is tidy.
-
-Either way the collision is worth removing eventually, but on a day when the
-result can be heard rather than argued.
+The collision may still be worth removing one day as tidiness. It is not worth
+changing what a working plugin sounds like for.
 
 ---
 ## 1. Melody Phase instances come in out of alignment on project open

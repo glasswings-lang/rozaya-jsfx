@@ -304,6 +304,19 @@ because they apply every session, not on the day they were learned.
   theory was offered — it was that I acted on the theory and never asked what it
   sounded like. Hold the two apart: observation as evidence, mechanism as the
   lead worth checking first.
+- **A NEGATIVE TEST RESULT IS A RESULT.** When a prediction is tested and does
+  not appear, that is evidence against the prediction — not a puzzle to explain
+  until the prediction survives. **The rescuing explanation is the tell**, and
+  it is convincing by construction, because it was built to fit. On 2026-09-04
+  I predicted a case-fold bug in both Shepards, Rozaya tested them and said
+  they were fine, I produced an exact-cancellation argument that made that
+  compatible with the bug still existing, and shipped a change on it — while
+  they were busy testing something else. The argument did not even cover both
+  plugins; it fitted one and contradicted the other. Reverted, and the
+  prediction is now refuted by two direct tests. **The collision is still real
+  and still inert: a fact about the source is not a fact about the sound.**
+  See `docs/open-bugs.md` entry 2, which is kept CLOSED rather than deleted so
+  the reasoning cannot be re-derived and re-shipped.
 - **When a fix lands near an open bug, re-test the open bug.** One sat on the
   books for two weeks after being silently fixed, and a diagnostic plan was
   written for a problem that no longer existed.
