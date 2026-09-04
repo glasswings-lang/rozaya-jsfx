@@ -60,29 +60,50 @@ slider6:0<-24,12,0.01>Output (dB)
 slider7:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Drift target
 slider8:0<0,1000,0.01>Drift up amount (units match target)
 slider9:0<0,1000,0.01>Drift down amount (units match target)
-// Unit is set by slider17 (Drift period unit) — seconds by default, beats in
+// Unit is set by slider11 (Drift period unit) — seconds by default, beats in
 // Host-synced projects. The unit is deliberately NOT in this label: NVDA
 // re-reads the parameter name on every arrow step, and a name that lies half
 // the time is worse than one that's short.
 slider10:20<1,600,0.1>Drift period
-slider11:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Host tempo sync for the drift period. Veil has no rate — the only musical
+// length in it is the drift period, so that is the only thing Host x touches.
+// Seconds is the default; Beats reinterprets slider10 as beats and follows the
+// project tempo. GLOBAL, not per target: one drift clock unit for the plugin.
+// Deliberately NOT synced: Ramp duration / start delay stay in minutes. A
+// wind-down is wall-clock — how long until you are asleep, not a musical
+// length — and the cutoffs are pitch, never tempo.
+slider11:0<0,1,1{Seconds,Beats}>Drift period unit
+slider12:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Drift Play/Rest. The drift wanders for `play` periods, then FREEZES where
+// it stands for `rest` periods, then wanders on. Without this the drift never
+// settles — it is always moving, and stillness is only reachable by switching
+// it off. Counted in drift periods (slider10), so there is no second unit and
+// no arithmetic: you set the period once, then say how many of them.
+// PER TARGET, like everything else behind the selector — so Left cutoff can
+// wander while Right cutoff holds, which makes the WIDTH itself move in steps
+// rather than continuously. Both must be > 0 or the gate is off (the default),
+// which is bit-identical to the old always-drifting behaviour.
+slider13:0<0,64,0.25>Drift play for (periods, 0 = always)
+slider14:0<0,64,0.25>Drift rest for (periods, 0 = always)
 
-// --- Speed Ramp (nested selector; signed delta) ---
-slider12:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Ramp target
-slider13:0<-1000,1000,0.001>Ramp by (units match target)
-slider14:0<0,60,0.1>Ramp duration (minutes)
-slider15:0<0,1,1{Off,On}>Ramp engage
-slider16:0<0,60,0.1>Ramp start delay (minutes)
-
-// Host tempo sync. Veil has no rate — the only musical length in it is the
-// drift period, so that is the only thing Host x touches. Seconds (default)
-// leaves existing projects bit-identical; Beats reinterprets slider10's
-// number as beats and follows the project tempo.
-// GLOBAL, not per drift target: one drift clock unit for the whole plugin.
-// Deliberately NOT synced: Speed ramp duration / start delay stay in
-// minutes. A wind-down is wall-clock — it's how long until you're asleep,
-// not a musical length — and the cutoffs are pitch, never tempo.
-slider17:0<0,1,1{Seconds,Beats}>Drift period unit
+// --- Ramp (nested selector; signed delta) ---
+slider15:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Ramp target
+slider16:0<-1000,1000,0.001>Ramp by (units match target)
+slider17:0<0,60,0.1>Ramp duration (minutes)
+// Ramp Play/Rest — the STAIRCASE. The ramp advances for `play` minutes, holds
+// still for `rest` minutes, and repeats: descend, settle, descend, settle.
+// The rests come OUT of the duration, they do NOT extend it — Ramp duration
+// still means "you arrive in this many minutes", and the staircase only
+// changes HOW you get there, never WHEN. (The alternative would silently make
+// a 10-minute ramp take fifteen, which is the unit-lie this suite refuses.)
+// Note this is not the same as Ramp engage, which is the MANUAL version of
+// the same idea: engage Off freezes the ramp where it stands and On resumes.
+// Both must be > 0 or the gate is off (the default) and the ramp is a smooth
+// slide exactly as before.
+slider18:0<0,60,0.1>Ramp play for (minutes, 0 = smooth)
+slider19:0<0,60,0.1>Ramp rest for (minutes, 0 = smooth)
+slider20:0<0,1,1{Off,On}>Ramp engage
+slider21:0<0,60,0.1>Ramp start delay (minutes)
 
 @init
 // NO ext_noinit: REAPER re-runs @init on every transport play / render
@@ -124,6 +145,17 @@ drift_phase_mem              = 4240;   // RUNTIME
 drift_prev_mem               = 4256;   // RUNTIME (Random shape)
 drift_curr_mem               = 4272;   // RUNTIME (Random shape)
 drift_offset_mem             = 4288;   // RUNTIME (computed Hz offset per target)
+// Drift Play/Rest, per target. Counted in drift PERIODS.
+drift_play_mem               = 4304;   // CONFIG (periods; 0 = gate off)
+drift_rest_mem               = 4320;   // CONFIG (periods; 0 = gate off)
+drift_pr_resting_mem         = 4336;   // RUNTIME (1 = frozen)
+drift_pr_count_mem           = 4352;   // RUNTIME (whole periods in this state)
+drift_pr_accum_mem           = 4368;   // RUNTIME (fractional period while frozen)
+// Ramp Play/Rest -- the staircase. Counted in MINUTES, matching Ramp duration.
+sr_play_mem                  = 4384;   // CONFIG (minutes; 0 = gate off)
+sr_rest_mem                  = 4400;   // CONFIG (minutes; 0 = gate off)
+sr_pr_resting_mem            = 4416;   // RUNTIME (1 = holding)
+sr_pr_accum_mem              = 4432;   // RUNTIME (samples into this window)
 
 // CONFIG defaults — one-time only, so transport re-runs of @init don't
 // wipe user setup. @serialize overwrites these on project reload.
@@ -137,6 +169,10 @@ drift_cfg_inited != 1 ? (
     drift_down_mem[i]       = 0;
     drift_per_mem[i]        = 20;
     drift_shape_mem[i]      = 0;
+    drift_play_mem[i]       = 0;
+    drift_rest_mem[i]       = 0;
+    sr_play_mem[i]          = 0;
+    sr_rest_mem[i]          = 0;
     i += 1;
   );
   drift_cfg_inited = 1;
@@ -152,6 +188,11 @@ loop(N_TARGETS,
   drift_prev_mem[i]   = 0;
   drift_curr_mem[i]   = 0;
   drift_offset_mem[i] = 0;
+  drift_pr_resting_mem[i] = 0;
+  drift_pr_count_mem[i]   = 0;
+  drift_pr_accum_mem[i]   = 0;
+  sr_pr_resting_mem[i]    = 0;
+  sr_pr_accum_mem[i]      = 0;
   i += 1;
 );
 
@@ -193,25 +234,33 @@ res_k = RES_DB_MAX / n_stages * (log(10) / 20);
 out_gain = 10 ^ (slider6 / 20);
 // (qL/qR are computed per-sample in @sample now — resonance drifts/ramps too.)
 
-// Speed Ramp target selector save/restore. slider12 = target; slider13 =
-// per-target `by`; slider14 = per-target duration; slider16 = per-target
-// start delay. slider15 (engage) stays GLOBAL.
-sel_speed_target = slider12;
+// Speed Ramp target selector save/restore. slider15 = target; slider16 =
+// per-target `by`; slider17 = per-target duration; slider21 = per-target
+// start delay. slider20 (engage) stays GLOBAL.
+sel_speed_target = slider15;
 last_speed_target != sel_speed_target ? (
-  speed_ramp_by_mem[last_speed_target]    = slider13;
-  speed_ramp_dur_mem[last_speed_target]   = slider14;
-  speed_ramp_delay_mem[last_speed_target] = slider16;
-  slider13 = speed_ramp_by_mem[sel_speed_target];
-  slider14 = speed_ramp_dur_mem[sel_speed_target];
-  slider16 = speed_ramp_delay_mem[sel_speed_target];
-  slider_automate(slider13);
-  slider_automate(slider14);
+  speed_ramp_by_mem[last_speed_target]    = slider16;
+  speed_ramp_dur_mem[last_speed_target]   = slider17;
+  speed_ramp_delay_mem[last_speed_target] = slider21;
+  sr_play_mem[last_speed_target]          = slider18;
+  sr_rest_mem[last_speed_target]          = slider19;
+  slider16 = speed_ramp_by_mem[sel_speed_target];
+  slider17 = speed_ramp_dur_mem[sel_speed_target];
+  slider21 = speed_ramp_delay_mem[sel_speed_target];
+  slider18 = sr_play_mem[sel_speed_target];
+  slider19 = sr_rest_mem[sel_speed_target];
   slider_automate(slider16);
+  slider_automate(slider17);
+  slider_automate(slider21);
+  slider_automate(slider18);
+  slider_automate(slider19);
   last_speed_target = sel_speed_target;
 ) : (
-  speed_ramp_by_mem[sel_speed_target]    = slider13;
-  speed_ramp_dur_mem[sel_speed_target]   = slider14;
-  speed_ramp_delay_mem[sel_speed_target] = slider16;
+  speed_ramp_by_mem[sel_speed_target]    = slider16;
+  speed_ramp_dur_mem[sel_speed_target]   = slider17;
+  speed_ramp_delay_mem[sel_speed_target] = slider21;
+  sr_play_mem[sel_speed_target]          = slider18;
+  sr_rest_mem[sel_speed_target]          = slider19;
 );
 
 // Drift target selector save/restore (same nested-selector pattern).
@@ -220,32 +269,40 @@ last_target_select != sel_target ? (
   drift_up_mem[last_target_select]    = slider8;
   drift_down_mem[last_target_select]  = slider9;
   drift_per_mem[last_target_select]   = slider10;
-  drift_shape_mem[last_target_select] = slider11;
+  drift_shape_mem[last_target_select] = slider12;
+  drift_play_mem[last_target_select]  = slider13;
+  drift_rest_mem[last_target_select]  = slider14;
   slider8  = drift_up_mem[sel_target];
   slider9  = drift_down_mem[sel_target];
   slider10 = drift_per_mem[sel_target];
-  slider11 = drift_shape_mem[sel_target];
+  slider12 = drift_shape_mem[sel_target];
+  slider13 = drift_play_mem[sel_target];
+  slider14 = drift_rest_mem[sel_target];
   slider_automate(slider8);
   slider_automate(slider9);
   slider_automate(slider10);
-  slider_automate(slider11);
+  slider_automate(slider12);
+  slider_automate(slider13);
+  slider_automate(slider14);
   last_target_select = sel_target;
 ) : (
   drift_up_mem[sel_target]    = slider8;
   drift_down_mem[sel_target]  = slider9;
   drift_per_mem[sel_target]   = slider10;
-  drift_shape_mem[sel_target] = slider11;
+  drift_shape_mem[sel_target] = slider12;
+  drift_play_mem[sel_target]  = slider13;
+  drift_rest_mem[sel_target]  = slider14;
 );
 
 @sample
 // mono-sum the source (handles dual-mono or single-sided mono cleanly)
 mono_in = (spl0 + spl1) * 0.5;
 
-// --- Advance each target's own ramp clock. Engage (slider15) is a
+// --- Advance each target's own ramp clock. Engage (slider20) is a
 //     freeze/resume gate: while Off, ramp_t holds; only transport play
 //     (via @init) resets it. Each target waits its own start-delay, then
 //     advances its own ramp_t 0->1 over its own duration. ---
-slider15 ? (
+slider20 ? (
   i = 0;
   loop(N_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
@@ -253,8 +310,31 @@ slider15 ? (
       speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
         speed_ramp_delay_elapsed_mem[i] += 1;
       ) : (
-        speed_ramp_ramp_t_mem[i] += 1.0 / (srate * speed_ramp_dur_mem[i] * 60);
-        speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+        // Staircase (sliders 18/19). The ramp advances for `play` minutes,
+        // holds for `rest`, and repeats. The rests come OUT of the duration:
+        // the advancing step is scaled by (play+rest)/play, so the ramp still
+        // completes in exactly `duration` minutes of wall clock. Ramp duration
+        // keeps meaning "you arrive in this long" -- the staircase changes
+        // only HOW you get there. Off unless BOTH are > 0.
+        sr_pl = sr_play_mem[i];
+        sr_rs = sr_rest_mem[i];
+        sr_pr_on = sr_pl > 0 && sr_rs > 0;
+        sr_pr_on ? (
+          sr_win = sr_pr_resting_mem[i] ? sr_rs : sr_pl;
+          sr_pr_accum_mem[i] += 1;
+          sr_pr_accum_mem[i] >= sr_win * 60 * srate ? (
+            sr_pr_accum_mem[i] = 0;
+            sr_pr_resting_mem[i] = 1 - sr_pr_resting_mem[i];
+          );
+        );
+        // Advance only while not holding. One-armed on purpose -- an empty
+        // else-branch is a silent compile failure in eel2 (CLAUDE.md).
+        !(sr_pr_on && sr_pr_resting_mem[i]) ? (
+          sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * 60);
+          sr_pr_on ? sr_step *= (sr_pl + sr_rs) / sr_pl;
+          speed_ramp_ramp_t_mem[i] += sr_step;
+          speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+        );
       );
     );
     i += 1;
@@ -274,19 +354,56 @@ loop(N_TARGETS,
 
   drift_offset_local = 0;
   (up > 0 || down > 0) && per > 0 ? (
-    // Drift period unit (slider17): Seconds = per as-is; Beats = per beats
+    // Drift period unit (slider11): Seconds = per as-is; Beats = per beats
     // converted at the live project tempo, so the wander follows the host.
-    per_seconds = slider17 == 1 ? per * 60 / host_bpm : per;
+    per_seconds = slider11 == 1 ? per * 60 / host_bpm : per;
     period_samples = max(per_seconds * srate, 1);
-    new_phase = drift_phase_mem[i] + 1.0 / period_samples;
-    new_phase >= 1.0 ? (
-      new_phase -= 1.0;
-      shape == 2 ? (
-        drift_prev_mem[i] = drift_curr_mem[i];
-        drift_curr_mem[i] = rand(2) - 1;
+
+    // Drift Play/Rest (sliders 13/14), per target, counted in PERIODS.
+    // While resting the phase does not advance at all, so shape_val below
+    // is recomputed from the held phase and the offset simply STAYS where
+    // it stopped -- freeze in place, not a return to centre. The rest
+    // interval needs its own clock precisely because the phase is frozen.
+    // Off unless BOTH are > 0, which is the default and is bit-identical
+    // to the old always-wandering behaviour.
+    d_pl = drift_play_mem[i];
+    d_rs = drift_rest_mem[i];
+    d_pr_on = d_pl > 0 && d_rs > 0;
+
+    // ONE accumulator counting fractional periods in whichever state we are
+    // in, ticked every sample whether frozen or not. Two reasons it is not
+    // a whole-period counter checked on the phase wrap: that can only ever
+    // switch state ON a boundary, and phase 0 is the zero crossing of both
+    // Sine and Triangle -- so every freeze landed at NO drift, which is the
+    // least interesting point in the cycle and the exact opposite of the
+    // point. Fractional values are therefore meaningful, and the FRACTION
+    // chooses where the parameter parks: x.25 freezes at the crest (drifted
+    // fully up), x.75 at the trough (fully down), x.0 and x.5 at neutral.
+    // Verified by simulating the loop, not by reading it -- an earlier
+    // version of this comment claimed 2.5 was the crest, and 2.5 is a zero
+    // crossing. (Random shape was the one that already worked, since at
+    // phase 0 it reads the previous random target rather than zero.)
+    d_pr_on ? (
+      drift_pr_accum_mem[i] += 1.0 / period_samples;
+      drift_pr_accum_mem[i] >= (drift_pr_resting_mem[i] ? d_rs : d_pl) ? (
+        drift_pr_accum_mem[i]   = 0;
+        drift_pr_resting_mem[i] = 1 - drift_pr_resting_mem[i];
       );
     );
-    drift_phase_mem[i] = new_phase;
+
+    d_pr_on && drift_pr_resting_mem[i] ? (
+      new_phase = drift_phase_mem[i];   // FROZEN: hold wherever we stopped
+    ) : (
+      new_phase = drift_phase_mem[i] + 1.0 / period_samples;
+      new_phase >= 1.0 ? (
+        new_phase -= 1.0;
+        shape == 2 ? (
+          drift_prev_mem[i] = drift_curr_mem[i];
+          drift_curr_mem[i] = rand(2) - 1;
+        );
+      );
+      drift_phase_mem[i] = new_phase;
+    );
 
     shape == 0 ? (
       shape_val = sin(2 * $pi * new_phase);
@@ -375,17 +492,21 @@ spl1 = in_R * out_gain;
 // configs so reload restores BOTH targets, not just whichever was selected
 // at save. Version-guarded (CLAUDE.md @serialize gotcha): magic encodes the
 // target count so a format change degrades to @init defaults, not garbage.
-wv_magic = 3100000 + N_TARGETS;
+wv_magic = 3200000 + N_TARGETS;
 file_var(0, wv_magic);
-wv_magic == 3100000 + N_TARGETS ? (
+wv_magic == 3200000 + N_TARGETS ? (
   file_mem(0, speed_ramp_by_mem,    N_TARGETS);
   file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
   file_mem(0, speed_ramp_delay_mem, N_TARGETS);
+  file_mem(0, sr_play_mem,          N_TARGETS);
+  file_mem(0, sr_rest_mem,          N_TARGETS);
   file_var(0, last_speed_target);
   file_mem(0, drift_up_mem,    N_TARGETS);
   file_mem(0, drift_down_mem,  N_TARGETS);
   file_mem(0, drift_per_mem,   N_TARGETS);
   file_mem(0, drift_shape_mem, N_TARGETS);
+  file_mem(0, drift_play_mem,  N_TARGETS);
+  file_mem(0, drift_rest_mem,  N_TARGETS);
   file_var(0, last_target_select);
 
   // TRACK-DUPLICATE FIX. On READ (load/duplicate) file_avail(0) >= 0; on
@@ -395,13 +516,17 @@ wv_magic == 3100000 + N_TARGETS ? (
   // banks for the restored selectors, correcting any transient @slider
   // clobber. (sliderchange, NOT slider_automate — no automation write.)
   file_avail(0) >= 0 ? (
-    slider13 = speed_ramp_by_mem[last_speed_target];
-    slider14 = speed_ramp_dur_mem[last_speed_target];
-    slider16 = speed_ramp_delay_mem[last_speed_target];
+    slider16 = speed_ramp_by_mem[last_speed_target];
+    slider17 = speed_ramp_dur_mem[last_speed_target];
+    slider21 = speed_ramp_delay_mem[last_speed_target];
+    slider18 = sr_play_mem[last_speed_target];
+    slider19 = sr_rest_mem[last_speed_target];
     slider8  = drift_up_mem[last_target_select];
     slider9  = drift_down_mem[last_target_select];
     slider10 = drift_per_mem[last_target_select];
-    slider11 = drift_shape_mem[last_target_select];
+    slider12 = drift_shape_mem[last_target_select];
+    slider13 = drift_play_mem[last_target_select];
+    slider14 = drift_rest_mem[last_target_select];
     sliderchange(-1);
   );
 );
