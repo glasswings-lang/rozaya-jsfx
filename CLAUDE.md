@@ -124,8 +124,16 @@ append-only history; this is the only part of the repo that claims to describe
 - **EAR-TESTED 2026-09-04 ✓ — Veil's rebuilt layout and the Ramp in beats.**
   *"Slider layout? Excellent. Ramp stuff? Works."* So the 22-slider reorder
   reads correctly, and `Ramp time unit` / the beat-counted staircase do what
-  they say. **Not separately confirmed:** Drift play/rest, and the steeper
-  slopes, which have been on the unheard list since the August rolloff work.
+  they say. **The steeper slopes are confirmed too** — *"rolloff works"* —
+  which closes the last item outstanding from the August rolloff overhaul.
+- **Where Drift play/rest earns its keep, and where it does not.** Rozaya, on
+  hearing it in Veil: *"filters are hard to hear a semi-beat pause on."* A
+  pause inside a slow cutoff wander is barely perceptible, because a filter
+  has no articulation of its own to interrupt. **So when this propagates,
+  aim it at parameters with an attack**: tremolo depth and rate, note timing,
+  breath and heart segments. On the filters it is correct and nearly
+  inaudible, which is not a reason to remove it but is a reason not to lead
+  with it.
 - **Still unheard:** the Host x beats-per-cycle conversion in four plugins, and
   the per-cycle pan tick in Melody (note trigger) and the filters (LFO wrap) —
   Polyrhythm's tremolo-wrap tick passed on 09-04 but the others advance on a
