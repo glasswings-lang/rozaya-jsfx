@@ -40,6 +40,17 @@ future session needs is the requirement; whose it is, is not.)
   ear is fine. `0.0625 ÷ 2` breaks; `480 − 440 = 40` does not. The machine does
   the maths and the owner keeps precise control. Do not hide numbers behind mood
   labels — that is a different mistake and it has already been rejected.
+- **Leave no debris in the folders they open.** `E:/reaper` and
+  `E:/reaper/finished` are working areas. A `.pre-something-bak` beside a
+  project is a monument to a migration that went wrong, and by screen reader
+  every one of them has to be read past to reach the file actually wanted.
+  Rozaya, 2026-09-04, having just swept ~44 of them out by hand: *"This is the
+  working area. I can't want to do anything if it's cluttered with reminders of
+  all the shit that I'm not happy about with these plugins... I'm starting to
+  dread opening any of this."* **This is not tidiness. It is whether the
+  project gets opened at all.** Backups go to the homes listed under *Layout*;
+  a `-TEST` or `-MIGRATED` copy is promoted or deleted before the end of the
+  exchange that made it, never left "for now".
 - **Walls of text and to-do lists are a cost, not a service.** So is handing over
   a decision dressed as a menu. Bring a recommendation.
 
@@ -219,18 +230,13 @@ older docs can lag too. Two renames matter when reading any of them:
 - `tools/` — Python utilities, all run from outside REAPER. Two families worth knowing: **`jsfx_lint.py`** (paren balance per section, empty `()` branches, case-folded names, scientific notation, reserved-variable writes, slider declarations after an `@section` — REAPER tells you none of this until load, so run it), and the **`.RPP` migration scripts**, which all build on `rpp_sliders.py` for parsing a project's slider line. `tools/README.md` indexes them. See also the standing rule that a script may *apply* an authored list but must never *infer* one.
 - `archive/exploration/` — work that never shipped. Experiments, abandoned approaches, discarded design directions (tract waveguide diagnostics, vowel shapers, the polyrhythm_tremolo decomposition experiment, the standalone drone synths). Preserved as reference, not maintained.
 - `archive/versions/<plugin>/v<N>.jsfx` — prior shipped versions that have since been replaced. Distinct from `exploration/` (which holds never-shipped work). See `archive/versions/README.md` for the convention.
-- **Nothing of ours lives loose in Rozaya's folders.** `E:/reaper` and
-  `E:/reaper/finished` are WORKING areas and are kept clear: a folder full of
-  `.pre-something-bak` files is a wall of reminders of migrations that went
-  wrong, and it had already cost Rozaya the will to open the project. Backups
-  go to **`E:/reaper/finished/backups/`** (projects and plugin builds), and
-  whole-tree pre-migration snapshots to **`.../backups/snapshots/`** -- the
-  seven `_pre-*` folders that used to sit at the root of `E:/reaper` were moved
-  there 2026-09-04, 165 files, counted before and after. Effects-folder `.jsfx`
-  backups go to `C:/Users/solst/jsfx-backups/`, never inside
-  `Effects/glasswings/` (a renamed twin there loads as a second plugin
-  forever). **A `-TEST` or `-MIGRATED` copy gets promoted or deleted before the
-  end of the exchange that made it** -- never left "for now".
+- **Backup and snapshot homes** (the reason is a rule at the top of this file):
+  `E:/reaper/finished/backups/` for project backups and plugin builds,
+  `.../backups/snapshots/` for whole-tree pre-migration snapshots (the seven
+  `_pre-*` folders moved out of the root of `E:/reaper` on 2026-09-04, 165
+  files, counted before and after), and `C:/Users/solst/jsfx-backups/` for
+  effects-folder `.jsfx` copies -- never inside `Effects/glasswings/`, where a
+  renamed twin loads as a second plugin forever.
 - `LICENSE` — CC0.
 - `README.md` — top-level overview.
 
