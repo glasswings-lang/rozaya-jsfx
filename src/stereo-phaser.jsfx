@@ -136,34 +136,13 @@ dmin = min(dmin, dmax);
 lfoInc = 2 * $pi * rate / srate;
 
 @block
-// ---- SELF-REPAIR for the 2026-09-04 reorder. -------------------------------
-// The flag is RAISED in @serialize and acted on HERE, never both in the same
-// place. @serialize and REAPER's restore of the slider LINE are independent
-// paths with no guaranteed order, so a permute inside @serialize can read
-// values that have not arrived yet and shuffle the @init DEFAULTS instead --
-// which is "migrate what was DEFAULTED", the failure CLAUDE.md names. @block
-// cannot run before the instance is configured, so what it reads is real.
-//
-// Note the flag is NOT cleared in @init. @init re-runs on every transport play
-// here (no ext_noinit), and clearing it there would let a play press eat a
-// migration that had not happened yet.
-pending_layout_migration ? (
-  // Read all nine in OLD positions first. Writing in place would clobber a
-  // value before a later line needs it -- s2 must survive until s4 is written.
-  o1 = slider1; o2 = slider2; o3 = slider3; o4 = slider4; o5 = slider5;
-  o6 = slider6; o7 = slider7; o8 = slider8; o9 = slider9;
-  slider1 = o1;   // Rate            stayed put
-  slider2 = o8;   // Rate Mode       was 8
-  slider3 = o9;   // Host ratio      was 9
-  slider4 = o2;   // Range Min       was 2
-  slider5 = o3;   // Range Max       was 3
-  slider6 = o4;   // Feedback        was 4
-  slider7 = o5;   // Stages          was 5
-  slider8 = o6;   // Stereo Spread   was 6
-  slider9 = o7;   // Wet/Dry Mix     was 7
-  sliderchange(-1);        // NEVER slider_automate -- that writes automation
-  pending_layout_migration = 0;
-);
+// The 2026-09-04 reorder is repaired IN THE PROJECT FILE, not here. An earlier
+// version of this plugin carried a runtime self-repair that keyed on "no blob
+// means old layout" -- and it was actively dangerous once the file was migrated,
+// because a correctly-migrated project ALSO has no blob, so the plugin would
+// have permuted it a second time and scrambled it. REAPER reads the slider line
+// as positional numbers and nothing else, so the numbers are what to fix.
+// See tools/phaser_migrate_rate_triple.py.
 // --- Restore-order guard for the change-detecting controls below -----------
 //     These trackers answer "did the user just move this control?". Adopted
 //     HERE, not in @slider: on a fresh or duplicated instance @slider runs
@@ -241,29 +220,3 @@ loop(stages,
 );
 fbR = x;
 spl1 = dry * spl1 + wet * x;
-
-@serialize
-// This plugin had NO @serialize before 2026-09-04, and that absence is exactly
-// what makes the reorder repairable. A project saved by the old build carries
-// no blob at all, so on read file_avail(0) is 0 -- and "no blob" is a perfect,
-// unambiguous signal for "these slider values are in the old order". A project
-// saved by this build carries the magic and needs no repair.
-//
-// Read the whole thing in ONE go. Sequential file_var advances a cursor that
-// cannot be rewound, so a plugin that guesses wrong about the format has
-// already destroyed its own ability to fall back.
-//
-// This section only RAISES A FLAG. It touches no sliders -- see @block.
-sp_avail = file_avail(0);
-sp_avail >= 0 ? (
-  // READ (load or track duplicate).
-  sp_avail == 0 ? (
-    pending_layout_migration = 1;   // pre-reorder project: no blob, old order
-  ) : (
-    file_var(0, sp_magic);
-  );
-) : (
-  // WRITE (save or undo point). Stamp the current layout.
-  sp_magic = 4100001;
-  file_var(0, sp_magic);
-);
