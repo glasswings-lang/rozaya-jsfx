@@ -2,13 +2,85 @@
 
 A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment audio. Public domain (CC0). Designed by Rozaya, developed iteratively with Claude.
 
+## From Rozaya
+
+*The rest of this file is the AI's words. This section is mine.*
+
+I don't code. I don't code at all. That doesn't mean you have to simplify things
+to the point of leaving out ideas. It does mean that I need things to be broken
+down in non technical language so that I can then make a decision. Speaking in
+English does not necessitate the removal of complexity, especially when you may
+not know whether or not that complexity is load-bearing.
+
+## Where things stand
+
+**Everything below this heading goes stale. Update it at the end of a session,
+before writing anything into the session log further down** — that log is
+append-only history, this is the only part that claims to describe *now*.
+
+*Checked against the tree 2026-09-03.*
+
+- **Branch `feature/melody-reorder`, 42 commits ahead of `master`, unpushed and
+  unmerged.** `master` itself is in sync with `origin/master` — the session log
+  below still says the 2026-07 run is unpushed, and that is no longer true.
+- **`v2.21` is the newest tag and sits 23 commits back on `master`**, so
+  everything on `master` since it, plus all 42 branch commits, is unreleased.
+  Per the session log, v2.21 is marked *pre-release* on GitHub and v2.20 is
+  "Latest" — that is release metadata this file cannot verify, so check with
+  `gh release list` rather than trusting the line. And **`git fetch --tags`
+  before assuming the next version number**; stale local tags have already
+  caused one misnumbered release.
+- **Almost none of the 2026-09-02 work has been ear-tested.** The exception is
+  `Pan Glide 0` (heard, clean). The per-cycle pan modes, the Host x
+  beats-per-cycle conversion in four plugins, and the Melody reorder are all
+  unheard.
+- **The suite consistency sweep is mid-flight.** `docs/suite-consistency-plan.md`
+  is the authoritative document for it — read it before touching interface
+  naming, ordering, ranges or units anywhere in the suite. Phase 0 and most of
+  Phase 1 are done; **Phase 2 (reorders + migrations) has not started.**
+- **No releases until the sweep finishes.** Pushing is fine; a release is a
+  distribution artefact and shipping one mid-sweep hands a stranger a
+  half-renamed suite.
+- **`docs/open-bugs.md` has one open entry** (Melody Phase instances arriving out
+  of alignment in `simple-sequence`). Read it before touching Melody.
+- **`docs/NEXT_SESSION_PICKUP.md` is stale** — it describes the 2026-08-12 Host x
+  branch state and names a branch that no longer exists. Its *rules* section is
+  still good; its status section is not. Either refresh it or fold it into this
+  heading and delete it.
+
+### Terminology that changed, and where the old words survive
+
+The session log below is **append-only history and is not rewritten**, so it
+uses the names that were current when each entry was written. Two renames
+matter when reading it:
+
+- **`Speed ramp` is now `Ramp`** everywhere the user can see (2026-08-31, 70
+  labels across 14 plugins). The internal variables are still `speed_ramp_*` and
+  that is fine. Every "Speed Ramp" in the history below means today's `Ramp`.
+- **`Host x` is a rate mode, and `Rate Value` there means BEATS PER CYCLE.** The
+  history below describes it as a *multiplier* of the project tempo, which is
+  what it was from 2026-08-11 until R13-revised on 2026-09-02. **Sixteen plugins
+  have a Host x mode. Four are converted** — both Polyrhythms, Dapple, Bubbler —
+  **and twelve still read Rate Value as a multiplier there** (counted
+  2026-09-03; the session note below says "nine", which was already wrong when
+  written). Womb is in the twelve but is a special case: its Host x was rebuilt
+  on the R11 shape (a sync-target selector plus a free `Every N beats`) rather
+  than left as a bare multiplier, so the raw count overstates the remaining
+  work by one. So both descriptions are true of different files right now —
+  check the file before trusting either. Recount with:
+  `cd src && for f in *.jsfx; do grep -q "Host x" "$f" && { grep -qiE "beats per (cycle|bubble|beat|breath)" "$f" && echo "CONVERTED $f" || echo "multiplier $f"; }; done`
+
 ## Layout
 
-- `src/*.jsfx` — plugin source files (one per plugin). A plugin can ship parallel versions when they have genuinely different design tradeoffs, but a superseded version moves to `archive/versions/`. Womb is the current example: v3 (`womb_sound_generator_v3.jsfx`) is the sole supported Womb; **v1 and v2 were archived 2026-06-15** to `archive/versions/womb_sound_generator/` (legacy, frozen, no further updates — they also still carry the pre-Park-Miller right-channel PRNG artifact, left unfixed as frozen-as-shipped).
+- `src/*.jsfx` — plugin source files (one per plugin), 21 of them. A plugin can ship parallel versions when they have genuinely different design tradeoffs, but a superseded version moves to `archive/versions/`. **Only one parallel pair is left: Polyrhythm Phase v1 (`polyrhythm_phase.jsfx`) and v3 (`polyrhythm_phase_v3.jsfx`)**, and that pair is a migration backlog rather than a decision — see the versioning section. Womb v1/v2 were archived 2026-06-15 (legacy, frozen, and still carrying the pre-Park-Miller right-channel PRNG artifact, left unfixed as frozen-as-shipped); **Melody Phase v2 was archived 2026-09-02** after zero projects ever reached it, its note-name picker having moved into v1.
 - `docs/plugins/` — user-facing reference, **one page per plugin** (`docs/plugins/<plugin>.md`), indexed by `docs/plugins/README.md`. Split from the old single-file `docs/rozaya_jsfx_manual.md` on 2026-07-08 (verbatim carve; nothing lost) so a player who installs one `.jsfx` reads only that plugin's page. Each page is self-contained — it documents that plugin's own controls (including how shared features like Drift and Speed Ramp apply to it), so no companion file is needed; the earlier `shared-systems.md` was removed for reintroducing exactly the "docs for stuff you don't have" coupling the split fixes. `docs/rozaya_jsfx_manual.md` is now a stub redirect. **Update the relevant plugin page whenever you change a slider or add a feature** — modders and players read it instead of the source. **Lockstep still applies** (see the manual-audit discipline): update the touched plugin's page and re-verify counts/defaults, but the audit surface is now scoped to one file per plugin.
-- `docs/planned-features.md` — design-session capture of in-flight feature work and deferred items. Less authoritative than the manual.
+- `docs/suite-consistency-plan.md` — **the authoritative document for the interface sweep currently in flight.** Naming rules (R1–R19), the canonical layout, the migration strategy, and the phase ordering all live here. Read it before changing any slider's name, order, range or unit. It is long because it had to decide everything up front: a migration costs the same whether one thing changes or forty, so everything a plugin needs changes in one version bump.
+- `docs/layouts/<plugin>.md` — the authored target layout for a plugin whose reorder hasn't landed yet. Four exist so far.
+- `docs/open-bugs.md` — known-broken and not fixed. **Read it before touching the plugin it names.** It also records theories already burned, so they aren't tried again.
+- `docs/planned-features.md` — design-session capture of in-flight feature work and deferred items. Less authoritative than the plugin pages.
 - `docs/womb-v2-design.md` — Womb v2 architectural rationale.
-- `docs/dyscalculia-accessibility-sweep.md` — planning + design reference for the planned dyscalculia-accessibility sweep. Core rule: never make the user produce a number — note-value pickers / felt units / nudge-by-ear over decimal grids and forced conversions. Rozaya is dyscalculic as well as blind; both axes apply.
+- `docs/dyscalculia-accessibility-sweep.md` and `docs/designing-for-dyscalculia.md` — Rozaya is dyscalculic as well as blind; both axes apply. **The core rule was sharpened and the old wording is wrong: the barrier is ARITHMETIC AND CONVERSION, not numbers.** Reading, setting and nudging a value by ear is fine. `0.0625 ÷ 2` breaks; `480 − 440 = 40` does not. So the machine does any maths, and the user keeps precise control — do NOT "fix" access by hiding numbers behind mood labels, which is a separate and already-rejected mistake.
+- `tools/` — Python utilities, all run from outside REAPER. Two families worth knowing: **`jsfx_lint.py`** (paren balance per section, empty `()` branches, case-folded names, scientific notation, reserved-variable writes, slider declarations after an `@section` — REAPER tells you none of this until load, so run it), and the **`.RPP` migration scripts**, which all build on `rpp_sliders.py` for parsing a project's slider line. `tools/README.md` indexes them. See also the standing rule that a script may *apply* an authored list but must never *infer* one.
 - `archive/exploration/` — work that never shipped. Experiments, abandoned approaches, discarded design directions (tract waveguide diagnostics, vowel shapers, the polyrhythm_tremolo decomposition experiment, the standalone drone synths). Preserved as reference, not maintained.
 - `archive/versions/<plugin>/v<N>.jsfx` — prior shipped versions that have since been replaced. Distinct from `exploration/` (which holds never-shipped work). See `archive/versions/README.md` for the convention.
 - `LICENSE` — CC0.
@@ -16,7 +88,24 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
 
 ## Active plugin under heaviest development
 
-`src/polyrhythm_phase.jsfx` — drone synth, not a playable instrument. Up to 8 simultaneous voices, polyrhythmic tremolo with attack/release envelope, optional binaural beat, four pan modes (Tremolo / Increment / Spread / Spread Reversed), twelve waveforms, Direction & Reverse (5 modes), Start Delay, and Play/Rest gating (per-voice cycle counts, depth-floor cancel on final release for clean rest entry). Currently at v2 — see the `desc:` line in the file. Slider IDs 1-62 are bit-identical to v1; v2 added sliders 63 / 64 (Play for / Rest for) at the end with defaults of 0 (gate off), so any v1 project still opens unchanged.
+**Polyrhythm Phase — and `src/polyrhythm_phase_v3.jsfx` is where a new feature
+gets built and judged.** `src/polyrhythm_phase.jsfx` (v2 of the v1 line) gets
+only what keeps it working until its projects cross over. Defaulting to v1
+because it has more instances is backwards — that count is the migration
+backlog, not a vote. (Confirmed by Rozaya 2026-09-02; see the versioning section.)
+
+A drone synth, not a playable instrument. Up to 8 simultaneous voices,
+polyrhythmic tremolo with attack/release envelope, optional binaural beat,
+**16 pan modes** (Tremolo / Increment / Spread / Spread Reversed, plus the
+per-cycle family added 2026-09-02), **14 waveforms**, Direction & Reverse
+(5 modes), Start Delay, Play/Rest gating (per-voice cycle counts, depth-floor
+cancel on final release for clean rest entry), nested-selector Drift and Ramp,
+and a Host x rate mode where **Rate Value means beats per cycle**.
+
+The two differ in how a voice is pitched: v1 takes semitones against a tuning
+reference, v3 is note-based. Slider counts as of 2026-09-03: v1 declares 82
+sliders with a highest ID of 86; v3 declares 90. Their `@serialize` blobs are
+byte-identical, which is what makes the v1 → v3 migration tractable.
 
 ## Project values to preserve
 
@@ -35,7 +124,7 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
 - **When a crossfade hands a source from one oscillator bank to another, hand the PHASE over too — otherwise every handoff clicks, and it will look intermittent.** Any A/B crossfade engine (two voices, two banks, ping-pong grains) eventually reaches "the thing B was fading *to* is now A's job." If A resumes from its own phase accumulators, the waveform steps: same magnitudes, same frequency, but every partial restarts mid-cycle. **Symptom signature:** a click at transitions whose LOUDNESS varies wildly run to run — sometimes inaudible, sometimes a pop — because the step size is the difference between two unrelated phase sets. That randomness is what disguises a once-per-transition bug as a CPU dropout, and it sends you hunting for load problems instead. **Second tell, and a sharper one: the click lives in ONE engine, so it vanishes as that engine's own level goes to zero.** In Passage/Morpher the voice is scaled by `hlevel = cos(texture*PI/2)`, so the click is full at Texture 0 and *mathematically absent* at Texture 100 (Rozaya, 2026-07-28: "with 100 percent it was a non-issue"). A fault that tracks a crossfade slider is a fault in one side of the crossfade -- which localises it instantly, and is worth asking about before touching anything. **Fix:** on the swap, copy B's phase accumulators into A's (`hph[i] = hphB[i]` across all partials). A then resumes the exact waveform B was mid-way through; B's own phases don't matter afterwards because it re-enters at zero level and fades up. Mirror the copy for a backwards step, and make the two cases mutually exclusive — a two-slot bounce satisfies both tests at once and running both copies feeds each bank the other's already-overwritten values. Cost is one copy on the transition sample only. Reference implementation: the "voice phase handover" block in `@sample` of `src/spectral_vowel_passage.jsfx` (ear-tested by Rozaya 2026-07-27; the same plugin's slot changes clicked from birth until this landed). Applies to Passage's morph legs, any future two-bank morph engine, and manual crossfade sliders that cross a source boundary.
 - **A slider renumber breaks shipped projects, but `@serialize` blobs survive it — so the repair is a text migration of the project's slider line, not another renumber.** REAPER restores plugin values by slider POSITION, so inserting a control mid-list shifts every value above it (Passage's Fade in/out shape at 10-11 pushed Wash grain's 150 onto Voice level dB, Auto-morph onto Audition, etc.). The `<JS_SER>` blob is a raw memory dump with no notion of slider numbering, so captures/banks come through untouched — which means the whole break lives in one plain-text line per instance and can be shifted in place. `tools/passage_migrate_sliders.py` is the worked example: a HOPS table of `(slider count this applies to, how many keep their place, values to insert)`, walked in order so a project two layouts behind migrates straight through in one run. Seed each new slider to whatever reproduces the OLD behavior (Linear fades, a one-frame capture average) rather than to the plugin's default — the project should still sound like itself. Keep the line's token width, preserve CRLF, and gate on the value count so it is idempotent and safe to re-run over a folder. **Still add new sliders at the END** — this is the repair, not a licence. And the assumption that lets you renumber freely ("no shipped projects yet") expires silently: Passage had real projects before the comment claiming otherwise was written. Check with `grep -rl <plugin>.jsfx --include=*.RPP` over the project folders before renumbering anything.
 - **LCG random/noise generators overflow EEL2's 2^53 integer limit — use Park-Miller.** EEL2 does ALL arithmetic in float64, where integers are exact only up to 2^53 (9.0e15). A power-of-2-modulus LCG step `(seed * a + c) & 0xFFFFFFFF` only stays exact if `a * seed_max < 2^53`; with a 32-bit seed (`seed_max ≈ 2^32`) that means `a` must be under ~2^21. The glibc multiplier **22695477** violates this (`22695477 * 2^32 = 9.7e16 > 2^53`): the multiply silently ROUNDS before the bitmask, degenerating the "random" stream into a faint **periodic tone + DC offset**. This shipped in breath_gen / heartbeat / all three wombs on the right (decorrelated) channel only — audible as a subtle "swung" wobble on R that scales with volume (because it's baked into the signal). The left channels used 1664525 (`1664525 * 2^32 = 7.1e15`, just under the limit) so they were fine, which is why it was R-only. **Fix: Park-Miller / MINSTD** (`x = (x * a) % 2147483647`, a ∈ {16807, 48271, 69621}) — a prime modulus generator whose `a * modulus ≈ 1e14` sits ~60-90x under 2^53 by design, with full period and no low-bit patterning. Give the two channels DIFFERENT multipliers (e.g. 48271 / 69621) so they're genuinely independent, not phase-shifted copies; seed each nonzero in [1, 2^31-2]. EEL2's built-in `rand()` is fine for a single stream but is one shared sequence — you can't pull two independent deterministic channels from it, which is why these plugins roll their own. Reference implementation: the noise block in `src/breath_gen.jsfx`. Symptom signature: a faint periodic/tonal artifact on one channel that follows volume and survives into rendered files. (Diagnosed 2026-06-15; the two archived wombs keep the bug frozen-as-shipped.)
-- **The Golden TS / SG slots are NOT what the names suggest** — and this is deliberate now. Polyrhythm Phase originally shipped with slot 3 ("Golden TS") as a phi-warped *sine* (not triangle, despite the name), and slot 4 ("Golden SG") with an extra sine pre-warp before the phi-warp. Melody Phase initially implemented them strictly per their names (warp → triangle, clean warp → sine), which made the two plugins SOUND DIFFERENT for the same slot. Reconciled 2026-05-24: all four oscillator plugins (Polyrhythm Phase, Melody Phase, Shepard Scale Generator, Shepard Tone Generator) now offer the same 12-waveform palette at the same slot indices. Slots 3 / 4 / 5 match Polyrhythm Phase's original behavior (preserves existing project files); slots 10 ("Phi Triangle") and 11 ("Phi Sine") are the strict / manual-correct versions. Don't "fix" slot 3 to output a triangle — there are projects built on the sine sound. Shepard Scale + Tone gained the new slots 6–11 (Bell, Wavefold, Half-sine, Phi-cascade, Phi Triangle, Phi Sine) in this same change — they previously stopped at slot 5. **Convention going forward: any new waveform added to Polyrhythm Phase or Melody Phase should land in all four plugins at the same slot index.** Diverging waveform palettes between sibling oscillator plugins is exactly the inconsistency this sweep cleaned up.
+- **The Golden TS / SG slots are NOT what the names suggest** — and this is deliberate now. Polyrhythm Phase originally shipped with slot 3 ("Golden TS") as a phi-warped *sine* (not triangle, despite the name), and slot 4 ("Golden SG") with an extra sine pre-warp before the phi-warp. Melody Phase initially implemented them strictly per their names (warp → triangle, clean warp → sine), which made the two plugins SOUND DIFFERENT for the same slot. Reconciled 2026-05-24: all four oscillator plugins (Polyrhythm Phase, Melody Phase, Shepard Scale Generator, Shepard Tone Generator) now offer the same waveform palette at the same slot indices — **14 slots as of 2026-09-03** (Square and Pulse were appended at 12/13 by the 2026-06-26 Harmonic Sculptor work, which shares the same palette; that is five plugins carrying it, not four). Slots 3 / 4 / 5 match Polyrhythm Phase's original behavior (preserves existing project files); slots 10 ("Phi Triangle") and 11 ("Phi Sine") are the strict / manual-correct versions. Don't "fix" slot 3 to output a triangle — there are projects built on the sine sound. Shepard Scale + Tone gained the new slots 6–11 (Bell, Wavefold, Half-sine, Phi-cascade, Phi Triangle, Phi Sine) in this same change — they previously stopped at slot 5. **Convention going forward: any new waveform added to Polyrhythm Phase or Melody Phase should land in all four plugins at the same slot index.** Diverging waveform palettes between sibling oscillator plugins is exactly the inconsistency this sweep cleaned up.
 - **Stop-sequence-style behaviors** don't apply here (no language model). What does apply: stay below 90° static L/R phase offset to avoid mono-cancellation on speakers; static phase offsets read as **lateralization** to the listener (ITD cue), not as width. True width without binaural beating requires either a) multi-voice unison with detune, b) chorus/ensemble effects with modulated delay lines, or c) all-pass filter networks. There's a session log of attempting (b) inside the plugin and reverting to "use Reaper's stock chorus AFTER the synth" — see git log around the pan-modes merge for context.
 - **`@init` re-runs on every transport start by default.** This silently re-zeros all plugin memory (variables, arrays, oscillator phases, smoother states) on every press of the Reaper play button. Usually you WANT that (conventional Reaper "fresh start on play"), but if you ever need state to persist across stop/play (drift relationships, gate progression, accumulated phase positions), set `ext_noinit = 1;` at the top of `@init`. With that flag, `@init` only runs on actual plugin load and Reaper leaves memory intact at transport boundaries. Polyrhythm Phase v2 deliberately does NOT set this flag — the gate begins a fresh play period on every play press, matching v1 behavior. Documented at [reaper.fm vars.php](https://www.reaper.fm/sdk/js/vars.php).
 - **`play_state` enumeration** (verbatim from official docs): `0 = stopped, <0 = error, 1 = playing, 2 = paused, 5 = recording, 6 = record paused`. There's no `3` or `4`. Common pitfall: `play_state == 0` alone misses the pause case — use `play_state == 0 || play_state == 2` if you want to gate "transport is not advancing." For "transport is actively moving" (regardless of mode) use `play_state == 1 || play_state == 5`. Transport-edge detection via `play_state != last_play_state` is more robust than the `play_state > 0 && last_play_state == 0` pattern (which only catches stop→play, not pause→play or play→pause).
@@ -65,7 +154,7 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
 
   **Why it slipped through:** the verification compared the output against the same authored table the migration used, so it agreed with itself perfectly. Rozaya: *"read and compare, don't script."* Reading ONE real line beside the control names would have shown it immediately — and did, once asked.
 
-  **Which plugins are exposed:** any with more than 64 sliders. Today that is `melody_phase` (80), `polyrhythm_phase` (84, and the library holds instances storing up to slider 83), `polyrhythm_phase_v3` (88, instances up to 88). **Polyrhythm v1 -> v3 is next in Phase 2 and both ends are over 64**, so it is squarely in this.
+  **Which plugins are exposed:** any with more than 64 sliders. Today that is `melody_phase` (82), `polyrhythm_phase` (82 declared, highest ID 86), `polyrhythm_phase_v3` (90), `shepard-tone` (75) and `shepard-scale` (64, i.e. exactly at the boundary and one slider away from crossing it). **Re-count rather than trusting these figures — they moved twice in one day on 2026-09-02.** **Polyrhythm v1 -> v3 is next in Phase 2 and both ends are over 64**, so it is squarely in this.
 
   **Fix: `tools/rpp_sliders.py`.** One module that parses a value line into `{slider_id: token}` and renders it back, marker and padding handled, with a round-trip check inside `render_line` so a shifted line cannot be written silently. It round-trips all 377 lines in the library byte-identically. **Every migration script uses it; none re-derives the format.** `morpher_migrate_layout.py` predates it, is correct because the Morpher has 40 sliders, and now refuses outright if it ever meets a quoted token.
 
@@ -102,13 +191,16 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
   - 272 v_pan_static (target pan position for Spread / Spread Reversed modes)
   - 288 v_resting (per-voice Play/Rest flag: 1 = silent during rest, 0 = playing)
   - 304 v_pr_cycle (per-voice Play/Rest cycle counter, advances at the voice's own v_trem_freq)
-  - 320 **is NOT free** — `chorus_buf` owns 320..8511, and the drift / Speed Ramp
-    banks run from 8512 to 8927. **The first genuinely free slot is 8928.** This
-    line used to say "320 onward: free for new arrays", which would have written
-    a new bank straight through the chorus delay buffer, silently. Verified
-    2026-09-02 while adding the per-cycle pan modes; the same map holds for
-    `polyrhythm_phase_v3`. Check with
-    `grep -nE '^[a-z_]+ *= *[0-9]{3,};' src/<plugin>.jsfx` before allocating.
+  - 320 **is NOT free** — `chorus_buf` owns 320..8511, the drift / Ramp banks run
+    8512..8927, and the per-cycle pan banks added 2026-09-02 took the next two:
+    8928 `pan_cycle_index`, 8944 `pan_cycle_dir`. **The first free slot is now
+    8960**, in both v1 and v3.
+    This line used to say "320 onward: free for new arrays", which would have
+    written a new bank straight through the chorus delay buffer, silently — and
+    then it said 8928 was free for one day, until the pan work took it. **Do not
+    trust the number written here; re-derive it.** `grep -nE '^[a-z_]+ *= *[0-9]{3,};'
+    src/<plugin>.jsfx` lists every allocation in the file, and the last one plus
+    its width is the answer.
 - **JSFX can LOAD audio samples — it's not just live DSP.** Idiom (from stock `guitar/amp-model-dual`, used in `src/sustain_looper.jsfx`): a file-selector slider `sliderN:/foldername:default:Name` presents a dropdown of files in `<REAPER resource>/Data/foldername/` (NVDA-navigable as a list-parameter, same family as enum dropdowns). Then `fh = file_open(sliderN); file_riff(fh, nch, sr); n = file_avail(fh)/nch; file_mem(fh, buf, n*nch); file_close(fh);` reads interleaved samples. Reload only when `sliderN|0` changes. **Formats:** WAV and OGG are reliable; FLAC/MP3 are NOT guaranteed — export loop sources as WAV. **Memory:** ~8 million slots/instance by default (≈80 s of 48 kHz stereo, interleaved), max 32M via `options:maxmem=33554432` (≈5.5 min) — keep loaded samples short. `file_riff` with nch `'rqsr'` + a target SR auto-resamples (REAPER 6.29+).
 - **JSFX `fft()`/`ifft()` operate on PERMUTED bin order.** To read or edit frequency bins by index you MUST call `fft_permute(buf,size)` after `fft()`, do the work in natural order, then `fft_ipermute(buf,size)` before `ifft()`. Skipping it corrupts the spectrum — a magnitude-preserving op (e.g. phase randomization) will *grow harmonics on a pure sine*, which is impossible if implemented right and is the diagnostic tell. (Surfaced building the Paulstretch-style `smear_stretch`, now archived.)
 - **Muted/inaudible layers still cost full CPU — gate expensive per-grain / per-block DSP (FFTs especially) on the layer's LEVEL, or a busy project crackles.** JSFX runs the code whether or not its output is audible. In `spectral_vowel_morpher` at Texture 0 (pure voice, wash muted), the wash engine still ran two `FFTSIZE` inverse FFTs *per grain* on audio being multiplied by zero — a real per-grain load that tipped busy projects into occasional real-time-deadline misses: **non-clipping crackle on ~every slot.** That's the diagnostic tell — the crackle scales with project CPU load, NOT with signal level, and it eases when you free CPU / mute other tracks (a clip-driven crackle would do the opposite). **Fix:** gate the heavy work on the layer being audible — `have > 0 && wlevel > 0.0001 ? gen_grain();` — mirroring whatever guard the sibling/parallel layer already has (here the voice engine's `hlevel` guard). Keep the accumulator draining (read-and-clear) so the layer fades back cleanly over ~one grain when its level rises off 0; output is bit-identical while muted. Applies to ANY plugin computing a voice/band/layer whose gain can reach 0 — skip its expensive DSP when silent, not merely its output. (Fixed 2026-07-10, shipped **v2.18**, commit `1affa90`.)
@@ -129,21 +221,60 @@ A small collection of Reaper JSFX plugins for ambient, sleep, and entrainment au
 
 1. Update `slider14`'s option list at the top of the file. Range becomes `0,N,1` where N+1 is the new option count.
 2. Add a new `: waveform == K ? (...)` branch in the `@sample` voice loop's waveform chain. Compute `osc_l` from `osc_phase_l[i]` and `osc_r` from `osc_phase_r[i]`. Multiply by `gain_l[i] * v_gain[i]` (and `gain_r[i]` for R).
-3. Update `docs/rozaya_jsfx_manual.md` Waveform section with a one-line description.
+3. Update the Waveform section of `docs/plugins/polyrhythm-phase.md` **and
+   `polyrhythm-phase-v3.md`** with a one-line description. (`docs/rozaya_jsfx_manual.md`
+   is a stub redirect since the 2026-07-08 split — don't write to it.)
+4. **A new waveform lands in all five plugins that share the palette** at the same
+   slot index: both Polyrhythms, Melody Phase, Shepard Scale, Shepard Tone, and
+   Harmonic Sculptor. Diverging palettes between siblings is the exact
+   inconsistency the 2026-05-24 sweep cleaned up.
+5. **Append it — never insert.** An enum option is an index stored inside a
+   slider's value, so inserting one silently changes the waveform of every saved
+   project. This is the one case where append survives the consistency sweep
+   (R18); it is not a stylistic preference.
 
 ## Adding a new slider to Polyrhythm Phase (or any plugin)
 
-- Pick the next free slider ID at the end of the range (don't insert mid-list).
-- Read it in `@slider` after the existing reads.
-- Use `slider_show(sliderN, condition)` to hide it conditionally based on related sliders.
-- If it persists state, decide whether it's a runtime tunable (don't persist) or saved per-instance.
-- Document in the manual.
+- **Today: pick the next free slider ID at the end of the range, and do not
+  insert mid-list.** See the two gotchas above on what a mid-list insert costs —
+  it has happened to eight plugins in this suite and cost two projects three
+  months of wrong sound.
+- **This rule is scheduled to change, and hasn't yet.** R18 in
+  `docs/suite-consistency-plan.md` says a new slider should go in its *logical*
+  position once the plugin can migrate its own saved state on load from the
+  blob's version magic. **That mechanism is the gate and it is not built** —
+  Phase 2 hasn't started. Until it is, append.
+- Read it in `@slider` after the existing reads — **unless it derives from a
+  `@serialize` bank, or answers "did the user just move this?", in which case it
+  belongs in `@block`.** Both have their own gotcha above; both produced real bugs.
+- Use `slider_show(sliderN, condition)` to hide it conditionally. **If it is
+  hidden, it must not write** — gate any write on the same condition the
+  `slider_show` uses.
+- If it persists state, decide whether it's a runtime tunable (don't persist) or
+  saved per-instance.
+- Give it a unit, sentence case, and a step size chosen from its range — the
+  naming rules are R1–R19 in the consistency plan, not free choices.
+- Document it on that plugin's page in `docs/plugins/`.
+- Run `python tools/jsfx_lint.py src/<plugin>.jsfx` before you believe it
+  compiles. It takes one file per run and defaults to the Morpher if you forget
+  the argument — so a clean result on the wrong file is a real way to fool
+  yourself here.
 
 ## Branches
 
 - `master` — stable. Releases tag from here.
 - `feature/*` — work in progress. Merge with `--ff-only` when ready (see git log for past examples).
 - Don't work directly on master — use a branch and merge when validated by ear.
+- **"Validated by ear" is the actual gate and it is not a formality.** JSFX
+  cannot be compiled outside REAPER, so nothing here is verified by writing it.
+  Rozaya can reload projects and test — **ask for an ear-test rather than
+  assuming that path is dark.** Say plainly which parts of a change have been
+  heard and which have not; this file marks that distinction everywhere and it
+  is worth keeping.
+- **Pushing is fine at any time. Cutting a release is not** — see *No releases
+  until the sweep is finished* in the consistency plan. A release is a
+  distribution artefact, and shipping one mid-sweep hands a stranger a
+  half-renamed suite.
 
 ## Versioning: when to fork a plugin, when to archive it
 
@@ -244,12 +375,16 @@ project should not become a product other people are told about.
 Re-measure with the grep above before acting; these were the counts on
 2026-08-22.
 
-- **Melody Phase** — v1 (`src/melody_phase.jsfx`) 5 projects, v2
-  (`src/melody_phase_v2.jsfx`) **0**. Either fund the v1→v2 migration (it must
-  synthesise a `@serialize` blob, which is why it has not happened) and retire
-  v1, or archive v2 as an abandoned direction. It should not keep sitting in
-  `src/` as a permanent second option.
-- **Polyrhythm Phase** — v1 18 projects, v3 5. Both genuinely live, so this one
+- **Melody Phase — RESOLVED 2026-09-02.** v2 is archived to
+  `archive/versions/melody_phase/`. It had zero projects, ever, and could never
+  gain one: its per-voice data lived in a `@serialize` blob with no path across
+  from v1's slider line. Its one good idea — the note-name **picker** — moved to
+  v1; its *implementation* did not and could not, because v2 drew the picker but
+  never changed the pitch conversion underneath, so picking "C4" gave you C6.
+  Nobody had ever noticed, because nobody had ever run it. **That is the
+  strongest argument in this whole section: an unmigratable version is not a
+  second option, it is unrun code that looks like one.**
+- **Polyrhythm Phase — the one still open.** v1 18 projects, v3 5. Both genuinely live, so this one
   is permanent until someone writes the migration. This is the case rule 2
   exists to prevent. **Direction: v1 migrates UP to v3, then v1 retires.**
   (Confirmed by Rozaya 2026-09-02.) So **v3 is where a new feature gets built
@@ -264,12 +399,35 @@ Re-measure with the grep above before acting; these were the counts on
 plugin it names.** One entry: **Melody Phase instances come in out of alignment
 on project open** — now only against `simple-sequence`, since the loud half of
 that report turned out to be the 2026-07-02 slider-insert bug (fixed and heard,
-`9a84e87`). Cause UNKNOWN; **three wrong theories already burned** and the doc
-lists them so they are not tried again. One was shipped and reverted, and a fix
-of that shape (holding the sequencer until the transport moves) is **forbidden**
-— the plugin must keep sounding with the transport stopped.
+`9a84e87`). **The cause is no longer unknown and there is a reliable workaround:
+open the project, then press play and stop once** (alt-tabbing out of REAPER and
+back does the same). Both re-run `@init` on every instance at the same sample, so
+they all restart together. Renders were never affected. **Three wrong theories
+are already burned** and the doc lists them so they are not tried again. One was
+shipped and reverted, and a fix of that shape (holding the sequencer until the
+transport moves) is **forbidden** — the plugin must keep sounding with the
+transport stopped.
 
-## Recent session notes worth knowing
+## Session log — history, newest first
+
+**This section is append-only and is NOT kept current.** Each entry describes
+what was true on its own date. It is here for the *reasoning* — why a decision
+went the way it did, what was tried and rejected, what a bug's symptom actually
+sounded like — none of which goes stale. **The facts in it do.** For what is
+true now, read *Where things stand* at the top of this file, the consistency
+plan, and the tree itself.
+
+Two habits keep this honest, and both have failed here before:
+
+- **When you add an entry, update *Where things stand* in the same commit.** The
+  status heading exists so that status lives in exactly one place.
+- **Never quote an entry back as evidence without re-checking it.** Two claims
+  in this log hardened into constraints purely by being restated — the
+  `filt_stages` straight-wire theory, and the "~4 layers is the CPU ceiling"
+  figure, which was arithmetic about oscillators that was later cited as a
+  measurement about the wash. Mark a mechanism **proved / predicted / untested**
+  when you write it down, because an unmarked one gets read as proved by the
+  next person, including by a later you.
 
 - **2026-09-02 — the long repair day. Melody's layout migration finally ran; per-cycle pan modes reached the oscillator plugins; Host x started becoming a real unit. On `feature/melody-reorder`, ~40 commits, UNPUSHED, unmerged.**
 
