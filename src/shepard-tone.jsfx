@@ -277,9 +277,21 @@ host_scale = 1;
 host_ratio_inited = 0;
 
 PHI = 1.6180339887;
-NUM_OSC = 16; // max oscillators per voice
+// RENAMED from NUM_OSC on 2026-09-04, and it was not cosmetic. EEL2 FOLDS
+// CASE, so `NUM_OSC` and the `num_osc` set in @slider were ONE variable.
+// The tell was dead code: the `o < num_osc` guard in the placement loop has
+// an else-branch parking the spare slots silent, and it could never run,
+// because inside loop(NUM_OSC) that test read `o < NUM_OSC`, always true.
+// Consequence: @init re-runs on every transport play (no ext_noinit here, by
+// design) and reset the shared variable to the maximum, while @slider -- the
+// only thing that sets the user's count -- does not re-run. So Octave Count
+// held until you pressed play and then silently became the maximum, with the
+// pitch window still sized to the number you chose. This is a generator: it
+// is only ever heard AFTER a play, so the intended behaviour had never been
+// heard at all. Ear-test after any change here.
+MAX_OSC = 16; // max per voice -- NEVER assign to this elsewhere
 
-// Memory layout — voice * NUM_OSC + osc = index, max 8*16 = 128 slots
+// Memory layout — voice * MAX_OSC + osc = index, max 8*16 = 128 slots
 osc_freq    = 0;   // 0-127
 osc_phase_l = 128; // 128-255
 osc_phase_r = 256; // 256-383
@@ -932,8 +944,8 @@ needs_init ? (
     root_in_window > pitch_hi ? root_in_window *= pow(2, -ceil(log(root_in_window / pitch_hi) / log(2)));
 
     o = 0;
-    loop(NUM_OSC,
-      oi = i * NUM_OSC + o;
+    loop(MAX_OSC,
+      oi = i * MAX_OSC + o;
       o < num_osc ? (
         f = root_in_window * pow(2, o);
         f > pitch_hi ? f *= pitch_lo / pitch_hi;
@@ -1013,7 +1025,7 @@ loop(8,
 
     o = 0;
     loop(num_osc,
-      oi = i * NUM_OSC + o;
+      oi = i * MAX_OSC + o;
 
       // Sweep oscillator frequency along the glissando, unless we
       // are in Freeze-mode rest — in that case the frequency stays

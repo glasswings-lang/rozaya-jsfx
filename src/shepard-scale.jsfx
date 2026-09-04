@@ -217,9 +217,21 @@ host_mult  = 1;
 bpm        = slider1;
 
 PHI = 1.6180339887;
-NUM_OSC = 12; // max octave layers per note
+// RENAMED from NUM_OSC on 2026-09-04, and it was not cosmetic. EEL2 FOLDS
+// CASE, so `NUM_OSC` and the `num_osc` set in @slider were ONE variable.
+// The tell was dead code: the `o < num_osc` guard in the placement loop has
+// an else-branch parking the spare slots silent, and it could never run,
+// because inside loop(NUM_OSC) that test read `o < NUM_OSC`, always true.
+// Consequence: @init re-runs on every transport play (no ext_noinit here, by
+// design) and reset the shared variable to the maximum, while @slider -- the
+// only thing that sets the user's count -- does not re-run. So Octave Count
+// held until you pressed play and then silently became the maximum, with the
+// pitch window still sized to the number you chose. This is a generator: it
+// is only ever heard AFTER a play, so the intended behaviour had never been
+// heard at all. Ear-test after any change here.
+MAX_OSC = 12; // max per voice -- NEVER assign to this elsewhere
 
-// Memory: note 0-11, osc 0-11 → index = note * NUM_OSC + osc (max 144 slots)
+// Memory: note 0-11, osc 0-11 → index = note * MAX_OSC + osc (max 144 slots)
 osc_freq    = 0;   // 0-143:   fixed frequency per oscillator
 osc_phase_l = 144; // 144-287: oscillator phase left
 osc_phase_r = 288; // 288-431: oscillator phase right
@@ -375,8 +387,8 @@ function init_oscs() (
     // wrapping back down when they exceed the window top.
     // Window == num_osc octaves wide, so wrap is always exact.
     o = 0;
-    loop(NUM_OSC,
-      oi = n * NUM_OSC + o;
+    loop(MAX_OSC,
+      oi = n * MAX_OSC + o;
       o < num_osc ? (
         f = root_near_center * pow(2, o);
         f > pitch_hi ? f *= pitch_lo / pitch_hi;
@@ -987,7 +999,7 @@ loop(12,
 
     o = 0;
     loop(num_osc,
-      oi = n * NUM_OSC + o;
+      oi = n * MAX_OSC + o;
 
       bg = bell_gain(osc_freq[oi], center_freq, half_width);
       target_gain = bg * n_gain_lin[n] * n_env[n];
