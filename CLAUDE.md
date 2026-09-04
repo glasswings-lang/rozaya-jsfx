@@ -117,10 +117,11 @@ append-only history; this is the only part of the repo that claims to describe
   half-renamed suite.
 - **`docs/open-bugs.md` has one open entry** (Melody Phase instances arriving out
   of alignment in `simple-sequence`). Read it before touching Melody.
-- **`docs/NEXT_SESSION_PICKUP.md` is stale** — it describes the 2026-08-12 Host x
-  branch state and names a branch that no longer exists. Its *rules* section is
-  still good; its status section is not. Either refresh it or fold it into this
-  heading and delete it.
+- **`docs/host-sync-ear-test.md` is the highest-value thing waiting.** Five tests,
+  about fifteen minutes, and **three of them have never been heard on any
+  plugin.** It is written to be handed over: preconditions, failure shapes and
+  what each one means, design questions marked as separate from correctness ones,
+  and an explicit *don't diagnose, just say which number did what*.
 
 ### Terminology that changed, and where the old words survive
 
@@ -368,6 +369,23 @@ because they apply every session, not on the day they were learned.
 - **Migrate what was RESTORED, never what was DEFAULTED.** Gate a blob migration on "this blob HAS the field" (`>= the magic that introduced it`), not on "this blob is old" (`< the current magic`). A pre-feature blob never wrote those banks, so an old-blob gate permutes the `@init` DEFAULTS — which were already in the current order — and moves them out of it. Silent, and it mutes things.
 
 - **Plugins are hand-copied into `<REAPER resource>/Effects/glasswings/`, and copying never REMOVES anything — so a RENAME leaves a working, frozen twin behind.** A `spectral_vowel_morpher_v2.jsfx` sat there for a month, eight lines different from the file it was renamed from, loading fine and silently missing every change since. **Diagnostic tell: the orphan's mtime is older than its siblings' and it is absent from `git ls-files`.** Check the effects folder against the repo after any rename.
+
+- **Host sync, four rules that were settled by ear and should not be re-derived.**
+  (From the 2026-08 tempo-sync sweep.)
+  - **Drift and Ramp amounts are in BPM in every mode, Host x included.** The
+    plugin converts (`D BPM` = `D/tempo` in multiplier terms); the user never
+    does. The multiplier form was tried twice and fails both times: at 0.1 slider
+    steps the value you want is not reachable, and where the step is fine it
+    still forces arithmetic to hit a musical destination.
+  - **Lock what is constant; accumulate what is modulated.** Position-locking
+    answers *"where would this be if it had run at this rate all along"*, which
+    stops being the right question the moment drift or a ramp moves the rate.
+  - **Effects lock per sample; sequencers place once.** A sequencer that
+    recomputed its position continuously would jump mid-note.
+  - **Before changing what a control's number MEANS, ask what the user holds in
+    their head when setting it** — a figure they know (5 BPM of HRV) or a feel
+    they are dialling for. Neither the code nor the label can tell you, and
+    getting it wrong is the silent-unit-change failure.
 
 - **EEL2 has NO scientific notation — `1e9` is a syntax error, not a big number.** Every other C-family language accepts it, so it gets typed on autopilot when you want "effectively infinity" as a sentinel (here: a High-cut fade threshold that no frequency can reach, so the fade multiplier is always exactly 1 when the control is off). REAPER reports it clearly — `@init:360: syntax error: 'hc_lo = 1 <!> e9;'` — but only when the plugin is loaded, so it survives every desk check. **Fix:** write the digits out, `1000000000`. **Audit:** `grep -nE '(?<![A-Za-z0-9_])[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+' src/*.jsfx` (ripgrep needs `-P` for the lookbehind) — should return nothing across the suite. Worth running alongside the paren-balance and empty-`()` checks, since none of those catch it. (Hit 2026-08-19 adding High cut to spectral_vowel_morpher; the whole suite was scanned and this was the only instance.)
 

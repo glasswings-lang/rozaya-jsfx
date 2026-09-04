@@ -154,7 +154,7 @@ Status as built (2026-07-25):
 
 - **Naming — RESOLVED 2026-07-25: Spectral Vowel Passage.** It is a sibling, not a
   version: Morpher is a field you sit inside, Passage is a route with stops. An
-  earlier session (`NEXT_SESSION_PICKUP.md`, 2026-07-22) had picked *Loom*; this
+  earlier session (a since-retired handoff note, 2026-07-22) had picked *Loom*; this
   supersedes it. *Passage* — "a way through" and "a section of music" both apply —
   keeps the shared "Spectral Vowel" prefix so the pair sits adjacent in the plugin
   list. The former file `spectral_vowel_morpher_v2.jsfx` is now

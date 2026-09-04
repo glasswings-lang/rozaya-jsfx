@@ -2,36 +2,67 @@
 
 A collection of audio synthesis and effect plugins for [REAPER](https://www.reaper.fm/), designed by Rozaya.
 
+They were built for ambient, sleep and entrainment listening — long, slow,
+gentle sound you can leave running. Nothing here is a playable instrument in the
+keyboard sense; they are sources and shapers you set going and then live with.
+
 ## Plugins
 
-**Synthesizers**
-- `Heartbeat Generator` — stereo binaural heartbeat simulator with S1/S2 sounds
-- `Breath Generator` — synthesized breathing with inhale/exhale cycles
-- `Womb Sound Generator` (v1) — multi-layered intrauterine soundscape (heartbeat, breath, bloodflow); original architecture, kept available for projects built on it
-- `Womb Sound Generator v2` — Womb variant with intrauterine-perspective tuning (muffled lowpass, amplitude-modulated bloodflow, continuous floors) and an independent HRV/drift architecture; recommended for new projects
-- `Polyrhythm Phase` — up to 8 binaural-pitched voices with polyrhythmic tremolo and pan modulation, per-voice semitones and phase offsets, Direction & Reverse modes (single-layer or 16-voice Both), Play/Rest gating per voice, Speed Ramp, musical and slow drift
-- `Polyrhythm Phase (Note Names)` — same engine as Polyrhythm Phase, but each voice picks its note **by name** (C2–C6) with a separate fine-tune in cents, instead of counting semitone offsets from a base note. No music theory and no arithmetic; a separate plugin, so existing Polyrhythm projects are untouched
-- `Melody Phase` — step-sequencer sibling to Polyrhythm Phase. 8 voices play in sequence rather than in parallel; configurable Next-voice-in / Note duration per voice for overlapping or rest-between phrasing, with glide / portamento and legato modes
-- `Dapple` — scattered-droplet texture generator: random pitched plinks that chirp upward, over a resonant noise fizz, blendable from gurgle to plink (32-voice polyphonic)
+Twenty-one plugins. Each installs on its own and has its own page, so you only
+ever read about the one you took.
 
-- `Spectral Vowel Morpher` — capture-based instrument: grab moments of live audio into slots and resynthesize them as a recognizable voice, an evolving wash, or any blend, morphing between the captured moments
-- `Spectral Vowel Passage` — a sibling of the Morpher on the same engine, but a paced-arrangement instrument instead of a continuous morph: each captured moment carries its own timing (fade in, hold, fade out, an optional gap of silence, and a crossfade-into-next toggle), and every setting that describes a capture — Texture, Pitch, Spread, Stereo width, Low cut, Denoise, Voice level — belongs to that slot rather than being one global setting flattening them all
-- `Harmonic Sculptor` — additive resynthesis over a 64-harmonic selector, each harmonic level-adjustable, for building or carving a spectrum by hand
-- `Sustain Looper` — loads a sample and builds a clean crossfaded sustain loop, with an ensemble layer
+### Synthesizers — they make sound from nothing
 
-**Effects**
-- `Resonant Sweeping Filter with Shaped LFO and Pan Modes` — resonant lowpass sweep with LFO start phase, stereo phase control, and pan modes
-- `Sweep Dwell Filter` — lowpass sweep driven by independent hold and transition times, with stereo phase and pan modes
-- `Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation` — amplitude modulation with shaped envelope and pan system
-- `Resonance Bank` — 16-band parallel-bandpass or serial-peaking-EQ effect with per-band multi-target drift modulation and cascade rolloff. Vowel-flavored breath shaping, dynamic windscapes, evolving noise textures
-- `Stereo Phaser` — swept-allpass phaser with stereo spread and feedback; 2–64 stages (classic phaser through dense sound-design "curtain")
-- `Veil` — soft spectral haze
-- `Bubbler` — granular "bubble" effect: scatters a tonal input into rising pitched droplets made of your own sound (pitch down for underwater). Sibling to Dapple, for tonal sources
+| Plugin | What it is |
+|---|---|
+| **[Heartbeat Generator](docs/plugins/heartbeat-generator.md)**<br>`heartbeat gen.jsfx` | A synthesized heartbeat. Two resonant voices, a "near" and a "far", give it depth; the rate wanders the way a real one does rather than looping mechanically. |
+| **[Breath Generator](docs/plugins/breath-generator.md)**<br>`breath_gen.jsfx` | A breathing cycle — inhale, pause, exhale, pause — with the length, tone and envelope of each phase set separately. |
+| **[Womb Sound Generator](docs/plugins/womb.md)**<br>`womb_sound_generator_v3.jsfx` | Heartbeat, breath and bloodflow together as one body, heard from inside. Any of seven things can be set drifting slowly, and it sighs on its own every so often. |
+| **[Polyrhythm Phase](docs/plugins/polyrhythm-phase.md)**<br>`polyrhythm_phase.jsfx` | Up to eight tuned voices at once, each pulsing at its own rate so the pattern between them never quite repeats. Each voice is a stereo pair slightly detuned against itself — the binaural beat. |
+| **[Polyrhythm Phase v3](docs/plugins/polyrhythm-phase-v3.md)**<br>`polyrhythm_phase_v3.jsfx` | The same engine, but voices are picked **by note name** instead of by counting semitones from a root. This is where new work happens; see *Two Polyrhythms* below. |
+| **[Melody Phase](docs/plugins/melody-phase.md)**<br>`melody_phase.jsfx` | The sequencer sibling. The same eight voices, but they play one after another instead of together — each holding for its own length before handing over. Notes are picked by name, with glide and legato. |
+| **[Harmonic Sculptor](docs/plugins/harmonic-sculptor.md)**<br>`harmonic_sculptor.jsfx` | Builds a sound from 64 sine harmonics, each set by ear. The suite's tool for *designing source material* — sculpt a timbre, render it, loop it. |
+| **[Dapple](docs/plugins/dapple.md)**<br>`dapple.jsfx` | Scattered droplets that pop on irregular timing and chirp upward as they fade. Somewhere between rain on glass and a pointillist wash. It started as an attempt at water and became its own thing. |
 
-**Utilities**
-- `Rhythm Track` — synthesized metronome with swing and pan distribution
-- `Shepard Scale Generator` — infinite ascending/descending pitch illusion, step sequencer
-- `Shepard Tone Generator` — continuous Shepard-Risset glissando
+### Samplers — they work from sound you give them
+
+| Plugin | What it is |
+|---|---|
+| **[Sustain Looper](docs/plugins/sustain-looper.md)**<br>`sustain_looper.jsfx` | Turns a piece of a WAV into an endless pad. The crossfade is the point: loop points don't have to be matched by eye, you set the region roughly and raise the crossfade until the seam disappears. |
+| **[Spectral Vowel Morpher](docs/plugins/spectral-vowel-morpher.md)**<br>`spectral_vowel_morpher.jsfx` | Play audio into it, catch moments you like, and it resynthesizes them — as a recognizable voice, an evolving wash, or any blend — morphing between them. Captures are saved with the project. |
+| **[Spectral Vowel Passage](docs/plugins/spectral-vowel-passage.md)**<br>`spectral_vowel_passage.jsfx` | The same engine arranged as a *passage* instead of a morph: every captured moment carries its own timing and its own character, and the plugin walks through them. |
+
+### Effects — they change sound coming in
+
+| Plugin | What it is |
+|---|---|
+| **[Resonant Sweeping Filter](docs/plugins/sweeping-filter.md)**<br>`full-feature-sweeping-filter.jsfx` | A resonant lowpass whose sweep is a shaped envelope rather than a plain sine, with stereo phase and pan modes. Movement is its subject. |
+| **[Sweep Dwell Filter](docs/plugins/sweep-dwell-filter.md)**<br>`sweep-dwell-filter.jsfx` | The same idea told in time instead of rate: hold high, fall, hold low, rise. You set the four durations and the cycle length follows from them. |
+| **[Full Feature Tremolo](docs/plugins/tremolo.md)**<br>`Full_Feature_Tremolo.jsfx` | Amplitude modulation with a shaped, gated envelope rather than a sine, plus a pan block that can move with the tremolo or against it. |
+| **[Resonance Bank](docs/plugins/resonance-bank.md)**<br>`resonance_bank.jsfx` | Sixteen bands, each of which can drift on several of its own parameters at once and at different speeds. A few bands wandering independently is an evolving windscape. |
+| **[Stereo Phaser](docs/plugins/stereo-phaser.md)**<br>`stereo-phaser.jsfx` | A swept-allpass phaser, 2 to 64 stages. Low, it's a normal musical phaser; high, it's a dense curtain of notches for sound design. |
+| **[Veil](docs/plugins/veil.md)**<br>`veil.jsfx` | Muffles a **mono** voice the way the womb does — a steep lowpass near 500 Hz, speech from behind a heavy curtain. Its two channels are filtered independently, so it manufactures stereo width from a mono source and the width itself breathes. |
+| **[Bubbler](docs/plugins/bubbler.md)**<br>`bubbler.jsfx` | Scatters your input into rising pitched droplets *made of your own sound*. For **tonal** sources — pads, drones, voices. Pitch it down for underwater. Dapple is its sibling for noise. |
+
+### Utilities
+
+| Plugin | What it is |
+|---|---|
+| **[Rhythm Track](docs/plugins/rhythm-track.md)**<br>`rhythm-track.jsfx` | A metronome with swing and stereo pan distribution — a strong beat on the downbeat, weak beats elsewhere, both shapeable. |
+| **[Shepard Scale Generator](docs/plugins/shepard-scale.md)**<br>`shepard-scale.jsfx` | The Shepard scale illusion as a step sequencer: every note sounds higher than the last, and after twelve steps you are back where you began. |
+| **[Shepard Tone Generator](docs/plugins/shepard-tone.md)**<br>`shepard-tone.jsfx` | The same illusion made continuous — the Shepard-Risset glissando, sliding forever without arriving. Up to eight voices, each rooted on its own pitch class. |
+
+### Two Polyrhythms, and which to use
+
+Both are current and both are shipped. **Polyrhythm Phase v3 is where new work
+happens**; v1 gets only what keeps it working. The difference that matters when
+choosing is how a voice is pitched — v1 counts semitones from a root note, v3
+picks a note by name. Existing v1 projects are untouched and safe; a migration
+across is planned but not written, so **v1 stays until it exists.**
+
+Womb v1 and v2, and Melody Phase v2, are no longer shipped. They are frozen in
+[`archive/versions/`](archive/versions/) with their manuals, so an old project
+that needs one can still open it.
 
 ## Documentation
 

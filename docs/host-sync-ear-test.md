@@ -1,12 +1,29 @@
 # Host x ear-test checklist
 
-Written 2026-08-11 for the tempo-sync sweep sitting on `feature/host-tempo-sync`.
-Five tests, roughly fifteen minutes. If tests 1–3 pass, the mechanism is sound
-and the remaining plugins are the same idea in different houses.
+Written 2026-08-11. Five tests, roughly fifteen minutes. If tests 1–3 pass, the
+mechanism is sound and the remaining plugins are the same idea in different
+houses.
 
-**To back out a plugin:** the originals are in `C:\Users\solst\pre-hostsinc`.
-Copy the one you want back into `<REAPER resource>\Effects\glasswings\` and
-rename it from `<name>.jsfx.pre-hostsync.bak` to `<name>.jsfx`.
+**Still current, and still the thing to do.** The branch it was written for is
+long merged, but **tests 3, 4 and 5 have never been heard on any plugin**, and
+tests 1 and 2 have only been heard on the two plugins they name. Checked against
+the source 2026-09-04; the control names below are the ones in the plugins today.
+
+**Two things changed underneath it since it was written, neither of which breaks
+a test:**
+
+- **`Speed ramp` is now just `Ramp`** on every control (2026-08-31). Test 3 is
+  updated to match.
+- **In four plugins `Rate Value` in Host x now means BEATS PER CYCLE**, not a
+  tempo multiplier — both Polyrhythms, Dapple and Bubbler (2026-09-02). **None of
+  the plugins used below are among them**, so every step here still reads
+  correctly. If you test a Polyrhythm, remember the number means something else
+  there: `4` is four beats per cycle, not four times the tempo.
+
+**To back out a plugin:** originals were saved to `C:\Users\solst\pre-hostsinc`
+as `<name>.jsfx.pre-hostsync.bak`. Copy one back into
+`<REAPER resource>\Effects\glasswings\` and drop the `.pre-hostsync.bak`. That
+folder is from August — check it still exists before relying on it.
 
 **Set the project tempo to 90, not 120, before you start.** 120 is REAPER's
 default *and* the fallback a broken tempo read would land on, so a bug that
@@ -73,7 +90,7 @@ shape. I think that's better than the alternative. You may not.
 
 ---
 
-## Test 3 — Drift and Speed Ramp under Host x (never heard, any plugin)
+## Test 3 — Drift and Ramp under Host x (never heard, any plugin)
 
 Use **Full_Feature_Tremolo** — it's in `simple-sequence.RPP` with 2 instances,
 so you can hear it in a real project rather than a test bed.
@@ -87,8 +104,8 @@ so you can hear it in a real project rather than a test bed.
 period — and since a cycle is now a beat, that's 4 beats. Change the project
 tempo and the drift period should stretch with it.
 
-3. **Speed ramp target** → `Rate Value`. **Speed ramp by** → `-0.5`.
-   **Speed ramp duration** → `1`. **Speed ramp engage** → `On`.
+3. **Ramp target** → `Rate Value`. **Ramp by** → `-0.5`.
+   **Ramp duration** → `1`. **Ramp engage** → `On`.
 
 **Pass:** over a minute the tremolo slows to half speed, and stays
 tempo-locked the whole way down — at the end it should be one cycle every two
