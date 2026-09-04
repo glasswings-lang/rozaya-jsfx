@@ -156,10 +156,28 @@ because they apply every session, not on the day they were learned.
   theory were wrong, what would I hear?* No answer means it is a hypothesis.
 - **"What else produces exactly this symptom?" is the cheaper question.** Both
   times a wrong theory survived here, a second candidate was the real cause.
-- **A listener's report is a symptom, not a diagnosis.** "Random" and "CPU"
-  from the chair sent a whole session into optimisation for a bug that was one
-  deterministic click per handoff. Ask what it SOUNDS like before touching
-  anything.
+- **Rozaya's reports have a track record, and it is better than mine. Start from
+  the assumption that what is described is really happening, where it is said to
+  be happening.** The measured history in `docs/session-log.md`:
+  *"it's not in the start delay, it's in the passage from one note to the next"*
+  localised the slider-insert bug after a full day of my reasoning had not;
+  *"it was using the base rate, and ignoring the rest"* was the shared pan index,
+  heard instantly; *"I suspect the problem is in the rate mode units stuff"* was
+  the Host x accumulator; *"wiggling the slider brought them both back"* is so
+  diagnostic it names one bug and almost no other; *"I can hear that real
+  overtones don't dip everything else"* was correct at the level of the CONCEPT,
+  against a design I had argued for from physics and got wrong. Asking what a
+  control does at 0 caught a bug on its way out the door.
+- **What to hold loosely is any MECHANISM attached to a report — including, and
+  especially, my own.** When a report arrives as observation-plus-theory
+  ("it crackles, I think it's CPU"), the observation is evidence and the theory
+  is a hypothesis — and that is not a fact about who is speaking: my mechanisms
+  are the ones that have actually hardened into false constraints here. So the
+  move is never to discount the report. It is to ask **what it SOUNDS like**,
+  which costs one question and gets you the observation underneath. The
+  2026-07-27 Passage case is the whole lesson: the report said a real bug, in the
+  harmonics engine, varying run to run — all three true — and I spent the session
+  optimising CPU instead of asking.
 - **When a fix lands near an open bug, re-test the open bug.** One sat on the
   books for two weeks after being silently fixed, and a diagnostic plan was
   written for a problem that no longer existed.
