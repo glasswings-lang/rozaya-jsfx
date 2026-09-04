@@ -2129,7 +2129,11 @@ fucking briefing."* **An ear-test report is the only measurement anyone on this
 project can take. Harvesting a yes/no out of it and discarding the rest throws
 away the best input the suite has.** Ask what it SOUNDED like, every time.
 
-### Entry 1 -- two ramps to the same place, one gliding and one stepped
+### Entry 1 -- "ramp on one side, stairs on the other"
+
+Rozaya's name for it, 2026-09-04, and it is exact: a ramp and a staircase in a
+building rise the same height to the same landing and differ only in how they
+cover the ground between. Same rise, same landing. That IS the invariant below.
 
 Heard on Veil, 2026-09-04. Two filter cutoffs, both ramping 100 Hz -> 500 Hz over
 the same span. One set to glide continuously; the other given **Ramp play 2 /
