@@ -294,12 +294,6 @@ How far to move the parameter, and which direction — in that parameter's own u
 **Ramp duration (minutes)** `0 to 60, default 0`
 How long the ride takes. 0 = this target doesn't ramp. Set it to, say, 20 and the parameter takes twenty minutes to travel its full `by` amount, then holds.
 
-**Ramp engage** `Off / On, default Off`
-Arms every configured target at once. While On, each rides its own duration from where it is; flip Off and they freeze in place (flip back On and they resume). The ride starts fresh from the current values each time the transport begins playing. You can aim several targets at once (Texture *and* Output level *and* Low cut, each over its own time) and one Engage winds them all down together.
-
-**Ramp start delay (minutes)** `0 to 60, default 0`
-Wait this many minutes after arming before the ride begins — e.g. "let me settle for 10 minutes, *then* start winding down."
-
 **Ramp play for** / **Ramp rest for** `0 to 1000 minutes, default 0 (smooth)`
 Turns the smooth ride into a **staircase**. It climbs for the play window,
 freezes for the rest window, climbs again. Both must be above 0; either at 0
@@ -317,6 +311,12 @@ Leave one smooth and give the other play 2 / rest 2. The stepped one falls
 behind during each hold, then overtakes during each climb, so the two keep
 crossing each other on the way up and land in the same place. That's the sound
 this exists for. (Heard first on Veil, 2026-09-04.)
+
+**Ramp engage** `Off / On, default Off`
+Arms every configured target at once. While On, each rides its own duration from where it is; flip Off and they freeze in place (flip back On and they resume). The ride starts fresh from the current values each time the transport begins playing. You can aim several targets at once (Texture *and* Output level *and* Low cut, each over its own time) and one Engage winds them all down together.
+
+**Ramp start delay (minutes)** `0 to 60, default 0`
+Wait this many minutes after arming before the ride begins — e.g. "let me settle for 10 minutes, *then* start winding down."
 
 ---
 
@@ -343,6 +343,26 @@ See [`docs/spectral-vowel-morpher.md`](spectral-vowel-morpher.md) for deeper des
 ---
 
 
+
+## Migrating projects across the 2026-09-04 play/rest change
+
+Drift play/rest and Ramp play/rest went into their **logical** positions —
+35/36 beside the Drift amounts, 41/42 beside Ramp duration — rather than being
+tacked on the end. REAPER restores JSFX values by POSITION, so that shifts
+Drift restart and the whole Ramp group up and every project saved before it
+needs its slider line moved to match.
+
+`tools/morpher_migrate_playrest.py` does it, and
+`tools/morpher_verify_playrest.py` checks the result by decoding both the
+before and after by CONTROL NAME rather than by the table the migration used.
+Run on 2026-09-04 over 38 projects and 122 instances: **4880 name comparisons,
+0 mismatches**, 488 new controls all seeded to 0 (off, so nothing sounds
+different), and exactly one changed line per instance.
+
+The `@serialize` magic went 7700008 → 7700009 in the same commit even though
+the blob format did not change, so the blob is an exact witness for which
+slider layout an instance was saved on. That witness is the only thing that
+made the Melody slider-insert repairable without guessing.
 
 ## Migrating projects across the 2026-09 reorder
 

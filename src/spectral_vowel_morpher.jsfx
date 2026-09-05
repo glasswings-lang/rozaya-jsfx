@@ -191,45 +191,43 @@ slider31:0<0,300,0.01>Drift up amount (units match target)
 slider32:0<0,300,0.01>Drift down amount (units match target)
 slider33:30<1,600,0.5>Drift period (seconds)
 slider34:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// --- Drift play/rest. Ported from Veil, the reference implementation, which
+//     has been heard. Makes the wander move in bursts with holds between
+//     instead of running evenly forever. PER TARGET, like the amounts it gates.
+//     0 in either one = off, i.e. the old always-moving behaviour.
+//
+//     Windows are whole drift PERIODS, and the FRACTION chooses where the
+//     parameter parks: x.25 freezes at the crest (drifted fully up), x.75 at
+//     the trough, x.0 and x.5 at neutral. So an awkward fraction rotates the
+//     park point, and a whole number parks at no-change EVERY time, which is
+//     nearly inaudible. Confirmed by simulating the loop, not by reading it.
+slider35:0<0,64,0.01>Drift play for (periods, 0 = always)
+slider36:0<0,64,0.01>Drift rest for (periods, 0 = always)
+
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
 // drift ignores the transport and evolves continuously (loop under/over an
 // unbroken drift). A loop repeat is never a restart in either mode.
-slider35:0<0,1,1{Restart on play,Free-running}>Drift restart
+slider37:0<0,1,1{Restart on play,Free-running}>Drift restart
 
 // --- Ramp: the suite's "Speed Ramp" under an honest name (this plugin has no
 //     speed to ramp). A one-time slow RIDE of a parameter: pick a target, how
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider36:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Ramp target
-slider37:0<-300,300,0.001>Ramp by (units match target)
-slider38:0<0,60,0.1>Ramp duration (minutes)
-slider39:0<0,1,1{Off,On}>Ramp engage
-slider40:0<0,60,0.1>Ramp start delay (minutes)
-
-// --- Drift and Ramp play/rest. Ported from Veil, which is the reference
-//     implementation and has been heard. These sit at the END of the slider
-//     list rather than beside the Drift and Ramp groups they belong to,
-//     because a slider ID is a primary key and inserting one mid-list rewrites
-//     every project saved before it (CLAUDE.md; it cost two projects three
-//     months of wrong sound). They move to their proper places in the Phase 2
-//     reorder, with a migration.
-//
-//     Both are PER TARGET, like the amounts they gate.
-//     0 in either one = off, i.e. the old always-moving behaviour.
-//
-//     Drift windows are whole drift PERIODS, and the FRACTION chooses where the
-//     parameter parks: x.25 freezes at the crest (drifted fully up), x.75 at
-//     the trough, x.0 and x.5 at neutral -- so an awkward fraction rotates the
-//     park point and a whole number parks at no-change every time.
-slider41:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider42:0<0,64,0.01>Drift rest for (periods, 0 = always)
-//     Ramp windows are whole MINUTES, matching Ramp duration. The rests come
-//     OUT of the duration rather than extending it, so "ramp on one side,
-//     stairs on the other" -- a smooth twin and a stepped one arrive together.
-slider43:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider44:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider38:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Ramp target
+slider39:0<-300,300,0.001>Ramp by (units match target)
+slider40:0<0,60,0.1>Ramp duration (minutes)
+// Ramp play/rest turns the smooth ride into a STAIRCASE -- "ramp on one side,
+// stairs on the other" (Rozaya, 2026-09-04). Windows are whole MINUTES, matching
+// Ramp duration. The rests come OUT of the duration rather than extending it:
+// while moving it moves faster, by exactly (play+rest)/play, so a stepped ride
+// and a smooth one of the same length make the same journey in the same time --
+// crossing each other on the way, and landing on the destination together.
+slider41:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider42:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider43:0<0,1,1{Off,On}>Ramp engage
+slider44:0<0,60,0.1>Ramp start delay (minutes)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -1006,8 +1004,8 @@ sel_up     = slider31;
 sel_down   = slider32;
 sel_per    = slider33;
 sel_shape  = slider34;
-sel_dplay  = slider41;
-sel_drest  = slider42;
+sel_dplay  = slider35;
+sel_drest  = slider36;
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
   target_drift_down[last_target_select]  = sel_down;
@@ -1019,14 +1017,14 @@ last_target_select != sel_target ? (
   slider32 = target_drift_down[sel_target];
   slider33 = target_drift_per[sel_target];
   slider34 = target_drift_shape[sel_target];
-  slider41 = target_drift_play[sel_target];
-  slider42 = target_drift_rest[sel_target];
+  slider35 = target_drift_play[sel_target];
+  slider36 = target_drift_rest[sel_target];
   slider_automate(slider31);
   slider_automate(slider32);
   slider_automate(slider33);
   slider_automate(slider34);
-  slider_automate(slider41);
-  slider_automate(slider42);
+  slider_automate(slider35);
+  slider_automate(slider36);
   last_target_select = sel_target;
 ) : (
   target_drift_up[sel_target]    = sel_up;
@@ -1042,28 +1040,28 @@ last_target_select != sel_target ? (
 // --- Ramp target selector save/restore (nested-selector, mirrors Drift).
 //     Ramp target selects; `by`, duration and start delay are per target.
 //     Ramp engage is GLOBAL. All targets ride in parallel from @sample. ---
-rsel_target = slider36;
-rsel_by     = slider37;
-rsel_dur    = slider38;
-rsel_delay  = slider40;
-rsel_play   = slider43;
-rsel_rest   = slider44;
+rsel_target = slider38;
+rsel_by     = slider39;
+rsel_dur    = slider40;
+rsel_delay  = slider44;
+rsel_play   = slider41;
+rsel_rest   = slider42;
 last_ramp_target != rsel_target ? (
   ramp_by_mem[last_ramp_target]    = rsel_by;
   ramp_dur_mem[last_ramp_target]   = rsel_dur;
   ramp_delay_mem[last_ramp_target] = rsel_delay;
   ramp_play_mem[last_ramp_target]  = rsel_play;
   ramp_rest_mem[last_ramp_target]  = rsel_rest;
-  slider37 = ramp_by_mem[rsel_target];
-  slider38 = ramp_dur_mem[rsel_target];
-  slider40 = ramp_delay_mem[rsel_target];
-  slider43 = ramp_play_mem[rsel_target];
-  slider44 = ramp_rest_mem[rsel_target];
-  slider_automate(slider37);
-  slider_automate(slider38);
+  slider39 = ramp_by_mem[rsel_target];
+  slider40 = ramp_dur_mem[rsel_target];
+  slider44 = ramp_delay_mem[rsel_target];
+  slider41 = ramp_play_mem[rsel_target];
+  slider42 = ramp_rest_mem[rsel_target];
+  slider_automate(slider39);
   slider_automate(slider40);
-  slider_automate(slider43);
   slider_automate(slider44);
+  slider_automate(slider41);
+  slider_automate(slider42);
   last_ramp_target = rsel_target;
 ) : (
   ramp_by_mem[rsel_target]    = rsel_by;
@@ -1072,13 +1070,13 @@ last_ramp_target != rsel_target ? (
   ramp_play_mem[rsel_target]  = rsel_play;
   ramp_rest_mem[rsel_target]  = rsel_rest;
 );
-ramp_engaged = slider39;
+ramp_engaged = slider43;
 
 // td_active / mod_active are derived from the drift and ramp banks, so they are
 // computed in @block too, for exactly the same reason.
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
-drift_restart_free = slider35;   // 0 = restart on play (sync), 1 = free-running
+drift_restart_free = slider37;   // 0 = restart on play (sync), 1 = free-running
 
 @block
 // Adopt the Sync-to-host tracker here rather than in @slider -- see the note
@@ -1859,7 +1857,19 @@ spl1 = dryR + voutR;
 //              points at the parameter it was pointing at. (7700003 was an
 //              in-development layout with three layers and no octave stack; it
 //              never left this branch, so nothing reads it.)
-//   7700008 -- current. The list became a PITCH LADDER: the original sits at
+//   7700009 -- current. NO format change: the stream is byte-for-byte what
+//              7700008 wrote, and 7700008 is read exactly the same way. The
+//              bump exists solely so the blob is an EXACT gate for WHICH SLIDER
+//              LAYOUT an instance was saved on -- Drift play/rest and Ramp
+//              play/rest went into their logical positions at 35/36 and 41/42,
+//              which pushed Drift restart and the whole Ramp group up. A
+//              renumber cannot touch the blob, so a 7700008 blob is an
+//              independent witness that an instance still holds the OLD slider
+//              order and needs tools/morpher_migrate_playrest.py. That witness
+//              is the only thing that made the Melody slider-insert repairable
+//              without guessing (CLAUDE.md), so it is bumped here in the same
+//              commit as the layout change, which is the rule.
+//   7700008 -- The list became a PITCH LADDER: the original sits at
 //              unison, mid-list, rather than at either end. Blobs permute
 //              themselves; the SLIDER LINE needs the migration script.
 //   7700007 -- The original moved to the FRONT of the Layer selector
@@ -1878,9 +1888,9 @@ spl1 = dryR + voutR;
 //              evening on one machine, but layers had been dialled in against
 //              it, and resetting someone's work to save fifteen lines is the
 //              same disrespect as moving their values silently.
-ser_magic = 7700008;
+ser_magic = 7700009;
 file_var(0, ser_magic);
-(ser_magic == 7700008 || ser_magic == 7700007 || ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
+(ser_magic == 7700009 || ser_magic == 7700008 || ser_magic == 7700007 || ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
   n_ser_targets = ser_magic >= 7700006 ? N_TARGETS : ser_magic == 7700005 ? 23 :
                   ser_magic == 7700004 ? 19 : ser_magic == 7700002 ? 7 : 6;
   file_var(0, have);
@@ -2050,7 +2060,7 @@ file_var(0, ser_magic);
   //     the same treatment, because target LAY_T0+i has always meant layer i.
   //
   //     THE SLIDER LINE CANNOT BE FIXED FROM HERE. slider21, slider30 and
-  //     slider36 hold indices into these lists and live in the project file --
+  //     slider38 hold indices into these lists and live in the project file --
   //     run tools/morpher_migrate_layer_order.py over the project folders.
   // Gated on the blob actually HAVING layer banks (7700004 was the first), not
   // merely on being old. A 7700001/7700002 blob predates layers entirely, so
@@ -2106,13 +2116,13 @@ file_var(0, ser_magic);
     slider32 = target_drift_down[last_target_select];
     slider33 = target_drift_per[last_target_select];
     slider34 = target_drift_shape[last_target_select];
-    slider37 = ramp_by_mem[last_ramp_target];
-    slider38 = ramp_dur_mem[last_ramp_target];
-    slider40 = ramp_delay_mem[last_ramp_target];
-    slider41 = target_drift_play[last_target_select];
-    slider42 = target_drift_rest[last_target_select];
-    slider43 = ramp_play_mem[last_ramp_target];
-    slider44 = ramp_rest_mem[last_ramp_target];
+    slider39 = ramp_by_mem[last_ramp_target];
+    slider40 = ramp_dur_mem[last_ramp_target];
+    slider44 = ramp_delay_mem[last_ramp_target];
+    slider35 = target_drift_play[last_target_select];
+    slider36 = target_drift_rest[last_target_select];
+    slider41 = ramp_play_mem[last_ramp_target];
+    slider42 = ramp_rest_mem[last_ramp_target];
     // Per-slot Capture point: force slider3 to the restored slot's stored point,
     // and sync last_cap_slot so the first @slider doesn't mistake load for a
     // slot-switch (which would save the visible point into the wrong slot).
