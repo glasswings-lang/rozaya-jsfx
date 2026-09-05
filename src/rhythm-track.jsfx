@@ -4,7 +4,7 @@ desc: Rhythm Track
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:120<0.001,1000,0.001>Tempo (BPM, or beats per tick in Host x)
+slider1:120<0.001,1000,0.001>Tempo (BPM, or beats per cycle in Host x)
 slider2:4<1,20,1>Beats per bar
 slider3:0<-1,1,0.01>Swing amount
 slider4:880<20,2000,1>Strong beat frequency (Hz)
@@ -77,14 +77,14 @@ slider26:0<0,2,1{Sine,Triangle,Random}>Drift shape
 //
 // Own BPM  — slider1 is the tempo, as it always was. Free-running; the
 //            project tempo is ignored entirely.
-// Host x   — slider1 becomes BEATS PER TICK against the project tempo. 1 is a
+// Host x   — slider1 becomes BEATS PER CYCLE against the project tempo. 1 is a
 //            tick on every beat, 2 is every other beat, 0.5 is two ticks a
 //            beat. A metronome that could not follow the project tempo was the
 //            odd one out here.
 //
-//            A TICK IS THIS PLUGIN'S CYCLE. The rest of the suite says "beats
-//            per cycle"; a metronome's cycle has a name, so the label uses it
-//            (R17 -- name the real quantity). The unit is identical.
+//            A CYCLE HERE IS ONE TICK. The label uses the suite's own phrase
+//            rather than a word picked just for this plugin: consistency across
+//            the plugins outranks a slightly nicer word in any single file.
 //
 //            It used to be a MULTIPLIER of the tempo. R13-revised, 2026-09-02:
 //            a multiplier is a number you cannot hear without doing arithmetic
@@ -155,7 +155,7 @@ track_bpm        = slider1;
 samples_per_beat = (60.0 / max(slider1, 0.001)) * srate;
 
 // rate_units is slider1 in ITS OWN unit — plain BPM in Own BPM mode, beats
-// per tick in Host x — and track_bpm is the real ticks-per-minute it works
+// per cycle in Host x — and track_bpm is the real ticks-per-minute it works
 // out to. Drift and Ramp offsets are added to TRACK_BPM, in the @sample line
 // that computes effective_tempo, so they are deltas in real BPM in both modes
 // — which is the suite rule (CLAUDE.md: drift and ramp amounts are in BPM in
@@ -408,7 +408,7 @@ function beat_pan(idx) local(n, non_accent, steps, step, pos, flip) (
 
 // --- Host ratio picker: RETIRED (R13-revised) -----------------------------
 // The guard is forced to 0 rather than the block being deleted, so the
-// reasoning stays beside the code it disabled. Tempo says beats per tick in
+// reasoning stays beside the code it disabled. Tempo says beats per cycle in
 // Host x now, so there is no multiplier for a picker to translate -- and a
 // picker that WRITES a value is the exact shape that stamped 0.5 over a
 // hand-set rate on every load in infantile.RPP.
@@ -439,14 +439,14 @@ slider_show(slider28, 0);
 // The LANDING BLOCK is gone (R13-revised step 4). It used to stamp the picker
 // to "1 per beat" and Tempo to 1 on entering Host x, because meeting a bare
 // MULTIPLIER first was the trap -- 120 as a multiplier is a hundred and twenty
-// times the project tempo. There is no trap now: 120 beats per tick is a
+// times the project tempo. There is no trap now: 120 beats per cycle is a
 // legible number (a tick every 120 beats, very slow), so nothing needs stamping
 // and, crucially, the TEMPO SLIDER NEVER HIDES. Hiding it is what forced the
 // stamp in the first place.
 rate_mode_inited ? last_rate_mode = rate_mode;
 
 
-// In Host x, slider1 is BEATS PER TICK. The project runs at `tempo` beats per
+// In Host x, slider1 is BEATS PER CYCLE. The project runs at `tempo` beats per
 // minute, so a tick every N beats is tempo/N ticks per minute -- which is what
 // track_bpm has always been. Everything downstream (samples_per_beat, the drift
 // period, Start Delay, the beat clock itself) derives from track_bpm and so
@@ -616,7 +616,7 @@ rate_mode == 1 ? (
 transport_moving = (play_state == 1 || play_state == 5);
 rate_mode == 1 && transport_moving ? (
   (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ? (
-    // BEATS PER TICK, so the tick number at a given project position is the
+    // BEATS PER CYCLE, so the tick number at a given project position is the
     // beat position DIVIDED by it. This inverted with the rate conversion
     // above; multiplying here while dividing there would place the grid at a
     // different speed than the metronome runs at, and the ticks would walk.

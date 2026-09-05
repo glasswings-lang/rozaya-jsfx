@@ -29,7 +29,7 @@ Swing is applied by offsetting the beat phase at each cycle boundary, advancing 
 **Rate Mode** `Own BPM / Host x` (default Own BPM)
 **Own BPM** is the original behaviour: Tempo below is the metronome's own
 speed and the project tempo is ignored. **Host x** locks it to the project, and
-Tempo then means **beats per tick** — 1 is a tick on every beat, 2 is every
+Tempo then means **beats per cycle**, a cycle here being one tick — 1 is a tick on every beat, 2 is every
 other beat, 0.5 is two ticks a beat. Bigger is slower. Tempo changes apply live,
 including mid-playback.
 
@@ -42,7 +42,7 @@ Only two entries rather than the four in Melody Phase / Shepard Tone, because
 this plugin only ever had one unit — "Seconds" and "Hz" would be meaningless
 on a metronome.
 
-**Beats per tick is a plain number, not a menu.** 4 is a tick every four beats.
+**Beats per cycle is a plain number, not a menu.** 4 is a tick every four beats.
 3.7 is every three and seven tenths of a beat, which no note-division grid can
 express. Fractions below 1 subdivide: 0.25 gives four ticks a beat.
 
@@ -50,8 +50,8 @@ express. Fractions below 1 subdivide: 0.25 gives four ticks a beat.
 > 120 BPM in Own BPM mode, and in Host x it is a tick every 120 beats — very
 > slow. Set the mode first, then the Tempo.
 
-**A tick is this plugin's cycle.** The rest of the suite says "beats per cycle";
-a metronome's cycle has an ordinary name, so the label uses it. Same unit.
+**A cycle here is one tick.** The label uses the suite's own phrase rather than a
+word picked just for this plugin, so what you learn on one carries to all of them.
 
 **Host ratio (retired)** — hidden, and does nothing.
 It used to be a menu of ratios that wrote a **multiplier** into Tempo. The
@@ -60,7 +60,7 @@ beats" is now typing 4. The slider stays in the file because slider positions
 are how REAPER remembers a saved project, so removing one would shift every
 control above it in every project.
 
-**Tempo (BPM, or beats per tick in Host x)** `0.001-1000, default 120`
+**Tempo (BPM, or beats per cycle in Host x)** `0.001-1000, default 120`
 
 Widened from the old `10-300`. The bottom end was the pinch — very slow ambient
 pulses were unreachable without typing values in by hand — and Host x needs the
@@ -102,7 +102,7 @@ landing value into it so you were not left on something arbitrary. That stamp is
 bug that cost a session elsewhere in the suite, where a saved project had its
 hand-set rate overwritten on every load and every track duplicate.
 
-Beats per tick is legible on its own, so the whole chain unwinds: nothing hides,
+Beats per cycle is legible on its own, so the whole chain unwinds: nothing hides,
 nothing is stamped, and Tempo is always visible showing the value it is actually
 running at. (Suite rule R13-revised, 2026-09-02; converted here 2026-09-04.)
 

@@ -39,7 +39,7 @@ desc: Shepard Scale Generator
 //   Pan     — Stereo position.
 
 // ===== GLOBAL CONTROLS =====
-slider1:120<0.001,1000,0.001>BPM (or multiplier in Host x)
+slider1:120<0.001,1000,0.001>BPM (or beats per cycle in Host x)
 slider2:0<0,1,1{Asc,Desc}>Direction
 slider3:0<0,1,1{Skip,Rest}>Inactive Notes
 slider4:10<0,100,0.1>Attack %
@@ -172,15 +172,19 @@ slider61:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // --- Host tempo sync (sliders 62-63) ------------------------------------
 // Own BPM: free-running, project tempo ignored -- the original behaviour.
-// Host x: BPM becomes a MULTIPLIER of the project tempo.
+// Host x: BPM means BEATS PER CYCLE -- one step of the sequence takes that many
+// project beats. 4 is a note every four beats; 0.5 is two notes a beat. Bigger
+// is slower. It used to be a MULTIPLIER of the tempo (R13-revised, 2026-09-02):
+// a multiplier is a number you cannot hear without doing arithmetic first.
 // Two entries, not four: this plugin only ever had one unit, so Seconds and
 // Hz would be meaningless on it. Appended at the END per never-renumber.
 slider62:0<0,1,1{Own BPM,Host x}>Rate Mode
 
-// Convenience picker: writes a multiplier into BPM on change then gets out
-// of the way. "Custom" (default) never writes. Not "Free" -- that means
-// FREE-RUNNING in sync UI, which Own BPM already is.
-slider63:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes BPM)
+// RETIRED 2026-09-04 by R13-revised, and hidden. It existed only to spare you
+// arithmetic on a multiplier; "every 4 beats" is now typing 4 into BPM. NOT
+// deleted -- slider ids are primary keys and removing one shifts every control
+// above it in every saved project.
+slider63:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (retired)
 
 // ===== PULSE WIDTH (Waveform slot 13 only) =====
 // Duty cycle for the Pulse waveform: the fraction of each cycle the wave
@@ -205,15 +209,17 @@ slider64:25<1,99,0.1>Pulse width (%, 50 = square)
 host_bpm = max(tempo, 0.001);
 host_ratio_inited = 0;
 
-// rate_units is slider1 in ITS OWN unit — plain BPM in Own BPM mode, a
-// multiplier of the project tempo in Host x — and host_mult turns one into
-// the other. Drift and Speed Ramp offsets are added to rate_units BEFORE the
-// multiply, so they're deltas in whatever unit the BPM slider is currently
-// showing. Matches the plugins whose ramp adds straight onto Rate Value, and
-// means a ramp in Host x stretches with the tempo instead of being a fixed
-// BPM amount. Seeded here so @sample has them before @slider's first run.
+// rate_units is slider1 in ITS OWN unit — plain BPM in Own BPM mode, beats per
+// cycle in Host x — and bpm is the real steps-per-minute it works out to.
+// Drift and Ramp offsets are added to BPM, in the effective_bpm line in
+// @sample, so they are deltas in real BPM in both modes — which is the suite
+// rule (the plugin converts, never the user).
+//
+// An earlier version of this comment said the offsets were added to rate_units
+// before the multiply. They never were; the code has always added them after.
+// The same wrong comment sat in rhythm-track. Corrected 2026-09-04.
+// Seeded here so @sample has them before @slider's first run.
 rate_units = slider1;
-host_mult  = 1;
 bpm        = slider1;
 
 PHI = 1.6180339887;
@@ -487,15 +493,13 @@ loop(N_TARGETS,
 
 
 @slider
-// True for the ONE @slider pass where Rate Mode really moved INTO the
-// tempo-following mode. The named pickers below use it to apply their ratio on
-// entry: the raw multiplier HIDES behind a picker, so a stale picker value left
-// unapplied would name one speed on screen while the plugin ran another.
-// rate_mode_inited gates it, so a half-restored instance can never see an edge.
-entered_host_mode = rate_mode_inited && slider62 == 1 && last_rate_mode != slider62;
-
 rate_mode     = slider62;
-host_ratio_inited && slider62 == 1 && (host_ratio_sel != slider63 || entered_host_mode) ? (
+// RETIRED (R13-revised). Guard forced to 0 rather than deleted, so the
+// reasoning stays beside the code it disabled. BPM says beats per cycle in
+// Host x now, so there is no multiplier for a picker to translate -- and a
+// picker that WRITES a value is the shape that stamped 0.5 over a hand-set
+// rate on every load in infantile.RPP.
+0 ? (
   host_ratio_sel = slider63;
   host_ratio_sel > 0 ? (
     slider1 =
@@ -509,44 +513,28 @@ host_ratio_inited && slider62 == 1 && (host_ratio_sel != slider63 || entered_hos
     slider_automate(slider1);
   );
 );
-slider_show(slider63, rate_mode == 1);
-// --- Landing in Host x, and keeping the multiplier out of the way ----------
-//
-// Two problems, one fix. (a) The rate slider's default was chosen for its own
-// unit -- 2 means 2 Hz, which as a MULTIPLIER is double time -- so switching
-// mode used to hand you an arbitrary speed you never asked for. (b) In Host x
-// that slider is a multiplier, and setting one by hand means arithmetic, which
-// is the thing this project exists to avoid. The Host ratio picker already
-// solves (b), but it sits at the far end of the slider list because IDs can
-// never be renumbered, so you meet the multiplier first and the cure last.
-//
-// So: entering Host x lands on "1 per beat" (picker index 8) unless you had
-// already chosen a ratio, and the raw multiplier HIDES unless the picker is
-// on Custom. The named list becomes the way in; the number only appears when
-// you deliberately ask for one the list doesn't have.
-//
-// Guarded on a real in-session mode CHANGE. Adopting on load instead would
-// overwrite a hand-tuned rate the moment a saved project opened -- the same
-// trap the picker's own host_ratio_inited guard exists for.
-rate_mode_inited && last_rate_mode != rate_mode ? (
-  rate_mode == 1 && slider63 == 0 ? (
-    slider63 = 8;
-    host_ratio_sel = 8;
-    slider1 = 1;
-    slider_automate(slider63);
-    slider_automate(slider1);
-  );
-  last_rate_mode = rate_mode;
-);
-slider_show(slider1, rate_mode != 1 || slider63 == 0);
+slider_show(slider63, 0);
+// The LANDING BLOCK is gone (R13-revised step 4). It used to stamp the picker
+// to "1 per beat" and BPM to 1 on entering Host x, because meeting a bare
+// MULTIPLIER first was the trap -- 120 as a multiplier is 120x the project
+// tempo. There is no trap now: 120 beats per cycle is a legible number (a note
+// every 120 beats, very slow), so nothing needs stamping and, crucially, the
+// BPM SLIDER NEVER HIDES. Hiding it is what forced the stamp.
+rate_mode_inited ? last_rate_mode = rate_mode;
 
-// Host x: slider1 is a MULTIPLIER of the project tempo. beat_hz,
-// effective_bpm, the drift period and Start Delay all derive from bpm and
-// effective_beat_hz is recomputed per sample, so feeding the right number
-// in is the whole job -- no host_scale factor needed. @block repeats it.
+// Host x: slider1 is BEATS PER CYCLE. The project runs at `tempo` beats per
+// minute, so a step every N beats is tempo/N steps per minute -- which is what
+// bpm has always been. beat_hz, effective_bpm, the drift period and Start Delay
+// all derive from bpm, and effective_beat_hz is recomputed per sample, so
+// feeding the right number in is the whole job. @block repeats it.
+//
+// Guarded on the NUMERATOR: inverting a unit inverts its edge cases, and
+// 1/max(raw,0.001) clamps the DENOMINATOR, turning a stopped sequence into a
+// thousand-times-tempo one.
 rate_units    = slider1;
-host_mult     = rate_mode == 1 ? max(tempo, 0.001) : 1;
-bpm           = rate_units * host_mult;
+bpm           = rate_mode == 1 ?
+                  (rate_units > 0.001 ? max(tempo, 0.001) / rate_units : 0.001) :
+                  rate_units;
 direction     = slider2;
 skip_mode     = slider3;
 attack_frac   = slider4 / 100.0;
@@ -694,8 +682,7 @@ last_sr_target != sr_sel_target ? (
 // change, so these two lines repeat here; everything else is per-sample.
 rate_mode == 1 ? (
   rate_units = slider1;
-  host_mult = max(tempo, 0.001);
-  bpm = rate_units * host_mult;
+  bpm = rate_units > 0.001 ? max(tempo, 0.001) / rate_units : 0.001;
   start_delay_sec = slider48 * 60 / max(bpm, 0.001);
 );
 
@@ -723,7 +710,11 @@ rate_mode == 1 ? (
 transport_moving = (play_state == 1 || play_state == 5);
 rate_mode == 1 && transport_moving ? (
   (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ? (
-    seq_total = max(beat_position, 0) * rate_units;
+    // BEATS PER CYCLE, so the step number at a given project position is the
+    // beat position DIVIDED by it. This inverted with the rate conversion
+    // above and had to change with it -- multiplying here while dividing there
+    // would place the sequence at a different speed than it plays at.
+    seq_total = rate_units > 0.001 ? max(beat_position, 0) / rate_units : 0;
     seq_steps = floor(seq_total);
     seq_phase = seq_total - seq_steps;
 
