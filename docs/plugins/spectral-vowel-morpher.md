@@ -291,12 +291,18 @@ Re-arms every time you press play. 0 disables it.
 Play for a while, go quiet for a while, repeat forever. **0 in either one
 disables the gate**, so a half-set pair never silently mutes anything.
 
-**Modulation at rest** `Walk through / Freeze in place, default Walk through`
-What the movement does while resting. **Walk through** keeps Drift, Ramp and
-Auto-morph advancing silently, so you rejoin wherever they have got to — the
-texture has moved on while you weren't hearing it. **Freeze in place** stops
-them and resumes exactly where they stopped. Short rests barely tell the two
-apart; long ones do.
+**Auto-morph at rest** `Walk through / Freeze in place, default Walk through`
+What the morph walk does while resting. **Walk through** keeps Auto-morph
+advancing silently, so you rejoin wherever it has got to — the texture has moved
+on while you weren't hearing it. **Freeze in place** stops it and resumes exactly
+where it stopped. Short rests barely tell the two apart; long ones do.
+
+**Drift and Ramp keep running through a rest**, and that is deliberate — it is
+what every other plugin in the suite does. Drift has its own play/rest if you
+want it to hold too. (This control was briefly called *Modulation at rest* and
+briefly froze Drift and Ramp as well; both were wrong. "Modulation" is a word
+that appears as a control name nowhere else in the suite, and freezing more than
+the walk gave it a wider job than the *LFO at rest* control it was copied from.)
 
 **Output at rest** `Pass-through / Silence, default Pass-through`
 What comes out while resting. **Pass-through** mutes only what this plugin adds

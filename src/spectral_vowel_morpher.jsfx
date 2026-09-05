@@ -238,11 +238,26 @@ slider30:0<0,1000,0.001>Start delay (sec / min / beats by Time mode)
 slider31:0<0,1000,0.001>Play for (sec / min / beats by Time mode, 0 = always)
 slider32:0<0,1000,0.001>Rest for (sec / min / beats by Time mode, 0 = always)
 
-//     What the modulation does while resting. Walk through keeps Drift, Ramp
-//     and Auto-morph advancing silently, so you rejoin wherever they have got
-//     to; Freeze in place stops them and resumes exactly where they stopped.
-//     Named to match the same control in the sweeping filters and Shepard Tone.
-slider33:0<0,1,1{Walk through,Freeze in place}>Modulation at rest
+//     What the morph walk does while resting. Walk through keeps Auto-morph
+//     advancing silently, so you rejoin wherever it has got to; Freeze in place
+//     stops it and resumes exactly where it stopped.
+//
+//     CALLED "Auto-morph at rest", NOT "Modulation at rest", and the difference
+//     is not cosmetic -- both halves of this were wrong on the first pass, on
+//     2026-09-04, and Rozaya caught it: "since when has anything in here ever
+//     been referenced as 'modulation'."
+//
+//     Nowhere. Every sibling calls this control "LFO at rest"; "Modulation" was
+//     a cover word invented for this one plugin and appears as a slider name in
+//     no other file in the suite.
+//
+//     The invented name came with an invented SCOPE, which was the worse half.
+//     The sweeping filters' "LFO at rest" freezes the sweep LFO and nothing
+//     else -- Drift and Ramp run straight through a rest, everywhere in the
+//     suite. This froze them too. It now governs the morph walk only, which is
+//     this plugin's actual equivalent of an LFO: the thing that moves the sound
+//     on a clock of its own. Drift has its own play/rest if you want it to hold.
+slider33:0<0,1,1{Walk through,Freeze in place}>Auto-morph at rest
 
 //     What comes OUT while resting. Pass-through leaves the dry input alone and
 //     mutes only what this plugin adds -- the right default for an effect, and
@@ -614,8 +629,8 @@ pr_accum            = 0;
 // Derived in @block from the sliders; seeded here so the first @sample before
 // the first @block reads something sane rather than an implicit zero.
 start_delay_sec = 0; pr_play_sec = 0; pr_rest_sec = 0; pr_enabled = 0;
-mod_at_rest = 0; out_at_rest = 0; tr_k = 1; drift_per_k = 1;
-in_rest = 0; mod_frozen = 0;
+morph_at_rest = 0; out_at_rest = 0; tr_k = 1; drift_per_k = 1;
+in_rest = 0; in_start_delay = 0; mod_frozen = 0; morph_frozen = 0;
 // Scramble the RNG per load: EEL rand() otherwise replays the SAME sequence
 // every session, so Drift would wander the identical path each time you open the
 // project. Advance it a sub-second-time-dependent number of steps so each load
@@ -1212,7 +1227,7 @@ start_delay_sec = slider30 * tr_k;
 pr_play_sec     = slider31 * tr_k;
 pr_rest_sec     = slider32 * tr_k;
 pr_enabled      = pr_play_sec > 0 && pr_rest_sec > 0;
-mod_at_rest     = slider33;   // 0 walk through, 1 freeze in place
+morph_at_rest   = slider33;   // 0 walk through, 1 freeze in place
 out_at_rest     = slider34;   // 0 pass-through, 1 silence
 // Drift period is a SECONDS value everywhere it is consumed; under sync the
 // slider holds beats, so convert here too. target_drift_per[] keeps the
@@ -1416,12 +1431,19 @@ start_delay_elapsed < start_delay_sec ? (
     in_rest = 0;
   );
 );
-// Freeze in place stops Drift, Ramp and Auto-morph advancing during a rest, so
-// they resume exactly where they stopped. Walk through (the default) leaves
-// them running silently, so you rejoin wherever they have got to. During the
-// START DELAY the modulation always holds, whatever this is set to -- the delay
-// is "the piece has not begun yet", and starting mid-wander would defeat it.
-mod_frozen = (start_delay_elapsed < start_delay_sec) || (in_rest && mod_at_rest == 1);
+// TWO different holds, with different reach. Getting this wrong once is why the
+// distinction is spelled out.
+//
+// The START DELAY holds everything -- Drift, Ramp and the morph walk. That
+// matches the sweeping filters, where the delay skips the whole engine: the
+// delay means "the piece has not begun yet", and arriving mid-wander defeats it.
+//
+// A REST holds only the MORPH WALK, and only on Freeze in place. Drift and Ramp
+// keep running through a rest, which is what every sibling does -- their "LFO at
+// rest" freezes the LFO and nothing else.
+in_start_delay = start_delay_elapsed < start_delay_sec;
+mod_frozen     = in_start_delay;                                    // Drift, Ramp
+morph_frozen   = in_start_delay || (in_rest && morph_at_rest == 1); // the walk
 
 // --- Drift: advance each CONFIGURED target and compute its current offset.
 //     Period is wall-clock SECONDS (this plugin has no musical clock). Shape
@@ -1445,7 +1467,7 @@ loop(N_TARGETS,
     // it, so the offset holds where it stopped rather than snapping to zero.
     // Two independent reasons to hold: this target's own Drift play/rest, and
     // the plugin-wide transport (Start delay, or a Play/Rest rest with
-    // Modulation at rest = Freeze in place). pr_frozen is still TICKED either
+    // the Start delay). pr_frozen is still TICKED either
     // way, so a transport rest does not also stall the drift's own gate -- it
     // holds the wander without desynchronising the thing that decides when the
     // wander holds.
@@ -1481,8 +1503,8 @@ loop(N_TARGETS,
 //     freeze and resume. The offset (ride * by) is computed every sample
 //     (frozen when not engaged), and folds into the effective values alongside
 //     the Drift offset below. ---
-// mod_frozen holds every ride during the Start delay, and during a rest when
-// Modulation at rest is Freeze in place. Engage is unchanged and still the
+// mod_frozen holds every ride during the Start delay. A REST does not stop a
+// ride -- that matches the siblings. Engage is unchanged and still the
 // user's own freeze/resume switch; this is the transport's.
 ramp_engaged && !mod_frozen ? (
   ri = 0;
@@ -1588,11 +1610,10 @@ loop(N_LAY_SLOTS,
 );
 base_gain = layer_gain[LAY_ORIG];
 
-// The transport freezes the morph walk too, for the same reason it freezes
-// Drift and Ramp: with Freeze in place, a rest resumes exactly where it
-// stopped. eff_morph01 is deliberately left holding its last value rather than
+// morph_frozen, not mod_frozen -- the walk is what "Auto-morph at rest" governs.
+// eff_morph01 is deliberately left holding its last value rather than
 // recomputed, so the spectrum sits still instead of snapping to a slot edge.
-automorph_mode > 0.5 && !mod_frozen ? (
+automorph_mode > 0.5 && !morph_frozen ? (
   automorph_mode == 1 ? (
     // Sweep: triangle wander, morph runs 0 -> 1 -> 0 forever.
     morph_phase += 1 / (srate * auto_time);
