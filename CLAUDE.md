@@ -274,6 +274,31 @@ append-only history; this is the only part of the repo that claims to describe
   `docs/host-sync-ear-test.md`, which are Drift and Ramp under Host x, and pan
   following the tempo. **The beats-per-cycle conversion itself is no longer on
   this list** — it was heard on 09-04, see above.
+- **R20 — THE RATE BLOCK — WAS SETTLED 2026-09-04 AND IS THE NEXT THING TO
+  BUILD.** Nothing is built yet; the rule is written down in
+  `docs/suite-consistency-plan.md` and summarised under *Terminology* below.
+  **It goes before the Sweeping Filter reorder**, because the reorder moves
+  controls and this decides what they say — doing the layout first means
+  touching that plugin twice.
+
+  **Measured 2026-09-04, so the size is known:** the mode enum has FIVE different
+  shapes across the suite, and **every pan unit runs backwards** relative to the
+  Rate Mode sitting above it in the same plugin. Canonicalising costs **36
+  stored instances**, all uniform: 32 pan units (all on `Hz`, index 0 → 2), 3
+  Stereo Phasers (on the DEFAULT, whose index 0 is `Own Hz` — they need `2`
+  written explicitly or they silently become BPM), and 1 Womb on Host x
+  (1 → 3). Melody, Heartbeat, Rhythm Track and Shepard Scale need nothing.
+  Then Melody and Womb convert off the dead sync-block shape — Melody's 27
+  synced instances move their beats number into `Rate value`, and it comes out
+  **two controls shorter**.
+
+  **Rozaya, 2026-09-04, on why this keeps going wrong:** *"I've had five
+  different Claude sessions try and fuck this aspect up, and I don't know enough
+  JSFX or syntax or anything like that to try and fix it."* The plan's own text
+  was the tripping hazard — it read as authoritative and said the opposite. Both
+  offending paragraphs are now struck through in place rather than deleted, so a
+  session that half-remembers them finds the correction instead of the claim.
+
 - **The suite consistency sweep is mid-flight.** `docs/suite-consistency-plan.md`
   is the authoritative document for it — read it before touching interface
   naming, ordering, ranges or units anywhere in the suite. Phase 0 and most of
@@ -298,13 +323,36 @@ older docs can lag too. Two renames matter when reading any of them:
 - **`Speed ramp` is now `Ramp`** everywhere the user can see (2026-08-31, 70
   labels across 14 plugins). The internal variables are still `speed_ramp_*` and
   that is fine. Every "Speed Ramp" in the history means today's `Ramp`.
-- **`Host x` is a rate mode, and `Rate Value` there means BEATS PER CYCLE.** The
+- **`Host x` is a rate mode, and `Rate Value` there means EVERY N BEATS.** The
   history describes it as a *multiplier* of the project tempo, which is what it
-  was from 2026-08-11 until R13-revised on 2026-09-02. **R13-REVISED IS COMPLETE
-  AS OF 2026-09-04. No plugin in the suite multiplies any more.** Do not
-  re-open this: the remaining work on Host x is EAR-TESTING it, not converting
-  it. (That sentence is here because this suite's documented failure mode is a
-  settled decision being re-derived by a later session.)
+  was from 2026-08-11 until R13-revised on 2026-09-02. **No plugin in the suite
+  multiplies any more, and the conversion is EAR-TESTED.**
+
+  **THE RATE BLOCK IS SETTLED. IT IS R20 IN `docs/suite-consistency-plan.md`.
+  READ THAT SECTION BEFORE TOUCHING ANY RATE CONTROL ANYWHERE.** Five separate
+  sessions have each reached for a different shape here, and Rozaya — who cannot
+  read the source to check us — has had to catch it every time. The rule, so it
+  is in this file too and not only in the plan:
+
+  **Every rate carries exactly two controls, adjacent: a rate value, then a rate
+  mode of `{BPM, Seconds, Hz, Host x}` — always those four, always that order.
+  In Host x the rate value means every N beats. A plugin with two rates has two
+  complete pairs; the pan gets its OWN mode and does not borrow the main one.**
+
+  **Forbidden, all of them previously built here:** a `Sync to host` switch, a
+  `Host sync target` selector, a separate `Every N beats` slider, a `Host ratio`
+  picker, any control whose job is to write into another control, and any
+  multiplier in any mode.
+
+  **The argument that keeps resurrecting the dead shape, and the number that
+  kills it.** The plan used to say a plugin syncing two things independently
+  needs a target selector, because one Rate Value cannot express two beat
+  counts. True, and irrelevant — the second rate has its own value. The real
+  constraint was that **Melody's `Pan base rate` has no mode of its own** and is
+  handed the sequencer's (`melody_phase.jsfx:1116`), so there was nowhere to put
+  Host x for the pan. One slider fixes that; three were spent instead. And
+  across **73 Melody instances, 27 are synced and all 27 target `Rate value` —
+  not one points at the pan.** The capability has never been used.
 
   Converted with nothing stored on Host x, so no migration was needed -- checked
   in every case, never assumed: both Polyrhythms, Dapple, Bubbler (09-02), then

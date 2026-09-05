@@ -13,8 +13,8 @@ re-derived the state from the source. Status is now recorded here. **Keep it rec
 |---|---|
 | **R16** `Speed ramp` → `Ramp` | done, 70 labels across 14 plugins |
 | **R8** step sizes standardised down | done for dB (0.01) and `Start delay` (0.001) |
-| **R11** one sync block, not per-rate pickers | done in **Womb** and **Melody Phase** — both now carry `Sync to host` / `Host sync target` / `Every N beats` instead of a Rate Mode plus a stranded Host ratio |
-| **R13-revised** Host x means beats, not a multiplier | **COMPLETE 2026-09-04.** All thirteen plugins with a Host x mode converted; every Host ratio picker retired and hidden; every landing block that stamped a rate on mode entry deleted; the rate slider never hides. Ten stored instances in Tremolo and the Sweeping Filter migrated by reciprocal and verified against each project's own tempo. **Unheard.** |
+| ~~**R11** one sync block~~ | **SUPERSEDED BY R20, 2026-09-04. Do not build this shape.** Its `Sync to host` / `Host sync target` / `Every N beats` block is what Womb and Melody carry, and both now convert away from it. Measured: across 73 Melody instances, the target selector has NEVER been pointed at anything but `Rate value` — the multi-target capability it exists for has never been used |
+| **R13-revised** Host x means beats, not a multiplier | **COMPLETE 2026-09-04, EAR-TESTED ✓, and now folded into R20.** All thirteen plugins converted; every Host ratio picker retired; every landing block deleted; the rate slider never hides. Ten stored instances migrated by reciprocal. **R20 keeps all of this and adds the two things it left undone: a canonical enum ORDER, and a rate mode of its own for every rate** |
 | **Polyrhythm per-voice gain default** −60 → −6 | done |
 | **Morpher — the entire authored layout** | **LANDED** (`340fd4e`). `Capture average` 28 → 4, `High cut` beside `Low cut`, Drift and Ramp moved to the end, Input/Output relocated, `Layer overtone harmonic` added. `docs/layouts/spectral-vowel-morpher.md` describes a finished job, not a pending one — and it is itself stale: it says 39 sliders, the file has 44 |
 | **Stereo Phaser — rate triple made contiguous** | **LANDED** 2026-09-04, plugin installed and `strangeness.RPP` migrated. First reorder to use a project-file migration rather than runtime repair |
@@ -821,7 +821,13 @@ Note the same question exists in reverse for `Beats per breath`, which is visibl
 Host x and is the *correct* control there — R10 makes it always-visible within Host x
 rather than gated behind the picker.
 
-### R11. One tempo-sync block, shaped like Drift and Ramp — replacing every Host ratio picker
+### ~~R11. One tempo-sync block, shaped like Drift and Ramp~~ — SUPERSEDED BY R20, 2026-09-04
+
+**Do not build this. Everything below is kept for its reasoning about the Host
+ratio pickers, which was right, and those pickers are all retired. Its
+replacement — `Sync to host` + `Host sync target` + `Every N beats` — is dead:
+see R20 for what replaced it and for the measurement that killed it.**
+
 
 Decided 2026-08-30 with Rozaya. This **supersedes R10's scope**: R10's "the picker must
 not hide the value" is correct but it is a patch on a control that should not exist.
@@ -1770,7 +1776,123 @@ including the effect plugins, which have never been measured -- because the
 
 ---
 
+# R20 — THE RATE BLOCK. This is settled. Do not redesign it. (2026-09-04)
+
+**Supersedes R11 entirely and completes R13-revised.** Decided with Rozaya on
+2026-09-04 after five separate sessions had each reached for a different shape.
+If you are reading the suite for "how does tempo sync work here", stop at this
+section — everything below it is history and two of the shapes it describes are
+dead.
+
+## The rule, in full
+
+**Every rate in a plugin carries exactly two controls, adjacent, in this order:**
+
+```
+<Name> rate value        free number
+<Name> rate mode         {BPM, Seconds, Hz, Host x}   -- ALWAYS these four, ALWAYS this order
+```
+
+- **In Host x, the rate value means EVERY N BEATS.** One cycle takes N beats of
+  the project. Bigger is slower. It is a free number, so `0.333333` — every
+  three beats — is as reachable as `4`.
+- **The mode list is identical everywhere.** Same four entries, same order, in
+  every plugin, for every rate. This is the whole point: the suite is navigated
+  by arrowing the parameter list one control at a time, so position 3 must not
+  mean Hz on one control and BPM on the one under it.
+- **A plugin with two rates has two of these pairs**, each complete and
+  self-contained. The pan gets its own rate value and its own rate mode. It does
+  not borrow the main rate's mode, and nothing points across at it.
+
+**What is forbidden, and each of these has been built at least once:**
+
+- No `Sync to host` switch. Host x is a rate mode; a second switch is a second
+  way to say the same thing.
+- No `Host sync target` selector. Each rate carries its own sync.
+- No separate `Every N beats` slider. The rate value IS that number in Host x.
+- No `Host ratio` picker, or any control whose job is to write a value into
+  another control. All seven were retired 2026-09-04 and they stay retired.
+- No multiplier, anywhere, in any mode.
+
+## Why the two dead shapes existed, so nobody re-derives them
+
+**R11's sync block (Melody, Womb).** Its stated justification was that a plugin
+syncing more than one thing independently cannot express two beat counts in one
+rate value. **That is true and it is the wrong conclusion**, because you do not
+use one rate value for two rates — you give the second rate its own pair.
+
+The real constraint was narrower and is worth stating exactly, because it is a
+missing control rather than a limitation: **Melody's `Pan base rate` (slider 21)
+has no mode of its own.** Read `rate_to_cycle_seconds(pan_base_rate, rate_mode)`
+at melody_phase.jsfx:1116 and :1492 — the pan is handed the SEQUENCER's
+`rate_mode`. So there was nowhere to put Host x for the pan, and three sliders
+were added to reach around the outside. One slider — a pan rate mode — does it
+better, and untangles the pan from the sequencer's units as a side effect.
+
+**Measured, and this is the number that ended the argument.** Across all 73
+Melody Phase instances in the library, 27 have `Sync to host` ON, and **all 27
+have the target set to `Rate value`. Not one points at the pan.** The capability
+those three controls exist to provide has never been used, and it cost three
+positions in the parameter list on every instance since it shipped.
+
+**R13's "sync is not a unit" split.** Overturned by R13-revised on 2026-09-02 and
+still dead. Host x IS a rate mode — it is one of the ways of saying what the
+rate is.
+
+## What each plugin owes
+
+- **The thirteen already on R13-revised** owe only the enum ORDER, plus a rate
+  mode of their own for any rate that lacks one. Measured 2026-09-04: the main
+  Rate Mode is canonical in six plugins; `{Own BPM, Host x}` in four (Womb,
+  Heartbeat, Rhythm Track, Shepard Scale); `{Own Hz, Host x}` in Stereo Phaser;
+  and **every pan unit in the suite runs BACKWARDS** — `{Hz, Seconds, BPM}` on
+  Tremolo and the Sweeping Filter, `{Hz, Seconds, BPM, Host x}` on Sweep Dwell.
+  Resonance Bank's drift period mode is a third order again,
+  `{BPM, Hz, Seconds, Host x}`.
+- **Melody Phase** converts: its 27 synced instances get Rate mode `Host x` and
+  their beats number moved into `Rate value`; sliders 3, 4 and 5 are deleted;
+  the pan gains a rate mode. **Net two fewer controls than it has today.**
+- **Womb** converts the same way. Its 1 Host x instance moves its `Every N
+  beats` into the heart rate slider. **The beats value MOVES; it is not
+  deleted** — see the near-miss note below, which stays true as process even
+  though its conclusion about Womb has been overturned by this rule.
+
+## The enum-order migration, measured 2026-09-04
+
+Reordering an enum changes what a stored index MEANS, so this needs a migration
+even though it is "only naming". Every affected instance in the library:
+
+| what | instances | change |
+|---|---|---|
+| Pan unit, Tremolo / Sweeping Filter / Sweep Dwell | **32** | all stored `Hz`; index 0 → 2 |
+| Stereo Phaser rate mode | **3** | all on the DEFAULT, and its default is `Own Hz` — needs `2` written EXPLICITLY or they silently become BPM |
+| Womb rate mode | **1** | `Host x` index 1 → 3. The other 7 are on BPM and do not move |
+| Melody, Heartbeat, Rhythm Track, Shepard Scale | 0 | Melody's `{BPM, Seconds, Hz}` gains Host x on the END, so its indices are stable |
+
+**36 instances, every one uniform.** Nothing anybody has saved changes how it
+sounds.
+
+## The near-miss this rule must not repeat
+
+**BEFORE DELETING ANY CONTROL THIS RULE RETIRES, OPEN THE BLOCK AND READ IT.**
+On 2026-09-04 a plan document described Womb's `Every N beats` as a leftover and
+it is not — it is half of a working pair. Rozaya: *"host x is the rate mode.
+every N beats is getting the multiplier out of there. neither of them work
+alone."* R20 does retire it, but **by moving its number into the rate value,
+with a migration**, which is a different operation from deleting it. A retired
+`Host ratio` picker writes one slider and does nothing else; a working half of a
+pair does something the other half depends on. Those look identical from the
+slider list and completely different from inside.
+
+---
+
 # R13 REVISED — Host x stays a rate mode; Rate Value means BEATS there (2026-09-02)
+
+**SUPERSEDED IN PART BY R20 (2026-09-04).** Everything here about Host x being
+a rate mode and Rate Value meaning beats is CORRECT and still in force. What R20
+overturns is the paragraph below headed *Where the heavier R13 shape still earns
+its keep* — it does not earn its keep anywhere, and that paragraph is what sent
+multiple sessions to build a sync block that the measurements say nobody uses.
 
 **This supersedes R13's "split Rate mode from a Sync to host switch" for every
 plugin with a single sync target.** Rozaya raised it and the reasoning is
@@ -1807,14 +1929,23 @@ music -- "I'm not just designing for locks." A free beat count loses nothing.
 **And it costs no new sliders.** No `Sync to host`, no `Host sync target`, no
 `Every N beats`. The `Host ratio` multiplier picker becomes redundant.
 
-## Where the heavier R13 shape still earns its keep
+## ~~Where the heavier R13 shape still earns its keep~~ — WRONG. KILLED BY R20, 2026-09-04.
 
-Only where a plugin has **more than one thing to sync independently**. Melody
-Phase syncs the sequencer and the pan separately, which needs a target selector
-and a per-target beat count; one Rate Value cannot express two. Melody keeps
-what it has. Womb has one sync target and should move to the revised shape,
-which also finishes it -- it currently has `Every N beats (Host x)` bolted on
-beside a Host x it never removed.
+**This paragraph is the single most expensive sentence in this document. Do not
+act on it.** It said the sync block earns its keep where a plugin syncs more
+than one thing independently, and named Melody Phase. It is wrong twice over:
+
+- **A second rate does not need a selector. It needs its own rate mode.** One
+  Rate Value cannot express two beat counts — true, and irrelevant, because the
+  second rate has its own value. Melody's pan lacked a MODE, not a selector.
+- **Nobody has ever used the capability.** 73 Melody instances, 27 synced, all
+  27 targeting `Rate value`. Zero pointing at the pan.
+
+The original text is preserved here because it was quoted back at Rozaya as a
+justification and they could not evaluate it: *"Only where a plugin has more
+than one thing to sync independently. Melody Phase syncs the sequencer and the
+pan separately, which needs a target selector and a per-target beat count; one
+Rate Value cannot express two. Melody keeps what it has."* Read R20 instead.
 
 ## Cost, and why it is much smaller than R13's
 

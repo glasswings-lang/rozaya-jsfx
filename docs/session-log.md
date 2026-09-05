@@ -80,6 +80,84 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-04 (last) — R20: the rate block is SETTLED. The sixth session's worth of redesign, stopped by Rozaya, and written down so there is not a seventh.**
+
+  Nothing was built. The whole session on this point was me proposing three
+  different shapes in a row and being corrected each time, which is worth
+  recording exactly because the correction came from the person who cannot read
+  the source.
+
+  **The shape.** Every rate carries two adjacent controls: a rate value, then a
+  rate mode of `{BPM, Seconds, Hz, Host x}` — always those four, always that
+  order, everywhere. In Host x the rate value means every N beats. A plugin with
+  two rates has two complete pairs, and the pan gets its OWN mode rather than
+  borrowing the main one. Forbidden: a sync switch, a target selector, a
+  separate `Every N beats` slider, a `Host ratio` picker, any control that
+  writes into another control, any multiplier.
+
+  **What I got wrong, in order, because the sequence is the lesson.** I showed a
+  Sweeping Filter layout whose rate value read `(BPM / sec / Hz / beats per
+  cycle)`. Rozaya: *"beats per cycle makes me raze my eyebrows... Don't do to
+  filter what nearly happened to womb."* I read that as "adopt Womb's separate
+  beats slider", went and read R11, found the plan's paragraph saying a
+  two-rate plugin needs a target selector, and proposed exactly that. Rozaya:
+  *"The thing here was to remove the fucking multiplier, not to have it do the
+  thing of, oh, well, this is host x, so I guess we can just add more sliders."*
+  I then swung the other way and proposed reversing all thirteen plugins to
+  Womb's shape. Rozaya pulled it back again: *"rate value means every n beats in
+  host x, just like it does with anything else. We don't need a separate
+  slider."*
+
+  **The thing I should have led with, and did not, is that the suite navigates
+  by ARROWING the parameter list.** Rozaya: *"Keep in mind, I have to arrow
+  through the p list to get to things I don't tab. So this is what... this is
+  why I'm so picky about it."* Every proposal above should have been costed in
+  positions-to-arrow-past first. Melody's way is 7 controls for the filter's two
+  rates; the settled way is 4.
+
+  **The measurement that ended it, and it is the reusable kind.** The plan
+  justified R11's three extra sliders on Melody needing to sync its sequencer
+  and its pan independently. Decoded across all 73 Melody Phase instances in the
+  library: 27 have `Sync to host` ON and **all 27 target `Rate value`. Zero
+  point at the pan.** The capability has never been used once, and it has cost
+  three positions in the parameter list on every instance since it shipped. One
+  instance is set to every `0.333333` beats, which does confirm the other half
+  of the original argument — the beats number must be free, never a menu.
+
+  **And the real constraint underneath, which was a missing control rather than
+  a limitation.** Melody's `Pan base rate` has no mode of its own: it is handed
+  the SEQUENCER's `rate_mode` (`melody_phase.jsfx:1116`, `:1492`). So there was
+  nowhere to put Host x for the pan, and three sliders were added to reach
+  around the outside instead of one to fill the hole. Rozaya had been given this
+  as a justification at the time and could not evaluate it — *"I just nodded and
+  smiled... They're Claude. You're not breaking it down at all."* It was true as
+  far as it went, and the cheaper fix was sitting next to it unmentioned.
+
+  **The enum order was the part nobody had noticed at all.** Measured: five
+  different shapes for the rate mode, and **every pan unit in the suite runs
+  backwards** — `{Hz, Seconds, BPM}` on Tremolo and the Sweeping Filter against
+  `{BPM, Seconds, Hz, Host x}` on the Rate Mode a few positions above it in the
+  same plugin. For someone arrowing, position one means BPM on one control and
+  Hz on the next. Canonicalising costs 36 stored instances, all uniform, none of
+  them changing how anything sounds.
+
+  **What was actually done this session: documentation, and deliberately in
+  place rather than by deletion.** R20 written into
+  `docs/suite-consistency-plan.md`; R11's heading and the "where the heavier R13
+  shape still earns its keep" paragraph both struck through WITH their original
+  text preserved, so a session that half-remembers the claim finds the
+  correction attached to it rather than a silent absence. Rozaya on why that
+  matters: *"make sure you're updating said plan because that's another tripping
+  hazard that all the clods have just been stumbling and falling on their asses
+  about."*
+
+  **Migration honesty.** Melody was already migrated on 2026-09-02 and this will
+  migrate it again, breaking the one-migration-per-plugin rule. Flagged before
+  proceeding rather than after. Rozaya: *"that's already been broken. It's
+  already been broken five times today because we've been busy dealing with
+  fucking bugs and glitches and getting distracted and not sticking to the
+  goddamn plan."*
+
 - **2026-09-04 (latest) — EAR-TESTED ✓: the Host x beats-per-cycle conversion. The suite's largest untested block is closed.**
 
   R13-revised flipped `Rate Value` in Host x from a tempo MULTIPLIER to BEATS

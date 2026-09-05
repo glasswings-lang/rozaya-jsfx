@@ -3,6 +3,17 @@
 Written by hand 2026-09-04, not generated. **Status: order drafted, awaiting
 review. Nothing built.**
 
+**R20 (2026-09-04) applies to this layout and the rate block below already
+satisfies it** — a rate value with its own rate mode, and a pan rate with its
+own rate mode, each pair self-contained. Two things it adds:
+
+- **The pan's mode enum must be the canonical `{BPM, Seconds, Hz, Host x}`.**
+  Today the pan unit is `{Hz, Seconds, BPM}` — BACKWARDS relative to the Rate
+  Mode sitting a few positions above it in this same plugin. All 20 stored
+  instances are on `Hz`, so it is a uniform index 0 → 2.
+- **No sync switch, no target selector, no separate beats slider.** If a future
+  draft of this document grows one, it is wrong; see R20.
+
 **Read `CLAUDE.md`'s one-migration rule before building this.** Everything this
 plugin is owed goes in ONE version bump. It has already been migrated twice on
 2026-09-04 — Host x values, then the rate-mode enum order — which is the mistake
