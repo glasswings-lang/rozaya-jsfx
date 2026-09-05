@@ -1524,12 +1524,56 @@ working the list rather than reading it:
 | | what | why here |
 |---|---|---|
 | 1 | **full-feature-sweeping-filter** (11 projects) | the only large one that is READY: layout authored, R20-compliant, no open question. Folds in its own backwards pan unit, so it gets ONE migration |
-| 2 | **Drift + Ramp for `bubbler`, `dapple`, `stereo-phaser`; Ramp for `resonance_bank`** | appended sliders, no reorder, no migration — and it closes the largest capability gap in the suite |
+| 2 | **Drift + Ramp for `bubbler` and `dapple`** (`stereo-phaser` DONE 2026-09-05) | the ONLY three where appending is also the LOGICAL position — see the correction below |
 | 3 | **Full Feature Tremolo** (7) | layout authored and R20-compliant; same pan-unit fix as the filter |
 | 4 | **polyrhythm_phase v1 -> v3** (17+5) | biggest, and blocked until its layout is AUTHORED |
 | 5 | **womb_sound_generator_v3** (8) | converts off the dead sync-block shape (R20) |
 | 6 | **spectral_vowel_passage** (10) | blocked on a design conversation, not on work — see below |
 | 7 | the singles | `resonance_bank`'s enum needs a version-gated BLOB migration; `sweep-dwell-filter`'s `Cycle mode` needs Passage's answer |
+
+### CORRECTION, same day: "appended, no migration" is true for exactly three plugins
+
+Rozaya, 2026-09-05, on being told the drift/ramp completion would be appended:
+*"Why would that be apending. we just reordered to fix the acumulation of
+apends making a goddamn mess."* Correct, and it contradicts R18 and Part 3,
+both of which this document already contains.
+
+**Measured after the question was asked, and the gap is far bigger than
+"three plugins have no drift":**
+
+| control | plugins that HAVE it | plugins MISSING it |
+|---|---|---|
+| Drift play for / rest for | 4 | **13** |
+| Ramp play for / rest for | 4 | **13** |
+| Ramp time unit (beats) | 3 | **14** |
+| Drift period unit (beats) | 3 | **14** |
+
+Only **Veil**, the **Morpher** and (since 2026-09-05) the **Stereo Phaser** carry
+a complete set. Every other plugin can drift and cannot do the staircase or
+count in beats. This is the rule *"Anything that has Ramp should have all the
+controls that go with Ramp"* having been true on paper and false in the files
+since it was written.
+
+**But the fix is NOT an append, except in three plugins.** The test is whether
+the plugin already HAS a drift block:
+
+- **No drift block and few sliders** — `bubbler` (11), `dapple` (13),
+  `stereo-phaser` (9, done). Drift and Ramp belong LAST in Part 2's order, so
+  appending them lands them exactly where the canonical layout wants them.
+  Append is correct here by accident of arithmetic, and it is worth saying that
+  it is an accident.
+- **An existing drift block** — everything else. The missing controls belong
+  INSIDE that block. `resonance_bank` is the clearest case: drift sits at 9-14
+  and **Mode / Wet-dry / Output Volume sit at 15-17**, so an appended
+  `Drift play for` would land at 18, nine places from `Drift shape`, with the
+  output controls wedged between. That is the disease this whole document
+  exists to cure.
+
+**So the drift/ramp completion is not a shortcut past Phase 2. It IS Phase 2**,
+folded into each plugin's single reorder, which is what Part 3 said all along.
+Only the three above can be done ahead of it.
+
+---
 
 **Passage is blocked on a question, not a queue position.** Rozaya, 2026-09-05:
 *"the whole reason I kinda hate using passage is because there's, you know,
