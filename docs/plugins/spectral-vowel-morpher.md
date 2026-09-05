@@ -240,35 +240,30 @@ The master level for everything the plugin *makes* — the voice, the wash, and 
 
 ### Rate Mode
 
-**Rate Mode** `Seconds / Minutes / Beats, default Seconds`
-What unit this plugin's durations are in — Auto-morph time, Start delay, Play
-for, Rest for and Drift period. On **Beats** they follow the project tempo.
-Changing the mode converts the values, so nothing changes audibly at the moment
-you change it; only the unit you type in does. The conversion goes through
-seconds rather than pairing the units off against each other, so it round-trips
-exactly and a fourth unit would cost one line rather than six.
+**Rate Mode** `BPM / Seconds / Hz / Host x, default Seconds`
+The suite's own four, same as Polyrhythm and Shepard Tone. It sets what
+**Auto-morph time** is measured in: cycles per minute, seconds per cycle, cycles
+per second, or beats per cycle when locked to the project.
 
-**Minutes was added in its proper place, not on the end, and that was possible
-exactly once.** An option's position in the list is what gets stored in your
-project, so inserting one normally changes what every saved project selected.
-Nothing had ever stored anything but the first option here — measured, 0 of 122
-instances — so the list could still be ordered by meaning: shortest unit first.
-That window is now shut. Any further unit appends to the end.
+Changing it converts the value, so nothing changes audibly at the moment you
+change it — only the unit you type in. The conversion goes via seconds rather
+than pairing units off, because BPM and Hz invert the number while Seconds does
+not; round-tripped through all four at 140 BPM it returns exactly where it
+started.
 
-**This was an on/off switch called `Sync to host` until 2026-09-04.** Rozaya:
+**Start delay, Play for, Rest for and Drift period are durations**, so they are
+in seconds — or beats when Rate Mode is Host x. A start delay cannot be "4 Hz".
+That split follows the suite, which annotates a control only where sync actually
+changes its meaning.
+
+**This was an on/off switch called `Sync to host` until 2026-09-04**, then briefly
+an invented `{Seconds, Minutes, Beats}` list of mine. Rozaya, on the first:
 *"bpm/seconds/hz/whatever belongs in a rate mode like everything else in the
-suite."* Right, and the suite had already settled the principle — being synced
-is an entry in the unit list, not a competing boolean beside it.
-
-It was briefly called *Rate Mode*, on the reasoning that this plugin has no rate.
-That was wrong: **Auto-morph** picks a shape and **Auto-morph time** is its
-period, which is a rate. And three other plugins already label their transport
-delay *"in rate mode units"*, so a Rate Mode governing durations alongside a rate
-is the existing convention. Same name as everywhere else now.
-
-The change cost nothing: it was already a two-entry enum, so `Off` became
-`Seconds` and `On` became `Beats` with the stored values 0 and 1 keeping their
-exact meanings. No renumber, no migration, no project touched.
+suite."* On the second: *"look to how the rest of the suite handles this too.
+these things don't exist in isolation."* Both right. Your projects were migrated
+so every existing instance still reads its Auto-morph time in seconds — without
+that they would have read it as BPM, turning a twenty-second morph into a
+three-second one.
 
 It is also **always visible** now. It used to hide unless Auto-morph was on,
 back when that was the only thing it governed — a mode that sets five controls'

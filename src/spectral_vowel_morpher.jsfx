@@ -98,21 +98,31 @@ slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 // two-entry enum, so Off -> Seconds and On -> Beats kept the stored values 0 and
 // 1 meaning exactly what they meant. No renumber, no migration, nothing touched.
 //
-// MINUTES ADDED 2026-09-04, IN ITS LOGICAL PLACE rather than on the end, and
-// that was free exactly once. Rozaya: "no project uses that switch. on and off
-// is fucking not great when you want to add things to it." Measured: 0 of 122
-// saved instances store anything but 0, so the option INDICES could still be
-// ordered by meaning -- shortest unit first. The moment anyone saves a project
-// on Beats that window shuts, because an enum option is an index stored inside
-// the slider's value and inserting one would change what every saved project
-// selected (R18: enum options append, and this is the sole exception, taken
-// while the count of affected projects is provably zero).
+// THE SUITE'S FOUR, 2026-09-04. Rozaya: "hz. independent bpm. host x. seconds
+// ... look to how the rest of the suite handles this too. these things don't
+// exist in isolation."
 //
-// Minutes is here for the controls that cannot use the other two: Ramp duration
-// and Ramp start delay are minutes-only today and sit outside this mode because
-// of it. They can join without a fourth unit now.
-slider8:0<0,2,1{Seconds,Minutes,Beats}>Rate Mode
-slider9:20<0.01,1000,0.01>Auto-morph time (sec / min / beats by Rate Mode)
+// Counted before choosing: the suite runs SIX different rate mode enums, so
+// there was no single thing to copy. But the full set is always these four, in
+// one of two orders -- {BPM,Seconds,Hz,Host x} in both Polyrhythms and Shepard
+// Tone, {Hz,Seconds,BPM,Host x} in Tremolo and the Sweeping Filter. Took the
+// three-plugin majority, which is also the order the two most-used plugins run.
+// The remaining enums are two-entry ({Own BPM,Host x} and friends) in plugins
+// that only ever had one unit; those are a different question.
+//
+// SECONDS NEEDS NO IMPLEMENTATION, which is Rozaya's point and worth keeping:
+// Auto-morph time is natively a PERIOD, so Seconds is the identity. The other
+// three are one line each -- BPM is 60/v, Hz is 1/v, Host x is v beats.
+//
+// DEFAULT IS 1 (Seconds), not 0, because Seconds is what this plugin has always
+// meant and a default must not change anyone's sound. Every saved instance is
+// migrated 0 -> 1 by tools/morpher_migrate_ratemode.py for the same reason.
+//
+// My invented {Seconds,Minutes,Beats} is gone. Minutes went with it: nothing
+// ever stored it, and Ramp duration -- the control it was added for -- is in
+// minutes everywhere in the suite and is not governed by Rate Mode anywhere.
+slider8:1<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
+slider9:20<0.01,1000,0.01>Auto-morph time (BPM / sec / Hz / beats per cycle)
 
 // --- The sound of the morph. Everything from here to High cut shapes what the
 //     captured spectra become; all of it is global, across every slot. ---
@@ -240,12 +250,12 @@ slider29:0<-60,12,0.01>Output level (dB, everything but the dry input)
 //     not being able to migrate saved state and this suite migrates it (R18).
 //     Everything from Drift target up moved +5; tools/morpher_migrate_transport.py
 //     carries the projects across.
-slider30:0<0,1000,0.001>Start delay (sec / min / beats by Rate Mode)
+slider30:0<0,1000,0.001>Start delay (sec, or beats in Host x)
 
 //     Play/Rest: run for a while, go quiet for a while, repeat. 0 in EITHER
 //     one disables the gate, so a half-set pair never silently mutes anything.
-slider31:0<0,1000,0.001>Play for (sec / min / beats by Rate Mode, 0 = always)
-slider32:0<0,1000,0.001>Rest for (sec / min / beats by Rate Mode, 0 = always)
+slider31:0<0,1000,0.001>Play for (sec, or beats in Host x, 0 = always)
+slider32:0<0,1000,0.001>Rest for (sec, or beats in Host x, 0 = always)
 
 //     What the morph walk does while resting. Walk through keeps Auto-morph
 //     advancing silently, so you rejoin wherever it has got to; Freeze in place
@@ -281,7 +291,7 @@ slider34:0<0,1,1{Pass-through,Silence}>Output at rest
 slider35:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
 slider36:0<0,300,0.01>Drift up amount (units match target)
 slider37:0<0,300,0.01>Drift down amount (units match target)
-slider38:30<1,600,0.5>Drift period (sec / min / beats by Rate Mode)
+slider38:30<1,600,0.5>Drift period (sec, or beats in Host x)
 slider39:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // --- Drift play/rest. Ported from Veil, the reference implementation, which
 //     has been heard. Makes the wander move in bursts with holds between
@@ -999,11 +1009,31 @@ function shuffle_bag() local(i, j, t) (
 //     turn seconds into whatever we are going to. One table, no pairwise cases,
 //     and adding a fourth unit later needs one line rather than n-squared.
 time_mode_inited && last_time_mode != slider8 ? (
+  // Auto-morph time is a PERIOD, so each mode is "seconds per unit of it":
+  //   BPM (0)      v cycles a minute -> 60/v seconds, so it INVERTS
+  //   Seconds (1)  v seconds, identity
+  //   Hz (2)       v cycles a second -> 1/v seconds, inverts
+  //   Host x (3)   v beats -> v * one beat in seconds
+  // The inverting pair cannot be expressed as a single ratio, so the conversion
+  // goes to seconds and back rather than pairing units off.
   tm_beat_sec = 60 / max(tempo, 0.001);
-  tm_from     = last_time_mode == 0 ? 1 : last_time_mode == 1 ? 60 : tm_beat_sec;
-  tm_to       = slider8        == 0 ? 1 : slider8        == 1 ? 60 : tm_beat_sec;
-  sync_k      = tm_from / tm_to;
-  slider9  = min(1000, max(0.01, slider9 * sync_k));
+  tm_secs     = last_time_mode == 0 ? 60 / max(slider9, 0.001) :
+                last_time_mode == 1 ? slider9 :
+                last_time_mode == 2 ? 1 / max(slider9, 0.001) :
+                                      slider9 * tm_beat_sec;
+  slider9     = slider8 == 0 ? 60 / max(tm_secs, 0.001) :
+                slider8 == 1 ? tm_secs :
+                slider8 == 2 ? 1 / max(tm_secs, 0.001) :
+                               tm_secs / tm_beat_sec;
+  slider9     = min(1000, max(0.01, slider9));
+  // The transport times and Drift period are DURATIONS and cannot be in BPM or
+  // Hz -- a start delay of "4 Hz" is not a thing. They read as seconds, or as
+  // beats in Host x, which is the same shape the suite uses for every control
+  // whose meaning changes only under sync. So their conversion depends on
+  // whether we crossed the Host x boundary, not on which of the other three.
+  tr_from     = last_time_mode == 3 ? tm_beat_sec : 1;
+  tr_to       = slider8        == 3 ? tm_beat_sec : 1;
+  sync_k      = tr_from / tr_to;
   // The transport times, added 2026-09-04, convert on the same flip and for the
   // same reason: the number on screen keeps meaning the same LENGTH OF TIME, and
   // only the unit you type in changes. Their floor is 0 rather than 0.01 because
@@ -1112,7 +1142,7 @@ automorph_mode = slider7;
 // Auto-morph time. The RAW slider is read here; the seconds it actually means
 // are derived in @block, because under sync it follows the project tempo and a
 // tempo change does not re-run @slider.
-time_mode     = slider8;        // 0 Seconds, 1 Minutes, 2 Beats
+time_mode     = slider8;        // 0 BPM, 1 Seconds, 2 Hz, 3 Host x
 auto_time_raw = max(0.01, slider9);
 automorph_mode != last_automode ? (
   last_automode = automorph_mode; morph_phase = 0;
@@ -1220,18 +1250,25 @@ drift_restart_free = slider42;   // 0 = restart on play (sync), 1 = free-running
 // Auto-morph time in SECONDS, derived every block. Under sync the slider is a
 // beat count, so this is where the project tempo enters; @slider would go
 // stale the moment the tempo changed, since a tempo change does not re-run it.
-auto_time = max(0.01, auto_time_raw * (time_mode == 0 ? 1 :
-                                       time_mode == 1 ? 60 :
-                                                        60 / max(tempo, 0.001)));
+// Auto-morph PERIOD in seconds. Seconds mode is the identity; the other three
+// are one line each. Derived per block because Host x reads the live tempo and
+// @slider does not re-run on a tempo change.
+auto_time = max(0.01,
+  time_mode == 0 ? 60 / max(auto_time_raw, 0.001) :
+  time_mode == 1 ? auto_time_raw :
+  time_mode == 2 ? 1 / max(auto_time_raw, 0.001) :
+                   auto_time_raw * 60 / max(tempo, 0.001));
 // Transport times in SECONDS, derived here for the same reason auto_time is:
 // under sync the sliders are beat counts, so this is where the project tempo
 // enters, and @slider would go stale the moment the tempo changed because a
 // tempo change does not re-run it. beats -> seconds is beats * 60 / tempo.
-// Seconds per unit, by Rate Mode. 1 for Seconds, 60 for Minutes, and one beat
-// in seconds for Beats -- which is where the live project tempo enters, and why
-// this is derived per block rather than in @slider (a tempo change does not
-// re-run @slider, so a value computed there would go stale).
-tr_k            = time_mode == 0 ? 1 : time_mode == 1 ? 60 : 60 / max(tempo, 0.001);
+// Seconds per unit for the DURATIONS -- Start delay, Play for, Rest for and
+// Drift period. These are times, not rates, so they cannot be in BPM or Hz: they
+// read as seconds, or as beats in Host x. One beat in seconds is where the live
+// tempo enters, which is why this is derived per block rather than in @slider (a
+// tempo change does not re-run @slider, so a value computed there would go
+// stale).
+tr_k            = time_mode == 3 ? 60 / max(tempo, 0.001) : 1;
 start_delay_sec = slider30 * tr_k;
 pr_play_sec     = slider31 * tr_k;
 pr_rest_sec     = slider32 * tr_k;
