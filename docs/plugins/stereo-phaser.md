@@ -80,8 +80,12 @@ and which is exactly the kind of thing this suite exists for. Bigger is slower.
 It used to be a menu of ratios (*every 4 beats*, *2 per beat* …) that wrote a
 **multiplier** into Rate. The multiplier is gone, so the menu that translated it has
 no job left: "every 4 beats" is now typing 4. The slider itself stays in the file
-because slider positions are how REAPER remembers a saved project, so deleting one
-would shift every control above it in every project you have.
+only because this plugin has no reorder pending. It gets deleted when it does have
+one. (An earlier version of this page said it *could not* be deleted, which mixed up
+two different things: **renumbering** a slider is dangerous, because REAPER restores
+by position and everything above it shifts. **Deleting** one is not — the id is
+written out explicitly, so removing it just leaves that number unused, and Heartbeat
+has carried such gaps harmlessly since v2.14.)
 
 ---
 
@@ -98,3 +102,65 @@ every load.
 Beats per cycle is legible on its own, so the whole chain unwinds: nothing is hidden,
 nothing is stamped, and the rate slider is always visible showing the value it is
 actually running at. (Suite rule R13-revised, 2026-09-02.)
+
+---
+
+## Drift and Ramp
+
+**Added 2026-09-05.** Until then the Phaser had neither — it was built after the
+suite's drift sweep and never joined it, which meant three plugins simply could not do
+a thing the rest of them can. The block is copied from **Veil**, which is the
+built-and-heard reference for the complete set, rather than written fresh.
+
+**The six targets, on both Drift and Ramp:**
+
+| Target | What moving it does |
+|---|---|
+| **Rate** | the sweep speeds up and slows down |
+| **Range min Hz** | the bottom of the swept window travels |
+| **Range max Hz** | the top of it travels |
+| **Feedback** | the notches deepen and shallow |
+| **Stereo spread** | the swirl opens and closes across the field |
+| **Wet/dry mix** | mostly a Ramp target — the hour-long fade in or out |
+
+**Stages is deliberately not a target.** It is a whole number of allpass sections, and
+adding or removing one mid-play makes a filter appear from nowhere, which clicks. Same
+reason Voices is off the Sustain Looper's list.
+
+**Rate amounts are in BPM, in every rate mode.** So a Drift up of `30` means the same
+wander whether the sweep is set in Hz, seconds or beats — the plugin converts, you
+never do. Every other target's amount is in that target's own unit: Hz for the range
+edges, degrees for spread, and the raw 0–1 for feedback and mix.
+
+**Each target remembers its own settings.** Pick a target, set its amounts, pick
+another — the first one keeps running. That is the same nested-selector behaviour Drift
+and Ramp have everywhere else in the suite, and it now saves with the project, which
+required giving this plugin save/restore for the first time.
+
+### What the numbers do, simulated rather than reasoned
+
+- **Drift up 30 / down 15 BPM on Rate**, from a baseline of 0.3 Hz: the sweep runs
+  between **0.05 Hz** (one pass every 20 seconds) and **0.8 Hz** (one every 1.25), and
+  the up and down halves are asymmetric in exactly the 2:1 you asked for.
+- **Drift period unit set to Beats**, period 4 at 90 BPM: one wander every 2.67
+  seconds, and it stretches and shrinks live when the project tempo changes.
+- **Drift play/rest**: the wander runs for a while and then FREEZES WHERE IT STANDS
+  rather than returning to centre. Where it parks depends on the fraction you use — a
+  **whole number parks at no-change every single time and is nearly inaudible**, while
+  `1.2` cycles through four different park points, two of them partial. An awkward
+  fraction is the interesting one.
+- **Ramp play/rest** turns the ramp into a staircase — climb, hold, climb. The holds
+  come out of the duration rather than extending it, so a 32-beat ramp stepping 2 and
+  holding 2 still arrives at beat 32 and then stands on the landing.
+
+### One thing that had to change underneath
+
+The Phaser locks its sweep to the project's bar position in Host x, so it lands the
+same way at the same bar however you got there. Its own source comment used to say
+that needed no safety check *because nothing in this plugin can modulate the rate*.
+Drift and Ramp made that false, so the lock now hands over to free-running the moment
+either one touches the rate — no jump at the handover, and it stays free until the next
+transport start rather than lurching back onto the grid mid-play. Same behaviour the
+Tremolo and the Sweeping Filter already have.
+
+**None of this has been heard yet.**
