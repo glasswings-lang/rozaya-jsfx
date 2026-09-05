@@ -79,7 +79,7 @@ slider24:0<0,64,0.01>Drift rest for (periods, 0 = always)
 // --- Ramp ----------------------------------------------------------------
 slider25:0<0,10,1{Bubble rate,Timing randomness,Pitch,Pitch spread,Resonance,Bubble length,Rise,Tone vs noise,Excite from input,Stereo width,Output}>Ramp target
 slider26:0<-1000,1000,0.001>Ramp by (units match target)
-slider27:0<0,1,1{Minutes,Beats}>Ramp time unit
+slider27:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
 slider28:0<0,1000,0.01>Ramp duration
 slider29:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider30:0<0,1000,0.01>Ramp rest for (0 = smooth)
@@ -318,7 +318,18 @@ rate_mode == 3 ? rate = max((max(tempo,0.001)/60)/max(slider1,0.001), 0.0001);
 @sample
 // --- Ramp clocks, one per target. Engage (slider31) is a freeze/resume gate:
 //     while Off, progress HOLDS; only transport play (via @init) resets it.
-ramp_time_scale = slider27 == 1 ? 60 / host_bpm : 60;
+// Ramp time unit. One factor turns the Ramp block's time values into seconds.
+// Cycles counts THIS plugin's own cycles, referenced against the rate BEFORE
+// drift and ramp touch it, so a ramp cannot alter its own clock. Seconds is
+// wall clock. Minutes is 60 s and is the DEFAULT -- every saved instance has
+// this control unset, so the default is what they all run on, and moving it
+// would rewrite live ramps (2026-09-05). A beat is 60/tempo s, recomputed per
+// sample so Beats follows a live tempo change rather than remembering one.
+ramp_time_scale =
+  slider27 == 3 ? 60 / max(host_bpm, 0.001) :
+  slider27 == 2 ? 60 :
+  slider27 == 1 ? 1 :
+                  1 / max(rate, 0.00001);
 slider31 ? (
   di = 0;
   loop(N_TARGETS,

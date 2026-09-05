@@ -90,7 +90,7 @@ slider19:0<0,64,0.01>Drift rest for (periods, 0 = always)
 
 slider20:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Ramp target
 slider21:0<-1000,1000,0.001>Ramp by (units match target)
-slider22:0<0,1,1{Minutes,Beats}>Ramp time unit
+slider22:1<0,2,1{Seconds,Minutes,Beats}>Ramp time unit
 slider23:0<0,1000,0.01>Ramp duration
 slider24:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider25:0<0,1000,0.01>Ramp rest for (0 = smooth)
@@ -468,7 +468,14 @@ last_ramp_target_select  = sel_ramp_target;
 //     depend on which.
 //     A minute is 60 s, a beat is 60/tempo s, recomputed per sample so a tempo
 //     change is followed live in Beats mode.
-rb_ramp_scale = slider22 == 1 ? 60 / host_bpm : 60;
+// Ramp time unit. No Cycles entry here: this plugin has no rate, so there are no
+// cycles to count, and an option that did nothing would be worse than its
+// absence -- the same rule the drift period unit follows. Minutes is the DEFAULT
+// because every saved instance has this control unset.
+rb_ramp_scale =
+  slider22 == 2 ? 60 / max(host_bpm, 0.001) :
+  slider22 == 1 ? 60 :
+                  1;
 slider26 ? (
   rs = 0;
   loop(N_BANDS * N_TARGETS,

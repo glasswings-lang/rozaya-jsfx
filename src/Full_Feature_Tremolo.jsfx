@@ -67,7 +67,7 @@ slider37:0<0,64,0.01>Drift rest for (periods, 0 = always)
 // would need the time signature and would mean something different per meter.
 // The four labels it governs still say (minutes); renaming a SHIPPED slider
 // is a separate job and belongs with the naming sweep, not smuggled in here.
-slider38:0<0,1,1{Minutes,Beats}>Ramp time unit
+slider38:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
 
 // Ramp Play/Rest -- the staircase: climb, settle, climb, settle. The holds
 // come out of the duration rather than extending it, so Ramp duration still
@@ -828,7 +828,18 @@ cfg_stable < CFG_HOLD_BLOCKS ?
 // minute is 60 s, a beat is 60/tempo s. Recomputed per sample, so Beats mode
 // follows a live tempo change instead of remembering one (CLAUDE.md: with
 // @init re-running per play, anything remembered across transport is wrong).
-ramp_time_scale = slider38 == 1 ? 60 / host_bpm : 60;
+// Ramp time unit. One factor turns the Ramp block's time values into seconds.
+// Cycles counts THIS plugin's own cycles, referenced against the rate BEFORE
+// drift and ramp touch it, so a ramp cannot alter its own clock. Seconds is
+// wall clock. Minutes is 60 s and is the DEFAULT -- every saved instance has
+// this control unset, so the default is what they all run on, and moving it
+// would rewrite live ramps (2026-09-05). A beat is 60/tempo s, recomputed per
+// sample so Beats follows a live tempo change rather than remembering one.
+ramp_time_scale =
+  slider38 == 3 ? 60 / max(host_bpm, 0.001) :
+  slider38 == 2 ? 60 :
+  slider38 == 1 ? 1 :
+                  1 / max(freq_smoothed, 0.00001);
 slider27 ? (
   i = 0;
   loop(N_TARGETS,

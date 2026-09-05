@@ -303,6 +303,28 @@ append-only history; this is the only part of the repo that claims to describe
   projects stay closed** — a reordered build plus an opened project equals a
   scrambled save.
 
+- **THE RAMP TIME UNIT IS `{Cycles, Seconds, Minutes, Beats}` — AND ITS DECLARED
+  DEFAULT IS MINUTES, NOT INDEX 0.** Settled 2026-09-05. It was `{Minutes, Beats}`
+  everywhere, so a thirty-second ramp had to be entered as *0.5 minutes* — a
+  conversion, which is the exact barrier this suite exists to remove — and a ramp
+  counted in cycles was unreachable though Drift could do it. Veil and Resonance
+  Bank get `{Seconds, Minutes, Beats}`: no rate, so no cycles to count.
+
+  **The near-miss, and it is the reusable part.** I checked that the unit was
+  unset on all 59 instances and reported "nothing stored", which sounded like
+  "nobody uses Ramp". Rozaya: *"Which plugin has it? because we do have projects
+  that use ramp lol what."* They were right — `bilateral-with-binaurals` has TWO
+  Sweeping Filters ramping by −1 over **30 minutes**, engaged. Putting Cycles at
+  index 0 while those instances sit on the default would have turned a
+  thirty-minute fade into a two-second one. **A control being unset is not the
+  same as a feature being unused, and the default is a live value for every
+  instance that never touched it.** The fix is to move the declared default to
+  wherever the old meaning landed — the same trick the Phaser's rate mode uses.
+
+  **Caveat that remains:** per-target ramp settings live in the `@serialize`
+  blob, so the slider line only shows whichever target was selected at save.
+  There may be more configured ramps than can be counted from outside REAPER.
+
 - **THE DRIFT PERIOD UNIT IS `{Cycles, Seconds, Beats}`, and Cycles is the
   default — everywhere the plugin HAS a rate to count cycles of.** Veil is the
   one exception and it is a principled one: it has no rate, so there are no
