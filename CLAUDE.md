@@ -303,6 +303,26 @@ append-only history; this is the only part of the repo that claims to describe
   projects stay closed** — a reordered build plus an opened project equals a
   scrambled save.
 
+- **EAR-TESTED 2026-09-05 ✓ — Dapple's rate change landing immediately, and its
+  Seconds rate mode.** *"There we go, works perfectly."* Set to Seconds with a
+  value of 6, Rozaya heard one drip every six seconds — which confirms the R20
+  canonical rate modes are right on a converted plugin — then changed the value
+  to 1 mid-play and heard it respond at once rather than finishing the old
+  six-second gap.
+
+  **That clears the count-up scheduling change** in Bubbler and Dapple: the
+  jitter is rolled as a proportion of a gap re-read every sample, instead of an
+  absolute length frozen when the previous bubble was born. **It does NOT clear**
+  the rest of today's work — the two reorders, the drift/ramp blocks, the
+  transport gates and the unit changes are all still unheard.
+
+  **How it was found is the reusable part.** The observation located the symptom
+  (*"you of course have to wait for 6 seconds to elaps"*) and the QUESTION
+  located the cause (*"Why does womb and friends not do the same thing?"*).
+  Heartbeat and Womb count UP to a target recomputed every sample; these two
+  counted DOWN from a committed length. Asking why a sibling behaves differently
+  is a cheap and unusually direct way into a structural difference.
+
 - **PHASE 2 REORDERS LANDED AND INSTALLED: Morpher, Melody, Stereo Phaser,
   Bubbler, Dapple, Resonance Bank, SWEEPING FILTER and TREMOLO.** The last two on
   2026-09-05 — 31 instances across 19 projects between them, verified by 725 and

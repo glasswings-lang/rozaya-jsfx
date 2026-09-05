@@ -80,6 +80,25 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-05 — EAR-TESTED ✓: Dapple responds to a rate change immediately, and its Seconds mode is right.**
+
+  *"There we go, works perfectly."* Rate mode Seconds, value 6, heard as one drip
+  every six seconds; then changed to 1 mid-play and heard it respond at once.
+
+  Clears the count-up scheduling change in Bubbler and Dapple. Does NOT clear the
+  two reorders, the drift and ramp blocks, the transport gates or the unit
+  changes — all still unheard.
+
+  **The chain is worth keeping.** Rozaya hit the symptom while testing something
+  else, described it exactly (*"you of course have to wait for 6 seconds to elaps
+  before hearing, in this case, it beginning to do 1 a second"*), and then asked
+  the question that found the cause: *"Why does womb and friends not do the same
+  thing?"* It turned out to be a structural difference — count up to a live
+  target versus count down from a committed one — and once that was named the fix
+  was obvious and small. **Asking why a SIBLING behaves differently is a cheap
+  route into a structural difference, and it beat my own guess**, which was a
+  clamp that would have papered over the symptom without fixing drift and ramp.
+
 - **2026-09-05 (morning) — the Sweeping Filter and the Tremolo both reordered, migrated and installed; Ramp and Drift gain the units they were missing. Nothing heard.**
 
   **Both filters' siblings done in one window**, the Tremolo second and cheaply
