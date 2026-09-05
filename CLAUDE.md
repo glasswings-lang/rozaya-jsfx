@@ -198,7 +198,23 @@ append-only history; this is the only part of the repo that claims to describe
   at neutral every time and is nearly inaudible, and setting only `down`
   wastes half the holds (every park on the positive half lands at no-change).
   Written up on both plugin pages.
-- **Still unheard:** the Host x beats-per-cycle conversion in four plugins, and
+- **The Host x conversion is now in ELEVEN plugins and NONE of it has been
+  heard.** That is the largest untested block in the suite. Nothing saved
+  changed — every one was checked to have no stored Host x value first — so the
+  risk is confined to the mode itself. The check that needs no ears was done:
+  at 205 BPM a Rate Value of 4 must give one cycle every 1.171 s, and it does.
+- **A latent bug in the 09-02 conversion, found and fixed 2026-09-04, unheard.**
+  Both Polyrhythms added Drift and Ramp amounts to the raw Rate Value. That was
+  right while Host x's Rate Value WAS the rate, and wrong the moment it became
+  beats per cycle — more beats is slower, so a positive drift ran BACKWARDS.
+  Simulated at 120 BPM with a cycle every 2 beats: +10 BPM of drift gave 57.6
+  cycles/min instead of 70. Now added in the Hz domain instead. Shepard Tone was
+  converted with the correction already in. **No project was affected**: not one
+  Polyrhythm instance in the library is on Host x.
+- **Heartbeat's rate slider was widened** from `20..200` step 1 to
+  `0.001..1000` step 0.001, because beats-per-cycle needs values that range
+  could not express. Widening never clamps a stored value; only narrowing does.
+- **Still unheard, from before today:** the Host x beats-per-cycle conversion, and
   the per-cycle pan tick in Melody (note trigger) and the filters (LFO wrap) —
   Polyrhythm's tremolo-wrap tick passed on 09-04 but the others advance on a
   different clock. Plus tests 3-5 of `docs/host-sync-ear-test.md`.
@@ -227,16 +243,30 @@ older docs can lag too. Two renames matter when reading any of them:
   labels across 14 plugins). The internal variables are still `speed_ramp_*` and
   that is fine. Every "Speed Ramp" in the history means today's `Ramp`.
 - **`Host x` is a rate mode, and `Rate Value` there means BEATS PER CYCLE.** The
-  history describes it as a *multiplier* of the project tempo, which is
-  what it was from 2026-08-11 until R13-revised on 2026-09-02. **Sixteen plugins
-  have a Host x mode. Four are converted** — both Polyrhythms, Dapple, Bubbler —
-  **and twelve still read Rate Value as a multiplier there** (counted
-  2026-09-03; the 2026-09-02 log entry says "nine", which was already wrong when
-  written). Womb is in the twelve but is a special case: its Host x was rebuilt
-  on the R11 shape (a sync-target selector plus a free `Every N beats`) rather
-  than left as a bare multiplier, so the raw count overstates the remaining
-  work by one. So both descriptions are true of different files right now —
-  check the file before trusting either. Recount with:
+  history describes it as a *multiplier* of the project tempo, which is what it
+  was from 2026-08-11 until R13-revised on 2026-09-02. **TWO plugins still
+  multiply: `Full_Feature_Tremolo` and `full-feature-sweeping-filter`.**
+  Everything else is converted or was never a multiplier (recounted 2026-09-04
+  after the free-plugin sweep; the old figure here said four converted and
+  twelve left, which was true on 09-03).
+
+  Converted: both Polyrhythms, Dapple, Bubbler (2026-09-02), then Stereo Phaser,
+  Resonance Bank, Rhythm Track, Shepard Tone, Shepard Scale, Heartbeat and Sweep
+  Dwell (2026-09-04). All eleven were verified to have NO stored Host x value
+  anywhere in the library before being touched, so none needed a migration.
+
+  **The two that are left are the expensive ones**, and deliberately so: the
+  Sweeping Filter has **6** saved instances on Host x and the Tremolo has **4**.
+  Those need a snapshot, a **reciprocal** value conversion (a stored multiplier
+  of 0.5 becomes 2 beats per cycle), independent verification and an ear test —
+  do not start them without room for all four.
+
+  **Two files the recount command mislabels, so check before believing it.**
+  `melody_phase` and `womb_sound_generator_v3` are on the R11 shape (a sync
+  switch and a free `Every N beats`) rather than carrying a bare multiplier;
+  Womb still has `Host x` sitting in its Rate Mode enum beside its own
+  `Every N beats`, which is a tidy-up, not a conversion. And `veil` has no Host
+  x mode at all — the phrase only appears in two comments. Recount with:
   `cd src && for f in *.jsfx; do grep -q "Host x" "$f" && { grep -qiE "beats per (cycle|bubble|beat|breath)" "$f" && echo "CONVERTED $f" || echo "multiplier $f"; }; done`
 
 ## Layout
