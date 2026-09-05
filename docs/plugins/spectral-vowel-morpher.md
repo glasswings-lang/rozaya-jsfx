@@ -238,6 +238,44 @@ The master level for everything the plugin *makes* — the voice, the wash, and 
 
 *(Renamed from “Voice level”. Same slider, same behaviour, same saved values — the name was simply describing one part of what it did.)*
 
+### Transport (Start delay and Play/Rest)
+
+Added 2026-09-04. The Morpher had neither, while every generator in the suite
+did — and so did nothing else in the spectral family. All three times follow
+**Sync to host** above: off they are seconds, on they are beats, exactly the way
+Auto-morph time already worked. Flipping that switch **converts** the values at
+the current tempo, so nothing changes audibly at the moment you flip it; only
+the unit you type in does.
+
+**Start delay (sec / beats when synced)** `0 to 1000, default 0`
+Sit silent for this long after playback starts, then come in normally. The
+modulation holds still during the delay — Drift, Ramp and Auto-morph all wait —
+so the piece begins at the start of its wander rather than part-way through.
+Re-arms every time you press play. 0 disables it.
+
+**Play for / Rest for (sec / beats when synced)** `0 to 1000, default 0`
+Play for a while, go quiet for a while, repeat forever. **0 in either one
+disables the gate**, so a half-set pair never silently mutes anything.
+
+**Modulation at rest** `Walk through / Freeze in place, default Walk through`
+What the movement does while resting. **Walk through** keeps Drift, Ramp and
+Auto-morph advancing silently, so you rejoin wherever they have got to — the
+texture has moved on while you weren't hearing it. **Freeze in place** stops
+them and resumes exactly where they stopped. Short rests barely tell the two
+apart; long ones do.
+
+**Output at rest** `Pass-through / Silence, default Pass-through`
+What comes out while resting. **Pass-through** mutes only what this plugin adds
+and leaves the dry input alone, so a rest is a hole in the texture rather than a
+hole in the track — the right default for an effect sitting on someone's audio.
+**Silence** mutes everything, dry included.
+
+The input is still analysed throughout a rest, deliberately. A gate says "don't
+be heard", never "stop listening" — otherwise the first grain after a rest would
+be built from whatever was in the buffer when the rest began.
+
+---
+
 ### Drift (in-plugin automation)
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
@@ -248,7 +286,7 @@ Which parameter the Drift sliders below are editing. Switch it and the four slid
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
 How far it wanders above (up) and below (down) the parameter's current value, in that parameter's own units — Texture in its 0–100, Pitch in semitones, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
-**Drift period (seconds)** `1 to 600, default 30`
+**Drift period (sec / beats when synced)** `1 to 600, default 30`
 How long one full wander takes, in real seconds (this instrument has no tempo, so the period is wall-clock, not beats). 30 is a gentle sway; a few minutes is barely-there evolution.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
@@ -343,6 +381,37 @@ See [`docs/spectral-vowel-morpher.md`](spectral-vowel-morpher.md) for deeper des
 ---
 
 
+
+## Migrating projects across the 2026-09-04 transport change
+
+The transport block went in at sliders **30–34**, in its proper place ahead of
+Drift rather than tacked on the end, so Drift and Ramp both moved up by five.
+Rozaya: *"put them in, in a logical place, not scattered through the list or
+appended to the end, we can afford not to append."*
+
+`tools/morpher_migrate_transport.py` shifts saved projects to match, and
+`tools/morpher_verify_transport.py` checks the result by decoding before and
+after by CONTROL NAME rather than by the table the migration used. Run
+2026-09-04 over 38 projects and 122 instances: **5368 name comparisons, 0
+mismatches**, 610 new controls all seeded to 0 (off, so nothing sounds
+different), one changed line per instance.
+
+The verifier carries an **authored rename table**, because `Drift period
+(seconds)` became `Drift period (sec / beats when synced)` in the same change
+and a by-name check cannot pair a renamed control up on its own. Inferring that
+pairing would be the script exercising judgement, which is exactly what tools
+here are not allowed to do.
+
+The `@serialize` magic went 7700009 → 7700010 with no format change, so the blob
+stays an exact witness for which slider layout an instance was saved on.
+
+**One thing deliberately left out.** `Ramp duration` stays in minutes and does
+**not** follow Sync to host. Under sync it would have to be a beat count, and
+its range cannot hold one — a 20-minute ramp at 120 BPM is 2400 beats against a
+maximum of 60. Widening it to Veil's 0–1000 still only buys about eight minutes
+of beats at that tempo, so the conversion would silently clamp a long ramp,
+which is the one thing this suite refuses to do. It needs a decision about the
+range rather than a quiet workaround.
 
 ## Migrating projects across the 2026-09-04 play/rest change
 
