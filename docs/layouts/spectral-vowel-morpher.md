@@ -69,6 +69,47 @@ verify every one afterwards.** Checking, not hoping.
 
 39 sliders, from 38.
 
+---
+
+## THE FILE HAS MOVED PAST THIS DOCUMENT — amended 2026-09-04
+
+**The order above is what SHIPPED on 2026-09-01 and it is no longer the file.**
+The Morpher has 49 sliders, not 39. Everything from 29 onward has moved, and
+three separate migrations ran on 2026-09-04 to get there — which is precisely
+the failure `CLAUDE.md`'s one-migration rule now exists to prevent, and this
+document going stale is part of how it happened.
+
+What landed after this layout was authored:
+
+| new | control | when |
+|---|---|---|
+| 8 | **Rate Mode** `{BPM, Seconds, Hz, Host x}` | was `Sync to host`, an on/off switch; became the suite's four |
+| 9 | Auto-morph time (BPM / sec / Hz / beats per cycle) | relabelled with it |
+| 30 | **Start delay** (sec, or beats in Host x) | NEW, transport block |
+| 31 | **Play for** (sec, or beats in Host x) | NEW |
+| 32 | **Rest for** (sec, or beats in Host x) | NEW |
+| 33 | **Rest mode** (Walk through / Freeze in place) | NEW |
+| 34 | **Output at rest** (Pass-through / Silence) | NEW |
+| 35-42 | Drift, now with play/rest | +2 |
+| 43-49 | Ramp, now with play/rest | +2 |
+
+**Do not build from the table above.** It is kept because it records the
+reasoning for the 2026-09-01 reorder, which is still sound and still describes
+why sliders 1-28 sit where they do. For anything from 29 up, read the source.
+
+**What this plugin is still owed**, and what a re-authored layout has to cover
+before it is touched again:
+
+- **`Ramp duration` and `Ramp start delay` are minutes-only** and sit outside
+  Rate Mode, because a beat count will not fit their `0..60` range — a
+  20-minute ramp at 120 BPM is 2400 beats. Needs a range decision, not a quiet
+  clamp.
+- **`Drift restart`** (Restart on play / Free-running) has no equivalent
+  anywhere else in the suite; either it propagates or it is explained.
+- **R12 ranges and R17 units** for the `0..1` and percent controls.
+- **The Capture-slot 1-based display decision** (approved, item 10) is not
+  reflected here.
+
 ## The new control: `Layer overtone harmonic`
 
 **What it does today:** the overtone is folded into the shared magnitude array —
