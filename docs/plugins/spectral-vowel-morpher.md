@@ -87,7 +87,7 @@ Flipping it doesn't change what you hear. The value converts at the current temp
 
 Shown only when Auto-morph is running, alongside the time it governs.
 
-**Auto-morph time (sec / beats by Time mode)** `0.01 to 1000, default 20`
+**Auto-morph time (sec / min / beats by Time mode)** `0.01 to 1000, default 20`
 How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Shuffle it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow motion.
 
 **Texture (% wash)** `0 to 100, default 50`
@@ -240,11 +240,20 @@ The master level for everything the plugin *makes* — the voice, the wash, and 
 
 ### Time mode
 
-**Time mode** `Seconds / Beats, default Seconds`
+**Time mode** `Seconds / Minutes / Beats, default Seconds`
 What unit this plugin's durations are in — Auto-morph time, Start delay, Play
 for, Rest for and Drift period. On **Beats** they follow the project tempo.
-Changing the mode converts the values at the current tempo, so nothing changes
-audibly at the moment you change it; only the unit you type in does.
+Changing the mode converts the values, so nothing changes audibly at the moment
+you change it; only the unit you type in does. The conversion goes through
+seconds rather than pairing the units off against each other, so it round-trips
+exactly and a fourth unit would cost one line rather than six.
+
+**Minutes was added in its proper place, not on the end, and that was possible
+exactly once.** An option's position in the list is what gets stored in your
+project, so inserting one normally changes what every saved project selected.
+Nothing had ever stored anything but the first option here — measured, 0 of 122
+instances — so the list could still be ordered by meaning: shortest unit first.
+That window is now shut. Any further unit appends to the end.
 
 **This was an on/off switch called `Sync to host` until 2026-09-04.** Rozaya:
 *"bpm/seconds/hz/whatever belongs in a rate mode like everything else in the
@@ -272,13 +281,13 @@ Auto-morph time already worked. Flipping that switch **converts** the values at
 the current tempo, so nothing changes audibly at the moment you flip it; only
 the unit you type in does.
 
-**Start delay (sec / beats by Time mode)** `0 to 1000, default 0`
+**Start delay (sec / min / beats by Time mode)** `0 to 1000, default 0`
 Sit silent for this long after playback starts, then come in normally. The
 modulation holds still during the delay — Drift, Ramp and Auto-morph all wait —
 so the piece begins at the start of its wander rather than part-way through.
 Re-arms every time you press play. 0 disables it.
 
-**Play for / Rest for (sec / beats by Time mode)** `0 to 1000, default 0`
+**Play for / Rest for (sec / min / beats by Time mode)** `0 to 1000, default 0`
 Play for a while, go quiet for a while, repeat forever. **0 in either one
 disables the gate**, so a half-set pair never silently mutes anything.
 
@@ -311,7 +320,7 @@ Which parameter the Drift sliders below are editing. Switch it and the four slid
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
 How far it wanders above (up) and below (down) the parameter's current value, in that parameter's own units — Texture in its 0–100, Pitch in semitones, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
-**Drift period (sec / beats by Time mode)** `1 to 600, default 30`
+**Drift period (sec / min / beats by Time mode)** `1 to 600, default 30`
 How long one full wander takes, in real seconds (this instrument has no tempo, so the period is wall-clock, not beats). 30 is a gentle sway; a few minutes is barely-there evolution.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
@@ -422,7 +431,7 @@ mismatches**, 610 new controls all seeded to 0 (off, so nothing sounds
 different), one changed line per instance.
 
 The verifier carries an **authored rename table**, because `Drift period
-(seconds)` became `Drift period (sec / beats by Time mode)` in the same change
+(seconds)` became `Drift period (sec / min / beats by Time mode)` in the same change
 and a by-name check cannot pair a renamed control up on its own. Inferring that
 pairing would be the script exercising judgement, which is exactly what tools
 here are not allowed to do.
