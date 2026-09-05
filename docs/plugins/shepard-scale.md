@@ -186,7 +186,11 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 ### Host tempo sync
 
-**Rate Mode** `Own BPM / Host x` (default Own BPM)
+**Rate Mode** `Own BPM / Host x` (default Own BPM) — **slider 2, directly under BPM.**
+It sat at slider 62 until 2026-09-04, sixty places from the value it defines.
+Moved with no migration needed, because no project uses this plugin. Everything
+between 2 and 61 shifted up by one, so the twelve per-note groups now start at
+slider 13 rather than 12.
 **Own BPM** is the original behaviour — free-running, project tempo ignored.
 **Host x** locks the sequence to the project, and BPM then means **beats per
 cycle**: one step of the scale takes that many beats. 4 is a note every four

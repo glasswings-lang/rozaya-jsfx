@@ -26,7 +26,11 @@ Swing is applied by offsetting the beat phase at each cycle boundary, advancing 
 
 ### Timing
 
-**Rate Mode** `Own BPM / Host x` (default Own BPM)
+**Rate Mode** `Own BPM / Host x` (default Own BPM) — **slider 2, directly under Tempo.**
+It sat at slider 27 until 2026-09-04, twenty-five places from the value it
+defines. Rozaya: *"they've got their rate modes all scattered in terms of their
+slider order. not great."* Moved with no migration needed, because no project
+uses this plugin.
 **Own BPM** is the original behaviour: Tempo below is the metronome's own
 speed and the project tempo is ignored. **Host x** locks it to the project, and
 Tempo then means **beats per cycle**, a cycle here being one tick — 1 is a tick on every beat, 2 is every
