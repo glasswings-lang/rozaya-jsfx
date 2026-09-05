@@ -80,7 +80,10 @@ Blend between the filtered signal (wet) and the original unprocessed signal (dry
 **Rate Value (Hz / sec / BPM / beats per cycle)** `0.001-1000, default 2`
 The sweep rate in the units set by Rate Mode.
 
-**Rate Mode** `Hz / Seconds / BPM / Host x`
+**Rate Mode** `BPM / Seconds / Hz / Host x`
+The suite's canonical order since 2026-09-04. This plugin used to run the same four in a different order. Saved projects were remapped so every instance keeps the mode it was on.
+
+**A bug fell out of doing this.** The `@init` seed had no Host x branch at all, so in Host x it fell through to the BPM formula and seeded the rate smoother 60× too slow. The Tremolo had the identical bug, found and fixed there, and the fix was never carried across. It only surfaced now because writing all four branches out explicitly made the fallthrough impossible to leave implicit.
 
 **Host x** locks the sweep to the project tempo, and Rate Value there means
 **beats per cycle**: 4 is one sweep every four beats, 0.5 is two sweeps a beat.

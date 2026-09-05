@@ -4,8 +4,20 @@ desc: Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:2<0.001,1000,0.001>Rate Value (Hz / sec / BPM / beats per cycle)
-slider2:0<0,3,1{Hz,Seconds,BPM,Host x}>Rate Mode
+slider1:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle)
+// RATE MODE ORDER IS {BPM, Seconds, Hz, Host x} since 2026-09-04 -- the suite's
+// canonical order, shared with both Polyrhythms, Shepard Tone and the Morpher.
+// This plugin ran {Hz, Seconds, BPM, Host x}: the same four, a different order,
+// for no reason anyone recorded. Rozaya: "this is what I mean when I talk about
+// shit needing to be standardized."
+//
+// EVERY DISPATCH BELOW LISTS ALL FOUR BRANCHES EXPLICITLY. The old code used a
+// bare else to mean BPM; after the reorder that same else means Hz, and nothing
+// would have complained -- the plugin would simply have run the wrong unit. A
+// fallthrough is the thing that changes meaning silently in an enum reorder, so
+// there is none left. Saved projects are carried over by
+// tools/ratemode_migrate_order.py.
+slider2:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
 slider3:50<0,100,0.1>On Duration % of Cycle
 slider4:-6<-60,0,0.01>Depth dB
 slider5:0<0,100,0.1>Attack %
@@ -397,13 +409,13 @@ effect_mix        = 1;
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 // Host x (3) was MISSING from this list and fell through to the BPM branch,
 // seeding the smoother 60x too slow in that mode. It matches @sample now.
-slider2 == 0 ? (freq_smoothed = slider1) :
+slider2 == 0 ? (freq_smoothed = slider1 / 60) :
 slider2 == 1 ? (freq_smoothed = 1 / max(slider1, 0.001)) :
+slider2 == 2 ? (freq_smoothed = slider1) :
 // Host x: BEATS PER CYCLE (R13-revised). Guarded on the NUMERATOR -- inverting
 // a unit inverts its edge cases, and 1/max(v,0.001) clamps the denominator,
 // turning a stopped tremolo into a 1000 Hz one.
-slider2 == 3 ? (freq_smoothed = slider1 > 0.001 ? 1 / slider1 : 0.001) :
-               (freq_smoothed = slider1 / 60);
+               (freq_smoothed = slider1 > 0.001 ? 1 / slider1 : 0.001);   // 3 Host x
 // Speed Ramp state. Engage (global) is a freeze/resume gate, not an edge;
 // only transport play resets the per-target ramp clocks. As of v2.14 the
 // ramp is PER-TARGET (own by/duration/start-delay/clock per target; banks
@@ -594,8 +606,8 @@ start_delay_units = slider19;
 // because its nominal rate is also cycles-per-second; the live tempo is
 // applied to the counter via host_scale.)
 slider2 == 1 ? start_delay_sec = start_delay_units :
-slider2 == 2 ? start_delay_sec = start_delay_units * 60 / max(slider1, 0.001) :
-               start_delay_sec = start_delay_units / max(slider1, 0.001);
+slider2 == 0 ? start_delay_sec = start_delay_units * 60 / max(slider1, 0.001) :
+               start_delay_sec = start_delay_units / max(slider1, 0.001);   // 2 Hz, 3 Host x
 
 // Play/Rest gate: integer cycle counts. Both must be > 0 for the
 // gate to engage; 0 in either slider disables.
@@ -788,10 +800,10 @@ pan_sweep_ratio = slider18;
 // Host x (3) yields a NOMINAL cycles-per-second, as if the project were at
 // 60 BPM; the live tempo arrives separately as host_scale, so nothing here
 // has to remember a tempo and go stale when @init re-runs on play.
-rate_mode == 0 ? (freq_raw = rate_val) :
+rate_mode == 0 ? (freq_raw = rate_val / 60) :
 rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
-rate_mode == 3 ? (freq_raw = rate_val > 0.001 ? 1 / rate_val : 0.001) :
-                 (freq_raw = rate_val / 60);
+rate_mode == 2 ? (freq_raw = rate_val) :
+                 (freq_raw = rate_val > 0.001 ? 1 / rate_val : 0.001);   // 3 Host x
 
 // Smooth the rate slider so manual tweaks don't click, then advance
 // the speed ramp. Drift offsets are added below.
@@ -885,9 +897,9 @@ rate_mode == 3 ? (
   effective_rate_hz = max(freq_raw + sr_rate_by / max(host_bpm, 0.001), 0.0001);
 ) : (
   effective_rate_val = rate_val + sr_rate_by;
-  rate_mode == 0 ? (effective_rate_hz = effective_rate_val) :
+  rate_mode == 0 ? (effective_rate_hz = effective_rate_val / 60) :
   rate_mode == 1 ? (effective_rate_hz = 1 / max(effective_rate_val, 0.001)) :
-                   (effective_rate_hz = effective_rate_val / 60);
+                   (effective_rate_hz = effective_rate_val);   // 2 Hz
 );
 speed_scale_current = effective_rate_hz / max(freq_raw, 0.001);
 // host_scale folds the live project tempo in alongside Speed Ramp (1 outside
@@ -964,15 +976,15 @@ rate_drift_user != 0 ? (
   // and made Rate Value drift 60x too small — i.e. inaudible. In Host x the
   // offset is a multiplier delta, so it converts like Hz and then takes
   // host_scale, because it is added to freq AFTER combined_scale.
-  rate_mode == 0 ? (rate_drift_hz = rate_drift_user) :
+  rate_mode == 0 ? (rate_drift_hz = rate_drift_user / 60) :
   rate_mode == 1 ? (
     cur_period    = 1 / drift_ref_freq;
     new_period    = max(cur_period + rate_drift_user, 0.0001);
     rate_drift_hz = (1 / new_period) - freq;
   ) :
   // Host x takes the SAME formula as BPM: the amount is BPM in both.
-  rate_mode == 2 ? (rate_drift_hz = rate_drift_user / 60) :
-                   (rate_drift_hz = rate_drift_user / 60);
+  rate_mode == 2 ? (rate_drift_hz = rate_drift_user) :
+                   (rate_drift_hz = rate_drift_user / 60);   // 3 Host x
 );
 freq = max(freq + rate_drift_hz, 0.001);
 // ===== DRIFT BLOCK END =====

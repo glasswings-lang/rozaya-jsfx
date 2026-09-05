@@ -35,7 +35,8 @@ When the pan block is enabled, the post-tremolo signal is summed to mono, then r
 **Rate Value (Hz / sec / BPM / beats per cycle)** `0.001-1000, default 2`
 The tremolo rate in the units set by Rate Mode.
 
-**Rate Mode** `Hz / Seconds / BPM / Host x`
+**Rate Mode** `BPM / Seconds / Hz / Host x`
+The suite's canonical order since 2026-09-04, shared with both Polyrhythms, Shepard Tone and the Morpher. This plugin used to run the same four in a different order, for no recorded reason. Your saved projects were remapped so every instance keeps the mode it was on — verified by name, 31 instances across both filters, nothing else touched.
 
 **Host x** locks the rate to the project tempo, and Rate Value there means
 **beats per cycle**: 4 is one cycle every four beats, 0.5 is two cycles a beat.
