@@ -14,7 +14,7 @@ re-derived the state from the source. Status is now recorded here. **Keep it rec
 | **R16** `Speed ramp` → `Ramp` | done, 70 labels across 14 plugins |
 | **R8** step sizes standardised down | done for dB (0.01) and `Start delay` (0.001) |
 | **R11** one sync block, not per-rate pickers | done in **Womb** and **Melody Phase** — both now carry `Sync to host` / `Host sync target` / `Every N beats` instead of a Rate Mode plus a stranded Host ratio |
-| **R13-revised** Host x means beats, not a multiplier | done in **both Polyrhythms, Dapple, Bubbler**. Twelve plugins still read Rate Value as a tempo multiplier there |
+| **R13-revised** Host x means beats, not a multiplier | **COMPLETE 2026-09-04.** All thirteen plugins with a Host x mode converted; every Host ratio picker retired and hidden; every landing block that stamped a rate on mode entry deleted; the rate slider never hides. Ten stored instances in Tremolo and the Sweeping Filter migrated by reciprocal and verified against each project's own tempo. **Unheard.** |
 | **Polyrhythm per-voice gain default** −60 → −6 | done |
 | **Morpher — the entire authored layout** | **LANDED** (`340fd4e`). `Capture average` 28 → 4, `High cut` beside `Low cut`, Drift and Ramp moved to the end, Input/Output relocated, `Layer overtone harmonic` added. `docs/layouts/spectral-vowel-morpher.md` describes a finished job, not a pending one — and it is itself stale: it says 39 sliders, the file has 44 |
 | **Stereo Phaser — rate triple made contiguous** | **LANDED** 2026-09-04, plugin installed and `strangeness.RPP` migrated. First reorder to use a project-file migration rather than runtime repair |
@@ -23,7 +23,14 @@ re-derived the state from the source. Status is now recorded here. **Keep it rec
 
 ### Still true, re-measured 2026-09-04 — this is the remaining work
 
-- **The rate triple is still split in seven plugins.** Seven of the nine rows in the
+- **The rate triple — mostly fixed 2026-09-04.** Every Host ratio picker is now
+  retired and hidden, so the third member of each triple no longer occupies
+  reading order at all. Rate Mode was then brought home to slider 2 in **Rhythm
+  Track** (from 27) and **Shepard Scale** (from 62), both free because neither has
+  any projects. **Two remain stranded: Heartbeat (rate 1, mode 34) and Womb
+  (rate 1, mode 62)**, needing a migration for 1 and 8 projects respectively.
+  Everything else was already adjacent. The original measurement follows.
+- ~~The rate triple is still split in seven plugins.~~ Seven of the nine rows in the
   table below are unchanged: Tremolo 1/2/**34**, Sweeping Filter 3/4/**39**, Shepard
   Tone 3/2/**74**, Polyrhythm 3/2/**84**, Heartbeat 1/**34**/35, Shepard Scale
   1/**62**/63, Rhythm Track 1/**27**/28. The Melody Phase and Womb rows are superseded

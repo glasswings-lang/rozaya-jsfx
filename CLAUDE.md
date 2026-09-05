@@ -198,10 +198,13 @@ append-only history; this is the only part of the repo that claims to describe
   at neutral every time and is nearly inaudible, and setting only `down`
   wastes half the holds (every park on the positive half lands at no-change).
   Written up on both plugin pages.
-- **The Host x conversion is now in ELEVEN plugins and NONE of it has been
-  heard.** That is the largest untested block in the suite. Nothing saved
-  changed — every one was checked to have no stored Host x value first — so the
-  risk is confined to the mode itself. The check that needs no ears was done:
+- **The Host x conversion is in THIRTEEN plugins and NONE of it has been
+  heard.** The largest untested block in the suite. For eleven of them nothing
+  saved changed, so the risk is confined to the mode itself. For the **Tremolo
+  (4 instances) and the Sweeping Filter (6)** real stored values were rewritten,
+  so THOSE TEN ARE THE ONES WORTH PLAYING: `simple-sequence`,
+  `simple-sequence-check`, `bilateral-with-binaurals`, `as-things-are`,
+  `noisescape-august-18-2026`, `womb-and-baby-heartbeats-with-bloodflow`. The check that needs no ears was done:
   at 205 BPM a Rate Value of 4 must give one cycle every 1.171 s, and it does.
 - **A latent bug in the 09-02 conversion, found and fixed 2026-09-04, unheard.**
   Both Polyrhythms added Drift and Ramp amounts to the raw Rate Value. That was
@@ -244,22 +247,24 @@ older docs can lag too. Two renames matter when reading any of them:
   that is fine. Every "Speed Ramp" in the history means today's `Ramp`.
 - **`Host x` is a rate mode, and `Rate Value` there means BEATS PER CYCLE.** The
   history describes it as a *multiplier* of the project tempo, which is what it
-  was from 2026-08-11 until R13-revised on 2026-09-02. **TWO plugins still
-  multiply: `Full_Feature_Tremolo` and `full-feature-sweeping-filter`.**
-  Everything else is converted or was never a multiplier (recounted 2026-09-04
-  after the free-plugin sweep; the old figure here said four converted and
-  twelve left, which was true on 09-03).
+  was from 2026-08-11 until R13-revised on 2026-09-02. **R13-REVISED IS COMPLETE
+  AS OF 2026-09-04. No plugin in the suite multiplies any more.** Do not
+  re-open this: the remaining work on Host x is EAR-TESTING it, not converting
+  it. (That sentence is here because this suite's documented failure mode is a
+  settled decision being re-derived by a later session.)
 
-  Converted: both Polyrhythms, Dapple, Bubbler (2026-09-02), then Stereo Phaser,
-  Resonance Bank, Rhythm Track, Shepard Tone, Shepard Scale, Heartbeat and Sweep
-  Dwell (2026-09-04). All eleven were verified to have NO stored Host x value
-  anywhere in the library before being touched, so none needed a migration.
+  Converted with nothing stored on Host x, so no migration was needed -- checked
+  in every case, never assumed: both Polyrhythms, Dapple, Bubbler (09-02), then
+  Stereo Phaser, Resonance Bank, Rhythm Track, Shepard Tone, Shepard Scale,
+  Heartbeat and Sweep Dwell (09-04).
 
-  **The two that are left are the expensive ones**, and deliberately so: the
-  Sweeping Filter has **6** saved instances on Host x and the Tremolo has **4**.
-  Those need a snapshot, a **reciprocal** value conversion (a stored multiplier
-  of 0.5 becomes 2 beats per cycle), independent verification and an ear test —
-  do not start them without room for all four.
+  Converted WITH a value migration: `Full_Feature_Tremolo` (4 instances) and
+  `full-feature-sweeping-filter` (6). Reciprocal -- a stored multiplier of 0.5
+  became 2 beats per cycle. `tools/hostx_verify_beats.py` recomputed every
+  instance's rate in Hz under BOTH the old and the new code path using that
+  project's own tempo: 10 instances, 0 rate mismatches, 0 unexpected token
+  changes. It is deliberately NOT idempotent (1/x twice is x) and writes
+  copies rather than touching originals.
 
   **Two files the recount command mislabels, so check before believing it.**
   `melody_phase` and `womb_sound_generator_v3` are on the R11 shape (a sync
