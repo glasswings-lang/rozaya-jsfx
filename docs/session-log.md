@@ -80,6 +80,56 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-05 — R20's enum order BUILT in five plugins, and four of the five cost no project edit at all.**
+
+  The sweep the rule was written for. `{Own BPM, Host x}` and `{Own Hz, Host x}`
+  become the canonical `{BPM, Seconds, Hz, Host x}`, which moves Host x from
+  index 1 to 3 and adds two real modes rather than merely renaming.
+
+  **Rhythm Track, Shepard Scale, Heartbeat, Stereo Phaser, Sweep Dwell.** All
+  lint clean, all verified by simulating the branch at project tempo 90 and
+  reading the output: Seconds 2 gives a cycle every 2.000 s, Hz 2 gives 0.500 s,
+  Host x 1 gives exactly one cycle per project beat, Host x 2 gives 1.333 s.
+
+  **The trick worth keeping: a DEFAULT change can stand in for a migration.**
+  Stereo Phaser's three instances in `strangeness.RPP` and Heartbeat's one in
+  `transformation.RPP` all store `-` for their rate mode — nothing at all — so
+  they take whatever the DECLARED default is. Moving the Phaser's default to Hz
+  (index 2, not the suite's usual BPM) lands them on exactly the behaviour they
+  had, with no edit to a finished project. Checked by reading one real line
+  rather than trusting the decoder, which is the standing rule and which is what
+  distinguished "stored 0" from "stored nothing" — the two look identical in a
+  summary and are completely different to migrate.
+
+  **Sweep Dwell's pan list was BACKWARDS and nobody had noticed.**
+  `{Hz, Seconds, BPM, Host x}` against `{BPM, Seconds, Hz, Host x}` on the Rate
+  Mode a few positions above it in the same plugin. Position one meant Hz on one
+  control and BPM on the next, in a suite navigated by arrowing the parameter
+  list one control at a time. The Tremolo and the Sweeping Filter have the same
+  fault and get it fixed in their own reorders.
+
+  **One project migrated: `surges.RPP`**, slider 19 from `0` to `2` — the same
+  Hz, in its new position. Backed up to
+  `E:/reaper/finished/backups/surges.RPP.pre-panmode-order-20260905-bak`.
+  Assertions before writing: exactly one instance, the line has an ending, the
+  token is what was expected, only that token differs, line count unchanged,
+  byte length unchanged. Verified after by re-reading from disk and decoding
+  against the NEW enum, plus a range check — 64 stored values, 0 out of range.
+
+  **Ordering hazard, and it was worth saying out loud rather than assuming:**
+  installing the new Sweep Dwell BEFORE migrating `surges.RPP` would have read
+  that project's pan as BPM instead of Hz and run it sixty times slower. The
+  plugin and the project have to move together.
+
+  **HELD BACK on purpose: Resonance Bank.** Its `Drift period mode` is out of
+  order too (`{BPM, Hz, Seconds, Host x}`), but it is stored in a SERIALIZED
+  per-band bank — `file_mem(0, band_drift_mode, N_BANDS * N_TARGETS)` — so
+  reordering it needs a version-magic-gated blob migration and an `@init`
+  default change, not a token edit. That is the "migrate what was RESTORED,
+  never what was DEFAULTED" trap sitting in the middle of it. It gets its own
+  pass. Squeezing it in at the end of a long session is exactly the pattern this
+  repo keeps paying for.
+
 - **2026-09-04 (last) — R20: the rate block is SETTLED. The sixth session's worth of redesign, stopped by Rozaya, and written down so there is not a seventh.**
 
   Nothing was built. The whole session on this point was me proposing three

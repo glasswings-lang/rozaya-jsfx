@@ -305,8 +305,15 @@ append-only history; this is the only part of the repo that claims to describe
   approved. **The three drafted layouts can now be reviewed against something
   real.**
 
-- **R20 — THE RATE BLOCK — WAS SETTLED 2026-09-04 AND IS THE NEXT THING TO
-  BUILD.** Nothing is built yet; the rule is written down in
+- **R20 — THE RATE BLOCK. SETTLED 2026-09-04, and the enum order is BUILT in
+  FIVE plugins as of 2026-09-05: Rhythm Track, Shepard Scale, Heartbeat, Stereo
+  Phaser, Sweep Dwell.** Verified by simulation, lint clean, **not heard.** Only
+  `surges.RPP` needed a project edit (one token, backed up, verified by decoding
+  against the new enum). **Resonance Bank is deliberately NOT done** — its drift
+  period mode lives in a serialized bank and needs a version-gated blob
+  migration, not a token edit. **Melody, Womb, Tremolo and the Sweeping Filter
+  are held for their own reorder passes so each gets ONE migration.** The rule
+  itself is in `docs/suite-consistency-plan.md`; the rule is written down in
   `docs/suite-consistency-plan.md` and summarised under *Terminology* below.
   **It goes before the Sweeping Filter reorder**, because the reorder moves
   controls and this decides what they say — doing the layout first means
