@@ -763,6 +763,17 @@ function polyblep(t, dt) local(s) (
 // entry: the raw multiplier HIDES behind a picker, so a stale picker value left
 // unapplied would name one speed on screen while the plugin ran another.
 // rate_mode_inited gates it, so a half-restored instance can never see an edge.
+// INERT since the Host ratio picker was retired on 2026-09-02 -- this is the only
+// mention of entered_host_mode in the file, and nothing reads it (checked
+// case-insensitively, because EEL2 folds case and a variant would BE this
+// variable). A pure computation into an unread global: no slider written, no
+// memory touched, no effect on output.
+//
+// LEFT IN DELIBERATELY, not overlooked. Deleting it buys nothing in a plugin
+// with 92 saved instances, and "I have decided this is dead" is the exact
+// reasoning that nearly removed half of Womb's working sync pair on
+// 2026-09-04. If you want it gone, go ahead -- but check for readers first,
+// the same way this comment did.
 entered_host_mode = rate_mode_inited && slider2 == 3 && last_rate_mode != slider2;
 
 trem_mode     = slider1;

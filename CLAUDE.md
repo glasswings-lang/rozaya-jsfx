@@ -68,6 +68,41 @@ future session needs is the requirement; whose it is, is not.)
   project gets opened at all.** Backups go to the homes listed under *Layout*;
   a `-TEST` or `-MIGRATED` copy is promoted or deleted before the end of the
   exchange that made it, never left "for now".
+- **BEFORE RETIRING OR DELETING ANY CONTROL, OPEN IT AND ASK WHAT ELSE IS
+  INSIDE.** A control that looks like a leftover is sometimes half of a working
+  pair, and the half you can see is not always the half doing the work.
+
+  **The near-miss, 2026-09-04.** `docs/suite-consistency-plan.md` described Womb
+  as "half converted -- `Every N beats (Host x)` AND Host x still in the enum",
+  and said to retire the extra slider "the same way the picker does". I was
+  about to. Rozaya stopped it: *"host x is the rate mode. every N beats is
+  getting the multiplier out of there. neither of them work alone."*
+
+  Exactly right. Womb's Rate Mode, Host sync target and `Every N beats` are ONE
+  mechanism -- the mode says follow the project, the beats value says how fast,
+  and the beats value is the thing that REPLACED the multiplier. Retiring it
+  would have deleted the working half of a working pair, in a plugin with 8
+  saved instances, on the authority of a document that was simply out of date.
+  Womb was not behind; it got there first and the plan never caught up.
+
+  **The check, and it is cheap.** Open the block and read what is in it. A
+  control that is genuinely retired does exactly one thing and that thing is now
+  pointless -- every `Host ratio` picker in this suite writes a rate slider and
+  calls `slider_automate` on it, and nothing else, which is why all seven were
+  safe to retire. A control that is half of a pair does something the other half
+  depends on. Those look identical from the slider list and completely different
+  from inside.
+
+  **Same rule for code you have decided is dead.** Both Polyrhythms compute
+  `entered_host_mode` and never read it. It is provably inert -- one mention per
+  file, no readers even case-insensitively, no slider or memory touched -- and it
+  is still left in, annotated, because deleting it buys nothing in a plugin with
+  92 saved instances. Prove it, annotate it, and leave it alone unless removing
+  it actually gains something.
+
+  **And do not trust a document over the source.** The plan's Womb line had been
+  wrong since R13-revised overturned the shape it assumed, and it read as
+  authoritative the whole time.
 - **Walls of text and to-do lists are a cost, not a service.** So is handing over
   a decision dressed as a menu. Bring a recommendation.
 
