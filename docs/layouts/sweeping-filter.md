@@ -58,8 +58,8 @@ pattern the whole sweep keeps finding.
 7. **`Pan sweep rate unit` becomes `Pan sweep rate mode`** and gains **Host x**
    in the canonical `{BPM, Seconds, Hz, Host x}` order.
 8. **Sentence case, units in parentheses.**
-9. **The retired `Host ratio` parks at the end**, hidden. Not deleted — ids are
-   primary keys.
+9. **The retired `Host ratio` is deleted.** Deleting a slider is safe;
+   RENUMBERING one is not. See the section below — I had this wrong.
 
 ---
 

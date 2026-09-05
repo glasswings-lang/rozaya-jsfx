@@ -62,9 +62,9 @@ not say percent of what.
    in the canonical `{BPM, Seconds, Hz, Host x}` order. R7 standardises on
    *mode*, not *unit*, for the secondary rates.
 6. **Sentence case, units in parentheses**, `Attack (% of cycle)`.
-7. **The retired `Host ratio` parks at the end.** It is hidden and does nothing;
-   its position is meaningless, and moving it would cost migration churn for no
-   reading-order gain. It is not deleted — ids are primary keys.
+7. **The retired `Host ratio` is deleted.** It is inert, and keeping it would
+   cost a dead control to walk past forever. Deleting a slider is safe;
+   RENUMBERING one is not. See the section below — I had this wrong.
 
 ---
 
