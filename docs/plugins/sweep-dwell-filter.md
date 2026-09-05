@@ -214,8 +214,13 @@ Sequence length for per-cycle modes.
 **Pan Sweep Rate** `0.001-1000, default 2`
 Rate for Pan Sweep and Pan Sweep (Flipped) modes.
 
-**Pan Sweep Rate Unit** `Hz / Seconds / BPM / Host x`
-Unit for Pan Sweep Rate. **Host x** locks the pan to the project tempo, and the rate then means **beats per cycle** — 4 is one pan sweep every four beats, 0.5 is two sweeps a beat. **Bigger is slower**, the same way Seconds is, and the opposite of Hz and BPM.
+**Pan sweep rate mode** `BPM / Seconds / Hz / Host x`
+The suite's canonical four, in the suite's canonical order, as of 2026-09-05
+(R20). **It used to read `Hz / Seconds / BPM / Host x` — backwards** — which
+meant the first position on this control meant Hz while the first position on
+every Rate Mode in the suite meant BPM. For anyone arrowing the parameter list
+that is a trap, and it was the same on the Tremolo and the Sweeping Filter.
+Renamed from "Unit" to "mode" to match the rest of the suite. **Host x** locks the pan to the project tempo, and the rate then means **beats per cycle** — 4 is one pan sweep every four beats, 0.5 is two sweeps a beat. **Bigger is slower**, the same way Seconds is, and the opposite of Hz and BPM.
 
 It used to be a multiplier of the tempo, which is a number you cannot hear without doing arithmetic first. The filter's own cycle was moved to a plain beat count some time ago (Cycle length, below) and the pan was left behind — converted 2026-09-04 to match. (Suite rule R13-revised.)
 

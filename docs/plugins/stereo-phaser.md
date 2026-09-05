@@ -49,13 +49,24 @@ At the low end of its stage range it's a normal musical phaser; pushed toward it
 
 ### Host tempo sync
 
-**Rate Mode** `Own Hz / Host x` (default Own Hz)
-**Own Hz** is the original behaviour — free-running, project tempo ignored.
-**Host x** locks the sweep to the project tempo, and **Rate then means beats per
-cycle**: set it to 4 and one full sweep takes four beats. Tempo changes apply live.
+**Rate Mode** `BPM / Seconds / Hz / Host x` (**default Hz**) — the suite's
+canonical four, in the suite's canonical order, as of 2026-09-05 (R20).
 
-Only two entries rather than the four in Melody Phase / Polyrhythm, because this
-plugin only ever had one unit — "Seconds" and "BPM" would be meaningless here.
+**BPM** is sweeps per minute. **Seconds** is seconds per sweep. **Hz** is the
+original free-running behaviour, sweeps per second, project tempo ignored.
+**Host x** locks the sweep to the project, and Rate then means **every N beats**:
+set it to 4 and one full sweep takes four beats. Tempo changes apply live.
+
+**Why this one defaults to Hz when the rest of the suite defaults to BPM.** All
+three saved instances in `strangeness.RPP` store *nothing* for this control, so
+they take whatever the declared default is. It used to be `Own Hz` at position
+one; putting Hz at the default lands them on exactly the behaviour they had, and
+meant this change needed no edit to your project at all. The enum ORDER is
+canonical; only which one starts selected differs.
+
+This page used to say "Seconds and BPM would be meaningless here". That was
+wrong — seconds per sweep is an ordinary way to say a speed — and consistency
+across the suite outranks a per-plugin guess anyway.
 
 **Beats per cycle is a plain number, not a menu.** 4 is every four beats. 3.7 is
 every three and seven tenths of a beat — which no note-division grid can express,

@@ -29,14 +29,14 @@ desc: Stereo Phaser
 // 2026-09-04. Old projects are repaired IN THE PROJECT FILE by
 // tools/phaser_migrate_rate_triple.py -- there is no runtime self-repair, and
 // there deliberately isn't one (see the note above @serialize).
-slider1:0.3<0.001,1000,0.001>Rate (Hz, or beats per cycle in Host x)
+slider1:0.3<0.001,1000,0.001>Rate (BPM / sec / Hz / beats per cycle)
 // Own Hz: free-running at Rate Hz -- the original behaviour.
 // Host x: Rate means BEATS PER CYCLE. 4 is one sweep every four beats; 3.7 is
 //         one every three and seven tenths, which a note-division grid cannot
 //         express and which is what this suite exists for. It is NOT a
 //         multiplier any more (R13-revised, 2026-09-02) -- a multiplier is a
 //         number you have to do arithmetic against the tempo to hear.
-slider2:0<0,1,1{Own Hz,Host x}>Rate Mode
+slider2:2<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
 // RETIRED 2026-09-04 by R13-revised, and hidden. It existed only to spare you
 // arithmetic on a multiplier; "every 4 beats" is now typing 4 into Rate. The
 // slider is NOT deleted -- ids are primary keys and can never be renumbered, so
@@ -73,6 +73,15 @@ memset(0, 0, 256);
 // entry: the raw multiplier HIDES behind a picker, so a stale picker value left
 // unapplied would name one speed on screen while the plugin ran another.
 // rate_mode_inited gates it, so a half-restored instance can never see an edge.
+//
+// NOTE, R20 2026-09-05: this plugin's Rate Mode DEFAULTS TO 2 (Hz), not 0 (BPM)
+// like the rest of the suite. That is deliberate and it is what let this change
+// ship with no project migration: all three saved instances in strangeness.RPP
+// store `-` for this slider -- nothing at all -- so they take whatever the
+// DECLARED default is. It was `Own Hz` at index 0; moving the default to Hz at
+// index 2 lands them on exactly the behaviour they had. Writing explicit values
+// into the project would have worked too and would have been the riskier way to
+// get the same result. The enum ORDER is canonical; only the default differs.
 rate_mode = slider2;
 // RETIRED (R13-revised). The guard is forced to 0 rather than the block being
 // deleted, so the reasoning stays next to the code it disabled. Rate says beats
@@ -113,9 +122,16 @@ rate_mode_inited ? last_rate_mode = rate_mode;
 // 0 meant "effectively stopped" and it has to keep meaning that. This slider's
 // declared minimum is 0.001 so it cannot actually reach 0, but the safe form
 // costs nothing and the unsafe one nearly shipped elsewhere in this suite.
-rate      = rate_mode == 1 ?
+// `rate` is in Hz. R20's four modes convert into it:
+//   0 BPM      cycles per minute      -> /60
+//   1 Seconds  seconds per cycle      -> 1/x
+//   2 Hz       cycles per second      -> as-is  (THIS PLUGIN'S DEFAULT, see slider2)
+//   3 Host x   every N beats          -> tempo/60/x
+rate      = rate_mode == 3 ?
               (slider1 > 0.001 ? max(tempo, 0.001) / 60 / slider1 : 0.001) :
-              slider1;
+            rate_mode == 2 ? slider1 :
+            rate_mode == 1 ? 1 / max(slider1, 0.001) :
+              slider1 / 60;
 rangeMin  = min(slider4, slider5);
 rangeMax  = max(slider4, slider5);
 fb        = slider6;
@@ -156,7 +172,7 @@ lfoInc = 2 * $pi * rate / srate;
 !rate_mode_inited ? ( last_rate_mode = slider2; rate_mode_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run on a tempo
 // change, so the rate and the LFO increment are recomputed here.
-rate_mode == 1 ? (
+rate_mode == 3 ? (
   rate   = slider1 > 0.001 ? max(tempo, 0.001) / 60 / slider1 : 0.001;
   lfoInc = 2 * $pi * rate / srate;
 );
@@ -170,7 +186,7 @@ rate_mode == 1 ? (
 // stopped or paused, beat_position doesn't advance and locking would freeze
 // the sweep for live monitoring.
 host_beat_pos   = beat_position;
-host_pos_locked = (rate_mode == 1) && (play_state == 1 || play_state == 5);
+host_pos_locked = (rate_mode == 3) && (play_state == 1 || play_state == 5);
 blk_sample      = 0;
 
 @sample
