@@ -353,6 +353,12 @@ slider79:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 R
 // Parameter deliberately NOT a short name: EEL2 folds case, so a global `D`
 // anywhere in the file would BE this parameter and the function would
 // silently self-assign (the spectral_vowel_probe silence bug in CLAUDE.md).
+// Returns the amount in the unit it must be ADDED in. Outside Host x that is
+// the rate slider's own unit, so the amount passes through untouched. In Host x
+// it is NOMINAL Hz (cycles/sec as if the project were at 60 BPM), because Rate
+// Value there is beats per cycle and cannot take a BPM delta directly. Callers
+// must therefore add the Host x result to the HZ, never to the raw slider
+// value -- see the notes at the two call sites.
 function host_bpm_delta(bpm_amt) (
   rate_mode == 3 ? bpm_amt / max(host_bpm, 0.001) : bpm_amt
 );
@@ -1270,9 +1276,24 @@ slider82 ? (
 // multiplicative ratio so all voices stay in proportional lockstep.
 // The other 23 targets ride as additive offsets, folded into
 // target_drift_offset[] just after the drift loop below.
-effective_rate_val = rate_val + host_bpm_delta(speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0]);
-effective_rate_hz  = rate_to_hz(effective_rate_val, rate_mode);
+// WHERE the BPM amount is added changed on 2026-09-04, and it had to.
+// Until then, Host x's Rate Value WAS the nominal rate in cycles/sec, so
+// adding a converted amount to the raw slider value and adding it to the
+// Hz were the same operation. R13-revised inverted the unit -- Rate Value
+// became BEATS PER CYCLE -- and that identity broke, but nothing moved the
+// addition. Simulated at 120 BPM, a cycle every 2 beats: a Ramp of +10 BPM
+// came out as 57.6 cycles/min instead of 70. Wrong size and, worse, the
+// WRONG DIRECTION -- ramping up slowed it down, because more beats per
+// cycle is slower. So in Host x the amount is now added AFTER the
+// inversion. host_bpm_delta's factor was always right; only its
+// destination was wrong.
+sr_bpm_amt         = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
 base_rate_hz_ref   = rate_to_hz(rate_val, rate_mode);
+rate_mode == 3 ? (
+  effective_rate_hz = max(base_rate_hz_ref + host_bpm_delta(sr_bpm_amt), 0.0001);
+) : (
+  effective_rate_hz = rate_to_hz(rate_val + sr_bpm_amt, rate_mode);
+);
 speed_scale_current = effective_rate_hz / max(base_rate_hz_ref, 0.001);
 // host_scale folds the live project tempo in alongside Speed Ramp (1 outside
 // Host x, so a no-op elsewhere). Everything riding combined_scale -- all eight
@@ -1351,11 +1372,19 @@ loop(N_TARGETS - 1,
 // silence or break the plugin.
 drift_hz_delta = 0;
 target_drift_offset[0] != 0 ? (
-  effective_rate_natural = rate_val + host_bpm_delta(target_drift_offset[0]);
-  rate_mode == 0 ? effective_rate_natural = max(effective_rate_natural, 10) :
-  rate_mode == 1 ? effective_rate_natural = max(effective_rate_natural, 0.1) :
-                   effective_rate_natural = max(effective_rate_natural, 0.1);
-  drift_hz_delta = rate_to_hz(effective_rate_natural, rate_mode) - rate_val_hz;
+  // Host x adds in the Hz domain -- see the note on the Ramp above. Adding
+  // to the raw value there would drift the BEATS PER CYCLE, which runs
+  // backwards (up = slower) and by the wrong amount.
+  rate_mode == 3 ? (
+    drift_hz_delta = max(rate_val_hz + host_bpm_delta(target_drift_offset[0]), 0.0001)
+                     - rate_val_hz;
+  ) : (
+    effective_rate_natural = rate_val + target_drift_offset[0];
+    rate_mode == 0 ? effective_rate_natural = max(effective_rate_natural, 10) :
+    rate_mode == 1 ? effective_rate_natural = max(effective_rate_natural, 0.1) :
+                     effective_rate_natural = max(effective_rate_natural, 0.1);
+    drift_hz_delta = rate_to_hz(effective_rate_natural, rate_mode) - rate_val_hz;
+  );
 );
 
 // Binaural Beat drift (target 11): Hz delta on the L/R offset, added to
