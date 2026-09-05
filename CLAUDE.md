@@ -303,6 +303,18 @@ append-only history; this is the only part of the repo that claims to describe
   projects stay closed** — a reordered build plus an opened project equals a
   scrambled save.
 
+- **PITCH IS THE NEXT BIG INCONSISTENCY AND IT IS DELIBERATELY NOT STARTED.**
+  Raised and measured 2026-09-05: the suite states a pitch **seven different
+  ways** — note-with-octave, note-without, raw semitones, hertz, cents, percent,
+  and semitones-as-a-spread. Bubbler and Dapple disagree with each other on the
+  same control. Full table and the three worst cases are in
+  `docs/suite-consistency-plan.md` under *pitch needs its own rule*.
+
+  **Do not start it opportunistically.** Unlike the rate sweep there is NO free
+  window: every pitch value is stored in real projects and IS the sound. Write
+  the rule, settle it with Rozaya, then build — the R20 way, which is what
+  finally worked after five sessions each guessed differently.
+
 - **THE RAMP TIME UNIT IS `{Cycles, Seconds, Minutes, Beats}` — AND ITS DECLARED
   DEFAULT IS MINUTES, NOT INDEX 0.** Settled 2026-09-05. It was `{Minutes, Beats}`
   everywhere, so a thirty-second ramp had to be entered as *0.5 minutes* — a

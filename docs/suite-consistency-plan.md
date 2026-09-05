@@ -679,6 +679,51 @@ from 2026-08-22 and the note there is explicit that the assumption expires silen
 
 ---
 
+## OPEN, AND DELIBERATELY NOT STARTED: pitch needs its own rule (raised 2026-09-05)
+
+Rozaya: *"pitch needs its own whole thing, doesn't it."* It does. Measured the
+same day, before anyone designed anything — **this suite states a pitch seven
+different ways:**
+
+| how | where |
+|---|---|
+| note name WITH octave (48-entry picker, C2..C6) | melody_phase, polyrhythm_phase_v3 |
+| note name WITHOUT one (12-entry) + separate Centre Octave | polyrhythm_phase, shepard-tone |
+| semitones, raw | spectral_vowel_morpher, spectral_vowel_passage, sustain_looper, polyrhythm_phase's per-voice pitch |
+| hertz, directly | dapple, resonance_bank, rhythm-track, womb, heartbeat gen, breath_gen, both sweeping filters |
+| cents | polyrhythm_phase_v3 fine tune, shepard-tone drift |
+| percent | dapple's Pitch spread |
+| semitones, for a spread | bubbler's Pitch spread |
+
+**The three worst, and two are siblings disagreeing with each other:**
+
+1. **Bubbler and Dapple state the same control two ways.** Bubbler: Transpose
+   (semitones) + Pitch spread (semitones). Dapple: Pitch (Hz) + Pitch spread
+   (**percent**). Same family, same job.
+2. **Semitone ranges are unrelated to each other** — sustain_looper ±24,
+   the Morpher ±96, and **polyrhythm_phase's per-voice Semitones ±1000**, which
+   is eighty-three octaves.
+3. **Tuning reference exists in five plugins and is absent from every other one
+   that makes a pitch** — bubbler, dapple, the Morpher, Passage and
+   sustain_looper all produce pitched sound with no way to say what A is.
+
+### Why this is NOT the rate block, and must not be done the same way
+
+**There is no free window.** The rate-mode sweep was cheap because nothing was
+stored on those controls — 47 instances all sitting on a declared default. Every
+pitch value in this table is stored in real projects **and is the sound**.
+Changing a pitch unit changes what you hear, in work that is finished.
+
+**So: write the rule, argue it out, and touch no code until the shape is
+settled.** That is what finally worked for R20 after five sessions each reached
+for a different answer, and pitch is a bigger surface than rates were.
+
+**Deferred deliberately on 2026-09-05**, with the reasoning recorded rather than
+the work half-started. Rozaya: *"It's a thing that needs exploration... I don't
+think we should start that tonight."*
+
+---
+
 ## Open questions
 
 1. **Selector-backed targets.** Melody v2's 24 `Vn …` target options name sliders that
