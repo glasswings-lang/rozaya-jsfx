@@ -1,6 +1,54 @@
 # Suite consistency plan
 
-Started 2026-08-28. Planning document — nothing here has been built yet.
+Started 2026-08-28. **Much of this HAS been built.** The line that used to sit here
+said nothing had been, which was true for three days and has been wrong ever since —
+and it cost real time, because every session opened this file, believed it, and
+re-derived the state from the source. Status is now recorded here. **Keep it recorded.**
+
+## STATUS — verified against the source 2026-09-04
+
+### Shipped
+
+| what | where it stands |
+|---|---|
+| **R16** `Speed ramp` → `Ramp` | done, 70 labels across 14 plugins |
+| **R8** step sizes standardised down | done for dB (0.01) and `Start delay` (0.001) |
+| **R11** one sync block, not per-rate pickers | done in **Womb** and **Melody Phase** — both now carry `Sync to host` / `Host sync target` / `Every N beats` instead of a Rate Mode plus a stranded Host ratio |
+| **R13-revised** Host x means beats, not a multiplier | done in **both Polyrhythms, Dapple, Bubbler**. Twelve plugins still read Rate Value as a tempo multiplier there |
+| **Polyrhythm per-voice gain default** −60 → −6 | done |
+| **Morpher — the entire authored layout** | **LANDED** (`340fd4e`). `Capture average` 28 → 4, `High cut` beside `Low cut`, Drift and Ramp moved to the end, Input/Output relocated, `Layer overtone harmonic` added. `docs/layouts/spectral-vowel-morpher.md` describes a finished job, not a pending one — and it is itself stale: it says 39 sliders, the file has 44 |
+| **Stereo Phaser — rate triple made contiguous** | **LANDED** 2026-09-04, plugin installed and `strangeness.RPP` migrated. First reorder to use a project-file migration rather than runtime repair |
+| **Drift and Ramp play/rest** | **Veil, Tremolo, Morpher** |
+| **Ramp counted in beats** (`Ramp time unit`) | **Veil, Tremolo** only |
+
+### Still true, re-measured 2026-09-04 — this is the remaining work
+
+- **The rate triple is still split in seven plugins.** Seven of the nine rows in the
+  table below are unchanged: Tremolo 1/2/**34**, Sweeping Filter 3/4/**39**, Shepard
+  Tone 3/2/**74**, Polyrhythm 3/2/**84**, Heartbeat 1/**34**/35, Shepard Scale
+  1/**62**/63, Rhythm Track 1/**27**/28. The Melody Phase and Womb rows are superseded
+  by R11 and should be read as done.
+- **`Slope` is still 41 in Sweeping Filter, 42 in Sweep Dwell, 5 in Veil.** Veil's is
+  the correct position; the filters move to match it, not the other way round.
+- **Target lists still name sliders that do not exist.** Measured: Womb 4 of 10 wrong,
+  Sweeping Filter 4 of 6 (`Sweep Rate` still does not exist), Breath Gen 3 of 5 —
+  still offering `Breaths/min` for a control it does not have. Some are near-misses on
+  a trailing parenthetical, which is exactly what R2 exists to make mechanical.
+- **Womb's `RSA depth` / `Heart with breath (BPM peak-to-peak)` pair** is untouched.
+  R1 says both become `Heart rate swing per breath (BPM)`.
+- **Phase 2 has otherwise not started.** Remaining reorders, by measured use: Polyrhythm
+  v1 (17 projects), Sweeping Filter (11), Passage (10), Womb (8), Tremolo (8), Melody (7).
+
+### No longer true — do not act on these
+
+- The Morpher audit items in *Why* below. All fixed.
+- Both doc-staleness claims in *Why* below: Bubbler and Dapple document Host x, and
+  neither Polyrhythm page claims 12 waveforms. Verified 2026-09-04.
+- Womb's slider is `Heart rate (BPM)` now, not `BPM`.
+- `Speed ramp start delay` is `Ramp start delay`. R16 shipped.
+
+---
+
 
 ## Why
 
