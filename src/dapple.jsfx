@@ -111,7 +111,15 @@ NV = 32;                     // voices per channel
 // Park-Miller seeds (nonzero, < 2^31-1), different per channel.
 seedL = 1103527590;
 seedR = 1234567891;
-timerL = 0;  timerR = 0;     // samples until next bubble
+// Bubble scheduling, 2026-09-05: COUNT UP to a target recomputed every sample,
+// the same shape Heartbeat and Womb use, so a rate change lands immediately
+// instead of waiting out an interval fixed when the last bubble was born.
+// elapsed_* counts samples since the last bubble; jfac_* is that bubble's
+// jitter as a PROPORTION of the normal gap, rolled once at birth.
+// Seeded so the very first bubble arrives at once, which is what a countdown
+// starting at 0 used to do.
+elapsedL = 0;  elapsedR = 0;
+jfacL    = 0;  jfacR    = 0;
 // per-voice state arrays (32 slots each): env, base pitch, SVF n3, SVF n4, sine phase
 eL = 0;    p0L = 32;   n3L = 64;    n4L = 96;    phL = 128;   // left  0..159
 eR = 160;  p0R = 192;  n3R = 224;   n4R = 256;   phR = 288;   // right 160..319
@@ -467,7 +475,9 @@ pr_enabled ? (
 pr_gate = (start_delay_elapsed >= start_delay_sec) && !(pr_enabled && pr_resting);
 // While gated, hold both timers at a full interval so resuming does not fire a
 // burst of bubbles that queued up during the silence.
-!pr_gate ? ( timerL = eff_meanIntv; timerR = eff_meanIntv; );
+// While gated, hold both clocks at zero so resuming waits a full interval
+// rather than firing a burst of bubbles that queued up during the silence.
+!pr_gate ? ( elapsedL = 0; elapsedR = 0; );
 
 // Output at rest: Pass-through leaves the input alone (rest_target 1, and the
 // bubbles have already stopped); Silence mutes everything. Smoothed over ~3 ms
@@ -480,7 +490,8 @@ dryR = spl1;
 // ============ LEFT ============
 seedL = (seedL * 48271) % 2147483647; noiseL = (seedL / 2147483647) * 2 - 1;
 exciteL = (1 - eff_inp) * noiseL + eff_inp * dryL;    // internal noise, input, or a blend
-timerL <= 0 ? (
+elapsedL += 1;
+elapsedL >= max(eff_meanIntv * jfacL, 1) ? (
   seedL = (seedL * 48271) % 2147483647; rp = seedL / 2147483647;   // pitch roll
   seedL = (seedL * 48271) % 2147483647; rt = seedL / 2147483647;   // timing roll
   vsel = 0; vmin = abs(n3L[0]) + abs(n4L[0]); j = 1;
@@ -492,9 +503,12 @@ timerL <= 0 ? (
   np = eff_pitch * 2 ^ (eff_spreadOct * (rp * 2 - 1));
   p0L[vsel] = max(20, min(np, srate * 0.1));
   eL[vsel] = 1; n3L[vsel] = 0; n4L[vsel] = 0; phL[vsel] = 0;
-  timerL = max(eff_meanIntv * (1 + eff_jitter * (rt * 2 - 1)), 1);
+  // Roll the jitter as a PROPORTION, not a length. The gap it applies to
+  // is re-read every sample above, so drifting or ramping the rate moves
+  // this bubble's due time as it goes.
+  jfacL = 1 + eff_jitter * (rt * 2 - 1);
+  elapsedL = 0;
 );
-timerL -= 1;
 sumL = 0; j = 0;
 loop(NV,
   ev = eL[j];
@@ -517,7 +531,8 @@ loop(NV,
 // ============ RIGHT ============
 seedR = (seedR * 69621) % 2147483647; noiseR = (seedR / 2147483647) * 2 - 1;
 exciteR = (1 - eff_inp) * noiseR + eff_inp * dryR;
-timerR <= 0 ? (
+elapsedR += 1;
+elapsedR >= max(eff_meanIntv * jfacR, 1) ? (
   seedR = (seedR * 69621) % 2147483647; rp = seedR / 2147483647;
   seedR = (seedR * 69621) % 2147483647; rt = seedR / 2147483647;
   vsel = 0; vmin = abs(n3R[0]) + abs(n4R[0]); j = 1;
@@ -529,9 +544,12 @@ timerR <= 0 ? (
   np = eff_pitch * 2 ^ (eff_spreadOct * (rp * 2 - 1));
   p0R[vsel] = max(20, min(np, srate * 0.1));
   eR[vsel] = 1; n3R[vsel] = 0; n4R[vsel] = 0; phR[vsel] = 0;
-  timerR = max(eff_meanIntv * (1 + eff_jitter * (rt * 2 - 1)), 1);
+  // Roll the jitter as a PROPORTION, not a length. The gap it applies to
+  // is re-read every sample above, so drifting or ramping the rate moves
+  // this bubble's due time as it goes.
+  jfacR = 1 + eff_jitter * (rt * 2 - 1);
+  elapsedR = 0;
 );
-timerR -= 1;
 sumR = 0; j = 0;
 loop(NV,
   ev = eR[j];

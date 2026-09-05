@@ -152,3 +152,24 @@ beat 32 and then stands on the landing.
 
 **None of this has been heard yet.**
 
+### Changing the rate now takes effect immediately
+
+**Fixed 2026-09-05.** The gap to the next bubble used to be decided the moment
+the previous one was born, so if you set a slow rate and then sped it up, you sat
+through the whole old interval before anything changed — set it to one every six
+seconds, change your mind, and you wait six seconds wondering whether you
+actually moved the control.
+
+It now counts *up* to a target it recalculates every sample, which is what
+Heartbeat and Womb have always done. Speed it up and the next bubble arrives at
+once.
+
+**The timing randomness is unchanged.** It used to be rolled as a length; it is
+now rolled as a proportion — *this bubble waits 1.3× the normal gap* — so the
+random spread is identical and only what it is measured against has changed.
+Simulated over sixty seconds at 70% randomness: same number of bubbles, same
+shortest gap, same average, same longest.
+
+**Drift and Ramp aimed at Bubble rate are the real winners.** They move the rate
+continuously, and until now a gap you were already inside could not hear them.
+
