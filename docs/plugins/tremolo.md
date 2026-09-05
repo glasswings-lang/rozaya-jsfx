@@ -393,3 +393,38 @@ same idea: engage off freezes the ramp where it stands, engage on resumes it.
 
 ---
 
+---
+
+## The 2026-09-05 layout change
+
+Every control moved into the suite's canonical reading order: what the plugin
+**is**, then its **rate**, then the **shape of its movement**, then **stereo and
+pan**, then **transport**, then **drift**, then **ramp**. Attack and Release now
+sit beside their own shape selectors instead of both amounts coming first.
+
+**Two controls were deleted rather than hidden.** The retired **Host ratio**
+picker, which had no job left once Host x meant beats; and the **Pan speed**
+picker, whose job folded into the control below.
+
+**Linked Sweep is one number now.** It used to be a multiplier plus a named
+picker that wrote into it — a number you could not hear without doing arithmetic,
+and a control that writes another control, which is the shape that once stamped a
+hand-set rate on every project load. It is now **Pan sweep every (cycles)**:
+bigger is slower, and "every 3 cycles" is reachable, which the old eighth-step
+grid could not express.
+
+**Pan sweep rate mode** gains **Host x** and is now the suite's canonical
+`BPM / Seconds / Hz / Host x`. It previously read `Hz / Seconds / BPM` —
+backwards against the Rate Mode fifteen places above it in this same plugin.
+
+**Drift period unit** is new: `Cycles / Seconds / Beats`, cycles by default,
+which is what this plugin already counted in.
+
+**Your saved projects were migrated** — 11 instances across 8 projects, including
+`melodic`, `upswing`, `returning-home` and `bilateral stimulation tones`.
+Verified by decoding every stored value against the control NAME it belongs to,
+before and after, rather than against the table the migration used.
+
+**Nothing about the sound changed.** Every stored value came through, and both
+deleted controls were already inert.
+

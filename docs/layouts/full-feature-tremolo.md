@@ -1,7 +1,15 @@
 # Full Feature Tremolo — authored layout
 
-Written by hand 2026-09-04, not generated. **Status: order drafted, awaiting
-review. Nothing built.**
+Written by hand 2026-09-04. **Status: BUILT, MIGRATED AND INSTALLED 2026-09-05.**
+11 instances across 8 projects, verified by 348 name-decoded comparisons, PASS.
+**Not heard.**
+
+**One correction made while building, and the doc was the stale one.** Line 28
+below says the new Drift period unit is `Seconds / Beats`. It is
+**`Cycles / Seconds / Beats`** — the rule settled on the morning of 09-05, after
+Rozaya pointed out that a plugin which counts cycles should offer them. This
+plugin's drift period was already in cycles, so Cycles is index 0 and nothing
+saved changed meaning.
 
 This is the artefact that gets reviewed before anything is touched, and reviewing
 a reading order needs no code reading — which is exactly why it exists.
