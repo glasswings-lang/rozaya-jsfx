@@ -4,7 +4,19 @@ desc: Heartbeat Generator
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:70<20,200,1>BPM
+// RANGE WIDENED 2026-09-04, from 20..200 step 1, and it was FORCED by the Host x
+// conversion rather than chosen. In Host x this number is beats per cycle, and a
+// heart wants roughly half a beat to two beats per cycle -- none of which the old
+// range could express, and the step of 1 could not have reached anyway. The old
+// landing block even tried to write 1 into it, which REAPER would have clamped
+// straight back up to 20, i.e. twenty times the project tempo.
+//
+// Widening cannot disturb a saved project: every value that fitted 20..200 still
+// fits, and no stored value is clamped. (Narrowing is the dangerous direction --
+// that clamps permanently, which is why the plan puts range changes in the risky
+// row.) The step matches every other rate slider in the suite; you type the
+// number you want and nudge from there.
+slider1:70<0.001,1000,0.001>Heart rate (BPM, or beats per cycle in Host x)
 slider2:120<50,400,1>Systole ms (S1->S2 gap)
 slider3:1.0<0.0,1.0,0.01>S1 Volume
 slider4:0.7<0.0,1.0,0.01>S2 Volume
@@ -93,15 +105,20 @@ slider33:0<0,60,0.1>Ramp start delay (minutes)
 
 // --- Host tempo sync (sliders 34-35) ------------------------------------
 // Own BPM: free-running, project tempo ignored -- original behaviour.
-// Host x:  BPM becomes a MULTIPLIER of the project tempo.
+// Host x:  the heart rate means BEATS PER CYCLE -- one heartbeat every N project
+//          beats. 1 is a beat per beat; 0.5 is two heartbeats a beat; 2 is one
+//          every two beats. Bigger is slower. It used to be a MULTIPLIER of the
+//          tempo (R13-revised, 2026-09-02), which on a slider whose minimum was
+//          20 meant the gentlest available setting was twenty times the tempo.
 // Two entries, not four: only one unit here, so Seconds / Hz would be
 // meaningless. Appended at the END per the never-renumber rule.
 slider34:0<0,1,1{Own BPM,Host x}>Rate Mode
 
-// Writes a multiplier into BPM on change then gets out of the way.
-// "Custom" (default) never writes. Not "Free" -- that means FREE-RUNNING
-// in sync UI, which Own BPM already is.
-slider35:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes BPM)
+// RETIRED 2026-09-04 by R13-revised, and hidden. It existed only to spare you
+// arithmetic on a multiplier; "every 4 beats" is now typing 4. NOT deleted --
+// slider ids are primary keys and removing one shifts every control above it in
+// every saved project.
+slider35:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (retired)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -207,12 +224,10 @@ pr_enabled     = 0;
 // smoothed from a stale default.
 rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 bpm_target               = slider1;
-// host_mult is what turns slider1's own unit into BPM: 1 in Own BPM mode, the
-// project tempo in Host x (where slider1 is a multiplier). Drift and Speed
-// Ramp offsets on the rate are scaled by it at the consumption site, so they
-// stay deltas in whatever unit slider1 is currently showing rather than being
-// raw BPM that means a different proportion at every tempo.
-host_mult = 1;
+// host_mult is GONE. It used to turn slider1's own unit into BPM -- 1 in Own BPM
+// mode, the project tempo in Host x, where slider1 was a multiplier. R13-revised
+// made slider1 beats per cycle, so the relationship is a DIVISION and is done
+// inline where bpm_target is computed. Nothing else read it.
 bpm_smoothed             = slider1;
 // Speed Ramp state. Per-target memory bank for 4 targets' signed
 // `by` amounts (Heart BPM, S1-S2 gap, Breath HRV depth, Random HRV
@@ -297,17 +312,15 @@ loop(N_TARGETS,
 );
 
 @slider
-// True for the ONE @slider pass where Rate Mode really moved INTO the
-// tempo-following mode. The named pickers below use it to apply their ratio on
-// entry: the raw multiplier HIDES behind a picker, so a stale picker value left
-// unapplied would name one speed on screen while the plugin ran another.
-// rate_mode_inited gates it, so a half-restored instance can never see an edge.
-entered_host_mode = rate_mode_inited && slider34 == 1 && last_rate_mode != slider34;
 // bpm_target feeds the per-sample smoother; cycle_len_base is now
 // recomputed each sample in @sample from the smoothed, speed-scaled
 // value, so we don't compute it here anymore.
 rate_mode  = slider34;
-host_ratio_inited && slider34 == 1 && (host_ratio_sel != slider35 || entered_host_mode) ? (
+// RETIRED (R13-revised). Guard forced to 0 rather than the block deleted, so the
+// reasoning stays beside the code it disabled. There is no multiplier left for a
+// picker to translate, and a picker that WRITES a value is the shape that
+// stamped 0.5 over a hand-set rate on every load in infantile.RPP.
+0 ? (
   host_ratio_sel = slider35;
   host_ratio_sel > 0 ? (
     slider1 =
@@ -321,39 +334,30 @@ host_ratio_inited && slider34 == 1 && (host_ratio_sel != slider35 || entered_hos
     slider_automate(slider1);
   );
 );
-slider_show(slider35, rate_mode == 1);
-// --- Landing in Host x, and keeping the multiplier out of the way ----------
+slider_show(slider35, 0);
+// The LANDING BLOCK is gone (R13-revised step 4). It stamped the picker to
+// "1 per beat" and the rate to 1 on entering Host x, because meeting a bare
+// MULTIPLIER first was the trap -- 70 as a multiplier is seventy times the
+// tempo. Worth noting what that stamp actually did HERE: it wrote 1 into a
+// slider whose declared minimum was 20, so REAPER clamped it straight back to
+// 20 and you got twenty times the tempo anyway. The cure was as broken as the
+// disease, and neither is left.
 //
-// Same fix as the rest of the suite, and this plugin needed it most: the BPM
-// slider defaults to 70, which as a MULTIPLIER is seventy times the project
-// tempo. Switching mode used to hand you that.
-//
-// So: entering Host x lands on "1 per beat" (picker index 8) unless a ratio
-// was already chosen, and the raw multiplier HIDES unless the picker is on
-// Custom -- the named list becomes the way in, and the number only appears
-// when you deliberately want one the list doesn't have. The picker can't be
-// moved next to the rate slider because IDs can never be renumbered.
-//
-// Guarded on a real in-session mode CHANGE, so opening a saved project never
-// overwrites a hand-tuned rate.
-rate_mode_inited && last_rate_mode != rate_mode ? (
-  rate_mode == 1 && slider35 == 0 ? (
-    slider35 = 8;
-    host_ratio_sel = 8;
-    slider1 = 1;
-    slider_automate(slider35);
-    slider_automate(slider1);
-  );
-  last_rate_mode = rate_mode;
-);
-slider_show(slider1, rate_mode != 1 || slider35 == 0);
+// Nothing is stamped now and the rate slider NEVER HIDES. Hiding it is what
+// forced the stamp in the first place.
+rate_mode_inited ? last_rate_mode = rate_mode;
 
-// Host x: slider1 is a MULTIPLIER of the project tempo. bpm_target feeds
-// the per-sample smoother, and cycle_len / the drift period / Start Delay
-// all derive from it, so feeding the right number in is the whole job.
-// A pulse locked to musical tempo is a deliberate creative option here.
-host_mult  = rate_mode == 1 ? max(tempo, 0.001) : 1;
-bpm_target = slider1 * host_mult;
+// Host x: slider1 is BEATS PER CYCLE. The project runs at `tempo` beats per
+// minute, so a heartbeat every N beats is tempo/N beats per minute -- which is
+// what bpm_target has always been. cycle_len, the drift period and Start Delay
+// all derive from it, so feeding the right number in is the whole job. A pulse
+// locked to musical tempo is a deliberate creative option here.
+//
+// Guarded on the NUMERATOR: 1/max(raw,0.001) would clamp the denominator and
+// turn a stopped heart into a thousand-times-tempo one.
+bpm_target = rate_mode == 1 ?
+               (slider1 > 0.001 ? max(tempo, 0.001) / slider1 : 0.001) :
+               slider1;
 
 // Speed Ramp target selector save/restore (nested-selector pattern). slider29
 // = target; slider30 = per-target `by`; slider31 = per-target duration;
@@ -482,8 +486,7 @@ pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 // Follow the project tempo live in Host x. @slider does not re-run on a
 // tempo change, so these repeat here; everything else is per-sample.
 rate_mode == 1 ? (
-  host_mult  = max(tempo, 0.001);
-  bpm_target = slider1 * host_mult;
+  bpm_target = slider1 > 0.001 ? max(tempo, 0.001) / slider1 : 0.001;
   start_delay_sec = slider14 * 60 / max(bpm_target, 0.001);
 );
 

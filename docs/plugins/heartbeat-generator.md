@@ -28,8 +28,10 @@ Each voice passes through a double-cascaded lowpass after the resonant filter to
 
 ### Timing
 
-**BPM** `20-200, default 70`
+**Heart rate (BPM, or beats per cycle in Host x)** `0.001-1000, default 70`
 Base heart rate in beats per minute. This sets the cycle length before HRV modulation is applied. When HRV is active, the actual beat timing fluctuates around this value.
+
+**The range widened from `20-200` in steps of 1 on 2026-09-04**, and it was forced rather than chosen: in Host x this number means *beats per cycle*, and a heart wants somewhere around half a beat to two beats per cycle — none of which the old range could reach. Nothing you have saved is disturbed. Widening a range cannot move a stored value; only narrowing one can, and that is not what happened here. The finer step is the suite's standard for rate sliders — type the number you want and nudge from there.
 
 **Systole ms (S1→S2 gap)** `50-400 ms, default 120`
 The delay between the S1 and S2 events within each cycle. Shorter values produce a tighter, faster lub-dub; longer values spread the sounds further apart. At very short values the sounds may overlap depending on decay settings.
@@ -199,29 +201,39 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 **Rate Mode** `Own BPM / Host x` (default Own BPM)
 **Own BPM** is the original behaviour — free-running, project tempo ignored.
-**Host x** makes BPM a **multiplier of the project tempo** instead: x1 follows
-it exactly, x2 is double speed, x0.5 half. Tempo changes apply live.
+**Host x** locks the pulse to the project, and the heart rate then means **beats
+per cycle**: one heartbeat every N project beats. `1` is a beat per beat, `0.5` is
+two heartbeats a beat, `2` is one every two beats. Bigger is slower. Tempo changes
+apply live.
 
-Only two entries rather than the four in Melody Phase / Polyrhythm, because
-this plugin only ever had one unit — "Seconds" and "Hz" would be meaningless.
+Only two entries rather than the four in Melody Phase / Polyrhythm, because this
+plugin only ever had one unit — "Seconds" and "Hz" would be meaningless.
 
-> **Switching modes changes what BPM means, and nothing rescales it.** Set the
-> mode first, then the value — or use the picker below, which fills it in.
+> **Switching modes changes what the number means, and nothing rescales it.** 70 is
+> 70 BPM free-running, and in Host x it is one heartbeat every seventy beats. Set
+> the mode first, then the value.
 
-**Host ratio (writes BPM)** `Custom / every 8 beats / … / 8 per beat` (default Custom)
-Shown only in Host x. Writes the multiplier and then gets out of the way, so you
-can still type or automate anything. **Custom** never writes anything, and is
-deliberately not called "Free" — in sync UI that means free-running, which Own
-BPM already is. Entries are named for what you hear, not as note values.
+**Host ratio (retired)** — hidden, and does nothing.
+It used to be a menu of ratios that wrote a **multiplier** into the rate. The
+multiplier is gone, so the menu that translated it has no job left: "every 4 beats"
+is now typing 4. The slider stays in the file because slider positions are how
+REAPER remembers a saved project, so removing one would shift every control above
+it.
 
 ---
 
-#### Host x hands you the ratio list, not a multiplier
+#### Why the multiplier went — and this plugin is the clearest case
 
-Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw BPM number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat* — so setting a rate is picking a name rather than working out a number.
+A multiplier is a number you cannot hear without doing arithmetic against the
+project tempo. Here it was worse than illegible, it was unusable: the rate slider's
+range started at **20**, so the gentlest setting Host x could reach was *twenty
+times the project tempo*, and the default of 70 was seventy times.
 
-Set Host ratio to **Custom** and the number reappears, with whatever it last held, for ratios the list doesn't cover.
+The old cure was as broken as the disease. Entering Host x stamped a landing value
+of `1` into the slider to save you from that — but 1 was below the slider's own
+minimum, so REAPER clamped it straight back to 20 and handed you twenty times tempo
+anyway. Both are gone.
 
-This plugin needed it most: the BPM slider defaults to 70, and as a *multiplier* that's seventy times the project tempo. Switching mode used to hand you exactly that.
-
-Landing on 1 per beat only happens when *you* change the mode — opening a saved project leaves your rate alone.
+Beats per cycle is legible on its own, so nothing hides and nothing is stamped, and
+the rate slider is always visible showing what it is actually running at. (Suite
+rule R13-revised, 2026-09-02; converted here 2026-09-04.)

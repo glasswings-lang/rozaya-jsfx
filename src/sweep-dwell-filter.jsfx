@@ -22,12 +22,18 @@ slider14:0<0,15,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed
 slider15:1<0,1,0.01>Pan Spread (0=mono, 1=full)
 slider16:5<0,100,0.1>Pan Glide ms (0=instant)
 slider17:8<2,32,1>Cycle Steps (per-cycle modes)
-slider18:2<0.001,1000,0.001>Pan Sweep Rate
+slider18:2<0.001,1000,0.001>Pan Sweep Rate (Hz / sec / BPM / beats per cycle)
 // NOTE: this enum is {Hz,Seconds,BPM} — Seconds is index 1 here, but other
 // plugins in the suite order it {BPM,Seconds,Hz} and resonance_bank uses
 // {BPM,Hz,Seconds}. Key these branches by NAME, never by index; keying by
 // index is what put Start Delay 60x out in Tremolo and the sweeping filter.
 // Host x appended at the END (index 3) so saved values 0-2 are untouched.
+// Host x means BEATS PER CYCLE here, as everywhere else in the suite since
+// R13-revised (2026-09-02): 4 is one pan sweep every four beats. It used to be
+// a MULTIPLIER of the tempo. This plugin's MAIN cycle was already converted --
+// Cycle length (beats) below -- and the pan was left behind, which is the
+// suite's usual failure mode: a good decision made in one place and not
+// carried across.
 slider19:0<0,3,1{Hz,Seconds,BPM,Host x}>Pan Sweep Rate Unit
 slider20:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 
@@ -997,12 +1003,28 @@ pan_enabled ? (
   ) : pan_mode == 10 ? (
     // Pan Sweep — gate phase advance for Freeze mode. eff_pan_sweep_val
     // carries the Pan Sweep Rate drift offset (target 4). Branches keyed by
-    // the enum's NAMES: 0 Hz, 1 Seconds, 2 BPM, 3 Host x (a multiplier of
-    // the project tempo, so higher = faster, same as the rest of the suite).
+    // the enum's NAMES: 0 Hz, 1 Seconds, 2 BPM, 3 Host x = beats per cycle.
+    //
+    // NOTE the direction, and it is deliberate: in Hz and BPM a bigger number
+    // is FASTER, while in Seconds and Host x a bigger number is SLOWER. That
+    // is what the units mean, and the drift/ramp amount for this target rides
+    // in whatever unit is showing ("units match target"), so a positive drift
+    // speeds the pan up in two modes and slows it in the other two. Seconds
+    // has always behaved that way here; Host x now matches it.
+    //
+    // This differs from the Polyrhythms and the Shepards, where drift and ramp
+    // amounts are in real BPM in EVERY mode and the plugin converts. Neither is
+    // wrong on its own; having both in one suite is. Recorded as an open
+    // question rather than settled unilaterally at 2am.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val / 60) :
-                          (pan_freq = eff_pan_sweep_val * host_bpm / 60);
+    // Host x: BEATS PER CYCLE. host_bpm/60 is beats per second, so N beats per
+    // cycle is (host_bpm/60)/N cycles per second. Guarded on the NUMERATOR --
+    // 1/max(v,0.001) would clamp the denominator and turn a stopped pan into a
+    // 1000 Hz one, which is the opposite of what 0 has always meant.
+                          (pan_freq = eff_pan_sweep_val > 0.001 ?
+                                        host_bpm / 60 / eff_pan_sweep_val : 0.001);
     !in_frozen_rest ? (
       pan_phase += pan_freq / srate;
       pan_phase >= 1 ? pan_phase -= 1;
@@ -1012,11 +1034,16 @@ pan_enabled ? (
 
   ) : pan_mode == 11 ? (
     // Pan Sweep Flipped — gate phase advance for Freeze mode. Same
-    // name-keyed branches as mode 10 above.
+    // name-keyed branches as mode 10 above, Host x included.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val / 60) :
-                          (pan_freq = eff_pan_sweep_val * host_bpm / 60);
+    // Host x: BEATS PER CYCLE. host_bpm/60 is beats per second, so N beats per
+    // cycle is (host_bpm/60)/N cycles per second. Guarded on the NUMERATOR --
+    // 1/max(v,0.001) would clamp the denominator and turn a stopped pan into a
+    // 1000 Hz one, which is the opposite of what 0 has always meant.
+                          (pan_freq = eff_pan_sweep_val > 0.001 ?
+                                        host_bpm / 60 / eff_pan_sweep_val : 0.001);
     !in_frozen_rest ? (
       pan_phase += pan_freq / srate;
       pan_phase >= 1 ? pan_phase -= 1;

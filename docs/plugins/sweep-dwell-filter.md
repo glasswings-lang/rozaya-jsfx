@@ -215,7 +215,11 @@ Sequence length for per-cycle modes.
 Rate for Pan Sweep and Pan Sweep (Flipped) modes.
 
 **Pan Sweep Rate Unit** `Hz / Seconds / BPM / Host x`
-Unit for Pan Sweep Rate. **Host x** makes the value a multiplier of the project tempo — 1 is one pan sweep per beat, 0.25 is one every four beats, 2 is two per beat. Higher is faster.
+Unit for Pan Sweep Rate. **Host x** locks the pan to the project tempo, and the rate then means **beats per cycle** — 4 is one pan sweep every four beats, 0.5 is two sweeps a beat. **Bigger is slower**, the same way Seconds is, and the opposite of Hz and BPM.
+
+It used to be a multiplier of the tempo, which is a number you cannot hear without doing arithmetic first. The filter's own cycle was moved to a plain beat count some time ago (Cycle length, below) and the pan was left behind — converted 2026-09-04 to match. (Suite rule R13-revised.)
+
+Note that a Drift or Ramp amount aimed at Pan Sweep Rate rides in whatever unit is showing, so in Host x and Seconds a positive amount makes the pan *slower*, while in Hz and BPM it makes it faster. That follows the units honestly, but it differs from the oscillator plugins, where rate amounts are always in real BPM whatever the mode. Flagged as an inconsistency for the suite sweep to settle rather than decided here.
 
 **Filter Speed Multiplier (Linked Sweep)** `0.125-8×, default 1×`
 Pan sweep speed relative to filter cycle, for Linked Sweep only.
