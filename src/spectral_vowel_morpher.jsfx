@@ -208,6 +208,29 @@ slider38:0<0,60,0.1>Ramp duration (minutes)
 slider39:0<0,1,1{Off,On}>Ramp engage
 slider40:0<0,60,0.1>Ramp start delay (minutes)
 
+// --- Drift and Ramp play/rest. Ported from Veil, which is the reference
+//     implementation and has been heard. These sit at the END of the slider
+//     list rather than beside the Drift and Ramp groups they belong to,
+//     because a slider ID is a primary key and inserting one mid-list rewrites
+//     every project saved before it (CLAUDE.md; it cost two projects three
+//     months of wrong sound). They move to their proper places in the Phase 2
+//     reorder, with a migration.
+//
+//     Both are PER TARGET, like the amounts they gate.
+//     0 in either one = off, i.e. the old always-moving behaviour.
+//
+//     Drift windows are whole drift PERIODS, and the FRACTION chooses where the
+//     parameter parks: x.25 freezes at the crest (drifted fully up), x.75 at
+//     the trough, x.0 and x.5 at neutral -- so an awkward fraction rotates the
+//     park point and a whole number parks at no-change every time.
+slider41:0<0,64,0.01>Drift play for (periods, 0 = always)
+slider42:0<0,64,0.01>Drift rest for (periods, 0 = always)
+//     Ramp windows are whole MINUTES, matching Ramp duration. The rests come
+//     OUT of the duration rather than extending it, so "ramp on one side,
+//     stairs on the other" -- a smooth twin and a stepped one arrive together.
+slider43:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider44:0<0,1000,0.01>Ramp rest for (0 = smooth)
+
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
 // memory) survive transport stop/play -- the whole point of a capture-based
@@ -358,6 +381,14 @@ target_drift_phase  = freemem; freemem += 32;  // RUNTIME: 0..1 phase (reset on 
 target_drift_prev   = freemem; freemem += 32;  // RUNTIME: Random shape prev value
 target_drift_curr   = freemem; freemem += 32;  // RUNTIME: Random shape target value
 target_drift_offset = freemem; freemem += 32;  // RUNTIME: current offset (read at consumption)
+target_drift_play   = freemem; freemem += 32;  // CONFIG: play window, drift periods (0 = always)
+target_drift_rest   = freemem; freemem += 32;  // CONFIG: rest window, drift periods
+drift_pr_resting    = freemem; freemem += 32;  // RUNTIME: 1 = frozen
+drift_pr_accum      = freemem; freemem += 32;  // RUNTIME: fractional periods into this window
+ramp_play_mem       = freemem; freemem += 32;  // CONFIG: play window, ramp minutes (0 = smooth)
+ramp_rest_mem       = freemem; freemem += 32;  // CONFIG: rest window, ramp minutes
+ramp_pr_resting     = freemem; freemem += 32;  // RUNTIME: 1 = holding
+ramp_pr_accum       = freemem; freemem += 32;  // RUNTIME: fractional minutes into this window
 td_active           = freemem; freemem += 32;  // @slider: 1 if a target has any drift configured
 // --- Ramp: per-target config + runtime banks (32-slot-spaced, as above) ---
 ramp_by_mem            = freemem; freemem += 32;  // CONFIG: signed `by` amount
@@ -386,6 +417,10 @@ slots_inited == 0 ? (
     target_drift_down[i]  = 0;
     target_drift_per[i]   = 30;
     target_drift_shape[i] = 0;
+    target_drift_play[i]  = 0;
+    target_drift_rest[i]  = 0;
+    ramp_play_mem[i]      = 0;
+    ramp_rest_mem[i]      = 0;
     ramp_by_mem[i]    = 0;   // Ramp CONFIG defaults (same one-time-guard rationale)
     ramp_dur_mem[i]   = 0;   // 0 duration = ramp inert until the user sets it
     ramp_delay_mem[i] = 0;
@@ -418,6 +453,8 @@ slots_inited == 0 ? (
 i = 0; loop(N_TARGETS,
   target_drift_phase[i] = 0; target_drift_prev[i] = 0;
   target_drift_curr[i]  = 0; target_drift_offset[i] = 0;
+  drift_pr_resting[i]   = 0; drift_pr_accum[i]      = 0;
+  ramp_pr_resting[i]    = 0; ramp_pr_accum[i]       = 0;
   ramp_t_mem[i] = 0; ramp_delay_elapsed_mem[i] = 0; ramp_offset_mem[i] = 0;
   i += 1;
 );
@@ -503,6 +540,22 @@ _tp = time_precise(); i = 0; loop(floor(1 + (_tp - floor(_tp)) * 500), rand(1); 
 // harmonic stays exactly at (n+1)*f0 -- no detune, no inharmonic content. Phase
 // accumulators wrap to [0, TWOPI), so fidx lands in [0, WTBL) and the guard sample
 // at sintab[WTBL] covers i0 = WTBL-1.
+// Shared play/rest gate, byte-identical to the one in veil.jsfx and
+// Full_Feature_Tremolo.jsfx. Ticks EVERY sample whether frozen or not, in
+// whatever unit the caller's window is counted in, and returns 1 while resting.
+// Off unless BOTH windows are > 0, so a half-configured gate never silently
+// freezes anything.
+function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
+  play > 0 && rest > 0 ? (
+    accum_bank[idx] += tick;
+    accum_bank[idx] >= (resting_bank[idx] ? rest : play) ? (
+      accum_bank[idx] = 0;
+      resting_bank[idx] = 1 - resting_bank[idx];
+    );
+    resting_bank[idx];
+  ) : ( 0; );
+);
+
 function wtsin(ph) local(fidx, i0, fr) (
   fidx = ph * WTSCALE;
   i0 = floor(fidx); fr = fidx - i0;
@@ -953,25 +1006,35 @@ sel_up     = slider31;
 sel_down   = slider32;
 sel_per    = slider33;
 sel_shape  = slider34;
+sel_dplay  = slider41;
+sel_drest  = slider42;
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
   target_drift_down[last_target_select]  = sel_down;
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
+  target_drift_play[last_target_select]  = sel_dplay;
+  target_drift_rest[last_target_select]  = sel_drest;
   slider31 = target_drift_up[sel_target];
   slider32 = target_drift_down[sel_target];
   slider33 = target_drift_per[sel_target];
   slider34 = target_drift_shape[sel_target];
+  slider41 = target_drift_play[sel_target];
+  slider42 = target_drift_rest[sel_target];
   slider_automate(slider31);
   slider_automate(slider32);
   slider_automate(slider33);
   slider_automate(slider34);
+  slider_automate(slider41);
+  slider_automate(slider42);
   last_target_select = sel_target;
 ) : (
   target_drift_up[sel_target]    = sel_up;
   target_drift_down[sel_target]  = sel_down;
   target_drift_per[sel_target]   = sel_per;
   target_drift_shape[sel_target] = sel_shape;
+  target_drift_play[sel_target]  = sel_dplay;
+  target_drift_rest[sel_target]  = sel_drest;
 );
 // Per-target "is this target being driven at all?" flag — lets @sample skip the
 // per-sample effective-value recompute (and keep the exact original CPU/output)
@@ -983,21 +1046,31 @@ rsel_target = slider36;
 rsel_by     = slider37;
 rsel_dur    = slider38;
 rsel_delay  = slider40;
+rsel_play   = slider43;
+rsel_rest   = slider44;
 last_ramp_target != rsel_target ? (
   ramp_by_mem[last_ramp_target]    = rsel_by;
   ramp_dur_mem[last_ramp_target]   = rsel_dur;
   ramp_delay_mem[last_ramp_target] = rsel_delay;
+  ramp_play_mem[last_ramp_target]  = rsel_play;
+  ramp_rest_mem[last_ramp_target]  = rsel_rest;
   slider37 = ramp_by_mem[rsel_target];
   slider38 = ramp_dur_mem[rsel_target];
   slider40 = ramp_delay_mem[rsel_target];
+  slider43 = ramp_play_mem[rsel_target];
+  slider44 = ramp_rest_mem[rsel_target];
   slider_automate(slider37);
   slider_automate(slider38);
   slider_automate(slider40);
+  slider_automate(slider43);
+  slider_automate(slider44);
   last_ramp_target = rsel_target;
 ) : (
   ramp_by_mem[rsel_target]    = rsel_by;
   ramp_dur_mem[rsel_target]   = rsel_dur;
   ramp_delay_mem[rsel_target] = rsel_delay;
+  ramp_play_mem[rsel_target]  = rsel_play;
+  ramp_rest_mem[rsel_target]  = rsel_rest;
 );
 ramp_engaged = slider39;
 
@@ -1199,15 +1272,29 @@ di = 0;
 loop(N_TARGETS,
   td_active[di] ? (
     dper = target_drift_per[di];
-    dphase = target_drift_phase[di] + 1.0 / max(dper * srate, 1);
-    dphase >= 1.0 ? (
-      dphase -= 1.0;
-      target_drift_shape[di] == 2 ? (
-        target_drift_prev[di] = target_drift_curr[di];
-        target_drift_curr[di] = rand(2) - 1;   // new random target in [-1,1]
+    // Play/Rest. Windows are whole drift PERIODS and pr_frozen is ticked every
+    // sample whether frozen or not, so a FRACTION is meaningful and chooses
+    // where the parameter parks: x.25 the crest, x.75 the trough, x.0 and x.5
+    // neutral. A whole number parks at no-change every time, which is nearly
+    // inaudible -- an awkward fraction rotates the park point instead.
+    // While frozen the phase is held and the shape below is still computed from
+    // it, so the offset holds where it stopped rather than snapping to zero.
+    dfrozen = pr_frozen(drift_pr_accum, drift_pr_resting, di,
+                        1.0 / max(dper * srate, 1),
+                        target_drift_play[di], target_drift_rest[di]);
+    dfrozen ? (
+      dphase = target_drift_phase[di];
+    ) : (
+      dphase = target_drift_phase[di] + 1.0 / max(dper * srate, 1);
+      dphase >= 1.0 ? (
+        dphase -= 1.0;
+        target_drift_shape[di] == 2 ? (
+          target_drift_prev[di] = target_drift_curr[di];
+          target_drift_curr[di] = rand(2) - 1;   // new random target in [-1,1]
+        );
       );
+      target_drift_phase[di] = dphase;
     );
-    target_drift_phase[di] = dphase;
     target_drift_shape[di] == 0 ? (
       dshape = sin(TWOPI * dphase);
     ) : target_drift_shape[di] == 1 ? (
@@ -1232,8 +1319,26 @@ ramp_engaged ? (
       ramp_delay_elapsed_mem[ri] < rdelay_samps ? (
         ramp_delay_elapsed_mem[ri] += 1;
       ) : (
-        ramp_t_mem[ri] += 1.0 / (srate * ramp_dur_mem[ri] * 60);
-        ramp_t_mem[ri] > 1.0 ? ramp_t_mem[ri] = 1.0;
+        // Play/Rest -- "ramp on one side, stairs on the other" (Rozaya,
+        // 2026-09-04). Windows are whole MINUTES, matching Ramp duration.
+        // The rests come OUT of the duration rather than extending it: the
+        // advancing step is scaled by (play+rest)/play, so a stepped ramp and
+        // a smooth one of the same duration arrive on the destination
+        // together. Freezing without the compensation would make them drift
+        // steadily apart, which is the reading Rozaya explicitly did NOT hear
+        // and is not the effect. Off unless BOTH windows are > 0.
+        rpl = ramp_play_mem[ri];
+        rrs = ramp_rest_mem[ri];
+        rhold = pr_frozen(ramp_pr_accum, ramp_pr_resting, ri,
+                          1.0 / (60 * srate), rpl, rrs);
+        // One-armed on purpose: an empty else-branch is a silent compile
+        // failure in eel2 (CLAUDE.md).
+        !rhold ? (
+          rstep = 1.0 / (srate * ramp_dur_mem[ri] * 60);
+          (rpl > 0 && rrs > 0) ? rstep *= (rpl + rrs) / rpl;
+          ramp_t_mem[ri] += rstep;
+          ramp_t_mem[ri] > 1.0 ? ramp_t_mem[ri] = 1.0;
+        );
       );
     );
     ri += 1;
@@ -1917,6 +2022,21 @@ file_var(0, ser_magic);
   // mistake that moved the Original's unity gain off its slot last time.
   file_mem(0, lay_ot_harm, N_LAY_SLOTS);
 
+  // --- Drift and Ramp play/rest, APPENDED last. EOF-safe exactly like every
+  //     append before it: a project saved before these existed runs past the
+  //     end here, file_mem leaves the banks untouched, and they keep @init's 0
+  //     -- which is "always moving", precisely how those projects sound. No
+  //     magic bump, and none wanted: a bump would make every existing 7700008
+  //     blob fall through to defaults and lose its captures.
+  //     NOT added to the layer-order permutation below, for the same reason
+  //     lay_nharm is not: these are only ever restored from blobs already in
+  //     ladder order, and permuting a DEFAULTED bank is the mistake that moved
+  //     the Original's unity gain off its slot. Migrate what was RESTORED.
+  file_mem(0, target_drift_play, n_ser_targets);
+  file_mem(0, target_drift_rest, n_ser_targets);
+  file_mem(0, ramp_play_mem,     n_ser_targets);
+  file_mem(0, ramp_rest_mem,     n_ser_targets);
+
   // --- Layer order migration, walked LAST so every older layout above has
   //     already been brought up to CANON: Custom 1..3, the twelve intervals low
   //     to high, then the original at the end.
@@ -1989,6 +2109,10 @@ file_var(0, ser_magic);
     slider37 = ramp_by_mem[last_ramp_target];
     slider38 = ramp_dur_mem[last_ramp_target];
     slider40 = ramp_delay_mem[last_ramp_target];
+    slider41 = target_drift_play[last_target_select];
+    slider42 = target_drift_rest[last_target_select];
+    slider43 = ramp_play_mem[last_ramp_target];
+    slider44 = ramp_rest_mem[last_ramp_target];
     // Per-slot Capture point: force slider3 to the restored slot's stored point,
     // and sync last_cap_slot so the first @slider doesn't mistake load for a
     // slot-switch (which would save the visible point into the wrong slot).

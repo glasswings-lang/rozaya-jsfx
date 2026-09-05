@@ -254,6 +254,24 @@ How long one full wander takes, in real seconds (this instrument has no tempo, s
 **Drift shape** `Sine / Triangle / Random, default Sine`
 The path of the wander. Sine = smooth continuous sway; Triangle = straight ramps up and down with turnarounds; Random = drifts smoothly toward a new random spot each period (still smooth, just unpredictable in direction).
 
+**Drift play for (periods)** / **Drift rest for (periods)** `0 to 64, default 0 (off)`
+Makes the drift move in bursts with holds between, instead of wandering evenly
+forever. Play for 2 and rest for 2 and the parameter drifts for two periods,
+freezes exactly where it stopped for two, then carries on. Both must be above 0
+— either one at 0 leaves the drift always-on, which is the old behaviour.
+
+**These are per target**, like the amounts, so one parameter can breathe steadily
+while another moves in steps.
+
+**Use a fraction, not a whole number.** The freeze lands wherever the drift had
+got to, and the *fraction* decides where that is: `.25` parks at the crest
+(drifted fully up), `.75` at the trough (fully down), `.0` and `.5` at neutral —
+no change at all. So a whole number parks at neutral **every single time** and is
+nearly inaudible. An awkward fraction rotates the park point instead: `1.25`
+cycles crest, neutral, trough, neutral before repeating; `1.2` gives five
+positions including two partial ones at different depths. Confirmed by simulating
+the code, not by reading it.
+
 **Drift restart** `Restart on play / Free-running, default Restart on play`
 What the transport does to the drift — this is the choice between *synced* and *continuous*.
 - **Restart on play** snaps every drift back to the start of its cycle the moment you press play from a stop. Run the plugin on several tracks with the **same period and Sine/Triangle shape**, and they all reset *together* — so their drifts stay in step instead of wandering out of phase and clashing (e.g. Pitch drifts pulling against each other). This is the mode for locking multiple tracks together.
@@ -281,6 +299,24 @@ Arms every configured target at once. While On, each rides its own duration from
 
 **Ramp start delay (minutes)** `0 to 60, default 0`
 Wait this many minutes after arming before the ride begins — e.g. "let me settle for 10 minutes, *then* start winding down."
+
+**Ramp play for** / **Ramp rest for** `0 to 1000 minutes, default 0 (smooth)`
+Turns the smooth ride into a **staircase**. It climbs for the play window,
+freezes for the rest window, climbs again. Both must be above 0; either at 0
+leaves the ride smooth.
+
+**The rests come out of the duration, they don't extend it.** While it's moving
+it moves faster — by exactly enough to make up for the time spent standing still
+— so a 20-minute ramp is still a 20-minute ramp. It reaches the destination on
+the last climb and stands on it for the final rest, the way the top step of a
+staircase is a landing.
+
+**What it's for — "ramp on one side, stairs on the other."** Run two of
+something, both riding the same parameter the same distance over the same time.
+Leave one smooth and give the other play 2 / rest 2. The stepped one falls
+behind during each hold, then overtakes during each climb, so the two keep
+crossing each other on the way up and land in the same place. That's the sound
+this exists for. (Heard first on Veil, 2026-09-04.)
 
 ---
 
