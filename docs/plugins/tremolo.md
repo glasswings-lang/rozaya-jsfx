@@ -32,27 +32,35 @@ When the pan block is enabled, the post-tremolo signal is summed to mono, then r
 
 ### Tremolo
 
-**Rate Value** `0.001-1000, default 2`
+**Rate Value (Hz / sec / BPM / beats per cycle)** `0.001-1000, default 2`
 The tremolo rate in the units set by Rate Mode.
 
 **Rate Mode** `Hz / Seconds / BPM / Host x`
 
-**Host x** makes Rate Value a **multiplier of the project tempo** instead of an
-absolute rate — x1 = one tremolo cycle per beat, x2 = twice as fast, x0.5 =
-half. Move the project tempo and it moves with it, in proportion, so several
+**Host x** locks the rate to the project tempo, and Rate Value there means
+**beats per cycle**: 4 is one cycle every four beats, 0.5 is two cycles a beat.
+**Bigger is slower** — the same direction as Seconds, the opposite of Hz and BPM.
+Move the project tempo and everything moves with it in proportion, so several
 instances keep their relationships to each other instead of scattering when you
 change the speed of an arrangement.
 
-Not quantising: Rate Value stays continuous, so deliberately unlocked
-relationships survive a tempo change just as locked ones do. Tempo changes
-apply live, including mid-playback.
+Not quantising: Rate Value stays a continuous number, so `3.7` beats a cycle is
+exactly as reachable as `4` — which no note-division grid can express, and which
+is what this suite exists for. Tempo changes apply live, including mid-playback.
 
-**Host ratio (writes Rate Value)** `Custom / every 8 beats / … / 8 per beat` (default Custom)
-Shown only in Host x mode. Writes the multiplier into Rate Value and then gets
-out of the way, so you can still type or automate anything. **Custom** never
-writes anything, and is deliberately not called "Free" — in sync UI that means
-free-running, which is what the other three modes already are. Entries are
-named for what you hear, never as note values.
+**Host ratio (retired)** — hidden, and does nothing.
+It used to be a menu of ratios that wrote a **multiplier** into Rate Value. The
+multiplier is gone, so the menu that translated it has no job left: "every 4
+beats" is now typing 4. The slider stays in the file because slider positions are
+how REAPER remembers a saved project, so removing one would shift every control
+above it.
+
+**Your saved projects were converted.** Anything that had been set to Host x had
+its Rate Value replaced by its reciprocal — a stored multiplier of 0.5 became 2
+beats per cycle — so it runs at exactly the speed it always did. Checked against
+each project's own tempo: same frequency before and after, to the tenth decimal,
+with no other value touched. (Suite rule R13-revised, 2026-09-02; converted here
+2026-09-04, the last two plugins in the suite still using the multiplier.)
 
 > **Fixed at the same time:** Start Delay was 60x out in both Hz and BPM modes.
 > The conversion had been written as if Rate Mode were ordered

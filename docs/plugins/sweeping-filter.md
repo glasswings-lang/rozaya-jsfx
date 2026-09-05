@@ -77,21 +77,37 @@ Blend between the filtered signal (wet) and the original unprocessed signal (dry
 
 ### LFO Rate
 
-**Rate Value** `0.001-1000, default 2`
+**Rate Value (Hz / sec / BPM / beats per cycle)** `0.001-1000, default 2`
 The sweep rate in the units set by Rate Mode.
 
 **Rate Mode** `Hz / Seconds / BPM / Host x`
 
-**Host x** makes Rate Value a **multiplier of the project tempo** rather than an
-absolute rate — x1 = one sweep per beat, x2 = twice as fast, x0.5 = half. Move
-the tempo and it moves with it, in proportion, so instances keep their
-relationships instead of scattering. Rate Value stays continuous, so
-deliberately unlocked relationships survive a tempo change too. Applies live.
+**Host x** locks the sweep to the project tempo, and Rate Value there means
+**beats per cycle**: 4 is one sweep every four beats, 0.5 is two sweeps a beat.
+**Bigger is slower** — the same direction as Seconds, the opposite of Hz and BPM.
+Move the tempo and it moves with it in proportion, so instances keep their
+relationships instead of scattering. Rate Value stays a continuous number, so
+`3.7` beats a sweep is exactly as reachable as `4`. Applies live.
 
-**Host ratio (writes Rate Value)** `Custom / every 8 beats / … / 8 per beat` (default Custom)
-Shown only in Host x. Writes the multiplier into Rate Value then gets out of the
-way. **Custom** never writes anything, and is deliberately not "Free" — that
-means free-running in sync UI, which the other three modes already are.
+**Host ratio (retired)** — hidden, and does nothing.
+It used to be a menu of ratios that wrote a **multiplier** into Rate Value. The
+multiplier is gone, so the menu that translated it has no job left: "every 4
+beats" is now typing 4. The slider stays in the file because slider positions
+are how REAPER remembers a saved project.
+
+**Your saved projects were converted.** The six instances that were on Host x
+had their Rate Value replaced by its reciprocal — a stored 8 became 0.125 beats
+per cycle — so each runs at exactly the speed it always did. Checked against
+each project's own tempo: identical frequency before and after, no other value
+touched.
+
+**This is the plugin the multiplier cost a whole session on.** `infantile.RPP`
+held one in BPM mode with an invisible Host ratio set to "every 2 beats", and
+that picker stamped 0.5 over the hand-set rate on every single load and every
+track duplicate. The picker had to exist because the multiplier was illegible;
+the rate slider had to hide because the picker existed; the stamp had to exist
+because the slider was hidden. Beats per cycle unwinds the whole chain — nothing
+hides, nothing writes, and the rate slider always shows what it is running at.
 
 > **Fixed at the same time:** Start Delay was 60x out in both Hz and BPM modes.
 > The conversion was written as if Rate Mode were `{BPM, Seconds, Hz}` (as in

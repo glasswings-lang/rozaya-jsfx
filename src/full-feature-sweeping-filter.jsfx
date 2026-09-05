@@ -6,7 +6,7 @@ desc: Resonant Sweeping Filter with Shaped LFO and Pan Modes
 
 slider1:500<20,20000,1>Frequency Low Hz
 slider2:5000<20,20000,1>Frequency High Hz
-slider3:2<0.001,1000,0.001>Rate Value
+slider3:2<0.001,1000,0.001>Rate Value (Hz / sec / BPM / beats per cycle)
 slider4:0<0,3,1{Hz,Seconds,BPM,Host x}>Rate Mode
 slider5:0<-180,180,0.1>LFO Start Phase (degrees)
 slider6:50<0,100,0.1>On Duration % of Cycle
@@ -148,7 +148,7 @@ slider38:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // change then gets out of the way; "Custom" (default) never writes. Not
 // called "Free" -- that means FREE-RUNNING in sync UI, which the other
 // three modes already are. Named for what you HEAR, not as note values.
-slider39:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
+slider39:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (retired)
 
 // --- Slope, and an honest frequency axis -------------------------------------
 // This plugin used to be a fixed two-pole Kellett cascade -- two one-pole
@@ -448,13 +448,17 @@ memset(1300, 0, 5*FILT_MAXSTAGES);
 // entry: the raw multiplier HIDES behind a picker, so a stale picker value left
 // unapplied would name one speed on screen while the plugin ran another.
 // rate_mode_inited gates it, so a half-restored instance can never see an edge.
-entered_host_mode = rate_mode_inited && slider4 == 3 && last_rate_mode != slider4;
 
 freq_lo      = min(slider1, slider2);
 freq_hi      = max(slider1, slider2);
 rate_val     = slider3;
 rate_mode    = slider4;
-host_ratio_inited && slider4 == 3 && (host_ratio_sel != slider39 || entered_host_mode) ? (
+// RETIRED 2026-09-04 (R13-revised). Guard forced to 0 rather than deleted, so
+// the reasoning stays beside the code it disabled. Rate Value says beats per
+// cycle now, so there is no multiplier for a picker to translate -- and a picker
+// that WRITES a value is the shape that stamped 0.5 over this very plugin's
+// hand-set rate on every load in infantile.RPP.
+0 ? (
   host_ratio_sel = slider39;
   host_ratio_sel > 0 ? (
     slider3 =
@@ -468,36 +472,14 @@ host_ratio_inited && slider4 == 3 && (host_ratio_sel != slider39 || entered_host
     slider_automate(slider3);
   );
 );
-slider_show(slider39, rate_mode == 3);
-// --- Landing in Host x, and keeping the multiplier out of the way ----------
-//
-// Two problems, one fix. (a) The rate slider's default was chosen for its own
-// unit -- 2 means 2 Hz, which as a MULTIPLIER is double time -- so switching
-// mode used to hand you an arbitrary speed you never asked for. (b) In Host x
-// that slider is a multiplier, and setting one by hand means arithmetic, which
-// is the thing this project exists to avoid. The Host ratio picker already
-// solves (b), but it sits at the far end of the slider list because IDs can
-// never be renumbered, so you meet the multiplier first and the cure last.
-//
-// So: entering Host x lands on "1 per beat" (picker index 8) unless you had
-// already chosen a ratio, and the raw multiplier HIDES unless the picker is
-// on Custom. The named list becomes the way in; the number only appears when
-// you deliberately ask for one the list doesn't have.
-//
-// Guarded on a real in-session mode CHANGE. Adopting on load instead would
-// overwrite a hand-tuned rate the moment a saved project opened -- the same
-// trap the picker's own host_ratio_inited guard exists for.
-rate_mode_inited && last_rate_mode != rate_mode ? (
-  rate_mode == 3 && slider39 == 0 ? (
-    slider39 = 8;
-    host_ratio_sel = 8;
-    slider3 = 1;
-    slider_automate(slider39);
-    slider_automate(slider3);
-  );
-  last_rate_mode = rate_mode;
-);
-slider_show(slider3, rate_mode != 3 || slider39 == 0);
+slider_show(slider39, 0);
+// The LANDING BLOCK is gone (R13-revised step 4). It used to stamp the picker
+// to "1 per beat" and Rate Value to 1 on entering Host x, because meeting a
+// bare MULTIPLIER first was the trap. There is no trap now: 2 beats per cycle
+// is a legible number, so nothing needs stamping and, crucially, the RATE
+// SLIDER NEVER HIDES. Hiding it is what forced the stamp -- and this is the
+// plugin where that cost a whole session, in infantile.RPP.
+rate_mode_inited ? last_rate_mode = rate_mode;
 
 dur_pct      = slider6;
 depth_pct    = slider7 * 0.01;
@@ -756,7 +738,10 @@ pan_sweep_ratio = slider23;
 // to remember a tempo and go stale when @init re-runs on transport play.
 rate_mode == 0 ? (freq_raw = rate_val) :
 rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
-rate_mode == 3 ? (freq_raw = rate_val) :
+// Host x: BEATS PER CYCLE (R13-revised). Guarded on the NUMERATOR -- inverting
+// a unit inverts its edge cases, and 1/max(v,0.001) clamps the denominator,
+// turning a stopped sweep into a 1000 Hz one.
+rate_mode == 3 ? (freq_raw = rate_val > 0.001 ? 1 / rate_val : 0.001) :
                  (freq_raw = rate_val / 60);
 
 // Smooth the rate slider, advance the speed ramp, apply per-plugin
@@ -804,13 +789,28 @@ slider32 ? (
 // in use, because reaching a musical destination then needs arithmetic
 // (1 - 1/3 = 0.667 for "every three beats"), and a ramp deliberately leaves
 // the grid anyway, so a fraction of a beat buys nothing.
+//
+// WHERE the amount is added changed with the unit, and it had to. While Host x's
+// Rate Value WAS the nominal rate, adding a converted amount to the slider value
+// and adding it to the Hz were the same operation. Beats per cycle INVERTS that,
+// so adding to the raw value would move the wrong quantity in the wrong
+// direction -- more beats per cycle is slower. The divisor is unchanged and was
+// always right; only its destination was wrong. The same oversight shipped in
+// both Polyrhythms and was fixed the same day this landed.
+//
+// The Drift block further down needs NO such change: it adds its amount to
+// freq_base, which already has host_scale folded in, so D BPM is simply D/60 Hz
+// there. Two different domains, both correct -- said out loud because the two
+// divisors look inconsistent side by side and are not.
 sr_rate_by = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
-rate_mode == 3 ? sr_rate_by = sr_rate_by / max(host_bpm, 0.001);
-effective_rate_val = rate_val + sr_rate_by;
-rate_mode == 0 ? (effective_rate_hz = effective_rate_val) :
-rate_mode == 1 ? (effective_rate_hz = 1 / max(effective_rate_val, 0.001)) :
-rate_mode == 3 ? (effective_rate_hz = effective_rate_val) :
-                 (effective_rate_hz = effective_rate_val / 60);
+rate_mode == 3 ? (
+  effective_rate_hz = max(freq_raw + sr_rate_by / max(host_bpm, 0.001), 0.0001);
+) : (
+  effective_rate_val = rate_val + sr_rate_by;
+  rate_mode == 0 ? (effective_rate_hz = effective_rate_val) :
+  rate_mode == 1 ? (effective_rate_hz = 1 / max(effective_rate_val, 0.001)) :
+                   (effective_rate_hz = effective_rate_val / 60);
+);
 // host_scale folds the live project tempo in here rather than into a
 // combined_scale (this plugin has none -- speed_scale_current is the shared
 // factor, consumed by freq_base below and everything downstream of it).
@@ -968,9 +968,11 @@ rate_pos_lock = (rate_mode == 3) && host_pos_locked
 // Advance filter sweep LFO phases unless Freeze rest is pinning them.
 !in_frozen_rest ? (
   rate_pos_lock ? (
-    // rate_val is cycles per beat in Host x, so this is just how far through
-    // the cycle the project position is.
-    phase_l = sample_beat_pos * rate_val;
+    // rate_val is BEATS PER CYCLE in Host x, so the number of whole cycles
+    // elapsed is the beat position DIVIDED by it. Inverted with the rate
+    // conversion above and had to: multiplying here while dividing there would
+    // lock the phase to a different speed than the sweep runs at.
+    phase_l = rate_val > 0.001 ? sample_beat_pos / rate_val : 0;
     phase_l -= floor(phase_l);
   ) : (
     phase_l += freq / srate;
