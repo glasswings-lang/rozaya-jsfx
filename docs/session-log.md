@@ -80,6 +80,46 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-04 (latest) — EAR-TESTED ✓: the Host x beats-per-cycle conversion. The suite's largest untested block is closed.**
+
+  R13-revised flipped `Rate Value` in Host x from a tempo MULTIPLIER to BEATS
+  PER CYCLE across thirteen plugins, finishing earlier the same day. In eleven
+  of them nothing saved was touched, so the risk was confined to the mode. In
+  the Tremolo and the Sweeping Filter, real stored values in real projects were
+  rewritten to their reciprocals. **Rozaya played them: the sweeps run at the
+  speed they remember.**
+
+  **The sharpening, and it is the reusable part of this entry.** The status note
+  had been saying "ten instances worth playing, across six projects". Decoding
+  the live project files rather than re-reading the note cut that in half.
+  **Four of the ten were Tremolos stored at `1`, and one is its own
+  reciprocal** — their number did not move and neither did their meaning, so
+  they were never evidence about the conversion in either direction. The six
+  that genuinely changed are all Sweeping Filter, in four projects:
+  `bilateral-with-binaurals` (2, now 0.125), `as-things-are` (1, now 8),
+  `noisescape-august-18-2026` (2, now 4 and 8) and
+  `womb-and-baby-heartbeats-with-bloodflow` (1, now 0.5). Only the first is
+  finished work; the rest are in `to-play-with-later`.
+
+  So the general form: **an identity value under the transform is not a test
+  of the transform.** When a migration is asked to be ear-tested, decode which
+  stored values actually moved before naming the projects to play — otherwise
+  half the ask is confirmation that cannot confirm anything, and the listener
+  spends their attention on it.
+
+  **What this does NOT cover.** Drift and Ramp running *while* in Host x, and
+  pan following the project tempo — tests 3, 4 and 5 of
+  `docs/host-sync-ear-test.md`, still never heard on any plugin. The mode itself
+  was already proved by ear twice before today (Melody, 2026-08-11; Womb,
+  2026-08-30/31); what closed today is the conversion sitting on top of it.
+
+  **And a note on how it nearly stayed open.** Rozaya had already done this test
+  and had simply not said so — *"They do, I just forgot to say so."* The suite's
+  documented failure mode is a settled thing being re-derived by a later
+  session, and this is that failure mode with the polarity reversed: work that
+  is done, recorded as outstanding, and queued up to be asked for again. Ask
+  what has already been heard before recommending an ear-test.
+
 - **2026-09-04 (later) — the Phaser reorder LANDED: plugin installed, project migrated and promoted. Verified by decoding; NOT ear-tested.**
 
   The rate triple (Rate / Rate Mode / Host ratio) had been reordered in `src/`
@@ -141,7 +181,8 @@ Two habits keep this honest, and both have failed here before:
 
 - **2026-09-02 — the long repair day. Melody's layout migration finally ran; per-cycle pan modes reached the oscillator plugins; Host x started becoming a real unit. On `feature/melody-reorder`, ~40 commits, UNPUSHED, unmerged.**
 
-  **Melody layout migration: DONE and verified.** 73 instances across 7 projects. The script existed and had run once in August, but the projects were restored from backup afterwards for the line-eating defect and nobody re-ran it. Its gate was the problem: it asked "does this store more than OLD_COUNT values", and a count cannot answer that — it was already wrong for two projects storing 84, and adding `Pan Glide ms` that morning pushed a third un-migrated project to 79 and made it look done. **It now range-checks every value against BOTH layouts' declared ranges, read from git and the working tree rather than from a table authored beside the permutation map.** Verification decodes each instance by CONTROL NAME on both sides against a pre-migration snapshot: 4632 comparisons, plus line counts, instance counts, and a range check. Snapshot at `E:eaper\_pre-melody-layout-20260902-1503`.
+  **Melody layout migration: DONE and verified.** 73 instances across 7 projects. The script existed and had run once in August, but the projects were restored from backup afterwards for the line-eating defect and nobody re-ran it. Its gate was the problem: it asked "does this store more than OLD_COUNT values", and a count cannot answer that — it was already wrong for two projects storing 84, and adding `Pan Glide ms` that morning pushed a third un-migrated project to 79 and made it look done. **It now range-checks every value against BOTH layouts' declared ranges, read from git and the working tree rather than from a table authored beside the permutation map.** Verification decodes each instance by CONTROL NAME on both sides against a pre-migration snapshot: 4632 comparisons, plus line counts, instance counts, and a range check. Snapshot at `E:
+eaper\_pre-melody-layout-20260902-1503`.
 
   **Per-cycle pan modes** (`Alternating`, `Distributed`, `Converging`, `Diverging`, ping-pong variants, plus new `Alternating every 2/4/8`) now exist in all six plugins that have pan modes. `percycle_pan()` is byte-identical across the oscillator sources. **The tick differs and that is the whole point:** filters advance on their LFO wrap, Polyrhythm on the voice's TREMOLO wrap, Melody on the NOTE TRIGGER — so the pan moves because the sound did and there is no second clock to drift. In Polyrhythm the cycle index is **per voice**; a single shared index panned everything at the base rate and Rozaya heard it instantly: *"it was using the base rate, and ignoring the rest."*
 

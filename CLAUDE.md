@@ -233,14 +233,30 @@ append-only history; this is the only part of the repo that claims to describe
   at neutral every time and is nearly inaudible, and setting only `down`
   wastes half the holds (every park on the positive half lands at no-change).
   Written up on both plugin pages.
-- **The Host x conversion is in THIRTEEN plugins and NONE of it has been
-  heard.** The largest untested block in the suite. For eleven of them nothing
-  saved changed, so the risk is confined to the mode itself. For the **Tremolo
-  (4 instances) and the Sweeping Filter (6)** real stored values were rewritten,
-  so THOSE TEN ARE THE ONES WORTH PLAYING: `simple-sequence`,
-  `simple-sequence-check`, `bilateral-with-binaurals`, `as-things-are`,
-  `noisescape-august-18-2026`, `womb-and-baby-heartbeats-with-bloodflow`. The check that needs no ears was done:
-  at 205 BPM a Rate Value of 4 must give one cycle every 1.171 s, and it does.
+- **EAR-TESTED 2026-09-04 ✓ — the Host x beats-per-cycle conversion, on the
+  migrated Sweeping Filter instances.** Rozaya played them and the sweeps run at
+  the speed they remember. **This closes what was the largest untested block in
+  the suite** — the R13-revised conversion across thirteen plugins, where a
+  stored multiplier was flipped to its reciprocal.
+
+  **Which instances that actually covers, decoded from the project files rather
+  than from this note.** Ten instances were on Host x. **Four of them — every
+  Tremolo, in `simple-sequence` and `simple-sequence-check` — were stored at 1,
+  and one is its own reciprocal**, so nothing about them changed and they were
+  never evidence either way. The six that genuinely moved are all Sweeping
+  Filter, in four projects: `bilateral-with-binaurals` (2, at 0.125),
+  `as-things-are` (1, at 8), `noisescape-august-18-2026` (2, at 4 and 8) and
+  `womb-and-baby-heartbeats-with-bloodflow` (1, at 0.5). Those six are the ones
+  the ear-test speaks for.
+
+  The check that needs no ears was already done: at 205 BPM a Rate Value of 4
+  must give one cycle every 1.171 s, and it does.
+
+  **Still unheard within Host x, and it is a narrower list than it used to be:**
+  Drift and Ramp running *while* in Host x (tests 3 and 4 of
+  `docs/host-sync-ear-test.md`), and pan following the project tempo. The mode
+  itself is proved — Melody on 2026-08-11, Womb on 08-30/31, and now the
+  conversion.
 - **A latent bug in the 09-02 conversion, found and fixed 2026-09-04, unheard.**
   Both Polyrhythms added Drift and Ramp amounts to the raw Rate Value. That was
   right while Host x's Rate Value WAS the rate, and wrong the moment it became
@@ -252,10 +268,12 @@ append-only history; this is the only part of the repo that claims to describe
 - **Heartbeat's rate slider was widened** from `20..200` step 1 to
   `0.001..1000` step 0.001, because beats-per-cycle needs values that range
   could not express. Widening never clamps a stored value; only narrowing does.
-- **Still unheard, from before today:** the Host x beats-per-cycle conversion, and
-  the per-cycle pan tick in Melody (note trigger) and the filters (LFO wrap) —
-  Polyrhythm's tremolo-wrap tick passed on 09-04 but the others advance on a
-  different clock. Plus tests 3-5 of `docs/host-sync-ear-test.md`.
+- **Still unheard:** the per-cycle pan tick in Melody (note trigger) and the
+  filters (LFO wrap) — Polyrhythm's tremolo-wrap tick passed on 09-04 but the
+  others advance on a different clock. Plus tests 3-5 of
+  `docs/host-sync-ear-test.md`, which are Drift and Ramp under Host x, and pan
+  following the tempo. **The beats-per-cycle conversion itself is no longer on
+  this list** — it was heard on 09-04, see above.
 - **The suite consistency sweep is mid-flight.** `docs/suite-consistency-plan.md`
   is the authoritative document for it — read it before touching interface
   naming, ordering, ranges or units anywhere in the suite. Phase 0 and most of
