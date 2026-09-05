@@ -48,8 +48,9 @@ pattern the whole sweep keeps finding.
 1. **`Slope` comes home to 4**, beside the frequencies and resonance, matching
    Veil.
 2. **`Resonance` joins the frequency group** at 3.
-3. **`Pan speed (Linked Sweep)` comes home** to sit after
-   `Filter speed multiplier (Linked Sweep)`.
+3. **`Pan speed (Linked Sweep)` is absorbed, not moved.** It is a picker that
+   WRITES into the multiplier beside it, not a partner control. Both collapse
+   into one honest number — see the section below.
 4. **`Wet/dry mix` moves last in the plugin's own section**, at 25.
 5. **Attack and Release pair with their shapes.**
 6. **Drift and Ramp match Veil exactly** — the built, ear-tested reference —
@@ -65,8 +66,9 @@ pattern the whole sweep keeps finding.
 
 ## The order
 
-46 controls, all of them live. Six net new, one deleted (the retired `Host
-ratio`).
+45 controls, all of them live. Six net new; two deleted (the retired `Host
+ratio`, and the `Pan speed` picker whose job folds into the control it used to
+write into).
 
 | new | control | from |
 |---|---|---|
@@ -92,30 +94,29 @@ ratio`).
 | 20 | Cycle steps (per-cycle modes) | 20 |
 | 21 | Pan sweep rate | 21 |
 | 22 | Pan sweep rate mode | 22, **gains Host x**, canonical order |
-| 23 | Filter speed multiplier (Linked Sweep) | 23 |
-| 24 | Pan speed (Linked Sweep) | **40** — comes home to its partner |
-| 25 | Wet/dry mix | **15** — global output, last in this section |
-| 26 | Start delay (in rate mode units) | 24 |
-| 27 | Play for (cycles) | 25 |
-| 28 | Rest for (cycles) | 26 |
-| 29 | LFO at rest | 27 |
-| 30 | Output at rest | 28 |
-| 31 | Drift target | 34 |
-| 32 | Drift up amount (units match target) | 35 |
-| 33 | Drift down amount (units match target) | 36 |
-| 34 | Drift period | 37 |
-| 35 | Drift period unit (Seconds / Beats) | **NEW** |
-| 36 | Drift shape | 38 |
-| 37 | Drift play for (periods, 0 = always) | **NEW** |
-| 38 | Drift rest for (periods, 0 = always) | **NEW** |
-| 39 | Ramp target | 29 |
-| 40 | Ramp by (units match target) | 30 |
-| 41 | Ramp time unit | **NEW** |
-| 42 | Ramp duration | 31 |
-| 43 | Ramp play for (0 = smooth) | **NEW** |
-| 44 | Ramp rest for (0 = smooth) | **NEW** |
-| 45 | Ramp engage | 32 |
-| 46 | Ramp start delay | 33 |
+| 23 | **Pan sweep every (cycles)** | **23 + 40 merged** — the multiplier inverts, the picker goes |
+| 24 | Wet/dry mix | **15** — global output, last in this section |
+| 25 | Start delay (in rate mode units) | 24 |
+| 26 | Play for (cycles) | 25 |
+| 27 | Rest for (cycles) | 26 |
+| 28 | LFO at rest | 27 |
+| 29 | Output at rest | 28 |
+| 30 | Drift target | 34 |
+| 31 | Drift up amount (units match target) | 35 |
+| 32 | Drift down amount (units match target) | 36 |
+| 33 | Drift period | 37 |
+| 34 | Drift period unit (Seconds / Beats) | **NEW** |
+| 35 | Drift shape | 38 |
+| 36 | Drift play for (periods, 0 = always) | **NEW** |
+| 37 | Drift rest for (periods, 0 = always) | **NEW** |
+| 38 | Ramp target | 29 |
+| 39 | Ramp by (units match target) | 30 |
+| 40 | Ramp time unit | **NEW** |
+| 41 | Ramp duration | 31 |
+| 42 | Ramp play for (0 = smooth) | **NEW** |
+| 43 | Ramp rest for (0 = smooth) | **NEW** |
+| 44 | Ramp engage | 32 |
+| 45 | Ramp start delay | 33 |
 
 ---
 
@@ -146,6 +147,53 @@ leave a gap.
 2026-09-04** -- Stereo Phaser, Resonance Bank (never had one), Rhythm Track,
 Shepard Tone, Shepard Scale, Heartbeat, Sweep Dwell. Each should delete its
 picker in its own reorder pass rather than carrying a hidden corpse.
+
+---
+
+## `Linked Sweep` loses its multiplier and its picker — added 2026-09-04
+
+**What it does, since the names do not say.** Linked Sweep is a pan mode where
+the pan is locked to this plugin's own cycle. One line does it:
+`pan_phase += (freq * pan_sweep_ratio) / srate`. At 1 the pan makes one full
+left-to-right pass per cycle; at 2 it makes two; at 0.25 it takes four cycles to
+cross once. The lock holds whatever the rate does — drift it, ramp it, sync it to
+the host, and the pan follows in proportion.
+
+**The two controls are not a pair. One writes the other.** `Filter speed
+multiplier (Linked Sweep)` is the real value, a MULTIPLIER in 0.125 steps.
+`Pan speed (Linked Sweep)` is a named picker that writes into it, so you can
+choose "every 4 cycles" instead of typing 0.25.
+
+**Which is the exact shape R13-revised deleted everywhere else on 2026-09-04:**
+a multiplier you cannot hear without arithmetic, plus a picker that writes into
+it to hide the arithmetic. It is a milder case than Host x was — "every 4 cycles"
+is at least audible, where "0.25x the tempo" is not — but it is the same fault,
+and the picker-writes-a-value shape is what caused the `infantile.RPP` bug.
+
+Rozaya, 2026-09-04: *"I don't actually know what that one does. It seems right,
+but I don't know what it does in practice."* Then, on hearing what it was:
+*"I've never used it and I've never liked it being the current way BECAUSE of
+that exact thing."*
+
+**The replacement, following R13 exactly.** Both controls collapse into one:
+
+    Pan sweep every (cycles)     0.001 - 1000, step 0.001, default 1
+
+Bigger is slower, the same direction as Seconds and beats-per-cycle. Say it
+aloud with its value and it finishes the sentence: *"pan sweep every 4 cycles"*,
+*"pan sweep every 0.25 cycles"*. No menu, nothing writing into anything else,
+and thirds become reachable — the 0.125 grid cannot express "every 3 cycles",
+which is why that entry is missing from the picker today.
+
+**MEASURED FREE, 2026-09-04.** Across the whole library, every instance of all
+three plugins carrying this pair — 11 Tremolo, 20 Sweeping Filter, 1 Sweep Dwell
+— has the multiplier at **1** and the picker untouched. So the reciprocal
+conversion is 1 -> 1: not one saved value changes, and the picker can be deleted
+with nothing stored on it. That window is open now and closes the moment anyone
+uses it.
+
+**Sweep Dwell has the identical pair** (sliders 20 and 41) and gets the same
+treatment in its own reorder pass, not this one.
 
 ---
 
