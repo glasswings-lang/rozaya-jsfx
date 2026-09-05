@@ -1,7 +1,25 @@
 # Full Feature Sweeping Filter — authored layout
 
-Written by hand 2026-09-04, not generated. **Status: order drafted, awaiting
-review. Nothing built.**
+Written by hand 2026-09-04. **Status: READING ORDER APPROVED BY ROZAYA
+2026-09-05. BUILD IN PROGRESS -- renumber and retirements DONE in `src/`,
+NOT installed, NO project migrated.**
+
+**What is done:** the 41 sliders are renumbered into the approved order, both
+retired controls are DELETED (Host ratio, and the Linked Sweep picker), and
+`Filter speed multiplier` has become **`Pan sweep every (cycles)`** with the
+reciprocal applied at both read sites. 39 sliders.
+
+**What remains:** the six new drift/ramp controls (drift period unit, drift
+play/rest, ramp time unit, ramp play/rest) and their engine wiring; the pan
+sweep rate mode gaining Host x in canonical order; then the migration of 20
+instances across 11 projects, and installing.** *"Reading order seems OK to me."* Building against it.
+
+**Recorded here on purpose rather than left in a conversation.** Rozaya had in
+fact engaged with this order earlier the same day; the thread went sideways into
+R20 before anyone said yes, and they later said *"I thought I nodded at it. I
+don't remember."* **A decision that only exists in a chat log is a decision
+someone has to remember. Write it into the artefact it governs, at the moment it
+is made.**
 
 **R20 (2026-09-04) applies to this layout and the rate block below already
 satisfies it** — a rate value with its own rate mode, and a pan rate with its
