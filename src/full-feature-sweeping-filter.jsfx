@@ -170,7 +170,7 @@ slider33:8<1,1000,1>Drift period (cycles)
 // a period of 8 goes on meaning "wander over eight sweeps" and follows the rate.
 // Veil, the Phaser, Bubbler and Dapple say Seconds instead, because seconds is
 // what THEY natively count in. The second entry is Beats in every case.
-slider34:0<0,1,1{Cycles,Beats}>Drift period unit
+slider34:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 slider35:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // NEW 2026-09-05. Drift runs for a while and then FREEZES WHERE IT STANDS
 // rather than returning to centre. Off unless BOTH are > 0, which is the
@@ -958,9 +958,10 @@ loop(N_TARGETS,
     // period of 8 means eight sweeps, and it follows the rate for free. Beats
     // converts at the LIVE project tempo instead, so the wander follows the
     // host rather than the sweep.
-    period_samples = slider34 == 1
-      ? max(per * 60 / max(host_bpm, 0.001) * srate, 1)
-      : max(per * srate / drift_ref_freq, 1);
+    period_samples =
+      slider34 == 2 ? max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
+      slider34 == 1 ? max(per * srate, 1) :
+                      max(per * srate / drift_ref_freq, 1);
 
     // Drift play/rest (sliders 36/37), per target, counted in PERIODS. While
     // resting the phase does not advance at all, so shape_val below is

@@ -116,8 +116,13 @@ any of the others.
 BPM whatever the rate mode says, because that is the suite's rule everywhere —
 the plugin converts, you never do.
 
-**Drift period** can be counted in **seconds or beats**. In Beats it stretches
-and shrinks live with the project tempo.
+**Drift period** can be counted in **cycles, seconds or beats** — and cycles is
+the default. A cycle is this plugin's own: twenty cycles means twenty of whatever
+it is doing, so the wander stretches when you slow the plugin down. Seconds is
+wall clock and ignores the rate. Beats follows the project tempo live.
+
+It is referenced against the rate BEFORE drift is applied, so drifting the rate
+cannot modulate its own drift period.
 
 **Drift play/rest** makes the wander come and go. It runs for a while and then
 **freezes where it stands** rather than returning to centre. Where it parks

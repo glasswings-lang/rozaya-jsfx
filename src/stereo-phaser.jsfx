@@ -74,7 +74,7 @@ slider10:0<0,5,1{Rate,Range min Hz,Range max Hz,Feedback,Stereo spread,Wet/dry m
 slider11:0<0,1000,0.01>Drift up amount (units match target)
 slider12:0<0,1000,0.01>Drift down amount (units match target)
 slider13:20<1,600,0.1>Drift period
-slider14:0<0,1,1{Seconds,Beats}>Drift period unit
+slider14:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 slider15:0<0,2,1{Sine,Triangle,Random}>Drift shape
 slider16:0<0,64,0.01>Drift play for (periods, 0 = always)
 slider17:0<0,64,0.01>Drift rest for (periods, 0 = always)
@@ -439,8 +439,13 @@ loop(N_TARGETS,
   (up > 0 || down > 0) && per > 0 ? (
     // Period unit (slider14): Seconds as-is; Beats converted at the LIVE
     // project tempo, so the wander follows the host.
-    per_seconds    = slider14 == 1 ? per * 60 / host_bpm : per;
-    period_samples = max(per_seconds * srate, 1);
+    // Cycles is the default and counts THIS plugin's own cycles, referenced
+    // against the PRE-drift rate so drifting the rate cannot modulate its own
+    // drift period. Seconds is wall clock. Beats follows the live tempo.
+    period_samples =
+      slider14 == 2 ? max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
+      slider14 == 1 ? max(per * srate, 1) :
+                      max(per * srate / max(rate, 0.00001), 1);
 
     // Drift play/rest, counted in PERIODS. While resting the phase does not
     // advance at all, so the offset STAYS where it stopped -- freeze in place,

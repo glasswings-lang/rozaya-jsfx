@@ -303,6 +303,21 @@ append-only history; this is the only part of the repo that claims to describe
   projects stay closed** — a reordered build plus an opened project equals a
   scrambled save.
 
+- **THE DRIFT PERIOD UNIT IS `{Cycles, Seconds, Beats}`, and Cycles is the
+  default — everywhere the plugin HAS a rate to count cycles of.** Veil is the
+  one exception and it is a principled one: it has no rate, so there are no
+  cycles to offer. Settled 2026-09-05 after Rozaya caught the inconsistency:
+  *"I'd imagine both bubbler and daple have cycles, sort of, in the form of
+  bubbles. Don't they?"* They do — their own transport block already counted in
+  cycles, meaning one mean bubble interval, while the drift period I had just
+  given them counted in seconds. Same plugin, two time bases, no reason.
+
+  **It was free because nothing was stored:** all 47 instances across the four
+  plugins had NOTHING saved for that control, so every one took the declared
+  default. Checked before changing it, not assumed. **The period is referenced
+  against the PRE-drift rate**, so drifting the rate cannot modulate its own
+  drift period.
+
 - **PART 2 — THE CANONICAL READING ORDER — WAS APPROVED BY ROZAYA 2026-09-05 AND
   IS NOW WRITTEN DOWN.** Every per-plugin layout is measured against it, and for
   five days it described a block structure that had been thrown out on 08-31
