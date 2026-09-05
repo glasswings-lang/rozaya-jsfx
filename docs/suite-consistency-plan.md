@@ -1845,8 +1845,19 @@ beyond confirming the label reads right.
 ## The four shapes this is cleaning up (audited 2026-09-02)
 
 - `melody_phase` -- sync switch + target + Every N beats. Keeps it.
-- `womb_sound_generator_v3` -- `Every N beats (Host x)` AND Host x still in the
-  enum, no switch. Half converted.
+- `womb_sound_generator_v3` -- **NOT half converted. This was wrong and acting
+  on it would have broken the plugin.** Rozaya, 2026-09-04: *"host x is the
+  rate mode. every N beats is getting the multiplier out of there. neither of
+  them work alone."* Rate Mode `{Own BPM, Host x}` at 62, `Host sync target` at
+  63 and `Every N beats` at 64 are ONE mechanism: the mode says follow the
+  project, the beats value says how fast, and it is the thing that replaced the
+  multiplier. Retiring the beats slider "the same way the picker does", as this
+  document used to say, would delete the working half of a working pair.
+  It reads as a leftover only if you assume R11's separate sync switch is the
+  target -- and R13-REVISED ALREADY OVERTURNED THAT. Womb is the plugin that
+  got there first; the plan never caught up. What it actually needs is its Rate
+  Mode moved next to the rate it governs (62 against a rate at 1), which is a
+  position change, not a redesign.
 - `spectral_vowel_morpher` -- a sync switch and no Every N beats. Half converted
   the other way.
 - Twelve others -- Host x in the enum plus a Host ratio multiplier picker:

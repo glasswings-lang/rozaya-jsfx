@@ -14,16 +14,32 @@ a test:**
 
 - **`Speed ramp` is now just `Ramp`** on every control (2026-08-31). Test 3 is
   updated to match.
-- **In four plugins `Rate Value` in Host x now means BEATS PER CYCLE**, not a
-  tempo multiplier — both Polyrhythms, Dapple and Bubbler (2026-09-02). **None of
-  the plugins used below are among them**, so every step here still reads
-  correctly. If you test a Polyrhythm, remember the number means something else
-  there: `4` is four beats per cycle, not four times the tempo.
+- **`Rate Value` in Host x means BEATS PER CYCLE in EVERY plugin now**, not a
+  tempo multiplier. That finished on 2026-09-04 (R13-revised): thirteen plugins,
+  and **all three used below are among them**. An earlier version of this note
+  said four plugins and that none of the test subjects were affected — true when
+  written, false since.
 
-**To back out a plugin:** originals were saved to `C:\Users\solst\pre-hostsinc`
-as `<name>.jsfx.pre-hostsync.bak`. Copy one back into
-`<REAPER resource>\Effects\glasswings\` and drop the `.pre-hostsync.bak`. That
-folder is from August — check it still exists before relying on it.
+  **Bigger is now SLOWER in Host x.** `4` is one cycle every four beats. `0.5` is
+  two cycles a beat. Where a step below says `1`, that still means one cycle per
+  beat and reads the same as it always did — which is why the numbers in tests 1,
+  2 and 5 did not need changing.
+
+- **Every `Host ratio` picker is retired and hidden.** It was a menu that wrote a
+  multiplier for you; there is no multiplier left to write. Test 1 step 7 used
+  it and has been rewritten to type the number instead.
+
+**To back out a plugin:** originals are in
+`C:\Users\solst\jsfx-backups\pre-hostsync-2026-08\` as
+`<name>.jsfx.pre-hostsync.bak`. Copy one back into
+`<REAPER resource>\Effects\glasswings\` and drop the `.pre-hostsync.bak`.
+Checked 2026-09-04 and it is there. (This used to point at
+`C:\Users\solst\pre-hostsinc`, which does not exist and never did on this
+machine — so the escape hatch was broken until someone tried to use it.)
+
+**For anything changed on 2026-09-04**, the backups are the dated snapshot
+folders under `E:\reaper\finished\backups\snapshots\`, one per migration,
+and every plugin's previous build is in git.
 
 **Set the project tempo to 90, not 120, before you start.** 120 is REAPER's
 default *and* the fallback a broken tempo read would land on, so a bug that
@@ -37,7 +53,7 @@ The only unambiguous test in the suite. It's a metronome; it locks or it doesn't
 
 1. New project, tempo **90**. Insert **rhythm-track** on a track.
 2. **Rate Mode** → `Host x`.
-3. **Tempo (BPM, or multiplier in Host x)** → `1`.
+3. **Tempo (BPM, or beats per cycle in Host x)** → `1` (one tick per beat).
 4. Turn on REAPER's metronome. Play.
 
 **Pass:** the plugin's strong beat sits on the click and stays there for 30+
@@ -58,8 +74,10 @@ Then, still playing:
    a remembered reference tempo passes step 4 and fails here.
 6. **Stop, play again.** Still locked. `@init` re-runs on every play and wipes
    globals, so anything that remembers across transport breaks right here.
-7. **Host ratio** → `2 per beat`. Should double. → `every 2 beats`. Should
-   halve. (This picker writes the Tempo value for you; that's expected.)
+7. **Tempo** → `0.5`. Should double — half a beat per tick is two ticks a beat.
+   Then → `2`. Should halve. You type the number now; the Host ratio menu that
+   used to write it for you is retired and hidden, because there is no
+   multiplier left for it to translate.
 
 ---
 
@@ -97,19 +115,30 @@ so you can hear it in a real project rather than a test bed.
 
 1. **Rate Mode** → `Host x`. **Rate Value** → `1` (one tremolo cycle per beat).
    Confirm it pulses on the beat before going further.
-2. **Drift target** → `Rate Value`. **Drift up amount** → `0.5`.
+2. **Drift target** → `Rate Value`. **Drift up amount** → `30`.
    **Drift period** → `4`.
 
 **Pass:** the tremolo speeds up and slows down, wandering over a 4-cycle
 period — and since a cycle is now a beat, that's 4 beats. Change the project
 tempo and the drift period should stretch with it.
 
-3. **Ramp target** → `Rate Value`. **Ramp by** → `-0.5`.
+3. **Ramp target** → `Rate Value`. **Ramp by** → `-45`.
    **Ramp duration** → `1`. **Ramp engage** → `On`.
 
 **Pass:** over a minute the tremolo slows to half speed, and stays
 tempo-locked the whole way down — at the end it should be one cycle every two
 beats, not merely "slower".
+
+> **These two numbers were `0.5` and `-0.5` until 2026-09-04, and both would
+> have given you a FALSE FAIL.** Drift and Ramp amounts are in **BPM**, in every
+> mode, Host x included — the plugin converts, you never do. At tempo 90 with
+> one cycle per beat the tremolo runs at 1.5 Hz, so a drift of `0.5` BPM moves
+> it by **0.56%** and a ramp of `-0.5` BPM ends at **99%** of where it started.
+> You would have heard nothing, reported a fail, and I would have gone hunting a
+> bug that was not there. `30` is a third of the rate; `-45` is genuinely half
+> speed. Simulated, not reasoned. The error predates the beats-per-cycle change
+> — the same arithmetic held under the multiplier — so it has been sitting in
+> this document since it was written.
 
 ---
 
@@ -138,7 +167,9 @@ option the way sweep-dwell-filter's now has, and leave Hz meaning Hz.
    **Pan Mode** → `Pan Sweep`.
 2. **Pan Sweep Rate Unit** → `Host x`. **Pan Sweep Rate** → `1`.
 
-**Pass:** one full pan sweep per beat.
+**Pass:** one full pan sweep per beat. (Since 2026-09-04 this is beats per
+cycle here too, so `1` reads the same as before but `4` now means every four
+beats rather than four per beat — bigger is slower.)
 **Fail worth catching:** if it comes out 60× too fast or slow, the new enum
 entry fell into the BPM branch — the exact by-index mistake that hit Tremolo
 and the sweeping filter.
