@@ -117,6 +117,13 @@ project library through two rewrites.
 The corollary is that this plan has to decide everything up front, which is what the
 rest of this document is for.
 
+**This constraint was broken five times on 2026-09-04** -- the Morpher's 38 projects
+migrated three times in one day, Tremolo and the Sweeping Filter twice -- by working
+one instruction at a time instead of reading this document first. The operational
+form of the rule now lives in `CLAUDE.md` under *How to work here*: **author
+`docs/layouts/<plugin>.md` in full before writing any migration for that plugin.**
+A migration written before its layout is a migration you will write again.
+
 ---
 
 ## Part 1 — Naming rules

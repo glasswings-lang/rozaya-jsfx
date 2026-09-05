@@ -422,6 +422,40 @@ because they apply every session, not on the day they were learned.
   somewhere in it. One evening turned up five decisions that had been made and
   never propagated, plus a migration tool being rewritten from scratch that
   already existed.
+- **AUTHOR THE WHOLE LAYOUT BEFORE YOU MIGRATE ANYTHING. One migration per
+  plugin, not one per idea.** Before touching a plugin that will need an `.RPP`
+  migration, write its `docs/layouts/<plugin>.md` first -- every slider in its
+  final position, every enum in its final order, every control the plan says it
+  is still missing. Get the reading order reviewed. THEN build and migrate,
+  once.
+
+  **Why it is a rule and not a preference.** The consistency plan's governing
+  constraint is the first thing it says: a migration costs the same whether one
+  thing changes or forty, so everything a plugin needs changes in the same
+  version bump. The cost is not the script. It is that every migration is a
+  fresh chance to corrupt every project using that plugin, and paying that risk
+  repeatedly buys nothing.
+
+  **What breaking it looked like, 2026-09-04: FIVE migrations in one day.** The
+  Morpher's 38 projects were rewritten three separate times -- play/rest
+  positions, then the transport block, then the rate mode index. Tremolo and the
+  Sweeping Filter got two, hours apart. Nothing was lost; each was snapshotted
+  and verified independently. The risk was spent five times for work that needed
+  one pass, and the Morpher still owes a fourth, because its authored layout now
+  describes a plugin with fewer sliders than the file has.
+
+  **Why it happened, which is the reusable part.** I worked reactively -- one
+  instruction, one change, one migration -- instead of reading the plan first
+  and collecting everything that plugin was already owed. All three Morpher
+  changes were implied by things already written down: the transport block is
+  Part 3, the canonical rate enum is R13, logical positions are R18. None of it
+  was new information. Rozaya: *"so fuck not having to migrate only once. got
+  it."*
+
+  **The check, before writing any migration:** does `docs/layouts/<plugin>.md`
+  exist, is it current against the file, and does it include everything the plan
+  still owes this plugin? If not, stop and author it. **A migration written
+  before its layout is a migration you will write again.**
 - **Validate the CHARACTER on a cheap or limited version before building the
   heavy engine.** Bubbler's granular loop was only built after a play-once
   version proved the sound was right.
