@@ -154,3 +154,51 @@ Wander waveform. Sine is smooth continuous wander; Triangle has linear ramps wit
 
 ---
 
+## The 2026-09-05 layout change
+
+Every control moved into the suite's canonical reading order: what the plugin
+**is**, then its **rate**, then the **shape of its movement**, then **stereo**,
+then **output**, then **transport**, then **drift**, then **ramp**. **Mode joined the identity group at slider 2**, and **Wet/dry mix** and **Output volume** moved up out of the middle of the drift block, where they had been splitting it in two.
+
+**Drift period mode** is now the suite's canonical `BPM / Seconds / Hz / Host x`. Seconds and Hz swapped places, so anything you had saved was migrated to match — all four modes drift at exactly the same speed as before, checked by simulation.
+
+**Your saved projects were migrated** — 1 instances across wind. Verified by
+decoding every stored value against the control NAME it belongs to, before and
+after, rather than against the table the migration used.
+
+
+---
+
+## Drift and Ramp
+
+**Added 2026-09-05.** Resonance Bank had Drift but not the play/rest that goes with it, and no Ramp at all. The block is copied from **Veil**, which is the
+built-and-heard reference for the complete set.
+
+**Targets, on both Drift and Ramp:** Frequency, Width up, Width down, Gain, and Pan — the same five Drift already had.
+
+Each target remembers its own settings — pick one, set its amounts, pick another,
+and the first keeps running. Switching the selector edits one without stopping
+any of the others.
+
+**Amounts are in each target's own unit**, with one exception: **Drift period, when its mode is BPM** is in
+BPM whatever the rate mode says, because that is the suite's rule everywhere —
+the plugin converts, you never do.
+
+**Drift period** can be counted in **seconds or beats**. In Beats it stretches
+and shrinks live with the project tempo.
+
+**Drift play/rest** makes the wander come and go. It runs for a while and then
+**freezes where it stands** rather than returning to centre. Where it parks
+depends on the fraction you use: a **whole number parks at no-change every single
+time and is nearly inaudible**, while something like `1.2` cycles through four
+different park points, two of them partial. The awkward fraction is the
+interesting one.
+
+**Ramp** states a destination and takes its time getting there. **Ramp time unit**
+counts the duration in minutes or beats. **Ramp play/rest** turns the climb into a
+**staircase** — climb, hold, climb — and the holds come out of the duration rather
+than extending it, so a 32-beat ramp stepping 2 and holding 2 still arrives at
+beat 32 and then stands on the landing.
+
+**None of this has been heard yet.**
+

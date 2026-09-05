@@ -80,6 +80,72 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-05 (later) — the four plugins that could not drift now can, and the suite's biggest capability gap is closed. Built, migrated, installed, UNHEARD.**
+
+  **Stereo Phaser, Bubbler, Dapple and Resonance Bank** had no Drift and/or no
+  Ramp. They were written after the 2026-06 drift sweep and never joined it. All
+  four now carry the complete Veil block.
+
+  **The audit that found the real size, and it came from Rozaya's question**
+  (*"doesn't resonance bank need the drift play and rest stuff?"*). Yes — and so
+  did nearly everything else. Measured across the suite: **13 plugins lack drift
+  play/rest, 13 lack ramp play/rest, 14 lack each of the two beat-counting unit
+  controls.** Only Veil, the Morpher and now the Phaser have a complete set. The
+  rule *"anything that has Ramp should have all the controls that go with Ramp"*
+  had been true on paper and false in the files since it was written. **The
+  remaining eleven are Phase 2 work**, because their missing controls belong
+  INSIDE existing blocks and so need a renumber.
+
+  **"Append it" was wrong and Rozaya caught it.** *"Why would that be apending.
+  we just reordered to fix the acumulation of apends making a goddamn mess."*
+  Appending is correct only where a plugin has no drift block and few sliders --
+  the Phaser, Bubbler and Dapple -- because drift and ramp belong last in the
+  canonical order anyway, so append and logical position coincide. That is an
+  accident of arithmetic. Resonance Bank is the counter-example: its drift sits
+  at 9-14 with Mode/Wet-dry/Output at 15-17, so an appended `Drift play for`
+  would have landed at 18, nine places from `Drift shape`.
+
+  **What unlocked doing it properly**, Rozaya: *"I'm not using these until
+  they're done, therefore no projects should be saved with our changes,
+  therefore we can aford to be aggressive."* So layouts were restructured freely
+  and everything moved in ONE migration at the end, rather than a migration per
+  step. **That is the one-migration rule achieved by not installing**, and it is
+  worth reaching for again.
+
+  **The migration: 25 instances across 6 projects, verified PASS.** 266 value
+  comparisons decoded by control NAME, before against after, using the OLD
+  plugin sources kept out of the Effects folder and the new ones from `src/`.
+  Zero mismatches, zero values outside their declared ranges.
+  `tools/drift_ramp_migrate_20260905.py` reads the SNAPSHOT and writes the live
+  file, which makes it idempotent by construction -- these plugins' old and new
+  layouts overlap in range, so a "has this already been done?" test on the line
+  itself would have been guesswork, and guesswork is what ate a line per
+  instance on 2026-09-02.
+
+  **Three things the count assertions refused rather than half-doing:** `inp`
+  appears five times across three lines in Dapple, not three; `width` appears in
+  a COMMENT, which inflated its count until the rewrite was made to skip comment
+  text; and the first idempotence gate matched nothing at all because REAPER pads
+  every value line to 64 tokens, so `max(slider_id)` is always 64. Each one was a
+  wrong assumption that stopped instead of spreading.
+
+  **Two things found by reading rather than reasoning.** The Phaser's own comment
+  said its host position-lock needed no guard *because nothing in this plugin can
+  modulate the rate* -- adding Drift made that false, so it now hands over to
+  free-running exactly as the filters do. And a `cd src` inside a compound command
+  failed because the shell was already there, so an edit never ran AND the lint
+  that followed reported clean, on the unchanged file. Caught by grepping the
+  actual slider line rather than trusting an exit code.
+
+  **Resonance Bank was the hard one.** Its Drift is a TWO-dimensional nested
+  selector, 16 bands x 5 targets, so Ramp had to match that shape: nine more
+  80-slot banks, its own target selector, and clocks advanced once per sample
+  outside the serial/parallel branch because only one of those runs. Its
+  `Drift period mode` also lives in a SERIALIZED bank, so the blob bumped to v2
+  and a v1 blob is read and then migrated -- gated on the blob HAVING the field,
+  never on "the blob is old". Simulated: all four period modes drift at
+  identical speeds before and after the remap.
+
 - **2026-09-05 — R20's enum order BUILT in five plugins, and four of the five cost no project edit at all.**
 
   The sweep the rule was written for. `{Own BPM, Host x}` and `{Own Hz, Host x}`

@@ -284,6 +284,25 @@ append-only history; this is the only part of the repo that claims to describe
   `docs/host-sync-ear-test.md`, which are Drift and Ramp under Host x, and pan
   following the tempo. **The beats-per-cycle conversion itself is no longer on
   this list** — it was heard on 09-04, see above.
+- **THE DRIFT/RAMP GAP IS THE SUITE'S BIGGEST REMAINING INCONSISTENCY, and four
+  plugins were fixed 2026-09-05: Stereo Phaser, Bubbler, Dapple, Resonance
+  Bank.** All built, migrated (25 instances / 6 projects, verified by 266
+  name-decoded comparisons, PASS) and INSTALLED. **Not heard.**
+
+  **The measurement, and it is worse than it sounds:** 13 plugins still lack
+  drift play/rest, 13 lack ramp play/rest, 14 lack each of the two beat-counting
+  unit controls. **Only Veil, the Morpher and the Phaser have a complete set.**
+  The remaining eleven are Phase 2 work — their missing controls belong INSIDE
+  existing blocks, so they need a renumber, not an append.
+
+  **The unlock worth reusing**, Rozaya 2026-09-05: *"I'm not using these until
+  they're done, therefore no projects should be saved with our changes, therefore
+  we can aford to be aggressive."* Restructure freely, install nothing, migrate
+  once at the end. That is the one-migration rule achieved by NOT INSTALLING, and
+  it is much cheaper than migrating at every step. **It holds only while the
+  projects stay closed** — a reordered build plus an opened project equals a
+  scrambled save.
+
 - **PART 2 — THE CANONICAL READING ORDER — WAS APPROVED BY ROZAYA 2026-09-05 AND
   IS NOW WRITTEN DOWN.** Every per-plugin layout is measured against it, and for
   five days it described a block structure that had been thrown out on 08-31
