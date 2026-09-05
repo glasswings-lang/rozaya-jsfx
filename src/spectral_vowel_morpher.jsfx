@@ -61,7 +61,7 @@ slider4:1<1,6,1>Capture average (frames, 1 = one frame)
 slider5:1<0,1,1{Focused slot,Morph}>Audition
 slider6:0<0,100,0.1>Morph (% across captured slots)
 slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
-// Sync to host. Auto-morph time is a DURATION, and a duration's two honest units
+// Time mode. Auto-morph time is a DURATION, and a duration's two honest units
 // are seconds and beats -- so this is one switch, not a unit picker with a single
 // entry, and not a ratio menu. Per R13 sync is not a unit. Per R11 there is no
 // target selector either: R11 pairs one with "Every N beats" for rates expressed
@@ -70,8 +70,27 @@ slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 // Sits ABOVE the value it governs, so you meet the unit before the number.
 // Flipping it converts the value at the current tempo, so nothing changes
 // audibly at the moment you switch -- only the unit you type in.
-slider8:0<0,1,1{Off,On}>Sync to host
-slider9:20<0.01,1000,0.01>Auto-morph time (sec / beats when synced)
+// A MODE ENUM, not an on/off. Rozaya, 2026-09-04: "I kinda hate that we have no
+// rate mode... whoever built the host switch shouldn't have. I wish it'd been
+// not used as an anchor, it's not one. bpm/seconds/hz/whatever belongs in a rate
+// mode like everything else in the suite."
+//
+// Correct, and it was already written down -- the consistency plan's own audit
+// lists this plugin as "a sync switch and no Every N beats. Half converted the
+// other way." R13-revised settled the principle for the whole suite: synced-ness
+// is an ENTRY IN THE UNIT LIST, not a competing boolean beside it.
+//
+// It is called Time mode rather than Rate Mode because this plugin has no rate.
+// Everything it counts is a DURATION -- how long a wander takes, how long to
+// wait, how long to rest. Naming it Rate Mode would name a thing that does not
+// exist here (R17: the unit has to answer "of what?").
+//
+// FREE TO CHANGE, and that is why it happened immediately: it was already a
+// two-entry enum, so Off -> Seconds and On -> Beats keep the stored values 0 and
+// 1 meaning exactly what they meant. No renumber, no migration, no project
+// touched.
+slider8:0<0,1,1{Seconds,Beats}>Time mode
+slider9:20<0.01,1000,0.01>Auto-morph time (sec / beats by Time mode)
 
 // --- The sound of the morph. Everything from here to High cut shapes what the
 //     captured spectra become; all of it is global, across every slot. ---
@@ -187,7 +206,7 @@ slider29:0<-60,12,0.01>Output level (dB, everything but the dry input)
 //     neither, while every generator in the suite did and the plan lists it,
 //     Passage and Veil as the three that were missing it.
 //
-//     ALL THREE TIMES FOLLOW `Sync to host` ABOVE. Off, they are seconds; on,
+//     ALL THREE TIMES FOLLOW `Time mode` ABOVE. Seconds, they are seconds; Beats,
 //     they are beats, exactly as Auto-morph time already worked. That is why
 //     this block adds no unit selector of its own -- the plugin already had one
 //     switch for this and R11 says one sync block per plugin, not one per
@@ -199,12 +218,12 @@ slider29:0<-60,12,0.01>Output level (dB, everything but the dry input)
 //     not being able to migrate saved state and this suite migrates it (R18).
 //     Everything from Drift target up moved +5; tools/morpher_migrate_transport.py
 //     carries the projects across.
-slider30:0<0,1000,0.001>Start delay (sec / beats when synced)
+slider30:0<0,1000,0.001>Start delay (sec / beats by Time mode)
 
 //     Play/Rest: run for a while, go quiet for a while, repeat. 0 in EITHER
 //     one disables the gate, so a half-set pair never silently mutes anything.
-slider31:0<0,1000,0.001>Play for (sec / beats when synced, 0 = always)
-slider32:0<0,1000,0.001>Rest for (sec / beats when synced, 0 = always)
+slider31:0<0,1000,0.001>Play for (sec / beats by Time mode, 0 = always)
+slider32:0<0,1000,0.001>Rest for (sec / beats by Time mode, 0 = always)
 
 //     What the modulation does while resting. Walk through keeps Drift, Ramp
 //     and Auto-morph advancing silently, so you rejoin wherever they have got
@@ -225,7 +244,7 @@ slider34:0<0,1,1{Pass-through,Silence}>Output at rest
 slider35:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
 slider36:0<0,300,0.01>Drift up amount (units match target)
 slider37:0<0,300,0.01>Drift down amount (units match target)
-slider38:30<1,600,0.5>Drift period (sec / beats when synced)
+slider38:30<1,600,0.5>Drift period (sec / beats by Time mode)
 slider39:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // --- Drift play/rest. Ported from Veil, the reference implementation, which
 //     has been heard. Makes the wander move in bursts with holds between
@@ -928,7 +947,7 @@ function shuffle_bag() local(i, j, t) (
 // Every slider read into a named global here; nothing downstream references a
 // sliderN directly, so the layout can be reordered without desyncing the engine.
 
-// --- Sync to host: convert Auto-morph time when the switch actually moves.
+// --- Time mode: convert the time values when the mode actually moves.
 //     Same shape as Womb's Rate Mode conversion, which is the ear-tested one.
 //     Gated on `auto_sync_inited`, which is adopted in @block and NOT here:
 //     on a fresh or duplicated instance @slider runs while REAPER is still
@@ -1062,7 +1081,7 @@ automorph_mode != last_automode ? (
 // ALWAYS VISIBLE since 2026-09-04. It used to hide unless Auto-morph was on,
 // because Auto-morph time was the only thing it governed. It now also decides
 // whether Start delay, Play for, Rest for and Drift period read as seconds or
-// beats, so hiding it would leave five controls whose unit is set by a switch
+// beats, so hiding it would leave five controls whose unit is set by a mode
 // you cannot see -- which is the exact failure R10 exists to stop.
 slider_show(slider8, 1);
 slider_show(slider9, automorph_mode > 0.5);
@@ -1353,7 +1372,7 @@ inpos += 1; inpos >= INRING ? inpos = 0;
 // --- TRANSPORT: Start delay, then the Play/Rest gate ------------------------
 //
 // Both count WALL-CLOCK SECONDS here; @block has already turned a beat count
-// into seconds when Sync to host is on, so nothing below needs to know which
+// into seconds when Time mode is Beats, so nothing below needs to know which
 // unit the user typed in.
 //
 // The input ring above is filled BEFORE this, unconditionally and on purpose:
@@ -1392,7 +1411,7 @@ di = 0;
 loop(N_TARGETS,
   td_active[di] ? (
     // The bank holds the slider's own unit, like every other per-target bank.
-    // Under Sync to host that unit is BEATS, so convert to seconds here, where
+    // Under Time mode = Beats that unit is BEATS, so convert to seconds here, where
     // the live tempo is available -- drift_per_k is 1 when not synced, so this
     // is a no-op for every project that has ever existed (none is synced).
     dper = target_drift_per[di] * drift_per_k;
