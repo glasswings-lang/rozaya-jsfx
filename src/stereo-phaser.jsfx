@@ -29,15 +29,19 @@ desc: Stereo Phaser
 // 2026-09-04. Old projects are repaired IN THE PROJECT FILE by
 // tools/phaser_migrate_rate_triple.py -- there is no runtime self-repair, and
 // there deliberately isn't one (see the note above @serialize).
-slider1:0.3<0.001,1000,0.001>Rate Hz (or multiplier in Host x)
+slider1:0.3<0.001,1000,0.001>Rate (Hz, or beats per cycle in Host x)
 // Own Hz: free-running at Rate Hz -- the original behaviour.
-// Host x: Rate becomes a MULTIPLIER of the project tempo (x1 = one LFO sweep
-//         per beat). Two entries, not four: this plugin only ever had one unit.
+// Host x: Rate means BEATS PER CYCLE. 4 is one sweep every four beats; 3.7 is
+//         one every three and seven tenths, which a note-division grid cannot
+//         express and which is what this suite exists for. It is NOT a
+//         multiplier any more (R13-revised, 2026-09-02) -- a multiplier is a
+//         number you have to do arithmetic against the tempo to hear.
 slider2:0<0,1,1{Own Hz,Host x}>Rate Mode
-// Writes a multiplier into Rate on change then gets out of the way. "Custom"
-// (default) never writes. Not "Free" -- that means FREE-RUNNING in sync UI,
-// which Own Hz already is.
-slider3:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate)
+// RETIRED 2026-09-04 by R13-revised, and hidden. It existed only to spare you
+// arithmetic on a multiplier; "every 4 beats" is now typing 4 into Rate. The
+// slider is NOT deleted -- ids are primary keys and can never be renumbered, so
+// removing it would shift everything above it in every saved project.
+slider3:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (retired)
 
 slider4:300<40,20000,1>Range Min Hz
 slider5:1500<40,20000,1>Range Max Hz
@@ -69,9 +73,13 @@ memset(0, 0, 256);
 // entry: the raw multiplier HIDES behind a picker, so a stale picker value left
 // unapplied would name one speed on screen while the plugin ran another.
 // rate_mode_inited gates it, so a half-restored instance can never see an edge.
-entered_host_mode = rate_mode_inited && slider2 == 1 && last_rate_mode != slider2;
 rate_mode = slider2;
-host_ratio_inited && slider2 == 1 && (host_ratio_sel != slider3 || entered_host_mode) ? (
+// RETIRED (R13-revised). The guard is forced to 0 rather than the block being
+// deleted, so the reasoning stays next to the code it disabled. Rate says beats
+// per cycle in Host x now, so there is no multiplier for a picker to translate
+// -- and a picker that WRITES a value is exactly the shape that stamped 0.5
+// over a hand-set rate on every load in infantile.RPP.
+0 ? (
   host_ratio_sel = slider3;
   host_ratio_sel > 0 ? (
     slider1 =
@@ -85,41 +93,29 @@ host_ratio_inited && slider2 == 1 && (host_ratio_sel != slider3 || entered_host_
     slider_automate(slider1);
   );
 );
-slider_show(slider3, rate_mode == 1);
-// --- Landing in Host x, and keeping the multiplier out of the way ----------
-//
-// Two problems, one fix. (a) The rate slider's default was chosen for its own
-// unit -- 2 means 2 Hz, which as a MULTIPLIER is double time -- so switching
-// mode used to hand you an arbitrary speed you never asked for. (b) In Host x
-// that slider is a multiplier, and setting one by hand means arithmetic, which
-// is the thing this project exists to avoid. The Host ratio picker already
-// solves (b), but it sits at the far end of the slider list because IDs can
-// never be renumbered, so you meet the multiplier first and the cure last.
-//
-// So: entering Host x lands on "1 per beat" (picker index 8) unless you had
-// already chosen a ratio, and the raw multiplier HIDES unless the picker is
-// on Custom. The named list becomes the way in; the number only appears when
-// you deliberately ask for one the list doesn't have.
-//
-// Guarded on a real in-session mode CHANGE. Adopting on load instead would
-// overwrite a hand-tuned rate the moment a saved project opened -- the same
-// trap the picker's own host_ratio_inited guard exists for.
-rate_mode_inited && last_rate_mode != rate_mode ? (
-  rate_mode == 1 && slider3 == 0 ? (
-    slider3 = 8;
-    host_ratio_sel = 8;
-    slider1 = 1;
-    slider_automate(slider3);
-    slider_automate(slider1);
-  );
-  last_rate_mode = rate_mode;
-);
-slider_show(slider1, rate_mode != 1 || slider3 == 0);
+slider_show(slider3, 0);
+// The LANDING BLOCK is gone (R13-revised step 4). It used to stamp the picker
+// to "1 per beat" and the rate to 1 on entering Host x, because meeting a bare
+// MULTIPLIER first was the trap -- 0.3 as a multiplier is a third of the tempo,
+// which is nothing anyone asked for. There is no trap now: 0.3 beats per cycle
+// is a legible number, so nothing needs stamping and, crucially, the RATE
+// SLIDER NEVER HIDES. Hiding it is what forced the stamp in the first place.
+rate_mode_inited ? last_rate_mode = rate_mode;
 
-// Host x: Rate is a multiplier of the project tempo, converted to Hz here
-// (tempo/60 = beats per second). lfoInc below is the only thing that uses
-// it, and @block repeats this so a tempo change lands live.
-rate      = rate_mode == 1 ? max(tempo, 0.001) / 60 * slider1 : slider1;
+// Host x: Rate is BEATS PER CYCLE, converted to cycles per second here.
+// tempo/60 is beats per second, so N beats per cycle is (tempo/60)/N cycles per
+// second. lfoInc below is the only thing that uses it, and @block repeats this
+// so a tempo change lands live.
+//
+// The guard is on the NUMERATOR side deliberately. Inverting a unit inverts its
+// edge cases: `1 / max(raw, 0.001)` clamps the DENOMINATOR, so a rate of 0
+// comes out as 1000 -- screaming, rather than stopped. Under the old multiplier
+// 0 meant "effectively stopped" and it has to keep meaning that. This slider's
+// declared minimum is 0.001 so it cannot actually reach 0, but the safe form
+// costs nothing and the unsafe one nearly shipped elsewhere in this suite.
+rate      = rate_mode == 1 ?
+              (slider1 > 0.001 ? max(tempo, 0.001) / 60 / slider1 : 0.001) :
+              slider1;
 rangeMin  = min(slider4, slider5);
 rangeMax  = max(slider4, slider5);
 fb        = slider6;
@@ -161,7 +157,7 @@ lfoInc = 2 * $pi * rate / srate;
 // Follow the project tempo live in Host x. @slider does not re-run on a tempo
 // change, so the rate and the LFO increment are recomputed here.
 rate_mode == 1 ? (
-  rate   = max(tempo, 0.001) / 60 * slider1;
+  rate   = slider1 > 0.001 ? max(tempo, 0.001) / 60 / slider1 : 0.001;
   lfoInc = 2 * $pi * rate / srate;
 );
 
@@ -180,11 +176,14 @@ blk_sample      = 0;
 @sample
 // Where this sample sits in the project, in beats -- @block gives the position
 // at the start of the block, so step forward by however far in we are. slider1
-// is cycles per beat in Host x, so the phase is simply how far through the
-// cycle that position is.
+// is BEATS PER CYCLE in Host x, so the number of whole cycles elapsed is the
+// beat position DIVIDED by it. This division is the same inversion as the rate
+// conversion above and HAD to change with it -- multiplying here while dividing
+// there would lock the phase to a different speed than the sweep runs at, which
+// sounds like the sweep jumping every block.
 host_pos_locked ? (
   sample_beat_pos = host_beat_pos + blk_sample * max(tempo, 0.001) / (60 * srate);
-  lfo_turns = sample_beat_pos * slider1;
+  lfo_turns = slider1 > 0.001 ? sample_beat_pos / slider1 : 0;
   lfoPhase  = (lfo_turns - floor(lfo_turns)) * 2 * $pi;
 );
 blk_sample += 1;

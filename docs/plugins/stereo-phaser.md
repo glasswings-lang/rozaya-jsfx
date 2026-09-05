@@ -20,7 +20,7 @@ At the low end of its stage range it's a normal musical phaser; pushed toward it
 
 ## Parameters
 
-**Rate Hz** `0.01–10, default 0.3` — LFO speed. Slow for long sweeps, faster for vibrato-like motion.
+**Rate (Hz, or beats per cycle in Host x)** `0.001–1000, default 0.3` — LFO speed. Slow for long sweeps, faster for vibrato-like motion. In **Host x** this number is **beats per cycle** instead of Hz — see Host tempo sync below.
 
 **Range Min Hz** `40–20000, default 300` — low endpoint of the sweep (where the notches sit at one extreme).
 
@@ -49,31 +49,41 @@ At the low end of its stage range it's a normal musical phaser; pushed toward it
 
 ### Host tempo sync
 
-**Rate Mode** `Own Rate Hz / Host x` (default Own Rate Hz)
-**Own Rate Hz** is the original behaviour — free-running, project tempo ignored.
-**Host x** makes Rate a **multiplier of the project tempo** instead: x1 follows
-it exactly, x2 is double speed, x0.5 half. Tempo changes apply live.
+**Rate Mode** `Own Hz / Host x` (default Own Hz)
+**Own Hz** is the original behaviour — free-running, project tempo ignored.
+**Host x** locks the sweep to the project tempo, and **Rate then means beats per
+cycle**: set it to 4 and one full sweep takes four beats. Tempo changes apply live.
 
-Only two entries rather than the four in Melody Phase / Polyrhythm, because
-this plugin only ever had one unit — "Seconds" and "Hz" would be meaningless.
+Only two entries rather than the four in Melody Phase / Polyrhythm, because this
+plugin only ever had one unit — "Seconds" and "BPM" would be meaningless here.
 
-> **Switching modes changes what Rate means, and nothing rescales it.** Set the
-> mode first, then the value — or use the picker below, which fills it in.
+**Beats per cycle is a plain number, not a menu.** 4 is every four beats. 3.7 is
+every three and seven tenths of a beat — which no note-division grid can express,
+and which is exactly the kind of thing this suite exists for. Bigger is slower.
 
-**Host ratio (writes Rate)** `Custom / every 8 beats / … / 8 per beat` (default Custom)
-Shown only in Host x. Writes the multiplier and then gets out of the way, so you
-can still type or automate anything. **Custom** never writes anything, and is
-deliberately not called "Free" — in sync UI that means free-running, which Own
-Rate Hz already is. Entries are named for what you hear, not as note values.
+> **Switching modes changes what Rate means, and nothing rescales it.** A rate of
+> 0.3 is a slow sweep in Own Hz and just over a third of a beat per cycle — very
+> fast — in Host x. Set the mode first, then the value.
+
+**Host ratio (retired)** — hidden, and does nothing.
+It used to be a menu of ratios (*every 4 beats*, *2 per beat* …) that wrote a
+**multiplier** into Rate. The multiplier is gone, so the menu that translated it has
+no job left: "every 4 beats" is now typing 4. The slider itself stays in the file
+because slider positions are how REAPER remembers a saved project, so deleting one
+would shift every control above it in every project you have.
 
 ---
 
-#### Host x hands you the ratio list, not a multiplier
+#### Why the multiplier went, and why nothing hides any more
 
-Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw rate number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat*, and so on — so setting a rate is picking a name, never working out a number.
+A multiplier is a number you cannot hear without doing arithmetic against the project
+tempo — `0.25` is not a speed, it is a sum you have to finish. Because it was
+illegible, the rate slider had to be **hidden** in Host x and the menu shown instead;
+because it was hidden, entering Host x had to **stamp** a landing value into it so you
+were not left on something arbitrary. That stamp is the bug that cost a session
+elsewhere in the suite, where a saved project had its hand-set rate overwritten on
+every load.
 
-Set Host ratio to **Custom** and the rate value reappears, with whatever it last held. That's the way in for ratios the list doesn't cover, which is most of the point of a multiplier rather than a note grid.
-
-Two things this fixes. The rate slider's default was chosen for its own unit, so switching mode used to hand you a speed you never asked for — in the effects, a default of 2 meant *double time* the moment you selected Host x. And the picker sits at the far end of the parameter list (slider IDs can never be renumbered without scrambling saved projects), so you met the multiplier first and the cure last.
-
-Landing on 1 per beat only happens when *you* change the mode. Opening a saved project leaves your rate exactly as you set it.
+Beats per cycle is legible on its own, so the whole chain unwinds: nothing is hidden,
+nothing is stamped, and the rate slider is always visible showing the value it is
+actually running at. (Suite rule R13-revised, 2026-09-02.)
