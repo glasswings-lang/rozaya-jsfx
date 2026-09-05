@@ -16,7 +16,7 @@ desc: Heartbeat Generator
 // that clamps permanently, which is why the plan puts range changes in the risky
 // row.) The step matches every other rate slider in the suite; you type the
 // number you want and nudge from there.
-slider1:70<0.001,1000,0.001>Heart rate (BPM, or beats per cycle in Host x)
+slider1:70<0.001,1000,0.001>Heart rate (BPM / sec / Hz / beats per cycle)
 slider2:120<50,400,1>Systole ms (S1->S2 gap)
 slider3:1.0<0.0,1.0,0.01>S1 Volume
 slider4:0.7<0.0,1.0,0.01>S2 Volume
@@ -112,7 +112,7 @@ slider33:0<0,60,0.1>Ramp start delay (minutes)
 //          20 meant the gentlest available setting was twenty times the tempo.
 // Two entries, not four: only one unit here, so Seconds / Hz would be
 // meaningless. Appended at the END per the never-renumber rule.
-slider34:0<0,1,1{Own BPM,Host x}>Rate Mode
+slider34:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
 
 // RETIRED 2026-09-04 by R13-revised, and hidden. It existed only to spare you
 // arithmetic on a multiplier; "every 4 beats" is now typing 4. NOT deleted --
@@ -355,8 +355,10 @@ rate_mode_inited ? last_rate_mode = rate_mode;
 //
 // Guarded on the NUMERATOR: 1/max(raw,0.001) would clamp the denominator and
 // turn a stopped heart into a thousand-times-tempo one.
-bpm_target = rate_mode == 1 ?
+bpm_target = rate_mode == 3 ?
                (slider1 > 0.001 ? max(tempo, 0.001) / slider1 : 0.001) :
+             rate_mode == 2 ? slider1 * 60 :
+             rate_mode == 1 ? 60 / max(slider1, 0.001) :
                slider1;
 
 // Speed Ramp target selector save/restore (nested-selector pattern). slider29
@@ -485,7 +487,7 @@ pr_enabled     = (play_for_beats > 0 && rest_for_beats > 0);
 !rate_mode_inited ? ( last_rate_mode = slider34; rate_mode_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run on a
 // tempo change, so these repeat here; everything else is per-sample.
-rate_mode == 1 ? (
+rate_mode == 3 ? (
   bpm_target = slider1 > 0.001 ? max(tempo, 0.001) / slider1 : 0.001;
   start_delay_sec = slider14 * 60 / max(bpm_target, 0.001);
 );

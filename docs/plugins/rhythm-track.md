@@ -26,16 +26,26 @@ Swing is applied by offsetting the beat phase at each cycle boundary, advancing 
 
 ### Timing
 
-**Rate Mode** `Own BPM / Host x` (default Own BPM) — **slider 2, directly under Tempo.**
+**Rate Mode** `BPM / Seconds / Hz / Host x` (default BPM) — the suite's canonical
+four, in the suite's canonical order, as of 2026-09-05 (R20). Every rate in every
+plugin offers these same four entries in this same position order, so what you
+learn here is true everywhere. **Slider 2, directly under Tempo.**
 It sat at slider 27 until 2026-09-04, twenty-five places from the value it
 defines. Rozaya: *"they've got their rate modes all scattered in terms of their
 slider order. not great."* Moved with no migration needed, because no project
 uses this plugin.
-**Own BPM** is the original behaviour: Tempo below is the metronome's own
-speed and the project tempo is ignored. **Host x** locks it to the project, and
-Tempo then means **beats per cycle**, a cycle here being one tick — 1 is a tick on every beat, 2 is every
-other beat, 0.5 is two ticks a beat. Bigger is slower. Tempo changes apply live,
-including mid-playback.
+**BPM** is the original behaviour: Tempo below is the metronome's own speed and
+the project tempo is ignored. **Seconds** is seconds between ticks. **Hz** is
+ticks per second. **Host x** locks it to the project, and Tempo then means
+**every N beats** — 1 is a tick on every beat, 2 is every other beat, 0.5 is two
+ticks a beat. Bigger is slower. Tempo changes apply live, including mid-playback.
+
+This used to offer only `Own BPM / Host x`, and this page used to say that
+"Seconds and Hz would be meaningless" here. That was wrong on both counts: a
+duration per tick is an ordinary way to say a speed, and consistency across the
+suite outranks a per-plugin judgement about what someone would reach for. R20
+settled it — the four modes go everywhere their parent does, without triage.
+
 
 A metronome that couldn't follow the project tempo was the odd one out in any
 session, so this is the plugin the mode matters most on. It's also the easiest

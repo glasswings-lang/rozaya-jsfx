@@ -24,8 +24,11 @@ All active notes are summed and normalized by the oscillator count each sample.
 
 ### Global Controls
 
-**BPM** `10-300 BPM, default 120`
-The tempo of the sequence in beats per minute.
+**Rate value** `0.001-1000, step 0.001, default 120`
+How fast the sequence steps. What the number MEANS is set by Rate Mode below —
+steps per minute in BPM, seconds per step in Seconds, steps per second in Hz,
+and every N beats in Host x. This page used to call the control "BPM" and give
+its range as `10-300`; both were stale.
 
 **Direction** `Asc / Desc`
 The order in which notes are stepped through. Ascending moves C → C# → D → ... → B → C. Descending moves in reverse.
@@ -120,7 +123,7 @@ Picks which target the `by`, duration, and start delay sliders are currently edi
 **Ramp by (slider 53)** `-300 to +300, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over that target's duration. **0** = no change (safe default). For **Note Length / Attack / Release** it's in percentage points. The wide ±300 range is headroom shared across targets — only the target's own sensible span is meaningful (e.g. a note-length ramp beyond ±100 is clamped).
 
-For **Tempo** the delta is in **BPM**, in every Rate Mode (`-60` ramps 120 → 60).
+For **Rate value** the delta is in **BPM**, in every Rate Mode (`-60` ramps 120 → 60). The target used to be listed as `Tempo`; it now matches the slider it drives (R2).
 
 In **Host x** the delta stays in this plugin's own unit — it does **not** become a multiplier. That means a ramp does not stretch when the project tempo changes: `-60` is `-60 BPM` whatever the tempo does. That's a deliberate limitation. The alternative was tried and rejected: these amount sliders step in 0.1, a grain chosen for BPM, and in multiplier terms 0.1 is a 10% wander with nothing finer reachable — so the value you'd actually want stops being settable.
 
@@ -186,18 +189,26 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 ### Host tempo sync
 
-**Rate Mode** `Own BPM / Host x` (default Own BPM) — **slider 2, directly under BPM.**
+**Rate Mode** `BPM / Seconds / Hz / Host x` (default BPM) — the suite's canonical
+four, in the suite's canonical order, as of 2026-09-05 (R20). Every rate in every
+plugin offers these same four entries in this same position order, so what you
+learn here is true everywhere. **Slider 2, directly under the rate value.**
 It sat at slider 62 until 2026-09-04, sixty places from the value it defines.
 Moved with no migration needed, because no project uses this plugin. Everything
 between 2 and 61 shifted up by one, so the twelve per-note groups now start at
 slider 13 rather than 12.
-**Own BPM** is the original behaviour — free-running, project tempo ignored.
-**Host x** locks the sequence to the project, and BPM then means **beats per
-cycle**: one step of the scale takes that many beats. 4 is a note every four
-beats; 0.5 is two notes a beat. Bigger is slower. Tempo changes apply live.
+**BPM** is the original free-running behaviour — steps per minute, project tempo
+ignored. **Seconds** is seconds per step. **Hz** is steps per second.
+**Host x** locks the sequence to the project, and the rate value then means
+**every N beats**: one step of the scale takes that many beats. 4 is a note every
+four beats; 0.5 is two notes a beat. Bigger is slower. Tempo changes apply live.
 
-Only two entries rather than the four in Melody Phase / Polyrhythm, because this
-plugin only ever had one unit — "Seconds" and "Hz" would be meaningless.
+This used to offer only `Own BPM / Host x`, and this page used to say that
+"Seconds and Hz would be meaningless" here. That was wrong on both counts: a
+duration per step is an ordinary way to say a speed, and consistency across the
+suite outranks a per-plugin judgement about what someone would reach for. R20
+settled it — the four modes go everywhere their parent does, without triage.
+
 
 **Beats per cycle is a plain number, not a menu.** 3.7 beats a note is exactly as
 reachable as 4, which no note-division grid can express.

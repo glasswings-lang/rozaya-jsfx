@@ -199,15 +199,24 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 ### Host tempo sync
 
-**Rate Mode** `Own BPM / Host x` (default Own BPM)
-**Own BPM** is the original behaviour — free-running, project tempo ignored.
-**Host x** locks the pulse to the project, and the heart rate then means **beats
-per cycle**: one heartbeat every N project beats. `1` is a beat per beat, `0.5` is
-two heartbeats a beat, `2` is one every two beats. Bigger is slower. Tempo changes
-apply live.
+**Rate Mode** `BPM / Seconds / Hz / Host x` (default BPM) — the suite's canonical
+four, in the suite's canonical order, as of 2026-09-05 (R20). Every rate in every
+plugin offers these same four entries in this same position order, so what you
+learn here is true everywhere.
 
-Only two entries rather than the four in Melody Phase / Polyrhythm, because this
-plugin only ever had one unit — "Seconds" and "Hz" would be meaningless.
+**BPM** is the original free-running behaviour — heartbeats per minute, project
+tempo ignored. **Seconds** is seconds between heartbeats. **Hz** is heartbeats
+per second. **Host x** locks the pulse to the project, and the heart rate then
+means **every N beats**: one heartbeat every N project beats. `1` is a beat per
+beat, `0.5` is two heartbeats a beat, `2` is one every two beats. Bigger is
+slower. Tempo changes apply live.
+
+This used to offer only `Own BPM / Host x`, and this page used to say that
+"Seconds and Hz would be meaningless" here. That was wrong on both counts: a
+duration per heartbeat is an ordinary way to say a speed, and consistency across the
+suite outranks a per-plugin judgement about what someone would reach for. R20
+settled it — the four modes go everywhere their parent does, without triage.
+
 
 > **Switching modes changes what the number means, and nothing rescales it.** 70 is
 > 70 BPM free-running, and in Host x it is one heartbeat every seventy beats. Set
