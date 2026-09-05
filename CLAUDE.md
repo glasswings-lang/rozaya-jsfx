@@ -284,6 +284,27 @@ append-only history; this is the only part of the repo that claims to describe
   `docs/host-sync-ear-test.md`, which are Drift and Ramp under Host x, and pan
   following the tempo. **The beats-per-cycle conversion itself is no longer on
   this list** — it was heard on 09-04, see above.
+- **PART 2 — THE CANONICAL READING ORDER — WAS APPROVED BY ROZAYA 2026-09-05 AND
+  IS NOW WRITTEN DOWN.** Every per-plugin layout is measured against it, and for
+  five days it described a block structure that had been thrown out on 08-31
+  with no replacement written. That single gap is what made the sweep feel
+  unnavigable to Rozaya — *"I'm very lost, and I don't think I planned this out
+  well at all"* — and it was five days of nobody writing a paragraph, not a hard
+  problem. The order, so it is in this file too:
+
+  **what the plugin IS → its rate (value, then mode) → the shape of its movement
+  → stereo and pan → output level → transport → drift → ramp.**
+
+  Inside that: everything belonging to a layer lives with that layer; a modifier
+  is numbered immediately after the thing it modifies; a second rate carries its
+  own complete R20 pair; global output sits last before transport. Drift and
+  Ramp are last because their target lists reach across every other group.
+
+  It was not designed top-down — it is what the Sweeping Filter and Tremolo
+  layouts independently came out as when authored by hand, then described and
+  approved. **The three drafted layouts can now be reviewed against something
+  real.**
+
 - **R20 — THE RATE BLOCK — WAS SETTLED 2026-09-04 AND IS THE NEXT THING TO
   BUILD.** Nothing is built yet; the rule is written down in
   `docs/suite-consistency-plan.md` and summarised under *Terminology* below.

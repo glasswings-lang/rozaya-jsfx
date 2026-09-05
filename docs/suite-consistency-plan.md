@@ -295,48 +295,66 @@ exactly that was proposed and rejected.
 
 ## Part 2 — Canonical layout
 
-Sliders are read in **numeric order** regardless of declaration order in the file, so
-this is reading order. Every plugin follows the same relative shape, so what is learned
-in one transfers to all of them.
+**REWRITTEN AND APPROVED BY ROZAYA 2026-09-05.** The A/B/C/D block structure this
+section used to describe was thrown out on 2026-08-31 (Star: the blocks "were
+arbitrary as shit") and the replacement was never written down — so for five
+days every per-plugin layout was being measured against a ruler nobody believed
+in any more. That is the single thing that made the sweep feel unnavigable.
+
+Sliders are read in **numeric order** regardless of declaration order in the
+file, so this is reading order, and reading order is the whole interface. Rozaya
+arrows the parameter list one control at a time.
+
+### The order
+
+This was not designed top-down. It is what the Sweeping Filter and Tremolo
+layouts independently came out as when authored by hand, described afterwards
+and then approved:
 
 ```
-A. Plugin-specific controls
-     A1. primary sound / identity
-     A2. the rate triple (rate, rate mode, host ratio) — contiguous
-     A3. per-voice / per-band / per-slot groups
-     A4. global output (level, wet/dry, output mode) — last in A
-B. Transport
-     Start delay → Play for → Rest for → Rest mode
-     (or, for effects: → LFO at rest → Output at rest)
-C. Drift
-     target → up amount → down amount → period → period unit → shape → restart
-D. Speed ramp
-     target → by → duration → engage → start delay
+1. What the plugin IS          its identity — the sound, the frequencies, the voices
+2. Its rate                    rate value, then rate mode          (the R20 pair)
+3. The shape of its movement   depth, on-duration, attack + its shape, release + its shape
+4. Stereo and pan
+5. Output level                wet/dry mix, output volume
+6. Transport                   start delay, play for, rest for, what happens at rest
+7. Drift                       target, up, down, period, period unit, shape, play/rest
+8. Ramp                        target, by, time unit, duration, play/rest, engage, start delay
 ```
 
-### Rules inside section A
+**Why Drift and Ramp are last, and it is not because they matter least.** Their
+selectors reach across every other group — a drift target list names controls
+from sections 1, 3 and 4 — so they cannot sit *inside* any one of them without
+lying about their scope. Transport goes above them because it is also
+plugin-wide but simpler, and you set it once and leave it.
 
-- **A modifier is numbered immediately after the thing it modifies.** Unit selectors,
-  shape selectors, mode selectors, "…and its partner" pairs. This is the rule that moves
-  Veil's `Drift period unit` from 17 to directly after `Drift period`, and moves
-  `Pan speed (Linked Sweep)` next to `Filter speed multiplier (Linked Sweep)` in all
-  three filters (currently declared adjacent, numbered 30-odd sliders apart — a real
-  conflict between source order and reading order, and reading order wins).
-- **Groups stay whole.** Morpher's `Capture average` rejoins `Capture point`. Sweep
-  Dwell's cycle-length group rejoins its dwell/fade timings. Polyrhythm v1's five tone
-  sliders rejoin the waveform group, as v3 already does.
-- **Global output goes last in A**, so Resonance Bank's `Mode` / `Wet/dry mix` /
-  `Output volume` stop being numbered after the per-band drift block.
+### The four rules inside the order
+
+- **Everything belonging to a layer lives with that layer.** A per-voice,
+  per-band or per-slot group is whole and contiguous, and its own rate, gain,
+  timing and toggles sit inside it. This is what replaced the old block
+  structure: the grouping follows the *thing*, not an abstract category.
+- **A modifier is numbered immediately after the thing it modifies.** Unit
+  selectors, shape selectors, mode selectors. This is the rule that puts
+  `Drift period unit` directly after `Drift period`, and `Attack shape` directly
+  after `Attack` rather than after both amounts.
+- **A second rate carries its own complete pair** (R20). The pan gets its own
+  rate value and its own rate mode, inside the pan group. It never borrows the
+  main rate's mode and nothing points across at it.
+- **Global output goes last before transport**, so it stops interrupting the pan
+  group — which is exactly where the Sweeping Filter's `Wet/dry mix` sits today,
+  at slider 15.
 
 ### What this fixes on its own
 
-Womb's `Breaths per minute` stops being wedged between the ramp and drift blocks and
-rejoins the breath group. `Heart rate swing per breath` rejoins the heart group.
-`Direction` stops splitting Melody's transport trio. `Slope` stops being slider 41.
-Sweep Dwell's ramp block becomes walkable. Every stranded Host ratio comes home.
+`Slope` stops being slider 41 and rejoins the frequencies. Womb's `Breaths per
+minute` stops being wedged between the ramp and drift blocks and rejoins the
+breath group. `Heart rate swing per breath` rejoins the heart group. `Direction`
+stops splitting Melody's transport trio. Sweep Dwell's ramp block becomes
+walkable. Every stranded rate mode comes home to sit under its own rate.
 
-That the layout resolves nearly every ordering finding independently is the evidence
-that it is the right abstraction.
+That the order resolves nearly every ordering finding in this document without
+being aimed at any of them is the evidence that it is the right shape.
 
 ---
 
@@ -1228,11 +1246,13 @@ ear along the way. Deployed to the Effects folder and verified byte-identical to
 
 **Blocking:**
 
-1. **Part 2's canonical layout is stale.** It still describes the A/B/C/D block structure;
-   2026-08-31 replaced that with *everything belonging to a layer lives with that layer*
-   (Star: the blocks "were arbitrary as shit"). Every per-plugin layout is measured
-   against Part 2, so it is rewritten first. Drift and Ramp stay shared — their selectors
-   span targets across layers, so splitting them costs fifteen sliders where five do.
+1. ~~**Part 2's canonical layout is stale.**~~ **CLOSED 2026-09-05 — rewritten and
+   approved by Rozaya.** It described the A/B/C/D structure thrown out on 2026-08-31 and
+   the replacement was never written, so every per-plugin layout spent five days being
+   measured against a ruler nobody believed in. **This was the item making the whole
+   sweep feel unnavigable, and it was five days of nothing rather than a hard problem.**
+   Read Part 2. Drift and Ramp stay shared and last — their selectors span targets across
+   layers, so splitting them costs fifteen sliders where five do.
 2. ~~**The version forks.**~~ **CLOSED 2026-08-31.** Melody: archive v2, its note picker
    moves to v1 (`docs/layouts/melody-phase.md`). Polyrhythm: migrate v1's projects up to
    v3, archive v1 — evidenced in `docs/layouts/polyrhythm-phase.md`, and cheaper than
