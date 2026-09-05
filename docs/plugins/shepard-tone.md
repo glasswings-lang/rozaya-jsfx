@@ -43,38 +43,34 @@ speed of a whole arrangement: nudging each instance by hand changes the
 start scattering. Restarting the transport can't fix that — restart resets
 phase, not ratio.
 
-**Host x** makes Rate Value a **multiplier of the project tempo**. x1 = one
-sweep cycle per beat, x2 = twice as fast, x0.5 = half. Higher is faster, same
-as BPM and Hz (only Seconds inverts). Move the tempo and everything moves with
-it, in proportion.
+**Host x** locks the sweep to the project tempo, and Rate Value there means
+**beats per cycle**: 4 is one full sweep every four beats, 0.5 is two sweeps a
+beat. **Bigger is slower** — the one mode where that is true, alongside Seconds.
+Move the tempo and everything moves with it, in proportion.
 
-This is **not** quantising — Rate Value stays continuous, so deliberately
-unlocked relationships survive a tempo change just as locked ones do. `x1` and
-`x0.5` nest forever; `x1` against `x0.618` never resolves, and keeps not
-resolving in the same way at any tempo.
+This is **not** quantising — Rate Value stays a continuous number, so `3.7`
+beats per cycle is exactly as reachable as `4`. That is the point: deliberately
+unlocked relationships survive a tempo change just as locked ones do. 2 and 4
+beats nest forever; 2 against 3.236 never resolves, and keeps not resolving in
+the same way at any tempo.
 
 Tempo changes apply live, including mid-playback. The sweep rate, the Play/Rest
 cycle counter and Start Delay all follow. **Pitch does not** — a tempo change
 moves the glissando, it doesn't transpose the tone.
 
-**Host ratio (writes Rate Value)** `Custom / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Custom)
-A convenience picker, shown only in Host x mode. Choosing an entry writes that
-multiplier into Rate Value and then gets out of the way — it doesn't hold the
-value, so you can still type or automate anything you like. **Custom** never
-writes anything; it just means Rate Value is whatever you set. It's deliberately
-not called "Free", because in sync UI that word means FREE-RUNNING, and that
-switch is Rate Mode itself: BPM / Seconds / Hz are the free-running cases.
-
-Entries are named for what you HEAR, not as note values. "every 4 beats" means
-one cycle spread across four beats (multiplier 0.25) — deliberately *not*
-written `1/4`, which everywhere else means a quarter NOTE and sits at the
-opposite end of the scale.
+**Host ratio (retired)** — hidden, and does nothing.
+It used to be a menu of ratios that wrote a **multiplier** into Rate Value. The
+multiplier is gone, so the menu that translated it has no job left: "every 4
+beats" is now typing 4. The slider stays in the file because slider positions
+are how REAPER remembers a saved project, so removing one would shift every
+control above it in every project.
 
 > **Switching Rate Mode changes what Rate Value means, and nothing rescales it
-> for you.** 0.5 is 0.5 BPM in BPM mode but half the project tempo in Host x.
-> Set the mode first, then the rate.
+> for you.** 0.5 is 0.5 BPM in BPM mode, and in Host x it is half a beat per
+> cycle — two sweeps every beat, which is very fast. Set the mode first, then
+> the rate.
 
-**Rate Value** `0.001-1000, default 0.5 BPM`
+**Rate Value (BPM / sec / Hz / beats per cycle)** `0.001-1000, default 0.5 BPM`
 The global sweep rate, in the units set by Rate Mode. Only used in Synced mode. At 0.5 BPM, one full sweep cycle takes two minutes — appropriate for slow ambient use.
 
 **Octave Count** `2-16, default 8`
@@ -109,15 +105,25 @@ The global tonic. Per-voice Note sliders are interpreted as offsets from this va
 The A4 reference frequency used to calculate all oscillator pitches.
 
 
-#### Host x hands you the ratio list, not a multiplier
+#### Why the multiplier went, and why nothing hides any more
 
-Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw rate number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat*, and so on — so setting a rate is picking a name, never working out a number.
+A multiplier is a number you cannot hear without doing arithmetic against the
+project tempo — `0.25` is not a speed, it is a sum you have to finish. Because it
+was illegible, Rate Value had to be **hidden** in Host x and a menu of named ratios
+shown instead; because it was hidden, entering Host x had to **stamp** a landing
+value into it. That stamp is the bug that cost a session elsewhere in the suite,
+where a saved project had its hand-set rate overwritten on every load.
 
-Set Host ratio to **Custom** and the rate value reappears, with whatever it last held. That's the way in for ratios the list doesn't cover, which is most of the point of a multiplier rather than a note grid.
+Beats per cycle is legible on its own, so the chain unwinds: nothing hides, nothing
+is stamped, and Rate Value is always visible showing the value it is running at.
+(Suite rule R13-revised, 2026-09-02; converted here 2026-09-04.)
 
-Two things this fixes. The rate slider's default was chosen for its own unit, so switching mode used to hand you a speed you never asked for — in the effects, a default of 2 meant *double time* the moment you selected Host x. And the picker sits at the far end of the parameter list (slider IDs can never be renumbered without scrambling saved projects), so you met the multiplier first and the cure last.
-
-Landing on 1 per beat only happens when *you* change the mode. Opening a saved project leaves your rate exactly as you set it.
+**Drift and Ramp amounts stay in BPM in Host x**, as they are in every other mode —
+you say "wander by 10 BPM" and the plugin does the conversion. That needed care
+here: adding a BPM amount to a beats-per-cycle number would move the wrong quantity
+in the wrong direction, since more beats per cycle is *slower*. The amount is
+converted and added to the resulting speed instead. The same oversight had shipped
+in both Polyrhythms and was fixed the same day.
 
 ---
 
