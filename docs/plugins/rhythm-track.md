@@ -28,9 +28,10 @@ Swing is applied by offsetting the beat phase at each cycle boundary, advancing 
 
 **Rate Mode** `Own BPM / Host x` (default Own BPM)
 **Own BPM** is the original behaviour: Tempo below is the metronome's own
-speed and the project tempo is ignored. **Host x** makes Tempo a **multiplier
-of the project tempo** instead — x1 follows it exactly, x2 is double time, x0.5
-is half. Tempo changes apply live, including mid-playback.
+speed and the project tempo is ignored. **Host x** locks it to the project, and
+Tempo then means **beats per tick** — 1 is a tick on every beat, 2 is every
+other beat, 0.5 is two ticks a beat. Bigger is slower. Tempo changes apply live,
+including mid-playback.
 
 A metronome that couldn't follow the project tempo was the odd one out in any
 session, so this is the plugin the mode matters most on. It's also the easiest
@@ -41,18 +42,25 @@ Only two entries rather than the four in Melody Phase / Shepard Tone, because
 this plugin only ever had one unit — "Seconds" and "Hz" would be meaningless
 on a metronome.
 
+**Beats per tick is a plain number, not a menu.** 4 is a tick every four beats.
+3.7 is every three and seven tenths of a beat, which no note-division grid can
+express. Fractions below 1 subdivide: 0.25 gives four ticks a beat.
+
 > **Switching modes changes what Tempo means, and nothing rescales it.** 120 is
-> 120 BPM in Own BPM mode, but 120× the project tempo in Host x. Set the mode
-> first, then the Tempo — or use the Host ratio picker, which fills it in.
+> 120 BPM in Own BPM mode, and in Host x it is a tick every 120 beats — very
+> slow. Set the mode first, then the Tempo.
 
-**Host ratio (writes Tempo)** `Custom / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Custom)
-Shown only in Host x mode. Choosing an entry writes that multiplier into Tempo
-and then gets out of the way — it doesn't hold the value, so you can still type
-or automate anything. **Custom** never writes anything. It's deliberately not
-called "Free", because in sync UI that word means free-running, which is what
-Own BPM already is. Entries are named for what you hear, not as note values.
+**A tick is this plugin's cycle.** The rest of the suite says "beats per cycle";
+a metronome's cycle has an ordinary name, so the label uses it. Same unit.
 
-**Tempo (BPM, or multiplier in Host x)** `0.001-1000, default 120`
+**Host ratio (retired)** — hidden, and does nothing.
+It used to be a menu of ratios that wrote a **multiplier** into Tempo. The
+multiplier is gone, so the menu that translated it has no job left: "every 4
+beats" is now typing 4. The slider stays in the file because slider positions
+are how REAPER remembers a saved project, so removing one would shift every
+control above it in every project.
+
+**Tempo (BPM, or beats per tick in Host x)** `0.001-1000, default 120`
 
 Widened from the old `10-300`. The bottom end was the pinch — very slow ambient
 pulses were unreachable without typing values in by hand — and Host x needs the
@@ -84,15 +92,19 @@ Two things still count from when you pressed play rather than from the project p
 In **Own BPM** the metronome is free-running as it always was, and none of this applies.
 
 
-#### Host x hands you the ratio list, not a multiplier
+#### Why the multiplier went, and why nothing hides any more
 
-Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw rate number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat*, and so on — so setting a rate is picking a name, never working out a number.
+A multiplier is a number you cannot hear without doing arithmetic against the
+project tempo — `0.25` is not a speed, it is a sum you have to finish. Because it
+was illegible, the Tempo slider had to be **hidden** in Host x and a menu of named
+ratios shown instead; because it was hidden, entering Host x had to **stamp** a
+landing value into it so you were not left on something arbitrary. That stamp is the
+bug that cost a session elsewhere in the suite, where a saved project had its
+hand-set rate overwritten on every load and every track duplicate.
 
-Set Host ratio to **Custom** and the rate value reappears, with whatever it last held. That's the way in for ratios the list doesn't cover, which is most of the point of a multiplier rather than a note grid.
-
-Two things this fixes. The rate slider's default was chosen for its own unit, so switching mode used to hand you a speed you never asked for — in the effects, a default of 2 meant *double time* the moment you selected Host x. And the picker sits at the far end of the parameter list (slider IDs can never be renumbered without scrambling saved projects), so you met the multiplier first and the cure last.
-
-Landing on 1 per beat only happens when *you* change the mode. Opening a saved project leaves your rate exactly as you set it.
+Beats per tick is legible on its own, so the whole chain unwinds: nothing hides,
+nothing is stamped, and Tempo is always visible showing the value it is actually
+running at. (Suite rule R13-revised, 2026-09-02; converted here 2026-09-04.)
 
 ---
 
