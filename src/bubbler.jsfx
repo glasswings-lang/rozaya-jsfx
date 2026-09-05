@@ -23,14 +23,46 @@ desc: Bubbler
 // bubble takes the quietest voice. Effect, NOT a generator — needs input.
 
 slider1:6<0.001,1000,0.001>Bubble rate (BPM / sec / Hz / beats per bubble)
-slider2:70<0,100,1>Timing randomness %
-slider3:12<-36,36,1>Transpose (semitones)
-slider4:7<0,24,1>Pitch spread (semitones)
-slider5:12<0,36,1>Rise (semitones)
-slider6:150<5,1000,1>Bubble length (ms)
-slider7:80<0,100,1>Stereo width %
-slider8:100<0,100,1>Dry/Wet %
-slider9:0<-24,12,0.01>Output (dB)
+slider3:70<0,100,1>Timing randomness (%)
+slider4:12<-36,36,1>Transpose (semitones)
+slider5:7<0,24,1>Pitch spread (semitones)
+slider6:12<0,36,1>Rise (semitones)
+slider7:150<5,1000,1>Bubble length (ms)
+slider8:80<0,100,1>Stereo width (%)
+slider9:100<0,100,1>Dry/wet (%)
+slider10:0<-24,12,0.01>Output (dB)
+
+// --- Drift ---------------------------------------------------------------
+// Added 2026-09-05. Bubbler was built after the 2026-06 drift sweep and never
+// joined it. Block copied from `veil.jsfx`, the built-and-ear-tested reference.
+// Nine targets -- everything continuous the plugin has. There is no integer
+// control here, so nothing has the click risk that keeps Stages off the
+// Phaser's list.
+//
+// Bubble length is read when a bubble is BORN, so drifting it changes the
+// length of new bubbles, not ones already sounding: the effect arrives over
+// about one bubble rather than instantly.
+slider11:0<0,8,1{Bubble rate,Timing randomness,Transpose,Pitch spread,Rise,Bubble length,Stereo width,Dry/wet,Output}>Drift target
+// Amounts are per target, in the target's own unit -- except Bubble rate,
+// which is in BPM in every rate mode (the suite's settled rule: the plugin
+// converts, you never do).
+slider12:0<0,1000,0.01>Drift up amount (units match target)
+slider13:0<0,1000,0.01>Drift down amount (units match target)
+slider14:20<1,600,0.1>Drift period
+slider15:0<0,1,1{Seconds,Beats}>Drift period unit
+slider16:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider17:0<0,64,0.01>Drift play for (periods, 0 = always)
+slider18:0<0,64,0.01>Drift rest for (periods, 0 = always)
+
+// --- Ramp ----------------------------------------------------------------
+slider19:0<0,8,1{Bubble rate,Timing randomness,Transpose,Pitch spread,Rise,Bubble length,Stereo width,Dry/wet,Output}>Ramp target
+slider20:0<-1000,1000,0.001>Ramp by (units match target)
+slider21:0<0,1,1{Minutes,Beats}>Ramp time unit
+slider22:0<0,1000,0.01>Ramp duration
+slider23:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider24:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider25:0<0,1,1{Off,On}>Ramp engage
+slider26:0<0,1000,0.01>Ramp start delay
 
 in_pin:left input
 in_pin:right input
@@ -43,12 +75,11 @@ out_pin:right output
 // Host x:   Bubble rate becomes beats per bubble, so 4 is one bubble every
 //           is one bubble per beat. Two entries only; this plugin has one
 //           unit. Appended at the END per the never-renumber rule.
-slider10:2<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
+slider2:2<0,3,1{BPM,Seconds,Hz,Host x}>Rate mode
 
 // Writes a multiplier into Bubble rate on change then gets out of the way.
 // "Custom" (default) never writes. Not "Free" -- that means FREE-RUNNING
 // in sync UI, which Own rate already is.
-slider11:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Bubble rate)
 
 @init
 NV = 16;                         // voices per channel
@@ -67,30 +98,84 @@ seedR = 1234567891;
 timerL = 0;  timerR = 0;
 FADE = 128;                      // ~2.7 ms onset fade
 
+// --- Drift / Ramp state. Nine targets, 16-slot strides, placed AFTER the
+//     grain buffers -- which are srate-dependent, so the base is derived, never
+//     a literal. Re-derive rather than trusting any number written here.
+N_TARGETS = 9;
+db = sc + 8 * NV;
+speed_ramp_by_mem            = db;         // CONFIG
+speed_ramp_dur_mem           = db + 16;    // CONFIG
+speed_ramp_delay_mem         = db + 32;    // CONFIG
+speed_ramp_ramp_t_mem        = db + 48;    // RUNTIME
+speed_ramp_delay_elapsed_mem = db + 64;    // RUNTIME
+sr_play_mem                  = db + 80;    // CONFIG
+sr_rest_mem                  = db + 96;    // CONFIG
+sr_pr_resting_mem            = db + 112;   // RUNTIME
+sr_pr_accum_mem              = db + 128;   // RUNTIME
+drift_up_mem                 = db + 144;   // CONFIG
+drift_down_mem               = db + 160;   // CONFIG
+drift_per_mem                = db + 176;   // CONFIG
+drift_shape_mem              = db + 192;   // CONFIG
+drift_play_mem               = db + 208;   // CONFIG
+drift_rest_mem               = db + 224;   // CONFIG
+drift_phase_mem              = db + 240;   // RUNTIME
+drift_prev_mem               = db + 256;   // RUNTIME (Random shape)
+drift_curr_mem               = db + 272;   // RUNTIME (Random shape)
+drift_offset_mem             = db + 288;   // RUNTIME
+drift_pr_resting_mem         = db + 304;   // RUNTIME
+drift_pr_accum_mem           = db + 320;   // RUNTIME
+
+// Shared play/rest window counter. `tick` is how much of ONE window passes per
+// sample, which lets each caller keep its own units: Drift passes
+// 1/period_samples so its windows are drift periods; Ramp passes
+// 1/(unit_seconds*srate) so its windows are minutes or beats. Off unless BOTH
+// values are > 0.
+function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
+  play > 0 && rest > 0 ? (
+    accum_bank[idx] += tick;
+    accum_bank[idx] >= (resting_bank[idx] ? rest : play) ? (
+      accum_bank[idx] = 0;
+      resting_bank[idx] = 1 - resting_bank[idx];
+    );
+    resting_bank[idx];
+  ) : ( 0; );
+);
+
+// CONFIG defaults -- ONE TIME ONLY. @init re-runs on every transport play, and
+// without this guard every press of play would wipe the drift setup.
+drift_cfg_inited != 1 ? (
+  j = 0;
+  loop(N_TARGETS,
+    speed_ramp_by_mem[j] = 0;  speed_ramp_dur_mem[j] = 0;
+    speed_ramp_delay_mem[j] = 0;
+    sr_play_mem[j] = 0;        sr_rest_mem[j] = 0;
+    drift_up_mem[j] = 0;       drift_down_mem[j] = 0;
+    drift_per_mem[j] = 20;     drift_shape_mem[j] = 0;
+    drift_play_mem[j] = 0;     drift_rest_mem[j] = 0;
+    j += 1;
+  );
+  drift_cfg_inited = 1;
+);
+
+// RUNTIME reset on EVERY @init. Phases seeded with rand so targets do not crest
+// together.
+j = 0;
+loop(N_TARGETS,
+  speed_ramp_ramp_t_mem[j] = 0;  speed_ramp_delay_elapsed_mem[j] = 0;
+  sr_pr_resting_mem[j] = 0;      sr_pr_accum_mem[j] = 0;
+  drift_phase_mem[j] = rand(1);
+  drift_prev_mem[j] = 0;         drift_curr_mem[j] = 0;
+  drift_offset_mem[j] = 0;
+  drift_pr_resting_mem[j] = 0;   drift_pr_accum_mem[j] = 0;
+  j += 1;
+);
+
+host_bpm = max(tempo, 0.001);
+
 // `tempo` is READ-ONLY in JSFX; read only, into a global not named `tempo`.
-host_ratio_inited = 0;
 
 @slider
-rate_mode = slider10;
-// RETIRED 2026-09-02 (R13 revised). This picker spared you arithmetic on a
-// multiplier; Bubble rate now means beats per bubble, so "every 4 beats" is
-// typing 4. Inert and hidden; the slider stays declared because ids can never
-// be renumbered.
-0 ? (
-  host_ratio_sel = slider11;
-  host_ratio_sel > 0 ? (
-    slider1 =
-      host_ratio_sel ==  1 ? 0.125 : host_ratio_sel ==  2 ? 0.25  :
-      host_ratio_sel ==  3 ? 1/3   : host_ratio_sel ==  4 ? 0.5   :
-      host_ratio_sel ==  5 ? 0.618 : host_ratio_sel ==  6 ? 2/3   :
-      host_ratio_sel ==  7 ? 0.75  : host_ratio_sel ==  8 ? 1     :
-      host_ratio_sel ==  9 ? 4/3   : host_ratio_sel == 10 ? 1.5   :
-      host_ratio_sel == 11 ? 1.618 : host_ratio_sel == 12 ? 2     :
-      host_ratio_sel == 13 ? 3     : host_ratio_sel == 14 ? 4     : 8;
-    slider_automate(slider1);
-  );
-);
-slider_show(slider11, 0);   // retired, see above
+rate_mode = slider2;
 // Host x: slider1 is beats per bubble. tempo/60 is beats per second, so
 // dividing by the beat count gives bubbles per second -- one bubble every N
 // beats. @block repeats this so a tempo change lands live.
@@ -103,17 +188,81 @@ rate      = rate_mode == 3 ? max((max(tempo,0.001)/60)/max(slider1,0.001), 0.000
           : rate_mode == 2 ? max(slider1, 0.01)
           : rate_mode == 1 ? max(1 / max(slider1, 0.001), 0.0001)
                            : max(slider1 / 60, 0.0001);
-jitter    = slider2 * 0.01;
-transpose = slider3;
-spreadSemi= slider4;
-riseSemi  = slider5;
-decayCoef = exp(-4 / (srate * max(slider6,1) * 0.001));   // env ~ -34 dB at the set length
-width     = slider7 * 0.01;
-wetmix    = slider8 * 0.01;
-outlev    = 2 ^ (slider9 / 6);
+// BASELINES ONLY from here down. @sample now rebuilds each of these every
+// sample as eff_*, because Drift and Ramp can move all nine. Left in place
+// rather than deleted: they are provably inert (nothing downstream reads them
+// since 2026-09-05) and deleting them buys nothing, which is this repo's
+// standing rule for dead code. `rate` is the exception -- eff_rate is built
+// from it.
+jitter    = slider3 * 0.01;
+transpose = slider4;
+spreadSemi= slider5;
+riseSemi  = slider6;
+decayCoef = exp(-4 / (srate * max(slider7,1) * 0.001));   // env ~ -34 dB at the set length
+width     = slider8 * 0.01;
+wetmix    = slider9 * 0.01;
+outlev    = 2 ^ (slider10 / 6);
 meanIntv  = srate / rate;
 
+// --- Ramp target selector save/restore (nested-selector pattern) ----------
+// slider19 target; 20 by; 22 duration; 23/24 play/rest; 26 start delay -- all
+// per target. slider25 (engage) and slider21 (time unit) stay GLOBAL.
+sel_speed_target = slider19;
+last_speed_target != sel_speed_target ? (
+  speed_ramp_by_mem[last_speed_target]    = slider20;
+  speed_ramp_dur_mem[last_speed_target]   = slider22;
+  sr_play_mem[last_speed_target]          = slider23;
+  sr_rest_mem[last_speed_target]          = slider24;
+  speed_ramp_delay_mem[last_speed_target] = slider26;
+  slider20 = speed_ramp_by_mem[sel_speed_target];
+  slider22 = speed_ramp_dur_mem[sel_speed_target];
+  slider23 = sr_play_mem[sel_speed_target];
+  slider24 = sr_rest_mem[sel_speed_target];
+  slider26 = speed_ramp_delay_mem[sel_speed_target];
+  slider_automate(slider20); slider_automate(slider22);
+  slider_automate(slider23); slider_automate(slider24);
+  slider_automate(slider26);
+  last_speed_target = sel_speed_target;
+) : (
+  speed_ramp_by_mem[sel_speed_target]    = slider20;
+  speed_ramp_dur_mem[sel_speed_target]   = slider22;
+  sr_play_mem[sel_speed_target]          = slider23;
+  sr_rest_mem[sel_speed_target]          = slider24;
+  speed_ramp_delay_mem[sel_speed_target] = slider26;
+);
+
+// --- Drift target selector save/restore (same pattern) -------------------
+sel_target = slider11;
+last_target_select != sel_target ? (
+  drift_up_mem[last_target_select]    = slider12;
+  drift_down_mem[last_target_select]  = slider13;
+  drift_per_mem[last_target_select]   = slider14;
+  drift_shape_mem[last_target_select] = slider16;
+  drift_play_mem[last_target_select]  = slider17;
+  drift_rest_mem[last_target_select]  = slider18;
+  slider12 = drift_up_mem[sel_target];
+  slider13 = drift_down_mem[sel_target];
+  slider14 = drift_per_mem[sel_target];
+  slider16 = drift_shape_mem[sel_target];
+  slider17 = drift_play_mem[sel_target];
+  slider18 = drift_rest_mem[sel_target];
+  slider_automate(slider12); slider_automate(slider13);
+  slider_automate(slider14); slider_automate(slider16);
+  slider_automate(slider17); slider_automate(slider18);
+  last_target_select = sel_target;
+) : (
+  drift_up_mem[sel_target]    = slider12;
+  drift_down_mem[sel_target]  = slider13;
+  drift_per_mem[sel_target]   = slider14;
+  drift_shape_mem[sel_target] = slider16;
+  drift_play_mem[sel_target]  = slider17;
+  drift_rest_mem[sel_target]  = slider18;
+);
+
 @block
+// Project tempo, once per block. Used when Drift period unit or Ramp time
+// unit is set to Beats.
+host_bpm = max(tempo, 0.001);
 // --- Restore-order guard for the change-detecting controls below -----------
 //     These trackers answer "did the user just move this control?". Adopted
 //     HERE, not in @slider: on a fresh or duplicated instance @slider runs
@@ -125,12 +274,123 @@ meanIntv  = srate / rate;
 //     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
 //     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
 //     load and every track duplicate.)
-!host_ratio_inited ? ( host_ratio_sel = slider11; host_ratio_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run when the
 // tempo changes, so the rate is recomputed here.
 rate_mode == 3 ? rate = max((max(tempo,0.001)/60)/max(slider1,0.001), 0.0001);
 
 @sample
+// --- Ramp clocks, one per target. Engage (slider25) is a freeze/resume gate:
+//     while Off, progress HOLDS; only transport play (via @init) resets it.
+//     A minute is 60 s, a beat is 60/tempo s -- recomputed per sample so a
+//     tempo change is followed live in Beats mode.
+ramp_time_scale = slider21 == 1 ? 60 / host_bpm : 60;
+slider25 ? (
+  di = 0;
+  loop(N_TARGETS,
+    speed_ramp_dur_mem[di] > 0 ? (
+      sr_delay_samples = speed_ramp_delay_mem[di] * ramp_time_scale * srate;
+      speed_ramp_delay_elapsed_mem[di] < sr_delay_samples ? (
+        speed_ramp_delay_elapsed_mem[di] += 1;
+      ) : (
+        // Staircase: advance for `play`, hold for `rest`, repeat. The holds come
+        // OUT of the duration rather than extending it, so Ramp duration still
+        // means "you arrive in about this long".
+        sr_pl = sr_play_mem[di];
+        sr_rs = sr_rest_mem[di];
+        sr_pr_on = sr_pl > 0 && sr_rs > 0;
+        sr_hold = pr_frozen(sr_pr_accum_mem, sr_pr_resting_mem, di,
+                            1.0 / (ramp_time_scale * srate), sr_pl, sr_rs);
+        // One-armed on purpose -- an empty else-branch is a silent compile
+        // failure in eel2 (CLAUDE.md).
+        !sr_hold ? (
+          sr_step = 1.0 / (srate * speed_ramp_dur_mem[di] * ramp_time_scale);
+          sr_pr_on ? sr_step *= (sr_pl + sr_rs) / sr_pl;
+          speed_ramp_ramp_t_mem[di] += sr_step;
+          speed_ramp_ramp_t_mem[di] > 1.0 ? speed_ramp_ramp_t_mem[di] = 1.0;
+        );
+      );
+    );
+    di += 1;
+  );
+);
+
+// --- Per-target drift wave.
+di = 0;
+loop(N_TARGETS,
+  up    = drift_up_mem[di];
+  down  = drift_down_mem[di];
+  per   = drift_per_mem[di];
+  shape = drift_shape_mem[di];
+  drift_offset_local = 0;
+  (up > 0 || down > 0) && per > 0 ? (
+    per_seconds    = slider15 == 1 ? per * 60 / host_bpm : per;
+    period_samples = max(per_seconds * srate, 1);
+    // While resting the phase does not advance, so the offset STAYS where it
+    // stopped -- freeze in place, not a return to centre. The FRACTION of the
+    // play value chooses where it parks: x.25 crest, x.75 trough, x.0 and x.5
+    // neutral. A whole number therefore parks at no-change every time and is
+    // nearly inaudible; an awkward fraction is the interesting one.
+    d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, di,
+                         1.0 / period_samples,
+                         drift_play_mem[di], drift_rest_mem[di]);
+    d_frozen ? (
+      new_phase = drift_phase_mem[di];
+    ) : (
+      new_phase = drift_phase_mem[di] + 1.0 / period_samples;
+      new_phase >= 1.0 ? (
+        new_phase -= 1.0;
+        shape == 2 ? (
+          drift_prev_mem[di] = drift_curr_mem[di];
+          drift_curr_mem[di] = rand(2) - 1;
+        );
+      );
+      drift_phase_mem[di] = new_phase;
+    );
+    shape == 0 ? (
+      shape_val = sin(2 * $pi * new_phase);
+    ) : shape == 1 ? (
+      shape_val = new_phase < 0.25 ? (4 * new_phase) :
+                  new_phase < 0.75 ? (2 - 4 * new_phase) :
+                                     (4 * new_phase - 4);
+    ) : (
+      shape_val = drift_prev_mem[di] +
+        (drift_curr_mem[di] - drift_prev_mem[di]) * new_phase;
+    );
+    drift_offset_local = shape_val > 0 ? shape_val * up : shape_val * down;
+  );
+  drift_offset_mem[di] = drift_offset_local;
+  di += 1;
+);
+
+// --- Effective values = baseline + drift + ramp, every sample. Targets:
+//     0 rate, 1 randomness, 2 transpose, 3 spread, 4 rise, 5 length,
+//     6 width, 7 dry/wet, 8 output.
+q0 = drift_offset_mem[0] + speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
+q1 = drift_offset_mem[1] + speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1];
+q2 = drift_offset_mem[2] + speed_ramp_ramp_t_mem[2] * speed_ramp_by_mem[2];
+q3 = drift_offset_mem[3] + speed_ramp_ramp_t_mem[3] * speed_ramp_by_mem[3];
+q4 = drift_offset_mem[4] + speed_ramp_ramp_t_mem[4] * speed_ramp_by_mem[4];
+q5 = drift_offset_mem[5] + speed_ramp_ramp_t_mem[5] * speed_ramp_by_mem[5];
+q6 = drift_offset_mem[6] + speed_ramp_ramp_t_mem[6] * speed_ramp_by_mem[6];
+q7 = drift_offset_mem[7] + speed_ramp_ramp_t_mem[7] * speed_ramp_by_mem[7];
+q8 = drift_offset_mem[8] + speed_ramp_ramp_t_mem[8] * speed_ramp_by_mem[8];
+
+// Rate amounts are in BPM in EVERY rate mode -- the settled suite rule -- and
+// `rate` is bubbles per second, so 60 BPM is 1 per second.
+eff_rate     = max(0.0001, rate + q0 / 60);
+eff_meanIntv = srate / eff_rate;
+eff_jitter   = max(0, min(100, slider3 + q1)) * 0.01;
+eff_transp   = slider4 + q2;
+eff_spread   = max(0, slider5 + q3);
+eff_rise     = slider6 + q4;
+// Bubble length is read at grain birth, so this changes NEW bubbles only --
+// the effect arrives over about one bubble rather than instantly.
+eff_len      = max(1, slider7 + q5);
+eff_decay    = exp(-4 / (srate * eff_len * 0.001));
+eff_width    = max(0, min(100, slider8 + q6)) * 0.01;
+eff_wet      = max(0, min(100, slider9 + q7)) * 0.01;
+eff_out      = 2 ^ ((slider10 + q8) / 6);
+
 dryL = spl0;
 dryR = spl1;
 histL[wpos] = dryL;
@@ -145,9 +405,9 @@ timerL <= 0 ? (
   start = (wpos + 1) % GC; n1 = GC - start;
   memcpy(grainL + vsel * GC, histL + start, n1);
   memcpy(grainL + vsel * GC + n1, histL, start);
-  ratioL[vsel] = 2 ^ ((transpose + spreadSemi * (rp * 2 - 1)) / 12);
+  ratioL[vsel] = 2 ^ ((eff_transp + eff_spread * (rp * 2 - 1)) / 12);
   rposL[vsel] = 0; eL[vsel] = 1; ageL[vsel] = 0;
-  timerL = max(meanIntv * (1 + jitter * (rt * 2 - 1)), 1);
+  timerL = max(eff_meanIntv * (1 + eff_jitter * (rt * 2 - 1)), 1);
 );
 timerL -= 1;
 sumL = 0; j = 0;
@@ -162,8 +422,8 @@ loop(NV,
     sB = gb[ipB] * (1 - frB) + gb[ipB1] * frB;
     xb = x + 0.5; xb >= 1 ? xb -= 1; wB = xb < 0.5 ? 2 * xb : 2 * (1 - xb);
     sumL += (sA * wA + sB * wB) * ev * min(ageL[j] / FADE, 1);
-    rp2 += ratioL[j] * 2 ^ (riseSemi * (1 - ev) / 12); rp2 >= GC ? rp2 -= GC;
-    rposL[j] = rp2; ageL[j] += 1; eL[j] = ev * decayCoef;
+    rp2 += ratioL[j] * 2 ^ (eff_rise * (1 - ev) / 12); rp2 >= GC ? rp2 -= GC;
+    rposL[j] = rp2; ageL[j] += 1; eL[j] = ev * eff_decay;
   );
   j += 1;
 );
@@ -177,9 +437,9 @@ timerR <= 0 ? (
   start = (wpos + 1) % GC; n1 = GC - start;
   memcpy(grainR + vsel * GC, histR + start, n1);
   memcpy(grainR + vsel * GC + n1, histR, start);
-  ratioR[vsel] = 2 ^ ((transpose + spreadSemi * (rp * 2 - 1)) / 12);
+  ratioR[vsel] = 2 ^ ((eff_transp + eff_spread * (rp * 2 - 1)) / 12);
   rposR[vsel] = 0; eR[vsel] = 1; ageR[vsel] = 0;
-  timerR = max(meanIntv * (1 + jitter * (rt * 2 - 1)), 1);
+  timerR = max(eff_meanIntv * (1 + eff_jitter * (rt * 2 - 1)), 1);
 );
 timerR -= 1;
 sumR = 0; j = 0;
@@ -194,19 +454,65 @@ loop(NV,
     sB = gb[ipB] * (1 - frB) + gb[ipB1] * frB;
     xb = x + 0.5; xb >= 1 ? xb -= 1; wB = xb < 0.5 ? 2 * xb : 2 * (1 - xb);
     sumR += (sA * wA + sB * wB) * ev * min(ageR[j] / FADE, 1);
-    rp2 += ratioR[j] * 2 ^ (riseSemi * (1 - ev) / 12); rp2 >= GC ? rp2 -= GC;
-    rposR[j] = rp2; ageR[j] += 1; eR[j] = ev * decayCoef;
+    rp2 += ratioR[j] * 2 ^ (eff_rise * (1 - ev) / 12); rp2 >= GC ? rp2 -= GC;
+    rposR[j] = rp2; ageR[j] += 1; eR[j] = ev * eff_decay;
   );
   j += 1;
 );
 
 // ---- stereo width, soft-clip safety, dry/wet, output ----
 wmono = (sumL + sumR) * 0.5;
-wetL = wmono + width * (sumL - wmono);
-wetR = wmono + width * (sumR - wmono);
+wetL = wmono + eff_width * (sumL - wmono);
+wetR = wmono + eff_width * (sumR - wmono);
 wetL = wetL / sqrt(1 + wetL * wetL);
 wetR = wetR / sqrt(1 + wetR * wetR);
-spl0 = dryL * (1 - wetmix) + wetL * outlev * wetmix;
-spl1 = dryR * (1 - wetmix) + wetR * outlev * wetmix;
+spl0 = dryL * (1 - eff_wet) + wetL * eff_out * eff_wet;
+spl1 = dryR * (1 - eff_wet) + wetR * eff_out * eff_wet;
 
 wpos = (wpos + 1) % GC;
+
+@serialize
+// Bubbler had NO @serialize until 2026-09-05. Drift and Ramp remember a separate
+// amount per target and that memory has to travel with the project.
+// Version-guarded; the magic encodes the target count, so a format change
+// degrades to @init defaults rather than to garbage. An OLD project has no blob
+// at all, fails the check, and lands on defaults -- drift and ramp both off,
+// which is exactly how this plugin behaved before today.
+bb_magic = 3400000 + N_TARGETS;
+file_var(0, bb_magic);
+bb_magic == 3400000 + N_TARGETS ? (
+  file_mem(0, speed_ramp_by_mem,    N_TARGETS);
+  file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
+  file_mem(0, speed_ramp_delay_mem, N_TARGETS);
+  file_mem(0, sr_play_mem,          N_TARGETS);
+  file_mem(0, sr_rest_mem,          N_TARGETS);
+  file_var(0, last_speed_target);
+  file_mem(0, drift_up_mem,    N_TARGETS);
+  file_mem(0, drift_down_mem,  N_TARGETS);
+  file_mem(0, drift_per_mem,   N_TARGETS);
+  file_mem(0, drift_shape_mem, N_TARGETS);
+  file_mem(0, drift_play_mem,  N_TARGETS);
+  file_mem(0, drift_rest_mem,  N_TARGETS);
+  file_var(0, last_target_select);
+
+  // TRACK-DUPLICATE FIX, and it is not optional: without it a duplicated track
+  // silently ZEROES whichever target is selected. On READ (load or duplicate)
+  // file_avail(0) >= 0; on WRITE it is < 0. @serialize is the ONE section that
+  // runs on both, so it re-establishes the bank-matches-slider invariant
+  // whatever order the restore paths ran in. sliderchange(-1), NOT
+  // slider_automate -- this must not write automation.
+  file_avail(0) >= 0 ? (
+    slider20 = speed_ramp_by_mem[last_speed_target];
+    slider22 = speed_ramp_dur_mem[last_speed_target];
+    slider23 = sr_play_mem[last_speed_target];
+    slider24 = sr_rest_mem[last_speed_target];
+    slider26 = speed_ramp_delay_mem[last_speed_target];
+    slider12 = drift_up_mem[last_target_select];
+    slider13 = drift_down_mem[last_target_select];
+    slider14 = drift_per_mem[last_target_select];
+    slider16 = drift_shape_mem[last_target_select];
+    slider17 = drift_play_mem[last_target_select];
+    slider18 = drift_rest_mem[last_target_select];
+    sliderchange(-1);
+  );
+);
