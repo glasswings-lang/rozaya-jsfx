@@ -56,7 +56,7 @@ slider8:0<0,3,1{1 (-6 dB/oct),2 (-12 dB/oct),4 (-24 dB/oct),8 (-48 dB/oct)}>Orde
 slider9:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Drift target
 slider10:0<0,1000,0.01>Drift up amount (units match target)
 slider11:0<0,1000,0.01>Drift down amount (units match target)
-slider12:0<0,1000,0.001>Drift period (interpret by mode; 0 = off)
+slider12:0<0,1000,0.001>Drift period (BPM / Hz / sec / beats per cycle by mode; 0 = off)
 // NOTE the ordering here is {BPM,Hz,Seconds} -- a THIRD variant. Melody Phase
 // and Polyrhythm use {BPM,Seconds,Hz}; Tremolo and the sweeping filter use
 // {Hz,Seconds,BPM}. Seconds is index 2 here, not 1. Any code copied between
@@ -64,10 +64,17 @@ slider12:0<0,1000,0.001>Drift period (interpret by mode; 0 = off)
 // -- that mistake put Start Delay 60x out in two plugins already. The
 // conversions below are correct for THIS ordering; leave them keyed by name.
 //
-// Host x appends at index 3. No ratio picker on this one: the period is a
-// PER-BAND value living behind the drift selector, not a headline rate, so a
-// picker writing into the visible slider would fight the selector's own
-// save/restore (see the nested-selector note in CLAUDE.md).
+// Host x appends at index 3, and there Drift period means BEATS PER CYCLE --
+// 4 is one full wander every four beats (R13-revised, 2026-09-02). It used to
+// be a MULTIPLIER of the tempo, which is a number you cannot hear without doing
+// arithmetic against the project tempo first.
+//
+// No ratio picker on this one, and there never was: the period is a PER-BAND
+// value living behind the drift selector, not a headline rate, so a picker
+// writing into the visible slider would fight the selector's own save/restore
+// (see the nested-selector note in CLAUDE.md). That accident of design means
+// this plugin skips steps 3 and 4 of the R13-revised recipe entirely -- there
+// is no picker to retire and no landing block to delete.
 slider13:2<0,3,1{BPM,Hz,Seconds,Host x}>Drift period mode
 slider14:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
@@ -335,9 +342,13 @@ mode == 1 ? (
         d_per_mode == 0 ? d_cps = d_per / 60;
         d_per_mode == 1 ? d_cps = d_per;
         d_per_mode == 2 ? d_cps = 1.0 / d_per;
-        // Host x: d_per is a multiplier of the project tempo. Applied right
-        // here, per band, so bands in other modes are untouched.
-        d_per_mode == 3 ? d_cps = d_per * max(tempo, 0.001) / 60;
+        // Host x: d_per is BEATS PER CYCLE. tempo/60 is beats per second, so N
+        // beats per cycle is (tempo/60)/N cycles per second. Applied right here,
+        // per band, so bands in other modes are untouched. The enclosing guard
+        // is `d_per > 0`, so the division cannot meet a zero -- but it is
+        // written the safe way anyway, because inverting a unit inverts its edge
+        // cases and `1/max(raw,0.001)` clamps the wrong side.
+        d_per_mode == 3 ? d_cps = d_per > 0.001 ? max(tempo, 0.001) / 60 / d_per : 0.001;
 
         band_drift_phase[slot] += d_cps / srate;
         band_drift_phase[slot] >= 1.0 ? (
@@ -457,9 +468,13 @@ mode == 1 ? (
         d_per_mode == 0 ? d_cps = d_per / 60;
         d_per_mode == 1 ? d_cps = d_per;
         d_per_mode == 2 ? d_cps = 1.0 / d_per;
-        // Host x: d_per is a multiplier of the project tempo. Applied right
-        // here, per band, so bands in other modes are untouched.
-        d_per_mode == 3 ? d_cps = d_per * max(tempo, 0.001) / 60;
+        // Host x: d_per is BEATS PER CYCLE. tempo/60 is beats per second, so N
+        // beats per cycle is (tempo/60)/N cycles per second. Applied right here,
+        // per band, so bands in other modes are untouched. The enclosing guard
+        // is `d_per > 0`, so the division cannot meet a zero -- but it is
+        // written the safe way anyway, because inverting a unit inverts its edge
+        // cases and `1/max(raw,0.001)` clamps the wrong side.
+        d_per_mode == 3 ? d_cps = d_per > 0.001 ? max(tempo, 0.001) / 60 / d_per : 0.001;
 
         band_drift_phase[slot] += d_cps / srate;
         band_drift_phase[slot] >= 1.0 ? (
