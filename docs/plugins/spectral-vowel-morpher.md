@@ -78,7 +78,7 @@ Crossfades across the captured slots. Pitch-preserving — each slot plays at it
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. One full pass takes one Auto-morph time, so each slot gets an equal share of it — same timing and same gentle crossfades as Sweep, just shuffled (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
-**Time mode** `Off / On, default Off`
+**Rate Mode** `Off / On, default Off`
 Whether **Auto-morph time** below is counted in seconds or in beats of the project tempo.
 
 Auto-morph time is a *duration*, and a duration's two honest units are seconds and beats — so this is one switch rather than a mode list. There is no ratio menu and no note-value grid: a morph every **5** beats is exactly as reachable as one every 4, which is the point in a suite about layers slipping against each other.
@@ -87,7 +87,7 @@ Flipping it doesn't change what you hear. The value converts at the current temp
 
 Shown only when Auto-morph is running, alongside the time it governs.
 
-**Auto-morph time (sec / min / beats by Time mode)** `0.01 to 1000, default 20`
+**Auto-morph time (sec / min / beats by Rate Mode)** `0.01 to 1000, default 20`
 How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Shuffle it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow motion.
 
 **Texture (% wash)** `0 to 100, default 50`
@@ -238,9 +238,9 @@ The master level for everything the plugin *makes* — the voice, the wash, and 
 
 *(Renamed from “Voice level”. Same slider, same behaviour, same saved values — the name was simply describing one part of what it did.)*
 
-### Time mode
+### Rate Mode
 
-**Time mode** `Seconds / Minutes / Beats, default Seconds`
+**Rate Mode** `Seconds / Minutes / Beats, default Seconds`
 What unit this plugin's durations are in — Auto-morph time, Start delay, Play
 for, Rest for and Drift period. On **Beats** they follow the project tempo.
 Changing the mode converts the values, so nothing changes audibly at the moment
@@ -258,9 +258,13 @@ That window is now shut. Any further unit appends to the end.
 **This was an on/off switch called `Sync to host` until 2026-09-04.** Rozaya:
 *"bpm/seconds/hz/whatever belongs in a rate mode like everything else in the
 suite."* Right, and the suite had already settled the principle — being synced
-is an entry in the unit list, not a competing boolean beside it. It is called
-**Time mode** rather than Rate Mode because this plugin has no rate; everything
-it counts is a duration.
+is an entry in the unit list, not a competing boolean beside it.
+
+It was briefly called *Rate Mode*, on the reasoning that this plugin has no rate.
+That was wrong: **Auto-morph** picks a shape and **Auto-morph time** is its
+period, which is a rate. And three other plugins already label their transport
+delay *"in rate mode units"*, so a Rate Mode governing durations alongside a rate
+is the existing convention. Same name as everywhere else now.
 
 The change cost nothing: it was already a two-entry enum, so `Off` became
 `Seconds` and `On` became `Beats` with the stored values 0 and 1 keeping their
@@ -276,22 +280,22 @@ units cannot be one you can't see.
 
 Added 2026-09-04. The Morpher had neither, while every generator in the suite
 did — and so did nothing else in the spectral family. All three times follow
-**Time mode** above: off they are seconds, on they are beats, exactly the way
+**Rate Mode** above: off they are seconds, on they are beats, exactly the way
 Auto-morph time already worked. Flipping that switch **converts** the values at
 the current tempo, so nothing changes audibly at the moment you flip it; only
 the unit you type in does.
 
-**Start delay (sec / min / beats by Time mode)** `0 to 1000, default 0`
+**Start delay (sec / min / beats by Rate Mode)** `0 to 1000, default 0`
 Sit silent for this long after playback starts, then come in normally. The
 modulation holds still during the delay — Drift, Ramp and Auto-morph all wait —
 so the piece begins at the start of its wander rather than part-way through.
 Re-arms every time you press play. 0 disables it.
 
-**Play for / Rest for (sec / min / beats by Time mode)** `0 to 1000, default 0`
+**Play for / Rest for (sec / min / beats by Rate Mode)** `0 to 1000, default 0`
 Play for a while, go quiet for a while, repeat forever. **0 in either one
 disables the gate**, so a half-set pair never silently mutes anything.
 
-**Auto-morph at rest** `Walk through / Freeze in place, default Walk through`
+**Rest mode** `Walk through / Freeze in place, default Walk through`
 What the morph walk does while resting. **Walk through** keeps Auto-morph
 advancing silently, so you rejoin wherever it has got to — the texture has moved
 on while you weren't hearing it. **Freeze in place** stops it and resumes exactly
@@ -299,7 +303,7 @@ where it stopped. Short rests barely tell the two apart; long ones do.
 
 **Drift and Ramp keep running through a rest**, and that is deliberate — it is
 what every other plugin in the suite does. Drift has its own play/rest if you
-want it to hold too. (This control was briefly called *Modulation at rest* and
+want it to hold too. (This control was briefly called *Modulation at rest*, then *Rest mode*, and
 briefly froze Drift and Ramp as well; both were wrong. "Modulation" is a word
 that appears as a control name nowhere else in the suite, and freezing more than
 the walk gave it a wider job than the *LFO at rest* control it was copied from.)
@@ -326,7 +330,7 @@ Which parameter the Drift sliders below are editing. Switch it and the four slid
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
 How far it wanders above (up) and below (down) the parameter's current value, in that parameter's own units — Texture in its 0–100, Pitch in semitones, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
-**Drift period (sec / min / beats by Time mode)** `1 to 600, default 30`
+**Drift period (sec / min / beats by Rate Mode)** `1 to 600, default 30`
 How long one full wander takes, in real seconds (this instrument has no tempo, so the period is wall-clock, not beats). 30 is a gentle sway; a few minutes is barely-there evolution.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
@@ -437,7 +441,7 @@ mismatches**, 610 new controls all seeded to 0 (off, so nothing sounds
 different), one changed line per instance.
 
 The verifier carries an **authored rename table**, because `Drift period
-(seconds)` became `Drift period (sec / min / beats by Time mode)` in the same change
+(seconds)` became `Drift period (sec / min / beats by Rate Mode)` in the same change
 and a by-name check cannot pair a renamed control up on its own. Inferring that
 pairing would be the script exercising judgement, which is exactly what tools
 here are not allowed to do.
@@ -446,7 +450,7 @@ The `@serialize` magic went 7700009 → 7700010 with no format change, so the bl
 stays an exact witness for which slider layout an instance was saved on.
 
 **One thing deliberately left out.** `Ramp duration` stays in minutes and does
-**not** follow Time mode. On Beats it would have to be a beat count, and
+**not** follow Rate Mode. On Beats it would have to be a beat count, and
 its range cannot hold one — a 20-minute ramp at 120 BPM is 2400 beats against a
 maximum of 60. Widening it to Veil's 0–1000 still only buys about eight minutes
 of beats at that tempo, so the conversion would silently clamp a long ramp,
@@ -482,7 +486,7 @@ sound controls in half and moved to the end, where every other plugin in the sui
 keeps them; the two global levels moved to the end of the sound section, after
 everything they scale. **Capture slot** is numbered 1-8 now, matching how the slots
 are actually spoken about. Two controls were added *in their proper places* rather
-than bolted onto the end — **Time mode** beside the Auto-morph time it governs,
+than bolted onto the end — **Rate Mode** beside the Auto-morph time it governs,
 and **Layer overtone harmonic** with the other layer controls. 38 sliders became 40.
 
 REAPER restores plugin values by slider POSITION, so an existing project needs its
