@@ -70,8 +70,8 @@ not say percent of what.
 
 ## The order
 
-41 controls, of which one (the last) is hidden. One net new slider: `Drift
-period unit`.
+40 controls, all of them live. One net new (`Drift period unit`), one deleted
+(the retired `Host ratio`).
 
 | new | control | from |
 |---|---|---|
@@ -115,7 +115,36 @@ period unit`.
 | 38 | Ramp rest for (0 = smooth) | **40** |
 | 39 | Ramp engage | 27 |
 | 40 | Ramp start delay | 28 |
-| 41 | Host ratio (retired, hidden) | 34 |
+
+---
+
+## The retired `Host ratio` is DELETED, not parked
+
+An earlier draft of this document kept it in the list, hidden, on the reasoning
+that "ids are primary keys and can never be renumbered". Rozaya: *"host ratio.
+can't be deleted? why."*
+
+It can. Two different things were being conflated:
+
+- **Renumbering** a slider is dangerous, because REAPER restores by position and
+  everything above it shifts. That rule is real and is why this document exists.
+- **Deleting** one is not. The id is written explicitly (`sliderN:`), so removing
+  the declaration simply leaves N unused. An old project still has a value at
+  that position; REAPER hands it to a slider that is not there and it is ignored.
+
+**The suite already does this.** `heartbeat gen` declares 1-16, then 21-25, then
+29-35: ids 17-20 and 26-28 were retired by deletion in the v2.14 reorg and the
+gaps have been sitting there ever since, harmlessly.
+
+So the picker goes. Keeping it would have cost a dead control that a screen
+reader has to walk past forever, in exchange for nothing -- it is already inert.
+And since this layout renumbers everything anyway, deleting it does not even
+leave a gap.
+
+**This applies to the other six plugins whose pickers were retired on
+2026-09-04** -- Stereo Phaser, Resonance Bank (never had one), Rhythm Track,
+Shepard Tone, Shepard Scale, Heartbeat, Sweep Dwell. Each should delete its
+picker in its own reorder pass rather than carrying a hidden corpse.
 
 ---
 
