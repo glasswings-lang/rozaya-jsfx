@@ -80,6 +80,58 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-05 (morning) — the Sweeping Filter and the Tremolo both reordered, migrated and installed; Ramp and Drift gain the units they were missing. Nothing heard.**
+
+  **Both filters' siblings done in one window**, the Tremolo second and cheaply
+  because the Filter's shape was still loaded. Between them: 31 instances across
+  19 projects migrated, verified by 725 and 348 name-decoded comparisons, both
+  PASS. Eleven finished projects touched.
+
+  Each lost TWO controls rather than hiding them — the retired `Host ratio`, and
+  the Linked Sweep picker. **Linked Sweep collapsed to `Pan sweep every
+  (cycles)`**, which is R13's shape applied to the last place a
+  multiplier-plus-picker survived. Rozaya on the old one, 2026-09-04: *"I've
+  never used it and I've never liked it being the current way BECAUSE of that
+  exact thing."* Both pan rate lists were also running BACKWARDS against the Rate
+  Mode fifteen and eighteen places above them in the same plugin.
+
+  **The DEADSLIDER trick, worth keeping.** Before deleting a retired control,
+  rename every reference to it `DEADSLIDER<n>` in the same pass as the renumber.
+  Eight references surfaced in each plugin — two `slider_show` calls, a writer
+  block, a tracker — instead of some quietly surviving a grep.
+
+  **Two rules settled by Rozaya's questions, and both were catches:**
+
+  1. *"I'd imagine both bubbler and daple have cycles, sort of, in the form of
+     bubbles. Don't they?"* They do — their own transport block already counted
+     in cycles while the drift period I had given them the day before counted in
+     seconds. Same plugin, two time bases. **The drift period unit is now
+     `{Cycles, Seconds, Beats}` wherever the plugin has a rate to count cycles
+     of**, Veil excepted because it has none. Free: all 47 instances had that
+     control unset.
+
+  2. *"Which plugin has it? because we do have projects that use ramp lol what."*
+     **This one prevented a real break.** I had reported "nothing stored" having
+     checked only the unit selector, which sounded like nobody used Ramp.
+     `bilateral-with-binaurals` has two Sweeping Filters ramping by −1 over
+     **30 minutes**, engaged, in finished work. The Ramp time unit gains Seconds
+     and Cycles — a thirty-second ramp used to mean typing *0.5 minutes*, which
+     is the exact conversion this suite exists to remove — but **the declared
+     default had to move to Minutes**, because those two instances sit on the
+     default and putting Cycles at index 0 would have turned a thirty-minute fade
+     into two seconds.
+
+     **The general rule, now in CLAUDE.md: a control being UNSET is not the same
+     as a feature being UNUSED.** The default is a live value for every instance
+     that never touched it, so moving what index 0 means rewrites them all.
+
+  **And pitch was raised, measured, and deliberately NOT started.** Seven
+  different ways of stating a pitch across the suite; Bubbler and Dapple state
+  the same control two ways. Written up as an open question with the reasoning
+  for deferring, because unlike the rate sweep there is no free window: every
+  pitch value is stored in real projects and IS the sound. Rozaya: *"It's a thing
+  that needs exploration... I don't think we should start that tonight."*
+
 - **2026-09-05 (later) — the four plugins that could not drift now can, and the suite's biggest capability gap is closed. Built, migrated, installed, UNHEARD.**
 
   **Stereo Phaser, Bubbler, Dapple and Resonance Bank** had no Drift and/or no

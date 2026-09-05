@@ -303,6 +303,20 @@ append-only history; this is the only part of the repo that claims to describe
   projects stay closed** — a reordered build plus an opened project equals a
   scrambled save.
 
+- **PHASE 2 REORDERS LANDED AND INSTALLED: Morpher, Melody, Stereo Phaser,
+  Bubbler, Dapple, Resonance Bank, SWEEPING FILTER and TREMOLO.** The last two on
+  2026-09-05 — 31 instances across 19 projects between them, verified by 725 and
+  348 name-decoded comparisons, both PASS, eleven finished projects touched.
+  **None of it heard.**
+
+  **Still owed a reorder:** Polyrhythm v1 → v3 (its layout is NOT authored, which
+  is what blocks it), Passage (blocked on what it is FOR), Womb, Melody's second
+  pass for its drift/ramp controls, and the zero-project plugins.
+
+  **Drift and Ramp are now COMPLETE in eight plugins** — Veil, Tremolo, Morpher,
+  Phaser, Bubbler, Dapple, Resonance Bank, Sweeping Filter. The Morpher still
+  owes its two unit controls. Ten plugins owe the full six.
+
 - **PITCH IS THE NEXT BIG INCONSISTENCY AND IT IS DELIBERATELY NOT STARTED.**
   Raised and measured 2026-09-05: the suite states a pitch **seven different
   ways** — note-with-octave, note-without, raw semitones, hertz, cents, percent,
