@@ -142,6 +142,11 @@ required giving this plugin save/restore for the first time.
 - **Drift up 30 / down 15 BPM on Rate**, from a baseline of 0.3 Hz: the sweep runs
   between **0.05 Hz** (one pass every 20 seconds) and **0.8 Hz** (one every 1.25), and
   the up and down halves are asymmetric in exactly the 2:1 you asked for.
+- **Drift period unit** is `Cycles / Seconds / Beats`, Cycles by default. A cycle
+  is one full sweep, so the wander stretches when you slow the sweep down;
+  Seconds ignores the rate; Beats follows the project tempo. It is referenced
+  against the rate BEFORE drift, so drifting the rate cannot modulate its own
+  drift period.
 - **Drift period unit set to Beats**, period 4 at 90 BPM: one wander every 2.67
   seconds, and it stretches and shrinks live when the project tempo changes.
 - **Drift play/rest**: the wander runs for a while and then FREEZES WHERE IT STANDS
