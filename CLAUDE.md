@@ -305,9 +305,29 @@ append-only history; this is the only part of the repo that claims to describe
   approved. **The three drafted layouts can now be reviewed against something
   real.**
 
-- **R20 — THE RATE BLOCK. SETTLED 2026-09-04, and the enum order is BUILT in
-  FIVE plugins as of 2026-09-05: Rhythm Track, Shepard Scale, Heartbeat, Stereo
-  Phaser, Sweep Dwell.** Verified by simulation, lint clean, **not heard.** Only
+- **R20 — THE RATE BLOCK. SETTLED 2026-09-04, and the enum order is BUILT AND
+  INSTALLED in SEVEN plugins as of 2026-09-05: Rhythm Track, Shepard Scale,
+  Heartbeat, Stereo Phaser, Sweep Dwell, Bubbler, Dapple.**
+
+  **The measurement that found them had a blind spot, so re-run it properly.**
+  A grep for enums containing `BPM`, `Hz` or `Seconds` misses every list that
+  names its unit its own way — `{Own rate, Host x}`, `{Own durations, Host x}`.
+  The correct scan is
+  `grep -nHE "^slider[0-9]+:.*\{[^}]*Host x[^}]*\}" src/*.jsfx | grep -v "{BPM,Seconds,Hz,Host x}"`,
+  which lists exactly what is left. **But that scan is not the whole remainder
+  either**, because a list with no `Host x` in it at all does not match: the
+  **Tremolo and Sweeping Filter pan units are `{Hz, Seconds, BPM}`, backwards
+  AND missing Host x**, and Melody's Rate mode is `{BPM, Seconds, Hz}`. Those
+  three are held for their own reorder passes.
+
+  **What the scan does show, all three deliberately held:** Resonance Bank's
+  `Drift period mode` (its value lives in a SERIALIZED per-band bank, so it
+  needs a version-gated blob migration, not a token edit), Sweep Dwell's
+  `Cycle mode` (`{Own durations, Host x}` — not a unit list at all; "own
+  durations" means the four dwell sliders SUM to the cycle, so giving it
+  BPM/Seconds/Hz turns them into proportions. Same design question as Passage,
+  and it waits for that conversation), and Womb's Rate Mode (converting off the
+  dead sync-block shape, its own pass). Verified by simulation, lint clean, **not heard.** Only
   `surges.RPP` needed a project edit (one token, backed up, verified by decoding
   against the new enum). **Resonance Bank is deliberately NOT done** — its drift
   period mode lives in a serialized bank and needs a version-gated blob
