@@ -132,7 +132,10 @@ different park points, two of them partial. The awkward fraction is the
 interesting one.
 
 **Ramp** states a destination and takes its time getting there. **Ramp time unit**
-counts the duration in minutes or beats. **Ramp play/rest** turns the climb into a
+counts the duration in **cycles, seconds, minutes or beats** — minutes by default,
+which is what a long sleep fade is usually thought in. Cycles counts this
+plugin's own, referenced against the rate before drift and ramp touch it.
+**Ramp play/rest** turns the climb into a
 **staircase** — climb, hold, climb — and the holds come out of the duration rather
 than extending it, so a 32-beat ramp stepping 2 and holding 2 still arrives at
 beat 32 and then stands on the landing.

@@ -176,10 +176,16 @@ holds do nothing.
 
 #### Ramp time unit
 
-**Minutes** (default) is wall-clock, and keeps every existing project
-bit-identical. **Beats** reads the Ramp's four time values — duration, start
-delay, play, rest — as beats instead, following the project tempo live, so a
-tempo change mid-ramp is tracked rather than ignored.
+**Minutes** is wall-clock and remains the **default**, so every existing project
+is bit-identical. **Seconds** is the same clock at a scale that suits a short
+ramp — added 2026-09-05, because a thirty-second ramp used to mean typing `0.5`
+minutes, and working that out is exactly the kind of sum this suite exists to
+take off you. **Beats** reads the Ramp's four time values — duration, start
+delay, play, rest — as beats, following the project tempo live.
+
+There is no **Cycles** entry here, unlike the Tremolo and the filters: this
+plugin has no rate, so there are no cycles to count, and an option that did
+nothing would be worse than its absence. The list is `Seconds / Minutes / Beats`.
 
 Beats, never bars: bars would need the time signature, so the same number would
 mean different things in different meters and would shift under you if the meter
@@ -193,7 +199,7 @@ the time is worse than a short one.
 
 The **staircase**: the ramp climbs for `play`, holds still for `rest`, and
 repeats — climb, settle, climb, settle — instead of one smooth slide. Read in
-whatever `Ramp time unit` selects, so `1` is one minute or one beat.
+whatever `Ramp time unit` selects, so `1` is one second, one minute or one beat.
 
 **The holds come out of the duration, they do not extend it.** A 10-minute ramp
 with holds is still a 10-minute ramp; the staircase changes only *how* you get
