@@ -1496,6 +1496,52 @@ no saved value changes**. Ship it as one batch, not per plugin.
 **Test cost: low.** One pass through the plugins actually in use, listening for anything
 that changed audibly — which nothing should.
 
+### Phase 2 ORDER REVISED 2026-09-05 — readiness first, and drift/ramp jumps the queue
+
+**Agreed with Rozaya 2026-09-05.** The table below orders by project count. That
+was right when it was written and is not right now, for two reasons found by
+working the list rather than reading it:
+
+1. **The top of the list is not startable.** Polyrhythm v1 -> v3 is 17 projects
+   and has no authored layout — only a document arguing the decision. The
+   author-the-layout-first rule (added 2026-09-04, after five migrations in one
+   day) means it cannot begin. **Ordering by use assumes every item is ready;
+   readiness gates it in practice.**
+2. **Four plugins have no Drift and/or no Ramp AT ALL.** Measured 2026-09-05:
+   `bubbler`, `dapple` and `stereo-phaser` have neither; `resonance_bank` has
+   drift and no ramp. They were built after the drift sweep and never added to
+   it. Part 3 folds missing features into each plugin's own reorder, which puts
+   these LAST because those plugins have two or three projects each.
+
+   **That is backwards, and it is the "half-done is unusable" rule.** A plugin
+   that cannot drift is a plugin you do not reach for — which is plausibly WHY
+   it has three projects. Project count is being read as a preference when it
+   is at least partly a consequence. So **Drift and Ramp go into those four
+   BEFORE their reorders, not inside them.**
+
+**The revised order:**
+
+| | what | why here |
+|---|---|---|
+| 1 | **full-feature-sweeping-filter** (11 projects) | the only large one that is READY: layout authored, R20-compliant, no open question. Folds in its own backwards pan unit, so it gets ONE migration |
+| 2 | **Drift + Ramp for `bubbler`, `dapple`, `stereo-phaser`; Ramp for `resonance_bank`** | appended sliders, no reorder, no migration — and it closes the largest capability gap in the suite |
+| 3 | **Full Feature Tremolo** (7) | layout authored and R20-compliant; same pan-unit fix as the filter |
+| 4 | **polyrhythm_phase v1 -> v3** (17+5) | biggest, and blocked until its layout is AUTHORED |
+| 5 | **womb_sound_generator_v3** (8) | converts off the dead sync-block shape (R20) |
+| 6 | **spectral_vowel_passage** (10) | blocked on a design conversation, not on work — see below |
+| 7 | the singles | `resonance_bank`'s enum needs a version-gated BLOB migration; `sweep-dwell-filter`'s `Cycle mode` needs Passage's answer |
+
+**Passage is blocked on a question, not a queue position.** Rozaya, 2026-09-05:
+*"the whole reason I kinda hate using passage is because there's, you know,
+there's no real reason to right now."* It was born to supersede the Morpher and
+in practice does not. **Reordering a plugin nobody wants to open buys nothing,
+and spends a migration across ten projects to buy it.** What it needs first is a
+decision about what it is FOR — the live candidates being durations that follow
+the rate mode's unit (the `(in rate mode units)` control the Sweeping Filter
+already has), and Play for / Rest for gaining their own target lists.
+
+---
+
 ### Phase 2 — the migrations, ordered by USE, not by family
 
 Measured across 91 projects, 2026-08-31:
