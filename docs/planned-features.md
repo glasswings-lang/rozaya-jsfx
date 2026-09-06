@@ -2166,3 +2166,48 @@ a plugin's play/rest merely paused the ramp without the speed compensation, the
 stepped one would arrive late and keep drifting -- which is the 'pulling apart'
 reading Rozaya explicitly did not hear. Two ramps arriving together, one smooth
 and one in bursts, is the whole effect.
+
+## A RANGE SWEEP — every slider's declared limits against what it can actually do
+
+**Raised by Rozaya 2026-09-06**, after a library-wide range scan found seven
+stored values sitting above their control's declared maximum: *"This is why I get
+on people for clamping or artificially limiting. Makes me think there needs to be
+a range sweep after all this."*
+
+**Six of the seven were deliberate.** Values typed past the slider, in the
+parameter list, because the setting was wanted and the control would not offer
+it: a 300% stereo width, a two-hour ramp, an eight-second breath pause. They
+worked. The plugin receives what was typed.
+
+**The clearest case is the one that proves the point.** Breath Gen's Inhale and
+Exhale reach 20 seconds; its pauses stopped at 5. A pause that cannot be made as
+long as the breath it sits inside is not a safety limit, it is an oversight — and
+the only way to find it was that someone typed past it and the scan noticed.
+
+### What the sweep is
+
+Go through every slider in the suite and ask, per control: **is this maximum a
+real constraint of the DSP, or a number somebody guessed?** Widen the guesses.
+
+- **Widening is free and safe.** It never moves a stored value; only narrowing
+  does. So this needs no migration and cannot break a project.
+- **Look for internal inconsistencies first** — a control that cannot reach as
+  far as the thing it modifies, like the breath pauses. Those are findable by
+  reading rather than by waiting for someone to hit them.
+- **Where a limit IS real, say so in the control or the comment**, so the next
+  person does not widen it back.
+- **The scan is the entry point:** `tools/scan_slider_ranges.py` over the live
+  projects finds anything already typed past. But that only finds limits someone
+  has already fought; the sweep proper has to go looking for the ones that
+  silently stopped them.
+
+**Three widened already, 2026-09-06** (Breath Gen's two pauses to 0..20 to match
+its breaths, the Morpher's Stereo width to 0..400 and its Ramp duration to 0..240
+minutes), which is where the idea came from rather than the sweep itself.
+
+**One caution, and it is the only one:** widening makes a setting reachable that
+was previously only typeable, so a control that is genuinely dangerous past a
+point should keep its limit and say why. The Morpher's Stereo width is the live
+example — above 100 it is a widener, and heavy widening is what causes
+mono-cancellation on a speaker, which matters for a suite played on phones and
+HomePods.

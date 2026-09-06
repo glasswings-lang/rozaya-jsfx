@@ -35,7 +35,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rpp_sliders import parse_line, SliderLineError, is_quoted  # noqa: E402
 
 DECL = re.compile(r'^slider(\d+):([^<]*)<([^,]*),([^,]*),([^>]*)>(.*)$')
-JS_RE = re.compile(r'^\s*<JS\s+(\S+)')
+# REAPER QUOTES the plugin path when it contains a space, and one plugin in this
+# suite does: `<JS "glasswings/heartbeat gen.jsfx" ""`. The old pattern was
+# `(\S+)`, which stopped at the space and yielded `"glasswings/heartbeat` -- so
+# every Heartbeat instance in the library was silently SKIPPED by this check and
+# reported only as a "NOT FOUND in the effects folder" footnote nobody read.
+# A safety check that quietly covers less than it claims is worse than none.
+JS_RE = re.compile(r'^\s*<JS\s+(?:"([^"]+)"|(\S+))')
 
 DEFAULT_EFFECTS = os.path.expandvars(
     r"%APPDATA%\REAPER\Effects")
@@ -67,7 +73,7 @@ def scan(path, effects, cache):
         m = JS_RE.match(ln)
         if not m:
             continue
-        rel = m.group(1).strip('"')
+        rel = (m.group(1) or m.group(2)).strip('"')
         if rel not in cache:
             cache[rel] = read_layout(os.path.join(effects, rel.replace("/", os.sep)))
         lay = cache[rel]

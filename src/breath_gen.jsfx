@@ -5,9 +5,14 @@ desc: Breath Generator
 // https://creativecommons.org/publicdomain/zero/1.0/
 
 slider1:4.0<0.5,20.0,0.1>Inhale Duration (sec)
-slider2:0.3<0.0,5.0,0.01>Top pause (sec)
+// 0..20 to match Inhale/Exhale above, widened 2026-09-06. It was 0..5, which
+// meant a pause could not be made as long as the breath it sits inside -- and
+// `breathscapes.RPP` had 8 typed into it, above what the control offered.
+// WIDENING NEVER MOVES A STORED VALUE; only narrowing does. So this makes an
+// existing setting reachable by the slider instead of only by typing.
+slider2:0.3<0.0,20.0,0.01>Top pause (sec)
 slider3:4.0<0.5,20.0,0.1>Exhale Duration (sec)
-slider4:0.3<0.0,5.0,0.01>Bottom pause (sec)
+slider4:0.3<0.0,20.0,0.01>Bottom pause (sec)   // 0..20, see Top pause above
 slider5:800<50,2000,1>Inhale Frequency Hz
 slider6:600<50,2000,1>Exhale Frequency Hz
 slider7:0.3<0.0,1.0,0.01>Inhale Fade In

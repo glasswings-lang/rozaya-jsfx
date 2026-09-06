@@ -130,7 +130,14 @@ slider10:50<0,100,1>Texture (% wash)
 slider11:150<5,680,1>Wash grain (ms)
 slider12:0<0,150,0.5>Spread (Hz)
 slider13:0<-96,96,0.1>Pitch (semitones)
-slider14:50<0,100,1>Stereo width (%)
+// 0..400, widened 2026-09-06. `nothing to fear.RPP` has 300 typed into this on
+// two instances, above the 100 the control offered, and it works -- the value is
+// used directly as a width multiplier. Widening never moves a stored value.
+// NOTE, because it is now reachable by the slider rather than only by typing:
+// above 100 this is a stereo WIDENER, and heavy widening is what causes
+// mono-cancellation on a speaker. That matters for this suite specifically --
+// these get played on phone and HomePod speakers.
+slider14:50<0,400,1>Stereo width (%)
 slider15:0<0,100,0.1>Denoise (%)
 slider16:0<0,500,1>Low cut (Hz)
 // --- High cut. The mirror of Low cut, and the thing that makes an octave-up
@@ -326,7 +333,9 @@ slider44:0<-300,300,0.001>Ramp by (units match target)
 // at that tempo, so the flip-conversion would silently clamp a long ramp -- which
 // is precisely the silent value change the suite forbids. Needs a decision about
 // the range, not a quiet workaround at 3am. Left in minutes and flagged.
-slider45:0<0,60,0.1>Ramp duration (minutes)
+// 0..240, widened 2026-09-06. `half-music-half-wind.RPP` has 120 typed into this
+// on two instances -- a two-hour ramp, above the one hour the control offered.
+slider45:0<0,240,0.1>Ramp duration (minutes)
 // Ramp play/rest turns the smooth ride into a STAIRCASE -- "ramp on one side,
 // stairs on the other" (Rozaya, 2026-09-04). Windows are whole MINUTES, matching
 // Ramp duration. The rests come OUT of the duration rather than extending it:
