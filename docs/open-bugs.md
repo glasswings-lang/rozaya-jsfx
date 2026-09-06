@@ -1,7 +1,5 @@
 # Open bugs
 
-Things that are known-broken and NOT fixed.
-
 **Both entries are currently CLOSED.** Neither is a job. An entry stays here for
 its reasoning and its burned theories, so they are not re-derived — read them
 before touching the plugin they name, then leave them alone.
@@ -89,9 +87,23 @@ never affected. Ear-confirmed repeatedly by Rozaya on 2026-09-02.
 The loud half of the original report was the 2026-07-02 slider-insert bug — drift
 switching itself on in projects that never used it — which is fixed and
 ear-confirmed (see *Recently closed* below). What remains is the report against
-**`simple-sequence`** specifically: 12 instances, all synced, every Start delay 0,
-tempo 205, arriving at slightly different times on project open, with a play/stop
-curing it.
+**`simple-sequence`** specifically: 12 instances, all synced, arriving at
+slightly different times on project open, with a play/stop curing it.
+
+> **THE PROJECT HAS CHANGED UNDER THIS REPORT. Re-measured 2026-09-05.** This
+> paragraph used to say *"every Start delay 0, tempo 205"*. Both were true when
+> written and neither is now:
+>
+> - **The project tempo is 120, not 205.** It was still 205 in the
+>   `_pre-phase1-20260831` snapshot, so it was changed some time after that.
+> - **Start delays are no longer all zero** — the twelve instances now hold a mix
+>   of `0` and `8`.
+>
+> **This weakens the entry's own explanation for why the fault is audible here.**
+> The argument below is that a small absolute offset is a large fraction of a
+> 0.585 s step. At 120 BPM the step is **1.000 s**, so the same offset is now a
+> smaller fraction of it, and the fault may well be quieter or absent. Anyone
+> re-testing should expect that rather than reading a null result as a fix.
 
 `simple-sequence` was **never** affected by the slider shift (its blob magic is
 2100028, the current format), so this is a separate, quieter fault.
@@ -105,11 +117,27 @@ drift bug and should be treated as withdrawn** unless it is heard again.
   re-running on every instance on the same sample at the transport edge, which is
   currently the **only** shared time origin the sequencer has.
 - Melody's `@sample` has no `play_state` test anywhere, so each instance's
-  sequence starts at *its own* instantiation moment. Only `polyrhythm_phase` and
-  `_v3` have such a test; fourteen other plugins with sync do not.
-- `simple-sequence`'s real step is `(1/0.5) ÷ (205/60)` = **0.585 s**, so a small
-  absolute offset is a large fraction of a step — which is why it would be
-  audible there and not in a project with 4-second steps.
+  sequence starts at *its own* instantiation moment. **This is true of the WHOLE
+  SUITE** — re-measured 2026-09-05: of the 17 plugins that can sync, **not one**
+  tests `play_state` in `@sample`.
+
+  > **Corrected 2026-09-05.** This bullet used to say *"Only `polyrhythm_phase`
+  > and `_v3` have such a test; fourteen other plugins with sync do not."* Both
+  > halves were wrong. The Polyrhythms' only mentions of `play_state` are
+  > COMMENTS — one of which records that the transport-edge handler was REMOVED
+  > in v2.10 Path A — and there are 17 synced plugins now, not 15. The original
+  > claim came from a grep that did not exclude comment lines, which is a mistake
+  > this repo has now made more than once.
+  >
+  > **The correction strengthens the diagnosis rather than weakening it.** Melody
+  > is not the exception; `@init` re-running at the transport edge is the only
+  > shared time origin ANY of these plugins has. Melody is simply where it
+  > becomes audible, because of the 0.585 s step below.
+- `simple-sequence`'s step was **0.585 s** at the tempo it had when this was
+  diagnosed — `(1/0.5) ÷ (205/60)` — so a small absolute offset was a large
+  fraction of a step, which is why it was audible there and not in a project with
+  4-second steps. **At today's tempo of 120 the same step is 1.000 s**, so the
+  mechanism still holds but the margin is nearly double what it was.
 
 ### What the 2026-09-02 measurement established
 
