@@ -228,9 +228,9 @@ slider64:0<0,1000,1>Rest for (cycles)
 // v2.14 per-target timelines + reorg. Existing Speed Ramp configs reset on
 // this upgrade (the @serialize magic bumped for the per-target format).
 slider80:0<-1000,1000,0.001>Ramp by (units match target)
-slider81:0<0,60,0.1>Ramp duration (minutes)
+slider81:0<0,1000,0.1>Ramp duration (minutes)
 slider82:0<0,1,1{Off,On}>Ramp engage
-slider83:0<0,60,0.1>Ramp start delay (minutes)
+slider83:0<0,1000,0.1>Ramp start delay (minutes)
 
 // Convenience picker for Host x, not a grid: WRITES a multiplier into Rate
 // Value on change, then gets out of the way. "Custom" (default) never writes.
@@ -239,7 +239,7 @@ slider83:0<0,60,0.1>Ramp start delay (minutes)
 // values ("1/4" means a quarter NOTE everywhere else, the opposite end).
 slider84:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
 slider85:10<0,100,0.1>Pan Glide ms (0=instant)
-slider86:8<2,32,1>Cycle Steps (per-cycle modes)
+slider86:8<2,1000,1>Cycle Steps (per-cycle modes)
 
 // ===== CHARACTER (global post-effects) =====
 // Four sliders that adjust the character of WHATEVER waveform is
@@ -328,8 +328,8 @@ slider73:25<1,99,0.1>Pulse Width % (50 = square)
 // to fit 24 targets, so v2.9 saved drift configs reset on load (the
 // selector still defaults to Base Rate). Reconfigure after upgrading.
 slider74:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Drift target
-slider75:0<0,100,0.01>Drift up amount (units match target)
-slider76:0<0,100,0.01>Drift down amount (units match target)
+slider75:0<0,1000,0.01>Drift up amount (units match target)
+slider76:0<0,1000,0.01>Drift down amount (units match target)
 slider77:8<1,1000,1>Drift period (cycles)
 slider78:0<0,2,1{Sine,Triangle,Random}>Drift shape
 

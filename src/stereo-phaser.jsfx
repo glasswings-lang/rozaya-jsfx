@@ -76,8 +76,8 @@ slider12:0<0,1000,0.01>Drift down amount (units match target)
 slider13:20<1,600,0.1>Drift period
 slider14:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 slider15:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider16:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider17:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider16:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider17:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp ----------------------------------------------------------------
 slider18:0<0,5,1{Rate,Range min Hz,Range max Hz,Feedback,Stereo spread,Wet/dry mix}>Ramp target

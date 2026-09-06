@@ -34,7 +34,7 @@ slider16:0<0,1,1{Off,On}>Pan Enabled
 slider17:0<0,15,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan Mode
 slider18:1<0,1,0.01>Pan Spread (0=mono, 1=full)
 slider19:5<0,100,0.1>Pan Glide ms (0=instant)
-slider20:8<2,32,1>Cycle Steps (per-cycle modes)
+slider20:8<2,1000,1>Cycle Steps (per-cycle modes)
 slider21:2<0.001,1000,0.001>Pan Sweep Rate
 // R20, 2026-09-05: the canonical four, in the canonical order, and it gains
 // Host x. This list used to read {Hz, Seconds, BPM} -- BACKWARDS against the
@@ -127,14 +127,14 @@ slider39:0<-5000,5000,0.001>Ramp by (units match target)
 // NEW 2026-09-05. Minutes is what this plugin's Ramp duration and start delay
 // already counted in, so index 0 leaves every saved value meaning what it did.
 slider40:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider41:0<0,60,0.1>Ramp duration (minutes)
+slider41:0<0,1000,0.1>Ramp duration (minutes)
 // NEW 2026-09-05. Turns the climb into a STAIRCASE -- climb, hold, climb. The
 // holds come OUT of the duration rather than extending it, so Ramp duration goes
 // on meaning "you arrive in about this long". Off unless BOTH are > 0.
 slider42:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider43:0<0,1000,0.01>Ramp rest for (0 = smooth)
 slider44:0<0,1,1{Off,On}>Ramp engage
-slider45:0<0,60,0.1>Ramp start delay (minutes)
+slider45:0<0,1000,0.1>Ramp start delay (minutes)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / the rest of
 // the sweep. Pick a target (slider30), then sliders 35-38 hold THAT target's
@@ -175,8 +175,8 @@ slider35:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // NEW 2026-09-05. Drift runs for a while and then FREEZES WHERE IT STANDS
 // rather than returning to centre. Off unless BOTH are > 0, which is the
 // default and is bit-identical to the old always-wandering behaviour.
-slider36:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider37:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider36:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider37:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // Convenience picker for Host x. Writes a multiplier into Rate Value on
 // change then gets out of the way; "Custom" (default) never writes. Not

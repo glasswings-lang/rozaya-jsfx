@@ -2201,6 +2201,32 @@ real constraint of the DSP, or a number somebody guessed?** Widen the guesses.
   has already fought; the sweep proper has to go looking for the ones that
   silently stopped them.
 
+### PASS 1 IS DONE, 2026-09-06 — 126 sliders across 20 plugins
+
+Applied as a UNION of the old range and the target, which is the formulation that
+makes it safe: a union can only grow, so it cannot narrow anything by
+construction. Verified across all 641 continuous sliders in the suite — 126
+widened, 515 unchanged, **0 narrowed**, so no value in any project can be
+clamped. No migration needed.
+
+**Two failures on the way, and both are the reason to write the rule as a union
+rather than as an assignment:**
+
+* A flat "set these to 0..1000" NARROWED the Sweeping Filter's drift amounts from
+  0..5000, and another pair from 0..2000, because the same control name is
+  deliberately wider in some plugins than in others. Narrowing clamps silently on
+  the next load. **A blanket widening rule without that guard is a narrowing tool
+  wearing a widening tool's name.**
+* Applying the 0.001 floor to INTEGER controls dropped `Beats per bar` and
+  `Capture average (frames)` to a minimum of 0. Zero beats per bar is not a wider
+  choice, it is a division by zero. Integer controls now keep their floor and
+  their step; only the ceiling moves.
+
+**What pass 2 still owes a decision**, all held deliberately: dB ranges (the
+floor is an "off" sentinel and the ceiling guards clipping, so it is a judgement
+about loudness, not reach), and whether any of the normalised 0..1 controls
+should exceed 1 — Stereo width is the live example of one that arguably should.
+
 **Three widened already, 2026-09-06** (Breath Gen's two pauses to 0..20 to match
 its breaths, the Morpher's Stereo width to 0..400 and its Ramp duration to 0..240
 minutes), which is where the idea came from rather than the sweep itself.

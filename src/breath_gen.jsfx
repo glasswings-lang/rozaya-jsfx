@@ -4,14 +4,14 @@ desc: Breath Generator
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:4.0<0.5,20.0,0.1>Inhale Duration (sec)
+slider1:4.0<0.001,1000,0.001>Inhale Duration (sec)
 // 0..20 to match Inhale/Exhale above, widened 2026-09-06. It was 0..5, which
 // meant a pause could not be made as long as the breath it sits inside -- and
 // `breathscapes.RPP` had 8 typed into it, above what the control offered.
 // WIDENING NEVER MOVES A STORED VALUE; only narrowing does. So this makes an
 // existing setting reachable by the slider instead of only by typing.
-slider2:0.3<0.0,20.0,0.01>Top pause (sec)
-slider3:4.0<0.5,20.0,0.1>Exhale Duration (sec)
+slider2:0.3<0,1000,0.001>Top pause (sec)
+slider3:4.0<0.001,1000,0.001>Exhale Duration (sec)
 slider4:0.3<0.0,20.0,0.01>Bottom pause (sec)   // 0..20, see Top pause above
 slider5:800<50,2000,1>Inhale Frequency Hz
 slider6:600<50,2000,1>Exhale Frequency Hz
@@ -69,7 +69,7 @@ slider26:0<-20,20,0.001>Ramp by
 // Cycles counts whole breaths at the length BEFORE drift and ramp touch it, so a
 // ramp cannot alter its own clock.
 slider27:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider28:0<0,60,0.1>Ramp duration (in ramp time units)
+slider28:0<0,1000,0.1>Ramp duration (in ramp time units)
 // Ramp play/rest, per target, in ramp time units: the ramp advances for `play`,
 // holds for `rest`, and repeats -- a staircase instead of a smooth glide. The
 // holds come OUT of the duration rather than extending it, so Ramp duration goes
@@ -99,8 +99,8 @@ slider31:0<0,1,1{Off,On}>Ramp engage
 // old block. Sliders 26 and 27 are no longer declared — their old
 // values are silently discarded on project load.
 slider17:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Drift target
-slider18:0<0,10,0.01>Drift up amount (seconds)
-slider19:0<0,10,0.01>Drift down amount (seconds)
+slider18:0<0,1000,0.01>Drift up amount (seconds)
+slider19:0<0,1000,0.01>Drift down amount (seconds)
 slider20:8<1,1000,1>Drift period
 // What the period is COUNTED IN. Cycles is this plugin's native count -- one
 // full breath, inhale through bottom pause -- and the default, which is exactly
@@ -115,12 +115,12 @@ slider22:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // centre -- and the FRACTION of the play value chooses where it parks: x.25
 // crest, x.75 trough, x.0 and x.5 neutral. A whole number parks at no-change
 // every time and is nearly inaudible; an awkward fraction is the useful one.
-slider23:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider24:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider23:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider24:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // Speed ramp start delay — part of the v2.14 selector-first block (appears at
 // 34 in the UI, right after engage/33). Per-target.
-slider32:0<0,60,0.1>Ramp start delay (in ramp time units)
+slider32:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).

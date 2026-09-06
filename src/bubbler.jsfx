@@ -66,8 +66,8 @@ slider17:0<0,1000,0.01>Drift down amount (units match target)
 slider18:20<1,600,0.1>Drift period
 slider19:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 slider20:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider21:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider22:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider21:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider22:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp ----------------------------------------------------------------
 slider23:0<0,8,1{Bubble rate,Timing randomness,Transpose,Pitch spread,Rise,Bubble length,Stereo width,Dry/wet,Output}>Ramp target

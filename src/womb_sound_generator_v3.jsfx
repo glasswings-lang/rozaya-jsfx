@@ -64,9 +64,9 @@ slider13:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
 // --- BREATH ---
 slider14:0.5<0.0,1.0,0.01>Breath Volume
 slider15:0<0,1,1{Off,Solo}>Breath Solo
-slider16:4.0<0.02,64.0,0.01>Inhale (sec / beats in Host x)
+slider16:4.0<0.001,1000,0.001>Inhale (sec / beats in Host x)
 slider17:0.3<0.0,64.0,0.01>Top pause (sec / beats in Host x)
-slider18:4.0<0.02,64.0,0.01>Exhale (sec / beats in Host x)
+slider18:4.0<0.001,1000,0.001>Exhale (sec / beats in Host x)
 slider19:0.3<0.0,64.0,0.01>Bottom pause (sec / beats in Host x)
 slider20:250<50,2000,1>Inhale Frequency Hz
 slider21:170<50,2000,1>Exhale Frequency Hz
@@ -123,9 +123,9 @@ slider47:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // layer.
 slider48:0<0,9,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq}>Ramp target
 slider49:0<-2000,2000,0.001>Ramp by
-slider50:0<0,60,0.1>Ramp duration (minutes)
+slider50:0<0,1000,0.1>Ramp duration (minutes)
 slider51:0<0,1,1{Off,On}>Ramp engage
-slider52:0<0,60,0.1>Ramp start delay (minutes)
+slider52:0<0,1000,0.1>Ramp start delay (minutes)
 
 // Breaths per minute: one-way SETUP rescale tool for the four breath
 // durations — it rewrites sliders 16-19 once, preserving their I:E ratio,
@@ -133,7 +133,7 @@ slider52:0<0,60,0.1>Ramp start delay (minutes)
 // Ramp TARGET (added v2.14), which modulates the breath rate over time
 // without touching the sliders. Use this to dial in a starting rate; use
 // the target to wander or wind it down while playing.
-slider53:0<0,30,0.1>Breaths per minute (Own BPM only; 0=off, rewrites the durations)
+slider53:0<0,1000,0.001>Breaths per minute (Own BPM only; 0=off, rewrites the durations)
 
 // === Drift (nested-selector pattern, see header) ===
 // Pick a target, then sliders 55-58 hold THAT target's drift config.
@@ -148,14 +148,14 @@ slider58:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // Heart with breath — RSA baseline coupling depth.
 // The RSA depth drift target (slider54=6) wanders THIS baseline value.
-slider59:0<0,30,0.1>Heart with breath (BPM peak-to-peak)
+slider59:0<0,1000,0.001>Heart with breath (BPM peak-to-peak)
 
 // === Sighs ===
 // Periodic deep breaths. Sigh interval = average minutes between sighs.
 // When a sigh fires, the next breath's inhale stretches by the depth
 // multiplier (and reads as deeper because the longer inhale envelope
 // rises higher under the same fade shape). 0 interval = no sighs.
-slider60:0<0,30,0.1>Sigh interval (minutes, 0=off)
+slider60:0<0,1000,0.001>Sigh interval (minutes, 0=off)
 slider61:1.5<1.0,3.0,0.05>Sigh depth multiplier
 
 // --- Host tempo sync (sliders 62-64) ------------------------------------
@@ -197,7 +197,7 @@ slider63:0<0,0,1{Heart rate}>Host sync target
 // which is how two instances are made to slip against each other.
 // Step 0.01 -- in the parameter list you can only arrow, never type, so a
 // value the step cannot land on is a value that does not exist.
-slider64:1<0.25,64,0.01>Every N beats (Host x)
+slider64:1<0.001,1000,0.001>Every N beats (Host x)
 
 // Slider 64 is the EDITOR. The numbers themselves live in a memory bank saved
 // with the project (host_beats_mem, see @init), which is how Drift and Speed

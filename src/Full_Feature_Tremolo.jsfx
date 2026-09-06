@@ -31,7 +31,7 @@ slider11:0<0,1,1{Off,On}>Pan Enabled
 slider12:0<0,14,1{Mono,Alternating,Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan Mode
 slider13:1<0,1,0.01>Pan Spread (0=mono, 1=full)
 slider14:5<0,100,0.1>Pan Glide ms (0=instant)
-slider15:8<2,32,1>Cycle Steps (per-cycle modes)
+slider15:8<2,1000,1>Cycle Steps (per-cycle modes)
 slider16:2<0.001,1000,0.001>Pan Sweep Rate
 // R20: the canonical four, in the canonical order, gaining Host x. This list
 // used to read {Hz, Seconds, BPM} -- BACKWARDS against the Rate Mode fifteen
@@ -60,8 +60,8 @@ slider18:1<0.001,1000,0.001>Pan sweep every (cycles)
 // is off (the default), which is bit-identical to always-drifting.
 // Proven in Veil first. Unlike a filter, a tremolo has an attack for the
 // pause to interrupt, which is where this feature actually earns its keep.
-slider30:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider31:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider30:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider31:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // Ramp time unit. REAPER counts in beats and this plugin already has a Host x
 // rate mode, yet the Ramp was hardwired to wall clock. Minutes keeps every
@@ -150,9 +150,9 @@ slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 // reconfigure. See the manual's migration note.
 slider32:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Ramp target
 slider33:0<-1000,1000,0.001>Ramp by (units match target)
-slider35:0<0,60,0.1>Ramp duration (minutes)
+slider35:0<0,1000,0.1>Ramp duration (minutes)
 slider38:0<0,1,1{Off,On}>Ramp engage
-slider39:0<0,60,0.1>Ramp start delay (minutes)
+slider39:0<0,1000,0.1>Ramp start delay (minutes)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / the rest of
 // the sweep. Pick a target (slider24), then sliders 30-33 hold THAT target's
@@ -180,8 +180,8 @@ slider39:0<0,60,0.1>Ramp start delay (minutes)
 // (Drift IDs shifted +1 from the old 28-32 layout in the v2.14 reorg above —
 // same reset story.)
 slider24:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Drift target
-slider25:0<0,100,0.01>Drift up amount (units match target)
-slider26:0<0,100,0.01>Drift down amount (units match target)
+slider25:0<0,1000,0.01>Drift up amount (units match target)
+slider26:0<0,1000,0.01>Drift down amount (units match target)
 slider27:8<1,1000,1>Drift period (cycles)
 // NEW 2026-09-05. {Cycles, Seconds, Beats} -- the rule settled the same morning.
 // The authored layout said {Seconds, Beats}; it was written a day earlier, and

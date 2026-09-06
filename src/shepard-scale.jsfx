@@ -166,7 +166,7 @@ slider54:0<-300,300,0.001>Ramp by (units match target)
 // saved ramp. Cycles counts this plugin's own cycles at the rate BEFORE drift
 // and ramp touch it, so a ramp cannot alter its own clock.
 slider55:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider56:0<0,60,0.1>Ramp duration (in ramp time units)
+slider56:0<0,1000,0.1>Ramp duration (in ramp time units)
 // Ramp play/rest, per target, in ramp time units: the ramp advances for `play`,
 // holds for `rest`, and repeats -- a staircase instead of a smooth glide. The
 // holds come OUT of the duration rather than extending it, so Ramp duration goes
@@ -174,7 +174,7 @@ slider56:0<0,60,0.1>Ramp duration (in ramp time units)
 slider57:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider58:0<0,1000,0.01>Ramp rest for (0 = smooth)
 slider59:0<0,1,1{Off,On}>Ramp engage
-slider60:0<0,60,0.1>Ramp start delay (in ramp time units)
+slider60:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / breath gen /
 // heartbeat. Pick a target (slider61), then sliders 58-61 hold THAT target's
@@ -186,8 +186,8 @@ slider60:0<0,60,0.1>Ramp start delay (in ramp time units)
 // (~960 beats ≈ 8 min at 120 BPM). (Drift IDs shifted +1 from the old 56-60
 // layout in the v2.14 reorg above — same reset story.)
 slider61:0<0,3,1{Rate value,Note Length %,Attack %,Release %}>Drift target
-slider62:0<0,100,0.01>Drift up amount (units match target)
-slider63:0<0,100,0.01>Drift down amount (units match target)
+slider62:0<0,1000,0.01>Drift up amount (units match target)
+slider63:0<0,1000,0.01>Drift down amount (units match target)
 slider64:8<1,1000,1>Drift period
 // What the period is COUNTED IN. Cycles is this plugin's native count and the
 // default -- exactly what this control did before the unit existed, and it
@@ -201,8 +201,8 @@ slider66:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // centre -- and the FRACTION of the play value chooses where it parks: x.25
 // crest, x.75 trough, x.0 and x.5 neutral. A whole number parks at no-change
 // every time and is nearly inaudible; an awkward fraction is the useful one.
-slider67:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider68:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider67:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider68:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 
 

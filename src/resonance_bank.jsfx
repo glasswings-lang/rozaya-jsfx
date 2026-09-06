@@ -98,8 +98,8 @@ slider17:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Both are stored PER (band, target), the same 16x5 shape the drift config
 // already uses -- so band 3's ramp on Frequency is a different setting from
 // band 4's, and switching either selector edits one without stopping the other.
-slider18:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider19:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider18:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider19:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 slider20:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Ramp target
 slider21:0<-1000,1000,0.001>Ramp by (units match target)

@@ -54,7 +54,7 @@ slider3:0<0,100,1>Capture point (%, per slot: earliest .. at press)
 // another that costs far less than it would on Passage's separate stops -- which
 // is exactly why Passage keeps it per slot.
 // 1 is the original single-frame behaviour and the default.
-slider4:1<1,6,1>Capture average (frames, 1 = one frame)
+slider4:1<1,1000,1>Capture average (frames, 1 = one frame)
 
 // --- The morph. Which slot you are hearing, where between them you are, and
 //     whether that position moves on its own. ---
@@ -314,8 +314,8 @@ slider34:0<0,1,1{Pass-through,Silence}>Output at rest
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
 slider35:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
-slider36:0<0,300,0.01>Drift up amount (units match target)
-slider37:0<0,300,0.01>Drift down amount (units match target)
+slider36:0<0,1000,0.01>Drift up amount (units match target)
+slider37:0<0,1000,0.01>Drift down amount (units match target)
 slider38:30<1,600,0.5>Drift period (sec, or beats in Host x)
 slider39:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // --- Drift play/rest. Ported from Veil, the reference implementation, which
@@ -328,8 +328,8 @@ slider39:0<0,2,1{Sine,Triangle,Random}>Drift shape
 //     the trough, x.0 and x.5 at neutral. So an awkward fraction rotates the
 //     park point, and a whole number parks at no-change EVERY time, which is
 //     nearly inaudible. Confirmed by simulating the loop, not by reading it.
-slider40:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider41:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider40:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider41:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
@@ -353,7 +353,7 @@ slider44:0<-300,300,0.001>Ramp by (units match target)
 // the range, not a quiet workaround at 3am. Left in minutes and flagged.
 // 0..240, widened 2026-09-06. `half-music-half-wind.RPP` has 120 typed into this
 // on two instances -- a two-hour ramp, above the one hour the control offered.
-slider45:0<0,240,0.1>Ramp duration (minutes)
+slider45:0<0,1000,0.1>Ramp duration (minutes)
 // Ramp play/rest turns the smooth ride into a STAIRCASE -- "ramp on one side,
 // stairs on the other" (Rozaya, 2026-09-04). Windows are whole MINUTES, matching
 // Ramp duration. The rests come OUT of the duration rather than extending it:
@@ -363,7 +363,7 @@ slider45:0<0,240,0.1>Ramp duration (minutes)
 slider46:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider47:0<0,1000,0.01>Ramp rest for (0 = smooth)
 slider48:0<0,1,1{Off,On}>Ramp engage
-slider49:0<0,60,0.1>Ramp start delay (minutes)
+slider49:0<0,1000,0.1>Ramp start delay (minutes)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all

@@ -82,7 +82,7 @@ slider12:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
 // --- Glide / portamento. When Glide time > 0, each new voice's pitch starts at
 //     the previous voice's target frequency and slides to its own over this many
 //     seconds. Legato glide changes how the new voice's envelope is triggered. ---
-slider13:0<0,5,0.001>Glide time (seconds; 0 = off)
+slider13:0<0,1000,0.001>Glide time (seconds; 0 = off)
 slider14:0<0,1,1{Off,On}>Legato glide
 
 // --- Pan -- mirrors Polyrhythm Phase. ---
@@ -90,7 +90,7 @@ slider15:0<0,1,1{Off,On}>Pan enabled
 slider16:2<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
 slider17:100<0,100,0.1>Pan spread (%)
 slider18:10<0,100,0.1>Pan glide ms (0 = instant)
-slider19:8<2,32,1>Cycle steps (per-cycle modes)
+slider19:8<2,1000,1>Cycle steps (per-cycle modes)
 slider20:1<0.001,1000,0.001>Pan base rate (Tremolo / Increment modes)
 // The pan's OWN rate mode (R20). Until 2026-09-05 the pan borrowed the
 // sequencer's, which is exactly why R11 needed a `Host sync target` selector --
@@ -129,50 +129,50 @@ slider25:1<0,1,1{Off,On}>Loop sequence
 //     root you have to remember is arithmetic; a note name is recognition. The
 //     old value converts exactly -- see the migration note in the layout doc. ---
 slider26:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V1 Note
-slider27:1<0.01,16,0.01>V1 Next voice in (cycles)
-slider28:1<0,16,0.01>V1 Note duration (cycles; 0 = silent)
+slider27:1<0.001,1000,0.001>V1 Next voice in (cycles)
+slider28:1<0,1000,0.001>V1 Note duration (cycles; 0 = silent)
 slider29:-6<-60,6,0.01>V1 Gain dB
 slider30:1<0,1,1{Off,On}>V1 Active
 
 slider31:26<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V2 Note
-slider32:1<0.01,16,0.01>V2 Next voice in (cycles)
-slider33:1<0,16,0.01>V2 Note duration (cycles; 0 = silent)
+slider32:1<0.001,1000,0.001>V2 Next voice in (cycles)
+slider33:1<0,1000,0.001>V2 Note duration (cycles; 0 = silent)
 slider34:-6<-60,6,0.01>V2 Gain dB
 slider35:0<0,1,1{Off,On}>V2 Active
 
 slider36:28<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V3 Note
-slider37:1<0.01,16,0.01>V3 Next voice in (cycles)
-slider38:1<0,16,0.01>V3 Note duration (cycles; 0 = silent)
+slider37:1<0.001,1000,0.001>V3 Next voice in (cycles)
+slider38:1<0,1000,0.001>V3 Note duration (cycles; 0 = silent)
 slider39:-6<-60,6,0.01>V3 Gain dB
 slider40:0<0,1,1{Off,On}>V3 Active
 
 slider41:29<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V4 Note
-slider42:1<0.01,16,0.01>V4 Next voice in (cycles)
-slider43:1<0,16,0.01>V4 Note duration (cycles; 0 = silent)
+slider42:1<0.001,1000,0.001>V4 Next voice in (cycles)
+slider43:1<0,1000,0.001>V4 Note duration (cycles; 0 = silent)
 slider44:-6<-60,6,0.01>V4 Gain dB
 slider45:0<0,1,1{Off,On}>V4 Active
 
 slider46:31<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V5 Note
-slider47:1<0.01,16,0.01>V5 Next voice in (cycles)
-slider48:1<0,16,0.01>V5 Note duration (cycles; 0 = silent)
+slider47:1<0.001,1000,0.001>V5 Next voice in (cycles)
+slider48:1<0,1000,0.001>V5 Note duration (cycles; 0 = silent)
 slider49:-6<-60,6,0.01>V5 Gain dB
 slider50:0<0,1,1{Off,On}>V5 Active
 
 slider51:33<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V6 Note
-slider52:1<0.01,16,0.01>V6 Next voice in (cycles)
-slider53:1<0,16,0.01>V6 Note duration (cycles; 0 = silent)
+slider52:1<0.001,1000,0.001>V6 Next voice in (cycles)
+slider53:1<0,1000,0.001>V6 Note duration (cycles; 0 = silent)
 slider54:-6<-60,6,0.01>V6 Gain dB
 slider55:0<0,1,1{Off,On}>V6 Active
 
 slider56:35<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V7 Note
-slider57:1<0.01,16,0.01>V7 Next voice in (cycles)
-slider58:1<0,16,0.01>V7 Note duration (cycles; 0 = silent)
+slider57:1<0.001,1000,0.001>V7 Next voice in (cycles)
+slider58:1<0,1000,0.001>V7 Note duration (cycles; 0 = silent)
 slider59:-6<-60,6,0.01>V7 Gain dB
 slider60:0<0,1,1{Off,On}>V7 Active
 
 slider61:36<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V8 Note
-slider62:1<0.01,16,0.01>V8 Next voice in (cycles)
-slider63:1<0,16,0.01>V8 Note duration (cycles; 0 = silent)
+slider62:1<0.001,1000,0.001>V8 Next voice in (cycles)
+slider63:1<0,1000,0.001>V8 Note duration (cycles; 0 = silent)
 slider64:-6<-60,6,0.01>V8 Gain dB
 slider65:0<0,1,1{Off,On}>V8 Active
 
@@ -199,8 +199,8 @@ slider70:0<0,1,1{Walk through,Freeze in place}>Rest mode
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
 slider71:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan base rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note duration,V2 Note duration,V3 Note duration,V4 Note duration,V5 Note duration,V6 Note duration,V7 Note duration,V8 Note duration,Attack %,Release %}>Drift target
-slider72:0<0,20,0.01>Drift up amount (units match target)
-slider73:0<0,20,0.01>Drift down amount (units match target)
+slider72:0<0,1000,0.01>Drift up amount (units match target)
+slider73:0<0,1000,0.01>Drift down amount (units match target)
 slider74:8<1,1000,1>Drift period (cycles)
 // What the period is COUNTED IN. Cycles is this plugin's native count and the
 // default -- a period of 8 means eight sequencer cycles, and it follows the rate
@@ -217,8 +217,8 @@ slider76:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // x.0 and x.5 neutral. So a whole number parks at no-change every time and is
 // nearly inaudible, and an awkward fraction is the interesting one, because each
 // freeze lands further round the wave than the last.
-slider77:0<0,64,0.01>Drift play for (periods, 0 = always)
-slider78:0<0,64,0.01>Drift rest for (periods, 0 = always)
+slider77:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider78:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp: a one-time slow RIDE of a parameter. Pick a target, where to take
 //     it and over how long, arm Engage, and it glides there once and holds.
@@ -239,7 +239,7 @@ slider80:0<-1000,1000,0.001>Ramp by (units match target)
 // putting Cycles at index 0 would silently rewrite a thirty-minute ramp into a
 // two-second one. The near-miss that established this is in CLAUDE.md.
 slider81:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider82:0<0,60,0.1>Ramp duration (in ramp time units)
+slider82:0<0,1000,0.1>Ramp duration (in ramp time units)
 // Ramp play/rest, per target: the ramp advances for `play`, holds for `rest`,
 // and repeats, so it climbs as a staircase rather than a smooth glide. The holds
 // come OUT of the duration rather than extending it -- the advancing step is
@@ -248,7 +248,7 @@ slider82:0<0,60,0.1>Ramp duration (in ramp time units)
 slider83:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider84:0<0,1000,0.01>Ramp rest for (0 = smooth)
 slider85:0<0,1,1{Off,On}>Ramp engage
-slider86:0<0,60,0.1>Ramp start delay (in ramp time units)
+slider86:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 @init
 // Rate drift and Ramp are in BPM in EVERY mode -- "BPM is BPM". This mattered
