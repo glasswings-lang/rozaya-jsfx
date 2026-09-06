@@ -1931,6 +1931,74 @@ including the effect plugins, which have never been measured -- because the
 
 ---
 
+# R21 — the host modes name their DIRECTION, and there are two (2026-09-05)
+
+**Extends R20; does not overturn it.** One rate value, one rate mode, same
+adjacency. What changes is that the mode enum gains a fifth entry and the fourth
+is renamed to say what it does.
+
+```
+BPM / Seconds / Hz / Every N beats / N per beat
+```
+
+- **`Every N beats`** is what `Host x` already was: one cycle takes N beats.
+  Renamed only — **index 3 does not move**, so the 10 instances stored on it are
+  untouched.
+- **`N per beat`** is new at index 4, appended, so nothing shifts. N cycles fit
+  in one beat.
+
+## Why, and it is a gap the retired pickers used to cover
+
+The pickers deleted on 2026-09-04 offered **both directions in words** — their
+list ran *"every 8 beats … 1 per beat … 8 per beat"*. Retiring them kept the slow
+half and silently dropped the fast one, so *eight cycles per beat* became
+`0.125`: three decimal places, and a reciprocal to work out. That is the exact
+arithmetic this suite exists to remove, and Rozaya found it by hitting it:
+*"Rate value should not have to be set to 0.5 to get 8 bubbles every beat."*
+
+**Neither direction is right on its own, because they are reciprocals.** Whichever
+way the number runs, one end is whole and the other is fractional. Polyrhythm
+lives at the slow end — *every 3 beats* against *every 5 beats* is how voices walk
+past each other — and Bubbler and Dapple live at the fast end. So the mode picks
+which end of your own music is arithmetic-free.
+
+**The sound is identical either way.** Both reach the same rates; only the typing
+differs. That is worth stating because it means this can never be judged by ear,
+only by use.
+
+## What it costs, measured 2026-09-05 before deciding
+
+**Nothing.** Renaming index 3 and appending index 4 move no stored value.
+
+**What was rejected on cost:** sorting the list by DIRECTION, so everything where
+bigger-means-faster sits together. That is arguably the more logical order, and it
+would mean reordering the settled three — **256 stored rate-mode values across 12
+plugins**, including the Morpher's 122 on Seconds alone. The grouping we get for
+free (three ways to say your own speed, then two ways to say it against the
+project) is logical at the level that matters. Rozaya: *"in logical positions
+though"* — this is that, without re-opening R20.
+
+## The conversion, per shape
+
+At 60 BPM one beat is one second, which is the nominal both host modes are
+computed against (never remember a tempo — `@init` wipes it on play).
+
+| mode | nominal cycles/sec | then |
+|---|---|---|
+| `Every N beats` (3) | `1 / N` | × `host_scale` (= tempo/60) |
+| `N per beat` (4) | `N` | × `host_scale` |
+
+So `N per beat` computes exactly like **Hz** does, and only the host_scale gate
+differs. Every `rate_mode == 3` gate that means "are we host-synced" becomes
+`>= 3`; the ones that mean "which conversion" stay exact.
+
+**Three shapes to apply it to:** a shared `rate_to_hz()` (both Polyrhythms,
+Shepard Tone), inline branch chains (most of the rest), and the Morpher, which
+CONVERTS the value on a mode switch and so needs its conversion table extended
+rather than a branch added.
+
+---
+
 # R20 — THE RATE BLOCK. This is settled. Do not redesign it. (2026-09-04)
 
 **Supersedes R11 entirely and completes R13-revised.** Decided with Rozaya on
