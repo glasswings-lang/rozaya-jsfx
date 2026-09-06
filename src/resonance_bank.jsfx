@@ -75,7 +75,20 @@ slider15:0<0,1000,0.001>Drift period (BPM / sec / Hz / beats per cycle by mode; 
 // (see the nested-selector note in CLAUDE.md). That accident of design means
 // this plugin skips steps 3 and 4 of the R13-revised recipe entirely -- there
 // is no picker to retire and no landing block to delete.
-slider16:1<0,3,1{BPM,Seconds,Hz,Host x}>Drift period mode
+// R20/R21, 2026-09-06. `Host x` was the retired name for what the whole suite
+// now calls `Every N beats`, and `N per beat` -- its reciprocal -- was missing.
+// THIS COSTS NO MIGRATION: indices 0-3 keep their exact meanings and only the
+// label of index 3 changes, so nothing in the serialized per-band bank moves.
+// It was held back on the belief that touching this control needed a
+// version-gated blob migration; that is true of REORDERING the enum and not of
+// renaming one entry and appending another.
+//
+// Named `mode` and not `unit` on purpose: everywhere else in the suite a drift
+// period is a COUNT of cycles with a unit beside it. Here it is a RATE, because
+// each band drifts independently and there is no single cycle to count. That is
+// a real difference in what the control means, not an inconsistency to paper
+// over, and changing it would move stored values in a live project.
+slider16:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Drift period mode
 slider17:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // --- Drift play/rest, and the Ramp block ---------------------------------
 // Added 2026-09-05. Rozaya spotted the gap: this plugin had Drift but not the
@@ -554,6 +567,11 @@ mode == 1 ? (
         // written the safe way anyway, because inverting a unit inverts its edge
         // cases and `1/max(raw,0.001)` clamps the wrong side.
         d_per_mode == 3 ? d_cps = d_per > 0.001 ? max(tempo, 0.001) / 60 / d_per : 0.001;
+        // N per beat: d_per is CYCLES PER BEAT, the reciprocal of the line above,
+        // so it MULTIPLIES where that one divides. Written as its own exact test
+        // rather than folded into a `>= 3` -- this is a conversion, and the two
+        // host modes fall on opposite sides of it.
+        d_per_mode == 4 ? d_cps = max(tempo, 0.001) / 60 * max(d_per, 0.001);
 
         // Drift play/rest, per (band, target), counted in PERIODS. While
         // resting the phase does not advance at all, so the offset STAYS where
@@ -704,6 +722,11 @@ mode == 1 ? (
         // written the safe way anyway, because inverting a unit inverts its edge
         // cases and `1/max(raw,0.001)` clamps the wrong side.
         d_per_mode == 3 ? d_cps = d_per > 0.001 ? max(tempo, 0.001) / 60 / d_per : 0.001;
+        // N per beat: d_per is CYCLES PER BEAT, the reciprocal of the line above,
+        // so it MULTIPLIES where that one divides. Written as its own exact test
+        // rather than folded into a `>= 3` -- this is a conversion, and the two
+        // host modes fall on opposite sides of it.
+        d_per_mode == 4 ? d_cps = max(tempo, 0.001) / 60 * max(d_per, 0.001);
 
         // Drift play/rest, per (band, target), counted in PERIODS. While
         // resting the phase does not advance at all, so the offset STAYS where
