@@ -902,6 +902,12 @@ file_var(0, sr_magic);
   file_mem(0, target_drift_per,   N_TARGETS);
   file_mem(0, target_drift_shape, N_TARGETS);
   file_var(0, last_target_select);
+  sr_magic == 2200000 + N_TARGETS ? (
+    file_mem(0, drift_play_mem, N_TARGETS);
+    file_mem(0, drift_rest_mem, N_TARGETS);
+    file_mem(0, sr_play_mem,    N_SPEED_TARGETS);
+    file_mem(0, sr_rest_mem,    N_SPEED_TARGETS);
+  );
 
   // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
   // on WRITE (save/undo) it is < 0. @serialize is the only section guaranteed

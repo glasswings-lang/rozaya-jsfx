@@ -32,7 +32,23 @@ HEARTBEAT.update({o: o + 1 for o in range(2, 17)})
 HEARTBEAT.update({21: 18, 22: 19, 23: 20, 24: 21, 25: 23})
 HEARTBEAT.update({29: 26, 30: 27, 31: 29, 32: 32, 33: 33, 35: 34})
 
+# sweep-dwell-filter: the ramp block was scattered and out of order (target 26,
+# duration 27, engage 28, `by` 29, and start delay stranded at 37). It becomes
+# contiguous 26-33 in canonical order; drift moves to 34-41; the five controls
+# that sat above the drift block shift up by four.
+SWEEPDWELL = {i: i for i in range(1, 27)}
+SWEEPDWELL.update({29: 27, 27: 29, 28: 32, 37: 33})
+SWEEPDWELL.update({30: 34, 31: 35, 32: 36, 33: 37, 34: 39})
+SWEEPDWELL.update({38: 42, 39: 43, 40: 44, 41: 45, 42: 46})
+
 PLUGINS = {
+    'sweep-dwell-filter': dict(remap=SWEEPDWELL, old_n=42, new_n=46,
+                               new_sliders={28: 'Ramp time unit',
+                                            30: 'Ramp play for',
+                                            31: 'Ramp rest for',
+                                            38: 'Drift period unit',
+                                            40: 'Drift play for',
+                                            41: 'Drift rest for'}),
     'heartbeat gen': dict(remap=HEARTBEAT, old_n=35, new_n=34,
                           new_sliders={22: 'Drift period unit',
                                        24: 'Drift play for',
@@ -43,9 +59,12 @@ PLUGINS = {
 }
 
 
-def convert(path_in, path_out, plug, cfg, dry, stats):
-    raw = open(path_in, 'rb').read()
-    lines = raw.decode('utf-8').splitlines(keepends=True)
+def convert(lines, plug, cfg, stats, where):
+    """Permute every instance of `plug` in `lines`, in place, and return the
+    count. Takes the lines rather than a path so that a project containing TWO
+    migrated plugins accumulates both edits -- reading the snapshot per plugin
+    would have made the second pass silently discard the first's work. No project
+    in the library has two of these today; the shape was wrong anyway."""
     n_before = len(lines)
     count = 0
     pat = re.compile(r'<JS\s+\S*?' + re.escape(plug) + r'\.jsfx')
@@ -57,46 +76,44 @@ def convert(path_in, path_out, plug, cfg, dry, stats):
         orig = lines[vi]
         if not orig.endswith(('\r\n', '\n', '\r')):
             raise SystemExit('%s line %d: value line has no ending -- refusing'
-                             % (path_in, vi))
+                             % (where, vi))
         old = parse_line(orig)
         real = {k: v for k, v in old.items() if v not in (None, '-')}
         for k, v in real.items():
             if v.startswith('"'):
                 raise SystemExit('%s line %d: slider %d holds a quoted token %r -- '
                                  'this plugin has no file selector, refusing'
-                                 % (path_in, vi, k, v))
+                                 % (where, vi, k, v))
         if real and max(real) > cfg['old_n']:
             raise SystemExit('%s line %d: real value at slider %d, above the old '
                              'highest id %d -- not the layout this table describes'
-                             % (path_in, vi, max(real), cfg['old_n']))
+                             % (where, vi, max(real), cfg['old_n']))
 
         new = {}
         for o, tok in real.items():
             if o not in cfg['remap']:
                 raise SystemExit('%s line %d: slider %d has no authored mapping'
-                                 % (path_in, vi, o))
+                                 % (where, vi, o))
             new[cfg['remap'][o]] = tok
         for nid, name in cfg['new_sliders'].items():
             if nid in new:
                 raise SystemExit('%s line %d: new slider %d (%s) already carries a '
                                  'value -- the permutation is wrong'
-                                 % (path_in, vi, nid, name))
+                                 % (where, vi, nid, name))
 
         rendered = render_line(orig, new, cfg['new_n'])
         back = parse_line(rendered)
         for nid, want in new.items():
             if back.get(nid) != want:
                 raise SystemExit('%s line %d: slider %d became %r, wanted %r'
-                                 % (path_in, vi, nid, back.get(nid), want))
+                                 % (where, vi, nid, back.get(nid), want))
         lines[vi] = rendered
         count += 1
         stats['instances'] += 1
 
     if len(lines) != n_before:
         raise SystemExit('%s: line count changed %d -> %d -- refusing'
-                         % (path_in, n_before, len(lines)))
-    if count and not dry:
-        open(path_out, 'w', encoding='utf-8', newline='').write(''.join(lines))
+                         % (where, n_before, len(lines)))
     return count
 
 
@@ -108,9 +125,13 @@ def main():
         live = 'E:/reaper/%s/%s' % (folder, base)
         if not os.path.exists(live):
             raise SystemExit('live project missing: %s' % live)
+        src = os.path.join(SNAP, snapname)
+        lines = open(src, 'rb').read().decode('utf-8').splitlines(keepends=True)
         total = 0
         for plug, cfg in PLUGINS.items():
-            total += convert(os.path.join(SNAP, snapname), live, plug, cfg, dry, stats)
+            total += convert(lines, plug, cfg, stats, src)
+        if total and not dry:
+            open(live, 'w', encoding='utf-8', newline='').write(''.join(lines))
         print('%-44s %d instance(s)' % (base, total))
     print('\n%s %d instances' % ('MIGRATED' if not dry else 'WOULD MIGRATE',
                                  stats['instances']))
