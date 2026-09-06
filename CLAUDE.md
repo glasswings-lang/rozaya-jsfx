@@ -157,6 +157,28 @@ append-only history; this is the only part of the repo that claims to describe
 
 *Checked against the tree 2026-09-06.*
 
+- **THE DRIFT/RAMP SWEEP IS UNDER WAY: Rhythm Track, Shepard Scale and Shepard
+  Tone completed 2026-09-06, with NO migration.** All three had **zero saved
+  instances** -- measured, not assumed -- so the six missing controls went into
+  their canonical positions instead of being appended, and no project was
+  touched. 28 -> 34, 64 -> 70, 75 -> 81 sliders. Defaults reproduce the old
+  behaviour exactly by construction. Installed, **not heard**.
+
+  **Ten plugins now complete** (Veil, Tremolo, Morpher*, Phaser, Bubbler, Dapple,
+  Resonance Bank*, Sweeping Filter, Melody, + these three = twelve, with * owing
+  a unit each). **Still owed the full six: both Polyrhythms, Passage, Womb,
+  Heartbeat, Breath Gen, Sweep Dwell.**
+
+  **The order to do the rest in, by risk:** Heartbeat, Sweep Dwell and Resonance
+  Bank have ONE saved instance each; Breath Gen has 4, Polyrhythm v3 has 8, Womb
+  has 9; then Passage (48 across 10 projects), Polyrhythm v1 (84 across 17) and
+  the Morpher (122 across 38). **Re-measure before each -- the counts move.**
+
+  **Read a period's LABEL against its code before choosing the default unit.**
+  Rhythm Track's period said "beats" and meant the METRONOME's beats, which are
+  its own cycles -- so `Cycles` was both canonical and behaviour-preserving, and
+  `Beats` (the host) was genuinely new. Trusting the label would have inverted it.
+
 - **`N per beat` WAS BROKEN IN TREMOLO AND THE SWEEPING FILTER -- IT RAN AT THE
   RECIPROCAL. Fixed 2026-09-06, no project affected, NOT HEARD.** `N per beat` = 8
   gave 0.125 cycles per beat instead of 8. Their rate chain ends

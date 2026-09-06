@@ -80,6 +80,41 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-06 — the Drift/Ramp sweep starts: Rhythm Track, Shepard Scale and Shepard Tone completed, no migration needed.**
+
+  Ten plugins were missing all six of the Drift and Ramp controls the other
+  seven have. **These three have ZERO saved instances in the whole library** --
+  measured before touching anything -- so the sliders went into their canonical
+  positions rather than being appended, and no `.RPP` was touched at all.
+
+  Each gained `Drift period unit`, `Drift play for`, `Drift rest for`,
+  `Ramp time unit`, `Ramp play for`, `Ramp rest for`, plus the shared `pr_frozen`
+  gate and four per-target banks. Slider counts 28 -> 34, 64 -> 70, 75 -> 81.
+
+  **Defaults reproduce the old behaviour exactly**, and that was designed rather
+  than hoped: the drift period unit's default branch IS the old expression
+  verbatim, and the ramp time unit's default of Minutes gives the `* 60` the code
+  had hardcoded. So the only way to change the sound is to move a new control.
+
+  **Rhythm Track needed a judgement the others did not.** Its drift period was
+  labelled "beats", but they are the METRONOME's beats, not the project's -- and
+  one metronome beat is one of its cycles. So `Cycles` is both the canonical
+  default and the existing behaviour, and `Beats` is genuinely new: it counts the
+  host, which is a different clock whenever the two disagree. Reading the label
+  alone would have got this backwards.
+
+  **Shepard Scale crossed 64 sliders (64 -> 70).** Its `.RPP` value lines will now
+  carry the `""` marker at index 64, so any future migration must go through
+  `tools/rpp_sliders.py`. Nothing to do today -- it has no projects -- but it is
+  the kind of thing that is invisible until it bites.
+
+  Each blob magic bumped, with the READ accepting both old and new, gated on
+  "this blob HAS the field". Lint clean, installed. **Not heard** -- though with
+  every new control defaulting to off, nothing can regress.
+
+  Still owed the same six: both Polyrhythms, Passage, Womb, Heartbeat, Breath Gen,
+  Sweep Dwell. Resonance Bank owes one, the Morpher two.
+
 - **2026-09-06 — `N per beat` WAS NEVER ACTUALLY BUILT in Tremolo and the Sweeping Filter. It ran at the reciprocal.**
 
   Rozaya asked to close the one R21 gate left unwidened yesterday. It was not one

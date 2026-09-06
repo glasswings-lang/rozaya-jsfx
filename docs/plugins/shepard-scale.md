@@ -115,6 +115,29 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 ### Ramp (v2.14 nested-selector)
 
+> **Added 2026-09-06.** These six controls existed in seven other plugins and not
+> here, which is exactly the inconsistency the suite sweep exists to remove — a
+> thing learned on one plugin should be true of all of them. This plugin had no
+> saved projects at the time, so the sliders were placed in their proper
+> positions rather than appended, and nothing needed migrating.
+
+**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+What the duration and start delay are counted in — one unit for both, so they
+always mean the same thing as each other. **Minutes** is the default and is what
+this block always did. **Seconds** is there so a thirty-second ramp can be typed
+as `30` rather than as `0.5` minutes. **Cycles** counts this plugin's own cycles,
+referenced against the rate *before* drift and ramp touch it, so a ramp cannot
+alter its own clock. **Beats** follows the project tempo, live.
+
+**Ramp play for** `0–1000, default 0` · **Ramp rest for** `0–1000, default 0`
+Per-target, in ramp time units. Turns the smooth ride into a **staircase**: the
+ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
+ramp, which is the default.
+
+The holds come **out of** the duration rather than extending it — the advancing
+steps are made proportionally faster — so Ramp duration goes on meaning "you
+arrive in about this long" however you set the staircase.
+
 In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same four targets as Drift** — BPM, Note Length %, Attack %, Release %. It is **fully per-target**: each target has its own `by`, its own duration, and its own start delay, so different targets can wind down over different timelines from a single engage. Only **engage** is global.
 
 **Ramp target (slider 52)** `Tempo / Note Length % / Attack % / Release %, default Tempo`
@@ -138,6 +161,37 @@ Example (one engage): BPM `by -40`, duration 20 min, delay 0; Note Length % `by 
 **Migration to v2.14 (reorganization + renumber):** Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Ramp block (now sliders 52–56) and the Drift block (now sliders 57–61). **Existing Shepard Scale projects lose their Ramp and Drift settings on upgrade** — both are off-by-default, and the scale sound itself (sliders 1–51) is untouched. Re-add the plugin instance for clean defaults, or re-enter your Ramp / Drift settings. *(Older history: pre-v2.14 Ramp was single-target BPM on slider 52; and pre-v2.8 it was a multiplier 0.1–4.0.)*
 
 ### Drift (v2.9 nested-selector)
+
+> **Added 2026-09-06.** These six controls existed in seven other plugins and not
+> here, which is exactly the inconsistency the suite sweep exists to remove — a
+> thing learned on one plugin should be true of all of them. This plugin had no
+> saved projects at the time, so the sliders were placed in their proper
+> positions rather than appended, and nothing needed migrating.
+
+**Drift period unit** `Cycles / Seconds / Beats, default Cycles`
+What the period above is counted in. **Cycles** counts this plugin's own cycles —
+which is exactly what the control did before this unit existed, and it follows
+the rate for free. **Seconds** is wall clock, independent of the rate. **Beats**
+counts the project tempo, so the wander follows the host rather than the plugin,
+and it follows a live tempo change.
+
+The period is measured against the rate **before** drift touches it, so drifting
+a rate cannot modulate its own drift period.
+
+**Drift play for** `0–64 periods, default 0` · **Drift rest for** `0–64 periods, default 0`
+Makes the drift come and go instead of wandering forever. It drifts for `play`
+periods, then **freezes exactly where it stopped** for `rest` periods, then
+carries on. Both must be above zero or the gate is off entirely — which is what
+`0` means, and why the default is "always".
+
+It freezes in place rather than returning to centre, and that is the interesting
+part: **the fraction of the play value chooses where it parks.** `x.25` parks at
+the crest, `x.75` at the trough, and `x.0` or `x.5` at no change at all. So a
+whole number parks at neutral every single time and is nearly inaudible, while an
+awkward fraction is the one worth using — each freeze lands further round the wave
+than the last, so `1.75` cycles through four different park points before
+repeating and `1.2` through five. Setting only `Drift down` wastes half of them,
+because every park on the positive half lands at no change.
 
 Slow organic wander applied independently to any of four targets: BPM, Note Length %, Attack %, or Release %. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
