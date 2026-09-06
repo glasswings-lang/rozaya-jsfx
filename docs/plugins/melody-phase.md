@@ -40,64 +40,64 @@ When Loop is on, the sequence wraps from the last active voice back to the first
 > Rate mode has never had a Host x entry. Its host sync is the separate
 > `Sync to host` switch below, which is the older shape the rest of the suite has
 > moved off. Corrected 2026-09-05.
-How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1 (also the default), one cycle equals one second, so the per-voice "Next voice in" and "Note duration" numbers behave as raw seconds. This is the easiest way to work in plain time — set a voice to 2 and it plays for 2 seconds. **BPM** = beats per minute; Rate Value becomes the tempo, and the per-voice numbers become beats. Useful if you want a polyrhythmic feel where every voice is in a sensible ratio of a common tempo. **Hz** = cycles per second; Rate Value is the cycle frequency. Useful for very slow ambient pacing (Rate = 0.05 Hz means one cycle every 20 seconds). **Host x** = follow the project tempo; see below.
+How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1 (also the default), one cycle equals one second, so the per-voice "Next voice in" and "Note duration" numbers behave as raw seconds. This is the easiest way to work in plain time — set a voice to 2 and it plays for 2 seconds. **BPM** = beats per minute; Rate Value becomes the tempo, and the per-voice numbers become beats. Useful if you want a polyrhythmic feel where every voice is in a sensible ratio of a common tempo. **Hz** = cycles per second; Rate Value is the cycle frequency. Useful for very slow ambient pacing (Rate = 0.05 Hz means one cycle every 20 seconds). **To follow the project tempo**, Melody does not use a rate mode — it has a separate `Sync to host` switch, described below.
 
 **Rate Value** `0.001 – 1000`
 The global rate. Meaning depends on Rate Mode (see above). Default 1, which in the default Seconds mode means "each per-voice cycle is one second."
 
-### Host x — following the project tempo
+### Sync to host — following the project tempo
 
-In the first three modes each instance holds its own absolute rate, and nothing
-in the plugin knows that two instances are related. That's fine until you want
-to change the speed of a whole arrangement: nudging every instance by hand
-changes the *relationships* between them, not just the pace, and layers that
-used to nest start scattering.
+> **This section described `Host x` as a rate mode with a `Host ratio` picker
+> until 2026-09-05, and Melody has neither.** That text predated Melody's
+> conversion and had been wrong for weeks. Rozaya caught it: *"melody phase does
+> too have a sync mode, of some description. I know this because I've used it."*
+> Quite right — it just isn't the one this page was describing.
 
-**Host x** makes Rate Value a **multiplier of the project tempo** instead of an
-absolute rate. x1 = one cycle per beat, x2 = twice as fast, x0.5 = half. Higher
-is faster, same as BPM and Hz (only Seconds inverts). Move the project tempo and
-every instance moves with it, in proportion.
+In the three rate modes each instance holds its own absolute rate, and nothing in
+the plugin knows that two instances are related. That's fine until you want to
+change the speed of a whole arrangement: nudging every instance by hand changes
+the *relationships* between them, not just the pace, and layers that used to nest
+start scattering.
 
-This is **not** quantising. Rate Value stays continuous, so unlocked
+Melody's sync is **three controls sitting together**, and it is the older shape —
+the rest of the suite has since moved to putting the host modes in the rate mode
+itself (R20/R21). Melody keeps this until its own conversion pass.
+
+**Sync to host** `Off / On`
+Whether the project tempo drives this instance at all.
+
+**Host sync target** `Rate value / Pan base rate`
+Which of Melody's two rates the sync applies to. Each remembers its own beat
+count, so you can sync one and leave the other free-running.
+
+**Every N beats (per sync target)** `0.25 – 1000, step 0.01`
+How many beats one cycle of the selected target takes. **Bigger is slower.** `1`
+is a cycle per beat, `4` is one per bar in 4/4, `0.5` is two cycles a beat.
+
+Move the project tempo and every synced instance moves with it, in proportion.
+
+This is **not** quantising. The beat count is continuous, so unlocked
 relationships are as available as locked ones — and they survive a tempo change
 too:
 
-| Layer | Multiplier | Tempo 40 | Tempo 45 |
+| Layer | Every N beats | Cycles/min at tempo 40 | at tempo 45 |
 |---|---|---|---|
-| Fast | x1 | 40 | 45 |
-| Mid | x0.5 | 20 | 22.5 |
-| Slow | x0.25 | 10 | 11.25 |
+| Fast | 1 | 40 | 45 |
+| Mid | 2 | 20 | 22.5 |
+| Slow | 4 | 10 | 11.25 |
 
-…nests forever, while `x1 / x0.618 / x0.25` never resolves — and keeps not
-resolving in the same way at any tempo.
+…nests forever, while `1 / 1.618 / 4` never resolves — and keeps not resolving in
+the same way at any tempo. That is the whole reason the beat count is a free
+number rather than a menu: *every 5 beats of a 4/4 bar* is exactly as reachable
+as *every 4*, and this suite is phase music.
 
 Tempo changes take effect live, including mid-playback. Voice and envelope
 proportions are untouched; the melody just runs faster or slower.
 
-**Host ratio (writes Rate Value)** `Custom / every 8 beats / every 4 beats / every 3 beats / every 2 beats / phi slow / 2 per 3 beats / 3 per 4 beats / 1 per beat / 4 per 3 beats / 3 per 2 beats / phi fast / 2 per beat / 3 per beat / 4 per beat / 8 per beat` (default Custom)
-A convenience picker, shown only in Host x mode. Choosing an entry writes that
-multiplier into Rate Value and then gets out of the way — it does not hold Rate
-Value afterwards, so you can still type or automate any value you like.
-**Custom** never writes anything -- it just means Rate Value is whatever you
-set it to. It is deliberately not called "Free", because in sync UI that word
-means FREE-RUNNING, and that switch is Rate Mode: any of BPM / Seconds / Hz is
-the free-running case, Host x is the synced one. The list carries the two phi ratios alongside the tidy
-ones because deliberately-unlocked relationships are first-class here.
+> **Start Delay is counted in cycles of the rate**, so when synced it is cycles of
+> the tempo-scaled rate — a delay of 8 stays 8 cycles when you move the tempo,
+> rather than drifting against the notes.
 
-Entries are named for what you HEAR, not as note values. "every 4 beats" means
-one cycle spread across four beats (multiplier 0.25) — deliberately *not*
-written `1/4`, which everywhere else means a quarter NOTE and would sit at the
-opposite end of the scale. "phi slow" is x0.618, "phi fast" is x1.618.
-
-> **Start Delay is counted in cycles of the rate, and in Host x that means
-> cycles of the tempo-scaled rate** — so a delay of 8 stays 8 cycles when you
-> move the tempo, rather than drifting against the notes.
-
-> **Switching Rate Mode changes what Rate Value means, and nothing rescales it
-> for you.** A Rate Value of 20 is 20 BPM in BPM mode, but twenty times the
-> project tempo in Host x. Toggling a running instance between the two will
-> jump hard. Set the mode first, then set the rate (or reach for the Host ratio
-> picker, which does the sum for you).
 
 **Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine / Square / Pulse`
 Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions, including the back-compat note on the Golden / Phi family. Note that Half-sine sounds an octave higher than the others at the same note + Center Octave setting (full-wave-rectified spectrum has no fundamental).
@@ -371,7 +371,9 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 **Pan transition follows Glide in Legato mode.** Pan position uses a one-pole smoother to slide between positions (~10ms by default — fast enough to feel snappy, slow enough to be click-free). When Legato glide is on AND Glide time > 0, the pan smoother slows down to match the Glide time — so pitch and pan transition at the same perceived speed and feel like one coherent slide. Without this, the pan finishes its 10ms slide while the pitch is still gliding for hundreds of ms, which the ear hears as a sharper-than-expected position change on top of a slow pitch bend.
 
 
-#### Host x hands you the ratio list, not a multiplier
+#### ~~Host x hands you the ratio list, not a multiplier~~ — HISTORICAL
+
+> **Describes a shape Melody no longer has.** Kept because it is a dated release note and those are not rewritten, but neither the `Host x` rate mode nor the `Host ratio` picker exists in this plugin today; see *Sync to host* above for what it actually does.
 
 Switching Rate Mode to **Host x** lands on **1 per beat** and hides the raw rate number. The **Host ratio** list becomes the control you use — *every 8 beats, every 4 beats, 1 per beat, 2 per beat*, and so on — so setting a rate is picking a name, never working out a number.
 
@@ -384,7 +386,7 @@ Landing on 1 per beat only happens when *you* change the mode. Opening a saved p
 
 #### The sequence is placed from the project
 
-In **Host x**, with the transport rolling, the sequencer works out which note it should be on from the project position — so starting playback at bar 40 gives you the note you'd have reached playing from the top, not the first note again.
+**With `Sync to host` on** and the transport rolling, the sequencer works out which note it should be on from the project position — so starting playback at bar 40 gives you the note you'd have reached playing from the top, not the first note again.
 
 Placed **once**, on transport start or when you move the playhead, then left to run. A sequencer that re-decided its position constantly would jump mid-note.
 
