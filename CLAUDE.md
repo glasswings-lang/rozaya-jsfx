@@ -1135,12 +1135,43 @@ because they apply every session, not on the day they were learned.
 - `master` — stable. Releases tag from here.
 - `feature/*` — work in progress. Merge with `--ff-only` when ready (see git log for past examples).
 - Don't work directly on master — use a branch and merge when validated by ear.
-- **"Validated by ear" is the actual gate and it is not a formality.** JSFX
-  cannot be compiled outside REAPER, so nothing here is verified by writing it.
-  Rozaya can reload projects and test — **ask for an ear-test rather than
-  assuming that path is dark.** Say plainly which parts of a change have been
-  heard and which have not; this file marks that distinction everywhere and it
-  is worth keeping.
+- **"Validated by ear" is the actual gate and it is not a formality.** Rozaya can
+  reload projects and test — **ask for an ear-test rather than assuming that path
+  is dark.** Say plainly which parts of a change have been heard and which have
+  not; this file marks that distinction everywhere and it is worth keeping.
+
+  > ~~JSFX cannot be compiled outside REAPER, so nothing here is verified by
+  > writing it.~~ **THAT WAS FALSE, and it was never checked.** Corrected
+  > 2026-09-06. **`ysfx` (github.com/jpcima/ysfx, Apache-2.0, CMake, builds on
+  > Windows) contains a JSFX compiler AND runtime**, and `jsusfx` is a second
+  > independent implementation. The public API is exactly what this repo needs:
+  > `ysfx_load_file` / `ysfx_compile` with a log reporter for real error
+  > messages, `ysfx_slider_set_value` and `ysfx_slider_get_range`, and
+  > `ysfx_process_double` — so a plugin can be compiled, configured, run for N
+  > samples and its output READ, with no REAPER and no ears.
+  >
+  > **Nobody had looked.** "We can't compile JSFX" should always have been
+  > "I haven't checked whether anyone has implemented it", and those are
+  > different sentences. **Before writing an impossibility into this file, search
+  > for the thing you are declaring impossible.**
+  >
+  > **Be precise about what it would buy, because it is not the ear-test.** A
+  > compile check catches syntax — the empty-`()` trap, scientific notation, a
+  > paren imbalance — which `jsfx_lint.py` only approximates with regexes. It
+  > would have caught NONE of the real bugs found on 2026-09-06: the `N per beat`
+  > reciprocal, the Start delay's two clocks, the placement regression. Those all
+  > compile perfectly.
+  >
+  > **The RUNTIME is the prize, and it addresses a named failure.** Behaviour here
+  > is currently checked by re-implementing the DSP in Python and reading the
+  > numbers — which only ever tests my MODEL of the code, never the code. That is
+  > exactly how the 2026-09-06 placement "fix" was verified, shipped, and turned
+  > out to make things worse. Running the actual `.jsfx` and reading its actual
+  > output samples closes that gap, and would have shown the `N per beat`
+  > reciprocal in one line of output.
+  >
+  > **It is real work, not a lookup:** build a C++ library with CMake, then write
+  > a small harness around it. Bounded, and done once. Not yet built.
 - **Pushing is fine at any time. Cutting a release is not** — see *No releases
   until the sweep is finished* in the consistency plan. A release is a
   distribution artefact, and shipping one mid-sweep hands a stranger a
