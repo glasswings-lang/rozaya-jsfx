@@ -150,630 +150,149 @@ public. Everything here serves that. When something in this file starts serving
 the file instead, cut it.
 ## Where things stand
 
-**Everything under this heading goes stale. Update it at the end of a session,
-in the same commit as any entry you add to `docs/session-log.md`** — that log is
-append-only history; this is the only part of the repo that claims to describe
-*now*.
+**This is the only part of the repo that claims to describe NOW, so it is the
+part that rots. Update it in the same commit as any `docs/session-log.md` entry.**
+
+**AND KEEP IT SHORT.** On 2026-09-06 this section was **566 lines — 44% of this
+whole file** — and its top three bullets were marked *(superseded)*. A section
+whose only job is to say what is true today had become a diary. It is archived
+verbatim in the session log; nothing was lost.
+
+**The cost of letting it grow again is not the reading.** It is that a session
+cannot hold a 1,300-line brief, so it contradicts itself and gets things wrong —
+and Rozaya, who cannot read the source to check us, is the one who has to catch
+that. They have described the bloat as the thing that reduced them to tears.
+**Narrative belongs in the session log. What belongs here is state, in as few
+lines as it takes.**
 
 *Checked against the tree 2026-09-06.*
 
-- **DRIFT/RAMP SWEEP: THIRTEEN OF NINETEEN COMPLETE. Breath Gen landed
-  2026-09-06** — 4 instances across 3 projects (one of them a TEMPLATE, in
-  `E:/reaper/templates`, which earlier scans of `E:/reaper` did pick up but which
-  is easy to forget exists). Verified with the others: 6 instances, 293 checks,
-  126 name-decoded comparisons, PASS.
-
-  **STILL OWED: Polyrhythm v3 (8 instances), Womb (9), Passage (48), Polyrhythm
-  v1 (84), and the Morpher's two unit controls (122).**
-
-  **A RANGE VIOLATION IS ONLY EVIDENCE IF THE MIGRATION CAUSED IT.**
-  `breathscapes.RPP` stores Top pause and Bottom pause at 8 against a 0-5
-  control, and REAPER silently clamps them to 5. That is PRE-EXISTING — sliders
-  1-16 are byte-identical before and after, proven — and reporting it as a
-  migration fault buries the real signal. The verifier now separates "was already
-  out of range" from "is out of range now", and only the second is a failure.
-
-  **PIN A VERIFIER TO A COMMIT HASH, NEVER TO `HEAD~n`.** A relative revision
-  goes stale the moment anything else is committed, and the check then compares a
-  new layout against ITSELF and reports catastrophic-looking shifts that are pure
-  fiction. It happened twice in one afternoon. There is a slider-count guard for
-  it now, but the guard is the backstop, not the fix.
-
-- **(superseded) DRIFT/RAMP SWEEP: TWELVE OF NINETEEN PLUGINS NOW COMPLETE.** Added
-  2026-09-06: Rhythm Track, Shepard Scale, Shepard Tone (no migration -- zero
-  saved instances), then **Heartbeat and Sweep Dwell** (one instance each,
-  migrated and verified). **Resonance Bank's `Drift period mode` also got the
-  R20/R21 rename** -- `Host x` -> `Every N beats`, plus `N per beat` -- which cost
-  no migration at all.
-
-  **STILL OWED THE FULL FOUR, and this list is CORRECTED:** Breath Gen (4
-  instances), Polyrhythm v3 (8), Womb (9), Passage (48), Polyrhythm v1 (84).
-  **The Morpher owes its two UNIT controls only** -- it already has both
-  play/rest pairs. That is six plugins, not the nine an earlier count claimed.
-
-  **RESONANCE BANK IS NOT MISSING A CONTROL, AND A NAME-MATCHING SWEEP WILL SAY
-  IT IS.** Everywhere else a drift period is a COUNT of cycles with a unit beside
-  it; there it is a RATE (`Drift period mode`), because each band drifts
-  independently and there is no single cycle to count. That is a real difference
-  in meaning, it is now stated in the source, and converting it would move stored
-  values in a live project. **Leave it.**
-
-  **A held-back job turned out to be free, so re-check the reason before
-  believing it.** The plan recorded Resonance Bank's mode as needing a
-  version-gated blob migration because its value lives in a serialized per-band
-  bank. True of REORDERING the enum; false of renaming one entry and appending
-  another, which moves no index at all.
-
-  **AND CHECK THE @serialize STREAM, NOT JUST THE MAGIC.** Heartbeat's blob magic
-  was bumped while the four new banks were never actually written to or read from
-  the stream, so its play/rest settings would not have survived a save. Caught
-  only by grepping all five finished plugins for the same line and finding one
-  with a zero. **After adding a bank, assert it appears in BOTH the file_mem list
-  and the duplicate-fix block, in every plugin, not just the one in front of you.**
-
-- **(superseded, kept for the reasoning) Rhythm Track, Shepard Scale and Shepard
-  Tone completed 2026-09-06, with NO migration.** All three had **zero saved
-  instances** -- measured, not assumed -- so the six missing controls went into
-  their canonical positions instead of being appended, and no project was
-  touched. 28 -> 34, 64 -> 70, 75 -> 81 sliders. Defaults reproduce the old
-  behaviour exactly by construction. Installed, **not heard**.
-
-  **Ten plugins now complete** (Veil, Tremolo, Morpher*, Phaser, Bubbler, Dapple,
-  Resonance Bank*, Sweeping Filter, Melody, + these three = twelve, with * owing
-  a unit each). **Still owed the full six: both Polyrhythms, Passage, Womb,
-  Heartbeat, Breath Gen, Sweep Dwell.**
-
-  **The order to do the rest in, by risk:** Heartbeat, Sweep Dwell and Resonance
-  Bank have ONE saved instance each; Breath Gen has 4, Polyrhythm v3 has 8, Womb
-  has 9; then Passage (48 across 10 projects), Polyrhythm v1 (84 across 17) and
-  the Morpher (122 across 38). **Re-measure before each -- the counts move.**
-
-  **Read a period's LABEL against its code before choosing the default unit.**
-  Rhythm Track's period said "beats" and meant the METRONOME's beats, which are
-  its own cycles -- so `Cycles` was both canonical and behaviour-preserving, and
-  `Beats` (the host) was genuinely new. Trusting the label would have inverted it.
-
-- **`N per beat` WAS BROKEN IN TREMOLO AND THE SWEEPING FILTER -- IT RAN AT THE
-  RECIPROCAL. Fixed 2026-09-06, no project affected, NOT HEARD.** `N per beat` = 8
-  gave 0.125 cycles per beat instead of 8. Their rate chain ends
-  `rate_mode == 2 ? (x) : (1/x)`, so mode 4 fell into the `Every N beats` default
-  branch. Both Polyrhythms end `rmode == 3 ? (1/x) : (x)` and were right --
-  **that difference in chain ORDER is the whole bug**, and it is invisible unless
-  you ask what mode 4 lands on. Three further leaks in the same two plugins, all
-  fixed: `rate_pos_lock` gated `== 3` (mode 4 followed the tempo without locking
-  to the grid), the Speed Ramp rate conversion likewise, and the Morpher's `tr_k`
-  treating durations as beats only in mode 3. `rate_drift_hz` was checked and is
-  correct as-is.
-
-  **THE LESSON IS ABOUT VERIFICATION, NOT GATES.** I checked R21 by reading every
-  gate and asking whether it should widen, and got every gate I looked at right.
-  **I never asked what mode 4 actually DID.** **When you add a mode, option or
-  branch to N plugins, SIMULATE ITS OUTPUT IN EACH ONE** -- the same check that
-  caught seven pan modes all returning `[-1,1,-1,1]`. Reading confirms the
-  wiring; only numbers confirm the behaviour. And **"nothing broke" is not
-  evidence that a latent feature works** -- nothing broke here only because
-  nothing was stored on the new mode yet.
-
-- **A REAL BUG WAS FOUND BY EAR IN THE START DELAY, 2026-09-06, and fixed. Not
-  yet heard.** Melody's sequencer waits for its config to settle before the first
-  note; the Start delay counter did not, so a delayed instance burned part of its
-  delay during that pause and came in early by ~21 ms — a fraction of a beat,
-  from the first note, surviving play/stop because the pause recurs. Both clocks
-  now start on the same line. **Any saved project with a Start delay now starts
-  that instance a few milliseconds later.**
-
-  **The lesson is about the QUESTION, not the listening.** Twice I checked the
-  suspected path's arithmetic and correctly reported it consistent — every
-  quantity really did count beats properly. The defect was not *how much* was
-  counted but *when counting began*. **When repeated checks of a suspect come
-  back clean and the symptom is still real, stop re-checking the magnitude and
-  check the ORIGIN.** Also: I had the right suspect early, dropped it on a
-  misreading of Rozaya's words, and spent a round elsewhere — when a report
-  contradicts a lead, re-read the report before abandoning the lead.
-
-  **And the one-slider test beat three rounds of source reading.** Start delay to
-  0 removed the symptom; 8 restored it exactly. Reach for a discriminating test
-  sooner than I did.
-
-  **EAR-TESTED ✓ 2026-09-06** — *"it's now done, and out of there."*
-
-  **THE SAME BUG WAS IN FULL FEATURE TREMOLO, and Rozaya found it by asking, not
-  me by checking.** *"does tremolo, or any other plugin, have that?"* It did.
-  Fixed identically, installed, and it changes no saved project — 11 Tremolo
-  instances in the library and none has a Start delay set.
-
-  **AUDIT RESULT, so it is not re-run blindly: only those two plugins can have
-  it.** The bug needs TWO clocks — a delay counter AND a gate the engine waits
-  for. Nineteen plugins have a Start delay; **only Melody and Tremolo have a
-  settling gate** (`cfg_stable` / `CFG_HOLD_BLOCKS`). The other seventeen have
-  nothing for the delay to get out of step with.
-
-  **A BUG IS A FEATURE'S TWIN. PROPAGATE THE FIX THE WAY A FEATURE IS
-  PROPAGATED.** *"A feature goes everywhere its parent already is"* applies to
-  defects too: a mechanism that is wrong in one plugin is wrong in every plugin
-  built from the same parts. **After fixing anything, grep the suite for the
-  same shape before saying it is done** -- and say plainly which plugins were
-  checked and cleared, not just which were fixed.
-
-- **MELODY IS CONVERTED, AND THE SUITE NO LONGER HAS A PLUGIN WITH ITS OWN SYNC
-  MECHANISM. Built, migrated, installed 2026-09-06. NOT HEARD.**
-  Melody was the last plugin on the R11 shape — a `Sync to host` switch, a
-  `Host sync target` selector and a free `Every N beats` slider. All three
-  retired; the rate block is now the suite's two controls, and the pan has its
-  own rate mode for the first time. **82 sliders → 86**, 73 instances across 7
-  projects migrated, **11,865 checks / 5,706 name-decoded comparisons, PASS.**
-
-  **It also closed Melody's drift/ramp gap in the SAME pass**, which is the part
-  worth carrying forward. The authored plan covered the rate block only; Melody
-  was also missing all six Drift and Ramp controls. Building just the plan would
-  have migrated the same 73 instances twice. **Before writing any migration, ask
-  whether the layout doc covers everything the plan still owes that plugin** —
-  here it did not, and the check took two minutes.
-
-  **Drift and Ramp are now COMPLETE in nine plugins** — Veil, Tremolo, Morpher,
-  Phaser, Bubbler, Dapple, Resonance Bank, Sweeping Filter, Melody. The Morpher
-  still owes its two unit controls. Nine plugins owe the full six.
-
-  **A latent direction bug was found and fixed on the way**, the same one the
-  Polyrhythms had on 09-04: `rate_mode == 1` decided whether a positive drift
-  speeds up or slows down, which is wrong once `Every N beats` exists, because
-  more beats is a longer cycle. Widened to `== 1 || == 3` in both the drift and
-  ramp paths and simulated. No project was affected — nothing in the library
-  drifts. **This is an EXACT gate, not a `>= 3` one: the two host modes fall on
-  opposite sides of it.**
-
-  **Still owed a reorder:** Polyrhythm v1 → v3, Passage, Womb, and the
-  zero-project plugins. Melody owes nothing further.
-
-- **Branch `feature/melody-reorder`, 107 commits ahead of `master`, PUSHED
-  through 2026-09-05, unmerged.** `master` is in sync with `origin/master`. The
-  branch is on GitHub, so nothing lives only on the one drive. **This number goes
-  stale every session — re-run `git rev-list --count master..HEAD` rather than
-  believing it.** It said 65 while the truth was 107.
-
-  **DO NOT PROPOSE MERGING OR TAGGING.** Rozaya, 2026-09-05, asked directly:
-  *"I am not tagging that. This is not done. And with the plan in flight, the
-  branch isn't done either. we can put it on the remote, but I ain't calling
-  this a release."* Pushing is right and welcome; a tag is a distribution
-  artefact and the sweep is mid-flight. This is the plan's own *No releases
-  until the sweep is finished* rule, and I offered a tag anyway — which is how a
-  written rule gets broken, by someone reaching for the reassuring cheap win.
-
-- **The Phaser reorder is LANDED, and it is the suite's first Phase 2 change.**
-  `src/stereo-phaser.jsfx` and the effects folder now MATCH — that half-landed
-  state is closed. Its rate triple (Rate / Rate Mode / Host ratio) is contiguous
-  at 1, 2, 3. `E:/reaper/finished/strangeness.RPP` **is the migrated file**; the
-  pre-reorder original and the old plugin build are both in
-  **`E:/reaper/finished/backups/`** — `strangeness.PRE-PHASER-REORDER.RPP` and
-  `stereo-phaser.PRE-REORDER-20260904.jsfx`. **That folder is where backups go**
-  (Rozaya, 2026-09-04); it already held 44 of them, so it is an existing
-  convention, not a new one. Note the plugin build lives there too rather than
-  anywhere under the REAPER resource folder — a renamed twin left in
-  `Effects/glasswings/` is the stale-twin trap and would show as a second
-  Phaser forever. **Verified by decoding, NOT ear-tested**: 27 controls by
-  name old-vs-new across 3 instances, 0 mismatches; 21 stored values in range
-  after promotion; 192 lines unchanged. Nobody has played it since the swap.
-  If it is ever wrong, put both backups back.
-- **`v2.21` is the newest tag and sits 23 commits back on `master`**, so
-  everything on `master` since it, plus all 42 branch commits, is unreleased.
-  Per the session log, v2.21 is marked *pre-release* on GitHub and v2.20 is
-  "Latest" — that is release metadata this file cannot verify, so check with
-  `gh release list` rather than trusting the line. And **`git fetch --tags`
-  before assuming the next version number**; stale local tags have already
-  caused one misnumbered release.
-- **EAR-TESTED 2026-09-04 ✓ — per-cycle pan on Polyrhythm Phase.** Independent
-  tremolo mode, two voices at 60 and 24 BPM, Depth dB 0, Pan mode `Alternating`:
-  each voice steps its pan on **its own** tremolo wrap, at its own rate.
-  *"It works perfectly."* That clears the per-cycle shape functions, the
-  per-voice cycle index (the regression Rozaya caught by ear on 09-02, where a
-  single shared index panned everything at the base rate), and `Pan Glide`.
-  **It does NOT clear the other ticks:** `percycle_pan()` is byte-identical
-  across the oscillator plugins, but what ADVANCES it differs on purpose —
-  Melody steps on the note trigger, the filters on their LFO wrap. Those are
-  still unheard.
-- **EAR-TESTED 2026-09-04 ✓ — the Melody layout migration, on the finished work.**
-  All four finished projects (`melodic`, `outcoming`, `slow-summer`, `upswing`)
-  played and correct. *"They came out perfectly."* **This was the highest-stakes
-  unverified thing in the repo**: 73 instances across 7 projects, rewritten by a
-  script whose earlier run had a wrong gate and had once eaten a line per
-  instance. It had been verified by DECODING — 4632 comparisons against the
-  snapshot at `backups/snapshots/_pre-melody-layout-20260902-1503` — and never played. Now both.
-- **EAR-TESTED 2026-09-04 ✓ — Veil's rebuilt layout and the Ramp in beats.**
-  *"Slider layout? Excellent. Ramp stuff? Works."* So the 22-slider reorder
-  reads correctly, and `Ramp time unit` / the beat-counted staircase do what
-  they say. **The steeper slopes are confirmed too** — *"rolloff works"* —
-  which closes the last item outstanding from the August rolloff overhaul.
-- **A FEATURE GOES EVERYWHERE ITS PARENT ALREADY IS. No triage.** Rozaya,
-  2026-09-04, overruling exactly the kind of note this file is full of:
-  *"Anything that has Ramp should have all the controls that go with Ramp. End
-  of fucking story."* If a plugin has Ramp it gets every Ramp control; if it
-  has Drift it gets every Drift control. **Do not decide on my own hearing --
-  which I do not have -- that some plugin will not benefit and skip it.**
-  Consistency is the point: a thing learned on one plugin has to be true of all
-  of them, because Rozaya may not have me around to explain the exceptions.
-  What this replaced, and why it is worth naming: a bullet that took Rozaya's
-  real observation (*"filters are hard to hear a semi-beat pause on"* -- still
-  true, still theirs) and grew a Claude-authored conclusion onto it, that
-  propagation should be *aimed* at parameters with an attack. Then I quoted
-  that conclusion back to Rozaya as though it were their guidance.
-  **Everything in these docs that is not inside quote marks is Claude-to-Claude
-  and may simply be wrong. Never hand it back to Rozaya as their own view.**
-- **EAR-TESTED 2026-09-04 ✓ — Drift play/rest on Full Feature Tremolo.**
-  *"It's definitely doing something... it goes real slow, then speeds up...
-  it's really hard to tell exactly what it'll do next, which is the point."*
-  Rozaya's causal read was right: with `play 1.75` it freezes at the trough,
-  which with `Drift down 1.5` on a 2 Hz rate parks it at 0.5 Hz.
-- **And the park point ROTATES — that is the feature, not an accident.** Each
-  freeze lands further round the wave than the last, so `play 1.75` cycles
-  through four positions before repeating and only ONE is dramatic; `1.2`
-  gives five with two partial parks at different depths. Simulated, not
-  reasoned. **So an awkward fraction beats a tidy one**, a whole number parks
-  at neutral every time and is nearly inaudible, and setting only `down`
-  wastes half the holds (every park on the positive half lands at no-change).
-  Written up on both plugin pages.
-- **EAR-TESTED 2026-09-04 ✓ — the Host x beats-per-cycle conversion, on the
-  migrated Sweeping Filter instances.** Rozaya played them and the sweeps run at
-  the speed they remember. **This closes what was the largest untested block in
-  the suite** — the R13-revised conversion across thirteen plugins, where a
-  stored multiplier was flipped to its reciprocal.
-
-  **Which instances that actually covers, decoded from the project files rather
-  than from this note.** Ten instances were on Host x. **Four of them — every
-  Tremolo, in `simple-sequence` and `simple-sequence-check` — were stored at 1,
-  and one is its own reciprocal**, so nothing about them changed and they were
-  never evidence either way. The six that genuinely moved are all Sweeping
-  Filter, in four projects: `bilateral-with-binaurals` (2, at 0.125),
-  `as-things-are` (1, at 8), `noisescape-august-18-2026` (2, at 4 and 8) and
-  `womb-and-baby-heartbeats-with-bloodflow` (1, at 0.5). Those six are the ones
-  the ear-test speaks for.
-
-  The check that needs no ears was already done: at 205 BPM a Rate Value of 4
-  must give one cycle every 1.171 s, and it does.
-
-  **Still unheard within Host x, and it is a narrower list than it used to be:**
-  Drift and Ramp running *while* in Host x (tests 3 and 4 of
-  `docs/host-sync-ear-test.md`), and pan following the project tempo. The mode
-  itself is proved — Melody on 2026-08-11, Womb on 08-30/31, and now the
-  conversion.
-- **A latent bug in the 09-02 conversion, found and fixed 2026-09-04, unheard.**
-  Both Polyrhythms added Drift and Ramp amounts to the raw Rate Value. That was
-  right while Host x's Rate Value WAS the rate, and wrong the moment it became
-  beats per cycle — more beats is slower, so a positive drift ran BACKWARDS.
-  Simulated at 120 BPM with a cycle every 2 beats: +10 BPM of drift gave 57.6
-  cycles/min instead of 70. Now added in the Hz domain instead. Shepard Tone was
-  converted with the correction already in. **No project was affected**: not one
-  Polyrhythm instance in the library is on Host x.
-- **Heartbeat's rate slider was widened** from `20..200` step 1 to
-  `0.001..1000` step 0.001, because beats-per-cycle needs values that range
-  could not express. Widening never clamps a stored value; only narrowing does.
-- **Still unheard:** the per-cycle pan tick in Melody (note trigger) and the
-  filters (LFO wrap) — Polyrhythm's tremolo-wrap tick passed on 09-04 but the
-  others advance on a different clock. Plus tests 3-5 of
-  `docs/host-sync-ear-test.md`, which are Drift and Ramp under Host x, and pan
-  following the tempo. **The beats-per-cycle conversion itself is no longer on
-  this list** — it was heard on 09-04, see above.
-- **THE DRIFT/RAMP GAP IS THE SUITE'S BIGGEST REMAINING INCONSISTENCY, and four
-  plugins were fixed 2026-09-05: Stereo Phaser, Bubbler, Dapple, Resonance
-  Bank.** All built, migrated (25 instances / 6 projects, verified by 266
-  name-decoded comparisons, PASS) and INSTALLED. **Not heard.**
-
-  **The measurement, and it is worse than it sounds:** 13 plugins still lack
-  drift play/rest, 13 lack ramp play/rest, 14 lack each of the two beat-counting
-  unit controls. **Only Veil, the Morpher and the Phaser have a complete set.**
-  The remaining eleven are Phase 2 work — their missing controls belong INSIDE
-  existing blocks, so they need a renumber, not an append.
-
-  **The unlock worth reusing**, Rozaya 2026-09-05: *"I'm not using these until
-  they're done, therefore no projects should be saved with our changes, therefore
-  we can aford to be aggressive."* Restructure freely, install nothing, migrate
-  once at the end. That is the one-migration rule achieved by NOT INSTALLING, and
-  it is much cheaper than migrating at every step. **It holds only while the
-  projects stay closed** — a reordered build plus an opened project equals a
-  scrambled save.
-
-- **EAR-TESTED 2026-09-05 ✓✓✓ — R21, and by the strongest test there is: it got
-  USED.** Rozaya: *"it worked. it worked so well I made and saved another project
-  despite myself."* `N per beat` was not merely confirmed correct, it was reached
-  for and built with. **That is the actual goal of this suite** — not that the
-  plugins are right, but that they get opened.
-
-  **AND IT CLOSES THE AGGRESSIVE-RESTRUCTURING WINDOW.** This morning's unlock
-  was Rozaya's own condition: *"I'm not using these until they're done, therefore
-  no projects should be saved with our changes, therefore we can aford to be
-  aggressive."* A project has now been saved on today's builds, so that premise
-  is spent. **Assume saved work exists from here, and migrate accordingly.**
-  Re-run the file scan before any layout change rather than trusting a list from
-  earlier in the session.
-
-- **R21 — THE RATE MODE NOW HAS FIVE ENTRIES, BUILT AND INSTALLED IN ALL TWELVE
-  PLUGINS 2026-09-05.** `BPM / Seconds / Hz / Every N beats / N per beat`.
-  `Host x` was RENAMED to `Every N beats` — index 3 did not move, so the 10
-  instances stored on it are untouched — and `N per beat` appends at index 4.
-  **No migration. Not heard.**
-
-  **Why:** the retired pickers offered both directions in words (*"every 8 beats
-  … 8 per beat"*), and retiring them kept the slow half only, so eight cycles per
-  beat became `0.125`. Rozaya hit it: *"Rate value should not have to be set to
-  0.5 to get 8 bubbles every beat."* The two directions are reciprocals, so
-  neither is right alone — the mode picks which end of your music is
-  arithmetic-free.
-
-  **The trick that made it free, and it generalises:** `N per beat` computes
-  EXACTLY like Hz — a nominal cycles-per-second against 60 BPM — and only differs
-  in being multiplied by `host_scale`. So in the three plugins with a shared
-  `rate_to_hz()` the function needed NO change at all; mode 4 falls through to
-  the Hz branch and the only edit was widening `host_scale = rate_mode == 3` to
-  `>= 3`.
-
-  **The gates that must NOT be widened**, and they were checked one at a time:
-  the conversion chains themselves (which mode am I) stay exact, while every gate
-  meaning "am I host-synced" becomes `>= 3`. Both Polyrhythms keep one exact
-  `== 3` — the landing block, which stamps Rate Value to 4 on entering beats mode
-  and now stamps 1 on entering per-beat mode, because the two units are
-  reciprocal and carrying the number across would change the speed sixteenfold.
-
-  **The Morpher was the odd one out:** it CONVERTS its value on a mode switch
-  rather than branching, so it needed both directions of its conversion table
-  extended, and its transport durations read as beats in EITHER host mode
-  (a start delay of "per beat" is not a length).
-
-- **EAR-TESTED 2026-09-05 ✓✓ — THE TWO BIG REORDERS, ON FINISHED WORK.** Rozaya
-  played every project on the safety-check list and they came back correct:
-  **`the-sound-of-a-drain`** (five Sweeping Filters AND five Bubblers, both
-  migrated), **`bilateral-with-binaurals`** (two filters, including the live
-  30-minute ramp), and **`melodic` / `upswing`** (Tremolo). *"we listened to
-  those ones... I did listen to all of the ones you pointed at."*
-
-  **What that clears, and it is the largest block in the sweep:**
-  - The **Sweeping Filter** reorder — 20 instances, 11 projects, 45 sliders
-    renumbered, two controls deleted, Linked Sweep collapsed to one number.
-  - The **Tremolo** reorder — 11 instances, 8 projects, same shape.
-  - **Bubbler's** reorder, its deleted Host ratio, and its transport block not
-    disturbing anything at rest defaults.
-  - **The Ramp time unit's moved default.** `bilateral-with-binaurals`' two
-    ramps are on the default and still run 30 MINUTES. That is the near-miss
-    proving itself: had the default stayed at index 0 with Cycles there, this
-    project would have come back audibly wrong.
-
-  **What it does NOT clear.** Those projects were played, not reconfigured, and
-  every new control defaults to off — so **Drift and Ramp actually doing
-  something is still unheard** on all four plugins that gained them, as are the
-  transport gates, the drift period units, and Resonance Bank and Stereo Phaser
-  entirely (`wind` and `strangeness` were not on the list).
-
-- **EAR-TESTED 2026-09-05 ✓ — Dapple's rate change landing immediately, and its
-  Seconds rate mode.** *"There we go, works perfectly."* Set to Seconds with a
-  value of 6, Rozaya heard one drip every six seconds — which confirms the R20
-  canonical rate modes are right on a converted plugin — then changed the value
-  to 1 mid-play and heard it respond at once rather than finishing the old
-  six-second gap.
-
-  **That clears the count-up scheduling change** in Bubbler and Dapple: the
-  jitter is rolled as a proportion of a gap re-read every sample, instead of an
-  absolute length frozen when the previous bubble was born. **It does NOT clear**
-  the rest of today's work — the two reorders, the drift/ramp blocks, the
-  transport gates and the unit changes are all still unheard.
-
-  **How it was found is the reusable part.** The observation located the symptom
-  (*"you of course have to wait for 6 seconds to elaps"*) and the QUESTION
-  located the cause (*"Why does womb and friends not do the same thing?"*).
-  Heartbeat and Womb count UP to a target recomputed every sample; these two
-  counted DOWN from a committed length. Asking why a sibling behaves differently
-  is a cheap and unusually direct way into a structural difference.
-
-- **PHASE 2 REORDERS LANDED AND INSTALLED: Morpher, Melody, Stereo Phaser,
-  Bubbler, Dapple, Resonance Bank, SWEEPING FILTER and TREMOLO.** The last two on
-  2026-09-05 — 31 instances across 19 projects between them, verified by 725 and
-  348 name-decoded comparisons, both PASS, eleven finished projects touched.
-  **None of it heard.**
-
-  **Still owed a reorder:** Polyrhythm v1 → v3 (its layout is NOT authored, which
-  is what blocks it), Passage (blocked on what it is FOR), Womb, ~~Melody's second
-  pass for its drift/ramp controls~~ (DONE 2026-09-06), and the zero-project
-  plugins.
-
-  ~~**Drift and Ramp are now COMPLETE in eight plugins**~~ — **NINE as of
-  2026-09-06**; see the Melody entry at the top of this section, which is the
-  current count. Struck rather than edited because a number in a dated bullet
-  goes stale by design, and the top of the section is where status lives.
-
-- **PITCH IS THE NEXT BIG INCONSISTENCY AND IT IS DELIBERATELY NOT STARTED.**
-  Raised and measured 2026-09-05: the suite states a pitch **seven different
-  ways** — note-with-octave, note-without, raw semitones, hertz, cents, percent,
-  and semitones-as-a-spread. Bubbler and Dapple disagree with each other on the
-  same control. Full table and the three worst cases are in
-  `docs/suite-consistency-plan.md` under *pitch needs its own rule*.
-
-  **Do not start it opportunistically.** Unlike the rate sweep there is NO free
-  window: every pitch value is stored in real projects and IS the sound. Write
-  the rule, settle it with Rozaya, then build — the R20 way, which is what
-  finally worked after five sessions each guessed differently.
-
-- **THE RAMP TIME UNIT IS `{Cycles, Seconds, Minutes, Beats}` — AND ITS DECLARED
-  DEFAULT IS MINUTES, NOT INDEX 0.** Settled 2026-09-05. It was `{Minutes, Beats}`
-  everywhere, so a thirty-second ramp had to be entered as *0.5 minutes* — a
-  conversion, which is the exact barrier this suite exists to remove — and a ramp
-  counted in cycles was unreachable though Drift could do it. Veil and Resonance
-  Bank get `{Seconds, Minutes, Beats}`: no rate, so no cycles to count.
-
-  **The near-miss, and it is the reusable part.** I checked that the unit was
-  unset on all 59 instances and reported "nothing stored", which sounded like
-  "nobody uses Ramp". Rozaya: *"Which plugin has it? because we do have projects
-  that use ramp lol what."* They were right — `bilateral-with-binaurals` has TWO
-  Sweeping Filters ramping by −1 over **30 minutes**, engaged. Putting Cycles at
-  index 0 while those instances sit on the default would have turned a
-  thirty-minute fade into a two-second one. **A control being unset is not the
-  same as a feature being unused, and the default is a live value for every
-  instance that never touched it.** The fix is to move the declared default to
-  wherever the old meaning landed — the same trick the Phaser's rate mode uses.
-
-  **Caveat that remains:** per-target ramp settings live in the `@serialize`
-  blob, so the slider line only shows whichever target was selected at save.
-  There may be more configured ramps than can be counted from outside REAPER.
-
-- **THE DRIFT PERIOD UNIT IS `{Cycles, Seconds, Beats}`, and Cycles is the
-  default — everywhere the plugin HAS a rate to count cycles of.** Veil is the
-  one exception and it is a principled one: it has no rate, so there are no
-  cycles to offer. Settled 2026-09-05 after Rozaya caught the inconsistency:
-  *"I'd imagine both bubbler and daple have cycles, sort of, in the form of
-  bubbles. Don't they?"* They do — their own transport block already counted in
-  cycles, meaning one mean bubble interval, while the drift period I had just
-  given them counted in seconds. Same plugin, two time bases, no reason.
-
-  **It was free because nothing was stored:** all 47 instances across the four
-  plugins had NOTHING saved for that control, so every one took the declared
-  default. Checked before changing it, not assumed. **The period is referenced
-  against the PRE-drift rate**, so drifting the rate cannot modulate its own
-  drift period.
-
-- **PART 2 — THE CANONICAL READING ORDER — WAS APPROVED BY ROZAYA 2026-09-05 AND
-  IS NOW WRITTEN DOWN.** Every per-plugin layout is measured against it, and for
-  five days it described a block structure that had been thrown out on 08-31
-  with no replacement written. That single gap is what made the sweep feel
-  unnavigable to Rozaya — *"I'm very lost, and I don't think I planned this out
-  well at all"* — and it was five days of nobody writing a paragraph, not a hard
-  problem. The order, so it is in this file too:
-
-  **what the plugin IS → its rate (value, then mode) → the shape of its movement
-  → stereo and pan → output level → transport → drift → ramp.**
-
-  Inside that: everything belonging to a layer lives with that layer; a modifier
-  is numbered immediately after the thing it modifies; a second rate carries its
-  own complete R20 pair; global output sits last before transport. Drift and
-  Ramp are last because their target lists reach across every other group.
-
-  It was not designed top-down — it is what the Sweeping Filter and Tremolo
-  layouts independently came out as when authored by hand, then described and
-  approved. **The three drafted layouts can now be reviewed against something
-  real.**
-
-- **R20 — THE RATE BLOCK. SETTLED 2026-09-04, and the enum order is BUILT AND
-  INSTALLED in SEVEN plugins as of 2026-09-05: Rhythm Track, Shepard Scale,
-  Heartbeat, Stereo Phaser, Sweep Dwell, Bubbler, Dapple.**
-
-  **The measurement that found them had a blind spot, so re-run it properly.**
-  A grep for enums containing `BPM`, `Hz` or `Seconds` misses every list that
-  names its unit its own way — `{Own rate, Host x}`, `{Own durations, Host x}`.
-  The correct scan is
-  `grep -nHE "^slider[0-9]+:.*\{[^}]*Host x[^}]*\}" src/*.jsfx | grep -v "{BPM,Seconds,Hz,Host x}"`,
-  which lists exactly what is left. **But that scan is not the whole remainder
-  either**, because a list with no `Host x` in it at all does not match: the
-  **Tremolo and Sweeping Filter pan units are `{Hz, Seconds, BPM}`, backwards
-  AND missing Host x**, and Melody's Rate mode is `{BPM, Seconds, Hz}`. Those
-  three are held for their own reorder passes.
-
-  **What the scan does show, all three deliberately held:** Resonance Bank's
-  `Drift period mode` (its value lives in a SERIALIZED per-band bank, so it
-  needs a version-gated blob migration, not a token edit), Sweep Dwell's
-  `Cycle mode` (`{Own durations, Host x}` — not a unit list at all; "own
-  durations" means the four dwell sliders SUM to the cycle, so giving it
-  BPM/Seconds/Hz turns them into proportions. Same design question as Passage,
-  and it waits for that conversation), and Womb's Rate Mode (converting off the
-  dead sync-block shape, its own pass). Verified by simulation, lint clean, **not heard.** Only
-  `surges.RPP` needed a project edit (one token, backed up, verified by decoding
-  against the new enum). **Resonance Bank is deliberately NOT done** — its drift
-  period mode lives in a serialized bank and needs a version-gated blob
-  migration, not a token edit. **Melody, Womb, Tremolo and the Sweeping Filter
-  are held for their own reorder passes so each gets ONE migration.** The rule
-  itself is in `docs/suite-consistency-plan.md`; the rule is written down in
-  `docs/suite-consistency-plan.md` and summarised under *Terminology* below.
-  **It goes before the Sweeping Filter reorder**, because the reorder moves
-  controls and this decides what they say — doing the layout first means
-  touching that plugin twice.
-
-  **Measured 2026-09-04, so the size is known:** the mode enum has FIVE different
-  shapes across the suite, and **every pan unit runs backwards** relative to the
-  Rate Mode sitting above it in the same plugin. Canonicalising costs **36
-  stored instances**, all uniform: 32 pan units (all on `Hz`, index 0 → 2), 3
-  Stereo Phasers (on the DEFAULT, whose index 0 is `Own Hz` — they need `2`
-  written explicitly or they silently become BPM), and 1 Womb on Host x
-  (1 → 3). Melody, Heartbeat, Rhythm Track and Shepard Scale need nothing.
-  Then Melody and Womb convert off the dead sync-block shape — Melody's 27
-  synced instances move their beats number into `Rate value`, and it comes out
-  **two controls shorter**.
-
-  **Rozaya, 2026-09-04, on why this keeps going wrong:** *"I've had five
-  different Claude sessions try and fuck this aspect up, and I don't know enough
-  JSFX or syntax or anything like that to try and fix it."* The plan's own text
-  was the tripping hazard — it read as authoritative and said the opposite. Both
-  offending paragraphs are now struck through in place rather than deleted, so a
-  session that half-remembers them finds the correction instead of the claim.
-
-- **The suite consistency sweep is mid-flight.** `docs/suite-consistency-plan.md`
-  is the authoritative document for it — read it before touching interface
-  naming, ordering, ranges or units anywhere in the suite. Phase 0 and most of
-  Phase 1 are done; **Phase 2 (reorders + migrations) has not started.**
-- **No releases until the sweep finishes.** Pushing is fine; a release is a
-  distribution artefact and shipping one mid-sweep hands a stranger a
+### The branch
+
+- On `feature/melody-reorder`, pushed, unmerged. **Re-run
+  `git rev-list --count master..HEAD` rather than believing any number written
+  here** — a count in this file has gone stale twice.
+- **DO NOT PROPOSE MERGING OR TAGGING.** Rozaya, 2026-09-05: *"I am not tagging
+  that. This is not done."* Pushing is right and welcome; a tag is a distribution
+  artefact and the sweep is mid-flight.
+- **No releases until the sweep finishes** — shipping one now hands a stranger a
   half-renamed suite.
-- **`docs/open-bugs.md` has one open entry** (Melody Phase instances arriving out
-  of alignment in `simple-sequence`). Read it before touching Melody.
-- **`docs/host-sync-ear-test.md` is the highest-value thing waiting.** Five tests,
-  about fifteen minutes, and **three of them have never been heard on any
-  plugin.** It is written to be handed over: preconditions, failure shapes and
-  what each one means, design questions marked as separate from correctness ones,
-  and an explicit *don't diagnose, just say which number did what*.
+
+### The consistency sweep
+
+`docs/suite-consistency-plan.md` is authoritative. Read it before touching any
+slider's name, order, range or unit.
+
+- **The rate block (R20) and both its host modes (R21) are BUILT EVERYWHERE.**
+- **Drift/Ramp: 13 of 19 plugins complete.** Still owed the full six: both
+  Polyrhythms, Passage, Womb. The **Morpher** owes its two unit controls only.
+  **Resonance Bank is NOT missing one** — its drift period is a RATE by design,
+  because each band drifts independently and there is no single cycle to count.
+  A name-matching sweep will claim otherwise; it is wrong.
+- **Reorders still owed:** Polyrhythm v1 → v3 (its layout is not authored, which
+  is what blocks it), Passage (blocked on what it is FOR), Womb, Sweep Dwell
+  (blocked on its `Cycle mode` question, not on effort).
+- **The range sweep: passes 1 and 2 are done** — 176 sliders widened, 0 narrowed,
+  verified against all 641 continuous sliders. dB and semitone ranges are held
+  for Rozaya's decision. See `docs/planned-features.md` for the rule, which has
+  two halves: widen the guesses, AND narrow anything promising more than the code
+  honours.
+- **PITCH IS NEXT AND IS DELIBERATELY NOT STARTED.** The suite states a pitch
+  seven different ways. Unlike the rate sweep there is **no free window** — every
+  pitch value is in a real project and IS the sound. Write the rule, settle it
+  with Rozaya, then build. That is the R20 way, and it is what finally worked
+  after five sessions each guessed differently.
+
+### What has been heard, and what has not
+
+**Heard and good:** Melody's R20/R21 rate block; the Start delay fix in Melody;
+`N per beat` (reached for and built with, which is the strongest test there is);
+both big reorders on finished work; Dapple's immediate rate change; per-cycle pan
+on Polyrhythm; Veil's layout and ramp.
+
+**NOT heard:** everything from the 2026-09-06 drift/ramp sweep (six plugins), the
+`N per beat` reciprocal fix, the Tremolo Start delay fix, and the range
+widenings. **Nothing there can regress silently** — every new control defaults to
+off and no stored value moved — but none of it has been played.
+
+`docs/host-sync-ear-test.md` is still the highest-value thing waiting: five tests,
+about fifteen minutes, three of them never heard on any plugin.
+
+### Settled — do not re-derive these
+
+Each cost a session or more. The reasoning lives in the plan and the session log;
+what matters here is that they are **decided**.
+
+- **The rate block.** Full rule under *Terminology* below. Five separate sessions
+  each reached for a different shape here.
+- **A FEATURE GOES EVERYWHERE ITS PARENT ALREADY IS. No triage.** Rozaya,
+  2026-09-04: *"Anything that has Ramp should have all the controls that go with
+  Ramp. End of fucking story."* Do not decide on my own hearing — which I do not
+  have — that some plugin will not benefit and skip it. **A bug is a feature's
+  twin: propagate a fix the same way, and say which plugins were checked and
+  cleared, not just which were fixed.**
+- **Ramp time unit** is `{Cycles, Seconds, Minutes, Beats}`, **default Minutes
+  (index 2, not 0)**. **Drift period unit** is `{Cycles, Seconds, Beats}`,
+  **default Cycles**, everywhere the plugin has a rate to count cycles of (Veil
+  is the one principled exception — no rate, no cycles).
+- **A DECLARED DEFAULT IS A LIVE VALUE** for every instance that never touched
+  the control. Putting a new meaning at index 0 silently reinterprets all of
+  them. Move the declared default to wherever the old meaning landed.
+- **The canonical reading order:** what the plugin IS → its rate (value, then
+  mode) → the shape of its movement → stereo and pan → output level → transport
+  → drift → ramp. A modifier is numbered immediately after what it modifies; a
+  second rate carries its own complete pair.
+- **`docs/open-bugs.md`: BOTH entries are CLOSED.** Neither is a job. Read them
+  for their burned theories before touching the plugin they name, then leave them
+  alone. An OPEN status reads as a job to a session arriving mid-task, and that
+  is how the forbidden fix got shipped once already.
 
 ### Terminology that changed, and where the old words survive
 
-`docs/session-log.md` is **append-only history and is not rewritten**, so it uses
-the names that were current when each entry was written. The plugin pages and
-older docs can lag too. Two renames matter when reading any of them:
+`docs/session-log.md` is **append-only and is not rewritten**, so it uses the
+names that were current when each entry was written. Plugin pages can lag too.
+Three renames matter when reading any of them:
 
-- **`Speed ramp` is now `Ramp`** everywhere the user can see (2026-08-31, 70
-  labels across 14 plugins). The internal variables are still `speed_ramp_*` and
-  that is fine. Every "Speed Ramp" in the history means today's `Ramp`.
-- **`Host x` is a rate mode, and `Rate Value` there means EVERY N BEATS.** The
-  history describes it as a *multiplier* of the project tempo, which is what it
-  was from 2026-08-11 until R13-revised on 2026-09-02. **No plugin in the suite
-  multiplies any more, and the conversion is EAR-TESTED.**
+- **`Speed ramp` is now `Ramp`** everywhere the user can see. Internal variables
+  are still `speed_ramp_*`, which is fine.
+- **`Host x` is retired as a name.** It is `Every N beats`, and the rate value
+  there means beats per cycle. The history calls it a *multiplier* of the project
+  tempo, which is what it was until 2026-09-02. **No plugin multiplies any more.**
+- **`Host ratio` pickers are gone**, all of them.
 
-  **THE RATE BLOCK IS SETTLED. IT IS R20 IN `docs/suite-consistency-plan.md`.
-  READ THAT SECTION BEFORE TOUCHING ANY RATE CONTROL ANYWHERE.** Five separate
-  sessions have each reached for a different shape here, and Rozaya — who cannot
-  read the source to check us — has had to catch it every time. The rule, so it
-  is in this file too and not only in the plan:
+**THE RATE BLOCK IS SETTLED — R20/R21 in `docs/suite-consistency-plan.md`. READ
+THAT BEFORE TOUCHING ANY RATE CONTROL.** Five separate sessions each reached for
+a different shape here, and Rozaya — who cannot read the source to check us — had
+to catch it every time. The rule, so it is in this file too:
 
-  **Every rate carries exactly two controls, adjacent: a rate value, then a rate
-  mode of `{BPM, Seconds, Hz, Host x}` — always those four, always that order.
-  In Host x the rate value means every N beats. A plugin with two rates has two
-  complete pairs; the pan gets its OWN mode and does not borrow the main one.**
+> **Every rate carries exactly two controls, adjacent: a rate value, then a rate
+> mode of `{BPM, Seconds, Hz, Every N beats, N per beat}` — always those five,
+> always that order. A plugin with two rates has two complete pairs; the pan gets
+> its OWN mode and never borrows the main one.**
 
-  **Forbidden, all of them previously built here:** a `Sync to host` switch, a
-  `Host sync target` selector, a separate `Every N beats` slider, a `Host ratio`
-  picker, any control whose job is to write into another control, and any
-  multiplier in any mode.
+**Forbidden, and every one of them was built here at some point:** a
+`Sync to host` switch, a `Host sync target` selector, a free-standing
+`Every N beats` slider, a `Host ratio` picker, any control whose job is to write
+into another control, and any multiplier in any mode.
 
-  **The argument that keeps resurrecting the dead shape, and the number that
-  kills it.** The plan used to say a plugin syncing two things independently
-  needs a target selector, because one Rate Value cannot express two beat
-  counts. True, and irrelevant — the second rate has its own value. The real
-  constraint was that **Melody's `Pan base rate` has no mode of its own** and is
-  handed the sequencer's (`melody_phase.jsfx:1116`), so there was nowhere to put
-  Host x for the pan. One slider fixes that; three were spent instead. And
-  across **73 Melody instances, 27 are synced and all 27 target `Rate value` —
-  not one points at the pan.** The capability has never been used.
+**The argument that keeps resurrecting the dead shape, and the number that kills
+it.** It is said that a plugin syncing two things independently needs a target
+selector, because one rate value cannot express two beat counts. True and
+irrelevant — the second rate has its own value. The real gap was that Melody's
+pan had no mode of its own, so there was nowhere to put the host mode for it. One
+slider fixed that; three were spent instead. And across 73 Melody instances, all
+27 synced ones targeted the sequencer and **not one** targeted the pan.
 
-  Converted with nothing stored on Host x, so no migration was needed -- checked
-  in every case, never assumed: both Polyrhythms, Dapple, Bubbler (09-02), then
-  Stereo Phaser, Resonance Bank, Rhythm Track, Shepard Tone, Shepard Scale,
-  Heartbeat and Sweep Dwell (09-04).
+**`Every N beats` and `N per beat` are RECIPROCALS and both are needed.**
+Retiring the old pickers kept only the slow half, so eight cycles per beat had to
+be typed as `0.125` — arithmetic, which is the barrier this suite exists to
+remove.
 
-  Converted WITH a value migration: `Full_Feature_Tremolo` (4 instances) and
-  `full-feature-sweeping-filter` (6). Reciprocal -- a stored multiplier of 0.5
-  became 2 beats per cycle. `tools/hostx_verify_beats.py` recomputed every
-  instance's rate in Hz under BOTH the old and the new code path using that
-  project's own tempo: 10 instances, 0 rate mismatches, 0 unexpected token
-  changes. It is deliberately NOT idempotent (1/x twice is x) and writes
-  copies rather than touching originals.
-
-  **Two files the recount command mislabels, so check before believing it.**
-  `melody_phase` and `womb_sound_generator_v3` are on the R11 shape (a sync
-  switch and a free `Every N beats`) rather than carrying a bare multiplier;
-  Womb still has `Host x` sitting in its Rate Mode enum beside its own
-  `Every N beats`, which is a tidy-up, not a conversion. And `veil` has no Host
-  x mode at all — the phrase only appears in two comments. Recount with:
-  `cd src && for f in *.jsfx; do grep -q "Host x" "$f" && { grep -qiE "beats per (cycle|bubble|beat|breath)" "$f" && echo "CONVERTED $f" || echo "multiplier $f"; }; done`
+**Two gates, and the difference matters.** A test meaning *am I host-synced*
+covers both host modes and is written `>= 3`. A *conversion* asking *which mode
+am I* stays exact, because the two modes are reciprocals and using one formula
+for both runs the plugin at the wrong speed, silently. Getting this backwards is
+how `N per beat` shipped inverted in two plugins on 2026-09-05.
 
 ## Layout
 
@@ -857,63 +376,84 @@ because they apply every session, not on the day they were learned.
   writing anything.
 - **"Read and compare, don't script"** — Rozaya. Reading ONE real line beside the
   control names has twice found in seconds what a day of reasoning did not.
+- **SIMULATE A NEW MODE'S OUTPUT IN EVERY PLUGIN YOU ADD IT TO.** Reading
+  confirms the wiring; only numbers confirm the behaviour. R21's `N per beat`
+  shipped switched on in twelve plugins and **inverted in two** — 8 per beat gave
+  one cycle every 8 beats — because their rate chain ended with the other host
+  mode as its fallback. I had checked every gate and got every gate right, and
+  never once asked what the new mode actually DID. **"Nothing broke" is not
+  evidence a latent feature works**; nothing broke because nothing was stored on
+  it yet.
+- **CHECK THE @serialize STREAM, NOT JUST THE MAGIC.** A version bump proves you
+  meant to change the format, not that you did. Heartbeat's magic was bumped
+  while its four new banks were never written to the stream, so its settings
+  would have vanished on save. Nothing caught it but grepping all five finished
+  plugins for the same line and finding one zero. **After adding a bank, assert
+  it appears in BOTH the file_mem list and the duplicate-fix block, in every
+  plugin.**
+- **A RANGE VIOLATION IS ONLY EVIDENCE IF THE MIGRATION CAUSED IT.** A value that
+  was already out of range is a pre-existing oddity, and reporting it as a fault
+  buries the real signal. Separate "was already out of range" from "is out of
+  range now"; only the second is a failure.
+- **PIN A VERIFIER TO A COMMIT HASH, NEVER `HEAD~n`.** A relative revision goes
+  stale the moment anything else is committed, and the check then compares a new
+  layout against ITSELF and reports catastrophic-looking shifts that are pure
+  fiction. Happened twice in one afternoon. **A verifier that cries wolf is worse
+  than none** — the whole point is that when it says FAIL, you stop.
+- **A SAFETY CHECK THAT QUIETLY COVERS LESS THAN IT CLAIMS IS WORSE THAN NONE.**
+  `scan_slider_ranges.py` matched the plugin path as `(\S+)`, so it stopped at
+  the space in `heartbeat gen.jsfx` and **silently skipped every Heartbeat
+  instance in the library** — reporting it only as a footnote nobody read. One
+  plugin here has a space in its filename; REAPER quotes the path when it does.
+  Word-splitting on it has now bitten three separate tools.
 
 ### Diagnosis
 
-- **A plausible mechanism is not a finding. Say which one you have.** Mark it
-  **proved / predicted / untested** when you write it down — an unmarked
-  mechanism gets read as proved by the next person, including by a later you.
-  Two have hardened into false constraints here that way. The test: *if this
-  theory were wrong, what would I hear?* No answer means it is a hypothesis.
+- **A plausible mechanism is not a finding. Mark it proved / predicted /
+  untested.** An unmarked mechanism gets read as proved by the next person,
+  including a later you; two have hardened into false constraints here that way.
+  The test: *if this theory were wrong, what would I hear?* No answer means it is
+  a hypothesis.
 - **"What else produces exactly this symptom?" is the cheaper question.** Both
   times a wrong theory survived here, a second candidate was the real cause.
-- **Rozaya's reports have a track record, and it is better than mine. Start from
-  the assumption that what is described is really happening, where it is said to
-  be happening.** The measured history in `docs/session-log.md`:
-  *"it's not in the start delay, it's in the passage from one note to the next"*
-  localised the slider-insert bug after a full day of my reasoning had not;
-  *"it was using the base rate, and ignoring the rest"* was the shared pan index,
-  heard instantly; *"I suspect the problem is in the rate mode units stuff"* was
-  the Host x accumulator; *"wiggling the slider brought them both back"* is so
-  diagnostic it names one bug and almost no other; *"I can hear that real
-  overtones don't dip everything else"* was correct at the level of the CONCEPT,
-  against a design I had argued for from physics and got wrong. Asking what a
-  control does at 0 caught a bug on its way out the door.
-- **What to hold loosely is any MECHANISM attached to a report — including, and
-  especially, my own.** When a report arrives as observation-plus-theory
-  ("it crackles, I think it's CPU"), the observation is evidence and the theory
-  is a hypothesis — and that is not a fact about who is speaking: my mechanisms
-  are the ones that have actually hardened into false constraints here. So the
-  move is never to discount the report. It is to ask **what it SOUNDS like**,
-  which costs one question and gets you the observation underneath. The
-  2026-07-27 Passage case is the whole lesson: the report said a real bug, in the
-  harmonics engine, varying run to run — all three true — and I spent the session
-  optimising CPU instead of asking.
-- **Ask for the observation AND the read on it. Never for one instead of the
-  other.** "Just tell me what it did, don't diagnose" sounds like it protects
-  their time and actually throws away the best input the project has. The
-  diagnoses here have repeatedly been right and faster than mine, and on
-  2026-09-04 a correction to a test's own settings caught a **false fail** before
-  it happened. What went wrong in the case that produced the rule was not that a
-  theory was offered — it was that I acted on the theory and never asked what it
-  sounded like. Hold the two apart: observation as evidence, mechanism as the
-  lead worth checking first.
-- **A NEGATIVE TEST RESULT IS A RESULT.** When a prediction is tested and does
-  not appear, that is evidence against the prediction — not a puzzle to explain
-  until the prediction survives. **The rescuing explanation is the tell**, and
-  it is convincing by construction, because it was built to fit. On 2026-09-04
-  I predicted a case-fold bug in both Shepards, Rozaya tested them and said
-  they were fine, I produced an exact-cancellation argument that made that
-  compatible with the bug still existing, and shipped a change on it — while
-  they were busy testing something else. The argument did not even cover both
-  plugins; it fitted one and contradicted the other. Reverted, and the
-  prediction is now refuted by two direct tests. **The collision is still real
-  and still inert: a fact about the source is not a fact about the sound.**
-  See `docs/open-bugs.md` entry 2, which is kept CLOSED rather than deleted so
-  the reasoning cannot be re-derived and re-shipped.
+- **Rozaya's reports have a track record, and it is better than mine.** Start
+  from the assumption that what is described is really happening, where it is
+  said to be happening. *"it's not in the start delay, it's in the passage from
+  one note to the next"* localised a bug a full day of my reasoning had not;
+  *"wiggling the slider brought them both back"* names one bug and almost no
+  other; *"I bet that 300 was the old wash grain value"* was right about a value
+  I had just written a paragraph justifying. Asking what a control does at 0
+  caught a bug on its way out the door.
+- **Hold the MECHANISM loosely, never the report — and especially my own
+  mechanism.** When a report arrives as observation-plus-theory, the observation
+  is evidence and the theory is a lead. Ask **what it SOUNDS like**: one question,
+  and it gets you the observation underneath. In the 2026-07-27 Passage case the
+  report was right on all three counts and I spent the session optimising CPU
+  instead of asking.
+- **Ask for the observation AND the read on it, never one instead of the other.**
+  "Just tell me what it did" sounds like it protects their time and throws away
+  the best input the project has.
+- **A NEGATIVE TEST RESULT IS A RESULT.** A prediction that does not appear is
+  evidence against the prediction, not a puzzle to explain until it survives.
+  **The rescuing explanation is the tell** — convincing by construction, because
+  it was built to fit. Shipped once on exactly that, and reverted.
+- **WHEN REPEATED CHECKS OF A SUSPECT COME BACK CLEAN AND THE SYMPTOM IS STILL
+  REAL, STOP RE-CHECKING THE MAGNITUDE AND CHECK THE ORIGIN.** 2026-09-06: twice
+  I verified a Start delay's arithmetic and correctly reported it consistent —
+  every quantity really did count beats properly. The defect was not *how much*
+  was counted but *when counting began*. The paper was right and the question was
+  wrong.
+- **A ONE-SLIDER TEST BEATS THREE ROUNDS OF SOURCE READING.** Same day: setting
+  Start delay to 0 isolated the fault in seconds, after I had read the delay and
+  placement code twice without convicting either. Reach for the discriminating
+  test earlier — and when a report contradicts a lead, re-read the report before
+  abandoning the lead.
+- **A COMPENSATING ERROR IS NOT A SPARE PART.** When you remove one half of an
+  accidental cancellation, go looking for what the other half was quietly paying
+  for. A stale cached value was silently performing a subtraction; making it live
+  removed both.
 - **When a fix lands near an open bug, re-test the open bug.** One sat on the
-  books for two weeks after being silently fixed, and a diagnostic plan was
-  written for a problem that no longer existed.
+  books for two weeks after being silently fixed.
 
 ### Scope
 
@@ -936,39 +476,27 @@ because they apply every session, not on the day they were learned.
   never propagated, plus a migration tool being rewritten from scratch that
   already existed.
 - **AUTHOR THE WHOLE LAYOUT BEFORE YOU MIGRATE ANYTHING. One migration per
-  plugin, not one per idea.** Before touching a plugin that will need an `.RPP`
-  migration, write its `docs/layouts/<plugin>.md` first -- every slider in its
-  final position, every enum in its final order, every control the plan says it
-  is still missing. Get the reading order reviewed. THEN build and migrate,
-  once.
+  plugin, not one per idea.** Write `docs/layouts/<plugin>.md` first — every
+  slider in its final position, every enum in its final order, every control the
+  plan still owes it. Then build and migrate, once.
 
-  **Why it is a rule and not a preference.** The consistency plan's governing
-  constraint is the first thing it says: a migration costs the same whether one
-  thing changes or forty, so everything a plugin needs changes in the same
-  version bump. The cost is not the script. It is that every migration is a
-  fresh chance to corrupt every project using that plugin, and paying that risk
-  repeatedly buys nothing.
+  **Why it is a rule.** A migration costs the same whether one thing changes or
+  forty, and every one is a fresh chance to corrupt every project using that
+  plugin. Paying that risk repeatedly buys nothing. **Breaking it cost FIVE
+  migrations in one day (2026-09-04)** — the Morpher's 38 projects rewritten
+  three separate times, Tremolo and the Sweeping Filter twice each. Nothing was
+  lost; the risk was just spent five times for one pass of work. Rozaya: *"so
+  fuck not having to migrate only once. got it."*
 
-  **What breaking it looked like, 2026-09-04: FIVE migrations in one day.** The
-  Morpher's 38 projects were rewritten three separate times -- play/rest
-  positions, then the transport block, then the rate mode index. Tremolo and the
-  Sweeping Filter got two, hours apart. Nothing was lost; each was snapshotted
-  and verified independently. The risk was spent five times for work that needed
-  one pass, and the Morpher still owes a fourth, because its authored layout now
-  describes a plugin with fewer sliders than the file has.
+  **Why it happened, which is the reusable part:** I worked reactively — one
+  instruction, one change, one migration — instead of reading the plan first and
+  collecting everything that plugin was already owed. Every one of those changes
+  was implied by something already written down.
 
-  **Why it happened, which is the reusable part.** I worked reactively -- one
-  instruction, one change, one migration -- instead of reading the plan first
-  and collecting everything that plugin was already owed. All three Morpher
-  changes were implied by things already written down: the transport block is
-  Part 3, the canonical rate enum is R13, logical positions are R18. None of it
-  was new information. Rozaya: *"so fuck not having to migrate only once. got
-  it."*
-
-  **The check, before writing any migration:** does `docs/layouts/<plugin>.md`
-  exist, is it current against the file, and does it include everything the plan
-  still owes this plugin? If not, stop and author it. **A migration written
-  before its layout is a migration you will write again.**
+  **The check, before writing any migration:** does the layout doc exist, is it
+  current against the file, and does it cover everything the plan still owes this
+  plugin? If not, stop and author it. **A migration written before its layout is
+  a migration you will write again.**
 - **Validate the CHARACTER on a cheap or limited version before building the
   heavy engine.** Bubbler's granular loop was only built after a play-once
   version proved the sound was right.
@@ -1094,37 +622,13 @@ because they apply every session, not on the day they were learned.
 
 - **EEL2 has NO scientific notation — `1e9` is a syntax error, not a big number.** Every other C-family language accepts it, so it gets typed on autopilot when you want "effectively infinity" as a sentinel (here: a High-cut fade threshold that no frequency can reach, so the fade multiplier is always exactly 1 when the control is off). REAPER reports it clearly — `@init:360: syntax error: 'hc_lo = 1 <!> e9;'` — but only when the plugin is loaded, so it survives every desk check. **Fix:** write the digits out, `1000000000`. **Audit:** `grep -nE '(?<![A-Za-z0-9_])[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+' src/*.jsfx` (ripgrep needs `-P` for the lookbehind) — should return nothing across the suite. Worth running alongside the paren-balance and empty-`()` checks, since none of those catch it. (Hit 2026-08-19 adding High cut to spectral_vowel_morpher; the whole suite was scanned and this was the only instance.)
 
-- **Polyrhythm Phase voice memory layout** (16 slots each):
-  - 0  osc_phase_l
-  - 16 osc_phase_r
-  - 32 trem_phase
-  - 48 gain_l
-  - 64 gain_r
-  - 80 v_freq_l
-  - 96 v_freq_r
-  - 112 v_trem_freq
-  - 128 v_active
-  - 144 v_semitones
-  - 160 v_dr (drift in Drift mode / rate in Independent mode)
-  - 176 pan_phase
-  - 192 pan_smooth
-  - 208 v_pan_freq
-  - 224 v_gain
-  - 240 v_phase_off (last-known per-voice offset slider value)
-  - 256 v_phase_off_last
-  - 272 v_pan_static (target pan position for Spread / Spread Reversed modes)
-  - 288 v_resting (per-voice Play/Rest flag: 1 = silent during rest, 0 = playing)
-  - 304 v_pr_cycle (per-voice Play/Rest cycle counter, advances at the voice's own v_trem_freq)
-  - 320 **is NOT free** — `chorus_buf` owns 320..8511, the drift / Ramp banks run
-    8512..8927, and the per-cycle pan banks added 2026-09-02 took the next two:
-    8928 `pan_cycle_index`, 8944 `pan_cycle_dir`. **The first free slot is now
-    8960**, in both v1 and v3.
-    This line used to say "320 onward: free for new arrays", which would have
-    written a new bank straight through the chorus delay buffer, silently — and
-    then it said 8928 was free for one day, until the pan work took it. **Do not
-    trust the number written here; re-derive it.** `grep -nE '^[a-z_]+ *= *[0-9]{3,};'
-    src/<plugin>.jsfx` lists every allocation in the file, and the last one plus
-    its width is the answer.
+- **Polyrhythm Phase's memory map lives in the SOURCE, not here.** A copy in this
+  file went stale twice — it once said slot 320 was free when `chorus_buf` owns
+  320..8511, which would have written a new bank straight through the delay
+  buffer, silently. **Re-derive it, every time:**
+  `grep -nE '^[a-z_]+ *= *[0-9]{3,};' src/<plugin>.jsfx` — the last allocation
+  plus its width is the first free slot. The same applies to any plugin with
+  hand-placed banks.
 - **JSFX can LOAD audio samples — it's not just live DSP.** Idiom (from stock `guitar/amp-model-dual`, used in `src/sustain_looper.jsfx`): a file-selector slider `sliderN:/foldername:default:Name` presents a dropdown of files in `<REAPER resource>/Data/foldername/` (NVDA-navigable as a list-parameter, same family as enum dropdowns). Then `fh = file_open(sliderN); file_riff(fh, nch, sr); n = file_avail(fh)/nch; file_mem(fh, buf, n*nch); file_close(fh);` reads interleaved samples. Reload only when `sliderN|0` changes. **Formats:** WAV and OGG are reliable; FLAC/MP3 are NOT guaranteed — export loop sources as WAV. **Memory:** ~8 million slots/instance by default (≈80 s of 48 kHz stereo, interleaved), max 32M via `options:maxmem=33554432` (≈5.5 min) — keep loaded samples short. `file_riff` with nch `'rqsr'` + a target SR auto-resamples (REAPER 6.29+).
 - **JSFX `fft()`/`ifft()` operate on PERMUTED bin order.** To read or edit frequency bins by index you MUST call `fft_permute(buf,size)` after `fft()`, do the work in natural order, then `fft_ipermute(buf,size)` before `ifft()`. Skipping it corrupts the spectrum — a magnitude-preserving op (e.g. phase randomization) will *grow harmonics on a pure sine*, which is impossible if implemented right and is the diagnostic tell. (Surfaced building the Paulstretch-style `smear_stretch`, now archived.)
 - **Muted/inaudible layers still cost full CPU — gate expensive per-grain / per-block DSP (FFTs especially) on the layer's LEVEL, or a busy project crackles.** JSFX runs the code whether or not its output is audible. In `spectral_vowel_morpher` at Texture 0 (pure voice, wash muted), the wash engine still ran two `FFTSIZE` inverse FFTs *per grain* on audio being multiplied by zero — a real per-grain load that tipped busy projects into occasional real-time-deadline misses: **non-clipping crackle on ~every slot.** That's the diagnostic tell — the crackle scales with project CPU load, NOT with signal level, and it eases when you free CPU / mute other tracks (a clip-driven crackle would do the opposite). **Fix:** gate the heavy work on the layer being audible — `have > 0 && wlevel > 0.0001 ? gen_grain();` — mirroring whatever guard the sibling/parallel layer already has (here the voice engine's `hlevel` guard). Keep the accumulator draining (read-and-clear) so the layer fades back cleanly over ~one grain when its level rises off 0; output is bit-identical while muted. Applies to ANY plugin computing a voice/band/layer whose gain can reach 0 — skip its expensive DSP when silent, not merely its output. (Fixed 2026-07-10, shipped **v2.18**, commit `1affa90`.)
@@ -1132,14 +636,9 @@ because they apply every session, not on the day they were learned.
 
 - **An "adopt on first `@slider`" flag is NOT a load guard — it is the bug. Any tracker that answers "did the user just move this control?" must be adopted in `@block`.** (Proved 2026-08-23, and this is the *confirmed* mechanism the nested-selector entry above only predicted in passing: "an adopt-on-first-`@slider` flag gets consumed by an early `@slider` firing with default (pre-restore) slider values.") **Mechanism:** on a fresh or duplicated instance, `@slider` runs while REAPER is still handing over the saved parameter values. A tracker adopted there captures a **default**; the real value arriving a moment later then reads as a user edit, the change-detecting branch fires, and `slider_automate()` makes the write stick — so the damage is saved back into the project. **Worked example, with the number that proves it:** `infantile.RPP` held a Sweeping Filter in **BPM** mode, Rate Value **180**, and — invisibly — Host ratio on *"every 2 beats"*. That picker's table maps "every 2 beats" to the multiplier **0.5**, so every load and every track duplicate stamped Rate Value to exactly 0.5. Fixing it by hand held for the session (the tracker finally matched) and died on the next duplicate. **Two faults, and they are separable:** (a) the picker wrote its ratio **without checking Rate Mode**, while `slider_show` hid it outside Host x — so the control doing the damage was invisible and firing in a mode where it has no meaning; (b) the tracker was adopted in `@slider`. **The fix, both halves:** gate every picker's write on the same condition its `slider_show` uses (if it is hidden it must not write), and move the `!flag ? ( tracker = sliderN; flag = 1; )` adopt into `@block`, reading the **raw slider** rather than a `@slider`-local variable. `@block` cannot run before the instance is configured, so it adopts settled values whatever order the restore paths ran in; and while the flag is still 0, `@slider` fires nothing at all, which is the safe direction. **Consequence to handle:** once a picker is mode-gated it no longer self-corrects on reload, so entering the host-sync mode with a stale picker would name one speed on screen and run another (the raw multiplier hides behind the picker). Add a one-pass entry edge — `entered_host_mode = rate_mode_inited && sliderM == H && last_rate_mode != sliderM;` at the very top of `@slider` — and OR it into the picker's condition. **Applied across 15 plugins / 30 trackers** (every `host_ratio` and `pan_speed` picker, every "landing in Host x" block, and Womb's breath picker). Reference implementation: the `@block` head and `@slider` head of `src/full-feature-sweeping-filter.jsfx`. **Audit:** `grep -n '^!.*_inited ? (' src/*.jsfx` — any hit inside `@slider` is this bug. **Does NOT explain the `filt_stages` mystery** below: this proves `@slider` runs *early with defaults*, which gives a stage count of 1, not 0.
 
-- **A plausible mechanism is not a finding, and this codebase has been bitten by the confusion twice. Say which one you have.** Both times the shape was identical: a mechanism that would explain the symptom got written down — and then quoted back later — as though it were the established cause.
-  - **`filt_stages` (2026-08-19).** "A fresh Sweeping Filter has `filt_stages = 0`, so the cascade is a straight wire" explained the reported symptom perfectly. It was false: `@slider` *does* run on instantiation, just early with defaults, which gives 1 and never 0. The actual cause was the Host ratio picker stamping Rate Value to 0.5. The theory survived because it matched.
-  - **Per-slot wash grain (2026-08-31).** "Changing `W` per slot would click, which is why Wash grain is global" was asserted as the reason for a design decision. Nobody has ever tested it. Reasoned through afterwards, the predicted symptom isn't even a click — it's an amplitude wobble over about one grain, from the overlap count sitting between two values, and it normalises out.
-  - **The tell:** you can state the mechanism but not the observation that would separate it from the alternatives. If asked *"what would I hear if this theory were wrong?"* and there's no answer, it is a hypothesis.
-  - **The cheaper question, every time: "what else produces exactly this symptom?"** Both cases had a second candidate that was the real one.
-  - **Discipline when writing it down:** mark the status. This file already distinguishes *ear-tested ✓* from *NOT TESTED*, and the same applies to mechanisms — **proved / predicted / untested**. An unmarked mechanism gets read as proved by the next person, including by a later you. That is exactly how both of these hardened into constraints.
-
-
+- **A plausible mechanism is not a finding** — see *Diagnosis* above, which
+  carries this rule and the two cases that hardened into false constraints here
+  (`filt_stages`, and per-slot wash grain).
 
 ## Adding a new waveform to Polyrhythm Phase
 
@@ -1194,38 +693,25 @@ because they apply every session, not on the day they were learned.
   is dark.** Say plainly which parts of a change have been heard and which have
   not; this file marks that distinction everywhere and it is worth keeping.
 
-  > ~~JSFX cannot be compiled outside REAPER, so nothing here is verified by
-  > writing it.~~ **THAT WAS FALSE, and it was never checked.** Corrected
-  > 2026-09-06. **`ysfx` (github.com/jpcima/ysfx, Apache-2.0, CMake, builds on
-  > Windows) contains a JSFX compiler AND runtime**, and `jsusfx` is a second
-  > independent implementation. The public API is exactly what this repo needs:
-  > `ysfx_load_file` / `ysfx_compile` with a log reporter for real error
-  > messages, `ysfx_slider_set_value` and `ysfx_slider_get_range`, and
-  > `ysfx_process_double` — so a plugin can be compiled, configured, run for N
-  > samples and its output READ, with no REAPER and no ears.
+  > **A JSFX COMPILER *DOES* EXIST OUTSIDE REAPER, and this file said otherwise
+  > for months without anyone checking.** `ysfx`
+  > (github.com/jpcima/ysfx, Apache-2.0, CMake, Windows) has a JSFX compiler AND
+  > runtime; `jsusfx` is a second implementation. Its API covers load, compile
+  > with real error messages, slider get/set, and offline block processing — so a
+  > plugin can be compiled, configured, RUN and its output READ, with no REAPER
+  > and no ears. **Not built yet;** the details are in
+  > `docs/planned-features.md`.
   >
-  > **Nobody had looked.** "We can't compile JSFX" should always have been
-  > "I haven't checked whether anyone has implemented it", and those are
-  > different sentences. **Before writing an impossibility into this file, search
-  > for the thing you are declaring impossible.**
+  > **"We can't compile JSFX" should have been "I haven't looked."** Before
+  > writing an impossibility into this file, search for the thing being declared
+  > impossible.
   >
-  > **Be precise about what it would buy, because it is not the ear-test.** A
-  > compile check catches syntax — the empty-`()` trap, scientific notation, a
-  > paren imbalance — which `jsfx_lint.py` only approximates with regexes. It
-  > would have caught NONE of the real bugs found on 2026-09-06: the `N per beat`
-  > reciprocal, the Start delay's two clocks, the placement regression. Those all
-  > compile perfectly.
-  >
-  > **The RUNTIME is the prize, and it addresses a named failure.** Behaviour here
-  > is currently checked by re-implementing the DSP in Python and reading the
-  > numbers — which only ever tests my MODEL of the code, never the code. That is
-  > exactly how the 2026-09-06 placement "fix" was verified, shipped, and turned
-  > out to make things worse. Running the actual `.jsfx` and reading its actual
-  > output samples closes that gap, and would have shown the `N per beat`
-  > reciprocal in one line of output.
-  >
-  > **It is real work, not a lookup:** build a C++ library with CMake, then write
-  > a small harness around it. Bounded, and done once. Not yet built.
+  > **The runtime is the prize, not the compile check.** A compile check catches
+  > syntax and would have caught NONE of 2026-09-06's real bugs. Behaviour here
+  > is currently checked by re-implementing the DSP in Python — which tests my
+  > MODEL of the code, never the code, and is exactly how that day's placement
+  > "fix" was verified, shipped, and made things worse.
+
 - **Pushing is fine at any time. Cutting a release is not** — see *No releases
   until the sweep is finished* in the consistency plan. A release is a
   distribution artefact, and shipping one mid-sweep hands a stranger a
