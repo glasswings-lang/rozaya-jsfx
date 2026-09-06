@@ -80,6 +80,43 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-06 — `N per beat` WAS NEVER ACTUALLY BUILT in Tremolo and the Sweeping Filter. It ran at the reciprocal.**
+
+  Rozaya asked to close the one R21 gate left unwidened yesterday. It was not one
+  gate.
+
+  **What R21 claimed:** mode 4 computes exactly like Hz -- a nominal rate against
+  60 BPM -- differing only by a multiply by `host_scale`, so a shared
+  `rate_to_hz()` needed no change because mode 4 falls through to the Hz branch.
+  **True for both Polyrhythms:** their chain ends `rmode == 3 ? (1/x) : (x)`.
+
+  **Tremolo and the Sweeping Filter end the other way round** --
+  `rate_mode == 2 ? (x) : (1/x)`, with `Every N beats` as the DEFAULT branch -- so
+  mode 4 fell into it and ran at the RECIPROCAL. Measured: `N per beat` = 8 gave
+  **0.125 cycles per beat instead of 8**, a 64x error, and exactly the arithmetic
+  R21 exists to abolish, performed backwards.
+
+  **Three further leaks in the same two plugins**, all the same omission:
+  `rate_pos_lock` gated `== 3` (mode 4 followed the tempo without locking to the
+  grid); the Speed Ramp rate conversion likewise; and the Morpher's `tr_k`
+  treating durations as beats only in mode 3. Where the gate widened, the
+  *formula* under it was branched EXACTLY -- widening a sync test is right,
+  widening a conversion is not, and the two host modes are reciprocals.
+  `rate_drift_hz` was checked and correctly left alone.
+
+  **No project affected: zero saved instances anywhere are on mode 4.**
+
+  **The lesson is about verification, not gates.** I checked R21 by reading every
+  gate and asking whether it should widen, and every gate I looked at I got right.
+  **I never asked what mode 4 actually DID in each plugin**, and in two of them
+  the answer was "the opposite of what it says". A feature switched on everywhere
+  is not a feature that WORKS everywhere. **When you add a mode to N plugins,
+  simulate its OUTPUT in each one** -- the check that caught seven pan modes
+  returning identical arrays. Reading confirms the wiring; only numbers confirm
+  the behaviour. And nothing broke on release only because nothing was stored on
+  the new mode yet: **"nothing broke" is not evidence that a latent feature
+  works.**
+
 - **2026-09-06 — a real bug, found by ear, in the Start delay: two clocks with different starting lines.**
 
   Rozaya, testing `simple-sequence`: track 10 sat a fraction of a beat out

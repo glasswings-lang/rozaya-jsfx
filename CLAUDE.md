@@ -157,6 +157,27 @@ append-only history; this is the only part of the repo that claims to describe
 
 *Checked against the tree 2026-09-06.*
 
+- **`N per beat` WAS BROKEN IN TREMOLO AND THE SWEEPING FILTER -- IT RAN AT THE
+  RECIPROCAL. Fixed 2026-09-06, no project affected, NOT HEARD.** `N per beat` = 8
+  gave 0.125 cycles per beat instead of 8. Their rate chain ends
+  `rate_mode == 2 ? (x) : (1/x)`, so mode 4 fell into the `Every N beats` default
+  branch. Both Polyrhythms end `rmode == 3 ? (1/x) : (x)` and were right --
+  **that difference in chain ORDER is the whole bug**, and it is invisible unless
+  you ask what mode 4 lands on. Three further leaks in the same two plugins, all
+  fixed: `rate_pos_lock` gated `== 3` (mode 4 followed the tempo without locking
+  to the grid), the Speed Ramp rate conversion likewise, and the Morpher's `tr_k`
+  treating durations as beats only in mode 3. `rate_drift_hz` was checked and is
+  correct as-is.
+
+  **THE LESSON IS ABOUT VERIFICATION, NOT GATES.** I checked R21 by reading every
+  gate and asking whether it should widen, and got every gate I looked at right.
+  **I never asked what mode 4 actually DID.** **When you add a mode, option or
+  branch to N plugins, SIMULATE ITS OUTPUT IN EACH ONE** -- the same check that
+  caught seven pan modes all returning `[-1,1,-1,1]`. Reading confirms the
+  wiring; only numbers confirm the behaviour. And **"nothing broke" is not
+  evidence that a latent feature works** -- nothing broke here only because
+  nothing was stored on the new mode yet.
+
 - **A REAL BUG WAS FOUND BY EAR IN THE START DELAY, 2026-09-06, and fixed. Not
   yet heard.** Melody's sequencer waits for its config to settle before the first
   note; the Start delay counter did not, so a delayed instance burned part of its
