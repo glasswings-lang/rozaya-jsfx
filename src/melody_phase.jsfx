@@ -417,6 +417,10 @@ bounce_count_total = 0;
 // anymore; @init re-running on play is the reset.)
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
+// Per-sample project beat position, so the sequence can be placed against the
+// SAME grid the effects lock to. See the note at the top of @sample.
+host_beat_pos = 0;
+blk_sample    = 0;
 
 // The sequencer must not start before this instance has been configured.
 // @sample has no transport test (deliberately -- the plugin has to sound with
@@ -1426,7 +1430,13 @@ pan_host_scale = pan_synced ? host_bpm / 60 : 1;
 transport_moving = (play_state == 1 || play_state == 5);
 seq_synced && transport_moving
   && (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ?
-  ( seq_place_pending = 1; seq_place_beats = max(beat_position, 0); );
+  ( seq_place_pending = 1; );
+// This block's beat origin, refreshed every block. @sample interpolates within
+// it. The old code CACHED beat_position at the transport edge and placed
+// against that value whenever the placement finally ran -- which is later, by
+// however long the config took to settle. See the note at the placement.
+host_beat_pos = beat_position;
+blk_sample    = 0;
 predicted_beat_pos = beat_position + samplesblock * max(tempo, 0.001) / (60 * srate);
 was_moving = transport_moving;
 
@@ -1454,6 +1464,26 @@ cfg_sig_now != cfg_sig ? ( cfg_sig = cfg_sig_now; cfg_stable = 0; )
 // duration, after its own start delay; while Off, all clocks freeze and
 // resume from where they are. Only transport play (via @init) resets them,
 // so different targets can wind down over different timelines from one engage.
+// The project's beat position AT THIS SAMPLE, interpolated within the block --
+// the same quantity Full Feature Tremolo locks its LFO phase to, computed the
+// same way. Melody needs it for one thing only: placing the sequence.
+//
+// WHY IT EXISTS (2026-09-06). The placement used to run against beat_position as
+// CACHED at the transport edge, but it does not execute until the sequencer
+// starts, which waits for the config to settle. So the sequence was placed where
+// the project had been a couple of audio blocks earlier, and then ran free from
+// there -- permanently behind the grid by that pause, while every position-locked
+// effect sat exactly ON the grid. Rozaya heard it as the tremolo catching the
+// leading edge of the next note: *"the tremolo cycle catches the tiiiiiniest bit
+// of the upcoming note ... not that it's running fast, it's running slightly
+// unalined."* Which is exactly right -- the tremolo was correct and the notes
+// were late.
+//
+// Computed unconditionally, above the Start delay gate, so blk_sample counts
+// every sample of the block whether or not the sequencer is running.
+sample_beat_pos = host_beat_pos + blk_sample * host_bpm / (60 * srate);
+blk_sample += 1;
+
 slider85 ? (
   // Ramp time unit (slider81). One factor turns the block's time values into
   // seconds, so Duration and Start delay always mean the same thing as each
@@ -1837,7 +1867,20 @@ seq_place_pending ? (
       // two hours in costs the same as one at bar 2. Without one (Loop off),
       // walk until the time runs out or the sequence ends -- and if it ended
       // first, that IS the answer: it would have finished by now.
-      place_t = seq_place_beats;
+      // Place against the beat position AT THIS SAMPLE, not one cached earlier.
+      //
+      // The Start delay has to be subtracted explicitly now, and it did not
+      // before -- for a reason worth stating, because it looks like a new term
+      // appearing from nowhere. The cached value was stale by exactly the delay
+      // (the placement could not run until the delay had elapsed), and that
+      // staleness was silently doing this subtraction. Reading the live position
+      // removes the staleness, so the subtraction has to become real. Miss this
+      // and a delayed instance lands a whole delay's worth ahead of where it
+      // belongs.
+      //
+      // start_delay_sec is in NOMINAL seconds, which are beats in a host mode --
+      // and placement only ever runs in a host mode -- so it needs no conversion.
+      place_t = max(sample_beat_pos - start_delay_sec, 0);
       (place_found && loop_enabled && place_period > 0.0001) ?
         place_t = place_t - floor(place_t / place_period) * place_period;
 
