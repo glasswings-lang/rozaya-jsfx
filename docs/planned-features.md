@@ -2222,7 +2222,49 @@ that stops the user short, and does the code honour everything below it? An
 ear-test answered the second one here in one sentence, which no amount of reading
 had.
 
-### PASS 1 IS DONE, 2026-09-06 — 126 sliders across 20 plugins
+### PASS 2, same day — 50 more, and what is deliberately still standing
+
+Pass 1 stopped at a list I had written rather than at a finish line, which left
+**161 controls unexamined**. Rozaya asked *"did you stop at those or"*, which was
+the right question. Pass 2 took the ones whose ceiling is plainly a guess:
+
+* **`Ramp by` had FIVE different ceilings across the suite** — 20, 60, 300, 1000,
+  5000. Nothing chose those; they accumulated. Now uniform.
+* Drift period (capped at 600), Wash grain (680), Pan glide (100), the Passage
+  slot times (300), heart decay and systole, Cycle length, Womb's pauses.
+* Frequencies: Breath high-pass and Low cut now reach 20 kHz; the tuning
+  reference was 400..480, which covers the historical concert pitches and
+  nothing else — a guess about what the control is FOR rather than what it can do.
+
+**176 sliders widened across both passes. Zero narrowed, verified against all 641
+continuous sliders each time.**
+
+### THE OTHER HALF OF THE CHECK HAS BEEN RUN, AND IT IS CLEAN
+
+Scanned the suite for sliders whose CODE clamps tighter than the slider
+advertises — the fault Rozaya's ear found in Stereo width. **One real case, the
+one already fixed.** The only other hit was Shepard Tone's Fade In/Out %, and
+that is a false positive: the clamp is `min(1, pct/100)`, on the fraction, so
+100% maps to exactly 1.0 and the range is honoured.
+
+**Caveat, stated because the check is worth less without it:** the scan follows a
+value only ONE hop from its slider. A clamp further downstream would still hide.
+The Morpher's was one hop; that is the shape known to exist.
+
+### WHAT IS STILL STANDING, each for a reason
+
+* **Percentages that are genuinely proportions** — Attack %, Release %, Denoise,
+  Depth %, Dry/wet, Tone vs noise, Timing randomness, Crossfade, Loop position,
+  Capture point, Note length %, On duration %. 0..100 IS the range.
+* **Pans at +/-100 and phase offsets at +/-180** — already the full span.
+* **Volumes and resonances normalised to 0..1.**
+* **Tone resonance Q (0.5..8)** — high Q self-oscillates. A real limit, and one to
+  widen only with an ear on it.
+* **Capture average (1..6)** — check it against the capture buffer's size first;
+  it may be an array bound rather than a preference.
+* **dB and semitones** — still held for a decision.
+
+### PASS 1, 2026-09-06 — 126 sliders across 20 plugins
 
 Applied as a UNION of the old range and the target, which is the formulation that
 makes it safe: a union can only grow, so it cannot narrow anything by

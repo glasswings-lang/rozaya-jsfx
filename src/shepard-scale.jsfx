@@ -58,8 +58,8 @@ slider7:100<1,100,0.1>Note Length %
 slider8:8<2,12,1>Octave Count
 slider9:4<0,8,1>Center Octave
 slider10:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
-slider11:0<0,100,0.1>Binaural Beat Hz
-slider12:440<400,480,0.1>Tuning Reference Hz
+slider11:0<0,1000,0.001>Binaural Beat Hz
+slider12:440<20,2000,0.1>Tuning Reference Hz
 
 // ===== NOTES — C through B (3 sliders each: Active, Gain dB, Pan) =====
 slider13:1<0,1,1{Off,On}>C Active
@@ -159,7 +159,7 @@ slider52:0<0,1,1{Walk through,Freeze in place}>Rest mode
 // sound on sliders 1-51 is untouched). Re-add the instance for clean
 // defaults, or reconfigure. See the manual's migration note.
 slider53:0<0,3,1{Rate value,Note Length %,Attack %,Release %}>Ramp target
-slider54:0<-300,300,0.001>Ramp by (units match target)
+slider54:0<-1000,1000,0.001>Ramp by (units match target)
 // What the duration and start delay below are counted in -- one unit for both,
 // so they always mean the same thing as each other. DEFAULT IS 2, Minutes,
 // which is what this block always did; index 0 would silently reinterpret every

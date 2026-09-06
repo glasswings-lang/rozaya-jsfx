@@ -30,7 +30,7 @@ slider10:0<0,1,1{Independent L+R,Offset from L}>Phase Mode
 slider11:0<0,1,1{Off,On}>Pan Enabled
 slider12:0<0,14,1{Mono,Alternating,Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan Mode
 slider13:1<0,1,0.01>Pan Spread (0=mono, 1=full)
-slider14:5<0,100,0.1>Pan Glide ms (0=instant)
+slider14:5<0,1000,0.1>Pan Glide ms (0=instant)
 slider15:8<2,1000,1>Cycle Steps (per-cycle modes)
 slider16:2<0.001,1000,0.001>Pan Sweep Rate
 // R20: the canonical four, in the canonical order, gaining Host x. This list

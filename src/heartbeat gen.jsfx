@@ -18,14 +18,14 @@ desc: Heartbeat Generator
 // number you want and nudge from there.
 slider1:70<0.001,1000,0.001>Heart rate (BPM / sec / Hz / beats per cycle / per beat)
 slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
-slider3:120<50,400,1>Systole ms (S1->S2 gap)
+slider3:120<50,1000,1>Systole ms (S1->S2 gap)
 slider4:1.0<0.0,1.0,0.01>S1 Volume
 slider5:0.7<0.0,1.0,0.01>S2 Volume
 slider6:0.3<0.0,1.0,0.01>Brightness
-slider7:60<10,200,1>S1 Decay ms
-slider8:25<5,100,1>S2 Decay ms
-slider9:45<20,120,1>S1 Frequency Hz
-slider10:120<60,300,1>S2 Frequency Hz
+slider7:60<10,1000,1>S1 Decay ms
+slider8:25<5,1000,1>S2 Decay ms
+slider9:45<20,1000,1>S1 Frequency Hz
+slider10:120<60,1000,1>S2 Frequency Hz
 slider11:3.0<-15.0,15.0,0.1>Stereo Width ms (neg = heart right)
 slider12:6.0<0.001,1000,0.001>Breath Cycle Seconds
 slider13:0.08<0.0,0.25,0.01>Breath HRV Depth
@@ -67,7 +67,7 @@ slider17:0<0,1000,1>Rest for (beats)
 // Speed Ramp configs reset on this upgrade (magic already bumped). Declared
 // here for context; REAPER orders by ID so they appear grouped at 29-33.
 slider26:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Ramp target
-slider27:0<-400,400,0.001>Ramp by
+slider27:0<-1000,1000,0.001>Ramp by
 // What the duration and start delay are counted in -- one unit for both, so they
 // always mean the same thing as each other. DEFAULT IS 2, Minutes, which is what
 // this block always did; index 0 would silently reinterpret every saved ramp.

@@ -51,7 +51,7 @@ slider3:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,H
 slider4:25<1,99,0.1>Pulse width (%, 50 = square)
 
 // --- Pitch. Where the sequence sits, before any per-voice note is applied. ---
-slider5:440<400,480,0.1>Tuning reference (Hz)
+slider5:440<20,2000,0.1>Tuning reference (Hz)
 // Where the whole set sits, and it is the SAME pair Polyrhythm v3 uses.
 //
 // Root note and Center octave used to live here, and they had to go the moment
@@ -70,7 +70,7 @@ slider5:440<400,480,0.1>Tuning reference (Hz)
 // way, so the picker is a comfortable middle rather than a limit.
 slider6:0<-12,12,1>Transpose (half steps)
 slider7:0<-4,4,1>Octave shift
-slider8:0<0,100,0.1>Binaural beat (Hz, L/R offset)
+slider8:0<0,1000,0.001>Binaural beat (Hz, L/R offset)
 
 // --- Envelope. Each shape sits with the stage it shapes; they used to be four
 //     apart (Attack%, Release%, Attack shape, Release shape). ---
@@ -89,7 +89,7 @@ slider14:0<0,1,1{Off,On}>Legato glide
 slider15:0<0,1,1{Off,On}>Pan enabled
 slider16:2<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
 slider17:100<0,100,0.1>Pan spread (%)
-slider18:10<0,100,0.1>Pan glide ms (0 = instant)
+slider18:10<0,1000,0.1>Pan glide ms (0 = instant)
 slider19:8<2,1000,1>Cycle steps (per-cycle modes)
 slider20:1<0.001,1000,0.001>Pan base rate (Tremolo / Increment modes)
 // The pan's OWN rate mode (R20). Until 2026-09-05 the pan borrowed the

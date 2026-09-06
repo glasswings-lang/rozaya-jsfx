@@ -20,7 +20,7 @@ slider12:0<0,1,1{Independent L+R,Offset from L}>Phase Mode
 slider13:0<0,1,1{Off,On}>Pan Enabled
 slider14:0<0,15,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan Mode
 slider15:1<0,1,0.01>Pan Spread (0=mono, 1=full)
-slider16:5<0,100,0.1>Pan Glide ms (0=instant)
+slider16:5<0,1000,0.1>Pan Glide ms (0=instant)
 slider17:8<2,1000,1>Cycle Steps (per-cycle modes)
 slider18:2<0.001,1000,0.001>Pan sweep rate (BPM / sec / Hz / beats per cycle)
 // NOTE: this enum is {Hz,Seconds,BPM} — Seconds is index 1 here, but other
@@ -99,7 +99,7 @@ slider25:0<0,1,1{Pass-through,Silence}>Output at rest
 // defaults to 0 — so Speed Ramp produces no effect on reload until
 // reconfigured.
 slider26:0<0,5,1{High dwell,Fade down,Low dwell,Fade up,Pan Sweep Rate,Resonance}>Ramp target
-slider27:0<-60,60,0.001>Ramp by (units match target)
+slider27:0<-1000,1000,0.001>Ramp by (units match target)
 // What the duration and start delay are counted in -- one unit for both, so they
 // always mean the same thing as each other. DEFAULT IS 2, Minutes, which is what
 // this block always did; index 0 would silently reinterpret every saved ramp.
@@ -190,7 +190,7 @@ slider41:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 //   - Start Delay (slider21) stays literal seconds. It is labelled seconds
 //     and is a "wait before the effect arrives" control, not musical pacing.
 slider42:0<0,1,1{Own durations,Host x}>Cycle mode
-slider43:12<0.25,128,0.25>Cycle length (beats)
+slider43:12<0.001,1000,0.001>Cycle length (beats)
 
 // How the cycle length is arrived at, in Host x.
 //   Fit to durations (default) — the cycle is however long the four dwell

@@ -60,9 +60,9 @@ slider5:3<0,8,1>Center Octave
 slider6:20<0,100,0.1>Fade In %
 slider7:20<0,100,0.1>Fade Out %
 slider8:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
-slider9:0<0,100,0.1>Binaural Beat Hz
+slider9:0<0,1000,0.001>Binaural Beat Hz
 slider10:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
-slider11:440<400,480,0.1>Tuning Reference Hz
+slider11:440<20,2000,0.1>Tuning Reference Hz
 
 // ===== VOICE 1 =====
 slider12:9<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V1 Note

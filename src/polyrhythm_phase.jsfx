@@ -18,14 +18,14 @@ desc: Binaural Polyrhythm Oscillator v2
 slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
 slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider3:60<0.001,1000,0.001>Rate Value (Drift only: BPM / sec / Hz / beats per cycle)
-slider4:4<0,100,0.1>Binaural Beat Hz (L/R offset)
+slider4:4<0,1000,0.001>Binaural Beat Hz (L/R offset)
 slider5:100<0,100,0.1>On Duration % of Cycle
 slider6:0<0,100,0.1>Attack % of Cycle
 slider7:100<0,100,0.1>Release % of Cycle
 slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider9:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
 slider10:-6<-60,0,0.01>Depth dB
-slider11:440<400,480,0.1>Tuning Reference Hz
+slider11:440<20,2000,0.1>Tuning Reference Hz
 
 // ===== BASE PITCH =====
 slider12:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Base Note
@@ -238,7 +238,7 @@ slider83:0<0,1000,0.1>Ramp start delay (minutes)
 // other three Rate Modes already are. Labelled by what you HEAR, never as note
 // values ("1/4" means a quarter NOTE everywhere else, the opposite end).
 slider84:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (writes Rate Value)
-slider85:10<0,100,0.1>Pan Glide ms (0=instant)
+slider85:10<0,1000,0.1>Pan Glide ms (0=instant)
 slider86:8<2,1000,1>Cycle Steps (per-cycle modes)
 
 // ===== CHARACTER (global post-effects) =====

@@ -127,8 +127,8 @@ slider9:20<0.01,1000,0.01>Auto-morph time (BPM / sec / Hz / beats per cycle / pe
 // --- The sound of the morph. Everything from here to High cut shapes what the
 //     captured spectra become; all of it is global, across every slot. ---
 slider10:50<0,100,1>Texture (% wash)
-slider11:150<5,680,1>Wash grain (ms)
-slider12:0<0,150,0.5>Spread (Hz)
+slider11:150<5,1000,1>Wash grain (ms)
+slider12:0<0,1000,0.1>Spread (Hz)
 slider13:0<-96,96,0.1>Pitch (semitones)
 // 0..100, and NOT wider -- settled by ear 2026-09-06.
 //
@@ -153,7 +153,7 @@ slider13:0<-96,96,0.1>Pitch (semitones)
 // the code clamps, the slider should say so.
 slider14:50<0,100,1>Stereo width (%)
 slider15:0<0,100,0.1>Denoise (%)
-slider16:0<0,500,1>Low cut (Hz)
+slider16:0<0,20000,1>Low cut (Hz)
 // --- High cut. The mirror of Low cut, and the thing that makes an octave-up
 //     Layer usable at all. Two deliberate differences from Low cut, both worth
 //     knowing before you reach for it:
@@ -312,7 +312,7 @@ slider34:0<0,1,1{Pass-through,Silence}>Output at rest
 slider35:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
 slider36:0<0,1000,0.01>Drift up amount (units match target)
 slider37:0<0,1000,0.01>Drift down amount (units match target)
-slider38:30<1,600,0.5>Drift period (sec, or beats in Host x)
+slider38:30<1,1000,0.01>Drift period (sec, or beats in Host x)
 slider39:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // --- Drift play/rest. Ported from Veil, the reference implementation, which
 //     has been heard. Makes the wander move in bursts with holds between
@@ -339,7 +339,7 @@ slider42:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
 slider43:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Ramp target
-slider44:0<-300,300,0.001>Ramp by (units match target)
+slider44:0<-1000,1000,0.001>Ramp by (units match target)
 // NOT sync-aware, deliberately, and this is the one thing in the transport work
 // that could not be bundled. Under sync this would have to be a BEAT COUNT, and
 // the range cannot hold one: a 20-minute ramp at 120 BPM is 2400 beats against a

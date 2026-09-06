@@ -62,7 +62,7 @@ slider16:0<0,1000,1>Rest for (breaths)
 // reset on this upgrade (magic already bumped). REAPER orders by ID, so they
 // appear grouped at 30-34.
 slider25:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Ramp target
-slider26:0<-20,20,0.001>Ramp by
+slider26:0<-1000,1000,0.001>Ramp by
 // What the duration and start delay are counted in -- one unit for both, so they
 // always mean the same thing as each other. DEFAULT IS 2, Minutes, which is what
 // this block always did; index 0 would silently reinterpret every saved ramp.
