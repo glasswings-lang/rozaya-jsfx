@@ -157,7 +157,39 @@ append-only history; this is the only part of the repo that claims to describe
 
 *Checked against the tree 2026-09-06.*
 
-- **THE DRIFT/RAMP SWEEP IS UNDER WAY: Rhythm Track, Shepard Scale and Shepard
+- **DRIFT/RAMP SWEEP: TWELVE OF NINETEEN PLUGINS NOW COMPLETE.** Added
+  2026-09-06: Rhythm Track, Shepard Scale, Shepard Tone (no migration -- zero
+  saved instances), then **Heartbeat and Sweep Dwell** (one instance each,
+  migrated and verified). **Resonance Bank's `Drift period mode` also got the
+  R20/R21 rename** -- `Host x` -> `Every N beats`, plus `N per beat` -- which cost
+  no migration at all.
+
+  **STILL OWED THE FULL FOUR, and this list is CORRECTED:** Breath Gen (4
+  instances), Polyrhythm v3 (8), Womb (9), Passage (48), Polyrhythm v1 (84).
+  **The Morpher owes its two UNIT controls only** -- it already has both
+  play/rest pairs. That is six plugins, not the nine an earlier count claimed.
+
+  **RESONANCE BANK IS NOT MISSING A CONTROL, AND A NAME-MATCHING SWEEP WILL SAY
+  IT IS.** Everywhere else a drift period is a COUNT of cycles with a unit beside
+  it; there it is a RATE (`Drift period mode`), because each band drifts
+  independently and there is no single cycle to count. That is a real difference
+  in meaning, it is now stated in the source, and converting it would move stored
+  values in a live project. **Leave it.**
+
+  **A held-back job turned out to be free, so re-check the reason before
+  believing it.** The plan recorded Resonance Bank's mode as needing a
+  version-gated blob migration because its value lives in a serialized per-band
+  bank. True of REORDERING the enum; false of renaming one entry and appending
+  another, which moves no index at all.
+
+  **AND CHECK THE @serialize STREAM, NOT JUST THE MAGIC.** Heartbeat's blob magic
+  was bumped while the four new banks were never actually written to or read from
+  the stream, so its play/rest settings would not have survived a save. Caught
+  only by grepping all five finished plugins for the same line and finding one
+  with a zero. **After adding a bank, assert it appears in BOTH the file_mem list
+  and the duplicate-fix block, in every plugin, not just the one in front of you.**
+
+- **(superseded, kept for the reasoning) Rhythm Track, Shepard Scale and Shepard
   Tone completed 2026-09-06, with NO migration.** All three had **zero saved
   instances** -- measured, not assumed -- so the six missing controls went into
   their canonical positions instead of being appended, and no project was

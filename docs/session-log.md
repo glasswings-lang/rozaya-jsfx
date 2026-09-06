@@ -80,6 +80,41 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-06 — Drift/Ramp sweep continues: Heartbeat and Sweep Dwell completed, Resonance Bank renamed, and two of my own faults caught by cross-checking.**
+
+  Heartbeat and Sweep Dwell each had ONE saved instance, so both got a real
+  migration: 2 instances, 110 checks, 48 name-decoded comparisons against the
+  snapshot, PASS. Both also had their ramp blocks put in order -- Heartbeat's
+  Rate Mode was thirty-three sliders from its rate value, and Sweep Dwell's ramp
+  block was scattered with its start delay stranded eight places away.
+
+  **The miss worth recording: Heartbeat's blob magic was bumped while the four
+  new banks were never written to the stream.** Its play/rest settings would have
+  vanished on save. Nothing detected this except grepping all five finished
+  plugins for the same line and noticing one returned zero. **After adding a bank,
+  assert it appears in BOTH the file_mem list and the duplicate-fix block, in
+  every plugin -- a magic bump proves intent, not format.**
+
+  **Two tooling faults, both found by using the tools rather than reading them:**
+  the migration re-read the snapshot once per plugin and wrote the live file each
+  time, so a project holding two migrated plugins would have silently lost the
+  first's edits; and the verifier was pointed one commit short and compared a new
+  layout against ITSELF, reporting twelve catastrophic-looking shifts that were
+  nothing of the kind. It now refuses when old and new have the same slider count.
+
+  **A measurement I got wrong, and the shape of the error is the lesson.** My gap
+  table matched the exact string "Drift period unit", so it reported Resonance
+  Bank as missing one. It is not: it has "Drift period mode", which is a
+  genuinely different control -- a RATE rather than a count, because each band
+  drifts independently and there is no single cycle to count. **A name-matching
+  sweep cannot tell a missing control from a differently-shaped one.**
+
+  **And a job held back for a reason that did not survive checking.** Resonance
+  Bank's mode was recorded as needing a version-gated blob migration because its
+  value lives in a serialized per-band bank. That is true of REORDERING the enum
+  and false of renaming one entry and appending another: indices 0-3 keep their
+  meanings, nothing moves, and the R20/R21 rename was free.
+
 - **2026-09-06 — the Drift/Ramp sweep starts: Rhythm Track, Shepard Scale and Shepard Tone completed, no migration needed.**
 
   Ten plugins were missing all six of the Drift and Ramp controls the other
