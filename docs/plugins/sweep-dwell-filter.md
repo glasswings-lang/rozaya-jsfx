@@ -214,7 +214,7 @@ Sequence length for per-cycle modes.
 **Pan Sweep Rate** `0.001-1000, default 2`
 Rate for Pan Sweep and Pan Sweep (Flipped) modes.
 
-**Pan sweep rate mode** `BPM / Seconds / Hz / Host x`
+**Pan sweep rate mode** `BPM / Seconds / Hz / Every N beats / N per beat`
 The suite's canonical four, in the suite's canonical order, as of 2026-09-05
 (R20). **It used to read `Hz / Seconds / BPM / Host x` — backwards** — which
 meant the first position on this control meant Hz while the first position on

@@ -42,7 +42,7 @@ slider21:2<0.001,1000,0.001>Pan Sweep Rate
 // Hz here and BPM there. For someone arrowing the parameter list one control at
 // a time that is a trap. All 20 stored instances are on Hz, so the migration is
 // one uniform index 0 -> 2.
-slider22:0<0,3,1{BPM,Seconds,Hz,Host x}>Pan sweep rate mode
+slider22:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan sweep rate mode
 slider23:1<0.001,1000,0.001>Pan sweep every (cycles)
 
 // Named picker for the Linked Sweep multiplier, same idea as Host ratio: the
@@ -1256,6 +1256,8 @@ pan_enabled ? (
     // the numerator -- inverting a unit inverts its edge cases.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val / 60) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
+    // R21: mode 3 is Every N beats (divide), mode 4 is N per beat (multiply).
+    pan_sweep_mode == 4 ? (pan_freq = max(host_bpm, 0.001) / 60 * max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val) :
                           (pan_freq = eff_pan_sweep_val > 0.001
                                         ? max(host_bpm, 0.001) / 60 / eff_pan_sweep_val
@@ -1275,6 +1277,8 @@ pan_enabled ? (
     // the numerator -- inverting a unit inverts its edge cases.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val / 60) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
+    // R21: mode 3 is Every N beats (divide), mode 4 is N per beat (multiply).
+    pan_sweep_mode == 4 ? (pan_freq = max(host_bpm, 0.001) / 60 * max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val) :
                           (pan_freq = eff_pan_sweep_val > 0.001
                                         ? max(host_bpm, 0.001) / 60 / eff_pan_sweep_val

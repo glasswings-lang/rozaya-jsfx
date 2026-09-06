@@ -49,7 +49,20 @@ At the low end of its stage range it's a normal musical phaser; pushed toward it
 
 ### Host tempo sync
 
-**Rate Mode** `BPM / Seconds / Hz / Host x` (**default Hz**) — the suite's
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat`
+
+**The two host modes are the same idea from opposite ends, and both follow the
+project tempo.** *Every N beats* means one cycle takes that many beats — `4` is
+one per bar in 4/4. *N per beat* means that many cycles fit in a beat — `8` is
+eight per beat.
+
+They are reciprocals, so whichever you pick decides which end of your music is a
+whole number and which needs a decimal. Slow, drifting, phase-music settings are
+whole in *Every N beats*; dense, fast ones are whole in *N per beat*. They agree
+exactly at `1`, which is one cycle per beat either way.
+
+*(Renamed and extended 2026-09-05. `Host x` was the old name for `Every N beats`
+and behaves identically; anything you had saved on it is untouched.)* (**default Hz**) — the suite's
 canonical four, in the suite's canonical order, as of 2026-09-05 (R20).
 
 **BPM** is sweeps per minute. **Seconds** is seconds per sweep. **Hz** is the

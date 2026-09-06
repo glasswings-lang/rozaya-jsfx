@@ -240,7 +240,12 @@ The master level for everything the plugin *makes* — the voice, the wash, and 
 
 ### Rate Mode
 
-**Rate Mode** `BPM / Seconds / Hz / Host x, default Seconds`
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat` (default Seconds)
+
+The two host modes are reciprocals of each other: *Every N beats* means one
+morph takes that many beats, *N per beat* means that many morphs fit in a beat.
+Pick whichever puts whole numbers at the end of the range you are working in.
+*(Extended 2026-09-05; `Host x` was the old name for `Every N beats`.)*
 The suite's own four, same as Polyrhythm and Shepard Tone. It sets what
 **Auto-morph time** is measured in: cycles per minute, seconds per cycle, cycles
 per second, or beats per cycle when locked to the project.

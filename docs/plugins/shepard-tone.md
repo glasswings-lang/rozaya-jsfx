@@ -31,7 +31,20 @@ Sets how per-voice sweep rates are determined.
 - **Synced** — all voices share the global Rate Value as their sweep speed. Each voice's Drift slider adds a cents offset to its oscillators, creating subtle detuning without changing the underlying rate.
 - **Independent** — the global Rate Value is ignored. Each voice's Drift / Rate slider sets that voice's sweep rate directly, in the units set by Rate Mode. Voices can sweep at entirely different speeds.
 
-**Rate Mode** `BPM / Seconds / Hz / Host x`
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat`
+
+**The two host modes are the same idea from opposite ends, and both follow the
+project tempo.** *Every N beats* means one cycle takes that many beats — `4` is
+one per bar in 4/4. *N per beat* means that many cycles fit in a beat — `8` is
+eight per beat.
+
+They are reciprocals, so whichever you pick decides which end of your music is a
+whole number and which needs a decimal. Slow, drifting, phase-music settings are
+whole in *Every N beats*; dense, fast ones are whole in *N per beat*. They agree
+exactly at `1`, which is one cycle per beat either way.
+
+*(Renamed and extended 2026-09-05. `Host x` was the old name for `Every N beats`
+and behaves identically; anything you had saved on it is untouched.)*
 Unit for interpreting rate values. **Host x** follows the project tempo — see below.
 
 ### Host x — following the project tempo

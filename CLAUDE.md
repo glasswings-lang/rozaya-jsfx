@@ -303,6 +303,20 @@ append-only history; this is the only part of the repo that claims to describe
   projects stay closed** — a reordered build plus an opened project equals a
   scrambled save.
 
+- **EAR-TESTED 2026-09-05 ✓✓✓ — R21, and by the strongest test there is: it got
+  USED.** Rozaya: *"it worked. it worked so well I made and saved another project
+  despite myself."* `N per beat` was not merely confirmed correct, it was reached
+  for and built with. **That is the actual goal of this suite** — not that the
+  plugins are right, but that they get opened.
+
+  **AND IT CLOSES THE AGGRESSIVE-RESTRUCTURING WINDOW.** This morning's unlock
+  was Rozaya's own condition: *"I'm not using these until they're done, therefore
+  no projects should be saved with our changes, therefore we can aford to be
+  aggressive."* A project has now been saved on today's builds, so that premise
+  is spent. **Assume saved work exists from here, and migrate accordingly.**
+  Re-run the file scan before any layout change rather than trusting a list from
+  earlier in the session.
+
 - **R21 — THE RATE MODE NOW HAS FIVE ENTRIES, BUILT AND INSTALLED IN ALL TWELVE
   PLUGINS 2026-09-05.** `BPM / Seconds / Hz / Every N beats / N per beat`.
   `Host x` was RENAMED to `Every N beats` — index 3 did not move, so the 10

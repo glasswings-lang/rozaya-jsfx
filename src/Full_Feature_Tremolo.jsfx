@@ -37,7 +37,7 @@ slider16:2<0.001,1000,0.001>Pan Sweep Rate
 // used to read {Hz, Seconds, BPM} -- BACKWARDS against the Rate Mode fifteen
 // places above it in this same plugin, so position one meant Hz here and BPM
 // there, which is a trap for anyone arrowing the parameter list.
-slider17:0<0,3,1{BPM,Seconds,Hz,Host x}>Pan sweep rate mode
+slider17:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan sweep rate mode
 slider18:1<0.001,1000,0.001>Pan sweep every (cycles)
 
 // Named picker for the Linked Sweep multiplier, same idea as Host ratio: the
@@ -1162,6 +1162,8 @@ pan_enabled ? (
     // BEATS, so (tempo/60)/N pan sweeps per second.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val / 60) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
+    // R21: mode 3 is Every N beats (divide), mode 4 is N per beat (multiply).
+    pan_sweep_mode == 4 ? (pan_freq = max(host_bpm, 0.001) / 60 * max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val) :
                           (pan_freq = eff_pan_sweep_val > 0.001
                                         ? max(host_bpm, 0.001) / 60 / eff_pan_sweep_val
@@ -1180,6 +1182,8 @@ pan_enabled ? (
     // BEATS, so (tempo/60)/N pan sweeps per second.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val / 60) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
+    // R21: mode 3 is Every N beats (divide), mode 4 is N per beat (multiply).
+    pan_sweep_mode == 4 ? (pan_freq = max(host_bpm, 0.001) / 60 * max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val) :
                           (pan_freq = eff_pan_sweep_val > 0.001
                                         ? max(host_bpm, 0.001) / 60 / eff_pan_sweep_val

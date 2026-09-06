@@ -46,7 +46,20 @@ Sets how each voice's tremolo rate is determined.
 > **Direction reverses in Host x.** Rate Value and Drift are in *beats* there, and more beats means slower — so a **positive** drift makes a voice **slower**, not faster. That is the same way Seconds mode already behaves, where a bigger number is a longer period. BPM and Hz go the other way. Worth knowing before you tune drift by ear in a synced project.
 - **Independent** — the global Rate Value is hidden. Each voice's Drift / Rate slider sets that voice's tremolo rate directly in the units selected by Rate Mode. Voices can run at entirely different rates with no shared reference.
 
-**Rate Mode** `BPM / Seconds / Hz / Host x` — Rate Value carries the mode's unit: BPM, seconds, Hz, or beats per cycle.
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat`
+
+**The two host modes are the same idea from opposite ends, and both follow the
+project tempo.** *Every N beats* means one cycle takes that many beats — `4` is
+one per bar in 4/4. *N per beat* means that many cycles fit in a beat — `8` is
+eight per beat.
+
+They are reciprocals, so whichever you pick decides which end of your music is a
+whole number and which needs a decimal. Slow, drifting, phase-music settings are
+whole in *Every N beats*; dense, fast ones are whole in *N per beat*. They agree
+exactly at `1`, which is one cycle per beat either way.
+
+*(Renamed and extended 2026-09-05. `Host x` was the old name for `Every N beats`
+and behaves identically; anything you had saved on it is untouched.)* — Rate Value carries the mode's unit: BPM, seconds, Hz, or beats per cycle.
 
 ### Host x — following the project tempo
 

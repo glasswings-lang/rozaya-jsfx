@@ -33,7 +33,20 @@ Each event blends two voices, set by the **Tone vs Noise** knob: a **noise** bur
 
 Fractions are free — *every 3.7 beats* is as reachable as *every 4*. Nothing forces you onto a note grid.
 
-**Rate Mode** `BPM / Seconds / Hz / Host x` (**default Hz**) — the suite's canonical four, in the suite's canonical order, as of 2026-09-05 (R20). Bubble rate carries the mode's unit. In **Host x** it means every N beats; bigger is slower.
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat`
+
+**The two host modes are the same idea from opposite ends, and both follow the
+project tempo.** *Every N beats* means one cycle takes that many beats — `4` is
+one per bar in 4/4. *N per beat* means that many cycles fit in a beat — `8` is
+eight per beat.
+
+They are reciprocals, so whichever you pick decides which end of your music is a
+whole number and which needs a decimal. Slow, drifting, phase-music settings are
+whole in *Every N beats*; dense, fast ones are whole in *N per beat*. They agree
+exactly at `1`, which is one cycle per beat either way.
+
+*(Renamed and extended 2026-09-05. `Host x` was the old name for `Every N beats`
+and behaves identically; anything you had saved on it is untouched.)* (**default Hz**) — the suite's canonical four, in the suite's canonical order, as of 2026-09-05 (R20). Bubble rate carries the mode's unit. In **Host x** it means every N beats; bigger is slower.
 
 This used to be `Own rate / Host x`, where "Own rate" meant per second. It defaults to Hz so that every saved instance keeps that meaning — all fourteen in the library store nothing for this control, so no project needed editing.
 

@@ -35,7 +35,20 @@ When the pan block is enabled, the post-tremolo signal is summed to mono, then r
 **Rate Value (Hz / sec / BPM / beats per cycle)** `0.001-1000, default 2`
 The tremolo rate in the units set by Rate Mode.
 
-**Rate Mode** `BPM / Seconds / Hz / Host x`
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat`
+
+**The two host modes are the same idea from opposite ends, and both follow the
+project tempo.** *Every N beats* means one cycle takes that many beats — `4` is
+one per bar in 4/4. *N per beat* means that many cycles fit in a beat — `8` is
+eight per beat.
+
+They are reciprocals, so whichever you pick decides which end of your music is a
+whole number and which needs a decimal. Slow, drifting, phase-music settings are
+whole in *Every N beats*; dense, fast ones are whole in *N per beat*. They agree
+exactly at `1`, which is one cycle per beat either way.
+
+*(Renamed and extended 2026-09-05. `Host x` was the old name for `Every N beats`
+and behaves identically; anything you had saved on it is untouched.)*
 The suite's canonical order since 2026-09-04, shared with both Polyrhythms, Shepard Tone and the Morpher. This plugin used to run the same four in a different order, for no recorded reason. Your saved projects were remapped so every instance keeps the mode it was on — verified by name, 31 instances across both filters, nothing else touched.
 
 **Host x** locks the rate to the project tempo, and Rate Value there means
@@ -413,8 +426,21 @@ hand-set rate on every project load. It is now **Pan sweep every (cycles)**:
 bigger is slower, and "every 3 cycles" is reachable, which the old eighth-step
 grid could not express.
 
-**Pan sweep rate mode** gains **Host x** and is now the suite's canonical
-`BPM / Seconds / Hz / Host x`. It previously read `Hz / Seconds / BPM` —
+**Pan sweep rate mode** gains the two host modes and is now the suite's canonical
+`BPM / Seconds / Hz / Every N beats / N per beat`
+
+**The two host modes are the same idea from opposite ends, and both follow the
+project tempo.** *Every N beats* means one cycle takes that many beats — `4` is
+one per bar in 4/4. *N per beat* means that many cycles fit in a beat — `8` is
+eight per beat.
+
+They are reciprocals, so whichever you pick decides which end of your music is a
+whole number and which needs a decimal. Slow, drifting, phase-music settings are
+whole in *Every N beats*; dense, fast ones are whole in *N per beat*. They agree
+exactly at `1`, which is one cycle per beat either way.
+
+*(Renamed and extended 2026-09-05. `Host x` was the old name for `Every N beats`
+and behaves identically; anything you had saved on it is untouched.)*. It previously read `Hz / Seconds / BPM` —
 backwards against the Rate Mode fifteen places above it in this same plugin.
 
 **Drift period unit** is new: `Cycles / Seconds / Beats`, cycles by default,

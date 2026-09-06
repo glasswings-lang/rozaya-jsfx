@@ -199,7 +199,18 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 ### Host tempo sync
 
-**Rate Mode** `BPM / Seconds / Hz / Host x` (default BPM) — the suite's canonical
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat`
+
+**The two host modes are the same idea from opposite ends, and both follow the
+project tempo.** *Every N beats* means one heartbeat takes that many beats.
+*N per beat* means that many heartbeats fit in a beat.
+
+They are reciprocals, so whichever you pick decides which end is a whole number
+and which needs a decimal. They agree exactly at `1`, which is one beat per beat
+either way.
+
+*(Renamed and extended 2026-09-05. `Host x` was the old name for `Every N beats`
+and behaves identically; anything you had saved on it is untouched.)* (default BPM) — the suite's canonical
 four, in the suite's canonical order, as of 2026-09-05 (R20). Every rate in every
 plugin offers these same four entries in this same position order, so what you
 learn here is true everywhere.

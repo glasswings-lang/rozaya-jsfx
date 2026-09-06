@@ -34,7 +34,7 @@ slider18:2<0.001,1000,0.001>Pan sweep rate (BPM / sec / Hz / beats per cycle)
 // Cycle length (beats) below -- and the pan was left behind, which is the
 // suite's usual failure mode: a good decision made in one place and not
 // carried across.
-slider19:0<0,3,1{BPM,Seconds,Hz,Host x}>Pan sweep rate mode
+slider19:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan sweep rate mode
 slider20:1<0.125,8,0.125>Filter Speed Multiplier (Linked Sweep)
 
 // Named picker for the Linked Sweep multiplier, same idea as Host ratio: the
@@ -1018,6 +1018,8 @@ pan_enabled ? (
     // question rather than settled unilaterally at 2am.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val / 60) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
+    // R21: mode 3 is Every N beats (divide), mode 4 is N per beat (multiply).
+    pan_sweep_mode == 4 ? (pan_freq = max(host_bpm, 0.001) / 60 * max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val) :
     // Host x: BEATS PER CYCLE. host_bpm/60 is beats per second, so N beats per
     // cycle is (host_bpm/60)/N cycles per second. Guarded on the NUMERATOR --
@@ -1037,6 +1039,8 @@ pan_enabled ? (
     // name-keyed branches as mode 10 above, Host x included.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val / 60) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
+    // R21: mode 3 is Every N beats (divide), mode 4 is N per beat (multiply).
+    pan_sweep_mode == 4 ? (pan_freq = max(host_bpm, 0.001) / 60 * max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val) :
     // Host x: BEATS PER CYCLE. host_bpm/60 is beats per second, so N beats per
     // cycle is (host_bpm/60)/N cycles per second. Guarded on the NUMERATOR --

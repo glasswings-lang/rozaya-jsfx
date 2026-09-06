@@ -34,7 +34,12 @@ When Loop is on, the sequence wraps from the last active voice back to the first
 
 ### Global
 
-**Rate Mode** `BPM / Seconds / Hz / Host x` (default Seconds)
+**Rate mode** `BPM / Seconds / Hz` (default Seconds)
+
+> **This page said `BPM / Seconds / Hz / Host x` and that was wrong** — Melody's
+> Rate mode has never had a Host x entry. Its host sync is the separate
+> `Sync to host` switch below, which is the older shape the rest of the suite has
+> moved off. Corrected 2026-09-05.
 How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1 (also the default), one cycle equals one second, so the per-voice "Next voice in" and "Note duration" numbers behave as raw seconds. This is the easiest way to work in plain time — set a voice to 2 and it plays for 2 seconds. **BPM** = beats per minute; Rate Value becomes the tempo, and the per-voice numbers become beats. Useful if you want a polyrhythmic feel where every voice is in a sensible ratio of a common tempo. **Hz** = cycles per second; Rate Value is the cycle frequency. Useful for very slow ambient pacing (Rate = 0.05 Hz means one cycle every 20 seconds). **Host x** = follow the project tempo; see below.
 
 **Rate Value** `0.001 – 1000`

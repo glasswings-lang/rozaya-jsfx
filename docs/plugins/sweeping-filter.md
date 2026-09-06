@@ -80,7 +80,20 @@ Blend between the filtered signal (wet) and the original unprocessed signal (dry
 **Rate Value (Hz / sec / BPM / beats per cycle)** `0.001-1000, default 2`
 The sweep rate in the units set by Rate Mode.
 
-**Rate Mode** `BPM / Seconds / Hz / Host x`
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat`
+
+**The two host modes are the same idea from opposite ends, and both follow the
+project tempo.** *Every N beats* means one cycle takes that many beats — `4` is
+one per bar in 4/4. *N per beat* means that many cycles fit in a beat — `8` is
+eight per beat.
+
+They are reciprocals, so whichever you pick decides which end of your music is a
+whole number and which needs a decimal. Slow, drifting, phase-music settings are
+whole in *Every N beats*; dense, fast ones are whole in *N per beat*. They agree
+exactly at `1`, which is one cycle per beat either way.
+
+*(Renamed and extended 2026-09-05. `Host x` was the old name for `Every N beats`
+and behaves identically; anything you had saved on it is untouched.)*
 The suite's canonical order since 2026-09-04. This plugin used to run the same four in a different order. Saved projects were remapped so every instance keeps the mode it was on.
 
 **A bug fell out of doing this.** The `@init` seed had no Host x branch at all, so in Host x it fell through to the BPM formula and seeded the rate smoother 60× too slow. The Tremolo had the identical bug, found and fixed there, and the fix was never carried across. It only surfaced now because writing all four branches out explicitly made the fallthrough impossible to leave implicit.
