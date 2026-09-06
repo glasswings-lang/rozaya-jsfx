@@ -29,14 +29,14 @@ desc: Stereo Phaser
 // 2026-09-04. Old projects are repaired IN THE PROJECT FILE by
 // tools/phaser_migrate_rate_triple.py -- there is no runtime self-repair, and
 // there deliberately isn't one (see the note above @serialize).
-slider1:0.3<0.001,1000,0.001>Rate (BPM / sec / Hz / beats per cycle)
+slider1:0.3<0.001,1000,0.001>Rate (BPM / sec / Hz / beats per cycle / per beat)
 // Own Hz: free-running at Rate Hz -- the original behaviour.
 // Host x: Rate means BEATS PER CYCLE. 4 is one sweep every four beats; 3.7 is
 //         one every three and seven tenths, which a note-division grid cannot
 //         express and which is what this suite exists for. It is NOT a
 //         multiplier any more (R13-revised, 2026-09-02) -- a multiplier is a
 //         number you have to do arithmetic against the tempo to hear.
-slider2:2<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
+slider2:2<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 // RETIRED 2026-09-04 by R13-revised, and hidden. It existed only to spare you
 // arithmetic on a multiplier; "every 4 beats" is now typing 4 into Rate. The
 // slider is not deleted HERE only because this plugin has no reorder pending.
@@ -250,7 +250,8 @@ rate_mode_inited ? last_rate_mode = rate_mode;
 //   1 Seconds  seconds per cycle      -> 1/x
 //   2 Hz       cycles per second      -> as-is  (THIS PLUGIN'S DEFAULT, see slider2)
 //   3 Host x   every N beats          -> tempo/60/x
-rate      = rate_mode == 3 ?
+rate      = rate_mode == 4 ? max(tempo, 0.001) / 60 * max(slider1, 0.001) :
+            rate_mode == 3 ?
               (slider1 > 0.001 ? max(tempo, 0.001) / 60 / slider1 : 0.001) :
             rate_mode == 2 ? slider1 :
             rate_mode == 1 ? 1 / max(slider1, 0.001) :
@@ -363,8 +364,9 @@ host_bpm = max(tempo, 0.001);
 !rate_mode_inited ? ( last_rate_mode = slider2; rate_mode_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run on a tempo
 // change, so the rate and the LFO increment are recomputed here.
-rate_mode == 3 ? (
-  rate   = slider1 > 0.001 ? max(tempo, 0.001) / 60 / slider1 : 0.001;
+rate_mode >= 3 ? (
+  rate   = rate_mode == 4 ? max(tempo, 0.001) / 60 * max(slider1, 0.001)
+         : slider1 > 0.001 ? max(tempo, 0.001) / 60 / slider1 : 0.001;
   lfoInc = 2 * $pi * rate / srate;
 );
 
@@ -377,7 +379,9 @@ rate_mode == 3 ? (
 // stopped or paused, beat_position doesn't advance and locking would freeze
 // the sweep for live monitoring.
 host_beat_pos   = beat_position;
-host_pos_locked = (rate_mode == 3) && (play_state == 1 || play_state == 5);
+// Position-lock applies to BOTH host modes; the cycle count differs and is
+// handled where lfo_turns is computed.
+host_pos_locked = (rate_mode >= 3) && (play_state == 1 || play_state == 5);
 blk_sample      = 0;
 
 @sample
@@ -544,7 +548,9 @@ rate_pos_lock ? (
   // slider1 is BEATS PER CYCLE in Host x, so whole cycles elapsed is the beat
   // position DIVIDED by it -- the same inversion as the rate conversion, and it
   // has to stay matched or the lock runs at a different speed than the sweep.
-  lfo_turns = slider1 > 0.001 ? sample_beat_pos / slider1 : 0;
+  // Every N beats divides the beat position; N per beat multiplies it.
+  lfo_turns = rate_mode == 4 ? sample_beat_pos * max(slider1, 0.001)
+            : slider1 > 0.001 ? sample_beat_pos / slider1 : 0;
   lfoPhase  = (lfo_turns - floor(lfo_turns)) * 2 * $pi;
 );
 

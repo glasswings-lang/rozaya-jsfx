@@ -39,7 +39,7 @@ desc: Shepard Scale Generator
 //   Pan     — Stereo position.
 
 // ===== GLOBAL CONTROLS =====
-slider1:120<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle)
+slider1:120<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle / per beat)
 
 // --- Host tempo sync (sliders 62-63) ------------------------------------
 // Own BPM: free-running, project tempo ignored -- the original behaviour.
@@ -49,7 +49,7 @@ slider1:120<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle)
 // a multiplier is a number you cannot hear without doing arithmetic first.
 // Two entries, not four: this plugin only ever had one unit, so Seconds and
 // Hz would be meaningless on it. Appended at the END per never-renumber.
-slider2:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider3:0<0,1,1{Asc,Desc}>Direction
 slider4:0<0,1,1{Skip,Rest}>Inactive Notes
 slider5:10<0,100,0.1>Attack %
@@ -533,7 +533,8 @@ rate_mode_inited ? last_rate_mode = rate_mode;
 // 1/max(raw,0.001) clamps the DENOMINATOR, turning a stopped sequence into a
 // thousand-times-tempo one.
 rate_units    = slider1;
-bpm           = rate_mode == 3 ?
+bpm           = rate_mode == 4 ? max(tempo, 0.001) * max(rate_units, 0.001) :
+                rate_mode == 3 ?
                   (rate_units > 0.001 ? max(tempo, 0.001) / rate_units : 0.001) :
                 rate_mode == 2 ? rate_units * 60 :
                 rate_mode == 1 ? 60 / max(rate_units, 0.001) :
@@ -688,9 +689,10 @@ last_sr_target != sr_sel_target ? (
 !rate_mode_inited ? ( last_rate_mode = slider2; rate_mode_inited = 1; );
 // Follow the project tempo live in Host x. @slider does not re-run on a tempo
 // change, so these two lines repeat here; everything else is per-sample.
-rate_mode == 3 ? (
+rate_mode >= 3 ? (
   rate_units = slider1;
-  bpm = rate_units > 0.001 ? max(tempo, 0.001) / rate_units : 0.001;
+  bpm = rate_mode == 4 ? max(tempo, 0.001) * max(rate_units, 0.001)
+      : rate_units > 0.001 ? max(tempo, 0.001) / rate_units : 0.001;
   start_delay_sec = slider49 * 60 / max(bpm, 0.001);
 );
 
@@ -716,13 +718,15 @@ rate_mode == 3 ? (
 // won't glitch -- placement only happens on play or a seek -- but two
 // playbacks can differ if you flipped notes in between.
 transport_moving = (play_state == 1 || play_state == 5);
-rate_mode == 3 && transport_moving ? (
+rate_mode >= 3 && transport_moving ? (
   (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ? (
     // BEATS PER CYCLE, so the step number at a given project position is the
     // beat position DIVIDED by it. This inverted with the rate conversion
     // above and had to change with it -- multiplying here while dividing there
     // would place the sequence at a different speed than it plays at.
-    seq_total = rate_units > 0.001 ? max(beat_position, 0) / rate_units : 0;
+    // Every N beats divides the beat position; N per beat multiplies it.
+    seq_total = rate_mode == 4 ? max(beat_position, 0) * max(rate_units, 0.001)
+              : rate_units > 0.001 ? max(beat_position, 0) / rate_units : 0;
     seq_steps = floor(seq_total);
     seq_phase = seq_total - seq_steps;
 

@@ -4,7 +4,7 @@ desc: Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle)
+slider1:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle / per beat)
 // RATE MODE ORDER IS {BPM, Seconds, Hz, Host x} since 2026-09-04 -- the suite's
 // canonical order, shared with both Polyrhythms, Shepard Tone and the Morpher.
 // This plugin ran {Hz, Seconds, BPM, Host x}: the same four, a different order,
@@ -17,7 +17,7 @@ slider1:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle)
 // fallthrough is the thing that changes meaning silently in an enum reorder, so
 // there is none left. Saved projects are carried over by
 // tools/ratemode_migrate_order.py.
-slider2:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider3:50<0,100,0.1>On Duration % of Cycle
 slider4:-6<-60,0,0.01>Depth dB
 slider5:0<0,100,0.1>Attack %
@@ -722,7 +722,11 @@ last_sr_target != sr_sel_target ? (
 // play and wipes globals, so a reference would reset and silently discard the
 // change. 1 in every other mode, so those stay bit-identical.
 host_bpm = max(tempo, 0.001);
-host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
+// R21: >= 3 covers BOTH host modes -- Every N beats (3) and N per beat (4).
+// Both are computed against a NOMINAL 60 BPM and then scaled by the live tempo
+// here, which is what keeps them tempo-independent upstream (@init re-runs on
+// play and would wipe a remembered tempo).
+host_scale = rate_mode >= 3 ? host_bpm / 60 : 1;
 
 // Transport POSITION, for phase-locking the LFO in Host x. Tempo sync sets
 // the LFO's speed; this sets where in the cycle it is, so the tremolo lands

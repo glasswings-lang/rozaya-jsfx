@@ -4,7 +4,7 @@ desc: Rhythm Track
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:120<0.001,1000,0.001>Tempo (BPM / sec / Hz / beats per cycle)
+slider1:120<0.001,1000,0.001>Tempo (BPM / sec / Hz / beats per cycle / per beat)
 
 // --- Host tempo sync: the retired ratio picker ----------------------------
 //
@@ -27,7 +27,7 @@ slider1:120<0.001,1000,0.001>Tempo (BPM / sec / Hz / beats per cycle)
 // "Seconds" and "Hz" would be nonsense on it. Appended at the END of the
 // slider range per the never-renumber rule, even though it reads better
 // next to Tempo -- moving it would scramble every saved project.
-slider2:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider3:4<1,20,1>Beats per bar
 slider4:0<-1,1,0.01>Swing amount
 slider5:880<20,2000,1>Strong beat frequency (Hz)
@@ -458,7 +458,8 @@ rate_mode_inited ? last_rate_mode = rate_mode;
 // thousand-times-tempo one. The slider's declared minimum is 0.001 so it cannot
 // reach zero, but the safe form costs nothing.
 rate_units   = slider1;
-track_bpm    = rate_mode == 3 ?
+track_bpm    = rate_mode == 4 ? max(tempo, 0.001) * max(rate_units, 0.001) :
+               rate_mode == 3 ?
                  (rate_units > 0.001 ? max(tempo, 0.001) / rate_units : 0.001) :
                rate_mode == 2 ? rate_units * 60 :
                rate_mode == 1 ? 60 / max(rate_units, 0.001) :
@@ -587,9 +588,10 @@ weak_len   = render_tick(weak_buf,   weak_hz,   weak_gain,   weak_decay,   tone_
 // live tempo each block rather than compared against a stored reference. That
 // matters because @init re-runs on every transport play and wipes globals -- a
 // remembered reference would reset on play and silently discard the change.
-rate_mode == 3 ? (
+rate_mode >= 3 ? (
   rate_units = slider1;
-  track_bpm = rate_units > 0.001 ? max(tempo, 0.001) / rate_units : 0.001;
+  track_bpm = rate_mode == 4 ? max(tempo, 0.001) * max(rate_units, 0.001)
+            : rate_units > 0.001 ? max(tempo, 0.001) / rate_units : 0.001;
   samples_per_beat = (60.0 / max(track_bpm, 0.001)) * srate;
   start_delay_sec = slider15 * 60 / max(track_bpm, 0.001);
 );
@@ -617,13 +619,15 @@ rate_mode == 3 ? (
 // than from the project position -- they're "after you start" controls, not
 // part of the bar grid.
 transport_moving = (play_state == 1 || play_state == 5);
-rate_mode == 3 && transport_moving ? (
+rate_mode >= 3 && transport_moving ? (
   (!was_moving || abs(beat_position - predicted_beat_pos) > 0.25) ? (
     // BEATS PER CYCLE, so the tick number at a given project position is the
     // beat position DIVIDED by it. This inverted with the rate conversion
     // above; multiplying here while dividing there would place the grid at a
     // different speed than the metronome runs at, and the ticks would walk.
-    tb = rate_units > 0.001 ? max(beat_position, 0) / rate_units : 0;
+    // Every N beats divides the beat position; N per beat multiplies it.
+    tb = rate_mode == 4 ? max(beat_position, 0) * max(rate_units, 0.001)
+       : rate_units > 0.001 ? max(beat_position, 0) / rate_units : 0;
     tb_floor = floor(tb);
     tb_frac  = tb - tb_floor;
     ts_beats = max(slider3, 1);

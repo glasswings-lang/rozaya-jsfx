@@ -53,8 +53,8 @@ desc: Shepard Tone Generator
 
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Synced,Independent}>Drift Mode
-slider2:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
-slider3:0.5<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle)
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
+slider3:0.5<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle / per beat)
 slider4:8<2,16,1>Octave Count
 slider5:3<0,8,1>Center Octave
 slider6:20<0,100,0.1>Fade In %
@@ -264,7 +264,7 @@ slider75:25<1,99,0.1>Pulse width (%, 50 = square)
 // +10 BPM drift came out as -2.4. Fixed there and never present here, because
 // this plugin is converted with the correction already applied.
 function host_bpm_delta(bpm_amt) (
-  rate_mode == 3 ? bpm_amt / max(host_bpm, 0.001) : bpm_amt
+  rate_mode >= 3 ? bpm_amt / max(host_bpm, 0.001) : bpm_amt
 );
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
 // NO ext_noinit: REAPER re-runs @init on every transport play / render
@@ -794,7 +794,11 @@ last_sr_target != sr_sel_target ? (
 // bit-identical to before. Transport-edge detection belongs in @block rather
 // than @sample (play_state only updates per block); the same applies to tempo.
 host_bpm = max(tempo, 0.001);
-host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
+// R21: >= 3 covers BOTH host modes -- Every N beats (3) and N per beat (4).
+// Both are computed against a NOMINAL 60 BPM and then scaled by the live tempo
+// here, which is what keeps them tempo-independent upstream (@init re-runs on
+// play and would wipe a remembered tempo).
+host_scale = rate_mode >= 3 ? host_bpm / 60 : 1;
 
 @sample
 
@@ -844,7 +848,7 @@ slider67 ? (
 // slider's own unit exactly as before, which is what makes BPM/Seconds/Hz
 // mode-direction come out right for free.
 sr_bpm_amt = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
-rate_mode == 3 ? (
+rate_mode >= 3 ? (
   effective_rate_hz = max(base_rate_hz + host_bpm_delta(sr_bpm_amt), 0.0001);
 ) : (
   effective_rate_hz = rate_to_hz(slider3 + sr_bpm_amt, rate_mode);
@@ -899,7 +903,7 @@ loop(N_TARGETS,
 // e.g. in Seconds mode a positive offset lengthens the period =
 // slower). Folds into combined_scale alongside Speed Ramp. Per-voice
 // rate drift (targets 1-8) is applied inside the voice loop below.
-rate_mode == 3 ? (
+rate_mode >= 3 ? (
   rate_value_drift_mult = max(base_rate_hz + host_bpm_delta(target_drift_offset[0]), 0.0001)
                           / max(base_rate_hz, 0.001);
 ) : (
@@ -1018,7 +1022,7 @@ loop(8,
       // Host x adds in the Hz domain, for the same reason as the master rate
       // above. This one is per voice, so getting it wrong would have made the
       // voices drift against each other in the wrong direction.
-      rate_mode == 3 ? (
+      rate_mode >= 3 ? (
         v_rate_mult = max(vbase_hz + host_bpm_delta(voff), 0.0001) / max(vbase_hz, 0.0001);
       ) : (
         v_rate_mult = rate_to_hz(vbase + voff, rate_mode) / max(vbase_hz, 0.0001);

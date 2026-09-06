@@ -303,6 +303,38 @@ append-only history; this is the only part of the repo that claims to describe
   projects stay closed** — a reordered build plus an opened project equals a
   scrambled save.
 
+- **R21 — THE RATE MODE NOW HAS FIVE ENTRIES, BUILT AND INSTALLED IN ALL TWELVE
+  PLUGINS 2026-09-05.** `BPM / Seconds / Hz / Every N beats / N per beat`.
+  `Host x` was RENAMED to `Every N beats` — index 3 did not move, so the 10
+  instances stored on it are untouched — and `N per beat` appends at index 4.
+  **No migration. Not heard.**
+
+  **Why:** the retired pickers offered both directions in words (*"every 8 beats
+  … 8 per beat"*), and retiring them kept the slow half only, so eight cycles per
+  beat became `0.125`. Rozaya hit it: *"Rate value should not have to be set to
+  0.5 to get 8 bubbles every beat."* The two directions are reciprocals, so
+  neither is right alone — the mode picks which end of your music is
+  arithmetic-free.
+
+  **The trick that made it free, and it generalises:** `N per beat` computes
+  EXACTLY like Hz — a nominal cycles-per-second against 60 BPM — and only differs
+  in being multiplied by `host_scale`. So in the three plugins with a shared
+  `rate_to_hz()` the function needed NO change at all; mode 4 falls through to
+  the Hz branch and the only edit was widening `host_scale = rate_mode == 3` to
+  `>= 3`.
+
+  **The gates that must NOT be widened**, and they were checked one at a time:
+  the conversion chains themselves (which mode am I) stay exact, while every gate
+  meaning "am I host-synced" becomes `>= 3`. Both Polyrhythms keep one exact
+  `== 3` — the landing block, which stamps Rate Value to 4 on entering beats mode
+  and now stamps 1 on entering per-beat mode, because the two units are
+  reciprocal and carrying the number across would change the speed sixteenfold.
+
+  **The Morpher was the odd one out:** it CONVERTS its value on a mode switch
+  rather than branching, so it needed both directions of its conversion table
+  extended, and its transport durations read as beats in EITHER host mode
+  (a start delay of "per beat" is not a length).
+
 - **EAR-TESTED 2026-09-05 ✓✓ — THE TWO BIG REORDERS, ON FINISHED WORK.** Rozaya
   played every project on the safety-check list and they came back correct:
   **`the-sound-of-a-drain`** (five Sweeping Filters AND five Bubblers, both

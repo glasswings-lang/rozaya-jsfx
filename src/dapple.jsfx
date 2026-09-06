@@ -31,7 +31,7 @@ desc: Dapple
 // Resonant lowpass is the Cockos state-variable topology (standard JSFX);
 // noise is Park-Miller (MINSTD), one independent stream per channel.
 
-slider1:6<0.001,1000,0.001>Bubble rate (BPM / sec / Hz / beats per bubble)
+slider1:6<0.001,1000,0.001>Bubble rate (BPM / sec / Hz / beats per bubble / per beat)
 slider3:70<0,100,1>Timing randomness (%)
 slider4:150<40,1500,1>Pitch (Hz)
 slider5:50<0,100,1>Pitch spread (%)
@@ -99,7 +99,7 @@ out_pin:right output
 // Host x:   Bubble rate becomes beats per bubble, so 4 is one bubble every
 //           is one bubble per beat. Two entries only; this plugin has one
 //           unit. Appended at the END per the never-renumber rule.
-slider2:2<0,3,1{BPM,Seconds,Hz,Host x}>Rate mode
+slider2:2<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 
 // Writes a multiplier into Bubble rate on change then gets out of the way.
 // "Custom" (default) never writes. Not "Free" -- that means FREE-RUNNING
@@ -217,7 +217,8 @@ rate_mode = slider2;
 //   1 Seconds  seconds per bubble  -> 1/x
 //   2 Hz       bubbles per second  -> as-is   (THIS PLUGIN'S DEFAULT, see Rate Mode)
 //   3 Host x   every N beats       -> (tempo/60)/x
-rate      = rate_mode == 3 ? max((max(tempo,0.001)/60)/max(slider1,0.001), 0.0001)
+rate      = rate_mode == 4 ? max((max(tempo,0.001)/60)*max(slider1,0.001), 0.0001)
+          : rate_mode == 3 ? max((max(tempo,0.001)/60)/max(slider1,0.001), 0.0001)
           : rate_mode == 2 ? max(slider1, 0.01)
           : rate_mode == 1 ? max(1 / max(slider1, 0.001), 0.0001)
                            : max(slider1 / 60, 0.0001);
@@ -321,7 +322,10 @@ host_bpm = max(tempo, 0.001);
 //     load and every track duplicate.)
 // Follow the project tempo live in Host x. @slider does not re-run when the
 // tempo changes, so the rate is recomputed here.
-rate_mode == 3 ? rate = max((max(tempo,0.001)/60)/max(slider1,0.001), 0.0001);
+rate_mode >= 3 ? (
+  rate = rate_mode == 4 ? max((max(tempo,0.001)/60)*max(slider1,0.001), 0.0001)
+                        : max((max(tempo,0.001)/60)/max(slider1,0.001), 0.0001);
+);
 
 @sample
 // --- Ramp clocks, one per target. Engage (slider31) is a freeze/resume gate:

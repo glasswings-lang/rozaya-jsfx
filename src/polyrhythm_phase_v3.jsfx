@@ -19,7 +19,7 @@ desc: Binaural Polyrhythm Oscillator v3 (note-based)
 
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
-slider2:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider3:60<0.001,1000,0.001>Rate Value (Drift only: BPM / sec / Hz / beats per cycle)
 slider4:4<0,100,0.1>Binaural Beat Hz (L/R offset)
 slider5:100<0,100,0.1>On Duration % of Cycle
@@ -371,7 +371,7 @@ slider90:8<2,32,1>Cycle Steps (per-cycle modes)
 // must therefore add the Host x result to the HZ, never to the raw slider
 // value -- see the notes at the two call sites.
 function host_bpm_delta(bpm_amt) (
-  rate_mode == 3 ? bpm_amt / max(host_bpm, 0.001) : bpm_amt
+  rate_mode >= 3 ? bpm_amt / max(host_bpm, 0.001) : bpm_amt
 );
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
 // NO ext_noinit: we let REAPER re-run @init on every transport play /
@@ -831,8 +831,16 @@ slider_show(slider88, 0);   // retired, see above
 // change, never on load: adopting on load would overwrite a hand-set rate the
 // moment a saved project opened, which is the restore-order trap.
 rate_mode_inited && last_rate_mode != rate_mode ? (
+  // Landing values, one per host mode. The two are RECIPROCAL units, so
+  // carrying the number across would change the speed wildly -- 4 means one
+  // cycle per bar as beats, and four per beat as the other. Stamping is the
+  // right behaviour here for the same reason it was for entering Host x at all.
   rate_mode == 3 && last_rate_mode != 3 ? (
-    slider3 = 4;
+    slider3 = 4;                 // one cycle per bar in 4/4
+    slider_automate(slider3);
+  );
+  rate_mode == 4 && last_rate_mode != 4 ? (
+    slider3 = 1;                 // one cycle per beat
     slider_automate(slider3);
   );
 );
@@ -1232,7 +1240,11 @@ re_start = on_frac - rw_eff;
 // silently discard the change. Eight stored per-voice rates, but one shared
 // scale factor reaches them all.
 host_bpm = max(tempo, 0.001);
-host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
+// R21: >= 3 covers BOTH host modes -- Every N beats (3) and N per beat (4).
+// Both are computed against a NOMINAL 60 BPM and then scaled by the live tempo
+// here, which is what keeps them tempo-independent upstream (@init re-runs on
+// play and would wipe a remembered tempo).
+host_scale = rate_mode >= 3 ? host_bpm / 60 : 1;
 
 @sample
 
@@ -1282,7 +1294,7 @@ slider86 ? (
 // destination was wrong.
 sr_bpm_amt         = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
 base_rate_hz_ref   = rate_to_hz(rate_val, rate_mode);
-rate_mode == 3 ? (
+rate_mode >= 3 ? (
   effective_rate_hz = max(base_rate_hz_ref + host_bpm_delta(sr_bpm_amt), 0.0001);
 ) : (
   effective_rate_hz = rate_to_hz(rate_val + sr_bpm_amt, rate_mode);
@@ -1366,7 +1378,7 @@ target_drift_offset[0] != 0 ? (
   // Host x adds in the Hz domain -- see the note on the Ramp above. Adding
   // to the raw value there would drift the BEATS PER CYCLE, which runs
   // backwards (up = slower) and by the wrong amount.
-  rate_mode == 3 ? (
+  rate_mode >= 3 ? (
     drift_hz_delta = max(rate_val_hz + host_bpm_delta(target_drift_offset[0]), 0.0001)
                      - rate_val_hz;
   ) : (

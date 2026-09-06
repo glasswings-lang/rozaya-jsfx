@@ -6,7 +6,7 @@ desc: Resonant Sweeping Filter with Shaped LFO and Pan Modes
 
 slider1:500<20,20000,1>Frequency Low Hz
 slider2:5000<20,20000,1>Frequency High Hz
-slider5:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle)
+slider5:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle / per beat)
 // RATE MODE ORDER IS {BPM, Seconds, Hz, Host x} since 2026-09-04 -- the suite's
 // canonical order, shared with both Polyrhythms, Shepard Tone and the Morpher.
 // This plugin ran {Hz, Seconds, BPM, Host x}: the same four, a different order,
@@ -17,7 +17,7 @@ slider5:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle)
 // else to mean BPM; after the reorder that same else means Hz, and nothing would
 // have complained -- the plugin would simply have run the wrong unit. Saved
 // projects are carried over by tools/ratemode_migrate_order.py.
-slider6:0<0,3,1{BPM,Seconds,Hz,Host x}>Rate Mode
+slider6:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider7:0<-180,180,0.1>LFO Start Phase (degrees)
 slider8:50<0,100,0.1>On Duration % of Cycle
 slider9:100<0,100,0.1>Depth %
@@ -768,7 +768,11 @@ filt_res_k = FILT_RES_DB_MAX / filt_stages * (log(10) / 20);
 // a ratio against a remembered reference -- @init re-runs on play and wipes
 // globals, so a reference would reset and silently discard the change.
 host_bpm = max(tempo, 0.001);
-host_scale = rate_mode == 3 ? host_bpm / 60 : 1;
+// R21: >= 3 covers BOTH host modes -- Every N beats (3) and N per beat (4).
+// Both are computed against a NOMINAL 60 BPM and then scaled by the live tempo
+// here, which is what keeps them tempo-independent upstream (@init re-runs on
+// play and would wipe a remembered tempo).
+host_scale = rate_mode >= 3 ? host_bpm / 60 : 1;
 
 // Transport POSITION, for phase-locking the sweep in Host x. Tempo sync sets
 // the sweep's speed; this sets where in the cycle it is, so the filter lands
