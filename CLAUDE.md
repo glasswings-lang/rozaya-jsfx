@@ -747,6 +747,18 @@ because they apply every session, not on the day they were learned.
 
 ### Scope
 
+- **DO NOT FIX AN OPEN BUG YOU ARE NOT THERE TO FIX. "I also did X while I was in
+  there" is a named failure mode here.** Rozaya, 2026-09-05, on why the Melody
+  alignment entry was closed rather than left open: *"having another instance
+  panic over a supposedly open bug and try to fix it while also doing other
+  things as 'I also did x while I was in there' is how we wound up with
+  errors."* An OPEN status reads as a job to a session arriving mid-task, and
+  the forbidden transport-gate fix was shipped exactly that way once already.
+  **A known bug with an accepted workaround is DONE.** Both entries in
+  `docs/open-bugs.md` are now closed; read them for their reasoning before
+  touching the plugin they name, then leave them alone.
+
+
 - **Search the repo and `git log` before estimating that something needs
   building or deciding.** The suite's recurring problem is not design, it is
   DISTRIBUTION: nearly every question hit has already been answered correctly

@@ -109,10 +109,11 @@ reads, not about correctness.**
 - **The aggressive-restructuring window is CLOSED** as of 2026-09-05 — a project
   has been saved on current builds. Re-scan the project files at migration time
   rather than trusting the counts above.
-- `docs/open-bugs.md` has an open entry against Melody (instances arriving out of
-  alignment in `simple-sequence`). **Read it before touching this plugin**, and
-  re-test that bug afterwards — a fix landing near an open bug is exactly when it
-  should be re-checked.
+- `docs/open-bugs.md`'s Melody entry is **CLOSED and accepted with its
+  workaround** as of 2026-09-05. **Read it for its five burned theories and the
+  FORBIDDEN fix, then leave it alone.** Do not attempt the alignment bug while
+  doing this conversion — that is the "I also did X while I was in there" failure
+  mode, and it is how the forbidden fix got shipped once already.
 - Melody has **more than 64 sliders**, so its `.RPP` value lines carry the `""`
   marker at index 64. `tools/rpp_sliders.py` handles it; nothing may re-derive
   the format.

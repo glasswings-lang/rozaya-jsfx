@@ -1,5 +1,11 @@
 # Open bugs
 
+Things that are known-broken and NOT fixed.
+
+**Both entries are currently CLOSED.** Neither is a job. An entry stays here for
+its reasoning and its burned theories, so they are not re-derived — read them
+before touching the plugin they name, then leave them alone.
+
 Things that are known-broken and NOT fixed. Newest first. A bug leaves this file
 only when it has been fixed *and* heard.
 
@@ -49,8 +55,29 @@ changing what a working plugin sounds like for.
 ---
 ## 1. Melody Phase instances come in out of alignment on project open
 
-**Status: OPEN — no fix, but the cause is no longer unknown and the workaround
-is reliable.**
+**Status: CLOSED 2026-09-05 — ACCEPTED WITH ITS WORKAROUND. Not fixed, and not
+to be fixed opportunistically.** Rozaya: *"I'd say the bug's marked done.
+alt-tab is acceptable."*
+
+> **Why this is closed rather than left open, and it is a process decision.**
+> Rozaya: *"having another instance panic over a supposedly open bug and try to
+> fix it while also doing other things as 'I also did x while I was in there' is
+> how we wound up with errors."*
+>
+> **An open entry is an invitation.** A session arriving here mid-task reads
+> OPEN as a job, reaches for it while already elbow-deep in something else, and
+> ships a fix nobody asked for alongside work that was asked for. That is
+> precisely how the forbidden fix below got shipped once already. The cost of
+> the bug is one alt-tab. The cost of a session opportunistically fixing it is
+> unbounded, and has been paid.
+>
+> **So: do not fix this. Do not "improve" it while you are in Melody for
+> something else.** Everything below is kept because the reasoning and the five
+> burned theories are worth having — not because there is work outstanding.
+> Rozaya may test it independently as its own thing; that is different from a
+> session deciding to.
+
+The cause is known and the workaround is reliable.
 
 **Workaround: after opening the project, press play and stop once.** Alt-tabbing
 out of REAPER and back does the same thing. Both re-run `@init` on every instance
