@@ -441,7 +441,8 @@ backlog of finished pieces can be re-rendered with the multi-frame analysis
 without opening each one and hunting for the control.
 
 ```
-python tools/passage_set_capture_average.py "E:eaper	o-be-re-rendered\*.RPP" --value 6 --in-place
+python tools/passage_set_capture_average.py "E:
+eaper	o-be-re-rendered\*.RPP" --value 6 --in-place
 ```
 
 **What it touches.** One line of plain text per instance — the slider line. It
@@ -485,6 +486,14 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   against the INSTALLED plugin. The cheapest detector for a shifted map, and the
   one that actually found the bug after a day of reasoning had not. Start here.
   `python tools/scan_slider_ranges.py E:/reaper/finished`
+
+  **It walks subfolders, and `E:/reaper/finished` contains `backups/` and
+  `backups/snapshots/`.** Those hold PRE-migration copies by design, so checking
+  them against a post-migration build reports every shifted value as out of
+  range — 283 files' worth on 2026-09-06, which reads as a catastrophe and is
+  the tool working correctly. **Point it at the live project files** when you
+  want to know whether a migration was clean, and read the paths on any hit
+  before believing it.
 - **`migrate_speedramp_insert.py`** — repairs the 2026-07-02 `Speed ramp target`
   insert across the six plugins it hit. Table-driven, gated on the `@serialize`
   magic, idempotent, dry-run by default.
@@ -494,3 +503,20 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   against each instance's untouched `@serialize` blob. Verify the result, never
   the exit code: the first run of the migration exited cleanly while silently
   eating one line per instance.
+- **`melody_migrate_r20.py`** — the 2026-09-06 R20/R21 conversion: retires
+  Melody's `Sync to host` / `Host sync target` / `Every N beats` trio, folds a
+  synced instance's beat count into `Rate value` with `Rate mode` = *Every N
+  beats*, brings `Pan glide` and `Cycle steps` back into the pan block, and opens
+  the gaps for the seven new controls. Reads the snapshot and writes the live
+  project, so it is idempotent; dry-run by default. **Refuses rather than
+  guessing** on a pan-synced instance, a quoted token, or a value above the old
+  slider count.
+- **`melody_verify_r20.py`** — the check for it, and it deliberately does NOT
+  import the migration's table. It reads the OLD slider names out of `git show`
+  and the NEW ones out of the working tree, decodes both sides by CONTROL NAME,
+  and compares. Renames are declared explicitly so a rename can never read as a
+  deletion plus an addition — which is the fingerprint of a mid-list insert. It
+  also recomputes each synced instance's cycle length from first principles to
+  prove the fold changed no speed, and range-checks every value against its
+  slider's declared min/max. **Run it before committing the source**, since it
+  reads the pre-migration layout from `HEAD`.

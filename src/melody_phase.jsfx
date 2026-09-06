@@ -25,37 +25,33 @@ desc:Melody Phase
 //
 // CC0 — public domain.
 
-// --- Global sliders (1-14) ---
-// --- Rate. The value, the unit it is in, and whether the project tempo drives
-//     it -- all four in one place, which is the whole point of the reorder.
-//     `Host ratio` at slider 77 used to live sixty sliders from the Rate Mode
-//     that gave it meaning; it is gone, replaced by the sync block below. ---
+// --- R20: THE RATE BLOCK. Exactly two controls, adjacent, in this order --
+//     a rate value, then a rate mode of {BPM, Seconds, Hz, Every N beats,
+//     N per beat}. Every rate in the suite carries this pair, and a plugin with
+//     two rates carries two complete pairs -- the pan below has its own.
+//
+//     What used to be here instead, and why none of it survived: a `Host ratio`
+//     picker sixty sliders from the mode that gave it meaning; then a
+//     `Sync to host` switch, a `Host sync target` selector and a free
+//     `Every N beats` slider. Both shapes had a control whose job was to write
+//     into another control, which R20 forbids outright.
+//
+//     R21: the two host modes are RECIPROCALS and both are needed. Retiring the
+//     old picker kept only the slow half, so eight cycles per beat had to be
+//     entered as 0.125 -- an arithmetic step, which is the exact barrier this
+//     suite exists to remove. The mode now picks which end of your music is
+//     arithmetic-free. ---
 slider1:1<0.001,1000,0.001>Rate value
-// R13: sync is NOT a unit, so it does not compete for a slot in this list.
-// `Host x` used to sit here as a fourth entry, which made Rate value a
-// MULTIPLIER of the project tempo -- a number that means nothing on its own and
-// reads backwards from every other rate in the suite. The unit list now only
-// says what unit; the switch below says whether the tempo drives it.
-slider2:0<0,2,1{BPM,Seconds,Hz}>Rate mode
-// R11: one sync block, shaped like Drift and Ramp. Pick which rate follows the
-// tempo, say how many beats one cycle of it takes, move on. `Every N beats` is a
-// plain continuous number, not a menu, so one cycle every 5 beats of a 4/4 bar
-// is exactly as reachable as every 4 -- which is the point in a suite whose
-// subject is layers slipping against each other.
-// The rate slider stays visible and stays settable in its own unit; nothing
-// hides, nothing is stamped, nothing multiplies.
-slider3:0<0,1,1{Off,On}>Sync to host
-slider4:0<0,1,1{Rate value,Pan base rate}>Host sync target
-slider5:4<0.25,1000,0.01>Every N beats (per sync target)
-slider6:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
+slider3:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
 // Duty cycle for the Pulse waveform: the fraction of each cycle the wave spends
 // high before snapping low. 50 is a square wave (and equals the Square slot).
 // Hidden unless Waveform is Pulse. Arrived appended at 78 on 2026-09-01; this
 // layout is where it goes next to the Waveform slider it belongs to.
-slider7:25<1,99,0.1>Pulse width (%, 50 = square)
+slider4:25<1,99,0.1>Pulse width (%, 50 = square)
 
 // --- Pitch. Where the sequence sits, before any per-voice note is applied. ---
-slider8:440<400,480,0.1>Tuning reference (Hz)
+slider5:440<400,480,0.1>Tuning reference (Hz)
 // Where the whole set sits, and it is the SAME pair Polyrhythm v3 uses.
 //
 // Root note and Center octave used to live here, and they had to go the moment
@@ -72,28 +68,37 @@ slider8:440<400,480,0.1>Tuning reference (Hz)
 // They are also what stops C2..C6 being a ceiling: four octaves and an octave
 // of half steps in each direction reaches well past anything audible either
 // way, so the picker is a comfortable middle rather than a limit.
-slider9:0<-12,12,1>Transpose (half steps)
-slider10:0<-4,4,1>Octave shift
-slider11:0<0,100,0.1>Binaural beat (Hz, L/R offset)
+slider6:0<-12,12,1>Transpose (half steps)
+slider7:0<-4,4,1>Octave shift
+slider8:0<0,100,0.1>Binaural beat (Hz, L/R offset)
 
 // --- Envelope. Each shape sits with the stage it shapes; they used to be four
 //     apart (Attack%, Release%, Attack shape, Release shape). ---
-slider12:10<0,100,0.1>Attack (% of note duration)
-slider13:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack shape
-slider14:30<0,100,0.1>Release (% of note duration)
-slider15:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
+slider9:10<0,100,0.1>Attack (% of note duration)
+slider10:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack shape
+slider11:30<0,100,0.1>Release (% of note duration)
+slider12:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
 
 // --- Glide / portamento. When Glide time > 0, each new voice's pitch starts at
 //     the previous voice's target frequency and slides to its own over this many
 //     seconds. Legato glide changes how the new voice's envelope is triggered. ---
-slider16:0<0,5,0.001>Glide time (seconds; 0 = off)
-slider17:0<0,1,1{Off,On}>Legato glide
+slider13:0<0,5,0.001>Glide time (seconds; 0 = off)
+slider14:0<0,1,1{Off,On}>Legato glide
 
 // --- Pan -- mirrors Polyrhythm Phase. ---
-slider18:0<0,1,1{Off,On}>Pan enabled
-slider19:2<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
-slider20:100<0,100,0.1>Pan spread (%)
-slider21:1<0.001,1000,0.001>Pan base rate (Tremolo / Increment modes)
+slider15:0<0,1,1{Off,On}>Pan enabled
+slider16:2<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
+slider17:100<0,100,0.1>Pan spread (%)
+slider18:10<0,100,0.1>Pan glide ms (0 = instant)
+slider19:8<2,32,1>Cycle steps (per-cycle modes)
+slider20:1<0.001,1000,0.001>Pan base rate (Tremolo / Increment modes)
+// The pan's OWN rate mode (R20). Until 2026-09-05 the pan borrowed the
+// sequencer's, which is exactly why R11 needed a `Host sync target` selector --
+// there was nowhere else to put the pan's sync. One slider replaced three.
+// Same five entries as every rate mode in the suite; in `Every N beats` the pan
+// takes N beats to go round once, and in `N per beat` it goes round N times per
+// beat. The two are reciprocals, so neither is right alone.
+slider21:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan rate mode
 slider22:0<-1000,1000,0.001>Pan increment per voice (Increment mode)
 
 // --- The sequence: how many steps, in what order, and does it go round again.
@@ -197,12 +202,28 @@ slider71:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V
 slider72:0<0,20,0.01>Drift up amount (units match target)
 slider73:0<0,20,0.01>Drift down amount (units match target)
 slider74:8<1,1000,1>Drift period (cycles)
-slider75:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// What the period is COUNTED IN. Cycles is this plugin's native count and the
+// default -- a period of 8 means eight sequencer cycles, and it follows the rate
+// for free. Seconds is wall clock. Beats converts at the LIVE project tempo, so
+// the wander follows the host rather than the melody. Cycles is the default
+// everywhere the plugin HAS a rate to count cycles of; Veil is the one
+// exception, and it is exempt because it has no rate at all.
+slider75:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider76:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Drift play/rest, per target, counted in PERIODS. Both must be above zero for
+// the gate to engage. While resting the drift phase does not advance at all, so
+// the offset FREEZES where it stopped rather than returning to centre -- and the
+// FRACTION of the play value chooses where it parks: x.25 crest, x.75 trough,
+// x.0 and x.5 neutral. So a whole number parks at no-change every time and is
+// nearly inaudible, and an awkward fraction is the interesting one, because each
+// freeze lands further round the wave than the last.
+slider77:0<0,64,0.01>Drift play for (periods, 0 = always)
+slider78:0<0,64,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp: a one-time slow RIDE of a parameter. Pick a target, where to take
 //     it and over how long, arm Engage, and it glides there once and holds.
 //     Nested-selector like Drift; all targets ride in parallel off one Engage. ---
-slider76:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan base rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note duration,V2 Note duration,V3 Note duration,V4 Note duration,V5 Note duration,V6 Note duration,V7 Note duration,V8 Note duration,Attack %,Release %}>Ramp target
+slider79:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan base rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note duration,V2 Note duration,V3 Note duration,V4 Note duration,V5 Note duration,V6 Note duration,V7 Note duration,V8 Note duration,Attack %,Release %}>Ramp target
 // R14 says this should state a DESTINATION (`Ramp to`), not a delta, and it
 // will -- but the engine still computes `ramp_t * by`, so renaming it alone
 // would be a label that lies about what the number does. Destination
@@ -211,12 +232,23 @@ slider76:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V
 // it lands (the value lives in a bank the plugin can migrate itself), and
 // every instance in the library currently has this at 0 with duration 0, so
 // nothing is riding on it either way. Left honest until then.
-slider77:0<-1000,1000,0.001>Ramp by (units match target)
-slider78:0<0,60,0.1>Ramp duration (minutes)
-slider79:0<0,1,1{Off,On}>Ramp engage
-slider80:0<0,60,0.1>Ramp start delay (minutes)
-slider81:10<0,100,0.1>Pan Glide ms (0=instant)
-slider82:8<2,32,1>Cycle Steps (per-cycle modes)
+slider80:0<-1000,1000,0.001>Ramp by (units match target)
+// What the duration and start delay are COUNTED IN. The DECLARED DEFAULT IS 2,
+// Minutes, and that is not a free choice: every instance in the library has this
+// control unset, so the default is the live value all of them run on, and
+// putting Cycles at index 0 would silently rewrite a thirty-minute ramp into a
+// two-second one. The near-miss that established this is in CLAUDE.md.
+slider81:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+slider82:0<0,60,0.1>Ramp duration (in ramp time units)
+// Ramp play/rest, per target: the ramp advances for `play`, holds for `rest`,
+// and repeats, so it climbs as a staircase rather than a smooth glide. The holds
+// come OUT of the duration rather than extending it -- the advancing step is
+// scaled by (play+rest)/play -- so Ramp duration goes on meaning "you arrive in
+// about this long". Both zero is the smooth ramp.
+slider83:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider84:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider85:0<0,1,1{Off,On}>Ramp engage
+slider86:0<0,60,0.1>Ramp start delay (in ramp time units)
 
 @init
 // Rate drift and Ramp are in BPM in EVERY mode -- "BPM is BPM". This mattered
@@ -261,22 +293,16 @@ function host_bpm_delta(bpm_amt) (
 // report is that it reads zero in @init, and Womb never touches it here.
 // @block owns host_bpm now; seed a neutral value.
 host_bpm     = 120;
-// --- Tempo sync (R11). Two syncable rates -- the sequencer and the pan --
-//     behind one selector, with `Every N beats` stored PER TARGET in a bank
-//     exactly as Drift's amounts are, so a synced sequencer and a synced pan
-//     hold different beat counts at once and switching the selector edits one
-//     without disturbing the other.
-N_HS_TARGETS = 2;   // 0 = Rate value (the sequencer), 1 = Pan base rate
-HS_RATE = 0; HS_PAN = 1;
-hs_beats = freemem; freemem += 16;
-// Guarded like every other config bank in the suite: @init re-runs on transport
-// play, and re-defaulting these mid-session would throw away a beat count the
-// moment you pressed play. (Womb shipped exactly that bug on 2026-08-30.)
-hs_cfg_inited == 0 ? (
-  hs_cfg_inited = 1;
-  hsi = 0; loop(N_HS_TARGETS, hs_beats[hsi] = 4; hsi += 1; );
-);
-hs_inited = 0; last_hs_sel = 0; last_sync_on = 0;
+// --- Tempo sync (R20/R21). The R11 shape that used to live here -- a
+//     `Sync to host` switch, a `Host sync target` selector and a per-target
+//     `Every N beats` bank -- was RETIRED 2026-09-05. Both rates now carry
+//     their own complete R20 pair (a value, then a mode of
+//     {BPM, Seconds, Hz, Every N beats, N per beat}), so there is nothing left
+//     for a selector to reach across. The measurement that settled it: across
+//     73 saved instances, all 27 synced ones targeted the sequencer and not one
+//     targeted the pan -- the capability the selector existed for had never
+//     been used, and the real gap was simply that the pan had no mode of its
+//     own. One slider fixed that; three had been spent instead.
 // NOT seq_synced / pan_synced. @init re-runs on every transport play and
 // @slider does NOT, so zeroing them here left the sequence-placement gate
 // false on every play press -- the placement never ran, and the instances
@@ -545,6 +571,21 @@ speed_ramp_delay_elapsed_mem = 896;
 // instead of jumping when the next note advances the pattern.
 v_pan_cycle_pos = 928;  // delay sample counter per target (RUNTIME)
 
+// Drift and Ramp play/rest, per target (2026-09-05). 32-slot-spaced like every
+// other per-target bank here. play/rest are CONFIG (survive a transport re-init,
+// restored by @serialize); the accumulator and the resting flag are RUNTIME.
+// FIRST FREE SLOT AFTER THIS BLOCK IS 1216 -- re-derive it rather than trusting
+// this comment, with:
+//   grep -nE '^[a-z_]+ *= *[0-9]{2,} *;' src/melody_phase.jsfx
+drift_play_mem       = 960;   // periods of drift to run   (CONFIG)
+drift_rest_mem       = 992;   // periods to hold frozen    (CONFIG)
+sr_play_mem          = 1024;  // ramp time to advance      (CONFIG)
+sr_rest_mem          = 1056;  // ramp time to hold         (CONFIG)
+drift_pr_accum_mem   = 1088;  // (RUNTIME)
+drift_pr_resting_mem = 1120;  // (RUNTIME)
+sr_pr_accum_mem      = 1152;  // (RUNTIME)
+sr_pr_resting_mem    = 1184;  // (RUNTIME)
+
 // Drift CONFIG (up/down/period/shape) + selector tracker — initialized
 // ONCE per plugin instance, guarded by drift_cfg_inited so @init
 // re-running on every transport play does NOT wipe the user's drift
@@ -561,6 +602,8 @@ drift_cfg_inited != 1 ? (
     speed_ramp_by_mem[i]    = 0;
     speed_ramp_dur_mem[i]   = 0;
     speed_ramp_delay_mem[i] = 0;
+    drift_play_mem[i] = 0; drift_rest_mem[i] = 0;
+    sr_play_mem[i]    = 0; sr_rest_mem[i]    = 0;
     i += 1;
   );
   last_target_select = 0;
@@ -579,6 +622,8 @@ loop(N_TARGETS,
   target_drift_offset[i] = 0;
   speed_ramp_ramp_t_mem[i]        = 0;
   speed_ramp_delay_elapsed_mem[i] = 0;
+  drift_pr_accum_mem[i]   = 0; drift_pr_resting_mem[i] = 0;
+  sr_pr_accum_mem[i]      = 0; sr_pr_resting_mem[i]    = 0;
   i += 1;
 );
 
@@ -627,8 +672,18 @@ function rate_to_cycle_seconds(raw_rate, rmode) (
   //         seconds still described the OLD tempo — pressing play silently
   //         threw the tempo change away. Nothing to remember, nothing to go
   //         stale.
+  // R21, and this is the EXACT chain -- "which mode am I", never widened to
+  // `>= 3`. The two host modes are held against a NOMINAL 60 BPM, where one
+  // beat is one second, so:
+  //   Every N beats (3): N beats per cycle -> N nominal seconds. Identical
+  //                      arithmetic to Seconds, which is why they share a line.
+  //   N per beat    (4): N cycles per beat -> 1/N nominal seconds. Identical
+  //                      arithmetic to Hz, which is why it falls through.
+  // The two are reciprocals of each other by construction, and the live tempo
+  // is applied separately as host_scale in @block -- so mode 3 and mode 4 are
+  // the same conversion the free modes already use, plus a multiply.
   rmode == 0 ? 60 / max(raw_rate, 0.001) :
-  rmode == 1 ? max(raw_rate, 0.001) :
+  (rmode == 1 || rmode == 3) ? max(raw_rate, 0.001) :
                1 / max(raw_rate, 0.001)
 );
 
@@ -652,6 +707,25 @@ function polyblep(bt, bdt) local(bs) (
 
 function db_to_lin(db) (
   pow(10, db / 20)
+);
+
+// Shared play/rest gate for Drift and Ramp, byte-identical to the one in the
+// Sweeping Filter, Tremolo, Phaser, Bubbler, Dapple, Resonance Bank and the
+// Morpher -- a thing learned on one plugin has to be true of all of them.
+//
+// `tick` is how much of one play/rest unit passes per sample, so the caller
+// decides the unit (drift periods, or ramp time units) and this stays unitless.
+// Returns 1 while the target is resting. Both play and rest must be above zero
+// or the gate is off entirely, which is what makes 0 mean "always".
+function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
+  play > 0 && rest > 0 ? (
+    accum_bank[idx] += tick;
+    accum_bank[idx] >= (resting_bank[idx] ? rest : play) ? (
+      accum_bank[idx] = 0;
+      resting_bank[idx] = 1 - resting_bank[idx];
+    );
+    resting_bank[idx];
+  ) : ( 0; );
 );
 
 function count_active_voices() local(n, j) (
@@ -913,96 +987,59 @@ function trigger_seq_voice(prev_idx) (
 // @init re-running on transport play must not re-arm it, because the slider
 // section does NOT re-run on play and the sequencer would never start again.
 slider_ran = 1;
-// True for the ONE @slider pass where Rate Mode really moved INTO the
-// tempo-following mode. The named pickers below use it to apply their ratio on
-// entry: the raw multiplier HIDES behind a picker, so a stale picker value left
-// unapplied would name one speed on screen while the plugin ran another.
-// rate_mode_inited gates it, so a half-restored instance can never see an edge.
 rate_mode     = slider2;
 
 rate_value    = slider1;
 
-// --- Sync to host (R13) + the sync target selector (R11) ------------------
-// Nested selector, same shape as Drift and Ramp: slider4 picks which rate the
-// tempo drives, slider5 holds THAT target's beat count, and switching the
-// selector saves the outgoing target's value and loads the incoming one's.
-sync_on = slider3 > 0.5;
-hs_sel  = max(0, min(N_HS_TARGETS-1, slider4));
-last_hs_sel != hs_sel ? (
-  hs_beats[last_hs_sel] = slider5;
-  slider5 = hs_beats[hs_sel]; slider_automate(slider5);
-  last_hs_sel = hs_sel;
-) : (
-  hs_beats[hs_sel] = slider5;
-);
-// Entering and leaving sync are both SILENT: the beat count is seeded from the
-// cycle the rate slider already describes, so the speed does not change at the
-// moment you flip the switch -- only the unit you type in. Womb's ear-tested
-// shape; `hs_inited` is adopted in @block, never here, so a half-restored
-// instance cannot mistake REAPER handing over a saved value for a user edit.
-hs_inited && last_sync_on != sync_on ? (
-  sync_on ? (
-    hs_sel == HS_RATE ? (
-      hs_beats[HS_RATE] = max(0.25, min(1000,
-        rate_to_cycle_seconds(rate_value, rate_mode) * max(tempo, 0.001) / 60));
-    ) : (
-      hs_beats[HS_PAN] = max(0.25, min(1000,
-        (slider21 > 0 ? 1/slider21 : 1) * max(tempo, 0.001) / 60));
-    );
-    slider5 = hs_beats[hs_sel]; slider_automate(slider5);
-  ) : (
-    // Leaving sync: hand the rate slider back the speed it was actually
-    // running at, in whatever unit it is set to, so nothing jumps.
-    hs_sel == HS_RATE ? (
-      hs_cyc = hs_beats[HS_RATE] * 60 / max(tempo, 0.001);
-      slider1 = max(0.001, min(1000,
-        rate_mode == 0 ? 60 / max(hs_cyc, 0.001) :
-        rate_mode == 1 ? hs_cyc :
-                         1 / max(hs_cyc, 0.001)));
-      rate_value = slider1; slider_automate(slider1);
-    ) : (
-      hs_cyc = hs_beats[HS_PAN] * 60 / max(tempo, 0.001);
-      slider21 = max(0.001, min(1000, 1 / max(hs_cyc, 0.001)));
-      slider_automate(slider21);
-    );
-  );
-  last_sync_on = sync_on;
-);
-// Which rates are following the tempo right now. Read all over the engine, so
-// derived once here and again in @block (which is where host_scale lives,
-// because it comes off a bank).
-seq_synced = sync_on && hs_sel == HS_RATE;
-pan_synced = sync_on && hs_sel == HS_PAN;
-slider_show(slider4, sync_on);
-slider_show(slider5, sync_on);
-waveform      = slider6;
+// --- Host sync (R20/R21) ---------------------------------------------------
+// A rate follows the project tempo when its OWN mode says so. Modes 3 and 4 are
+// the two host modes -- `Every N beats` and `N per beat` -- and they are
+// reciprocals of each other, so the mode picks which end of your music is
+// arithmetic-free rather than making you invert a number.
+//
+// The gate is `>= 3`, not `== 3`, and that distinction is the whole of R21: a
+// test meaning "am I host-synced" widens, while a conversion chain asking
+// "which mode am I" stays exact. rate_to_cycle_seconds() is the exact one; this
+// is the widened one.
+//
+// Nothing is seeded or converted when the mode changes. Melody's R11 shape used
+// to hand the rate slider a fresh number on entering and leaving sync, which is
+// a control writing into another control -- forbidden by R20, and unnecessary
+// once each rate owns its own unit.
+seq_synced = rate_mode >= 3;
+waveform      = slider3;
 // Pulse duty as a 0..1 fraction of the cycle. Only read by waveform
 // slot 13, and the slider only shows there.
-pulse_duty    = slider7 * 0.01;
-slider_show(slider7, waveform == 13);
-tuning_ref    = slider8;
+pulse_duty    = slider4 * 0.01;
+slider_show(slider4, waveform == 13);
+tuning_ref    = slider5;
 // Transpose and Octave shift, feeding the same conversion Root note and Center
 // octave used to. Polyrhythm v3's arrangement exactly: base_note is a signed
 // half-step offset rather than a pitch class, and Octave shift is the octave
 // measured from 4, so 0 / 0 leaves the note names literally true.
-base_note     = slider9;
-center_octave = 4 + slider10;
+base_note     = slider6;
+center_octave = 4 + slider7;
 loop_enabled  = slider25;
 master_gain   = db_to_lin(slider66);
-binaural_hz   = slider11;
-attack_pct    = slider12 / 100;
-release_pct   = slider14 / 100;
-attack_shape  = slider13;
-release_shape = slider15;
+binaural_hz   = slider8;
+attack_pct    = slider9 / 100;
+release_pct   = slider11 / 100;
+attack_shape  = slider10;
+release_shape = slider12;
 seq_length_cfg = slider23;
-pan_enabled    = slider18;
-pan_mode       = slider19;
+pan_enabled    = slider15;
+pan_mode       = slider16;
 
-pan_spread     = slider20 / 100;
-pan_base_rate  = slider21;
+pan_spread     = slider17 / 100;
+pan_base_rate  = slider20;
+// The pan's own rate mode, and its own sync gate. `>= 3` is the widened
+// "am I host-synced" test (R21); the exact "which mode am I" question is asked
+// only inside rate_to_cycle_seconds().
+pan_rate_mode  = slider21;
+pan_synced     = pan_rate_mode >= 3;
 pan_increment  = slider22;
-glide_time     = slider16;
-legato_enabled = slider17;
+glide_time     = slider13;
+legato_enabled = slider14;
 // Glide coefficient: one-pole smoother applied per sample to
 // v_freq_current_l/r, with glide_time as the time constant.
 // When glide_time = 0 we just snap (handled inline at the
@@ -1026,7 +1063,7 @@ glide_coeff   = glide_time > 0.0001 ? exp(-1 / max(srate * glide_time, 1)) : 0;
 // not a sweep. Default 10 reproduces the old behaviour exactly, including the
 // legato coupling; only an explicit 0 overrides it, so a legato project can
 // still reach a hard switch if it asks for one.
-pan_glide_sec   = slider81 / 1000;
+pan_glide_sec   = slider18 / 1000;
 pan_smooth_time = pan_glide_sec <= 0 ? 0 :
   ((legato_enabled && glide_time > 0.0001) ? max(pan_glide_sec, glide_time) : pan_glide_sec);
 pan_smooth_coeff_global = pan_smooth_time <= 0 ? 0 : exp(-1 / (srate * pan_smooth_time));
@@ -1035,8 +1072,7 @@ pan_smooth_coeff_global = pan_smooth_time <= 0 ? 0 : exp(-1 / (srate * pan_smoot
 // BPM) with the live tempo applied as host_scale in @block. That is exactly
 // the arrangement Host x used, and the one the sequence placement below relies
 // on, because it makes seq_step_elapsed and v_step_seconds both read in beats.
-cycle_seconds = seq_synced ? max(0.001, hs_beats[HS_RATE])
-                           : rate_to_cycle_seconds(rate_value, rate_mode);
+cycle_seconds = rate_to_cycle_seconds(rate_value, rate_mode);
 
 // Effective sequence length: "All Active" (0) means walk all 8
 // voice slots and skip the inactive ones; 1..8 truncates the
@@ -1110,10 +1146,10 @@ i = 0;
 loop(8,
   pan_mode == 1 ? (
     pan_rate_i = pan_base_rate + pan_increment * i;
-    pan_cycle_sec = rate_to_cycle_seconds(pan_rate_i, rate_mode);
+    pan_cycle_sec = rate_to_cycle_seconds(pan_rate_i, pan_rate_mode);
     v_pan_freq[i] = pan_cycle_sec > 0 ? 1 / pan_cycle_sec : 0;
   ) : (
-    pan_cycle_sec = rate_to_cycle_seconds(pan_base_rate, rate_mode);
+    pan_cycle_sec = rate_to_cycle_seconds(pan_base_rate, pan_rate_mode);
     v_pan_freq[i] = pan_cycle_sec > 0 ? 1 / pan_cycle_sec : 0;
   );
   i += 1;
@@ -1135,7 +1171,7 @@ loop(8,
 // collapsed all seven walk modes into Alternating whenever few voices were up.
 // Spread uses the voice count because Spread ranks VOICES across the field;
 // that is a different question with a coincidentally similar answer.
-pan_cycle_steps = max(2, slider82);
+pan_cycle_steps = max(2, slider19);
 // The every-N alternations count in their own pattern length (2N), not in
 // voices -- otherwise a four-voice project could never reach the second half
 // of an "every 4" and would sit on one side forever.
@@ -1162,15 +1198,16 @@ pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : 
 
 // Show pan sub-sliders only when pan is enabled, and only the
 // ones relevant to the chosen mode (matches PRP's UX).
-slider_show(slider19, pan_enabled);
+slider_show(slider16, pan_enabled);
 // Shown for every per-cycle mode from Alternating up, matching the filters.
 // It is NOT only the walks: the cycle index wraps at Cycle Steps, so an ODD
 // value makes Alternating limp -- 0,1,2,0,1,2 gives -1,+1,-1,-1,+1,-1. Hiding
 // the control would hide the cause. The every-N modes are excluded because they
 // count in their own pattern length (2N) and genuinely ignore this.
-slider_show(slider82, pan_enabled && pan_mode >= 4 && pan_mode <= 12);
-slider_show(slider81, pan_enabled);
-slider_show(slider20, pan_enabled);
+slider_show(slider19, pan_enabled && pan_mode >= 4 && pan_mode <= 12);
+slider_show(slider18, pan_enabled);
+slider_show(slider17, pan_enabled);
+slider_show(slider20, pan_enabled && (pan_mode == 0 || pan_mode == 1));
 slider_show(slider21, pan_enabled && (pan_mode == 0 || pan_mode == 1));
 slider_show(slider22, pan_enabled && pan_mode == 1);
 
@@ -1216,22 +1253,30 @@ sel_target = slider71;
 sel_up     = slider72;
 sel_down   = slider73;
 sel_per    = slider74;
-sel_shape  = slider75;
+sel_shape  = slider76;
+sel_dplay  = slider77;
+sel_drest  = slider78;
 
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
   target_drift_down[last_target_select]  = sel_down;
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
+  drift_play_mem[last_target_select]     = sel_dplay;
+  drift_rest_mem[last_target_select]     = sel_drest;
 
   slider72 = target_drift_up[sel_target];
   slider73 = target_drift_down[sel_target];
   slider74 = target_drift_per[sel_target];
-  slider75 = target_drift_shape[sel_target];
+  slider76 = target_drift_shape[sel_target];
+  slider77 = drift_play_mem[sel_target];
+  slider78 = drift_rest_mem[sel_target];
   slider_automate(slider72);
   slider_automate(slider73);
   slider_automate(slider74);
-  slider_automate(slider75);
+  slider_automate(slider76);
+  slider_automate(slider77);
+  slider_automate(slider78);
 
   last_target_select = sel_target;
 ) : (
@@ -1239,37 +1284,49 @@ last_target_select != sel_target ? (
   target_drift_down[sel_target]  = sel_down;
   target_drift_per[sel_target]   = sel_per;
   target_drift_shape[sel_target] = sel_shape;
+  drift_play_mem[sel_target]     = sel_dplay;
+  drift_rest_mem[sel_target]     = sel_drest;
 );
 
 // Speed Ramp target selector save/restore (nested-selector, mirrors the
-// drift block above). slider76 = target; slider77 = per-target `by`;
-// slider78 = per-target duration; slider80 = per-target start delay (all
-// three per-target). slider79 (engage) stays GLOBAL. Switching slider76
+// drift block above). slider79 = target; slider80 = per-target `by`;
+// slider82 = per-target duration; slider86 = per-target start delay (all
+// three per-target). slider85 (engage) stays GLOBAL. Switching slider79
 // saves the three per-target sliders into the OLD target's slots, then
 // loads the NEW target's stored values. Otherwise captures live edits. All
 // 28 targets ramp in parallel from @sample, each on its own duration/delay.
-sr_sel_target = slider76;
-sr_sel_by     = slider77;
-sr_sel_dur    = slider78;
-sr_sel_delay  = slider80;
+sr_sel_target = slider79;
+sr_sel_by     = slider80;
+sr_sel_dur    = slider82;
+sr_sel_delay  = slider86;
+sr_sel_play   = slider83;
+sr_sel_rest   = slider84;
 
 last_sr_target != sr_sel_target ? (
   speed_ramp_by_mem[last_sr_target]    = sr_sel_by;
   speed_ramp_dur_mem[last_sr_target]   = sr_sel_dur;
   speed_ramp_delay_mem[last_sr_target] = sr_sel_delay;
+  sr_play_mem[last_sr_target]          = sr_sel_play;
+  sr_rest_mem[last_sr_target]          = sr_sel_rest;
 
-  slider77 = speed_ramp_by_mem[sr_sel_target];
-  slider78 = speed_ramp_dur_mem[sr_sel_target];
-  slider80 = speed_ramp_delay_mem[sr_sel_target];
-  slider_automate(slider77);
-  slider_automate(slider78);
+  slider80 = speed_ramp_by_mem[sr_sel_target];
+  slider82 = speed_ramp_dur_mem[sr_sel_target];
+  slider86 = speed_ramp_delay_mem[sr_sel_target];
+  slider83 = sr_play_mem[sr_sel_target];
+  slider84 = sr_rest_mem[sr_sel_target];
   slider_automate(slider80);
+  slider_automate(slider82);
+  slider_automate(slider86);
+  slider_automate(slider83);
+  slider_automate(slider84);
 
   last_sr_target = sr_sel_target;
 ) : (
   speed_ramp_by_mem[sr_sel_target]    = sr_sel_by;
   speed_ramp_dur_mem[sr_sel_target]   = sr_sel_dur;
   speed_ramp_delay_mem[sr_sel_target] = sr_sel_delay;
+  sr_play_mem[sr_sel_target]          = sr_sel_play;
+  sr_rest_mem[sr_sel_target]          = sr_sel_rest;
 );
 
 // Samples per one global rate cycle — the "primary cycle" for the
@@ -1278,19 +1335,21 @@ last_sr_target != sr_sel_target ? (
 samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 
 @block
-// --- Restore-order guard for the change-detecting controls below -----------
-//     These trackers answer "did the user just move this control?". Adopted
-//     HERE, not in @slider: on a fresh or duplicated instance @slider runs
-//     while REAPER is still handing over the saved values, so a tracker
-//     adopted there takes a DEFAULT, and the real value arriving a moment
-//     later reads as a user edit -- the picker then fires and slider_automate()s
-//     its ratio over a rate that was set by hand. @block cannot run before the
-//     instance is configured, so adopting here is right whatever order the
-//     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
-//     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
-//     load and every track duplicate.)
-!rate_mode_inited ? ( last_rate_mode = slider2; rate_mode_inited = 1; );
-// Follow the project tempo, for whichever rate Sync to host is pointed at.
+// --- No restore-order guard here any more, and that is the point ------------
+//     A tracker used to sit here answering "did the user just move Rate Mode?",
+//     adopted in @block rather than @slider for the 2026-08-23 reason (@slider
+//     runs while REAPER is still handing over saved values, so a tracker adopted
+//     there takes a DEFAULT and the real value arriving later reads as a user
+//     edit). It existed to serve the entry-edge of the retired ratio picker.
+//
+//     R20 removed every control whose job was to write into another control, so
+//     nothing needs to know whether a mode change was a person or a restore.
+//     `last_rate_mode` was left with one write and zero readers when the picker
+//     went -- checked case-insensitively, because eel2 folds case and a reader
+//     spelled differently would still be a reader -- and it is removed rather
+//     than annotated because this change is what orphaned it, and the comment
+//     above it described a mechanism that no longer exists.
+// Follow the project tempo, for whichever rate is in a host mode.
 //
 // @slider does NOT re-run when the tempo changes, so everything derived
 // from cycle_seconds (v_step_seconds, v_note_seconds, the envelope
@@ -1313,21 +1372,24 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 //
 // Transport-edge detection belongs in @block, not @sample (play_state
 // only updates per block) — same reasoning applies to tempo.
-// Adopt the sync trackers HERE, not in @slider: on a fresh or duplicated
-// instance @slider runs while REAPER is still handing over saved values, so a
-// tracker adopted there captures a default and then reads the real value
-// arriving as a user edit. (Proved 2026-08-23.) While the flag is 0 the
-// conversion block fires nothing, which is the safe direction.
-!hs_inited ? ( last_hs_sel = slider4; last_sync_on = slider3 > 0.5; hs_inited = 1; );
+// No sync tracker to adopt any more. The R11 shape needed one because entering
+// or leaving sync CONVERTED the rate slider, which meant it had to know whether
+// the switch had really been moved by a person -- and adopting that in @slider
+// was the 2026-08-23 bug. R20 removed the conversion, so there is nothing to
+// edge-detect and nothing that can misfire during a restore.
+//
 // host_scale carries the live tempo into dt for whichever rate is synced.
-// Derived from a BANK, so it belongs here rather than in @slider.
 // Which rates are following the tempo. Derived HERE as well as in @slider,
 // and this is the copy that matters: @block runs every block forever, so the
 // gate is right on the first block after a transport play, when @slider has
 // not run and never will. Must sit above the sequence-placement test below,
 // which reads seq_synced in this same block.
-seq_synced = (slider3 > 0.5) && slider4 < 0.5;
-pan_synced = (slider3 > 0.5) && slider4 >= 0.5;
+//
+// `>= 3` is the widened "am I host-synced" gate, covering BOTH host modes.
+// Read the RAW sliders, not the @slider-local copies, for the same reason the
+// derivation lives here at all.
+seq_synced = slider2 >= 3;
+pan_synced = slider21 >= 3;
 // --- Which tempo to trust, and for how long ---------------------------------
 // REAPER reports `tempo` as its 120 placeholder for the first stretch after a
 // project opens, before the project's own tempo is applied. host_scale is
@@ -1387,23 +1449,49 @@ cfg_sig_now != cfg_sig ? ( cfg_sig = cfg_sig_now; cfg_stable = 0; )
 // here keeps Attack %, Release %, Note duration proportions
 // intact across speed changes).
 // Advance each target's own Speed Ramp clock (v2.14 per-target timeline).
-// Engage (slider79, GLOBAL) is the freeze/resume gate: while On, every
+// Engage (slider85, GLOBAL) is the freeze/resume gate: while On, every
 // target whose duration > 0 advances its own ramp_t 0->1 over its own
 // duration, after its own start delay; while Off, all clocks freeze and
 // resume from where they are. Only transport play (via @init) resets them,
-// so different targets can wind down over different timelines from one
-// engage. Duration is wall-clock MINUTES (an absolute real-time ride),
-// NOT rate-cycle-relative like drift's period.
-slider79 ? (
+// so different targets can wind down over different timelines from one engage.
+slider85 ? (
+  // Ramp time unit (slider81). One factor turns the block's time values into
+  // seconds, so Duration and Start delay always mean the same thing as each
+  // other. Cycles counts THIS plugin's own sequencer cycles, referenced against
+  // cycle_seconds -- the rate BEFORE drift and ramp touch it, so a ramp cannot
+  // alter its own clock. Seconds is wall clock. Minutes is 60 s and is the
+  // DEFAULT, because every saved instance has this control unset and moving the
+  // default would rewrite their live ramps. A beat is 60/tempo s, recomputed
+  // per sample so Beats follows a live tempo change rather than remembering one.
+  ramp_time_scale =
+    slider81 == 3 ? 60 / max(host_bpm, 0.001) :
+    slider81 == 2 ? 60 :
+    slider81 == 1 ? 1 :
+                    max(cycle_seconds, 0.00001);
   i = 0;
   loop(N_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
-      sr_delay_samples = speed_ramp_delay_mem[i] * 60 * srate;
+      sr_delay_samples = speed_ramp_delay_mem[i] * ramp_time_scale * srate;
       speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
         speed_ramp_delay_elapsed_mem[i] += 1;
       ) : (
-        speed_ramp_ramp_t_mem[i] += 1.0 / (srate * speed_ramp_dur_mem[i] * 60);
-        speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+        // Staircase (sliders 83/84). The ramp advances for `play`, holds for
+        // `rest`, and repeats. The holds come OUT of the duration rather than
+        // extending it -- the advancing step is scaled by (play+rest)/play --
+        // so Ramp duration goes on meaning "you arrive in about this long".
+        sr_pl = sr_play_mem[i];
+        sr_rs = sr_rest_mem[i];
+        sr_pr_on = sr_pl > 0 && sr_rs > 0;
+        sr_hold = pr_frozen(sr_pr_accum_mem, sr_pr_resting_mem, i,
+                            1.0 / (ramp_time_scale * srate), sr_pl, sr_rs);
+        // One-armed on purpose -- an empty else-branch is a silent compile
+        // failure in eel2 (CLAUDE.md).
+        !sr_hold ? (
+          sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * ramp_time_scale);
+          sr_pr_on ? sr_step *= (sr_pl + sr_rs) / sr_pl;
+          speed_ramp_ramp_t_mem[i] += sr_step;
+          speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+        );
       );
     );
     i += 1;
@@ -1418,7 +1506,19 @@ slider79 ? (
 // live edits adjust trajectory. Composes with Rate Value drift into
 // combined_scale below.
 effective_rate_val_ramp = max(rate_value + host_bpm_delta(speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0]), 0.001);
-rate_mode == 1 ?
+// DIRECTION. Which way a positive offset moves the rate depends on whether the
+// unit counts TIME PER CYCLE or CYCLES PER TIME, and mode 3 joined the first
+// group: `Every N beats` is beats per cycle, so more is SLOWER, exactly as
+// Seconds is. `N per beat` (4) is cycles per beat, so more is faster, like Hz.
+// Widening this gate is the correction the Polyrhythms needed on 2026-09-04 --
+// there, a positive drift ran BACKWARDS in beats mode, giving 57.6 cycles/min
+// where 70 was asked for. Getting it wrong here would be silent and would only
+// show up as drift pulling the wrong way.
+//
+// This is an EXACT mode test, not a `>= 3` sync gate. The two host modes fall
+// on OPPOSITE sides of it, which is precisely why the widened form would be
+// wrong here.
+(rate_mode == 1 || rate_mode == 3) ?
   speed_scale_current = rate_value / effective_rate_val_ramp :
   speed_scale_current = effective_rate_val_ramp / max(rate_value, 0.001);
 
@@ -1437,16 +1537,40 @@ loop(N_TARGETS,
 
   drift_offset_local = 0;
   (up > 0 || down > 0) ? (
-    // host_scale keeps the drift period in step with the project tempo;
+    // Drift period unit (slider75). Cycles is this plugin's native count -- a
+    // period of 8 means eight sequencer cycles, and because the advance already
+    // carries speed_scale_current and host_scale it follows the rate and the
+    // project tempo for free. Seconds is wall clock, so neither factor applies.
+    // Beats converts at the LIVE tempo, recomputed per sample so a tempo change
+    // is followed rather than remembered.
+    //
+    // The period is referenced against samples_per_primary_cycle, which comes
+    // off the PRE-drift rate, so drifting the rate cannot modulate its own
+    // drift period.
+    drift_per_tick =
+      slider75 == 2 ? 1.0 / max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
+      slider75 == 1 ? 1.0 / max(per * srate, 1) :
+                      speed_scale_current * host_scale / (per * samples_per_primary_cycle);
 
-    // like pan, this advance bypasses dt so it needs the factor applied.
-
-    new_phase = target_drift_phase[i] + speed_scale_current * host_scale / (per * samples_per_primary_cycle);
-    new_phase >= 1.0 ? (
-      new_phase -= 1.0;
-      shape == 2 ? (
-        target_drift_prev[i] = target_drift_curr[i];
-        target_drift_curr[i] = rand(2) - 1;
+    // Drift play/rest (sliders 77/78), per target, counted in PERIODS. While
+    // resting the phase does not advance at all, so shape_val below is
+    // recomputed from the HELD phase and the offset simply stays where it
+    // stopped -- freeze in place, not a return to centre.
+    d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,
+                         drift_per_tick, drift_play_mem[i], drift_rest_mem[i]);
+    // One-armed on purpose: an empty else-branch is a silent compile failure in
+    // eel2, and this is the shape CLAUDE.md prescribes for it.
+    d_frozen ? (
+      new_phase = target_drift_phase[i];
+    );
+    !d_frozen ? (
+      new_phase = target_drift_phase[i] + drift_per_tick;
+      new_phase >= 1.0 ? (
+        new_phase -= 1.0;
+        shape == 2 ? (
+          target_drift_prev[i] = target_drift_curr[i];
+          target_drift_curr[i] = rand(2) - 1;
+        );
       );
     );
     target_drift_phase[i] = new_phase;
@@ -1473,7 +1597,8 @@ loop(N_TARGETS,
 // into combined_scale, which scales dt — stretching the whole melody
 // timeline while voice envelope proportions stay intact.
 drifted_rate = max(rate_value + host_bpm_delta(target_drift_offset[0]), 0.001);
-rate_mode == 1 ?
+// Same direction rule as the Ramp block above, and for the same reason.
+(rate_mode == 1 || rate_mode == 3) ?
   drift_mult = rate_value / drifted_rate :
   drift_mult = drifted_rate / rate_value;
 
@@ -1489,8 +1614,8 @@ dt = combined_scale / srate;
 pan_rate_mult = 1.0;
 pan_rate_off = target_drift_offset[9] + speed_ramp_ramp_t_mem[9] * speed_ramp_by_mem[9];
 pan_rate_off != 0 ? (
-  base_pan_cyc  = rate_to_cycle_seconds(pan_base_rate, rate_mode);
-  drift_pan_cyc = rate_to_cycle_seconds(max(pan_base_rate + pan_rate_off, 0.001), rate_mode);
+  base_pan_cyc  = rate_to_cycle_seconds(pan_base_rate, pan_rate_mode);
+  drift_pan_cyc = rate_to_cycle_seconds(max(pan_base_rate + pan_rate_off, 0.001), pan_rate_mode);
   pan_rate_mult = base_pan_cyc / max(drift_pan_cyc, 0.0001);
 );
 
@@ -2320,9 +2445,29 @@ spl1 = out_r;
 // when the blob actually carries it; an older blob leaves host_bpm_saved at
 // 0, which the @block guard reads as "nothing remembered, use live tempo" --
 // i.e. exactly today's behaviour.
-ser_magic = 2200000 + N_TARGETS;   // 2200028 for this 28-target build
+// v2.23 (2026-09-05) adds FOUR per-target banks -- Drift play/rest and Ramp
+// play/rest -- and retires the R11 tempo-sync bank that used to be appended
+// after host_bpm_saved.
+//
+// THIS ONE GETS A MAGIC BUMP, and the reason is the trap CLAUDE.md names as
+// "migrate what was RESTORED, never what was DEFAULTED". Appending here without
+// a bump would have made a pre-2300000 blob's three leftover sync floats
+// (hs_beats[0], hs_beats[1], last_hs_sel) land in drift_play_mem[0..2] -- a
+// drift play/rest config nobody set, restored out of retired data. It happens
+// to be inert, because the values are 4/4/0 and the gate needs BOTH play and
+// rest above zero, so the rest bank staying at 0 disables it. Inert by luck is
+// not a design, and the luck would have expired the first time the bank order
+// changed.
+//
+// The bump is safe here in a way it usually is not, because the READ accepts
+// ALL THREE magics and they share a common prefix: an older blob restores its
+// Drift and Ramp configs exactly as before and simply stops at the point its
+// format ended. Nothing is reset. That is the same "accept the old, write the
+// new" shape the 2100000 -> 2200000 bump already used.
+ser_magic = 2300000 + N_TARGETS;   // 2300028 for this 28-target build
 file_var(0, ser_magic);
-(ser_magic == 2200000 + N_TARGETS || ser_magic == 2100000 + N_TARGETS) ? (
+(ser_magic == 2300000 + N_TARGETS || ser_magic == 2200000 + N_TARGETS
+                                  || ser_magic == 2100000 + N_TARGETS) ? (
   file_mem(0, target_drift_up,    N_TARGETS);
   file_mem(0, target_drift_down,  N_TARGETS);
   file_mem(0, target_drift_per,   N_TARGETS);
@@ -2332,18 +2477,28 @@ file_var(0, ser_magic);
   file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
   file_mem(0, speed_ramp_delay_mem, N_TARGETS);
   file_var(0, last_sr_target);
-  // Only the 2200000 format carries this. On WRITE ser_magic is the new value
-  // so it is always written; on READ of a 2100000 blob it is skipped and
-  // host_bpm_saved stays 0.
-  ser_magic == 2200000 + N_TARGETS ? file_var(0, host_bpm_saved);
-  // Tempo-sync beat counts, APPENDED rather than given a new magic. A bump
-  // would make every existing 2100028 blob fall through to defaults, which
-  // would silently reset Drift and Ramp configs across the whole library to
-  // add one small bank. Appending costs nothing instead: a blob written before
-  // this existed simply runs out here, file_mem leaves the destination
-  // untouched past EOF, and hs_beats keeps @init's 4 beats per target.
-  file_mem(0, hs_beats, N_HS_TARGETS);
-  file_var(0, last_hs_sel);
+  // Carried by the 2200000 format and everything after it. On WRITE ser_magic
+  // is the new value so it is always written; on READ of a 2100000 blob it is
+  // skipped and host_bpm_saved stays 0.
+  ser_magic != 2100000 + N_TARGETS ? file_var(0, host_bpm_saved);
+  // The R11 tempo-sync bank (hs_beats + last_hs_sel) used to be appended here.
+  // It was retired with the sync selector on 2026-09-05, and a pre-2300000 blob
+  // is simply left with trailing data this build never reads -- harmless,
+  // because file_avail is only ever compared against 0 and never used to demand
+  // an exact length. The beat count it held is migrated into Rate value by
+  // tools/melody_migrate_r20.py, from the project's slider line, not from here.
+  //
+  // Drift play/rest and Ramp play/rest, per target. Gated on the NEW magic
+  // exactly so they are read only from a blob that actually wrote them --
+  // "this blob HAS the field", never "this blob is old". An older blob leaves
+  // all four at @init's zeros, which is off, and never lands retired sync data
+  // in them.
+  ser_magic == 2300000 + N_TARGETS ? (
+    file_mem(0, drift_play_mem, N_TARGETS);
+    file_mem(0, drift_rest_mem, N_TARGETS);
+    file_mem(0, sr_play_mem,    N_TARGETS);
+    file_mem(0, sr_rest_mem,    N_TARGETS);
+  );
 
   // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
   // on WRITE it is < 0. @serialize is the only section guaranteed to run on
@@ -2354,19 +2509,20 @@ file_var(0, ser_magic);
   // zero whichever target was selected on the copy. Adds no data — format
   // unchanged.
   file_avail(0) >= 0 ? (
-    // The sync bank gets the same treatment as Drift's and Ramp's: force the
-    // visible `Every N beats` back to the restored selector's entry, so the
-    // first @slider cannot mistake a load for a selector switch and save the
-    // wrong target's value over the right one's.
-    slider4 = last_hs_sel;
-    slider5 = hs_beats[max(0, min(N_HS_TARGETS-1, last_hs_sel))];
     slider72 = target_drift_up[last_target_select];      // Drift up
     slider73 = target_drift_down[last_target_select];    // Drift down
     slider74 = target_drift_per[last_target_select];     // Drift period
-    slider75 = target_drift_shape[last_target_select];   // Drift shape
-    slider77 = speed_ramp_by_mem[last_sr_target];        // Speed ramp by
-    slider78 = speed_ramp_dur_mem[last_sr_target];       // Speed ramp duration
-    slider80 = speed_ramp_delay_mem[last_sr_target];     // Speed ramp start delay
+    slider76 = target_drift_shape[last_target_select];   // Drift shape
+    // The four new per-target play/rest sliders need this exactly as much as
+    // the ones above -- they are backed by live sliders, so they are the ones a
+    // transient @slider can clobber to zero on a track duplicate.
+    slider77 = drift_play_mem[last_target_select];  // Drift play for
+    slider78 = drift_rest_mem[last_target_select];  // Drift rest for
+    slider80 = speed_ramp_by_mem[last_sr_target];        // Speed ramp by
+    slider82 = speed_ramp_dur_mem[last_sr_target];       // Speed ramp duration
+    slider86 = speed_ramp_delay_mem[last_sr_target];     // Speed ramp start delay
+    slider83 = sr_play_mem[last_sr_target];      // Ramp play for
+    slider84 = sr_rest_mem[last_sr_target];      // Ramp rest for
     sliderchange(-1);
   );
 );

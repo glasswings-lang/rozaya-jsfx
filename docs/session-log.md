@@ -80,6 +80,88 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-06 — Melody Phase converted to R20/R21, and the last non-standard sync mechanism in the suite is gone. Built, migrated, installed, UNHEARD.**
+
+  Melody was the only plugin still carrying the R11 shape: a `Sync to host`
+  switch, a `Host sync target` selector and a free-standing `Every N beats`
+  slider. All three are retired. The rate block is now the suite's two controls —
+  a value, then a mode of `{BPM, Seconds, Hz, Every N beats, N per beat}` — and
+  the pan has its own mode for the first time. **82 sliders → 86.**
+
+  **The scope was widened before anything was built, and that is the reusable
+  part.** The authored plan covered the rate block only. Melody was ALSO missing
+  all six Drift and Ramp controls the other eight plugins have — period unit,
+  ramp time unit, and both play/rest pairs. Building only the rate block would
+  have migrated 73 instances and then migrated the same 73 again, which is
+  precisely the *five migrations in one day* failure. So the layout document was
+  extended first and everything landed in one pass. **The check that catches
+  this is cheap: before writing a migration, ask whether the layout doc includes
+  everything the plan still owes that plugin.** Here it did not.
+
+  It was also free. All 73 instances had **nothing** stored on Drift or Ramp —
+  zero drift amounts, zero engaged ramps, checked rather than assumed — so the
+  seven new controls moved no stored value and only needed the renumber that was
+  happening anyway.
+
+  **A latent bug found on the way, same shape as the Polyrhythm one from
+  2026-09-04.** Both the drift and the ramp rate paths asked `rate_mode == 1` to
+  decide whether a positive offset speeds up or slows down. That was right while
+  Seconds was the only "time per cycle" unit, and wrong the moment `Every N
+  beats` joined it — more beats is a longer cycle, so a positive drift would have
+  run BACKWARDS in the new mode. Both gates widened to `== 1 || == 3`, and
+  simulated: value 4 with a +1 offset now gives x0.8 in Every N beats and x1.25
+  in N per beat. **No project was affected** — nothing in the library drifts.
+
+  **The `>= 3` / `== 3` distinction is the whole of R21 and it was applied one
+  gate at a time.** Gates meaning *am I host-synced* widened; conversion chains
+  asking *which mode am I* stayed exact. The direction gate above is the sharp
+  case: it is exact, and the two host modes fall on OPPOSITE sides of it, so the
+  widened form would have been actively wrong there.
+
+  **The blob got a magic bump, 2200000 → 2300000, and it needed one.** The four
+  new per-target banks were going to be appended without a bump, the way the sync
+  bank had been. That would have landed the retired sync bank's three leftover
+  floats in `drift_play_mem[0..2]` on any older blob — a drift play/rest config
+  nobody set, restored out of retired data. It happens to be inert, because the
+  rest bank stays 0 and the gate needs both above zero. **Inert by luck is not a
+  design**, and the luck expires the first time the bank order changes. The read
+  accepts all three magics, so no existing Drift or Ramp config resets.
+
+  **Two lines of dead code removed rather than annotated**, which is the opposite
+  of the standing rule and deliberate: `last_rate_mode` had one write and zero
+  readers (checked case-insensitively, because eel2 folds case), and *this change
+  is what orphaned it*. The comment above it described a picker that no longer
+  exists. The Polyrhythm precedent leaves inert code alone because deleting it
+  buys nothing there; here, leaving it would have left a monument to a retired
+  mechanism.
+
+  **Verification, none of it with ears.** Lint clean. The five rate modes
+  simulated and their numbers read: `Every N beats` = 4 at 205 BPM gives one
+  cycle every 1.1707 s, which is 4 beats exactly; modes 3 and 4 are reciprocals
+  at every tempo tested. Migration equivalence proved from first principles —
+  every synced instance's old cycle length recomputed against its new one, all
+  identical. 73 instances across 7 projects migrated and checked by **11,865
+  checks, 5,706 of them name-decoded value comparisons** against the snapshot,
+  PASS.
+
+  **The verifier deliberately does not import the migration's table**, because a
+  Melody migration passed its own verification on 2026-09-02 while writing twelve
+  instances of nonsense. It reads old names from `git show` and new names from
+  the tree. Its first run reported 166 failures, all of them its own
+  double-counting: four RENAMED controls were being counted as new ones by one
+  check while another check already aliased them. Worth recording because the
+  fix was to the question, not the data — and because a verifier that declares
+  renames explicitly is what stops a rename reading as a deletion plus an
+  addition, which is the fingerprint of a mid-list insert.
+
+  **The one judgement call.** Of the 27 synced instances, 26 held tidy beat
+  counts and one held `0.333333`. It was rewritten as `3` in `N per beat` — the
+  same speed, said so it can be read. The new value is in fact 1 ppm closer to a
+  true third of a beat than the stored one was.
+
+  Backups: `E:/reaper/finished/backups/snapshots/_pre-melody-r20-20260906/` and
+  `E:/reaper/finished/backups/melody_phase.PRE-R20-20260906.jsfx`.
+
 - **2026-09-05 — EAR-TESTED ✓✓: both big reorders played back correctly on finished work.**
 
   `the-sound-of-a-drain`, `bilateral-with-binaurals`, `melodic` and `upswing` all

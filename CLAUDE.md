@@ -155,7 +155,37 @@ in the same commit as any entry you add to `docs/session-log.md`** — that log 
 append-only history; this is the only part of the repo that claims to describe
 *now*.
 
-*Checked against the tree 2026-09-04.*
+*Checked against the tree 2026-09-06.*
+
+- **MELODY IS CONVERTED, AND THE SUITE NO LONGER HAS A PLUGIN WITH ITS OWN SYNC
+  MECHANISM. Built, migrated, installed 2026-09-06. NOT HEARD.**
+  Melody was the last plugin on the R11 shape — a `Sync to host` switch, a
+  `Host sync target` selector and a free `Every N beats` slider. All three
+  retired; the rate block is now the suite's two controls, and the pan has its
+  own rate mode for the first time. **82 sliders → 86**, 73 instances across 7
+  projects migrated, **11,865 checks / 5,706 name-decoded comparisons, PASS.**
+
+  **It also closed Melody's drift/ramp gap in the SAME pass**, which is the part
+  worth carrying forward. The authored plan covered the rate block only; Melody
+  was also missing all six Drift and Ramp controls. Building just the plan would
+  have migrated the same 73 instances twice. **Before writing any migration, ask
+  whether the layout doc covers everything the plan still owes that plugin** —
+  here it did not, and the check took two minutes.
+
+  **Drift and Ramp are now COMPLETE in nine plugins** — Veil, Tremolo, Morpher,
+  Phaser, Bubbler, Dapple, Resonance Bank, Sweeping Filter, Melody. The Morpher
+  still owes its two unit controls. Nine plugins owe the full six.
+
+  **A latent direction bug was found and fixed on the way**, the same one the
+  Polyrhythms had on 09-04: `rate_mode == 1` decided whether a positive drift
+  speeds up or slows down, which is wrong once `Every N beats` exists, because
+  more beats is a longer cycle. Widened to `== 1 || == 3` in both the drift and
+  ramp paths and simulated. No project was affected — nothing in the library
+  drifts. **This is an EXACT gate, not a `>= 3` one: the two host modes fall on
+  opposite sides of it.**
+
+  **Still owed a reorder:** Polyrhythm v1 → v3, Passage, Womb, and the
+  zero-project plugins. Melody owes nothing further.
 
 - **Branch `feature/melody-reorder`, 107 commits ahead of `master`, PUSHED
   through 2026-09-05, unmerged.** `master` is in sync with `origin/master`. The
@@ -400,12 +430,14 @@ append-only history; this is the only part of the repo that claims to describe
   **None of it heard.**
 
   **Still owed a reorder:** Polyrhythm v1 → v3 (its layout is NOT authored, which
-  is what blocks it), Passage (blocked on what it is FOR), Womb, Melody's second
-  pass for its drift/ramp controls, and the zero-project plugins.
+  is what blocks it), Passage (blocked on what it is FOR), Womb, ~~Melody's second
+  pass for its drift/ramp controls~~ (DONE 2026-09-06), and the zero-project
+  plugins.
 
-  **Drift and Ramp are now COMPLETE in eight plugins** — Veil, Tremolo, Morpher,
-  Phaser, Bubbler, Dapple, Resonance Bank, Sweeping Filter. The Morpher still
-  owes its two unit controls. Ten plugins owe the full six.
+  ~~**Drift and Ramp are now COMPLETE in eight plugins**~~ — **NINE as of
+  2026-09-06**; see the Melody entry at the top of this section, which is the
+  current count. Struck rather than edited because a number in a dated bullet
+  goes stale by design, and the top of the section is where status lives.
 
 - **PITCH IS THE NEXT BIG INCONSISTENCY AND IT IS DELIBERATELY NOT STARTED.**
   Raised and measured 2026-09-05: the suite states a pitch **seven different

@@ -34,53 +34,57 @@ When Loop is on, the sequence wraps from the last active voice back to the first
 
 ### Global
 
-**Rate mode** `BPM / Seconds / Hz` (default Seconds)
+**Rate value** `0.001 – 1000` · **Rate mode** `BPM / Seconds / Hz / Every N beats / N per beat` (default Seconds)
 
-> **This page said `BPM / Seconds / Hz / Host x` and that was wrong** — Melody's
-> Rate mode has never had a Host x entry. Its host sync is the separate
-> `Sync to host` switch below, which is the older shape the rest of the suite has
-> moved off. Corrected 2026-09-05.
-How to interpret Rate Value. **Seconds** = seconds per cycle; with Rate Value = 1 (also the default), one cycle equals one second, so the per-voice "Next voice in" and "Note duration" numbers behave as raw seconds. This is the easiest way to work in plain time — set a voice to 2 and it plays for 2 seconds. **BPM** = beats per minute; Rate Value becomes the tempo, and the per-voice numbers become beats. Useful if you want a polyrhythmic feel where every voice is in a sensible ratio of a common tempo. **Hz** = cycles per second; Rate Value is the cycle frequency. Useful for very slow ambient pacing (Rate = 0.05 Hz means one cycle every 20 seconds). **To follow the project tempo**, Melody does not use a rate mode — it has a separate `Sync to host` switch, described below.
+Two controls, side by side: a number, and what the number means. That is the same
+rate block every other plugin in the suite has, and Melody joined it on
+2026-09-06.
 
-**Rate Value** `0.001 – 1000`
-The global rate. Meaning depends on Rate Mode (see above). Default 1, which in the default Seconds mode means "each per-voice cycle is one second."
+**Seconds** — seconds per cycle. With Rate value 1 (the default) one cycle is one
+second, so the per-voice *Next voice in* and *Note duration* numbers behave as
+raw seconds. Set a voice to 2 and it plays for 2 seconds.
+**BPM** — beats per minute. Rate value becomes the tempo and the per-voice
+numbers become beats.
+**Hz** — cycles per second. Rate value is the cycle frequency; 0.05 Hz is one
+cycle every 20 seconds, which is the useful end for slow ambient pacing.
+**Every N beats** — follow the project tempo, one cycle every N beats. Bigger is
+slower: `4` is one cycle per bar in 4/4, `1` is one per beat.
+**N per beat** — follow the project tempo, N cycles per beat. Bigger is faster:
+`3` is a triplet feel, `8` is eight notes a beat.
 
-### Sync to host — following the project tempo
+The last two are the same thing said from opposite ends, and both are here on
+purpose. They are reciprocals, so with only the slow one you would have to type
+`0.125` to get eight notes a beat — arithmetic, which is exactly what this suite
+exists to remove. Pick whichever end of your music you already have a number for.
 
-> **This section described `Host x` as a rate mode with a `Host ratio` picker
-> until 2026-09-05, and Melody has neither.** That text predated Melody's
-> conversion and had been wrong for weeks. Rozaya caught it: *"melody phase does
-> too have a sync mode, of some description. I know this because I've used it."*
-> Quite right — it just isn't the one this page was describing.
+### Following the project tempo
 
-In the three rate modes each instance holds its own absolute rate, and nothing in
+> **Melody used to do this with three separate controls** — a `Sync to host`
+> switch, a `Host sync target` selector and an `Every N beats` slider. They were
+> retired on 2026-09-06 and replaced by the two host entries in Rate mode above.
+> Saved projects were migrated: a synced instance's beat count moved into Rate
+> value with Rate mode set to `Every N beats`, so nothing changed speed.
+>
+> The selector existed so you could aim the sync at either the sequencer or the
+> pan. The real gap was simply that the pan had no rate mode of its own; it now
+> has one (see **Pan rate mode**), so both rates can sync independently and
+> nothing has to reach across.
+
+In the three free modes each instance holds its own absolute rate, and nothing in
 the plugin knows that two instances are related. That's fine until you want to
 change the speed of a whole arrangement: nudging every instance by hand changes
 the *relationships* between them, not just the pace, and layers that used to nest
 start scattering.
 
-Melody's sync is **three controls sitting together**, and it is the older shape —
-the rest of the suite has since moved to putting the host modes in the rate mode
-itself (R20/R21). Melody keeps this until its own conversion pass.
-
-**Sync to host** `Off / On`
-Whether the project tempo drives this instance at all.
-
-**Host sync target** `Rate value / Pan base rate`
-Which of Melody's two rates the sync applies to. Each remembers its own beat
-count, so you can sync one and leave the other free-running.
-
-**Every N beats (per sync target)** `0.25 – 1000, step 0.01`
-How many beats one cycle of the selected target takes. **Bigger is slower.** `1`
-is a cycle per beat, `4` is one per bar in 4/4, `0.5` is two cycles a beat.
-
-Move the project tempo and every synced instance moves with it, in proportion.
+Put Rate mode into `Every N beats` or `N per beat` and the project tempo drives
+the instance instead. Move the tempo and every synced instance moves with it, in
+proportion.
 
 This is **not** quantising. The beat count is continuous, so unlocked
 relationships are as available as locked ones — and they survive a tempo change
 too:
 
-| Layer | Every N beats | Cycles/min at tempo 40 | at tempo 45 |
+| Layer | Rate value in `Every N beats` | Cycles/min at tempo 40 | at tempo 45 |
 |---|---|---|---|
 | Fast | 1 | 40 | 45 |
 | Mid | 2 | 20 | 22.5 |
@@ -140,7 +144,7 @@ Curve of the release ramp.
 **Sequence Length** `All Active / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8`
 How many voice slots participate. "All Active" walks all 8 slots, skipping any with Active = Off. A numeric setting truncates the sequence to the first N voice slots (still skipping any inactive within that range). Useful for shortening a sequence without having to flip Active toggles.
 
-### Pan (sliders 15-19)
+### Pan
 
 Mirrors Polyrhythm Phase's pan section. When enabled, each voice gets independently-positioned L and R amplitudes — the binaural beat is preserved across the pan because each channel keeps its own oscillator. Pan Mode picks one of four behaviors.
 
@@ -184,13 +188,28 @@ How long the pan takes to travel between positions. **0 is an instant switch** �
 **Pan Spread %** `0 – 100`
 How wide the pan moves. 100 = full stereo. 0 = collapses to center (effectively defeats pan).
 
-**Pan Base Rate** `0.001 – 1000` (Tremolo / Increment modes only)
-Pan LFO rate, in the same units as the global Rate Mode. Hidden when pan is off or when Pan Mode is Spread / Spread Reversed.
+**Pan base rate** `0.001 – 1000` (Tremolo / Increment modes only)
+Pan LFO rate. Hidden when pan is off or when Pan Mode is Spread / Spread Reversed.
+
+**Pan rate mode** `BPM / Seconds / Hz / Every N beats / N per beat` (default BPM)
+What the pan rate above is measured in — the pan's **own** unit, with the same
+five entries as the sequencer's Rate mode. Added 2026-09-06.
+
+Until then the pan had no mode of its own and simply borrowed the sequencer's,
+which meant the pan could not follow the tempo unless the sequencer did too.
+That is exactly what the old `Host sync target` selector was working around. Now
+the pan can sit in `Every N beats` while the sequencer runs free in Seconds, or
+the reverse, and neither reaches across to the other.
+
+Existing projects are unaffected: the control defaults to BPM, and every saved
+instance takes that default.
 
 **Pan Increment per Voice** `-1000 – 1000` (Increment mode only)
 How much each successive voice's pan rate increases over the previous voice's. Hidden in other modes.
 
-### Glide / portamento (sliders 20-21)
+### Glide / portamento
+
+These sit with the envelope controls above rather than with Pan, because glide is part of the shape of the movement from one note to the next.
 
 **Glide time (seconds; 0 = off)** `0 – 5`
 When > 0, each new voice's pitch starts at the previous voice's target frequency and slides to its own target over this many seconds. 0 = no glide; voices jump directly to their pitch. Independent of all other timing — set Glide to 0.05 and notes will slide quickly into pitch from wherever the last one was, regardless of *Next voice in* or *Note duration*.
@@ -283,23 +302,40 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 A **one-time signed-delta ride** on any target over a set duration — the in-plugin substitute for a REAPER automation envelope, the "wind down / wind up once" move (vs Drift's endless wander). As of v2.14 it reaches **all 28 Drift targets** (same target set), each on its own timeline, using the same nested-selector pattern as Drift and the rest of the suite. Pick a target, set its `by` / duration / start delay; one global **engage** arms every configured target's ramp at once.
 
-**Ramp target (slider 67)** `28 options, default Rate Value`
+**Ramp target** `28 options, default Rate Value`
 Which parameter this ramp acts on — identical list to the Drift target selector (Rate Value, V1–V8 Timing, Pan Rate, V1–V8 Gain, V1–V8 Note dur, Attack %, Release %). Switching it saves the three per-target sliders (68/69/71) into the old target's slot and loads the new target's stored values. All 28 targets ramp in parallel; the selector only chooses which one you're editing.
 
-**Ramp by (slider 68)** `-1000 to +1000, step 0.001, default 0` (units match target)
+**Ramp by** `-1000 to +1000, step 0.001, default 0` (units match target)
 Signed delta the target moves by over the duration (from 0 at the start to the full `by` at the end, then held). Units follow the target: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. **0** = no ramp for this target. For Rate Value / Pan Rate the sign follows Rate Mode — in BPM/Hz modes negative `by` = slower, in Seconds mode (period) positive `by` = slower.
 
-**Ramp duration (slider 69)** `0–60 minutes, default 0` · **Ramp start delay (slider 71)** `0–60 minutes, default 0`
-Per-target. Each target waits out its own start delay, then rides its `by` over its own duration. Because both are per-target, different targets can wind down over **different timelines** from a single engage (e.g. slow the tempo over 10 minutes while softening Attack over the first 2). Duration 0 = that target's ramp is off.
+**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+What the duration and start delay below are counted in — one unit for both, so
+they always mean the same thing as each other. **Minutes** is the default and is
+what this block always did. **Seconds** is there so a thirty-second ramp can be
+typed as `30` rather than as `0.5` minutes. **Cycles** counts this plugin's own
+sequencer cycles, referenced against the rate before drift and ramp touch it, so
+a ramp cannot alter its own clock. **Beats** follows the project tempo live.
 
-**Ramp engage (slider 70)** `Off / On, default Off` — **GLOBAL**
+**Ramp duration** `0–60, default 0` · **Ramp start delay** `0–60, default 0`
+Per-target, in ramp time units. Each target waits out its own start delay, then rides its `by` over its own duration. Because both are per-target, different targets can wind down over **different timelines** from a single engage (e.g. slow the tempo over 10 minutes while softening Attack over the first 2). Duration 0 = that target's ramp is off.
+
+**Ramp play for** `0–1000, default 0` · **Ramp rest for** `0–1000, default 0`
+Per-target, in ramp time units. Turns the smooth ride into a **staircase**: the
+ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
+ramp, which is the default.
+
+The holds come **out of** the duration rather than extending it — the advancing
+steps are made proportionally faster — so Ramp duration goes on meaning "you
+arrive in about this long" however you set the staircase.
+
+**Ramp engage** `Off / On, default Off` — **GLOBAL**
 One switch arms every configured target. It's a freeze/resume gate (NOT a restart edge): while On, each target's ramp clock advances toward completion; while Off, all clocks freeze and resume from where they are on re-engage.
 
 **Granularity mirrors Drift:** Rate Value + Pan Rate convert the delta to a mode-aware ratio; per-voice Timing + Gain add per sample; the articulation targets (Note dur, Attack %, Release %) sample the ramp offset **once per note at trigger** so a ringing note's length/shape stay fixed. Ramp and Drift compose at the same consumption site — you can ramp a target down once *and* drift it at the same time.
 
-**Transport behavior:** every target's ramp progress resets to 0 on every transport play edge — the only thing that resets it. Slider changes adjust the trajectory live without resetting. Duration is wall-clock minutes (an absolute real-time ride), unlike Drift's rate-relative period.
+**Transport behavior:** every target's ramp progress resets to 0 on every transport play edge — the only thing that resets it. Slider changes adjust the trajectory live without resetting.
 
-**Migration from v2.13:** Ramp was single-target (Rate Value only) on sliders 67–70. It's now 5 sliders (67–71) reaching 28 targets, and the Drift block shifted to **72–76** (selector-first renumber so the target selector reads above its controls in NVDA order). On load, old projects' Ramp **and** Drift configs reset to defaults (the save-format version guard forces this) — reconfigure after upgrade. The plugin's *sound* sliders (1–66) are untouched. Re-adding the plugin instance gives clean defaults.
+**Migration from v2.13:** Ramp was single-target (Rate Value only). It now reaches 28 targets, and the Drift block was renumbered selector-first so the target selector reads above its controls in NVDA order. On that load, old projects' Ramp **and** Drift configs reset to defaults — reconfigure after upgrade.
 
 ### Drift (v2.9 nested-selector)
 
@@ -307,7 +343,7 @@ Slow organic wander applied independently to any of **28 targets** — the full 
 
 The target set is built to let a sequence *breathe*: timing (rubato), dynamics (per-voice volume swell), and articulation (note length, onset/tail softness) all wander on independent slow schedules, the way a live player phrases rather than a loop repeats.
 
-Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current sliders 73-76 into the old target's memory slot, then loads the new target's saved values. All 28 configurations persist across project save/load. (Sliders 72–76 as of v2.14 — the block shifted up by one to make room for the Ramp target selector at 67.)
+Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current amount / period / shape / play / rest values into the old target's memory slot, then loads the new target's saved values. All 28 configurations persist across project save/load.
 
 **Drift target** `28 options, default Rate Value`
 - **Rate Value** — wanders the global melody rate; stretches the whole timeline (sequencer + envelopes + pan together). The old single drift target.
@@ -323,8 +359,34 @@ How far above the target's baseline the drift wanders at its peak. Units: the ra
 **Drift down amount** `0.0–20.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (cycles)** `1–1000, default 8`
-How many global rate cycles one full drift wave takes for this target. All 28 targets use rate cycles as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
+**Drift period** `1–1000, default 8`
+How long one full drift wave takes for this target, counted in whatever the unit
+below says.
+
+**Drift period unit** `Cycles / Seconds / Beats, default Cycles`
+**Cycles** counts this plugin's own sequencer cycles — a period of 8 means eight
+cycles, and it follows the rate for free, which is what the control always did
+before this unit existed. **Seconds** is wall clock, independent of the rate.
+**Beats** counts the project tempo, so the wander follows the host rather than
+the melody, and it follows a live tempo change.
+
+The period is measured against the rate **before** drift and ramp touch it, so
+drifting the rate cannot modulate its own drift period.
+
+**Drift play for** `0–64 periods, default 0` · **Drift rest for** `0–64 periods, default 0`
+Makes the drift come and go instead of wandering forever. It drifts for `play`
+periods, then **freezes exactly where it stopped** for `rest` periods, then
+carries on. Both must be above zero or the gate is off entirely — which is what
+`0` means, and why the default is "always".
+
+It freezes in place rather than returning to centre, and that is the interesting
+part: **the fraction of the play value chooses where it parks.** `x.25` parks at
+the crest, `x.75` at the trough, and `x.0` or `x.5` at no change at all. So a
+whole number parks at neutral every single time and is nearly inaudible, while
+an awkward fraction is the one worth using — each freeze lands further round the
+wave than the last, so `1.75` cycles through four different park points before
+repeating and `1.2` through five. Setting only `Drift down` wastes half of them,
+because every park on the positive half lands at no change.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
@@ -338,7 +400,7 @@ Rate Value, the per-voice Timing targets, Pan Rate, and the per-voice Gain targe
 - **Per-voice timing drift wanders the step length** ("Next voice in"), not the note duration. The note still rings for its own (possibly separately-drifted) Note duration; only *when the next voice takes over* moves.
 - **A base-rest voice stays a rest.** A voice with Note duration 0 is silent regardless of Note-dur drift — drift only adjusts the length of notes that actually fire.
 - **Pan Rate drift only affects the Tremolo and Increment pan modes.** Spread / Spread Reversed are static positions.
-- **Mode-direction asymmetry on Rate Value / Pan Rate:** in BPM and Hz modes a positive drift amount speeds up; in Seconds mode (period) a positive amount slows down.
+- **Mode-direction asymmetry on Rate Value / Pan Rate:** a positive drift amount speeds up in **BPM**, **Hz** and **N per beat**, and slows down in **Seconds** and **Every N beats**. The split is not arbitrary — the second group counts *time per cycle*, so a bigger number is a longer cycle. Whichever mode you are in, a positive amount always moves the number on the slider upward; it is the *speed* that follows the unit.
 
 #### Transport behavior (v2.9)
 
@@ -346,7 +408,7 @@ On every transport play press, drift cycle restarts: all 28 targets' phase count
 
 #### Migration from v2.8
 
-The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape on sliders 71-77) was 7 sliders covering Rate Value only. v2.9 made it 5 sliders covering 28 independent targets; v2.14 shifted those IDs to **72–76** (from 71–75) so the Ramp target selector could take 67. On upgrade, old projects' Drift + Ramp configs reset to defaults (the save-format version guard forces this) — reconfigure under the nested-selector pattern.
+The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_shape) was 7 sliders covering Rate Value only. v2.9 made it 5 sliders covering 28 independent targets, and it is 8 today with the period unit and the play/rest pair. On that upgrade, old projects' Drift and Ramp configs reset to defaults — reconfigure under the nested-selector pattern. Later changes have not reset anything: the 2026-09-06 one accepts the older save formats and simply leaves the new controls off.
 
 ## Usage Notes
 
@@ -386,7 +448,7 @@ Landing on 1 per beat only happens when *you* change the mode. Opening a saved p
 
 #### The sequence is placed from the project
 
-**With `Sync to host` on** and the transport rolling, the sequencer works out which note it should be on from the project position — so starting playback at bar 40 gives you the note you'd have reached playing from the top, not the first note again.
+**In either host mode** and with the transport rolling, the sequencer works out which note it should be on from the project position — so starting playback at bar 40 gives you the note you'd have reached playing from the top, not the first note again.
 
 Placed **once**, on transport start or when you move the playhead, then left to run. A sequencer that re-decided its position constantly would jump mid-note.
 
