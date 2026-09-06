@@ -759,7 +759,22 @@ start_delay_elapsed < start_delay_sec ? (
   // * host_scale: start_delay_sec derives from the NOMINAL rate, so a
   // wall-clock counter would be wrong by exactly the tempo ratio while
   // everything else was right -- the partial failure Melody Phase hit.
-  start_delay_elapsed += host_scale / srate;
+  //
+  // SAME STARTING LINE AS THE LFO (2026-09-06). The tremolo phase advance below
+  // waits for `cfg_stable >= CFG_HOLD_BLOCKS` -- the settling pause that stops
+  // the rate smoother gliding up from its default on load. This counter used to
+  // wait for nothing, so a DELAYED instance burned part of its delay inside a
+  // pause the undelayed ones were still sitting in, and came in early by the
+  // length of that pause: two audio blocks, ~21 ms at 512/48 kHz, and it
+  // recurred identically on every transport play.
+  //
+  // Found in Melody Phase, by ear, and fixed there the same day -- Rozaya then
+  // asked whether any other plugin had it. Tremolo is the only one that did:
+  // the bug needs TWO clocks, and Melody and Tremolo are the only plugins in
+  // the suite carrying a settling gate for the engine to wait on.
+  cfg_stable >= CFG_HOLD_BLOCKS ? (
+    start_delay_elapsed += host_scale / srate;
+  );
   // No-op — spl0 and spl1 pass through unchanged.
 ) : (
 

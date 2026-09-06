@@ -112,9 +112,21 @@ Two habits keep this honest, and both have failed here before:
   isolated the path in seconds, after I had read the delay and placement code
   twice without convicting either. Reach for the discriminating test earlier.
 
-  Status: PREDICTED mechanism, fix installed, **not yet heard.** The falsifying
-  test if wanted: the error is a fixed number of BUFFERS, so it should scale with
-  buffer size — ~4x worse at 2048 than at 512.
+  **EAR-TESTED ✓ the same day** — *"it's now done, and out of there."* So the
+  mechanism is confirmed, not predicted.
+
+  **Then Rozaya asked the propagation question — "does tremolo, or any other
+  plugin, have that?" — and the answer was yes, one.** The bug needs TWO clocks,
+  and only Melody and Tremolo carry a settling gate for an engine to wait on.
+  Nineteen plugins have a Start delay; seventeen of them have nothing for the
+  delay to get out of step WITH. Tremolo had the identical structure and is fixed
+  the same way. It changes no saved project — 11 instances in the library, none
+  with a Start delay set.
+
+  **This is the shape of question that should have been asked without prompting.**
+  A bug is a feature's twin: if a mechanism is wrong in one plugin it is wrong in
+  every plugin built from the same parts, and *"anything that has Ramp should have
+  all the controls that go with Ramp"* applies to defects as much as to controls.
 
 - **2026-09-06 — Melody Phase converted to R20/R21, and the last non-standard sync mechanism in the suite is gone. Built, migrated, installed, UNHEARD.**
 

@@ -178,6 +178,26 @@ append-only history; this is the only part of the repo that claims to describe
   0 removed the symptom; 8 restored it exactly. Reach for a discriminating test
   sooner than I did.
 
+  **EAR-TESTED ✓ 2026-09-06** — *"it's now done, and out of there."*
+
+  **THE SAME BUG WAS IN FULL FEATURE TREMOLO, and Rozaya found it by asking, not
+  me by checking.** *"does tremolo, or any other plugin, have that?"* It did.
+  Fixed identically, installed, and it changes no saved project — 11 Tremolo
+  instances in the library and none has a Start delay set.
+
+  **AUDIT RESULT, so it is not re-run blindly: only those two plugins can have
+  it.** The bug needs TWO clocks — a delay counter AND a gate the engine waits
+  for. Nineteen plugins have a Start delay; **only Melody and Tremolo have a
+  settling gate** (`cfg_stable` / `CFG_HOLD_BLOCKS`). The other seventeen have
+  nothing for the delay to get out of step with.
+
+  **A BUG IS A FEATURE'S TWIN. PROPAGATE THE FIX THE WAY A FEATURE IS
+  PROPAGATED.** *"A feature goes everywhere its parent already is"* applies to
+  defects too: a mechanism that is wrong in one plugin is wrong in every plugin
+  built from the same parts. **After fixing anything, grep the suite for the
+  same shape before saying it is done** -- and say plainly which plugins were
+  checked and cleared, not just which were fixed.
+
 - **MELODY IS CONVERTED, AND THE SUITE NO LONGER HAS A PLUGIN WITH ITS OWN SYNC
   MECHANISM. Built, migrated, installed 2026-09-06. NOT HEARD.**
   Melody was the last plugin on the R11 shape — a `Sync to host` switch, a

@@ -280,10 +280,28 @@ Deterministic, and it reappears on every transport play because the pause does.
 clocks share a starting line. One line. `Start delay = 0` is unaffected — the
 counter is never entered.
 
-**Status: PREDICTED mechanism, fix INSTALLED, not yet confirmed by ear.** The
-falsifying test, if it is ever wanted: the offset is a fixed number of BUFFERS,
-so it should scale with the audio buffer size — roughly four times worse at 2048
-than at 512 — and nothing else in the plugin would care about that.
+**Status: FIXED and HEARD, 2026-09-06.** Rozaya, on the installed fix: *"it's
+now done, and out of there."* The mechanism above is therefore confirmed rather
+than predicted.
+
+**The suite was then audited, because Rozaya asked whether anything else had
+it.** The bug needs TWO clocks — a start-delay counter AND a separate gate the
+engine waits for. Nineteen plugins have a Start delay; **only Melody and
+Full Feature Tremolo have such a gate** (`cfg_stable`/`CFG_HOLD_BLOCKS`), so only
+those two could have it. **Tremolo did, with the identical structure**, and was
+fixed the same way — its LFO phase advance waits for `cfg_stable` while its delay
+counter did not. Tremolo's fix changes no saved project: 11 instances in the
+library and **not one has a Start delay set**, so it is purely preventive.
+
+**Checked and cleared while there, so it is not re-derived:** the OTHER start-delay
+hazard — counting wall-clock seconds against a delay expressed in cycles — is
+correct everywhere. The suite splits into two architectures and both are
+self-consistent. Plugins whose rate variable already has the tempo folded in
+(bubbler, dapple, heartbeat, rhythm-track, shepard-scale, womb, breath_gen,
+sweep-dwell) derive `start_delay_sec` in REAL seconds and rightly accumulate
+`1/srate`. Plugins holding a NOMINAL rate with the tempo applied separately
+(Melody, Tremolo, the Sweeping Filter, both Polyrhythms, shepard-tone) accumulate
+`host_scale/srate`. No plugin mixes them.
 
 **It moves existing projects.** Any saved project using a Start delay now starts
 that instance a few milliseconds later than before. That is the correction, not a
