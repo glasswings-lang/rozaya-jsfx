@@ -130,13 +130,31 @@ slider10:50<0,100,1>Texture (% wash)
 slider11:150<5,680,1>Wash grain (ms)
 slider12:0<0,150,0.5>Spread (Hz)
 slider13:0<-96,96,0.1>Pitch (semitones)
-// 0..400, widened 2026-09-06. `nothing to fear.RPP` has 300 typed into this on
-// two instances, above the 100 the control offered, and it works -- the value is
-// used directly as a width multiplier. Widening never moves a stored value.
-// NOTE, because it is now reachable by the slider rather than only by typing:
-// above 100 this is a stereo WIDENER, and heavy widening is what causes
-// mono-cancellation on a speaker. That matters for this suite specifically --
-// these get played on phone and HomePod speakers.
+// 0..400 as of 2026-09-06, and THIS ONE IS PROVISIONAL -- see below before
+// trusting it.
+//
+// It was widened because `nothing to fear.RPP` stores 300 here on two of its
+// three instances. On the evidence that is probably a SLIP rather than a
+// setting: Rozaya's own read was "I bet that 300 was the old wash grain value",
+// and the numbers agree with them. Wash grain (slider11) is 300 in all three
+// instances, legitimately, inside its own 5..680 range -- so 300 was the figure
+// in mind, and it looks to have gone into the wrong box twice. The third
+// instance has exactly 100 here, which is plain full width and reads like the
+// intended value.
+//
+// It is NOT a layout shift: Wash grain holds its own 300 where it belongs, all
+// 122 morpher instances in the library store the same 49 values with the same
+// highest id, and 48 of 49 values fit their controls. Ruled out by measurement,
+// not by argument.
+//
+// LEFT WIDE ON PURPOSE, pending Rozaya's ear. Narrowing back to 0..100 would
+// CLAMP those two instances from 300 to 100 -- a real change to how that project
+// sounds, and not mine to make silently. Widening changed nothing and lost
+// nothing, so it is the safe place to wait.
+//
+// The caution that made this worth a second look: above 100 this is a stereo
+// WIDENER, and heavy widening is what causes mono-cancellation on a single
+// speaker -- which matters for a suite played on phones and HomePods.
 slider14:50<0,400,1>Stereo width (%)
 slider15:0<0,100,0.1>Denoise (%)
 slider16:0<0,500,1>Low cut (Hz)
