@@ -157,26 +157,6 @@ append-only history; this is the only part of the repo that claims to describe
 
 *Checked against the tree 2026-09-06.*
 
-- **AND THE SAME FAULT ONE LAYER UP: the synced sequencer sat 21 ms BEHIND THE
-  GRID, fixed 2026-09-06, NOT HEARD.** Rozaya, after the Start delay fix landed:
-  *"the tremolo cycle catches the tiiiiiniest bit of the upcoming note ... not
-  that it's running fast, it's running slightly unalined."*
-
-  **Tremolo was right; Melody was late.** Effects POSITION-LOCK to a per-sample
-  beat position and are exactly on the grid; Melody PLACES ONCE, and it was
-  placing against a `beat_position` cached at the transport edge while the
-  placement itself waits for the config to settle. Fixed by computing the
-  per-sample beat position (the same expression Tremolo uses) and placing against
-  it. Only synced instances move, so only the three `to-play-with-later`
-  projects; all four finished projects run Melody free.
-
-  **A COMPENSATING ERROR IS NOT A SPARE PART.** The cached value was stale by
-  exactly the Start delay, and that staleness was silently doing the
-  `position = beats - delay` subtraction. Making the position live removed the
-  staleness, so the subtraction had to be written out explicitly -- miss it and a
-  delayed instance lands a whole delay ahead. **When you remove one half of an
-  accidental cancellation, go looking for what the other half was paying for.**
-
 - **A REAL BUG WAS FOUND BY EAR IN THE START DELAY, 2026-09-06, and fixed. Not
   yet heard.** Melody's sequencer waits for its config to settle before the first
   note; the Start delay counter did not, so a delayed instance burned part of its

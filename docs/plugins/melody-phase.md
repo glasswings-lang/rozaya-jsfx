@@ -461,16 +461,6 @@ Landing on 1 per beat only happens when *you* change the mode. Opening a saved p
 
 #### The sequence is placed from the project
 
-**Fixed 2026-09-06 — synced notes sat a hair behind the beat.** The sequencer
-worked out its position from the project beat as measured at the moment the
-transport started, but it does not actually apply that until it has finished
-waiting for its settings to settle. So it placed itself where the project had
-been a couple of audio buffers earlier and then ran on from there — permanently
-about 21 ms behind, while position-locked effects like Full Feature Tremolo sat
-exactly on the grid. Audible as a tremolo clipping the leading edge of the note
-it was supposed to land with. It now reads the beat position at the sample the
-placement actually happens, so both land together.
-
 **In either host mode** and with the transport rolling, the sequencer works out which note it should be on from the project position — so starting playback at bar 40 gives you the note you'd have reached playing from the top, not the first note again.
 
 Placed **once**, on transport start or when you move the playhead, then left to run. A sequencer that re-decided its position constantly would jump mid-note.

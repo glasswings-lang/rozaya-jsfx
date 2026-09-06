@@ -80,37 +80,6 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
-- **2026-09-06 — and the same fault one layer up: the whole synced sequencer sat 21 ms behind the grid.**
-
-  With the Start delay fixed, Rozaya went back to `simple-sequence` and heard the
-  residue: *"the tremolo cycle catches the tiiiiiniest bit of the upcoming note
-  ... Not that it's running *fast*. It's running *slightly unalined*."* A constant
-  phase offset, not a rate error — and the distinction is what made it findable.
-
-  **Tremolo was right and Melody was late.** Tremolo position-locks its LFO to a
-  per-sample project beat position, so it is exactly on the grid at every sample.
-  Melody places its sequence ONCE, against `beat_position` cached at the transport
-  edge — but the placement cannot execute until the config settles, so it landed
-  where the project had been two audio blocks earlier and then free-ran from
-  there. Permanently behind by the settling pause: the SAME 21 ms as the Start
-  delay bug, one layer up, and for the same underlying reason.
-
-  **Fix:** give Melody the per-sample beat position Tremolo already computes, and
-  place against that instead of a cached value. Simulated: note boundaries move
-  from 0.0427 beats late to exactly 0.
-
-  **The subtraction that had to become real.** The cached value was stale by
-  exactly the Start delay, and that staleness was silently performing the
-  `position = beats - delay` subtraction. Reading the live position removes the
-  staleness, so the subtraction has to be written out; miss it and a delayed
-  instance lands a whole delay ahead. Verified by simulation that the gap between
-  a delayed and an undelayed instance stays exactly 16 beats before and after.
-  **A compensating error is not a spare part -- when you remove one half, look for
-  what the other half was quietly paying for.**
-
-  Only synced instances are affected, which is the three `to-play-with-later`
-  projects; all four finished projects run Melody free. **Not heard.**
-
 - **2026-09-06 — a real bug, found by ear, in the Start delay: two clocks with different starting lines.**
 
   Rozaya, testing `simple-sequence`: track 10 sat a fraction of a beat out
