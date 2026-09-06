@@ -303,6 +303,30 @@ append-only history; this is the only part of the repo that claims to describe
   projects stay closed** — a reordered build plus an opened project equals a
   scrambled save.
 
+- **EAR-TESTED 2026-09-05 ✓✓ — THE TWO BIG REORDERS, ON FINISHED WORK.** Rozaya
+  played every project on the safety-check list and they came back correct:
+  **`the-sound-of-a-drain`** (five Sweeping Filters AND five Bubblers, both
+  migrated), **`bilateral-with-binaurals`** (two filters, including the live
+  30-minute ramp), and **`melodic` / `upswing`** (Tremolo). *"we listened to
+  those ones... I did listen to all of the ones you pointed at."*
+
+  **What that clears, and it is the largest block in the sweep:**
+  - The **Sweeping Filter** reorder — 20 instances, 11 projects, 45 sliders
+    renumbered, two controls deleted, Linked Sweep collapsed to one number.
+  - The **Tremolo** reorder — 11 instances, 8 projects, same shape.
+  - **Bubbler's** reorder, its deleted Host ratio, and its transport block not
+    disturbing anything at rest defaults.
+  - **The Ramp time unit's moved default.** `bilateral-with-binaurals`' two
+    ramps are on the default and still run 30 MINUTES. That is the near-miss
+    proving itself: had the default stayed at index 0 with Cycles there, this
+    project would have come back audibly wrong.
+
+  **What it does NOT clear.** Those projects were played, not reconfigured, and
+  every new control defaults to off — so **Drift and Ramp actually doing
+  something is still unheard** on all four plugins that gained them, as are the
+  transport gates, the drift period units, and Resonance Bank and Stereo Phaser
+  entirely (`wind` and `strangeness` were not on the list).
+
 - **EAR-TESTED 2026-09-05 ✓ — Dapple's rate change landing immediately, and its
   Seconds rate mode.** *"There we go, works perfectly."* Set to Seconds with a
   value of 6, Rozaya heard one drip every six seconds — which confirms the R20

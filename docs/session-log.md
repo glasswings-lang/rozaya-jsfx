@@ -80,6 +80,30 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-05 — EAR-TESTED ✓✓: both big reorders played back correctly on finished work.**
+
+  `the-sound-of-a-drain`, `bilateral-with-binaurals`, `melodic` and `upswing` all
+  played and were correct. Between them that is the Sweeping Filter's 20-instance
+  reorder, the Tremolo's 11-instance one, Bubbler's, and the Ramp time unit's
+  moved default — 31 migrated instances across 19 projects, heard rather than
+  only decoded.
+
+  **The migrations were already verified by 725 + 348 name-decoded comparisons.
+  This is the half that decoding cannot do**, and the repo's own rule is that
+  only "it has been heard" counts as done.
+
+  **The moved default earned its keep here.** `bilateral-with-binaurals`' two
+  ramps sit on the Ramp time unit's default and still run 30 minutes. Had the
+  default stayed at index 0 when Cycles was put there, this project would have
+  come back audibly wrong — a thirty-minute fade in two seconds — and it was
+  Rozaya's question that stopped it.
+
+  **Scope, stated because it is easy to over-claim:** the projects were PLAYED,
+  not reconfigured, and every newly added control defaults to off. So the
+  reorders and migrations are cleared; Drift and Ramp actually moving something,
+  the transport gates, the period units, and Resonance Bank and Stereo Phaser as
+  wholes are all still unheard.
+
 - **2026-09-05 — EAR-TESTED ✓: Dapple responds to a rate change immediately, and its Seconds mode is right.**
 
   *"There we go, works perfectly."* Rate mode Seconds, value 6, heard as one drip
