@@ -130,32 +130,28 @@ slider10:50<0,100,1>Texture (% wash)
 slider11:150<5,680,1>Wash grain (ms)
 slider12:0<0,150,0.5>Spread (Hz)
 slider13:0<-96,96,0.1>Pitch (semitones)
-// 0..400 as of 2026-09-06, and THIS ONE IS PROVISIONAL -- see below before
-// trusting it.
+// 0..100, and NOT wider -- settled by ear 2026-09-06.
 //
-// It was widened because `nothing to fear.RPP` stores 300 here on two of its
-// three instances. On the evidence that is probably a SLIP rather than a
-// setting: Rozaya's own read was "I bet that 300 was the old wash grain value",
-// and the numbers agree with them. Wash grain (slider11) is 300 in all three
-// instances, legitimately, inside its own 5..680 range -- so 300 was the figure
-// in mind, and it looks to have gone into the wrong box twice. The third
-// instance has exactly 100 here, which is plain full width and reads like the
-// intended value.
+// It was briefly widened to 0..400 because `nothing to fear.RPP` stores 300 here
+// on two instances. Rozaya listened: *"above 100, it does nothing. which tells me
+// the value was 1, fine and the slider is, 2, useless past 100"*. Both halves are
+// right, and the code says why.
 //
-// It is NOT a layout shift: Wash grain holds its own 300 where it belongs, all
-// 122 morpher instances in the library store the same 49 values with the same
-// highest id, and 48 of 49 values fit their controls. Ruled out by measurement,
-// not by argument.
+// The engine hard-clamps this to 100 (`eff_stereo_width` in @sample), so the wash
+// width saturates there. `nothing to fear` runs at Texture 100 -- pure wash -- so
+// the voice engine, the only other consumer, is silent in it. Nothing above 100
+// could ever have been audible.
 //
-// LEFT WIDE ON PURPOSE, pending Rozaya's ear. Narrowing back to 0..100 would
-// CLAMP those two instances from 300 to 100 -- a real change to how that project
-// sounds, and not mine to make silently. Widening changed nothing and lost
-// nothing, so it is the safe place to wait.
+// So the 300 was a slip after all, most likely the Wash grain figure (also 300,
+// in all three instances, where it belongs) typed into the wrong box. Narrowing
+// back CLAMPS those two from 300 to 100, which is exactly what they already
+// sounded like.
 //
-// The caution that made this worth a second look: above 100 this is a stereo
-// WIDENER, and heavy widening is what causes mono-cancellation on a single
-// speaker -- which matters for a suite played on phones and HomePods.
-slider14:50<0,400,1>Stereo width (%)
+// THE RULE THIS ADDS TO THE RANGE SWEEP: a range that promises MORE than the DSP
+// delivers is as misleading as one that stops too early. Widening is not
+// automatically right -- the range should match what the code honours, and where
+// the code clamps, the slider should say so.
+slider14:50<0,100,1>Stereo width (%)
 slider15:0<0,100,0.1>Denoise (%)
 slider16:0<0,500,1>Low cut (Hz)
 // --- High cut. The mirror of Low cut, and the thing that makes an octave-up
@@ -1164,7 +1160,14 @@ spread_hz     = slider12;
 pitch_semi    = slider13;                                    // base for Pitch drift
 pitch_ratio   = pow(2.0, slider13/12);
 stereo_width  = slider14;
-voice_detune  = stereo_width * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
+// Clamped to 100 to match `eff_stereo_width` in @sample. These are the two
+// consumers of Stereo width, and until 2026-09-06 only ONE of them clamped:
+// the wash saturated at 100 while the voice detune scaled on past it -- but
+// only when no drift or ramp targeted this control, because the @sample line
+// recomputes it from the clamped value when one does. Same control, three
+// different behaviours depending on the texture and on whether drift was
+// configured. Now one.
+voice_detune  = min(100, stereo_width) * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
 lowcut_hz     = slider16;
 hicut_hz      = slider17;                                    // base for High cut drift (20000 = off)
 denoise_amt   = slider15;

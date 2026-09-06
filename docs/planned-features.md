@@ -2201,6 +2201,27 @@ real constraint of the DSP, or a number somebody guessed?** Widen the guesses.
   has already fought; the sweep proper has to go looking for the ones that
   silently stopped them.
 
+### THE RULE HAS TWO HALVES, AND THE SECOND CAME FROM AN EAR-TEST
+
+**A range that promises MORE than the DSP delivers is as misleading as one that
+stops too early.** Widening is not automatically right; the range should match
+what the code actually honours.
+
+Found 2026-09-06. Stereo width was widened to 0..400 to accommodate a stored 300.
+Rozaya listened: *"above 100, it does nothing. which tells me the value was 1,
+fine and the slider is, 2, useless past 100"*. Both halves right. The engine
+hard-clamps that control to 100, so everything above it was a slider promising
+reach the code refused to give — and the 300 was a slip (almost certainly the
+Wash grain figure, which is also 300, typed into the wrong box). Put back to
+0..100, and the two consumers of the control now clamp alike; until then the wash
+saturated at 100 while the voice detune scaled past it, but only when no drift
+targeted the control. One control, three behaviours.
+
+**So the sweep has to ask both questions per control:** is this ceiling a guess
+that stops the user short, and does the code honour everything below it? An
+ear-test answered the second one here in one sentence, which no amount of reading
+had.
+
 ### PASS 1 IS DONE, 2026-09-06 — 126 sliders across 20 plugins
 
 Applied as a UNION of the old range and the target, which is the formulation that
