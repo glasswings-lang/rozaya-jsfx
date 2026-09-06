@@ -249,6 +249,19 @@ How long the plugin sits silent at the start of playback before the sequencer be
 
 During the delay the sequencer state stays frozen — when the delay elapses, the sequence begins cleanly from V1 (or the first active voice) rather than mid-step. Re-arms on every transport stop/start.
 
+**Fixed 2026-09-06 — a delayed instance used to come in slightly early.** Melody
+waits a moment at the start of playback for REAPER to finish handing over its
+settings, and only then starts the sequence. The Start delay counter did not
+wait: it began ticking immediately, so a delayed instance burned part of its
+delay during a pause the undelayed ones were still sitting in, and entered early
+by however long that pause lasted. About 21 ms at a 512-sample buffer — a small
+fraction of a beat, present from the first note, and it never washed out, because
+the pause happens again identically on every transport play.
+
+Both clocks now start on the same line. If you have a project with a Start delay
+that you tuned by ear against this behaviour, it will sit a few milliseconds later
+than it used to.
+
 ### Direction
 
 **Direction** `Up / Down / Up-Down (repeat) / Up-Down (no repeat) / Down-Up (repeat) / Down-Up (no repeat)` (default Up)

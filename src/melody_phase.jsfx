@@ -1640,7 +1640,27 @@ start_delay_elapsed < start_delay_sec ? (
   // if the rate is ramping, "8 cycles" of delay is measured against the
   // unramped rate. Pre-existing and left alone deliberately -- changing
   // it would move the start point of existing projects that use both.
-  start_delay_elapsed += host_scale / srate;
+  //
+  // SAME STARTING LINE AS THE SEQUENCER (2026-09-06). This counter used to
+  // start ticking on the first sample after @init, while the sequencer below
+  // waits for the config to settle (cfg_ready && slider_ran && cfg_stable).
+  // Two clocks, two different origins: a DELAYED instance burned part of its
+  // delay during a pause the undelayed ones were still sitting in, and came in
+  // early by however long that pause lasted -- a couple of audio buffers, which
+  // is a small fraction of a beat and never goes away, because the pause
+  // happens again identically on every transport play.
+  //
+  // Found by ear by Rozaya, who localised it to the ONE instance in
+  // simple-sequence carrying a Start delay and then proved it: setting the
+  // delay to 0 removed the symptom, restoring 8 brought it back exactly. With
+  // no delay the instance skips this counter entirely and falls through to the
+  // sequencer's own gate, which is precisely why 0 behaved.
+  //
+  // The gate is repeated rather than hoisted because the sequencer's copy has
+  // to stay where it is -- it also guards the first trigger.
+  (cfg_ready && slider_ran && cfg_stable >= CFG_HOLD_BLOCKS) ? (
+    start_delay_elapsed += host_scale / srate;
+  );
   spl0 = 0;
   spl1 = 0;
 ) : (

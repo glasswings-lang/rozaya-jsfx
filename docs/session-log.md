@@ -80,6 +80,42 @@ Two habits keep this honest, and both have failed here before:
   when you write it down, because an unmarked one gets read as proved by the
   next person, including by a later you.
 
+- **2026-09-06 — a real bug, found by ear, in the Start delay: two clocks with different starting lines.**
+
+  Rozaya, testing `simple-sequence`: track 10 sat a fraction of a beat out
+  against the melody, from the first note, and neither play/stop nor alt-tab
+  fixed it. Track 10 is the only instance in that project with a Start delay.
+
+  **Cause.** Melody's sequencer waits for the config to settle before its first
+  note (`cfg_ready && slider_ran && cfg_stable >= CFG_HOLD_BLOCKS`). The Start
+  delay counter waited for nothing. So a delayed instance burned part of its
+  delay inside a pause the undelayed ones were still in, and came in early by the
+  length of that pause — two audio blocks, ~21 ms at 512/48 kHz, 0.043 beats at
+  120 BPM. Deterministic, and it reappears on every play press because the pause
+  does. Fixed by gating the accumulation on the same condition. One line.
+
+  **The diagnosis was Rozaya's, and mine was wrong twice.** They localised it to
+  one track, established the offset did not move with tempo, and then settled it
+  with a one-slider test: delay 0 removed it, delay 8 restored it exactly. I had
+  suspected the Start delay, DROPPED it on a misreading of "the delays work with
+  one another", chased the Play/Rest gate instead, and had to be corrected back.
+
+  **The reusable lesson is sharper than "listen to the report".** Twice I checked
+  the arithmetic and reported it "consistent on paper", and twice it really was —
+  every quantity I checked measured beats correctly. **The paper was right and
+  the question was wrong.** I kept asking *is this counting the right amount?*
+  when the defect was *when does it start counting?* When repeated checks of a
+  suspected path come back clean but the symptom is real, the next move is to
+  stop re-checking the magnitude and start checking the ORIGIN.
+
+  **And a one-slider test beat three rounds of reading.** Setting the delay to 0
+  isolated the path in seconds, after I had read the delay and placement code
+  twice without convicting either. Reach for the discriminating test earlier.
+
+  Status: PREDICTED mechanism, fix installed, **not yet heard.** The falsifying
+  test if wanted: the error is a fixed number of BUFFERS, so it should scale with
+  buffer size — ~4x worse at 2048 than at 512.
+
 - **2026-09-06 — Melody Phase converted to R20/R21, and the last non-standard sync mechanism in the suite is gone. Built, migrated, installed, UNHEARD.**
 
   Melody was the only plugin still carrying the R11 shape: a `Sync to host`

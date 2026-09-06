@@ -242,6 +242,55 @@ order means it is something else.
 
 ## Recently closed
 
+### Melody Phase — a delayed instance came in early — FIXED 2026-09-06
+
+**This is NOT the alignment bug in entry 1, and conflating them would be a
+mistake.** That one scatters many instances and a play/stop cures it. This one
+hit exactly one instance, was constant, and play/stop did nothing — which is what
+told them apart.
+
+**Symptom.** In `simple-sequence`, track 10 sat a fraction of a beat out against
+the melody. From the first note. Not cured by play/stop or by alt-tabbing.
+
+**How it was found, and the method is the point.** Rozaya localised it by ear to
+one track, then narrowed it themselves across three exchanges: first that the
+offset did not move when the project tempo changed, then that the affected pair
+"work with one another", then the correction that it was track 10 and not 9. The
+decisive step was a one-slider test — **Start delay to 0 removed the symptom,
+restoring 8 brought it back exactly.** Track 10 is the only instance in that
+project carrying a Start delay.
+
+**Two false starts on my side, both worth recording.** I first suspected the
+Start delay, dropped it on a misreading of "the delays work with one another",
+spent a round on the Play/Rest gate instead, and had to be corrected back. And I
+twice reported the arithmetic as "consistent on paper" — which it was, for the
+quantity I was checking. **The paper was right and the question was wrong:** both
+clocks measured beats correctly, and the defect was that they started at
+different moments.
+
+**Cause.** The sequencer's first note waits for the config to settle
+(`cfg_ready && slider_ran && cfg_stable >= CFG_HOLD_BLOCKS`). The Start delay
+counter waited for nothing and began accumulating on the first sample after
+`@init`. So a delayed instance spent part of its delay inside a pause the
+undelayed instances had not left yet, and entered early by the length of that
+pause — **two audio blocks, ~21 ms at 512/48 kHz, 0.043 beats at 120 BPM.**
+Deterministic, and it reappears on every transport play because the pause does.
+
+**Fix.** Gate the accumulation on the same condition the sequencer uses, so both
+clocks share a starting line. One line. `Start delay = 0` is unaffected — the
+counter is never entered.
+
+**Status: PREDICTED mechanism, fix INSTALLED, not yet confirmed by ear.** The
+falsifying test, if it is ever wanted: the offset is a fixed number of BUFFERS,
+so it should scale with the audio buffer size — roughly four times worse at 2048
+than at 512 — and nothing else in the plugin would care about that.
+
+**It moves existing projects.** Any saved project using a Start delay now starts
+that instance a few milliseconds later than before. That is the correction, not a
+side effect, and it is on the plugin page too.
+
+
+
 ### The 2026-07-02 mid-list slider insert — FIXED and HEARD (2026-09-02)
 
 A slider (`Speed ramp target`) was inserted in the MIDDLE of six plugins' lists,

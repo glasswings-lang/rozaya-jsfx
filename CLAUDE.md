@@ -157,6 +157,27 @@ append-only history; this is the only part of the repo that claims to describe
 
 *Checked against the tree 2026-09-06.*
 
+- **A REAL BUG WAS FOUND BY EAR IN THE START DELAY, 2026-09-06, and fixed. Not
+  yet heard.** Melody's sequencer waits for its config to settle before the first
+  note; the Start delay counter did not, so a delayed instance burned part of its
+  delay during that pause and came in early by ~21 ms — a fraction of a beat,
+  from the first note, surviving play/stop because the pause recurs. Both clocks
+  now start on the same line. **Any saved project with a Start delay now starts
+  that instance a few milliseconds later.**
+
+  **The lesson is about the QUESTION, not the listening.** Twice I checked the
+  suspected path's arithmetic and correctly reported it consistent — every
+  quantity really did count beats properly. The defect was not *how much* was
+  counted but *when counting began*. **When repeated checks of a suspect come
+  back clean and the symptom is still real, stop re-checking the magnitude and
+  check the ORIGIN.** Also: I had the right suspect early, dropped it on a
+  misreading of Rozaya's words, and spent a round elsewhere — when a report
+  contradicts a lead, re-read the report before abandoning the lead.
+
+  **And the one-slider test beat three rounds of source reading.** Start delay to
+  0 removed the symptom; 8 restored it exactly. Reach for a discriminating test
+  sooner than I did.
+
 - **MELODY IS CONVERTED, AND THE SUITE NO LONGER HAS A PLUGIN WITH ITS OWN SYNC
   MECHANISM. Built, migrated, installed 2026-09-06. NOT HEARD.**
   Melody was the last plugin on the R11 shape — a `Sync to host` switch, a
