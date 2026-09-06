@@ -157,7 +157,29 @@ append-only history; this is the only part of the repo that claims to describe
 
 *Checked against the tree 2026-09-06.*
 
-- **DRIFT/RAMP SWEEP: TWELVE OF NINETEEN PLUGINS NOW COMPLETE.** Added
+- **DRIFT/RAMP SWEEP: THIRTEEN OF NINETEEN COMPLETE. Breath Gen landed
+  2026-09-06** — 4 instances across 3 projects (one of them a TEMPLATE, in
+  `E:/reaper/templates`, which earlier scans of `E:/reaper` did pick up but which
+  is easy to forget exists). Verified with the others: 6 instances, 293 checks,
+  126 name-decoded comparisons, PASS.
+
+  **STILL OWED: Polyrhythm v3 (8 instances), Womb (9), Passage (48), Polyrhythm
+  v1 (84), and the Morpher's two unit controls (122).**
+
+  **A RANGE VIOLATION IS ONLY EVIDENCE IF THE MIGRATION CAUSED IT.**
+  `breathscapes.RPP` stores Top pause and Bottom pause at 8 against a 0-5
+  control, and REAPER silently clamps them to 5. That is PRE-EXISTING — sliders
+  1-16 are byte-identical before and after, proven — and reporting it as a
+  migration fault buries the real signal. The verifier now separates "was already
+  out of range" from "is out of range now", and only the second is a failure.
+
+  **PIN A VERIFIER TO A COMMIT HASH, NEVER TO `HEAD~n`.** A relative revision
+  goes stale the moment anything else is committed, and the check then compares a
+  new layout against ITSELF and reports catastrophic-looking shifts that are pure
+  fiction. It happened twice in one afternoon. There is a slider-count guard for
+  it now, but the guard is the backstop, not the fix.
+
+- **(superseded) DRIFT/RAMP SWEEP: TWELVE OF NINETEEN PLUGINS NOW COMPLETE.** Added
   2026-09-06: Rhythm Track, Shepard Scale, Shepard Tone (no migration -- zero
   saved instances), then **Heartbeat and Sweep Dwell** (one instance each,
   migrated and verified). **Resonance Bank's `Drift period mode` also got the

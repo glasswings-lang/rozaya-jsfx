@@ -41,7 +41,21 @@ SWEEPDWELL.update({29: 27, 27: 29, 28: 32, 37: 33})
 SWEEPDWELL.update({30: 34, 31: 35, 32: 36, 33: 37, 34: 39})
 SWEEPDWELL.update({38: 42, 39: 43, 40: 44, 41: 45, 42: 46})
 
+# breath_gen: 26 declared sliders with ids up to 34 and gaps at 17-20/26-29.
+# Drift moves to 17-24 and ramp to 25-32, both gaining their new controls in
+# canonical positions. No rate pair to fix here -- this plugin is duration-based.
+BREATHGEN = {i: i for i in range(1, 17)}
+BREATHGEN.update({21: 17, 22: 18, 23: 19, 24: 20, 25: 22})
+BREATHGEN.update({30: 25, 31: 26, 32: 28, 33: 31, 34: 32})
+
 PLUGINS = {
+    'breath_gen': dict(remap=BREATHGEN, old_n=34, new_n=32,
+                       new_sliders={21: 'Drift period unit',
+                                    23: 'Drift play for',
+                                    24: 'Drift rest for',
+                                    27: 'Ramp time unit',
+                                    29: 'Ramp play for',
+                                    30: 'Ramp rest for'}),
     'sweep-dwell-filter': dict(remap=SWEEPDWELL, old_n=42, new_n=46,
                                new_sliders={28: 'Ramp time unit',
                                             30: 'Ramp play for',

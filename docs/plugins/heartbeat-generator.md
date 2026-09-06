@@ -114,6 +114,24 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 ### Ramp
 
+> **Added 2026-09-06.** These controls existed in a dozen other plugins and not
+> here, which is exactly the inconsistency the suite sweep exists to remove — a
+> thing learned on one plugin should be true of all of them.
+
+**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+What the duration and start delay are counted in — one unit for both, so they
+always mean the same thing as each other. **Minutes** is the default and is what
+this block always did. **Seconds** is there so a thirty-second ramp can be typed
+as `30` rather than as `0.5` minutes. **Cycles** counts this plugin's own cycles,
+referenced against the rate *before* drift and ramp touch it, so a ramp cannot
+alter its own clock. **Beats** follows the project tempo, live.
+
+**Ramp play for** `0–1000, default 0` · **Ramp rest for** `0–1000, default 0`
+Per-target, in ramp time units. Turns the smooth ride into a **staircase**: the
+ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
+ramp, which is the default. The holds come **out of** the duration rather than
+extending it, so Ramp duration goes on meaning "you arrive in about this long".
+
 Nested-selector pattern matching Womb v3. Pick one of 4 targets (Heart rate, S1-S2 gap, Breath HRV depth, Random HRV depth) on slider 29, then set a signed `by` amount on slider 30. All 4 targets ramp in parallel; the selector just changes which one you're editing.
 
 *(v2.14 reorg: the Ramp block is now a contiguous selector-first group at sliders **29–33** — target 29, by 30, duration 31, engage 32, start-delay 33 — so it tabs together. Old IDs 17–20 + 28 are retired; Ramp configs reset on upgrade.)*
@@ -147,6 +165,31 @@ A small ~100 ms smoother sits between the BPM slider and the audio, so manual BP
 **Migration history.** *v2.7:* the old single "Ramp" multiplier (0.1–4.0) on slider 17 became a target selector with a signed `by` amount (additive, not a multiplier). *v2.14:* the whole block was renumbered into the contiguous selector-first group at sliders **29–33** (old IDs 17–20 + 28 retired). Ramp configs reset to defaults on upgrade — reconfigure after loading.
 
 ### Drift (v2.9 nested-selector)
+
+> **Added 2026-09-06**, for the same reason as the Ramp controls above.
+
+**Drift period unit** `Cycles / Seconds / Beats, default Cycles`
+What the period above is counted in. **Cycles** counts this plugin's own cycles —
+exactly what the control did before this unit existed, and it follows the rate
+for free. **Seconds** is wall clock. **Beats** counts the project tempo, so the
+wander follows the host rather than the plugin, and it follows a live tempo
+change. The period is measured against the rate *before* drift touches it, so
+drifting a rate cannot modulate its own drift period.
+
+**Drift play for** `0–64 periods, default 0` · **Drift rest for** `0–64 periods, default 0`
+Makes the drift come and go instead of wandering forever. It drifts for `play`
+periods, then **freezes exactly where it stopped** for `rest` periods, then
+carries on. Both must be above zero or the gate is off entirely — which is what
+`0` means, and why the default is "always".
+
+It freezes in place rather than returning to centre, and that is the interesting
+part: **the fraction of the play value chooses where it parks.** `x.25` parks at
+the crest, `x.75` at the trough, and `x.0` or `x.5` at no change at all. So a
+whole number parks at neutral every time and is nearly inaudible, while an
+awkward fraction is the one worth using — each freeze lands further round the
+wave than the last, so `1.75` cycles through four park points before repeating
+and `1.2` through five. Setting only `Drift down` wastes half of them, because
+every park on the positive half lands at no change.
 
 Slow organic wander applied independently to any of four targets: Heart rate, S1-S2 gap, Breath HRV depth, or Random HRV depth. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 

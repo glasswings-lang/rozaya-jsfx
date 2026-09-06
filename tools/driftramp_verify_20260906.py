@@ -27,13 +27,15 @@ DECL = re.compile(r'^slider(\d+):([^<]*)<([^>]*)>(.*)$')
 
 # plugin -> (source path, git revision holding the PRE-migration layout)
 PLUGINS = {
-    # heartbeat's build was committed before this verifier existed, so its
-    # PRE-migration layout is two commits back, not one. Pinned explicitly and
-    # checked by slider count below rather than assumed -- pointing at the wrong
-    # revision makes the check compare the new layout against ITSELF, which looks
-    # like a catastrophic value shift and is nothing of the kind.
-    'heartbeat gen':      ('src/heartbeat gen.jsfx',      'HEAD~2'),
-    'sweep-dwell-filter': ('src/sweep-dwell-filter.jsfx', 'HEAD'),
+    # PINNED TO FIXED COMMITS, not to HEAD~n. A relative revision goes stale the
+    # moment anything else is committed, and then this check silently compares a
+    # new layout against ITSELF -- which reports catastrophic-looking value shifts
+    # that are pure fiction. The slider-count guard below catches that, but the
+    # right fix is to name the commit.
+    'heartbeat gen':      ('src/heartbeat gen.jsfx',      'e394afe^'),
+    'sweep-dwell-filter': ('src/sweep-dwell-filter.jsfx', 'f2defe8^'),
+    # breath_gen is not committed yet, so HEAD still holds its pre-migration form.
+    'breath_gen':         ('src/breath_gen.jsfx',         'HEAD'),
 }
 
 # Controls that kept their job and changed their label. Declared explicitly so a
@@ -45,6 +47,7 @@ RENAMED = {
     'Drift period (beats)':       'Drift period',
     'Drift period (cycles)':      'Drift period',
     'Drift period (heartbeats)':  'Drift period',
+    'Drift period (breath cycles)': 'Drift period',
 }
 
 
@@ -79,6 +82,7 @@ def by_name(decls, slots):
 
 def main():
     problems = []
+    notes = []
     checks = comparisons = n_inst = 0
 
     for plug, (src, rev) in PLUGINS.items():
@@ -118,10 +122,22 @@ def main():
                 O, W = by_name(old, o_s), by_name(new, n_s)
                 where = '%s %s #%d' % (plug, base, n + 1)
 
+                # Range check. A value outside its control's declared range is the
+                # fastest proof that a mapping shifted -- BUT only if the migration
+                # put it there. A value that was ALREADY out of range before is a
+                # pre-existing oddity in the project (REAPER clamps it on load) and
+                # reporting it as a migration fault buries the real signal.
                 for name, (tok, sid) in W.items():
                     _, lo, hi = new[sid]
                     checks += 1
-                    if not (lo - 1e-9 <= float(tok) <= hi + 1e-9):
+                    if lo - 1e-9 <= float(tok) <= hi + 1e-9:
+                        continue
+                    was_bad = name in O and O[name][0] == tok
+                    if was_bad:
+                        notes.append('%s: %s = %s is outside [%s, %s] and ALREADY '
+                                     'was before the migration -- pre-existing, '
+                                     'REAPER clamps it' % (where, name, tok, lo, hi))
+                    else:
                         problems.append('%s: %s = %s outside [%s, %s]'
                                         % (where, name, tok, lo, hi))
                 for name in added:
@@ -142,6 +158,11 @@ def main():
 
     print("\n%d instances, %d checks, %d name-decoded value comparisons"
           % (n_inst, checks, comparisons))
+    if notes:
+        print("\n%d pre-existing oddity/oddities, NOT caused by this migration:"
+              % len(notes))
+        for n in notes:
+            print('  ' + n)
     if problems:
         print("\nFAIL -- %d problem(s):" % len(problems))
         for p in problems[:40]:
