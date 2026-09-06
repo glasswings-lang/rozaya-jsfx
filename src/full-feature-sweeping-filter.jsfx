@@ -846,8 +846,18 @@ rate_mode == 1 ? (freq_raw = 1 / max(rate_val, 0.001)) :
 // Host x: BEATS PER CYCLE (R13-revised). Guarded on the NUMERATOR -- inverting
 // a unit inverts its edge cases, and 1/max(v,0.001) clamps the denominator,
 // turning a stopped sweep into a 1000 Hz one.
-rate_mode == 2 ? (freq_raw = rate_val) :
-                 (freq_raw = rate_val > 0.001 ? 1 / rate_val : 0.001);   // 3 Host x
+// R21 (fixed 2026-09-06). THIS CHAIN IS THE BUG `N per beat` HAD HERE.
+// It used to end `rate_mode == 2 ? (Hz) : (1/rate_val)`, so mode 4 fell into the
+// LAST branch -- the `Every N beats` one -- and ran at the RECIPROCAL of what it
+// said. `N per beat` = 8 gave one cycle every eight beats instead of eight per
+// beat, which is precisely the arithmetic R21 exists to abolish, done backwards.
+//
+// The correct shape, and it is the one both Polyrhythms already had: name mode 3
+// EXPLICITLY and let mode 4 fall through to the Hz branch. `N per beat` IS Hz
+// against a nominal 60 BPM -- that is the whole trick -- and host_scale
+// (rate_mode >= 3) supplies the live tempo afterwards.
+rate_mode == 3 ? (freq_raw = rate_val > 0.001 ? 1 / rate_val : 0.001) :
+                 (freq_raw = max(rate_val, 0.001));   // 2 Hz and 4 N per beat
 
 // Smooth the rate slider, advance the speed ramp, apply per-plugin
 // drift, then derive the effective freq used downstream by the LFO
@@ -938,7 +948,10 @@ slider44 ? (
 // there. Two different domains, both correct -- said out loud because the two
 // divisors look inconsistent side by side and are not.
 sr_rate_by = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
-rate_mode == 3 ? (
+// `>= 3` because BOTH host modes hold a NOMINAL rate with the tempo applied
+// separately, so a BPM amount converts the same way in both: D BPM is D/tempo in
+// nominal terms. The free modes add the amount to the slider value directly.
+rate_mode >= 3 ? (
   effective_rate_hz = max(freq_raw + sr_rate_by / max(host_bpm, 0.001), 0.0001);
 ) : (
   effective_rate_val = rate_val + sr_rate_by;
@@ -1118,18 +1131,30 @@ blk_sample += 1;
 // grid, so it hands over to the free-running accumulator from wherever it is
 // -- no jump on the handover, and it stays free until the next transport
 // start rather than lurching back onto the grid mid-play.
-rate_pos_lock = (rate_mode == 3) && host_pos_locked
+// R21 (corrected 2026-09-06). `>= 3` is the WIDENED gate -- "am I following the
+// project tempo" -- and it has to cover BOTH host modes. It said `== 3` until
+// now, which is the one R21 gate left unwidened when `N per beat` was added: a
+// sweep in `N per beat` followed the tempo but was NOT locked to the grid, so it
+// free-ran while the identical setting in `Every N beats` was nailed to it. Two
+// modes meant to be two ways of saying the same speed behaved differently.
+// The Stereo Phaser had it right; this and Full Feature Tremolo did not.
+rate_pos_lock = (rate_mode >= 3) && host_pos_locked
                 && rate_drift_hz == 0
                 && speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0] == 0;
 
 // Advance filter sweep LFO phases unless Freeze rest is pinning them.
 !in_frozen_rest ? (
   rate_pos_lock ? (
-    // rate_val is BEATS PER CYCLE in Host x, so the number of whole cycles
-    // elapsed is the beat position DIVIDED by it. Inverted with the rate
-    // conversion above and had to: multiplying here while dividing there would
-    // lock the phase to a different speed than the sweep runs at.
-    phase_l = rate_val > 0.001 ? sample_beat_pos / rate_val : 0;
+    // ...and THIS one stays exact, because it is a conversion rather than a
+    // sync test. In `Every N beats` (3) rate_val is beats per cycle, so cycles
+    // elapsed is the beat position DIVIDED by it; in `N per beat` (4) it is
+    // cycles per beat, so it is MULTIPLIED. The two are reciprocals, so using
+    // one formula for both would lock the phase to a speed the plugin is not
+    // running at -- silently, and only in host mode. Widening the gate above
+    // without branching here would have been worse than leaving both alone.
+    // Same shape as stereo-phaser.jsfx, which is the plugin that got this right.
+    phase_l = rate_mode == 4 ? sample_beat_pos * max(rate_val, 0.001)
+            : rate_val > 0.001 ? sample_beat_pos / rate_val : 0;
     phase_l -= floor(phase_l);
   ) : (
     phase_l += freq / srate;
