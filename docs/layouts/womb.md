@@ -61,8 +61,9 @@ unit vocabulary, reached for unprompted. Taken exactly as offered.
 - **`Breaths per minute` REWRITES four other sliders** and calls
   `slider_automate` on each. See the next section; this is the forbidden pattern.
 - **`Systole` silently changes unit** — milliseconds normally, BEATS under sync,
-  with nothing on the control saying so. **This has already broken a project.**
-  See the section below; it is the reason Systole is in this job after all.
+  with nothing on the control saying so. Nothing has been broken by it, but it is
+  one load-time migration away from breaking, and that migration is being removed
+  by this very job. See the section below.
 - **Womb owes the full six drift/ramp controls** — the last plugin group in the
   sweep besides the two Polyrhythms and Passage.
 
@@ -113,59 +114,89 @@ whose proportions divide the cycle.
 
 Nothing she has typed moves, and no control writes into another.
 
-## Systole, and the project it has already broken
+## Systole, and a claim I got wrong
 
-**This was deferred and should not have been.** The first read of it was that
-units-for-durations is a suite-wide rule to write rather than a Womb fix, and that
-giving Systole its own unit here would invent a sixth convention. Both halves were
-wrong. The Morpher established that convention on 2026-09-06 — an explicit unit
-control beside the duration — so this applies it rather than inventing anything.
-And it is not a tidiness question, because it has already cost a project.
+**First, the correction, because a wrong finding is worse than none.** This
+document said `womb-and-baby-heartbeats-with-bloodflow.RPP` was broken — that its
+Systole of 180, meant as milliseconds, was being read as 180 BEATS, giving a
+heartbeat with no second sound. **That is wrong.** The stored value and the read
+path were both read correctly; the LOAD path was not read at all.
 
-**What the control does today.** `Systole (ms / beats in Host x)`, read at line 665
-as `srate * slider5 * (rate_mode == 1 ? 60/tempo : 0.001)`. The same number means
-milliseconds in one mode and beats in the other. Nothing on the control changes.
+That project carries an old-format blob (magic 2100010), which sets
+`host_beats_seed_pending`, and the seeding block in `@block` — gated on
+`slider2 == 1`, so it fires for that instance and no other — converts on open:
+`slider4 * (tempo/60) * 0.001` turns 180 into 0.21 beats, which at its tempo of 70
+is 0.18 s. **180 ms, exactly as intended. S2 fires. The project is fine.**
 
-**The conversion only runs when the user flips the mode by hand** — it lives in
-the `last_rate_mode != rate_mode` branch in `@slider`. Any other route into host
-mode (load, duplicate, automation, or setting the mode before typing the number)
-leaves the value in the old unit, now read as the new one.
+The rule that should have caught this is already written down: *a plausible
+mechanism is not a finding — mark it proved / predicted / untested*, and *what else
+produces exactly this symptom?* The arithmetic was right and the question was
+wrong, which is the same shape as the 2026-09-06 Start delay case.
 
-**`womb-and-baby-heartbeats-with-bloodflow.RPP` took one of those other routes.**
-Measured from the project, not inferred:
+**What is still true, and is still worth fixing.** `Systole (ms / beats in Host x)`
+is read at line 665 as `srate * slider4 * (rate_mode == 1 ? 60/tempo : 0.001)`: the
+same number means milliseconds in one mode and beats in the other, with nothing on
+the control saying so. The by-hand conversion only runs in the
+`last_rate_mode != rate_mode` branch, so any other route into host mode leaves the
+value in the old unit. Today that hole is plugged for exactly one instance by a
+blob-version migration that this job removes — so the danger is real and this build
+is what would create it.
 
-| | |
-|---|---|
-| project tempo | 70 |
-| Rate Mode | 1 (Host x) |
-| `Every N beats` | absent, so its declared default of 1 |
-| heart rate | 70 BPM |
-| one heart cycle | 0.857 s |
-| `Systole` slider | **180** — meant as 180 ms, read as 180 BEATS |
-| systole in seconds | **154.3 s**, or 180x the whole cycle |
+**The fix, unchanged.** `Systole` gains `Systole unit`, declared Milliseconds, at
+position 5 directly after it, and the flip-conversion goes. **Rozaya asked for the
+full list rather than a cut-down one** — a stunted option list is the exact thing
+this job is fixing in `Rate Mode`, so the gap does not get one either. The fourth
+option is `% of heartbeat` and is deliberately NOT called `Cycles`: everywhere else
+in the suite Cycles COUNTS whole cycles, and systole is always a fraction of one,
+so the same word would mean two different things inside one plugin. (Rozaya caught
+this: *"cycles in fractions? I thought cycles were cycles lol"* — right, and it was
+named wrong for an hour.) The name it takes instead is the idiom already next door
+here, where Bloodflow Attack and Decay are proportions of a cycle. It earns its
+place: systole shortens as the heart speeds up, so a percentage is the
+physiologically right reading and the only unit here that tracks the rate instead
+of fighting it.
 
-`systole_samples` is never clamped against `cycle_len`, and S2 fires on
-`hb_phase == systole_samples` (line 1264). `hb_phase` wraps at `cycle_len`, so it
-never reaches that value: **S2 never sounds. The heartbeat has a lub and no dub.**
+**A clamp goes in regardless of units.** `systole_samples` is never held below
+`cycle_len`, and S2 fires on an exact equality with `hb_phase`, which wraps at
+`cycle_len`. So a systole longer than the beat silences S2 completely rather than
+sounding wrong. Nothing reaches that state today; the clamp is what makes sure
+nothing can.
 
-`scattered.rpp` is FINE and the contrast is the proof of mechanism: its Systole
-reads 0.14, which is 120 ms correctly converted to beats at that tempo, because
-that instance was flipped by hand and the conversion ran.
+## The blob reality, measured — and it changes the migration
 
-**Rozaya has never opened the affected project** (it lives in
-`to-play-with-later/`), so nothing here was heard and lived with — it is sitting
-broken, waiting. Which also means there is no sound anyone is attached to.
+Read from the nine projects rather than assumed. Every value line has exactly 64
+tokens; the `@serialize` blobs are three different vintages:
 
-**The fix.** `Systole` gains `Systole unit {Milliseconds, Seconds, Beats}`,
-declared Milliseconds, at position 5 directly after it. The flip-conversion at
-lines 630 and 640 goes, exactly as the Morpher's drift-period conversion did:
-Systole reads what its own unit says and no other control rewrites it.
+| blob | instances | what it means |
+|---|---|---|
+| **2100010** | **6** | The OLDEST versioned format. Drift and ramp banks restore; sets `host_beats_seed_pending` and `host_bpm_migration_pending`. |
+| unversioned (leading float 5, 148 bytes) | 2 | Matches no magic, so the whole block is skipped — drift and ramp fall through to `@init` defaults, and no seeding runs. |
+| **2300010** | **1** | Current. `scattered.rpp`. |
 
-**A clamp goes in regardless of units.** `systole_samples` should be held below
-`cycle_len` so that a systole longer than the beat cannot silence S2. That is a
-separate defect from the unit bug and would have made this one audible-but-odd
-rather than silent. It is cheap and it belongs in the same build.
+**Six of nine are on the oldest format, and that path is load-bearing.** Three
+things follow, none of which the first draft of this document accounted for:
 
+1. **The old-blob seeding path cannot simply be deleted.** It is gated on host
+   mode, so today it fires only for `womb-and-baby...`, and it is what makes that
+   instance correct. It must be REWRITTEN to write the new controls, not removed.
+   Deleting it is precisely how this job would create the breakage it was written
+   to prevent.
+2. **`N_TARGETS` goes 10 → 11** (appending `Bloodflow offset` to the drift and ramp
+   target lists), which changes every bank's width in the stream. Old blobs must be
+   read at the OLD width or the stream desyncs and every later bank is garbage. The
+   Morpher's `n_ser_targets` pattern is the precedent:
+   `n_ser = magic == NEW ? N_TARGETS : 10`.
+3. **The two unversioned instances have no drift or ramp state to preserve** —
+   they already fall through to defaults on every load, so nothing is lost by the
+   change. Worth asserting rather than assuming when the migration runs.
+
+**The migration must therefore reproduce what a LOAD produces, not what the file
+stores.** For the one host-mode instance with an old blob, the stored breath
+segments are seconds and become beats on open; the stored Systole is milliseconds
+and becomes beats on open; the stored Heart rate is a multiplier and becomes BPM on
+open. Migrating the stored numbers as if they were the live ones would be wrong on
+all three. This is the single most dangerous part of the job and it is worth its
+own verifier.
 ## What retires, and what was inside it first
 
 **The rule this plugin already taught us once** (the 2026-09-04 near-miss, in
@@ -195,7 +226,7 @@ post-filter all MOVE; none is dropped.
 | `Breath rate mode` | same five | BPM (0) | Same |
 | `Bloodflow offset` | `-1000..1000, 0.001` | **0** | Zero is today's behaviour exactly — bloodflow welded to the heart |
 | `Bloodflow offset unit` | `{Cycles, Seconds, Beats}` | Cycles (0) | Rozaya's own framing; and at offset 0 the unit cannot matter, so the default is free |
-| `Systole unit` | `{Milliseconds, Seconds, Beats}` | **Milliseconds (0)** | What every non-host instance means today, and what the broken host one MEANT |
+| `Systole unit` | `{Milliseconds, Seconds, Beats, % of heartbeat}` | **Milliseconds (0)** | What every non-host instance means today, and what the broken host one MEANT |
 | `Drift period unit` | `{Cycles, Seconds, Beats}` | **Cycles (0)** | The period already counts heartbeats or breath cycles — Cycles IS the current meaning |
 | `Drift play for` / `Drift rest for` | `0..1000, 0.01` | 0 (off) | Off |
 | `Ramp time unit` | `{Cycles, Seconds, Minutes, Beats}` | **Minutes (2)** | Ramp duration and start delay already read in minutes |
@@ -381,13 +412,12 @@ specifically.
 For the seven instances NOT in host mode, `Heart rate mode` takes its declared
 default of BPM (0) and the value is already in BPM. Nothing to convert.
 
-**`Systole unit`, for the two host-mode instances.** `scattered.rpp` gets
-**Beats**, which preserves its 0.14 exactly. `womb-and-baby...` gets
-**Milliseconds**, which is the one place in this whole migration where a stored
-value changes what it SOUNDS like — from a heartbeat with no second sound to 180
-ms, which is what the number always meant. Flagged in *Open* below and not to be
-done without a yes. The other seven instances take the declared default of
-Milliseconds, which is already what they mean.
+**`Systole unit`, per instance.** `scattered.rpp` gets **Beats** — its 0.14 is
+genuinely beats and that preserves it exactly. Every other instance gets the
+declared default of **Milliseconds**, which is already what its number means.
+`womb-and-baby...` included: its 180 is milliseconds, and 180 ms is what the
+load-time seeding already turns it into today. **No instance changes what it
+sounds like.**
 
 **The `Breaths per minute` change needs no value migration.** Every instance's four
 durations already sum to what its BPM asks for (the table above), so the stored
@@ -430,12 +460,11 @@ existing entry may move.
    recommendation is to ship all five anyway — an unused option costs nothing, and
    a missing one makes this plugin the odd one out again, which is what we are
    fixing.
-2. **The one place this migration CHANGES A SOUND, and it needs a yes.**
-   `womb-and-baby-heartbeats-with-bloodflow.RPP` holds `Systole = 180`, plainly
-   meant as 180 ms, in an instance that is in host mode where the plugin reads it
-   as 180 BEATS. The recommendation is to migrate it as **180 with unit =
-   Milliseconds**, which repairs the intent and makes S2 sound again. The
-   alternative — unit = Beats, preserving today's behaviour exactly — preserves a
-   heartbeat with no second sound. Rozaya has never opened the project, so there
-   is no sound anyone is attached to. **Named here rather than done quietly,
-   because it is a stored value changing meaning and that is never silent.**
+2. **Nothing in this migration changes a sound, after all.** An earlier draft said
+   `womb-and-baby-heartbeats-with-bloodflow.RPP` needed repairing and asked for a
+   yes on it. That was based on a wrong finding (see *Systole, and a claim I got
+   wrong*): the project self-corrects on load and is fine. Every instance keeps
+   `Systole` at its stored value, with the unit that reproduces what it does today
+   — Milliseconds for the eight that mean milliseconds, Beats for `scattered.rpp`,
+   whose 0.14 really is beats. **The permission asked for is withdrawn because the
+   problem it was for does not exist.**
