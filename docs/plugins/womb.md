@@ -192,9 +192,11 @@ When the timer reaches the configured interval, the NEXT breath transition (stat
 
 The timer scales with Ramp — so when Ramp slows the whole womb down, sigh interval slows along with it. (Specifically: every sample, `sigh_time_since_last += (1/srate) * speed_scale_current`.)
 
-### Sigh depth multiplier (slider 33)
+### Sigh extra length (slider 33)
 
-`Sigh depth multiplier` — how much longer each segment of the sigh breath is, compared to a normal breath. Range 1.0-3.0 step 0.05. 1.0 = no stretch (effectively disables sighs even with a nonzero interval); 1.5 = sigh breath is 1.5× longer in every segment; 3.0 = 3× longer. Default 1.5.
+`Sigh extra length` — how much **longer** the sigh breath is than an ordinary one, in breath units. 0 to 1000, default 4. The extra is spread across all four segments in proportion, so the sigh keeps the breath's shape and simply takes longer. 0 = a sigh is the same length as any other breath, which effectively disables it even with a non-zero interval.
+
+**It used to be a multiplier and is not any more.** Setting one meant multiplying in your head and hitting a target meant dividing, which is the barrier this suite exists to remove. A 1.5x sigh on a 12-second breath is the same thing as a breath 6 seconds longer — so that is what it says now.
 
 **All four segments stretch uniformly** — inhale, top pause, exhale, and bottom pause all get multiplied by the same value. The whole sigh breath is "more breath" — same shape as a normal breath, just longer and consequently deeper (the inhale envelope rises higher under the same fade curves applied over a longer span). I:E and pause ratios are preserved during the sigh, which matches the observed shape of real sighs (the entire breath cycle elongates, not just one phase).
 
@@ -269,31 +271,44 @@ works.
 
 **Heart rate** and **Heart rate mode** `BPM / Seconds / Hz / Every N beats /
 N per beat` (default BPM)
-**Breaths per minute** and **Breath rate mode**, the same five (default BPM)
 
 The mode says what its rate value means. `Every N beats` and `N per beat` are
 reciprocals of each other and both are there on purpose: eight cycles per beat
 should not have to be typed as 0.125.
 
-**Either layer can sync while the other runs free.** That is the point of the
-split. Put the breath on the project tempo and leave the heart on its own BPM, or
-the reverse. The old single switch dragged both, and the one-entry picker could
-never have expressed it.
+### The breath does not work that way, deliberately
 
-**The four breath sliders still ARE beats when the breath is synced.** Inhale 4,
-top pause 0, exhale 8, bottom pause 0 with the breath on `Every N beats` = 12 is
-four beats in and eight beats out, at any tempo. That is the behaviour this
-rewrite was tested against.
+**The four segments ARE the breath.** Inhale, top pause, exhale, bottom pause —
+their sum is the cycle, and **Breath unit** `Seconds / Beats` says what they are
+counted in. There is no breath rate control and no rate mode, which is a
+deliberate exception to how every other rate in the suite works.
 
-**Breaths per minute no longer rewrites those four sliders.** It used to reach in
-and multiply all four so they added up to the rate you asked for. Now it just
-sets how long the cycle is, and the four divide it in the proportions you typed —
-so your numbers stay exactly as you left them, forever. Set it to 0 and the four
-sliders are the cycle, which is what they have always been.
+The reason: the breath's rate is *emergent*. There is no rate value for a mode to
+qualify, so forcing the five-option picker onto it produced things like "eight
+breaths per beat". It was built that way for one evening in September 2026 and
+reverted the same night.
 
-**Switching a mode no longer converts anything.** The number means what the mode
-beside it says. Every control that used to borrow its unit from the rate mode now
-names its own.
+**In Beats, the segments follow the project.** Inhale 4, exhale 8 is four beats in
+and eight beats out, at any tempo. The heart is independent — its own rate, its own
+mode — so you can sync one and leave the other free.
+
+**Set breath rate** `0 = off`
+
+A **one-shot**, not a rate. Type a figure and it scales the four segments to match,
+once, keeping their ratio, then puts itself back to 0. Afterwards those four
+numbers are the real durations — which is the point of it. If you then halve the
+inhale, the breath genuinely gets shorter.
+
+**It speaks whatever unit the breath is in**, so what you type and what comes back
+are always the same family:
+
+| Breath unit | what this control is | type 12 and you get |
+|---|---|---|
+| Seconds | **breaths per minute** | segments summing to 5 seconds |
+| Beats | **beats per breath** | segments summing to 12 beats |
+
+Per minute is not available while you are in Beats — in beats you are thinking in
+beats, which is why you are there.
 
 ### Systole, and its own unit
 

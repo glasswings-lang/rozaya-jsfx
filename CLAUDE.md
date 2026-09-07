@@ -230,9 +230,10 @@ checker.
 **The 2026-09-06 Womb rebuild is HEARD AND GOOD** — the 70-slider reorder across
 9 projects, two rate pairs, Systole's own unit, the bloodflow offset and the six
 drift/ramp controls. Rozaya: *"Everything else, though, passes. :)"* The one thing
-she flagged is a USABILITY point, not a fault: **`Every N beats` vs `N per beat` is
-confusing in practice on the BREATH**, where it meets the four segments and
-`Breaths per minute`. Open, and the next Womb job.
+she flagged was a usability point, and it is **FIXED the same evening**: the breath
+has no rate mode at all now (a principled R20 exception — its rate is EMERGENT from
+its four segments), `Set breath rate` is a one-shot that speaks the breath's own
+unit, and Sigh depth is additive instead of a multiplier. **That fix is UNHEARD.**
 
 **NOT heard:** everything from the 2026-09-06 drift/ramp sweep (six plugins), the
 `N per beat` reciprocal fix in all four plugins it touched, the Tremolo Start

@@ -102,29 +102,49 @@ slider14:1.0<0.0,1.0,0.01>HB Master Volume
 slider15:0<0,1,1{Off,Solo}>Heartbeat Solo
 
 // --- BREATH ----------------------------------------------------------------
-// The breath's own rate, and its own mode beside it.
+// SET BREATH RATE -- a one-shot SETUP action, not a live rate.
 //
-// This NO LONGER REWRITES the four segment sliders below. It used to reach in
-// and multiply all four so they summed to the rate asked for, calling
-// slider_automate on each -- a control whose only job is to overwrite other
-// controls, which R20 forbids outright. It never misfired only because every
-// saved instance already summed to exactly the right total, so the multiply
-// came out as 1.0.
+// Type a rate, and it scales the four segments below to match, ONCE, preserving
+// their ratio, then reads 0 again. Afterwards those four numbers are the real
+// durations -- which is the whole point. Rozaya, on an earlier proposal to stop
+// it rewriting them: "I'm not happy with the death of the slider changes; that
+// was a deliberate bend toward honesty when rescaling." R20's "no control writes
+// into another" is against SILENT coupling; a one-shot you press, that shows you
+// its result, is the opposite of silent.
 //
-// Now: 0 means the cycle is however long the four segments add up to, exactly
-// as before. Set, it means the cycle is that long and the four DIVIDE it in
-// their stored proportions -- applied when the sound is made, never written
-// back. So segments of 4/0/8/0 with this on `Every N beats` = 12 gives four
-// beats in and eight beats out, which is Rozaya's own case and the acceptance
-// test for this build.
-slider16:0<0,1000,0.001>Breaths per minute (0 = the segments below decide)
-slider17:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Breath rate mode
-// The shape of the breath. Their PROPORTIONS divide the cycle when a breath
-// rate is set; their absolute values are the cycle when it is not.
-slider18:4.0<0.001,1000,0.001>Inhale (seconds, or beats when synced)
-slider19:0.3<0,1000,0.01>Top pause (seconds, or beats when synced)
-slider20:4.0<0.001,1000,0.001>Exhale (seconds, or beats when synced)
-slider21:0.3<0,1000,0.01>Bottom pause (seconds, or beats when synced)
+// IT SPEAKS THE BREATH'S OWN UNIT, and that is the fix for what Rozaya hit:
+// "Breaths per minute needs to not make up that seconds are slower... 4 seconds
+// isn't *that*, if set in like 70 bpm or something." Type 5 per minute while the
+// segments are in beats and they come back as 14 and 28, which reads as nothing
+// you asked for. So what you type and what appears are always the same family:
+//
+//   Breath unit = Seconds -> this is BREATHS PER MINUTE. 5 means 5 a minute.
+//   Breath unit = Beats   -> this is BEATS PER BREATH.  12 means a 12-beat breath.
+//
+// Per minute is deliberately not reachable in Beats: in beats you are thinking in
+// beats, which is why you are there.
+//
+// WHY IT IS NOT A LIVE RATE. That was built on 2026-09-06 and was wrong -- it made
+// the four segments PROPORTIONS of a length set here, which is a model Rozaya had
+// already rejected three times in August: "4-0.5-8-1 stopped meaning anything you
+// could count, halving the in and out did not shorten the breath (it only gave the
+// pauses a bigger share)". With a one-shot the segments are always durations, and
+// halving the inhale genuinely shortens the breath.
+slider16:0<0,1000,0.001>Set breath rate (per minute, or beats per breath; 0 = off)
+// What the four segments below are counted in. NOT the five-option rate mode --
+// the breath has no rate CONTROL, its rate is EMERGENT from its segments, so
+// there is no rate value for a mode to qualify. A principled R20 exception, like
+// Veil's. Forcing the five options on it is what produced "N per beat" here, and
+// eight breaths per beat is not a thing anyone wants. (Rozaya, 2026-09-06: "The
+// every n beats vs. n per beat distinction is confusing in practice when it comes
+// to breath segments and breaths per minute.")
+slider17:0<0,1,1{Seconds,Beats}>Breath unit
+// The shape of the breath, and its LENGTH -- their sum is the cycle. Absolute
+// durations, always, in the unit above.
+slider18:4.0<0.001,1000,0.001>Inhale (in breath units)
+slider19:0.3<0,1000,0.01>Top pause (in breath units)
+slider20:4.0<0.001,1000,0.001>Exhale (in breath units)
+slider21:0.3<0,1000,0.01>Bottom pause (in breath units)
 slider22:250<50,2000,1>Inhale Frequency Hz
 slider23:170<50,2000,1>Exhale Frequency Hz
 slider24:0.3<0.0,1.0,0.01>Inhale Fade In
@@ -139,7 +159,13 @@ slider31:1.5<0.5,8.0,0.1>Breath Post-filter Q
 // by the depth multiplier (and reads as deeper, because the longer inhale
 // envelope rises higher under the same fade shape). 0 interval = no sighs.
 slider32:0<0,1000,0.001>Sigh interval (minutes, 0=off)
-slider33:1.5<1,1000,0.01>Sigh depth multiplier
+// How much LONGER the sigh breath is than an ordinary one, in breath units --
+// not a multiplier. Rozaya, 2026-09-06: "that sigh multiplier is the exact same
+// type of problem" as the others -- setting one means multiplying in your head
+// and hitting a target means dividing. The extra is spread across all four
+// segments in proportion, so the sigh keeps the breath's shape and simply takes
+// longer. 0 = a sigh is the same length as any other breath.
+slider33:4<0,1000,0.01>Sigh extra length (in breath units)
 slider34:0.5<0.0,1.0,0.01>Breath Stereo Width
 slider35:0.5<0.0,1.0,0.01>Breath Volume
 slider36:0<0,1,1{Off,Solo}>Breath Solo
@@ -366,7 +392,7 @@ start_delay_sec     = 0;
 // runs oddly. @block overwrites all of them every block.
 beat_sec = 0.5; hb_cycle_sec = 60/70; sys_unit_sec = 0.001; sys_is_pct = 0;
 ramp_unit_sec = 60; bf_unit_to_cycles = 1; bf_offset_cycles = 0;
-breath_cycle_sec = 0; breath_seg_scale = 1;
+breath_unit = 0; breath_set_ready = 0;   // the one-shot cannot fire until @block arms it
 
 // --- Play/Rest state (per-layer, independent) ---
 pr_hb_resting    = 0;
@@ -586,7 +612,7 @@ last_bpm = slider16;
 // we're at a state 3 -> 0 transition, sigh_active flips to 1 for the
 // full duration of the next breath (all four states). At each state
 // transition during a sigh, breath_state_len is set from the CURRENTLY
-// drifted segment length × slider33 (depth multiplier) — so the sigh
+// drifted segment length x sigh_scale (from Sigh extra length) -- so the sigh
 // breath inherits whatever drift wander is current for each segment,
 // scaled by the depth. sigh_active clears at the next 3->0 transition
 // (and may re-arm immediately if the timer fires again).
@@ -608,7 +634,40 @@ sigh_active          = 0;
 // mode am I" must stay exact, because using one formula for both runs the
 // plugin at the wrong speed, silently.
 rate_mode        = slider2;
-breath_rate_mode = slider17;
+breath_unit = slider17;   // 0 = seconds, 1 = beats
+
+// --- Set breath rate: the ONE-SHOT ----------------------------------------
+// Scales the four segments to the requested rate, preserving their ratio, then
+// puts itself back to 0 so the four numbers on screen are the truth afterwards.
+//
+// GUARDED ON breath_set_ready, which is adopted in @block and NOT here. On a
+// fresh or duplicated instance @slider runs while REAPER is still handing over
+// the saved values, so a flag adopted here takes a default and the real value
+// arriving a moment later reads as a user edit -- which is how a picker came to
+// stamp a hand-set rate on every load (proved 2026-08-23). While the flag is 0
+// this fires nothing at all, which is the safe direction. @block cannot run
+// before the instance is configured.
+//
+// It also cannot fire on a saved value, because it never saves one: the
+// migration zeroes it and it zeroes itself after every use.
+breath_set_ready && slider16 > 0 ? (
+  bs_total = slider18 + slider19 + slider20 + slider21;
+  bs_total > 0.001 ? (
+    // The target cycle, IN THE SEGMENTS' OWN UNIT. Seconds: the control is
+    // breaths per minute, so one breath is 60/rate seconds. Beats: the control
+    // is already beats per breath, so it IS the target.
+    bs_target = breath_unit == 0 ? 60 / max(slider16, 0.001) : slider16;
+    bs_k      = bs_target / bs_total;
+    slider18 = min(1000, max(0.001, slider18 * bs_k));
+    slider19 = min(1000, max(0,     slider19 * bs_k));
+    slider20 = min(1000, max(0.001, slider20 * bs_k));
+    slider21 = min(1000, max(0,     slider21 * bs_k));
+  );
+  slider16 = 0;
+  // sliderchange, NOT slider_automate: this makes the values stick and refreshes
+  // REAPER's display without writing automation the user never asked for.
+  sliderchange(-1);
+);
 
 // --- Nothing converts on a mode change any more -----------------------------
 // There used to be a block here that, on entering or leaving Host x, multiplied
@@ -847,6 +906,8 @@ last_target_select != sel_target ? (
 //     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
 //     load and every track duplicate.)
 !rate_mode_inited ? ( last_rate_mode = slider2; rate_mode_inited = 1; );
+// Adopted HERE, never in @slider -- see the note on the one-shot itself.
+breath_set_ready = 1;
 
 // --- The old-blob seeding path is GONE, and this is where it was -----------
 // It used to convert, on load, an instance whose blob predated the beats bank:
@@ -907,26 +968,17 @@ bpm_target =
                    60 * hr_raw / beat_sec;        // N heartbeats per beat
 bpm_target = max(0.01, min(1000, bpm_target));
 
-// BREATH. Its own value and its own mode, so the breath can follow the project
-// while the heart runs free, or the reverse. 0 means "no rate set": the cycle
-// is however long the four segments add up to, exactly as it always was.
+// BREATH. Its rate is EMERGENT: the four segments ARE the cycle, and their unit
+// says whether that is seconds or beats. There is nothing to derive here beyond
+// how fast the state machine walks them. Under Beats the segments are consumed at
+// tempo/60 samples per sample, so a 4-beat inhale is four beats at any tempo and a
+// tempo change retimes it mid-segment.
 //
-// The engine consumes breath_cycle_sec (0 = let the segments decide) and
-// breath_host_scale. The four segments keep their stored numbers ALWAYS -- this
-// no longer rewrites them, which is what `Breaths per minute` used to do.
-br_raw = slider16;
-breath_cycle_sec =
-  br_raw <= 0        ? 0 :                            // segments decide
-  breath_rate_mode == 0 ? 60 / max(br_raw, 0.001) :   // breaths per minute
-  breath_rate_mode == 1 ? max(br_raw, 0.001) :        // seconds per breath
-  breath_rate_mode == 2 ? 1 / max(br_raw, 0.001) :    // Hz
-  breath_rate_mode == 3 ? max(br_raw, 0.001) * beat_sec :  // Every N beats
-                          beat_sec / max(br_raw, 0.001);   // N per beat
-// The segments are read in the breath's own unit. Under either host mode they
-// are BEATS, so the state machine advances tempo/60 samples per sample and a
-// 4-beat inhale is four beats at any tempo. Otherwise they are seconds and it
-// advances one for one.
-breath_host_scale = breath_rate_mode >= 3 ? max(tempo, 0.001) / 60 : 1;
+// There is deliberately NO cycle-length value scaling these. That was built on
+// 2026-09-06 and reverted the same evening: it made the four PROPORTIONS of a
+// length set elsewhere, which is the model Rozaya rejected three times in August
+// because halving the inhale then failed to shorten the breath.
+breath_host_scale = breath_unit == 1 ? max(tempo, 0.001) / 60 : 1;
 
 // SYSTOLE. Its own unit control since 2026-09-06, so the rate mode no longer
 // says anything about it. `% of heartbeat` is a proportion of one cycle, which
@@ -957,24 +1009,6 @@ bf_unit_to_cycles =
   slider38 == 1 ? 1 / max(hb_cycle_sec, 0.0001) :       // seconds
   slider38 == 2 ? beat_sec / max(hb_cycle_sec, 0.0001) :// beats
                   0.01;                                 // % of one heartbeat
-
-// The breath rate, applied. The four segments keep their stored numbers; what
-// changes is how fast the state machine walks through them. natural_cycle_sec
-// is how long they take on their own; the scale is the ratio to the requested
-// length, so at the setting where they already sum to it the scale is exactly
-// 1 and nothing moves.
-//
-// Worked, because it is the acceptance test: segments 4/0/8/0 with the breath
-// on `Every N beats` = 12 at tempo 70. breath_host_scale is 70/60, so the
-// natural cycle is 12/(70/60) = 10.286 s; the requested cycle is 12*60/70 =
-// 10.286 s; the scale is 1; the inhale is 4 beats and the exhale is 8. Four
-// beats in, eight beats out, which is what Rozaya asked to keep.
-seg_sum_units     = slider18 + slider19 + slider20 + slider21;
-natural_cycle_sec = max(seg_sum_units, 0.001) / max(breath_host_scale, 0.0001);
-breath_seg_scale  = breath_cycle_sec > 0
-  ? natural_cycle_sec / breath_cycle_sec
-  : 1;
-breath_host_scale = breath_host_scale * breath_seg_scale;
 
 // Start delay counts HEARTBEATS, as its name says, in every mode.
 start_delay_sec = slider48 * 60 / max(bpm_target, 0.001);
@@ -1180,6 +1214,14 @@ effective_inhale_sec = max((slider18 + target_drift_offset[2] + speed_ramp_inhal
 effective_top_sec    = max((slider19 + target_drift_offset[3] + speed_ramp_top_offset)    / breath_rate_scale, 0);
 effective_exhale_sec = max((slider20 + target_drift_offset[4] + speed_ramp_exhale_offset) / breath_rate_scale, 0.01);
 effective_bot_sec    = max((slider21 + target_drift_offset[5] + speed_ramp_bot_offset)    / breath_rate_scale, 0);
+// Sigh extra length -> the scale the four segments ride during a sigh. The
+// control says how much LONGER the sigh breath is, in breath units; spreading it
+// in proportion keeps the breath's shape and simply stretches it. Derived from
+// the EFFECTIVE lengths, so a sigh during drift stretches the drifted breath.
+sigh_extra_total = max(slider33, 0);
+sigh_base_total  = max(effective_inhale_sec + effective_top_sec +
+                       effective_exhale_sec + effective_bot_sec, 0.001);
+sigh_scale       = (sigh_base_total + sigh_extra_total) / sigh_base_total;
 inhale_len = max(floor(srate * effective_inhale_sec), 1);
 top_len    = max(floor(srate * effective_top_sec), 1);
 exhale_len = max(floor(srate * effective_exhale_sec), 1);
@@ -1201,12 +1243,12 @@ breath_freq_active ? (
   ex_f_r = min(2.0 * sin($pi * (eff_ex_freq * (1.0 - slider34 * 0.12)) * srate_inv), 0.98);
 );
 
-// Note: the sigh multiplier (slider33) is NOT applied here. It's
+// Note: the sigh stretch (sigh_scale) is NOT applied here. It's
 // applied at state transitions where breath_state_len is set —
 // see the state machine block below. That way drift continues to
 // wander each segment's length per sample (this block), and at the
 // MOMENT a sigh state starts, the currently-drifted segment length
-// is multiplied by slider33 to set breath_state_len. The result is
+// is multiplied by sigh_scale to set breath_state_len. The result is
 // "sigh inherits live drift" without storing any extra state.
 
 // Recompute total breath samples after drift, used by Breath rest timer
@@ -1402,21 +1444,21 @@ breath_state_pos >= breath_state_len ? (
         sigh_time_since_last = 0;
       );
       breath_state     = 0;
-      // Multiply by slider33 if sigh_active; otherwise use the
+      // Multiply by sigh_scale if sigh_active; otherwise use the
       // currently-drifted inhale_len as-is. Same pattern applies at every
       // state transition below — drift wanders the underlying segment
       // length, sigh scales it on top at the moment of state entry.
-      breath_state_len = sigh_active ? max(floor(inhale_len * slider33), 1) : inhale_len;
+      breath_state_len = sigh_active ? max(floor(inhale_len * sigh_scale), 1) : inhale_len;
     );
   ) : (
     breath_state = (breath_state + 1) % 4;
     // Each state's length is the currently-drifted segment length,
-    // multiplied by slider33 if we're mid-sigh. sigh_active stays set
+    // multiplied by sigh_scale if we're mid-sigh. sigh_active stays set
     // through all four states of the sigh breath; it clears at the
     // next 3->0 transition above.
-    breath_state == 1 ? breath_state_len = sigh_active ? max(floor(top_len    * slider33), 1) : top_len;
-    breath_state == 2 ? breath_state_len = sigh_active ? max(floor(exhale_len * slider33), 1) : exhale_len;
-    breath_state == 3 ? breath_state_len = sigh_active ? max(floor(bot_len    * slider33), 1) : bot_len;
+    breath_state == 1 ? breath_state_len = sigh_active ? max(floor(top_len    * sigh_scale), 1) : top_len;
+    breath_state == 2 ? breath_state_len = sigh_active ? max(floor(exhale_len * sigh_scale), 1) : exhale_len;
+    breath_state == 3 ? breath_state_len = sigh_active ? max(floor(bot_len    * sigh_scale), 1) : bot_len;
   );
 );
 
@@ -1435,7 +1477,7 @@ pr_br_resting ? (
       sigh_time_since_last = 0;
     );
     breath_state     = 0;
-    breath_state_len = sigh_active ? max(floor(inhale_len * slider33), 1) : inhale_len;
+    breath_state_len = sigh_active ? max(floor(inhale_len * sigh_scale), 1) : inhale_len;
     breath_state_pos = 0;
   );
 );
