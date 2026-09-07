@@ -313,9 +313,26 @@ heart runs.
 | 0.25 Beats | a quarter-beat after the lub, at the project tempo | — | — |
 | 30 % of heartbeat | three tenths of the way to the next beat | 300 ms | 150 ms |
 
-The physiological note still stands: a real systole stays roughly constant as
-heart rate changes rather than scaling with it, so milliseconds is the anatomical
-choice and the other three are musical ones.
+**The gotcha, and it is the same shape as the bloodflow offset's.** The gap lives
+inside one heartbeat, so the units that scale with the heart can put it places a
+body cannot go — and they do it quietly.
+
+- A real systole stays roughly CONSTANT as heart rate changes rather than scaling
+  with it. So **Milliseconds is the anatomical choice**; the other three are
+  musical ones. At `% of heartbeat` the gap stretches as the heart slows, which no
+  chest does.
+- **In `Beats`, whole numbers can collapse.** If the heart is running at one beat
+  per beat, a gap of one beat is the whole cycle, and it clamps. Same arithmetic
+  as the bloodflow offset: when the heart is locked to the grid, beats and
+  heartbeats are the same thing and the round numbers stop being distinct.
+- **The gap can never exceed the beat.** It is clamped one sample short, because
+  the dub fires at an exact position the beat would otherwise never reach — so an
+  over-long gap used to remove the second heart sound entirely rather than sound
+  wrong.
+
+None of that is a fault; it is what makes the control musically interesting. But
+if you are trying to build a body rather than a sound, **stay in Milliseconds** and
+the gap will behave like one.
 
 **A systole longer than the heartbeat is now clamped.** It could previously be set
 past the end of the cycle, and because the dub fires on an exact position that the
