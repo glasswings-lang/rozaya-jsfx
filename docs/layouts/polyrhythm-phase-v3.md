@@ -1,78 +1,99 @@
-# Polyrhythm Phase v3 — authored layout
+# Polyrhythm Phase v3 - authored layout
 
-Written by hand 2026-09-06, not generated. **Authored BEFORE anything is built or
-migrated.**
+Written by hand 2026-09-07, not generated. **Authored BEFORE anything is built.**
+Supersedes the first draft of this document (a flat 96-slider reorder), which is
+in git history if the reasoning is ever wanted.
 
 **Status: AUTHORED, NOT BUILT.**
 
-**Scale.** v3 has **8 instances across 5 projects** — a small, low-risk migration.
-v1 has **84 instances across 17 projects** and is NOT touched by this job.
+**Scale.** v3 has **8 instances across 5 projects**. v1 has **84 across 17** and is
+NOT touched by this job - it crosses later, once, and then retires.
 
-## Why this, and why now
+## The brief, in Rozaya's words
 
-Rozaya, asked what actually bothers her about the plugin in use: *"I haven't
-touched polyrhythm since every n beats and n per beat got introduced and then I
-stumbled on them... So in practice, the thing that bugs me most is that the orders
-are scattered as shit."*
+Asked what actually bothers her about the plugin: *"I haven't touched polyrhythm
+since every n beats and n per beat got introduced and then I stumbled on them...
+So in practice, the thing that bugs me most is that the orders are scattered as
+shit."*
 
-**So the scattering IS the brief.** There is no hunt for usability bugs here the
-way there was on Womb, because she has not been able to use it.
+And on the voices: *"say I fuck up the fifth voice, but then I don't know which one
+I fucked up. that's kinda difficult to determine with the sliders being the way
+they are... Is there a better design that would lead to less tabbing and less of me
+having to, like, wear out my hand trying to air through the p list?"*
 
-## And v1 is deliberately left alone
+## The answer: the voices go behind a selector
 
-Decided 2026-09-06: *"The polyrhythm can just... be left. If we do v3 and then
-migrate it'll be fine."* So v1 gets **no** drift/ramp controls and **no** reorder.
-v3 gets its layout, and afterwards v1's 84 instances cross to v3 once and v1
-retires. **Do not migrate those 84 twice.**
+**48 per-voice parameters become 8.** One `Voice` selector, then that voice's own
+controls. The other seven voices keep playing; their values live in the plugin's
+memory, exactly as Drift and Ramp targets already do here.
 
-## What is wrong today
+**90 sliders become 57**, which is also under the 64-slider boundary where a REAPER
+value line grows a quoted marker - so this removes an entire class of file-format
+trap from the plugin's future as a side effect.
 
-- **Two pan controls are stranded sixty places from the pan block.** `Pan Glide ms`
-  (89) and `Cycle Steps` (90) are both pan controls — each is `slider_show`n only
-  when pan is enabled — and both were appended rather than placed.
-- **The pan has a RATE but no MODE.** `Pan Base Rate` (23) sits with nothing saying
-  what unit it is in, so it cannot follow the project independently of the main
-  rate. R20/R21: *a plugin with two rates has two complete pairs; the pan gets its
-  OWN mode and never borrows the main one.* **Melody Phase has one; neither
-  Polyrhythm does.** `CLAUDE.md` said R21 landed everywhere. That is the THIRD such
-  claim to fail a check today, after Womb's rate block and the Morpher's reciprocal.
-- **Slider 88 is a corpse.** The retired `Host ratio (writes Rate Value)` picker:
-  its write block is `0 ? (...)`, it is `slider_show`n off, and nothing reads it.
-  It is only still declared because ids can never be renumbered — and a reorder is
-  exactly the moment that stops being true.
-- **The rate value's label is stale.** `Rate Value (Drift only: BPM / sec / Hz /
-  beats per cycle)` names four units for a mode that has five, and predates
-  `N per beat`.
-- **Womb owed the six drift/ramp controls and so does this.** It is the last of the
-  three (with Passage) still owing them.
-- **The tremolo's shape is interleaved oddly** — On Duration, Attack %, Release %,
-  Attack Shape, Release Shape, Depth. Each shape sits two places from the amount it
-  shapes.
+### We built this once and archived it, and that does not bind us
 
-## New controls
+Rozaya remembered: *"Feels like we did, then ditched it. I don't remember why we
+did but it feels important."* She was right. **Melody Phase v2** collapsed forty
+flat per-voice sliders behind a Voice selector and is archived.
 
-| control | options / range | default | why |
-|---|---|---|---|
-| `Pan rate mode` | `{BPM, Seconds, Hz, Every N beats, N per beat}` | BPM (0) | The pan's rate needs its own mode; this is the R21 gap |
-| `Drift period unit` | `{Cycles, Seconds, Beats}` | **Cycles (0)** | The period already counts CYCLES here, so Cycles is both the suite default and the back-compatible one |
-| `Drift play for` / `Drift rest for` | `0..1000, 0.01` | 0 (off) | Off |
-| `Ramp time unit` | `{Cycles, Seconds, Minutes, Beats}` | **Minutes (2)** | Ramp duration and start delay already read in minutes |
-| `Ramp play for` / `Ramp rest for` | `0..1000, 0.01` | 0 (smooth) | Off |
+**Two things killed it and only one is about the design:**
 
-**No control changes what it MEANS.** Every one of the 89 survivors keeps its units
-and its range; this is a move, plus seven additions that default to off or to what
-the plugin already did. That is what makes it a low-risk migration despite touching
-almost every slider.
+- **It could never gain a user.** Its per-voice data lived in a `@serialize` blob
+  with no path across from v1's slider line, so it had **zero projects, ever**. The
+  archive note calls it *"the better-looking design"*.
+- Rozaya called the selector **overkill for that plugin**: *"that was my fault
+  because I got overeager one day."*
+
+So the design judgement was made about a version nobody was ever able to run -
+including her. It is not evidence from use. What IS evidence from use is what she
+said this week about the plugin she does run.
+
+**The difference here: no fork.** This is built into v3 in place, with a migration,
+which is the thing whose absence killed v2.
+
+## Voice = All, and why it is not optional
+
+Once per-voice is cheap, setting things UNIFORMLY becomes the expensive case -
+arrowing the selector 1 to 8 and setting the same waveform eight times. That trades
+one hand-wearing problem for another, and it is the design tell already written
+down: *when a control needs a tool or a ritual to be usable in bulk, its
+granularity is wrong.*
+
+So the selector's first position is **All**. Park it there, move a control, every
+voice takes it. "All sine except voice five" is two moves, not eight.
+
+## Solo this voice
+
+One slider, and the direct answer to *"I don't know which one I fucked up."* Step
+the selector through the voices with Solo on and the broken one announces itself.
+Today there is no way to hear one voice alone without switching seven others off
+and back on again.
+
+## What this unlocks, which is the real prize
+
+Rozaya: *"At that point, it's trivial to make most controls per-voice."* Correct,
+and it is the argument for doing it at all.
+
+**A per-voice control costs 8 parameters today and 1 behind a selector.** So the
+things the plugin has wanted and could not afford become affordable:
+
+- **Per-voice waveform** - asked for directly, and nearly free in the engine:
+  checked in the source, the waveform chain is already INSIDE the per-voice loop
+  and already indexes that voice's own phase and gain. Only the waveform NUMBER is
+  global. **In this layout at 28**, with `-1 = follow the global` so nothing changes
+  until it is used (the Morpher's per-layer-overtone pattern).
+- **Per-cycle waveform changes** - the tremolo already silences each voice for part
+  of every cycle, so a switch made in that silence cannot click.
+- **Per-voice tremolo shape** (Depth, On Duration, Attack, Release and their
+  curves) and **per-voice timbre** (Tone, Edge, Movement, Body) are the obvious next
+  ones. See *Open* - they are NOT in this build, and that is a decision rather than
+  an oversight.
 
 ## The order
 
-96 sliders, up from 90 declared. Each group reads the same way — what it is, how
-fast it goes (value then mode), the shape of its movement, then level, then on/off.
-
-**The eight voice blocks are grouped BY VOICE, not by parameter**, and each reads
-in that same order: its note, its detune, its own rate, its phase, its level, its
-on/off. You tune one voice at a time, so one voice's six controls belong together.
-That is 48 of the 96, and it is the reason the rest has to be tight.
+57 sliders. Global first, then the voices behind their selector, then pan,
+direction, transport, drift, ramp.
 
 | new | control | from |
 |---|---|---|
@@ -95,128 +116,103 @@ That is 48 of the 96, and it is the reason the rest has to be tight.
 | 17 | Edge | 17 |
 | 18 | Movement | 18 |
 | 19 | Body | 19 |
-| 20 | V1 Note | 26 |
-| 21 | V1 Fine tune (cents) | 27 |
-| 22 | V1 Drift / Rate | 28 |
-| 23 | V1 Phase Offset | 29 |
-| 24 | V1 Gain dB | 25 |
-| 25 | V1 Active (Off = no CPU cost) | 30 |
-| 26 | V2 Note | 32 |
-| 27 | V2 Fine tune (cents) | 33 |
-| 28 | V2 Drift / Rate | 34 |
-| 29 | V2 Phase Offset | 35 |
-| 30 | V2 Gain dB | 31 |
-| 31 | V2 Active (Off = no CPU cost) | 36 |
-| 32 | V3 Note | 38 |
-| 33 | V3 Fine tune (cents) | 39 |
-| 34 | V3 Drift / Rate | 40 |
-| 35 | V3 Phase Offset | 41 |
-| 36 | V3 Gain dB | 37 |
-| 37 | V3 Active (Off = no CPU cost) | 42 |
-| 38 | V4 Note | 44 |
-| 39 | V4 Fine tune (cents) | 45 |
-| 40 | V4 Drift / Rate | 46 |
-| 41 | V4 Phase Offset | 47 |
-| 42 | V4 Gain dB | 43 |
-| 43 | V4 Active (Off = no CPU cost) | 48 |
-| 44 | V5 Note | 50 |
-| 45 | V5 Fine tune (cents) | 51 |
-| 46 | V5 Drift / Rate | 52 |
-| 47 | V5 Phase Offset | 53 |
-| 48 | V5 Gain dB | 49 |
-| 49 | V5 Active (Off = no CPU cost) | 54 |
-| 50 | V6 Note | 56 |
-| 51 | V6 Fine tune (cents) | 57 |
-| 52 | V6 Drift / Rate | 58 |
-| 53 | V6 Phase Offset | 59 |
-| 54 | V6 Gain dB | 55 |
-| 55 | V6 Active (Off = no CPU cost) | 60 |
-| 56 | V7 Note | 62 |
-| 57 | V7 Fine tune (cents) | 63 |
-| 58 | V7 Drift / Rate | 64 |
-| 59 | V7 Phase Offset | 65 |
-| 60 | V7 Gain dB | 61 |
-| 61 | V7 Active (Off = no CPU cost) | 66 |
-| 62 | V8 Note | 68 |
-| 63 | V8 Fine tune (cents) | 69 |
-| 64 | V8 Drift / Rate | 70 |
-| 65 | V8 Phase Offset | 71 |
-| 66 | V8 Gain dB | 67 |
-| 67 | V8 Active (Off = no CPU cost) | 72 |
-| 68 | Pan Enabled | 20 |
-| 69 | Pan Mode | 21 |
-| 70 | Pan Spread % | 22 |
-| 71 | Pan Base Rate | 23 |
-| 72 | Pan rate mode | NEW |
-| 73 | Pan Increment per Voice | 24 |
-| 74 | Cycle Steps (per-cycle modes) | 90 |
-| 75 | Pan Glide ms (0=instant) | 89 |
-| 76 | Direction & Reverse | 73 |
-| 77 | Reverse Drift Offset | 74 |
-| 78 | Start delay (in rate mode units) | 75 |
-| 79 | Play for (cycles) | 76 |
-| 80 | Rest for (cycles) | 77 |
-| 81 | Drift target | 78 |
-| 82 | Drift up amount | 79 |
-| 83 | Drift down amount | 80 |
-| 84 | Drift period | 81 |
-| 85 | Drift period unit | NEW |
-| 86 | Drift shape | 82 |
-| 87 | Drift play for | NEW |
-| 88 | Drift rest for | NEW |
-| 89 | Ramp target | 83 |
-| 90 | Ramp by | 84 |
-| 91 | Ramp time unit | NEW |
-| 92 | Ramp duration | 85 |
-| 93 | Ramp play for | NEW |
-| 94 | Ramp rest for | NEW |
-| 95 | Ramp engage | 86 |
-| 96 | Ramp start delay | 87 |
+| 20 | **Voice** (All, 1-8) | NEW |
+| 21 | Note | 26 |
+| 22 | Fine tune (cents) | 27 |
+| 23 | Drift / Rate | 28 |
+| 24 | Phase Offset | 29 |
+| 25 | Gain dB | 25 |
+| 26 | Active | 30 |
+| 27 | Solo this voice | NEW |
+| 28 | Waveform (-1 = follow the global) | NEW |
+| 29 | Pan Enabled | 20 |
+| 30 | Pan Mode | 21 |
+| 31 | Pan Spread % | 22 |
+| 32 | Pan Base Rate | 23 |
+| 33 | Pan rate mode | NEW |
+| 34 | Pan Increment per Voice | 24 |
+| 35 | Cycle Steps (per-cycle modes) | 90 |
+| 36 | Pan Glide ms (0=instant) | 89 |
+| 37 | Direction & Reverse | 73 |
+| 38 | Reverse Drift Offset | 74 |
+| 39 | Start delay (in rate mode units) | 75 |
+| 40 | Play for (cycles) | 76 |
+| 41 | Rest for (cycles) | 77 |
+| 42 | Drift target | 78 |
+| 43 | Drift up amount | 79 |
+| 44 | Drift down amount | 80 |
+| 45 | Drift period | 81 |
+| 46 | Drift period unit | NEW |
+| 47 | Drift shape | 82 |
+| 48 | Drift play for | NEW |
+| 49 | Drift rest for | NEW |
+| 50 | Ramp target | 83 |
+| 51 | Ramp by | 84 |
+| 52 | Ramp time unit | NEW |
+| 53 | Ramp duration | 85 |
+| 54 | Ramp play for | NEW |
+| 55 | Ramp rest for | NEW |
+| 56 | Ramp engage | 86 |
+| 57 | Ramp start delay | 87 |
 
-Only **slider 88** is dropped, and it is already dead code.
+**Where the other 42 went:** V2-V8's per-voice sliders (old 31-72) are not sliders
+any more - they are bank values reached through the selector. Old **88** is the
+already-dead `Host ratio` picker and is simply dropped.
 
-## Migration notes
+## Migration notes - and the hard part is NOT this migration
 
-**Both ends are over 64 sliders**, so every value line carries a quoted `""` marker
-at token index 64 and the token index of slider N is `N-1` up to 64 and `N` beyond.
-`tools/rpp_sliders.py` handles it and must not be re-derived — this is the trap
-that broke five Melody Phase projects on 2026-09-02.
+**v3's own 8 instances are easy.** Their V1 values stay on the slider line as the
+selector's editing slots; V2-V8's values move from the line into the blob. 8
+instances, and the blob format is known.
 
-**`@serialize` gains no bank** — all seven new controls are plain global sliders
-except the four per-target ones, which DO need banks:
+**The hard part is the v1 crossing, later, and it is exactly what killed Melody
+v2.** v1's 84 instances hold 40 per-voice values each on the slider line, and they
+have to end up in a `@serialize` blob. CLAUDE.md currently says v1 and v3 blobs are
+*byte-identical, which is what makes the v1 -> v3 migration tractable* - **that
+stops being true the moment this lands, and that line must be updated in the same
+commit.**
 
-- `Drift play for` / `Drift rest for` and `Ramp play for` / `Ramp rest for` are
-  per-target, like every other drift and ramp config here. Four new banks, APPENDED
-  to the stream so an older blob simply runs out and leaves them at their `@init`
-  zeroes — which is "no staircase", the correct reading for a project that never
-  had one. **Assert they appear in BOTH the file_mem list and the duplicate-fix
-  block**; a bank added to one and not the other is how Heartbeat nearly shipped
-  settings that vanished on save.
+**Why it is tractable now and was not in June:** the blob is a stream of float32s
+whose layout is fully known and has been decoded from real projects twice this
+week; `tools/rpp_sliders.py` handles the value line; and the verifier discipline
+now in use - decode what was written back and check it against what the plugin
+would load - did not exist here in June. Writing the stream is mechanical rather
+than clever. **It should still be its own job, with its own authored conversion and
+its own verifier.**
 
-**Bump the blob magic** in the same commit. No format change is needed for the
-plain sliders, but a slider layout moved, and the blob's leading float is the only
-independent witness of which layout an instance was saved on.
+**Blob magic bumps** in the same commit as the build. The per-voice banks are new
+and must appear in BOTH the `file_mem` list and the duplicate-fix block - a bank in
+one and not the other is how Heartbeat nearly shipped settings that vanished on
+save.
 
-**The Drift and Ramp target lists are APPEND-ONLY** and are not touched by this
-job: their indices are stored in projects AND are bank positions.
+**The nested-selector gotcha applies in full.** Selector-plus-shared-config-sliders
+silently zeroes the selected target on track duplicate unless `@serialize` forces
+the visible sliders back from the bank on read. Required here on day one, not
+later; the reference implementation is in `src/shepard-tone.jsfx`.
 
 ## What to check before believing it shipped
 
-- **Simulate the pan rate in all five modes**, at several tempos, with the two host
-  modes asserted RECIPROCAL. This plugin has never had a pan mode before, and the
-  R21 reciprocal shipped inverted in two plugins precisely because a new mode was
-  wired and never asked what it DID.
-- **Verify the migration BY CONTROL NAME** against a pre-migration snapshot, never
-  against the table the migration used, with an authored rename table for the one
-  label that changes (`Rate Value`).
-- **Range-check every migrated value**, separating "was already out of range" from
-  "is out of range now".
-- **Fix `CLAUDE.md`'s R21 claim** in the same commit, and say plainly that the pan
-  modes did NOT land everywhere.
+- **Simulate the pan rate in all five modes** with the two host modes asserted
+  RECIPROCAL. The pan has never had a mode before, and the R21 reciprocal shipped
+  inverted elsewhere precisely because a new mode was wired and never asked what it
+  DID.
+- **Duplicate the track** and confirm no voice is zeroed. That is the specific
+  failure this pattern has.
+- **Set Voice = All, move a control, and read back all eight banks** - the bulk path
+  is the one nobody tests and the one that will be used most.
+- **Verify the migration BY CONTROL NAME** against a pre-migration snapshot, and
+  separately decode the written blob and check it against what the plugin loads.
+- **Fix CLAUDE.md's R21 claim** (the pan modes did not land everywhere) and the
+  byte-identical-blobs line, in the same commit.
 
 ## Open, and needing Rozaya rather than me
 
-1. **Nothing blocking.** The layout above is a pure rearrangement plus seven
-   off-by-default additions, so it can be built and heard without any further
-   decision. The one judgement call already made is grouping the voices by voice
-   rather than by parameter, which is how they are today.
+1. **How many per-voice overrides to fold in NOW.** This build has one: waveform.
+   The candidates are per-voice Depth, On Duration, Attack %, Attack Shape,
+   Release %, Release Shape, Tone, Edge, Movement, Body and Pulse Width - eleven
+   more sliders, all "follow the global" by default, so none of them changes an
+   existing project. **Each one added later costs another migration**, which is the
+   argument for deciding now rather than discovering the want in three weeks. The
+   argument against is that per-voice envelopes change what the plugin IS, and that
+   is a musical judgement rather than a layout one.
+2. **Nothing else blocks.** The layout above is buildable as it stands.
