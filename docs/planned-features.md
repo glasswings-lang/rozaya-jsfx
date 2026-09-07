@@ -2301,14 +2301,20 @@ example — above 100 it is a widener, and heavy widening is what causes
 mono-cancellation on a speaker, which matters for a suite played on phones and
 HomePods.
 
-## Womb is being used as a NOISE instrument, not as a body (2026-09-06)
+## Womb got repurposed as a noise source ONCE, and that is still a signal (2026-09-06)
 
 Rozaya, on why she had `scattered.rpp` open at all: *"I was half-assed using
 scattered for crashes, womb was the only place I could get different frequencies
 of noise coming in like that."*
 
-**This is a use nobody designed for and it is the strongest kind of signal there
-is** — a thing reached for, not a thing asked for. Womb has three independent
+**Scope it honestly: this is ONE project, not how she uses Womb.** Asked about
+the rest: *"At least with scatter. The rest... well. I try to use it like it was
+meant for lol."* So Womb is not secretly a noise instrument and must not be
+redesigned as one.
+
+**What makes it worth recording anyway** is that she reached for it — a use found
+rather than asked for is a real signal about what is MISSING elsewhere, even when
+it happened once. Womb has three independent
 filtered-noise layers with their own envelopes, frequencies and stereo:
 
 - Bloodflow — noise through a resonant lowpass, swelling once per heartbeat.
