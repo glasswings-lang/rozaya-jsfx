@@ -184,8 +184,10 @@ lines as it takes.**
 slider's name, order, range or unit.
 
 - **The rate block (R20) and both its host modes (R21) are BUILT EVERYWHERE.**
-- **Drift/Ramp: 13 of 19 plugins complete.** Still owed the full six: both
-  Polyrhythms, Passage, Womb. The **Morpher** owes its two unit controls only.
+- **Drift/Ramp: 14 of 19 plugins complete.** Still owed the full six: both
+  Polyrhythms, Passage, Womb — and those four are exactly the four still owed a
+  reorder, so their six ride along with that one migration rather than going in
+  ahead of it. **The Morpher is DONE** (2026-09-06, 122 instances migrated).
   **Resonance Bank is NOT missing one** — its drift period is a RATE by design,
   because each band drifts independently and there is no single cycle to count.
   A name-matching sweep will claim otherwise; it is wrong.
@@ -211,9 +213,16 @@ both big reorders on finished work; Dapple's immediate rate change; per-cycle pa
 on Polyrhythm; Veil's layout and ramp.
 
 **NOT heard:** everything from the 2026-09-06 drift/ramp sweep (six plugins), the
-`N per beat` reciprocal fix, the Tremolo Start delay fix, and the range
-widenings. **Nothing there can regress silently** — every new control defaults to
-off and no stored value moved — but none of it has been played.
+`N per beat` reciprocal fix in all four plugins it touched, the Tremolo Start
+delay fix, the range widenings, and the Morpher's two unit controls.
+**Nothing there can regress silently** — every new control defaults to off or to
+what the plugin already meant, and no stored value moved — but none of it has
+been played.
+
+The Morpher is worth naming separately because it is the most-used plugin here:
+its 122 instances were rewritten on 2026-09-06 and the claim that nothing changed
+rests on a 12,200-check verifier, not on ears. **Opening one finished project and
+hearing it be itself is the whole test.**
 
 `docs/host-sync-ear-test.md` is still the highest-value thing waiting: five tests,
 about fifteen minutes, three of them never heard on any plugin.

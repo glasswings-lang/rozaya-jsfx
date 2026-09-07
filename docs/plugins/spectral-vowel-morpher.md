@@ -256,10 +256,15 @@ than pairing units off, because BPM and Hz invert the number while Seconds does
 not; round-tripped through all four at 140 BPM it returns exactly where it
 started.
 
-**Start delay, Play for, Rest for and Drift period are durations**, so they are
-in seconds — or beats when Rate Mode is Host x. A start delay cannot be "4 Hz".
-That split follows the suite, which annotates a control only where sync actually
-changes its meaning.
+**Start delay, Play for and Rest for are durations**, so they are in seconds —
+or beats when Rate Mode is one of the two host modes. A start delay cannot be
+"4 Hz". That split follows the suite, which annotates a control only where sync
+actually changes its meaning.
+
+**Drift period used to be in that list and no longer is.** Since 2026-09-06 it
+has its own **Drift period unit** control, so Rate Mode has nothing to say about
+it — the number means whatever that control says. Ramp times work the same way,
+through **Ramp time unit**.
 
 **This was an on/off switch called `Sync to host` until 2026-09-04**, then briefly
 an invented `{Seconds, Minutes, Beats}` list of mine. Rozaya, on the first:
@@ -330,8 +335,21 @@ Which parameter the Drift sliders below are editing. Switch it and the four slid
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
 How far it wanders above (up) and below (down) the parameter's current value, in that parameter's own units — Texture in its 0–100, Pitch in semitones, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
-**Drift period (sec / min / beats by Rate Mode)** `1 to 600, default 30`
-How long one full wander takes, in real seconds (this instrument has no tempo, so the period is wall-clock, not beats). 30 is a gentle sway; a few minutes is barely-there evolution.
+**Drift period** `1 to 1000, default 30`
+How long one full wander takes, counted in whatever **Drift period unit** says.
+30 seconds is a gentle sway; a few minutes is barely-there evolution.
+
+**Drift period unit** `Cycles / Seconds / Beats, default Seconds`
+What the period above is counted in. **Seconds** is wall-clock. **Beats** follows
+the project tempo. **Cycles** counts whole Auto-morph passes — so the drift keeps
+step with the morph however you set its speed.
+
+**This is the one control in the suite that defaults to Seconds rather than
+Cycles**, and deliberately. Everywhere else the cycle is unconditional — a
+breath, a heartbeat. Here it is one Auto-morph pass, and Auto-morph starts Off,
+so a fresh instance has no cycle to count: defaulting to Cycles would give you a
+drift that never moved. It also keeps every project saved before this change
+meaning exactly what it already meant.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
 The path of the wander. Sine = smooth continuous sway; Triangle = straight ramps up and down with turnarounds; Random = drifts smoothly toward a new random spot each period (still smooth, just unpredictable in direction).
@@ -373,10 +391,15 @@ Which parameter the Ramp sliders below are editing (same targets as Drift).
 **Ramp by** `-300 to +300, units match the target, default 0`
 How far to move the parameter, and which direction — in that parameter's own units (Texture 0–100, Pitch semitones, Low cut Hz…). Negative goes down, positive up. **0 means this target doesn't ramp**, so arming Ramp with everything at 0 safely does nothing.
 
-**Ramp duration (minutes)** `0 to 60, default 0`
-How long the ride takes. 0 = this target doesn't ramp. Set it to, say, 20 and the parameter takes twenty minutes to travel its full `by` amount, then holds.
+**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+What Ramp duration, Ramp play/rest and Ramp start delay are all counted in —
+one control for the four of them. Minutes is what they have always meant, so
+nothing you have saved changes.
 
-**Ramp play for** / **Ramp rest for** `0 to 1000 minutes, default 0 (smooth)`
+**Ramp duration** `0 to 1000, default 0`
+How long the ride takes, in ramp time units. 0 = this target doesn't ramp. Set it to, say, 20 and the parameter takes twenty minutes to travel its full `by` amount, then holds.
+
+**Ramp play for** / **Ramp rest for** `0 to 1000 ramp time units, default 0 (smooth)`
 Turns the smooth ride into a **staircase**. It climbs for the play window,
 freezes for the rest window, climbs again. Both must be above 0; either at 0
 leaves the ride smooth.
@@ -397,8 +420,8 @@ this exists for. (Heard first on Veil, 2026-09-04.)
 **Ramp engage** `Off / On, default Off`
 Arms every configured target at once. While On, each rides its own duration from where it is; flip Off and they freeze in place (flip back On and they resume). The ride starts fresh from the current values each time the transport begins playing. You can aim several targets at once (Texture *and* Output level *and* Low cut, each over its own time) and one Engage winds them all down together.
 
-**Ramp start delay (minutes)** `0 to 60, default 0`
-Wait this many minutes after arming before the ride begins — e.g. "let me settle for 10 minutes, *then* start winding down."
+**Ramp start delay** `0 to 1000, default 0`
+Wait this long after arming — in ramp time units — before the ride begins — e.g. "let me settle for 10 minutes, *then* start winding down."
 
 ---
 
@@ -449,13 +472,15 @@ here are not allowed to do.
 The `@serialize` magic went 7700009 → 7700010 with no format change, so the blob
 stays an exact witness for which slider layout an instance was saved on.
 
-**One thing deliberately left out.** `Ramp duration` stays in minutes and does
-**not** follow Rate Mode. On Beats it would have to be a beat count, and
-its range cannot hold one — a 20-minute ramp at 120 BPM is 2400 beats against a
-maximum of 60. Widening it to Veil's 0–1000 still only buys about eight minutes
-of beats at that tempo, so the conversion would silently clamp a long ramp,
-which is the one thing this suite refuses to do. It needs a decision about the
-range rather than a quiet workaround.
+**One thing was deliberately left out here, and 2026-09-06 resolved it.** The
+ramp times used to stay in minutes and not follow Rate Mode, because tying them
+to it meant a mode change would have to CONVERT the number into beats — and the
+range could not hold the answer, since a 20-minute ramp at 120 BPM is 2400
+beats. A long ramp would have been silently clamped, which is the one thing this
+suite refuses to do. **Ramp time unit** settles it by not converting anything:
+the number stays put and its unit is the one you picked. Beats are reachable
+now, and a beat count too big for the range is one you can see rather than one
+applied behind you.
 
 ## Migrating projects across the 2026-09-04 play/rest change
 
@@ -542,3 +567,44 @@ project, not guessed — writes a `.pre-layer-order-bak` copy first, and refuses
 clobber an existing one. **Close the project in REAPER first**, or REAPER writes
 its in-memory copy back over yours. Projects older than the layer feature have
 nothing to move and are skipped.
+
+## Migrating projects across the 2026-09-06 unit-control change
+
+`Drift period unit` and `Ramp time unit` went into their **logical** positions —
+39 beside Drift period, 46 beside Ramp duration — rather than being tacked on the
+end. REAPER restores JSFX values by POSITION, so the eleven controls above them
+each move up one or two places, and every project saved before this needs its
+slider line shifted to match. 49 sliders become 51.
+
+`tools/morpher_migrate_driftramp_units.py` does it and
+`tools/morpher_verify_driftramp_units.py` checks the result, decoding both the
+before and the after by CONTROL NAME rather than by the table the migration used,
+so a wrong permutation disagrees with itself instead of agreeing with whatever
+produced it. Applied to the whole library on 2026-09-06: **122 instances across
+38 projects, 12,200 checks, no failures and nothing out of range.**
+
+Both new sliders are left ABSENT from the migrated line, so every instance takes
+their declared defaults — Seconds and Minutes — which is exactly what those times
+already meant. **Nothing anyone had saved changed what it sounds like.**
+
+The `@serialize` magic went 7700010 → 7700011 with no format change and no new
+bank, so the blob stays an exact witness for which slider layout an instance was
+saved on.
+
+### And a bug fixed alongside it
+
+`N per beat` — the fifth Rate Mode — ran at its reciprocal. The rate chain
+handled BPM, Seconds and Hz explicitly and let **both** host modes fall into the
+`Every N beats` formula, which is the reciprocal of the one it wanted: at 120 BPM
+"8 per beat" gave one morph every 8 beats, 64 times too slow, while the display
+said the right thing throughout.
+
+The same defect was found and fixed in Tremolo, the Sweeping Filter and Resonance
+Bank a day earlier; this plugin was missed by that sweep. It was latent — every
+instance in the library is on Rate Mode = Seconds, so it had never made a sound —
+and it was fixed here because `Cycles` in both new unit controls counts one
+Auto-morph pass and would have inherited the wrong number.
+
+Checked by simulation rather than by reading: 120 combinations of mode, rate
+value and tempo against what each mode's own words say a cycle should last. 20
+wrong before, none after, and the other four modes are unchanged to the bit.

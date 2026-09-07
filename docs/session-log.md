@@ -36,6 +36,7 @@ Newest entries are the most likely to still be accurate.
 
 | If you are working on | Read |
 |---|---|
+| The Morpher's unit controls, appending vs reordering, the N-per-beat reciprocal | 2026-09-06 |
 | Polyrhythm Phase, pan modes, Host x as beats-per-cycle | 2026-09-02 |
 | The consistency sweep's origin, Womb's tempo sync, the R-rules | 2026-08-30/31 |
 | Morpher Layers, filter rolloff and the stock-filter Hz error, restore order | 2026-08-19..22 |
@@ -57,6 +58,92 @@ Newest entries are the most likely to still be accurate.
 | Womb v2 — RSA, bidirectional HRV | Womb v2 |
 | Why per-plugin drift replaced the Wobble Modulator | Per-plugin Drift sweep |
 | Play/Rest gating across the suite | v2.1 sweep |
+
+---
+
+## 2026-09-06 — the Morpher's two unit controls, and a reciprocal that was still inverted
+
+**What this closes.** The drift/ramp sweep owed the Morpher exactly two controls:
+`Drift period unit` and `Ramp time unit`. It is now 14 of 19 plugins complete. The
+four still owed the full six — both Polyrhythms, Passage, Womb — are the same four
+still owed a reorder, so their six ride along with that one migration.
+
+**Rozaya stopped an append, for the second time.** The first instinct was to add
+the two sliders at the end of the list, where adding is mechanically free. That
+would have put `Drift period unit` two blocks below the period it measures, which
+is the scatter the reorder existed to fix. The same objection is already recorded
+in the consistency plan from 2026-09-05: *"Why would that be apending. we just
+reordered to fix the acumulation of apends making a goddamn mess."* Making it
+twice means the pull toward appending is structural, not a slip — **appending is
+always the cheap option at the moment you are choosing, and always the expensive
+one afterwards.** The thirteen finished plugins all have their units in the right
+place, with migrations; the precedent was already correct and nearly got ignored.
+
+**The decision that needed evidence, not taste.** `Drift period unit` declares
+SECONDS, where the rest of the suite declares Cycles. Two independent reasons and
+they agree. All 122 instances mean seconds today — measured, not assumed — and a
+declared default is a live value, so Cycles at index 0 would have silently
+reinterpreted every one of them. And this is the only plugin whose cycle is
+OPTIONAL: Cycles counts one Auto-morph pass, Auto-morph defaults to Off, and the
+morph rate control is hidden entirely while it is. A fresh instance defaulting to
+Cycles would have had a drift that never advanced the first time it was switched
+on. The option LIST stays identical to the suite, which is the consistency that
+matters; only the default moved, the way Veil's already had.
+
+**A note the units resolved rather than replaced.** The ramp times had been left
+in minutes on purpose, with a comment saying so: tying them to Rate Mode meant a
+mode change would have to CONVERT the number into beats, and the range could not
+hold the answer — a 20-minute ramp at 120 BPM is 2400 beats — so a long ramp would
+have been silently clamped. An explicit unit control does not convert anything.
+The number stays put and its unit is the one you picked. **The blocker was never
+the beats; it was the conversion.**
+
+**Drift period stopped following Rate Mode.** It used to read as seconds, or beats
+under sync, with the value rewritten on the flip. That is one control silently
+rewriting another that now names its own unit on itself, so it went. Safe on real
+data, and checked rather than assumed: every one of the 122 instances is on Rate
+Mode = Seconds, so the conversion had never once fired.
+
+### The bug next door, and why it was in scope
+
+`auto_time` handled Rate Modes 0, 1 and 2 explicitly and let **both** host modes
+fall into the `Every N beats` formula. Mode 4 is `N per beat`, its reciprocal: at
+120 BPM "8 per beat" ran as one morph every 8 beats — 64x too slow — while the
+display said the right thing throughout. Identical to the defect fixed in Tremolo
+and the Sweeping Filter (`c4c9b31`) and Resonance Bank (`47da263`) the day before.
+**This plugin was missed by that sweep, and nothing noticed for a day.**
+
+It is latent — no instance is in either host mode — so by the standing rule it
+would have been someone else's job. It was not, because `Cycles` in both new unit
+controls counts that period and would have inherited the wrong number. **A latent
+bug becomes load-bearing the moment you build on top of it.** Fixed in its own
+commit, landing first, so it stays separately hearable.
+
+**Shepard Tone looked like the second case and is correct.** It also has no
+`mode == 4` branch. Its chain returns a nominal rate against 60 BPM, where one
+beat is one second, so `N per beat` and `Hz` genuinely coincide and the fallback
+lands exactly right. **The count said two plugins; reading said one.** A grep for
+the shape of a fix finds plugins that do not need it as readily as ones that do.
+
+### What was actually checked
+
+- **Simulation, not reading, for both.** 120 combinations of mode, rate value and
+  tempo for `auto_time` — 20 wrong before, 0 after, modes 0-3 bit-identical. Then
+  every drift and ramp unit against what its own words say a period should last:
+  0 mismatches, and both declared defaults reproduce the old behaviour exactly.
+- **The migration verified by NAME, not by its own table** — 122 instances, 38
+  projects, 12,200 checks, 0 failures, 0 newly out of range, with values that were
+  already out of range counted separately so they could not mask a real one.
+- **The verifier was wrong first, and said so.** Matching by name reported three
+  controls as vanished; they had been renamed in the same change. An authored
+  rename table fixed the checker. Worth recording because the tempting move is to
+  loosen the check until it passes, and the failure was real information about
+  what the change actually did.
+- **Pinned to a commit hash**, not `HEAD~n`, for the reason already in `CLAUDE.md`.
+
+**Nothing here has been heard.** The claim that 122 instances still sound like
+themselves rests on the verifier. Opening one finished project and hearing it be
+itself is the whole test.
 
 ---
 
