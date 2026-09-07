@@ -2337,3 +2337,58 @@ its name, and so that if a noise instrument ever gets built, this is the
 requirement it starts from. Ask Rozaya what she is reaching for before designing
 one — the useful question is what the crashes need to DO, not which filters to
 offer.
+
+## Polyrhythm with a SAMPLE as its voice source — the reason it was abandoned no longer applies (2026-09-07)
+
+Rozaya: *"sustain looper only loops samples. It doesn't do the tremolo with pitch
+that polyrhythm does, and I think we tried to build it, failed, then I gave up."*
+
+**We did try, and the reason it failed is recorded.** `archive/exploration/
+polyrhythm_tremolo.jsfx`, archived `289e611` (2026-06-08):
+
+> polyrhythm_tremolo decomposed the polyrhythm modulation from its bundled
+> oscillator cleanly enough — basic plugin works on external input — but lost the
+> per-voice semitones that make polyrhythm_phase musical, and getting that back
+> requires a quality real-time pitch shifter on arbitrary input audio (its own
+> non-trivial project).
+
+**That reasoning is correct and it is about the wrong architecture.** It was built
+as an EFFECT: audio streams in from outside, and pitching a live stream into eight
+independent voices really does need a real-time pitch shifter.
+
+**A sample LOADED INTO the plugin is not a stream.** It sits in memory, and eight
+voices reading it at eight rates is eight interpolated read pointers — a sampler,
+not a pitch shifter. `src/sustain_looper.jsfx` already does the hard halves: it
+loads a WAV through a file-selector slider (`sliderN:/foldername:default:Name`,
+then `file_open` / `file_riff` / `file_mem`) AND runs a true-detune multi-voice
+ensemble off one buffer.
+
+So the pieces exist in this suite and nobody has put them together. Polyrhythm's
+polyrhythmic tremolo, its 16 pan modes, its per-voice drift and ramp are all
+already per-voice; only the SOURCE would change.
+
+**Status: PREDICTED, not proved.** Reasoned from the parts, not built. The known
+constraints, none of them fatal:
+
+- **Memory.** ~8 M slots per instance by default, about 80 s of 48 kHz stereo
+  interleaved; 32 M with `options:maxmem=33554432`. Wants a short sample.
+- **Loop points.** Sustain Looper's crossfade loop already solves this BY EAR,
+  which is the accessibility win — no visual waveform matching.
+- **Pitch moves like tape.** Faster is higher AND shorter. Fine for a sustained,
+  loopable source; wrong for anything with an articulated attack.
+- **Formats.** WAV and OGG are reliable; FLAC/MP3 are not guaranteed.
+
+**Related and much cheaper: PER-VOICE WAVEFORMS.** Checked in the source — the
+waveform chain is already INSIDE the per-voice loop and already indexes that
+voice's own phase and gain (`osc_phase_l[i]`, `gain_l[i]`). Only the waveform
+NUMBER is global. Per-voice waveform is one substitution plus storage; the engine
+was built for it and nobody wired the control. A single-cycle wavetable read from
+a WAV would drop into the same chain as one more branch.
+
+**And per-cycle waveform CHANGES are nearly free of the usual problem.** The
+tremolo already silences each voice for part of every cycle, so a switch made
+during that silence cannot click.
+
+**Note for whoever picks this up:** per-voice waveform makes it SEVEN controls a
+voice, 56 flat parameters. Every per-voice feature makes the flat layout worse and
+the nested-selector question more urgent. They are the same question.
