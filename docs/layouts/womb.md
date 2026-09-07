@@ -225,7 +225,7 @@ post-filter all MOVE; none is dropped.
 | `Heart rate mode` | `{BPM, Seconds, Hz, Every N beats, N per beat}` | BPM (0) | What every non-host instance means today |
 | `Breath rate mode` | same five | BPM (0) | Same |
 | `Bloodflow offset` | `-1000..1000, 0.001` | **0** | Zero is today's behaviour exactly — bloodflow welded to the heart |
-| `Bloodflow offset unit` | `{Cycles, Seconds, Beats}` | Cycles (0) | Rozaya's own framing; and at offset 0 the unit cannot matter, so the default is free |
+| `Bloodflow offset unit` | `{Milliseconds, Seconds, Beats, % of heartbeat}` | **% of heartbeat (3)** | Same list as Systole. `Cycles` was tried and was WRONG -- see below |
 | `Systole unit` | `{Milliseconds, Seconds, Beats, % of heartbeat}` | **Milliseconds (0)** | What every non-host instance means today, and what the broken host one MEANT |
 | `Drift period unit` | `{Cycles, Seconds, Beats}` | **Cycles (0)** | The period already counts heartbeats or breath cycles — Cycles IS the current meaning |
 | `Drift play for` / `Drift rest for` | `0..1000, 0.01` | 0 (off) | Off |
@@ -245,14 +245,25 @@ it reads the heart's phase directly and has no counter of its own. The offset ad
 to that position and wraps, so it needs **no new phase counter and no new bank** —
 which is what makes it cheap enough to do now.
 
-- **Cycles** — a fraction of a heartbeat. 0.25 sits a quarter of the way round, and
-  scales automatically as the heart rate changes.
-- **Seconds** — fixed wall-clock, which is what real pulse transit time is
-  (roughly 0.1–0.25 s from heart to periphery).
-- **Beats** — the project tempo.
+- **% of heartbeat** — 25 puts the flow a quarter of a beat behind the thump, and
+  it scales automatically as the heart rate changes.
+- **Milliseconds** — the physiologically real one; pulse transit is roughly
+  100–250 ms from heart to periphery.
+- **Seconds**, **Beats** — fixed wall clock, and the project tempo.
 
-An offset longer than one cycle wraps into the next, which is meaningful rather
-than an error: the flow you hear belongs to the previous beat.
+**This said `Cycles` for one hour and it made the whole control look broken.** The
+offset WRAPS into a single heartbeat, so in cycles every whole number — 1, 2, 5,
+10 — is bit-identical to 0, and only fractions do anything. Rozaya turned the
+control on, moved it to a round number and correctly heard nothing.
+
+It is the identical error she had already caught on Systole the same day, and the
+rule is now stated once for both: **Cycles COUNTS whole cycles everywhere in this
+suite, so anything that is really a position inside one beat must not borrow the
+word.** Both controls say `% of heartbeat`, and every whole number a person can
+reach for now does something.
+
+No migration was needed for the change: measured, no instance stores a value for
+either slider, so all nine take the new default.
 
 **Deliberately NOT built: bloodflow on its own separate clock.** The June note
 priced it (own phase counter, own rate, own drift and ramp entries) and Rozaya

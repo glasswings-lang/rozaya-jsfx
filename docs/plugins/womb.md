@@ -325,17 +325,19 @@ nothing can.
 
 ### Bloodflow offset
 
-**Bloodflow offset** and **Bloodflow offset unit** `Cycles / Seconds / Beats`
-(default 0, so nothing changes until you move it)
+**Bloodflow offset** and **Bloodflow offset unit** `Milliseconds / Seconds /
+Beats / % of heartbeat` (default 0, so nothing changes until you move it)
 
 Bloodflow used to read the heart's position directly with no way to shift it. The
 offset moves the pulse behind the heart sound. In a real body the pulse reaches
 the periphery a fraction of a second after the heart sound — roughly 0.1 to 0.25
-seconds — so `Seconds` is the anatomical setting; `Cycles` is a fraction of a
-heartbeat and scales as the heart rate changes; `Beats` follows the project.
+seconds — so `Milliseconds` is the anatomical setting. `% of heartbeat` is the
+one to reach for first: 25 puts the flow a quarter of a beat behind the thump,
+and it scales as the heart rate changes. `Beats` follows the project.
 
-An offset longer than one cycle wraps into the next, which is meaningful rather
-than an error: the flow you hear belongs to the previous beat. It is also a Drift
+**The offset wraps into a single heartbeat**, so a whole beat of offset is the
+same as none — which is exactly why the unit is a percentage rather than a cycle
+count. At 0 and at 100 nothing moves; everything between does. It is also a Drift
 and Ramp target, so it can wander.
 
 **Not built, deliberately:** bloodflow on its own separate clock, wandering at a

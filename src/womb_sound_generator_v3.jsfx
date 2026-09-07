@@ -157,17 +157,28 @@ slider36:0<0,1,1{Off,Solo}>Breath Solo
 // what makes it affordable -- the offset is added to the position and wraps.
 //
 // DEFAULT 0, which is exactly today's behaviour: the flow welded to the thump.
-// An offset longer than one cycle wraps into the next, which is meaningful
-// rather than an error -- the flow you hear belongs to the previous beat.
+// The offset WRAPS into one heartbeat, so a whole heartbeat of offset is the
+// same as none -- which is why its unit is a percentage and not a cycle count.
+// 25 puts the flow a quarter of a beat behind the thump; 50 puts it halfway.
 slider37:0<-1000,1000,0.001>Bloodflow offset (in bloodflow offset units)
-// Cycles here COUNTS heartbeats and may exceed one, which is why it keeps the
-// suite's word -- unlike Systole's unit above, which is always a fraction of a
-// single beat and is therefore named `% of heartbeat` instead. Do not "fix"
-// either to match the other; they are different quantities.
-// Cycles scales automatically as the heart rate changes. Seconds is fixed wall clock, which is what real pulse transit
-// time is -- roughly 0.1 to 0.25 s from heart to periphery. Beats follows the
-// project. At an offset of 0 the unit cannot matter, so the default is free.
-slider38:0<0,2,1{Cycles,Seconds,Beats}>Bloodflow offset unit
+// SAME LIST AS SYSTOLE, and for the same reason. This said `Cycles` for one
+// hour and it was wrong in a way that made the whole control look broken: an
+// offset is WRAPPED into one heartbeat, so in cycles every whole number -- 1, 2,
+// 5, 10 -- is bit-identical to 0. Only fractions did anything. Rozaya turned the
+// control on, moved it to a round number, and correctly heard nothing.
+//
+// It is the identical error she had already caught on Systole the same day
+// ("cycles in fractions? I thought cycles were cycles lol"): Cycles COUNTS whole
+// cycles everywhere in this suite, and anything that is really a position inside
+// one beat must not borrow the word. `% of heartbeat` is the name, here and
+// there, and now every whole number you can type does something.
+//
+// Milliseconds is the physiologically real one -- pulse transit is roughly 100
+// to 250 ms from heart to periphery. Seconds is fixed wall clock, Beats follows
+// the project, and `% of heartbeat` scales with the heart rate. Defaulting to
+// the percentage because it is the one to reach for first; the offset's own
+// default is 0, so the unit changes nothing until it is moved.
+slider38:3<0,3,1{Milliseconds,Seconds,Beats,% of heartbeat}>Bloodflow offset unit
 slider39:0.15<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
 slider40:0.85<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
 slider41:0.1<0,1,0.01>Bloodflow Dicrotic Level
@@ -942,9 +953,10 @@ ramp_unit_sec  = slider65 == 0 ? hb_cycle_sec :
 // per sample. Cycles is already the answer; the other two are lengths of time
 // divided by the cycle.
 bf_unit_to_cycles =
-  slider38 == 0 ? 1 :
-  slider38 == 1 ? 1 / max(hb_cycle_sec, 0.0001) :
-                  beat_sec / max(hb_cycle_sec, 0.0001);
+  slider38 == 0 ? 0.001 / max(hb_cycle_sec, 0.0001) :   // milliseconds
+  slider38 == 1 ? 1 / max(hb_cycle_sec, 0.0001) :       // seconds
+  slider38 == 2 ? beat_sec / max(hb_cycle_sec, 0.0001) :// beats
+                  0.01;                                 // % of one heartbeat
 
 // The breath rate, applied. The four segments keep their stored numbers; what
 // changes is how fast the state machine walks through them. natural_cycle_sec

@@ -157,6 +157,53 @@ been wrong twice over. That is why the R20 conversion takes the beat count.
 
 **Nothing has been heard.**
 
+### Then it WAS heard, and the bloodflow offset did nothing
+
+Rozaya turned everything up to hear it and reported: *"It still isn't making a
+sound even still."* Correct, and the cause was my control design, not the DSP.
+
+**The offset's unit defaulted to `Cycles`, and the offset WRAPS into a single
+heartbeat -- so every whole number is bit-identical to zero.** 1, 2, 5, 10: all
+exactly no offset. Only fractions did anything. Move it to a round number, which
+is the obvious thing to do, and the plugin correctly does nothing at all.
+
+**It is the identical mistake she had caught earlier the same day on Systole**
+(*"cycles in fractions? I thought cycles were cycles lol"*). I fixed it there,
+left it here, and wrote a comment in the source explaining why the two were
+different quantities and should not be made to match. They were not different.
+The rule, now stated once for both: **Cycles COUNTS whole cycles everywhere in
+this suite, so anything that is really a position inside one beat must not borrow
+the word.** Both say `% of heartbeat`.
+
+Verified by simulation rather than by reading: at every whole percentage from 1 to
+99 the flow's peak moves; at 0 and 100 it does not, which is correct because a
+whole beat of offset is no offset. No migration needed -- no instance stores a
+value for either slider.
+
+### Three wrong turns getting there, and they are the same wrong turn
+
+Worth writing down together, because the pattern is the point.
+
+1. I called a project broken after reading the stored value and the consuming
+   code, without reading the LOAD path that fixed it.
+2. I told her to test in `scattered`, having read its breath timing without
+   reading its bloodflow volume (0) or its solo state (breath soloed).
+3. When she said she had turned things up, I went back to the SAVED file to check
+   the solo state -- and reported a finding from it. She had not saved. *"Like I
+   said not even 5 messages ago, I turned it all on, spesificly so I could hear.
+   I just didn't save it that way, because it's not done."*
+
+Every one is the same error: **reasoning confidently from part of the picture
+while the rest of it was available.** And in (3) the part I was missing was
+something she had already told me in words -- the file is not the session, and a
+person's report of what they just did outranks a file's record of what they last
+saved.
+
+**She also killed my last theory herself**, and correctly: I suggested REAPER
+might still be running the old plugin, and she asked *"if it didn't show up,
+wouldn't I have not seen the slider at all?"* -- which is exactly right, and is a
+negative test result treated as a result rather than as a puzzle to explain away.
+
 ---
 
 ## 2026-09-06 — the Morpher's two unit controls, and a reciprocal that was still inverted
