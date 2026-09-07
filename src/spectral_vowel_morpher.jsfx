@@ -1285,14 +1285,29 @@ drift_restart_free = slider42;   // 0 = restart on play (sync), 1 = free-running
 // Auto-morph time in SECONDS, derived every block. Under sync the slider is a
 // beat count, so this is where the project tempo enters; @slider would go
 // stale the moment the tempo changed, since a tempo change does not re-run it.
-// Auto-morph PERIOD in seconds. Seconds mode is the identity; the other three
-// are one line each. Derived per block because Host x reads the live tempo and
-// @slider does not re-run on a tempo change.
+// Auto-morph PERIOD in seconds. Seconds mode is the identity; the other four
+// are one line each. Derived per block because the host modes read the live
+// tempo and @slider does not re-run on a tempo change.
+//
+// R21, and this is a CONVERSION, not a gate: the two host modes are RECIPROCALS
+// of each other and each needs its own formula. `Every N beats` (3) is N beats
+// long; `N per beat` (4) is one beat divided N ways. This chain ended at mode 3
+// and let mode 4 fall into it, so "8 per beat" ran as "every 8 beats" -- 64x too
+// slow at 120 BPM, silently. Same defect as c4c9b31 (Tremolo, Sweeping Filter)
+// and 47da263 (Resonance Bank); this plugin was missed by that sweep. Latent --
+// no instance in the library has ever been in either host mode -- but `Cycles`
+// in the Drift and Ramp unit controls counts THIS period, so it had to be right
+// before those could be. (Fixed 2026-09-06.)
+//
+// Both host arms divide by auto_time_raw only where it is the divisor, and
+// auto_time_raw is already clamped to >= 0.01 at its @slider read, so neither
+// arm can divide by zero.
 auto_time = max(0.01,
   time_mode == 0 ? 60 / max(auto_time_raw, 0.001) :
   time_mode == 1 ? auto_time_raw :
   time_mode == 2 ? 1 / max(auto_time_raw, 0.001) :
-                   auto_time_raw * 60 / max(tempo, 0.001));
+  time_mode == 3 ? auto_time_raw * 60 / max(tempo, 0.001) :
+                   (60 / max(tempo, 0.001)) / auto_time_raw);
 // Transport times in SECONDS, derived here for the same reason auto_time is:
 // under sync the sliders are beat counts, so this is where the project tempo
 // enters, and @slider would go stale the moment the tempo changed because a
