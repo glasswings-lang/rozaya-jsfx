@@ -549,6 +549,21 @@ because they apply every session, not on the day they were learned.
   A silent unit change is "the same problem wearing different clothes" whether or
   not a mode gates it. Gate on one visible switch AND name it in every affected
   slider.
+- **A WRAPPED control has no values past one wrap, and its RANGE will lie about
+  that.** Anything expressed as a position inside a repeating cycle — an offset, a
+  phase, a start point — folds back: 125% of a beat IS 25%. So most of a wide
+  range is duplicates, and a person typing a round number can land on a no-op
+  forever. **Say the wrap on the control itself** (`Bloodflow offset (wraps at one
+  heartbeat)`); the range can stay wide when one slider serves several units,
+  because that is a real cost and narrowing it just moves the lie.
+- **NEVER call a within-cycle position `Cycles`. It is `% of <the thing>`.**
+  Cycles COUNTS whole cycles everywhere in this suite — a drift period of 8. A
+  position inside ONE cycle is always a fraction, so in cycles every whole number
+  is a no-op and the control reads as broken. **This shipped twice in one day**
+  (2026-09-06, Womb's Systole and its Bloodflow offset); the second time it
+  survived a source comment I wrote arguing the two cases were different. They
+  were not. Rozaya caught both: *"cycles in fractions? I thought cycles were
+  cycles lol"*, and then found the second by using it and hearing nothing.
 - **The dyscalculia rule is about arithmetic, not numbers.** Move the maths to
   the machine; keep the precise control. **Do not hide numbers behind mood
   labels — that was built once, delivered, and was insulting.** See *Whose job

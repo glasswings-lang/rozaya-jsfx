@@ -160,7 +160,7 @@ slider36:0<0,1,1{Off,Solo}>Breath Solo
 // The offset WRAPS into one heartbeat, so a whole heartbeat of offset is the
 // same as none -- which is why its unit is a percentage and not a cycle count.
 // 25 puts the flow a quarter of a beat behind the thump; 50 puts it halfway.
-slider37:0<-1000,1000,0.001>Bloodflow offset (in bloodflow offset units)
+slider37:0<-1000,1000,0.001>Bloodflow offset (wraps at one heartbeat)
 // SAME LIST AS SYSTOLE, and for the same reason. This said `Cycles` for one
 // hour and it was wrong in a way that made the whole control look broken: an
 // offset is WRAPPED into one heartbeat, so in cycles every whole number -- 1, 2,

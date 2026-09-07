@@ -335,10 +335,26 @@ seconds — so `Milliseconds` is the anatomical setting. `% of heartbeat` is the
 one to reach for first: 25 puts the flow a quarter of a beat behind the thump,
 and it scales as the heart rate changes. `Beats` follows the project.
 
-**The offset wraps into a single heartbeat**, so a whole beat of offset is the
-same as none — which is exactly why the unit is a percentage rather than a cycle
-count. At 0 and at 100 nothing moves; everything between does. It is also a Drift
-and Ramp target, so it can wander.
+**The gotcha, and it is worth knowing before you reach for this.** The offset
+**wraps into a single heartbeat**. A whole beat of offset is the same as none, so
+there are no values past one cycle — 125% is 25%, and the control says so in its
+own name. Two consequences:
+
+- **Most of the range is duplicates.** In percent only 0–100 is distinct. The
+  range is wide because one slider serves four units and milliseconds needs the
+  room, not because there is more reach up there.
+- **`Beats` can be a dead unit, depending on the project.** If the heart is
+  running at one beat per beat, then one beat of offset IS one heartbeat, so every
+  whole number does nothing — correctly, and confusingly. If the heart is every
+  two beats, even numbers die. **`% of heartbeat` always works**, which is why it
+  is the default.
+
+**And it is only audible against the heartbeat.** Bloodflow is filtered noise with
+a slow swell on it; move that swell in time with nothing to compare it against and
+it is the same sound. Solo the bloodflow and no value of this control will do
+anything you can hear. You need the thump and the flow together.
+
+It is also a Drift and Ramp target, so it can wander.
 
 **Not built, deliberately:** bloodflow on its own separate clock, wandering at a
 rate unrelated to the heart. That is a bigger change and the offset comes first,
