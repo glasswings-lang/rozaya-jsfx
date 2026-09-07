@@ -60,6 +60,9 @@ unit vocabulary, reached for unprompted. Taken exactly as offered.
 - **Sliders 37 and 38 do not exist** — a hole left by an earlier change.
 - **`Breaths per minute` REWRITES four other sliders** and calls
   `slider_automate` on each. See the next section; this is the forbidden pattern.
+- **`Systole` silently changes unit** — milliseconds normally, BEATS under sync,
+  with nothing on the control saying so. **This has already broken a project.**
+  See the section below; it is the reason Systole is in this job after all.
 - **Womb owes the full six drift/ramp controls** — the last plugin group in the
   sweep besides the two Polyrhythms and Passage.
 
@@ -110,6 +113,59 @@ whose proportions divide the cycle.
 
 Nothing she has typed moves, and no control writes into another.
 
+## Systole, and the project it has already broken
+
+**This was deferred and should not have been.** The first read of it was that
+units-for-durations is a suite-wide rule to write rather than a Womb fix, and that
+giving Systole its own unit here would invent a sixth convention. Both halves were
+wrong. The Morpher established that convention on 2026-09-06 — an explicit unit
+control beside the duration — so this applies it rather than inventing anything.
+And it is not a tidiness question, because it has already cost a project.
+
+**What the control does today.** `Systole (ms / beats in Host x)`, read at line 665
+as `srate * slider5 * (rate_mode == 1 ? 60/tempo : 0.001)`. The same number means
+milliseconds in one mode and beats in the other. Nothing on the control changes.
+
+**The conversion only runs when the user flips the mode by hand** — it lives in
+the `last_rate_mode != rate_mode` branch in `@slider`. Any other route into host
+mode (load, duplicate, automation, or setting the mode before typing the number)
+leaves the value in the old unit, now read as the new one.
+
+**`womb-and-baby-heartbeats-with-bloodflow.RPP` took one of those other routes.**
+Measured from the project, not inferred:
+
+| | |
+|---|---|
+| project tempo | 70 |
+| Rate Mode | 1 (Host x) |
+| `Every N beats` | absent, so its declared default of 1 |
+| heart rate | 70 BPM |
+| one heart cycle | 0.857 s |
+| `Systole` slider | **180** — meant as 180 ms, read as 180 BEATS |
+| systole in seconds | **154.3 s**, or 180x the whole cycle |
+
+`systole_samples` is never clamped against `cycle_len`, and S2 fires on
+`hb_phase == systole_samples` (line 1264). `hb_phase` wraps at `cycle_len`, so it
+never reaches that value: **S2 never sounds. The heartbeat has a lub and no dub.**
+
+`scattered.rpp` is FINE and the contrast is the proof of mechanism: its Systole
+reads 0.14, which is 120 ms correctly converted to beats at that tempo, because
+that instance was flipped by hand and the conversion ran.
+
+**Rozaya has never opened the affected project** (it lives in
+`to-play-with-later/`), so nothing here was heard and lived with — it is sitting
+broken, waiting. Which also means there is no sound anyone is attached to.
+
+**The fix.** `Systole` gains `Systole unit {Milliseconds, Seconds, Beats}`,
+declared Milliseconds, at position 5 directly after it. The flip-conversion at
+lines 630 and 640 goes, exactly as the Morpher's drift-period conversion did:
+Systole reads what its own unit says and no other control rewrites it.
+
+**A clamp goes in regardless of units.** `systole_samples` should be held below
+`cycle_len` so that a systole longer than the beat cannot silence S2. That is a
+separate defect from the unit bug and would have made this one audible-but-odd
+rather than silent. It is cheap and it belongs in the same build.
+
 ## What retires, and what was inside it first
 
 **The rule this plugin already taught us once** (the 2026-09-04 near-miss, in
@@ -139,6 +195,7 @@ post-filter all MOVE; none is dropped.
 | `Breath rate mode` | same five | BPM (0) | Same |
 | `Bloodflow offset` | `-1000..1000, 0.001` | **0** | Zero is today's behaviour exactly — bloodflow welded to the heart |
 | `Bloodflow offset unit` | `{Cycles, Seconds, Beats}` | Cycles (0) | Rozaya's own framing; and at offset 0 the unit cannot matter, so the default is free |
+| `Systole unit` | `{Milliseconds, Seconds, Beats}` | **Milliseconds (0)** | What every non-host instance means today, and what the broken host one MEANT |
 | `Drift period unit` | `{Cycles, Seconds, Beats}` | **Cycles (0)** | The period already counts heartbeats or breath cycles — Cycles IS the current meaning |
 | `Drift play for` / `Drift rest for` | `0..1000, 0.01` | 0 (off) | Off |
 | `Ramp time unit` | `{Cycles, Seconds, Minutes, Beats}` | **Minutes (2)** | Ramp duration and start delay already read in minutes |
@@ -186,16 +243,17 @@ its filtering, its stereo, its level, its solo.
 | 2 | Heart rate mode | 62, gaining three options |
 | 3 | Heart with breath (BPM peak-to-peak) | 59 — a modifier of the rate, so it sits with it |
 | 4 | Systole | 5 |
-| 5 | S1 Frequency Hz | 11 |
-| 6 | S1 Decay ms | 9 |
-| 7 | S1 Volume | 6 |
-| 8 | S2 Frequency Hz | 12 |
-| 9 | S2 Decay ms | 10 |
-| 10 | S2 Volume | 7 |
-| 11 | Brightness | 8 |
-| 12 | HB Stereo width ms | 13 |
-| 13 | HB Master volume | 3 |
-| 14 | Heartbeat solo | 4 |
+| 5 | Systole unit | NEW |
+| 6 | S1 Frequency Hz | 11 |
+| 7 | S1 Decay ms | 9 |
+| 8 | S1 Volume | 6 |
+| 9 | S2 Frequency Hz | 12 |
+| 10 | S2 Decay ms | 10 |
+| 11 | S2 Volume | 7 |
+| 12 | Brightness | 8 |
+| 13 | HB Stereo width ms | 13 |
+| 14 | HB Master volume | 3 |
+| 15 | Heartbeat solo | 4 |
 
 S1 and S2 are interleaved by SOUND rather than by parameter: frequency, decay and
 volume for the first beat, then the same three for the second. Today the six are
@@ -206,42 +264,42 @@ visiting three places.
 
 | new | control | from |
 |---|---|---|
-| 15 | Breaths per minute | 53, no longer rewriting anything |
-| 16 | Breath rate mode | NEW |
-| 17 | Inhale | 16 |
-| 18 | Top pause | 17 |
-| 19 | Exhale | 18 |
-| 20 | Bottom pause | 19 |
-| 21 | Inhale Frequency Hz | 20 |
-| 22 | Exhale Frequency Hz | 21 |
-| 23 | Inhale Fade In | 23 |
-| 24 | Inhale Fade Out | 24 |
-| 25 | Exhale Fade In | 25 |
-| 26 | Exhale Fade Out | 26 |
-| 27 | Fade Mode | 27 |
-| 28 | Breath High-pass Hz | 22 |
-| 29 | Breath Post-filter Hz | 39 |
-| 30 | Breath Post-filter Q | 40 |
-| 31 | Sigh interval | 60 |
-| 32 | Sigh depth multiplier | 61 |
-| 33 | Breath Stereo width | 28 |
-| 34 | Breath Volume | 14 |
-| 35 | Breath Solo | 15 |
+| 16 | Breaths per minute | 53, no longer rewriting anything |
+| 17 | Breath rate mode | NEW |
+| 18 | Inhale | 16 |
+| 19 | Top pause | 17 |
+| 20 | Exhale | 18 |
+| 21 | Bottom pause | 19 |
+| 22 | Inhale Frequency Hz | 20 |
+| 23 | Exhale Frequency Hz | 21 |
+| 24 | Inhale Fade In | 23 |
+| 25 | Inhale Fade Out | 24 |
+| 26 | Exhale Fade In | 25 |
+| 27 | Exhale Fade Out | 26 |
+| 28 | Fade Mode | 27 |
+| 29 | Breath High-pass Hz | 22 |
+| 30 | Breath Post-filter Hz | 39 |
+| 31 | Breath Post-filter Q | 40 |
+| 32 | Sigh interval | 60 |
+| 33 | Sigh depth multiplier | 61 |
+| 34 | Breath Stereo width | 28 |
+| 35 | Breath Volume | 14 |
+| 36 | Breath Solo | 15 |
 
 ### Bloodflow
 
 | new | control | from |
 |---|---|---|
-| 36 | Bloodflow offset | NEW |
-| 37 | Bloodflow offset unit | NEW |
-| 38 | Bloodflow Attack (proportion of cycle) | 34 |
-| 39 | Bloodflow Decay (proportion of cycle) | 35 |
-| 40 | Bloodflow Dicrotic Level | 32 |
-| 41 | Bloodflow Filter Hz | 31 |
-| 42 | Bloodflow Resonance | 33 |
-| 43 | Bloodflow Stereo width | 36 |
-| 44 | Bloodflow Volume | 29 |
-| 45 | Bloodflow Solo | 30 |
+| 37 | Bloodflow offset | NEW |
+| 38 | Bloodflow offset unit | NEW |
+| 39 | Bloodflow Attack (proportion of cycle) | 34 |
+| 40 | Bloodflow Decay (proportion of cycle) | 35 |
+| 41 | Bloodflow Dicrotic Level | 32 |
+| 42 | Bloodflow Filter Hz | 31 |
+| 43 | Bloodflow Resonance | 33 |
+| 44 | Bloodflow Stereo width | 36 |
+| 45 | Bloodflow Volume | 29 |
+| 46 | Bloodflow Solo | 30 |
 
 Bloodflow has no rate of its own, so the offset takes the rate's place at the head
 of the group: it is the control that says how this layer sits in time.
@@ -250,40 +308,40 @@ of the group: it is the control that says how this layer sits in time.
 
 | new | control | from |
 |---|---|---|
-| 46 | Master stereo flip | 2 |
-| 47 | Start delay | 41 |
-| 48 | HB: Play for | 42 |
-| 49 | HB: Rest for | 43 |
-| 50 | Breath: Play for | 44 |
-| 51 | Breath: Rest for | 45 |
-| 52 | Bloodflow: Play for | 46 |
-| 53 | Bloodflow: Rest for | 47 |
+| 47 | Master stereo flip | 2 |
+| 48 | Start delay | 41 |
+| 49 | HB: Play for | 42 |
+| 50 | HB: Rest for | 43 |
+| 51 | Breath: Play for | 44 |
+| 52 | Breath: Rest for | 45 |
+| 53 | Bloodflow: Play for | 46 |
+| 54 | Bloodflow: Rest for | 47 |
 
 ### Drift
 
 | new | control | from |
 |---|---|---|
-| 54 | Drift target | 54 |
-| 55 | Drift up amount | 55 |
-| 56 | Drift down amount | 56 |
-| 57 | Drift period | 57 |
-| 58 | Drift period unit | NEW |
-| 59 | Drift shape | 58 |
-| 60 | Drift play for | NEW |
-| 61 | Drift rest for | NEW |
+| 55 | Drift target | 54 |
+| 56 | Drift up amount | 55 |
+| 57 | Drift down amount | 56 |
+| 58 | Drift period | 57 |
+| 59 | Drift period unit | NEW |
+| 60 | Drift shape | 58 |
+| 61 | Drift play for | NEW |
+| 62 | Drift rest for | NEW |
 
 ### Ramp
 
 | new | control | from |
 |---|---|---|
-| 62 | Ramp target | 48 |
-| 63 | Ramp by | 49 |
-| 64 | Ramp time unit | NEW |
-| 65 | Ramp duration | 50 |
-| 66 | Ramp play for | NEW |
-| 67 | Ramp rest for | NEW |
-| 68 | Ramp engage | 51 |
-| 69 | Ramp start delay | 52 |
+| 63 | Ramp target | 48 |
+| 64 | Ramp by | 49 |
+| 65 | Ramp time unit | NEW |
+| 66 | Ramp duration | 50 |
+| 67 | Ramp play for | NEW |
+| 68 | Ramp rest for | NEW |
+| 69 | Ramp engage | 51 |
+| 70 | Ramp start delay | 52 |
 
 **Sliders 37 and 38 were a hole and are not any more** — the numbering is
 contiguous 1..69 after this.
@@ -323,6 +381,14 @@ specifically.
 For the seven instances NOT in host mode, `Heart rate mode` takes its declared
 default of BPM (0) and the value is already in BPM. Nothing to convert.
 
+**`Systole unit`, for the two host-mode instances.** `scattered.rpp` gets
+**Beats**, which preserves its 0.14 exactly. `womb-and-baby...` gets
+**Milliseconds**, which is the one place in this whole migration where a stored
+value changes what it SOUNDS like — from a heartbeat with no second sound to 180
+ms, which is what the number always meant. Flagged in *Open* below and not to be
+done without a yes. The other seven instances take the declared default of
+Milliseconds, which is already what they mean.
+
 **The `Breaths per minute` change needs no value migration.** Every instance's four
 durations already sum to what its BPM asks for (the table above), so the stored
 numbers are already consistent with the new reading. This is luck, and it is worth
@@ -352,6 +418,8 @@ existing entry may move.
   control whose label changed.
 - **Range-check every migrated value**, separating "was already out of range" from
   "is out of range now".
+- **Assert `systole_samples < cycle_len`** in the simulation, across every mode
+  and both units, so the S2-never-fires case cannot come back.
 - **Fix `CLAUDE.md`'s "R20/R21 built everywhere" claim** in the same commit.
 
 ## Open, and needing Rozaya rather than me
@@ -362,8 +430,12 @@ existing entry may move.
    recommendation is to ship all five anyway — an unused option costs nothing, and
    a missing one makes this plugin the odd one out again, which is what we are
    fixing.
-2. **`Systole` reads "ms / beats in Host x".** With the heart owning its own mode
-   this still works, but it is the same implicit-unit shape the Morpher just
-   replaced with an explicit control. Left alone here on purpose — it is not what
-   this job is for, and it should be a suite-wide decision about durations rather
-   than a Womb-only one.
+2. **The one place this migration CHANGES A SOUND, and it needs a yes.**
+   `womb-and-baby-heartbeats-with-bloodflow.RPP` holds `Systole = 180`, plainly
+   meant as 180 ms, in an instance that is in host mode where the plugin reads it
+   as 180 BEATS. The recommendation is to migrate it as **180 with unit =
+   Milliseconds**, which repairs the intent and makes S2 sound again. The
+   alternative — unit = Beats, preserving today's behaviour exactly — preserves a
+   heartbeat with no second sound. Rozaya has never opened the project, so there
+   is no sound anyone is attached to. **Named here rather than done quietly,
+   because it is a stored value changing meaning and that is never silent.**
