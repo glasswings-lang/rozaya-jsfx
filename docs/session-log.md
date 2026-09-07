@@ -155,7 +155,17 @@ whatever was typed, forever.
 says 35 BPM and means two beats per heartbeat. Carrying it across as BPM would have
 been wrong twice over. That is why the R20 conversion takes the beat count.
 
-**Nothing has been heard.**
+**HEARD AND GOOD, same day.** Rozaya tested it and reported: *"Everything else,
+though, passes. :)"* That covers the 70-slider reorder across 9 projects, both
+rate pairs, Systole's own unit and the six drift/ramp controls -- confirmed on real
+work rather than by the 1,080-check verifier, which is the status that counts.
+
+**One usability finding, and it is not a fault:** *"The every n beats vs. n per
+beat distinction is confusing in practice when it comes to breath segments and
+breaths per minute."* Recorded as the next Womb job rather than fixed on the spot.
+The suspicion worth testing first is that `Breaths per minute` has its UNIT BAKED
+INTO ITS NAME while its mode can say beats -- so the name and the mode contradict
+each other, which the heart's plain `Heart rate` does not do.
 
 ### Then it WAS heard, and the bloodflow offset did nothing
 

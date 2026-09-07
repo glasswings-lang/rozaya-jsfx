@@ -221,10 +221,14 @@ migration** — Rozaya opened a finished project the same day and it sounded exa
 as it had, which is the 122 instances confirmed on real work rather than by a
 checker.
 
-**NOT heard:** the whole 2026-09-06 Womb rebuild — two rate pairs, Systole's own
-unit, the bloodflow offset, the six drift/ramp controls and a 70-slider reorder
-across 9 projects. Nothing there should sound different and that rests on a
-1,080-check verifier, not on ears. Also unheard: everything from the 2026-09-06 drift/ramp sweep (six plugins), the
+**The 2026-09-06 Womb rebuild is HEARD AND GOOD** — the 70-slider reorder across
+9 projects, two rate pairs, Systole's own unit, the bloodflow offset and the six
+drift/ramp controls. Rozaya: *"Everything else, though, passes. :)"* The one thing
+she flagged is a USABILITY point, not a fault: **`Every N beats` vs `N per beat` is
+confusing in practice on the BREATH**, where it meets the four segments and
+`Breaths per minute`. Open, and the next Womb job.
+
+**NOT heard:** everything from the 2026-09-06 drift/ramp sweep (six plugins), the
 `N per beat` reciprocal fix in all four plugins it touched, the Tremolo Start
 delay fix, and the range widenings.
 **Nothing there can regress silently** — every new control defaults to off or to
