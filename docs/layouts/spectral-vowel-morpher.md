@@ -314,3 +314,108 @@ when you asked for the 1st. Moving the window into source bins -- which the per-
 work required anyway, since every layer reads that one spectrum at its own scale --
 corrects it. **Found by reading, NOT confirmed by ear**, and it changes the sound of
 any project using Overtone and Pitch together. Documented on the plugin page.
+
+---
+
+# Second layout change, 2026-09-06 — the two unit controls
+
+Authored before anything was touched, per the standing rule. This is the LAST thing
+the drift/ramp sweep owes the Morpher; every other control it was owed is already in
+the file. One migration, not the first of several.
+
+## What changes
+
+The Morpher is the only plugin left carrying Drift and Ramp without the two controls
+that say what unit their times are counted in. It gains both, in the canonical
+positions the rest of the suite uses:
+
+- **`Drift period unit`** `{Cycles, Seconds, Beats}` — directly after `Drift period`.
+- **`Ramp time unit`** `{Cycles, Seconds, Minutes, Beats}` — directly after `Ramp by`
+  and *before* `Ramp duration`, which is where every finished plugin puts it.
+
+Nothing else moves. Eleven controls shift up to make room.
+
+## Defaults, and why they are not the suite's usual ones
+
+**`Drift period unit` declares SECONDS (index 1), not Cycles.** Two independent
+reasons, and they agree:
+
+1. **Every existing instance means seconds.** Measured, not assumed: all **122**
+   instances across 38 projects are on Rate Mode = Seconds, and the drift period has
+   read as seconds in every one of them since the control existed. A declared default
+   is a live value for every instance that never touched the control, so putting
+   Cycles at index 0 would silently reinterpret all 122.
+2. **A Morpher can have no cycle at all.** Everywhere else in the suite the cycle is
+   unconditional — a breath, a heartbeat, a bubble. Here the cycle is one Auto-morph
+   traversal, and `Auto-morph` defaults to Off, which also hides `Auto-morph time`
+   entirely. Defaulting to a unit that counts something a fresh instance does not have
+   would mean drift silently never advancing the first time it is switched on.
+
+This is the same principled-exception shape Veil already has, and the option list
+stays identical to the rest of the suite so nothing learned elsewhere goes wrong here.
+
+**`Ramp time unit` declares MINUTES (index 2)**, which is both the suite default and
+exactly what `Ramp duration (minutes)` already meant. No instance changes meaning.
+
+## What the unit controls replace
+
+Drift period currently reads as seconds, or as beats when Rate Mode is one of the two
+host modes — an implicit unit change with no control of its own, and the number was
+rewritten on the mode flip to keep the length of time the same. That coupling goes:
+**Drift period now reads whatever its own unit control says, and Rate Mode no longer
+touches it.** Safe to remove outright, because no instance in the library has ever
+been in a host mode — all 122 are on Seconds, so the conversion has never once fired.
+
+The transport durations (`Start delay`, `Play for`, `Rest for`) keep the old implicit
+behaviour. They have not been given explicit units anywhere in the suite yet, and
+changing them is not this job.
+
+## The permutation
+
+Old 1–38 keep their places. `Drift period unit` is new at 39; `Ramp time unit` is new
+at 46.
+
+| old | new | control |
+|---|---|---|
+| 1–38 | 1–38 | unchanged |
+| — | **39** | **Drift period unit** (new) |
+| 39 | 40 | Drift shape |
+| 40 | 41 | Drift play for |
+| 41 | 42 | Drift rest for |
+| 42 | 43 | Drift restart |
+| 43 | 44 | Ramp target |
+| 44 | 45 | Ramp by |
+| — | **46** | **Ramp time unit** (new) |
+| 45 | 47 | Ramp duration |
+| 46 | 48 | Ramp play for |
+| 47 | 49 | Ramp rest for |
+| 48 | 50 | Ramp engage |
+| 49 | 51 | Ramp start delay |
+
+49 sliders become 51.
+
+## The blob
+
+`@serialize` gains no new bank — both new controls are plain global sliders, not
+per-target values. The magic is bumped anyway (`7700010` → `7700011`), because a
+slider layout changed and the blob's leading float is the only independent witness of
+which layout an instance was saved on. That is what made the Melody Phase insert
+repairable without guessing.
+
+## The bug found next door
+
+`auto_time` — the Auto-morph period in seconds — handles Rate Mode 0, 1 and 2
+explicitly and lets **both** host modes fall through to the `Every N beats` formula.
+Mode 4 is `N per beat`, its reciprocal, so it ran inverted: at 120 BPM, "8 per beat"
+gave one morph every 8 beats instead of 8 per beat — 64x too slow.
+
+This is the identical defect fixed in Tremolo and the Sweeping Filter (`c4c9b31`) and
+in Resonance Bank (`47da263`); the Morpher was missed by that sweep. It is latent —
+no instance is in either host mode — but it is **load-bearing for this job**, because
+`Cycles` in both new unit controls means one Auto-morph cycle and would have inherited
+the wrong number. Fixed in its own commit, landing first, so it stays separately
+hearable.
+
+Shepard Tone also has no `mode == 4` branch and is **correct** — its chain returns a
+nominal rate against 60 BPM, where one beat is one second, so `N per beat` and `Hz`
+genuinely coincide and the fallback is right. Checked by reading, not by counting.
