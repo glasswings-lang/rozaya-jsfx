@@ -102,8 +102,16 @@ other — so nothing here forces you onto a note grid.
 
 **Host ratio** — *gone.* It was retired in 2026-09-02 and removed outright in the 2026-09-07 rebuild, along with every other slider that no longer had a job. With Rate Value in beats, *every 4 beats* is typing 4.
 
-**Rate Value (Drift only)** `0.001-1000, default 60`
-The global base tremolo rate, in the units set by Rate Mode. Only visible in Drift mode. Individual voice drift values are added to this.
+**Rate Value — all voices** `0.001-1000, default 60`
+The shared base tremolo rate, in the units set by Rate Mode. Each voice's own
+Drift / Rate is added to it. **Only visible in Drift mode** — in Independent
+mode there is no shared rate, because each voice's Drift / Rate *is* its rate.
+
+*The label carries its full unit list and says "all voices" on purpose.* The
+2026-09-07 rebuild briefly shortened it to a bare `Rate Value`, and the first
+thing that tripped Rozaya up was tabbing onto a rate control that named neither
+its unit nor its scope. Restored the same day, to the form four other plugins
+in the suite already use.
 
 **Binaural Beat Hz (L/R offset)** `0-100 Hz, default 4`
 The frequency difference between each voice's left and right oscillators. At 4 Hz, the left oscillator runs at the voice's base pitch and the right runs 4 Hz higher, creating a 4 Hz binaural beat when heard on headphones. This value is the same for all voices simultaneously.
@@ -180,7 +188,10 @@ one note step**, so `+100` lands on the next note up — every pitch is reachabl
 whichever note you picked. This is the control for detuning voices against each
 other: two voices on the same Note with one a few cents off will beat slowly.
 
-**Drift / Rate** `-1000 to +1000, default 0`
+**Drift / Rate — offset in Drift mode, this voice's own rate in Independent** `-1000 to +1000, default 0`
+
+*The label spells both meanings out because the control genuinely has two, and
+a control whose meaning is gated by a switch has to say so on itself.*
 
 **In Drift mode** this is an *offset* added to Rate Value, never a value on its
 own. 0 means this voice runs at exactly the base — not stopped. Whether a

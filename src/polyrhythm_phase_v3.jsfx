@@ -27,7 +27,7 @@ slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
 // `Every N beats` means beats per cycle; `N per beat` is its reciprocal. Both
 // are needed -- keeping only the slow half made eight cycles per beat into
 // typing 0.125, which is the arithmetic this suite exists to remove.
-slider2:60<0.001,1000,0.001>Rate Value
+slider2:60<0.001,1000,0.001>Rate Value — all voices (BPM / sec / Hz / beats per cycle / per beat)
 slider3:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider4:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider5:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
@@ -97,7 +97,7 @@ slider16:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,
 slider17:0<-100,100,1>Fine tune (cents)
 // Unit follows Rate Mode. In Drift mode this is an OFFSET from Rate Value; in
 // Independent mode it IS the voice's rate.
-slider18:0<-1000,1000,0.001>Drift / Rate
+slider18:0<-1000,1000,0.001>Drift / Rate — offset in Drift mode, this voice's own rate in Independent
 // Phase Offset unit follows Rate Mode: BPM = beats, Seconds = seconds,
 // Hz = cycles. Values wrap freely -- there is no clamping.
 slider19:0<-1000,1000,0.001>Phase Offset

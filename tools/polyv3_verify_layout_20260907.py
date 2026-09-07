@@ -55,13 +55,15 @@ NEW_MAGIC = 2200000 + N_TARGETS
 # Controls whose NAME changed. Written by reading the two files side by side.
 # new name -> old name
 ALIAS = {
-    'Rate Value': 'Rate Value (Drift only: BPM / sec / Hz / beats per cycle)',
+    'Rate Value — all voices (BPM / sec / Hz / beats per cycle / per beat)':
+        'Rate Value (Drift only: BPM / sec / Hz / beats per cycle)',
     'Drift period': 'Drift period (cycles)',
     'Ramp duration (in ramp time units)': 'Ramp duration (minutes)',
     'Ramp start delay (in ramp time units)': 'Ramp start delay (minutes)',
     'Note': 'V1 Note',
     'Fine tune (cents)': 'V1 Fine tune (cents)',
-    'Drift / Rate': 'V1 Drift / Rate',
+    "Drift / Rate — offset in Drift mode, this voice's own rate in Independent":
+        'V1 Drift / Rate',
     'Phase Offset': 'V1 Phase Offset',
     'Gain dB': 'V1 Gain dB',
     'Active (Off = no CPU cost)': 'V1 Active (Off = no CPU cost)',
