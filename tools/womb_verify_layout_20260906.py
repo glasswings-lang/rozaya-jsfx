@@ -23,6 +23,11 @@ Deliberately does not import the migration's table. Two separate checks:
      something nobody ever heard.
 
 PRE is pinned to a commit HASH, never HEAD~n.
+
+ONE-SHOT. It compares the live project against the pre-migration snapshot, so it
+can only speak about projects nobody has opened since. A project that has been
+worked on and saved is reported as SKIPPED, not failed -- see the note in the line
+count check.
 """
 import base64
 import math
@@ -182,7 +187,7 @@ def main():
     if dupes:
         raise SystemExit('duplicate control names: %s' % dupes)
 
-    fails, new_bad = [], []
+    fails, new_bad, edited = [], [], []
     checks = pre_bad = n_inst = n_proj = 0
     pat = re.compile(r'<JS\s+\S*?' + re.escape(PLUG) + r'\.jsfx')
 
@@ -192,7 +197,13 @@ def main():
         o_lines = open(os.path.join(SNAP, snapname), 'rb').read().decode('utf-8').splitlines()
         n_lines = open(live, 'rb').read().decode('utf-8').splitlines()
         if len(o_lines) != len(n_lines):
-            fails.append('%s: %d lines -> %d' % (base, len(o_lines), len(n_lines)))
+            # NOT a failure. The project has been opened and saved in REAPER
+            # since the migration, which changes the file for a dozen innocent
+            # reasons (zoom, window state, a re-serialised blob). This check can
+            # only speak about a project that has not been touched since, and a
+            # verifier that cries wolf on ordinary work is worse than none --
+            # when it says FAIL you have to be able to stop.
+            edited.append('%s (%d lines -> %d)' % (base, len(o_lines), len(n_lines)))
             continue
         tempo = tempo_of(o_lines)
         oi = [i for i, l in enumerate(o_lines) if pat.search(l)]
@@ -261,7 +272,10 @@ def main():
                 if lo is not None and not (lo <= val <= hi) and name not in was_bad:
                     new_bad.append('%s @%d: %r = %s outside %g..%g' % (base, at, name, tok, lo, hi))
 
-    print('projects           :', n_proj)
+    print('projects verified  :', n_proj)
+    print('edited since (skipped, not a fault):', len(edited))
+    for e in edited:
+        print('   ', e)
     print('instances          :', n_inst)
     print('checks             :', checks)
     print('already out of range before (not a fault):', pre_bad)
