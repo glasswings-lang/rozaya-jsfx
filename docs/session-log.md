@@ -36,6 +36,7 @@ Newest entries are the most likely to still be accurate.
 
 | If you are working on | Read |
 |---|---|
+| Womb's rebuild, the two rate pairs, a wrong finding corrected | 2026-09-06 (later) |
 | The Morpher's unit controls, appending vs reordering, the N-per-beat reciprocal | 2026-09-06 |
 | Polyrhythm Phase, pan modes, Host x as beats-per-cycle | 2026-09-02 |
 | The consistency sweep's origin, Womb's tempo sync, the R-rules | 2026-08-30/31 |
@@ -58,6 +59,103 @@ Newest entries are the most likely to still be accurate.
 | Womb v2 — RSA, bidirectional HRV | Womb v2 |
 | Why per-plugin drift replaced the Wobble Modulator | Per-plugin Drift sweep |
 | Play/Rest gating across the suite | v2.1 sweep |
+
+---
+
+## 2026-09-06 (later) — Womb rebuilt: two rate pairs, and a wrong finding corrected on the way
+
+**Womb is done.** 64 sliders to 70, its whole authored layout in ONE migration:
+the R20/R21 rate block it never had, the six drift/ramp controls it was owed, a
+unit for Systole, an offset for bloodflow, and five stranded controls brought back
+to their groups. 9 instances across 9 projects.
+
+**Rozaya asked for Womb *because she had concerns about it*, and the concerns were
+the design.** That is the reusable part. Asking what was bothering her before
+authoring anything produced four things I would have got wrong:
+
+1. **The one-entry `Host sync target` picker was a STUB, not debris** — *"we were
+   going to put in breath and some other things to go alongside it."* The
+   retire-a-leftover rule nearly ate a plan for the second time in this plugin.
+2. **Her worry about collapsing controls was pointed at the right risk.** *"if I
+   set breath values to four and zero and eight and zero and switch everything to
+   beats, I right now can trust that it goes in for four beats, out for eight
+   beats."* `scattered.rpp` is set exactly that way. It became the acceptance
+   test, asserted at four tempos.
+3. **Bloodflow had no control over its rhythm relative to the heart** — a June
+   design note had parked that as *locked, open if someone wants decoupling for a
+   real reason*. She is the someone.
+4. **The unit vocabulary for it came from her unprompted** — *"bloodflow in n
+   beats/every n seconds/ whatever"* — which is the suite's own vocabulary.
+
+**And she corrected a name.** I called Systole's fourth unit `Cycles`; *"cycles in
+fractions? I thought cycles were cycles lol"*. Right: Cycles COUNTS whole cycles
+everywhere else in the suite, and a systole is always a fraction of one, so the
+same word would have meant two things inside one plugin — the exact inconsistency
+this sweep exists to remove. It is `% of heartbeat`, which is the idiom already
+next door in Bloodflow Attack and Decay.
+
+### The wrong finding, and what it cost
+
+I told her `womb-and-baby-heartbeats-with-bloodflow.RPP` was BROKEN — a Systole of
+180 meant as milliseconds being read as 180 beats, giving a heartbeat with no
+second sound. **She authorised a repair on the strength of it. It was wrong.**
+
+The stored value was read correctly and the consuming code was read correctly. The
+LOAD path was not read at all. That project carries the oldest blob, which triggers
+a seeding block that converts on open: 180 * (tempo/60) * 0.001 = 0.21 beats = 180
+ms at its tempo. S2 fires. The project was always fine.
+
+**The rule that should have caught it is already written down** — *a plausible
+mechanism is not a finding*, and *what else produces exactly this symptom?* The
+arithmetic was right and the question was wrong, which is the same shape as that
+morning's Start delay case. **Two in one day is a pattern, not bad luck: I keep
+verifying the code that USES a value and not the code that SETS it.**
+
+**What checking it bought, which is the argument for checking.** Six of the nine
+instances are on the oldest blob; one is current; two are unversioned and fall
+through to defaults entirely. So the seeding path was load-bearing and my plan had
+it being deleted. **Deleting it is exactly how this job would have created the
+breakage I thought I was fixing.** It is removed from the plugin and its arithmetic
+moved into the migration, where it happens once and can be inspected.
+
+### The forbidden pattern that was still in here
+
+`Breaths per minute` REWROTE the four breath segment sliders and called
+`slider_automate` on each — a control whose only job is to overwrite other
+controls, which R20 forbids outright. It never misfired for a reason worth
+keeping: in all nine instances the four durations already summed to exactly what
+the BPM asked for, so the ratio came out 1.0. **Correct by coincidence.** It was
+also HIDDEN in host mode while still able to write, which is the 2026-08-23 bug
+shape verbatim, and one project holds a hidden non-zero value.
+
+It is now a plain rate that scales the ADVANCE at DSP time. The four sliders keep
+whatever was typed, forever.
+
+### What was actually checked
+
+- **Simulated, not reasoned about.** Both rate chains in all five modes at five
+  tempos, with the two host modes asserted to be RECIPROCALS of each other (the
+  R21 defect that shipped inverted elsewhere); the breath cycle with the rate off
+  and set; every Systole unit; the bloodflow offset including wrap and negatives.
+  Zero mismatches. **Rozaya's 4/0/8/0 at `Every 12 beats` gives four beats in and
+  eight out at 60, 70, 120 and 174 BPM.**
+- **The systole clamp asserted across 400 combinations** of unit, value, tempo and
+  heart rate: nothing reaches the cycle wrap, so the S2-never-fires state is now
+  unreachable rather than merely unvisited.
+- **The migration verified BY BEHAVIOUR, not by position.** The verifier computes
+  what the plugin DOES — heart BPM, systole seconds, four segment lengths — under
+  the old code and the new, and asserts they agree. Model against model, which is
+  the only check that would notice a permutation that is perfectly self-consistent
+  and still changes the sound. 1,080 checks, 0 failures, 0 newly out of range.
+- **The old model includes the load-time seeding**, because that is what the
+  plugin really did on open. Comparing against the stored numbers would have been
+  comparing against something nobody ever heard.
+
+**The stored Heart rate in host mode was a READOUT, not a setting** — `scattered`
+says 35 BPM and means two beats per heartbeat. Carrying it across as BPM would have
+been wrong twice over. That is why the R20 conversion takes the beat count.
+
+**Nothing has been heard.**
 
 ---
 

@@ -33,7 +33,7 @@ The audio architecture (heartbeat sound generation, breath filters, bloodflow en
 | Audio sliders (1-47) | unchanged | unchanged |
 | Ramp sliders | 48-51 (multiplier / duration / engage / start delay) | 48-52 (target / amount / duration / engage / start delay — note: amount is NEW) |
 
-Migration from v2: the audio-shaping sliders 1-47 keep their meaning, so the heart sound, breath sound, bloodflow, and per-layer gates all carry over unchanged. Everything from slider 48 onward needs to be re-entered — v3 changed the layout substantially (Ramp added an amount slider and switched to signed-delta semantics; BPM rescale shifted from slider 52 to slider 53; the drift block is now nested-selector at sliders 54-58; RSA moved to slider 59; sighs are new at sliders 60-61).
+Migration from v2: the audio-shaping sliders 1-47 keep their meaning, so the heart sound, breath sound, bloodflow, and per-layer gates all carry over unchanged. Everything from slider 48 onward needs to be re-entered — v3 changed the layout substantially (Ramp added an amount slider and switched to signed-delta semantics; BPM rescale shifted from slider 52 to slider 53; the drift block is now nested-selector; RSA and the sighs moved). **Those slider numbers describe v3 as it shipped, not as it is now** -- the 2026-09-06 layout renumbered nearly everything; see the section at the end of this page.
 
 ---
 
@@ -41,7 +41,7 @@ Migration from v2: the audio-shaping sliders 1-47 keep their meaning, so the hea
 
 Identical to v2 for the three audio layers (see [Womb Sound Generator v2 → Signal Architecture](#womb-sound-generator-v2) for the full description). The change is in **how the drift modulations are computed and applied**:
 
-Each of the 10 drift targets has its own phase counter advancing per sample. The phase advance scales with Ramp so all drifts slow together when Ramp engages. Per-target up amount, down amount, period, and shape are stored in a per-instance memory bank — the slider 55-57 values you see at any moment reflect whichever target is currently selected.
+Each of the 10 drift targets has its own phase counter advancing per sample. The phase advance scales with Ramp so all drifts slow together when Ramp engages. Per-target up amount, down amount, period, and shape are stored in a per-instance memory bank — the slider 56-58 values you see at any moment reflect whichever target is currently selected.
 
 Target indices and units:
 
@@ -68,9 +68,9 @@ Each drift offset is added to the target's baseline slider value per sample. For
 
 Sliders 1-47: identical to [Womb Sound Generator v2](#womb-sound-generator-v2). See that section for full descriptions of BPM, the three layer Volume / Solo sliders, heartbeat sound parameters (Systole ms, S1/S2 Frequency Hz, Decay ms, Brightness, Stereo Width ms), breath sound parameters (Inhale/Top Pause/Exhale/Bottom Pause durations, Frequencies, Fade In/Out, Stereo Width, Post-filter), bloodflow parameters (Filter Hz, Dicrotic Level, Resonance, Attack, Decay, Stereo Width), Start Delay, and per-layer Play/Rest gates.
 
-Sliders 48-52 are the Ramp block, sliders 54-58 are the Drift block, slider 53 is BPM rescale, slider 59 is Heart-with-breath / RSA depth, sliders 60-61 are the Sigh mechanism — all described below.
+**Layout as of 2026-09-06** (see `docs/layouts/womb.md` for the full authored order): sliders 1-15 are the heartbeat, 16-36 the breath, 37-46 bloodflow, 47-54 master and transport, 55-62 the Drift block, 63-70 the Ramp block. Heart-with-breath / RSA depth is slider 3, beside the heart rate it modifies; the Sigh pair is 32-33, inside the breath group; Breaths per minute is 16, at the head of the breath group with its own rate mode beside it.
 
-### Drift target selector (slider 54)
+### Drift target selector (slider 55)
 
 `Drift target` — pick which parameter the drift sliders 55-58 are currently configuring. Options: **Heart rate**, **S1-S2 gap**, **Inhale**, **Top pause**, **Exhale**, **Bottom pause**, **RSA depth**, **Breaths/min**, **Inhale Freq**, **Exhale Freq** (last three v2.14).
 
@@ -80,21 +80,21 @@ Switching the selector saves the current values of sliders 55-58 to the previous
 
 **Breaths/min (aggregate target).** Unlike the four individual segment targets, this one scales **all four breath segments in lockstep**, preserving the inhale:exhale ratio — it wanders (Drift) or winds (Ramp) the *whole breath rate* as one felt control, in breaths per minute (signed: negative = slower). It composes with the per-segment targets, so you can, e.g., slow the overall breath rate while independently drifting just the top pause. It's the live-modulation cousin of the one-way "Breaths per minute" setup slider (53), which rewrites the four duration sliders once and then reads 0 again — use slider 53 to dial a starting rate, use this target to move it over time.
 
-### Drift up amount (slider 55)
+### Drift up amount (slider 56)
 
 `Drift up amount (units match target)` — peak amplitude the current target wanders ABOVE its baseline. Range 0-2000 step 0.1 (widened in v2.14 to reach the Hz-scale frequency targets); the unit depends on the target (BPM for Heart rate and RSA depth, ms for S1-S2 gap, seconds for breath segments, breaths/min for Breaths/min, Hz for Inhale/Exhale Freq). 0 disables the upward swing.
 
-### Drift down amount (slider 56)
+### Drift down amount (slider 57)
 
 `Drift down amount (units match target)` — peak amplitude the current target wanders BELOW its baseline. Same range and unit-by-target as Up. Setting Up and Down to different values gives biological-feel asymmetry around the baseline. Setting both to 0 disables drift for this target entirely.
 
-### Drift period (slider 57)
+### Drift period (slider 58)
 
 `Drift period (heartbeats or breath cycles)` — how many parent-rhythm cycles one full drift wave takes. Range 1-1000 step 1. The unit auto-matches the target: heartbeats for Heart rate and S1-S2 gap, breath cycles for the four breath segments and RSA depth.
 
 Period 1 with Random shape gives beat-to-beat (or breath-to-breath) jitter — each cycle gets a fresh random value within the up/down range.
 
-### Drift shape (slider 58)
+### Drift shape (slider 60)
 
 `Drift shape` — wave shape for the drift modulation. Options:
 
@@ -102,13 +102,13 @@ Period 1 with Random shape gives beat-to-beat (or breath-to-breath) jitter — e
 - **Triangle** — linear ramps with turnaround points at the peaks.
 - **Random** — value noise that interpolates smoothly between random targets at each period boundary. Random targets are independent per-target (each of the 10 wander-targets has its own random state).
 
-### Heart with breath (slider 59)
+### Heart with breath (slider 3)
 
 `Heart with breath (BPM peak-to-peak)` — baseline RSA coupling depth. Identical semantics to v2's slider 56 (moved to slider 59 in v3 because the drift block needed those slots). 0 = no RSA. A value of 6 means HR climbs ~3 above baseline at the peak (top of inhale) and descends ~3 below at the trough (bottom of exhale).
 
 When drift target 6 (RSA depth) has nonzero up/down values, this baseline depth wanders too — the up/down amplitudes are in the same BPM peak-to-peak units.
 
-### Ramp (sliders 48-52)
+### Ramp (sliders 63-70)
 
 Ramp in v3 uses the nested-selector pattern (same shape as Drift) and all five Ramp sliders live in one place. Pick a target on slider 48, set the amount on slider 49, set the duration and engage. The targets and their natural units:
 
@@ -184,7 +184,7 @@ This is a deliberate departure from v2. If the v2 "whole organism wind-down" fee
 
 ---
 
-### Sigh interval (slider 60)
+### Sigh interval (slider 32)
 
 `Sigh interval (minutes, 0=off)` — average minutes between sighs. Range 0-30 step 0.1. 0 disables sighs entirely (no event ever fires).
 
@@ -192,7 +192,7 @@ When the timer reaches the configured interval, the NEXT breath transition (stat
 
 The timer scales with Ramp — so when Ramp slows the whole womb down, sigh interval slows along with it. (Specifically: every sample, `sigh_time_since_last += (1/srate) * speed_scale_current`.)
 
-### Sigh depth multiplier (slider 61)
+### Sigh depth multiplier (slider 33)
 
 `Sigh depth multiplier` — how much longer each segment of the sigh breath is, compared to a normal breath. Range 1.0-3.0 step 0.05. 1.0 = no stretch (effectively disables sighs even with a nonzero interval); 1.5 = sigh breath is 1.5× longer in every segment; 3.0 = 3× longer. Default 1.5.
 
@@ -206,9 +206,9 @@ The timer scales with Ramp — so when Ramp slows the whole womb down, sigh inte
 
 ### Configuring drift across multiple targets
 
-1. Set slider 54 to the target you want to drift first (e.g. Heart rate).
+1. Set slider 55 to the target you want to drift first (e.g. Heart rate).
 2. Set sliders 55-58 (up amount, down amount, period, shape) for THAT target.
-3. Change slider 54 to the next target. Sliders 55-58 will snap to fresh values (defaults for an unconfigured target, or whatever you set previously if you've already touched that target).
+3. Change slider 55 to the next target. Sliders 56-62 will snap to fresh values (defaults for an unconfigured target, or whatever you set previously if you've already touched that target).
 4. Set 55-58 for the new target. The previous target's values are saved automatically.
 5. Repeat for as many targets as you want. They all run in parallel.
 
@@ -228,7 +228,7 @@ Same trick works for S1-S2 gap (beat-to-beat systole length jitter), or for any 
 
 ### RSA depth wander
 
-To make the RSA coupling itself feel alive rather than mechanically constant, set slider 54 to RSA depth (target 6), give it a small up amount (e.g. 2 BPM) and a long period (e.g. 20 breath cycles). The RSA depth slowly wanders over the course of ~20 breaths, deepening and shallowing — matches real physiology where RSA strength rises with relaxation and decreases with tension.
+To make the RSA coupling itself feel alive rather than mechanically constant, set slider 55 to RSA depth (target 6), give it a small up amount (e.g. 2 BPM) and a long period (e.g. 20 breath cycles). The RSA depth slowly wanders over the course of ~20 breaths, deepening and shallowing — matches real physiology where RSA strength rises with relaxation and decreases with tension.
 
 ---
 
@@ -237,7 +237,7 @@ To make the RSA coupling itself feel alive rather than mechanically constant, se
 - **Drift configurations persist across project save/load** via `@serialize`. All 10 targets' configs are written into the project file (about 40 numeric values total — negligible storage). Reopening a project restores every target's drift settings, not just the last-edited one.
 - **`ext_noinit = 1`** at the top of `@init` keeps the drift memory banks alive across transport play, so configured drifts don't reset every time you press the play button.
 - **Drift phases have small random offsets at @init** so the 10 drift waves don't all start at zero crossings in sync — first-listen feel is more organic.
-- **The selector counts as a slider edit** in REAPER's automation sense. If you change target via slider 54, sliders 55-58 will fire `slider_automate` callbacks as their values change. This is intended — it lets the slider state stay accurate for save/restore.
+- **The selector counts as a slider edit** in REAPER's automation sense. If you change target via slider 55, sliders 56-62 will fire `slider_automate` callbacks as their values change. This is intended — it lets the slider state stay accurate for save/restore.
 - **Heart rate drift modulates effective BPM**, which means it interacts with Ramp (multiplied together for the heart's final rate) and with RSA (added together). The display BPM remains your slider 1 value; the drift offset is applied at the audio path layer.
 - **Solo and Volume affect drift output the same way they affect normal output** — drift doesn't bypass any layer mixing.
 
@@ -259,81 +259,90 @@ To make the RSA coupling itself feel alive rather than mechanically constant, se
 ---
 
 
-### Host tempo sync
+### Host tempo sync, and the two rate pairs
 
-**Rate Mode** `Own BPM / Host x` (default Own BPM)
-**Own BPM** is the original behaviour — free-running, project tempo ignored.
-**Host x** hands the timing to the project tempo. Tempo changes apply live.
+**Rewritten 2026-09-06.** What used to be here — one shared `Rate Mode` with two
+options, a `Host sync target` picker with one entry, and a separate
+`Every N beats` value — is gone. The heart and the breath each carry their own
+rate and their own mode now, side by side, which is how the rest of the suite
+works.
 
-Only two entries rather than the four in Melody Phase / Polyrhythm, because this
-plugin only ever had one unit — "Seconds" and "Hz" would be meaningless here.
+**Heart rate** and **Heart rate mode** `BPM / Seconds / Hz / Every N beats /
+N per beat` (default BPM)
+**Breaths per minute** and **Breath rate mode**, the same five (default BPM)
 
-**The whole body follows the tempo**, not just the heart: the heart scales,
-bloodflow is locked to the heart, and the breath cycle is set in beats. One body,
-and the heart and lungs of one body don't disagree about how fast time is passing.
+The mode says what its rate value means. `Every N beats` and `N per beat` are
+reciprocals of each other and both are there on purpose: eight cycles per beat
+should not have to be typed as 0.125.
 
-**Host sync target** `Heart rate` (default Heart rate)
-**Every N beats (Host x)** `0.25 to 64, step 0.01, default 1`
+**Either layer can sync while the other runs free.** That is the point of the
+split. Put the breath on the project tempo and leave the heart on its own BPM, or
+the reverse. The old single switch dragged both, and the one-entry picker could
+never have expressed it.
 
-The numbers live in the plugin's own memory and are saved with your project,
-the same way Drift stores a setting for each of its ten targets behind four
-sliders. One target today; the list grows by adding targets, not controls.
+**The four breath sliders still ARE beats when the breath is synced.** Inhale 4,
+top pause 0, exhale 8, bottom pause 0 with the breath on `Every N beats` = 12 is
+four beats in and eight beats out, at any tempo. That is the behaviour this
+rewrite was tested against.
 
-**The breath is not on this list, and does not need to be** — see below.
+**Breaths per minute no longer rewrites those four sliders.** It used to reach in
+and multiply all four so they added up to the rate you asked for. Now it just
+sets how long the cycle is, and the four divide it in the proportions you typed —
+so your numbers stay exactly as you left them, forever. Set it to 0 and the four
+sliders are the cycle, which is what they have always been.
 
-Two controls, sitting directly under Rate Mode, and they cover both rates. Pick
-the target, set how many project beats one cycle of it takes, move on. Pick the
-other target to set that one — the first keeps running exactly as you left it,
-the same way switching Drift's target doesn't stop the other drifts.
+**Switching a mode no longer converts anything.** The number means what the mode
+beside it says. Every control that used to borrow its unit from the rate mode now
+names its own.
 
-**The breath works differently, and more simply: its four sliders ARE beats in
-Host x.** Inhale 4, top pause 0.5, exhale 8, bottom pause 1 is a breath of 13.5
-beats — four beats in, eight beats out, exactly as written. Nothing to set the
-total with, because the total is the sum, which is the same rule Own BPM has
-always used with seconds.
+### Systole, and its own unit
 
-That is the whole unit change: **seconds when free-running, beats when synced**,
-and the slider names say so. Slow the project from 120 to 30 and that breath
-stretches from 6.75 seconds to 27 — same 4-and-8, more real time each.
+**Systole** is the gap between the lub and the dub, and since 2026-09-06 it has
+**Systole unit** `Milliseconds / Seconds / Beats / % of heartbeat` (default
+Milliseconds) sitting directly after it. It used to read as milliseconds normally
+and beats when synced, with nothing on the control saying so.
 
-**Switching modes converts them for you**, so entering or leaving Host x sounds
-identical: a 4-second inhale at 120 BPM becomes an 8-beat inhale, which is the
-same 4 seconds. The numbers move because their unit moved; the breath does not.
+`% of heartbeat` is the interesting one and is not called `Cycles` on purpose —
+everywhere else in the suite Cycles counts whole cycles, and a systole is always a
+fraction of one. At 30% the gap stays three tenths of the beat however fast the
+heart runs.
 
-**Systole works the same way.** `Systole (ms / beats in Host x)` is the gap
-between the lub and the dub. In Host x it is in beats, so both halves of the
-heartbeat land where you put them: `0.25` puts the dub a quarter-beat after the
-lub, `0.5` exactly halfway to the next beat — and that stays true at any tempo,
-which is the thing a millisecond value can never do. The default 120 ms converts
-to 0.24 beats at 120 BPM, so switching modes changes nothing you can hear.
+| unit | what you get | at 60 BPM | at 120 |
+|---|---|---|---|
+| 120 Milliseconds | a fixed gap | 120 ms | 120 ms |
+| 0.25 Beats | a quarter-beat after the lub, at the project tempo | — | — |
+| 30 % of heartbeat | three tenths of the way to the next beat | 300 ms | 150 ms |
 
-| in beats | what you hear | at 60 BPM | at 120 | at 180 |
-|---|---|---|---|---|
-| 0.125 | an eighth of a beat after the lub | 125 ms | 62 ms | 42 ms |
-| 0.25 | a quarter-beat after | 250 ms | 125 ms | 83 ms |
-| 0.5 | halfway to the next beat | 500 ms | 250 ms | 167 ms |
+The physiological note still stands: a real systole stays roughly constant as
+heart rate changes rather than scaling with it, so milliseconds is the anatomical
+choice and the other three are musical ones.
 
-Note the physiological caveat: a real systole stays roughly constant as heart
-rate changes rather than scaling with it, so a beats value is the *musical*
-choice, not the anatomical one. Own BPM keeps milliseconds for when you want the
-body to be right. A heartbeat every 1 beat at 70 BPM is 70 BPM.
+**A systole longer than the heartbeat is now clamped.** It could previously be set
+past the end of the cycle, and because the dub fires on an exact position that the
+beat never reached, the second heart sound simply never played — silence rather
+than something odd. Nothing in the wild reached that state; the clamp means
+nothing can.
 
-**It is not a grid.** The beats value is a plain continuous number, so one cycle
-every **5** beats of a 4/4 track is exactly as reachable as 4 — and so is 5.3,
-which is how you set two instances slipping slowly against each other. The step
-is 0.01 because in REAPER's parameter list you can only arrow, never type, so a
-value the step can't land on is a value that doesn't exist.
+### Bloodflow offset
 
-**Heart rate stays visible and stays live.** It reads in BPM in Host x just as it
-does in Own BPM — it is never a multiplier of anything now — so it shows what the
-sync is actually running at, and it follows the project tempo as that moves.
-Moving it by hand converts back into beats rather than being ignored: the two are
-two views of one number and whichever you moved is the one that wins.
+**Bloodflow offset** and **Bloodflow offset unit** `Cycles / Seconds / Beats`
+(default 0, so nothing changes until you move it)
 
-**Switching into Host x does not change what you hear.** Both layers land on
-continuity: the heart converts the BPM it already had into the beats that
-reproduce it at this tempo, and the breath takes the cycle its four duration
-sliders already describe. The tempo simply takes over from there.
+Bloodflow used to read the heart's position directly with no way to shift it. The
+offset moves the pulse behind the heart sound. In a real body the pulse reaches
+the periphery a fraction of a second after the heart sound — roughly 0.1 to 0.25
+seconds — so `Seconds` is the anatomical setting; `Cycles` is a fraction of a
+heartbeat and scales as the heart rate changes; `Beats` follows the project.
+
+An offset longer than one cycle wraps into the next, which is meaningful rather
+than an error: the flow you hear belongs to the previous beat. It is also a Drift
+and Ramp target, so it can wander.
+
+**Not built, deliberately:** bloodflow on its own separate clock, wandering at a
+rate unrelated to the heart. That is a bigger change and the offset comes first,
+because once the flow is unwelded from the thump it becomes clear whether the
+remaining stiffness is about *when* it arrives or about it never breathing
+independently.
 
 ### Which controls are true, and when
 
@@ -395,3 +404,65 @@ Two things do need re-setting by hand in a project saved under the old build:
 the **Host sync target** may land somewhere arbitrary (it inherited the old
 *Host ratio* slider's slot), and if you had set a **breath** rate, check it.
 The heart's rate carries over untouched.
+
+## The 2026-09-06 layout, and migrating projects across it
+
+Womb was the last plugin in the suite whose rate block was not the standard one,
+and the last owed the six Drift and Ramp controls. Both landed together, in one
+migration, because a migration costs the same whether one thing changes or forty
+and every one is a fresh chance to disturb a saved project.
+
+64 sliders became 70. The full authored order lives in `docs/layouts/womb.md`.
+The shape of it: three groups, one per layer, each reading the same way — what it
+is, how fast it goes, the shape of its movement, its filtering, its stereo, its
+level, its solo. Then master, transport, drift, ramp.
+
+**What is new:** `Heart rate mode`, `Breath rate mode`, `Systole unit`,
+`Bloodflow offset`, `Bloodflow offset unit`, `Drift period unit`, `Drift play
+for`, `Drift rest for`, `Ramp time unit`, `Ramp play for`, `Ramp rest for`.
+
+**What retired:** `Host sync target` (one entry, nothing selectable) and
+`Every N beats` (its meaning moved into the rate value, which is what R20 says a
+rate value is for). `Rate Mode` did not retire — it became `Heart rate mode` and
+gained three options.
+
+**What moved and nothing else:** five controls that had ended up stranded at the
+bottom of the list are back with their groups — the breath post-filter pair,
+Breaths per minute, Heart with breath, and the sigh pair. S1 and S2 are grouped by
+sound rather than by parameter, so tuning one heart sound is one place instead of
+three. Sliders 37 and 38 had been an empty hole and are not any more.
+
+`tools/womb_migrate_layout_20260906.py` does the migration and
+`tools/womb_verify_layout_20260906.py` checks it. Applied to the whole library on
+2026-09-06: **9 instances across 9 projects, 1,080 checks, no failures, nothing
+newly out of range.**
+
+### Why the verifier checks behaviour and not just positions
+
+Checking a migration against the table that produced it makes it agree with
+itself perfectly. So the verifier does two independent things: it matches every
+surviving control **by its label** rather than by position, and then it computes
+what the plugin actually **does** — heart rate in BPM, systole in seconds, the
+four breath segment lengths in seconds — under the old code and the new code, and
+asserts the two agree.
+
+That second check is the one that matters here, because two instances needed real
+conversions rather than moves. Both are host-synced, and in host mode the stored
+Heart rate was a derived readout rather than a setting: `scattered.rpp` says 35
+BPM but means two beats per heartbeat. Carrying that across as BPM would have been
+wrong twice over.
+
+**One instance needed more than that.** Six of the nine carry the oldest saved-data
+format, and for host-synced instances the plugin used to convert heart rate, the
+four breath segments and Systole *on every open*. Exactly one instance is in that
+position. That load-time conversion is removed by this change, so the migration
+performs the same arithmetic once, in the project file, against that project's own
+tempo — where it can be checked instead of being repeated forever.
+
+The saved-data format also gained a version (`2400000 + targets`). Older blobs are
+still read, at their **old bank width**, because appending `Bloodflow offset` to
+the Drift and Ramp target lists widened every bank — reading an old one at the new
+width would turn everything after the first bank into garbage.
+
+**None of this has been heard.** Nothing should sound different for any saved
+project, and that claim rests on the verifier rather than on ears.

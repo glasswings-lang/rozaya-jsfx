@@ -183,16 +183,22 @@ lines as it takes.**
 `docs/suite-consistency-plan.md` is authoritative. Read it before touching any
 slider's name, order, range or unit.
 
-- **The rate block (R20) and both its host modes (R21) are BUILT EVERYWHERE.**
-- **Drift/Ramp: 14 of 19 plugins complete.** Still owed the full six: both
-  Polyrhythms, Passage, Womb — and those four are exactly the four still owed a
+- **The rate block (R20) and both its host modes (R21) are BUILT EVERYWHERE** —
+  true as of 2026-09-06 and NOT before. This line claimed it for weeks while
+  **Womb offered two options where the standard is five**, plus a one-entry
+  `Host sync target` picker and a free-standing `Every N beats`. Nobody noticed
+  because nothing contradicted the sentence. If a claim like this is in here,
+  grep for it before believing it.
+- **Drift/Ramp: 15 of 19 plugins complete.** Still owed the full six: both
+  Polyrhythms and Passage — and those three are exactly the three still owed a
   reorder, so their six ride along with that one migration rather than going in
-  ahead of it. **The Morpher is DONE** (2026-09-06, 122 instances migrated).
+  ahead of it. **The Morpher is DONE** (122 instances migrated) and **so is
+  Womb** (9 instances, 64 sliders → 70, its whole layout in one go).
   **Resonance Bank is NOT missing one** — its drift period is a RATE by design,
   because each band drifts independently and there is no single cycle to count.
   A name-matching sweep will claim otherwise; it is wrong.
 - **Reorders still owed:** Polyrhythm v1 → v3 (its layout is not authored, which
-  is what blocks it), Passage (blocked on what it is FOR), Womb, Sweep Dwell
+  is what blocks it), Passage (blocked on what it is FOR), Sweep Dwell
   (blocked on its `Cycle mode` question, not on effort).
 - **The range sweep: passes 1 and 2 are done** — 176 sliders widened, 0 narrowed,
   verified against all 641 continuous sliders. dB and semitone ranges are held
@@ -215,7 +221,10 @@ migration** — Rozaya opened a finished project the same day and it sounded exa
 as it had, which is the 122 instances confirmed on real work rather than by a
 checker.
 
-**NOT heard:** everything from the 2026-09-06 drift/ramp sweep (six plugins), the
+**NOT heard:** the whole 2026-09-06 Womb rebuild — two rate pairs, Systole's own
+unit, the bloodflow offset, the six drift/ramp controls and a 70-slider reorder
+across 9 projects. Nothing there should sound different and that rests on a
+1,080-check verifier, not on ears. Also unheard: everything from the 2026-09-06 drift/ramp sweep (six plugins), the
 `N per beat` reciprocal fix in all four plugins it touched, the Tremolo Start
 delay fix, and the range widenings.
 **Nothing there can regress silently** — every new control defaults to off or to
