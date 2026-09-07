@@ -27,7 +27,7 @@ having to, like, wear out my hand trying to air through the p list?"*
 controls. The other seven voices keep playing; their values live in the plugin's
 memory, exactly as Drift and Ramp targets already do here.
 
-**90 sliders become 57**, which is also under the 64-slider boundary where a REAPER
+**90 sliders become 56**, which is also under the 64-slider boundary where a REAPER
 value line grows a quoted marker - so this removes an entire class of file-format
 trap from the plugin's future as a side effect.
 
@@ -81,79 +81,100 @@ things the plugin has wanted and could not afford become affordable:
 - **Per-voice waveform** - asked for directly, and nearly free in the engine:
   checked in the source, the waveform chain is already INSIDE the per-voice loop
   and already indexes that voice's own phase and gain. Only the waveform NUMBER is
-  global. **In this layout at 28**, with `-1 = follow the global` so nothing changes
-  until it is used (the Morpher's per-layer-overtone pattern).
+  global.
 - **Per-cycle waveform changes** - the tremolo already silences each voice for part
   of every cycle, so a switch made in that silence cannot click.
-- **Per-voice tremolo shape** (Depth, On Duration, Attack, Release and their
-  curves) and **per-voice timbre** (Tone, Edge, Movement, Body) are the obvious next
-  ones. See *Open* - they are NOT in this build, and that is a decision rather than
-  an oversight.
+- **Per-voice tremolo shape: Depth, On Duration, Attack % and Release %.** Agreed
+  with Rozaya 2026-09-07. Today the voices differ in pitch, rate and phase but
+  share ONE envelope, so the plugin makes one kind of sound played in a pattern.
+  Per voice, a shallow near-continuous voice becomes a bed while a hard short one
+  becomes a blip on top of it; a long swell drifts through a fast tick. On Duration
+  is the big one -- a voice on for 90% of its cycle is a pad, one on for 10% is a
+  rhythm, and right now everything is one or the other together.
+- **The two envelope CURVES and the four timbre controls stay global**, also agreed.
+  That is where the refinement lives; Depth and On Duration are where the identity
+  lives. Four extra per-voice sliders instead of eleven.
+
+### No "follow the global" sentinel, and no global copies either
+
+The first draft gave each per-voice override a `-1 = follow the global` value. That
+is unnecessary and was removed: **`Voice = All` IS the global.** Park the selector
+there, move Depth, all eight take it -- so the separate global copies of Waveform,
+Depth, On Duration, Attack % and Release % simply move INTO the voice block and
+stop existing twice.
+
+No sentinel, no hidden follow-state, no control that behaves differently depending
+on a value you cannot see. The slider count goes DOWN rather than up.
+
+**What `All` shows when the voices disagree:** voice 1's value. Reading is
+approximate; writing is exact and hits all eight. That is the honest version of a
+multi-select control, and it matches the rewrite behaviour Rozaya asked to keep in
+Womb -- you see the result of what you did.
 
 ## The order
 
-57 sliders. Global first, then the voices behind their selector, then pan,
-direction, transport, drift, ramp.
+56 sliders. Global first, then the voices behind their selector, then pan,
+direction, transport, drift, ramp. **The per-voice block is thirteen controls** --
+the selector and twelve.
 
 | new | control | from |
 |---|---|---|
 | 1 | Tremolo Mode | 1 |
 | 2 | Rate Value | 3 |
 | 3 | Rate Mode | 2 |
-| 4 | Depth dB | 10 |
-| 5 | On Duration % of Cycle | 5 |
-| 6 | Attack % of Cycle | 6 |
-| 7 | Attack Shape | 8 |
-| 8 | Release % of Cycle | 7 |
-| 9 | Release Shape | 9 |
-| 10 | Tuning Reference Hz | 11 |
-| 11 | Transpose (half steps) | 12 |
-| 12 | Octave shift | 13 |
-| 13 | Binaural Beat Hz (L/R offset) | 4 |
-| 14 | Waveform | 14 |
-| 15 | Pulse Width % (50 = square) | 15 |
-| 16 | Tone (Warm <-> Bright) | 16 |
-| 17 | Edge | 17 |
-| 18 | Movement | 18 |
-| 19 | Body | 19 |
-| 20 | **Voice** (All, 1-8) | NEW |
-| 21 | Note | 26 |
-| 22 | Fine tune (cents) | 27 |
-| 23 | Drift / Rate | 28 |
-| 24 | Phase Offset | 29 |
+| 4 | Attack Shape | 8 |
+| 5 | Release Shape | 9 |
+| 6 | Tuning Reference Hz | 11 |
+| 7 | Transpose (half steps) | 12 |
+| 8 | Octave shift | 13 |
+| 9 | Binaural Beat Hz (L/R offset) | 4 |
+| 10 | Pulse Width % (50 = square) | 15 |
+| 11 | Tone (Warm <-> Bright) | 16 |
+| 12 | Edge | 17 |
+| 13 | Movement | 18 |
+| 14 | Body | 19 |
+| 15 | **Voice** (All, 1-8) | NEW |
+| 16 | Note | 26 |
+| 17 | Fine tune (cents) | 27 |
+| 18 | Drift / Rate | 28 |
+| 19 | Phase Offset | 29 |
+| 20 | Waveform | 14 |
+| 21 | Depth dB | 10 |
+| 22 | On Duration % of Cycle | 5 |
+| 23 | Attack % of Cycle | 6 |
+| 24 | Release % of Cycle | 7 |
 | 25 | Gain dB | 25 |
 | 26 | Active | 30 |
 | 27 | Solo this voice | NEW |
-| 28 | Waveform (-1 = follow the global) | NEW |
-| 29 | Pan Enabled | 20 |
-| 30 | Pan Mode | 21 |
-| 31 | Pan Spread % | 22 |
-| 32 | Pan Base Rate | 23 |
-| 33 | Pan rate mode | NEW |
-| 34 | Pan Increment per Voice | 24 |
-| 35 | Cycle Steps (per-cycle modes) | 90 |
-| 36 | Pan Glide ms (0=instant) | 89 |
-| 37 | Direction & Reverse | 73 |
-| 38 | Reverse Drift Offset | 74 |
-| 39 | Start delay (in rate mode units) | 75 |
-| 40 | Play for (cycles) | 76 |
-| 41 | Rest for (cycles) | 77 |
-| 42 | Drift target | 78 |
-| 43 | Drift up amount | 79 |
-| 44 | Drift down amount | 80 |
-| 45 | Drift period | 81 |
-| 46 | Drift period unit | NEW |
-| 47 | Drift shape | 82 |
-| 48 | Drift play for | NEW |
-| 49 | Drift rest for | NEW |
-| 50 | Ramp target | 83 |
-| 51 | Ramp by | 84 |
-| 52 | Ramp time unit | NEW |
-| 53 | Ramp duration | 85 |
-| 54 | Ramp play for | NEW |
-| 55 | Ramp rest for | NEW |
-| 56 | Ramp engage | 86 |
-| 57 | Ramp start delay | 87 |
+| 28 | Pan Enabled | 20 |
+| 29 | Pan Mode | 21 |
+| 30 | Pan Spread % | 22 |
+| 31 | Pan Base Rate | 23 |
+| 32 | Pan rate mode | NEW |
+| 33 | Pan Increment per Voice | 24 |
+| 34 | Cycle Steps (per-cycle modes) | 90 |
+| 35 | Pan Glide ms (0=instant) | 89 |
+| 36 | Direction & Reverse | 73 |
+| 37 | Reverse Drift Offset | 74 |
+| 38 | Start delay (in rate mode units) | 75 |
+| 39 | Play for (cycles) | 76 |
+| 40 | Rest for (cycles) | 77 |
+| 41 | Drift target | 78 |
+| 42 | Drift up amount | 79 |
+| 43 | Drift down amount | 80 |
+| 44 | Drift period | 81 |
+| 45 | Drift period unit | NEW |
+| 46 | Drift shape | 82 |
+| 47 | Drift play for | NEW |
+| 48 | Drift rest for | NEW |
+| 49 | Ramp target | 83 |
+| 50 | Ramp by | 84 |
+| 51 | Ramp time unit | NEW |
+| 52 | Ramp duration | 85 |
+| 53 | Ramp play for | NEW |
+| 54 | Ramp rest for | NEW |
+| 55 | Ramp engage | 86 |
+| 56 | Ramp start delay | 87 |
 
 **Where the other 42 went:** V2-V8's per-voice sliders (old 31-72) are not sliders
 any more - they are bank values reached through the selector. Old **88** is the
@@ -207,12 +228,7 @@ later; the reference implementation is in `src/shepard-tone.jsfx`.
 
 ## Open, and needing Rozaya rather than me
 
-1. **How many per-voice overrides to fold in NOW.** This build has one: waveform.
-   The candidates are per-voice Depth, On Duration, Attack %, Attack Shape,
-   Release %, Release Shape, Tone, Edge, Movement, Body and Pulse Width - eleven
-   more sliders, all "follow the global" by default, so none of them changes an
-   existing project. **Each one added later costs another migration**, which is the
-   argument for deciding now rather than discovering the want in three weeks. The
-   argument against is that per-voice envelopes change what the plugin IS, and that
-   is a musical judgement rather than a layout one.
-2. **Nothing else blocks.** The layout above is buildable as it stands.
+1. **Nothing.** The per-voice question was the last one open and it is decided:
+   Waveform, Depth, On Duration, Attack % and Release % go per-voice; the two
+   envelope curves, Pulse Width and the four timbre controls stay global. The
+   layout above is buildable as it stands.
