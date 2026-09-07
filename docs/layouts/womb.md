@@ -3,8 +3,10 @@
 Written by hand 2026-09-06, not generated. **Authored BEFORE anything is built or
 migrated**, per the standing rule: one migration per plugin, not one per idea.
 
-**Status: AUTHORED, NOT BUILT.** Nothing in the source or in any project has been
-touched. This document is the thing to argue with; the code comes after.
+**Status: BUILT, MIGRATED and HEARD 2026-09-06.** 9 instances across 9 projects,
+64 sliders to 70, verified by behaviour and then confirmed by ear -- Rozaya:
+*"Everything else, though, passes. :)"* The one thing that did NOT pass is the
+breath, and it has its own section at the end of this document.
 
 **Scale.** 9 instances across 9 projects — the smallest migration in the sweep so
 far, and the only one where **two instances are actually in host-sync mode**
@@ -488,7 +490,11 @@ existing entry may move.
 This section is the one thing that did not pass, and it is a regression I
 introduced the same day.
 
-**Status: AUTHORED, NOT BUILT.**
+**Status: BUILT AND MIGRATED 2026-09-06.** 9 instances, values only -- no slider
+moved and the count stayed at 70. Verified by BEHAVIOUR: every project's breath
+cycle length and sigh-breath length are identical before and after. The migration
+REFUSES rather than flattening if it ever meets a stored breath rate that would
+actually have rescaled something. **NOT HEARD.**
 
 ## What went wrong, and it was written down before I did it
 
