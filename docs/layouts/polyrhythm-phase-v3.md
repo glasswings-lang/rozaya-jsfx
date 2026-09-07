@@ -4,7 +4,30 @@ Written by hand 2026-09-07, not generated. **Authored BEFORE anything is built.*
 Supersedes the first draft of this document (a flat 96-slider reorder), which is
 in git history if the reasoning is ever wanted.
 
-**Status: AUTHORED, NOT BUILT.**
+**Status: BUILT AND MIGRATED 2026-09-07. NOT YET HEARD.**
+
+Built exactly as authored below -- 56 sliders, the twelve-control voice block,
+`All` at position 0, Solo, the pan's own rate mode, and the six drift/ramp
+controls. All 8 instances across 5 projects migrated; the verifier ran 1176
+name-driven checks with 0 failures. `tools/polyv3_migrate_layout_20260907.py`
+and `tools/polyv3_verify_layout_20260907.py`; snapshot at
+`E:/reaper/finished/backups/snapshots/_pre-polyv3-layout-20260907/`.
+
+**Two things changed from the table below during the build, both small:**
+
+- The voice block writes on CHANGE rather than capturing wholesale. The
+  ordinary nested-selector shape copies the visible sliders into the current
+  target on every @slider pass, which with an `All` position would flatten all
+  eight voices on any stray pass -- including the ones REAPER fires with default
+  values mid-load. Change detection removes that, and removes the need for a
+  save-on-switch step as well.
+- The migration seeds `Voice` to **1**, not to its declared default of `All`. A
+  fresh instance has eight identical voices so `All` is harmless there; a
+  migrated one has eight configured voices, and parking on `All` would mean one
+  stray nudge writes across all of them.
+
+**What is still owed:** an ear test, and the v1 -> v3 crossing (its own job, as
+the migration notes below say).
 
 **Scale.** v3 has **8 instances across 5 projects**. v1 has **84 across 17** and is
 NOT touched by this job - it crosses later, once, and then retires.

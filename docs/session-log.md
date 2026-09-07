@@ -62,6 +62,70 @@ Newest entries are the most likely to still be accurate.
 
 ---
 
+## 2026-09-07 — Polyrhythm v3: the voices go behind a selector
+
+**The largest reorder in the suite so far: 90 sliders to 56.** Built exactly as
+`docs/layouts/polyrhythm-phase-v3.md` authored it the day before, which is the
+whole point of that rule — the layout existed first, so this was one migration
+rather than five.
+
+**What landed.** The eight voices moved behind a `Voice` selector with an `All`
+position; forty-eight per-voice sliders became twelve. Five controls that were
+one setting for the whole plugin went per-voice (Waveform, Depth dB, On
+Duration, Attack %, Release %). `Solo this voice` and a `Pan rate mode` are new,
+as are the six Drift/Ramp controls the rest of the suite already had. The dead
+`Host ratio` picker and `entered_host_mode` were removed outright.
+
+**Why the dead code came out here, when the standing rule says leave it.** That
+rule protects code whose removal buys nothing. This removal was forced: the
+picker read `slider88` and the new highest id is 56, so it referenced a control
+that no longer exists — which is a compile error, not inert code.
+
+**The one design change made during the build, and the reason for it.** The
+ordinary nested-selector shape captures the visible sliders into the current
+target on EVERY `@slider` pass. With an `All` position that is a trap: any pass
+at all — including the ones REAPER fires with default values while a project is
+still loading — would copy the visible values across all eight voices and
+flatten them. So the voice block writes on CHANGE instead, comparing each
+visible slider against a mirror adopted in `@block`. Moving Tone while parked on
+`All` now writes nothing. It also removes the need for a save-on-switch step,
+because every edit is already written the moment it happens.
+
+Simulated: 50 stray passes on `All` wrote nothing; an `@slider` pass before
+`@block` has adopted wrote nothing.
+
+**Everything per-voice is derived in `@block`, not `@slider`,** because it now
+comes out of a `@serialize` bank — the rule whose signature is "wiggling any
+slider brings it back and transport does not". That moved the whole per-voice
+derivation block, the permutes, the pan static positions and the pan
+frequencies out of `@slider`.
+
+**The migration is the first in this repo that rewrites the blob.** V2–V8's
+forty-two values per instance had nowhere else to go. 8 instances across 5
+projects; the verifier ran 1176 name-driven checks with 0 failures, and one real
+line was read beside the control names by hand as well.
+
+**Two values the migration wrote rather than defaulting.** `Pan rate mode`
+takes each instance's own tremolo Rate Mode, because the pan used to borrow it
+and a declared default of BPM would have silently re-timed every host-synced
+pan. `Voice` is seeded to 1, not to its declared default of `All` — a fresh
+instance has eight identical voices so `All` is harmless there, but a migrated
+one has eight configured voices and parking on `All` would mean one stray nudge
+writes across all of them. The declared default is right for a new instance and
+wrong for a migrated one; those are allowed to differ.
+
+**What this cost the v1 crossing, and it is worth knowing.** CLAUDE.md said v1
+and v3's blobs were byte-identical and that this was what made the v1 → v3
+migration tractable. That stopped being true the moment this landed, and the
+line has been corrected in the same commit. v1's forty per-voice values per
+instance now have to move into a blob too, for 84 instances. Still tractable —
+the stream layout is fully known and this migration is a worked example of
+writing it — but it is its own job with its own verifier, and skipping exactly
+that step is what killed Melody v2.
+
+**Nothing here has been heard.** The build is installed in
+`Effects/glasswings`; the projects are migrated and verified on paper.
+
 ## 2026-09-06 (later) — Womb rebuilt: two rate pairs, and a wrong finding corrected on the way
 
 **Womb is done.** 64 sliders to 70, its whole authored layout in ONE migration:

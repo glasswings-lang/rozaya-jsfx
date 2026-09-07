@@ -189,11 +189,12 @@ slider's name, order, range or unit.
   `Host sync target` picker and a free-standing `Every N beats`. Nobody noticed
   because nothing contradicted the sentence. If a claim like this is in here,
   grep for it before believing it.
-- **Drift/Ramp: 15 of 19 plugins complete.** Still owed the full six: both
-  Polyrhythms and Passage — and those three are exactly the three still owed a
-  reorder, so their six ride along with that one migration rather than going in
-  ahead of it. **The Morpher is DONE** (122 instances migrated) and **so is
-  Womb** (9 instances, 64 sliders → 70, its whole layout in one go).
+- **Drift/Ramp: 16 of 19 plugins complete.** Still owed the full six: Polyrhythm
+  v1 and Passage. v1 is owed them only in the sense that it will INHERIT them
+  when it crosses to v3 — it is deliberately left alone (see below), so Passage
+  is the only plugin that still needs the work done to it. **The Morpher is
+  DONE** (122 instances migrated), **so is Womb** (9 instances, 64 sliders → 70),
+  and **so is Polyrhythm v3 as of 2026-09-07** (8 instances, 90 sliders → 56).
   **Resonance Bank is NOT missing one** — its drift period is a RATE by design,
   because each band drifts independently and there is no single cycle to count.
   A name-matching sweep will claim otherwise; it is wrong.
@@ -203,9 +204,14 @@ slider's name, order, range or unit.
   six, then v1's **84 instances across 17 projects** cross to v3 once and v1
   retires. Do not migrate those 84 twice. v1's layout does not need authoring —
   only v3's does, and the v1→v3 conversion after it.
-- **Reorders still owed:** Polyrhythm v3 (layout not authored yet — that is the
-  next job), Passage (blocked on what it is FOR), Sweep Dwell
-  (blocked on its `Cycle mode` question, not on effort).
+- **Reorders still owed:** Passage (blocked on what it is FOR) and Sweep Dwell
+  (blocked on its `Cycle mode` question, not on effort). **Polyrhythm v3 is
+  DONE** — built and migrated 2026-09-07, and it is the largest reorder in the
+  suite so far: 90 sliders to 56, because the eight voices moved behind a
+  **Voice** selector with an `All` position. Five controls went per-voice
+  (Waveform, Depth, On Duration, Attack %, Release %), Solo and a Pan rate mode
+  are new, and the six drift/ramp controls landed in the same migration.
+  **UNHEARD.**
 - **The range sweep: passes 1 and 2 are done** — 176 sliders widened, 0 narrowed,
   verified against all 641 continuous sliders. dB and semitone ranges are held
   for Rozaya's decision. See `docs/planned-features.md` for the rule, which has
@@ -369,9 +375,22 @@ cancel on final release for clean rest entry), nested-selector Drift and Ramp,
 and a Host x rate mode where **Rate Value means beats per cycle**.
 
 The two differ in how a voice is pitched: v1 takes semitones against a tuning
-reference, v3 is note-based. Slider counts as of 2026-09-03: v1 declares 82
-sliders with a highest ID of 86; v3 declares 90. Their `@serialize` blobs are
-byte-identical, which is what makes the v1 → v3 migration tractable.
+reference, v3 is note-based. Slider counts: v1 declares 82 sliders with a
+highest ID of 86; **v3 declares 56 as of 2026-09-07**, down from 90.
+
+**THEIR BLOBS ARE NO LONGER BYTE-IDENTICAL, and this file claimed they were.**
+That sentence was true until 2026-09-07 and was the stated reason the v1 → v3
+migration was tractable. v3's blob now carries twelve per-voice banks and four
+drift/ramp play-rest banks that v1 has no equivalent of, and its magic is
+2200024 against v1's 2100024. **The v1 → v3 crossing is now a bigger job than
+this line used to promise**: v1's forty per-voice values per instance have to
+move off the slider line and INTO the blob, for 84 instances.
+
+It is still tractable, and more so than in June — the stream layout is fully
+known, `tools/rpp_sliders.py` handles the value line, and
+`tools/polyv3_migrate_layout_20260907.py` is a worked example of writing that
+exact blob. But it is **its own job, with its own authored conversion and its
+own verifier**, and it is what killed Melody v2 when it was skipped.
 
 ## Project values to preserve
 
@@ -622,7 +641,7 @@ because they apply every session, not on the day they were learned.
 
   **Why it slipped through:** the verification compared the output against the same authored table the migration used, so it agreed with itself perfectly. Rozaya: *"read and compare, don't script."* Reading ONE real line beside the control names would have shown it immediately — and did, once asked.
 
-  **Which plugins are exposed:** any with more than 64 sliders. Today that is `melody_phase` (82), `polyrhythm_phase` (82 declared, highest ID 86), `polyrhythm_phase_v3` (90), `shepard-tone` (75) and `shepard-scale` (64, i.e. exactly at the boundary and one slider away from crossing it). **Re-count rather than trusting these figures — they moved twice in one day on 2026-09-02.** **Polyrhythm v1 -> v3 is next in Phase 2 and both ends are over 64**, so it is squarely in this.
+  **Which plugins are exposed:** any with more than 64 sliders. Today that is `melody_phase` (82), `polyrhythm_phase` (82 declared, highest ID 86), `shepard-tone` (75) and `shepard-scale` (64, i.e. exactly at the boundary and one slider away from crossing it). **`polyrhythm_phase_v3` dropped OFF this list on 2026-09-07** — 90 sliders to 56 — so the marker cannot appear in its lines any more. **Re-count rather than trusting these figures — they moved twice in one day on 2026-09-02.** **The v1 -> v3 crossing still reads a v1 line that is over 64**, so it is squarely in this at the source end even though the destination no longer is.
 
   **Fix: `tools/rpp_sliders.py`.** One module that parses a value line into `{slider_id: token}` and renders it back, marker and padding handled, with a round-trip check inside `render_line` so a shifted line cannot be written silently. It round-trips all 377 lines in the library byte-identically. **Every migration script uses it; none re-derives the format.** `morpher_migrate_layout.py` predates it, is correct because the Morpher has 40 sliders, and now refuses outright if it ever meets a quoted token.
 

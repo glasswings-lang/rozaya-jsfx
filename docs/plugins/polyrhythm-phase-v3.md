@@ -6,7 +6,12 @@
 
 ## Overview
 
-Polyrhythm Phase v3 is a binaural oscillator with up to eight simultaneous voices, each tuned to a specific musical pitch. Each voice generates a stereo pair of oscillators with a slight frequency offset between the left and right channels — the binaural beat — producing entrainment tones that shift in perceived frequency as the beat interacts with the listener's auditory system. A shared tremolo envelope modulates the amplitude of all voices, with per-voice drift or independent rate options creating polyrhythmic relationships between them. A pan modulation system adds either continuous spatial movement (Tremolo / Increment) or static spread positions (Spread / Spread Reversed) per voice.
+Polyrhythm Phase v3 is a binaural oscillator with up to eight simultaneous voices, each tuned to a specific musical pitch. Each voice generates a stereo pair of oscillators with a slight frequency offset between the left and right channels — the binaural beat — producing entrainment tones that shift in perceived frequency as the beat interacts with the listener's auditory system. Each voice carries its own tremolo envelope -- its own waveform, depth, on-duration
+and attack/release lengths -- so a shallow near-continuous voice can sit under a
+hard short one, with per-voice drift or independent rate options creating
+polyrhythmic relationships between them. A pan modulation system adds either
+continuous spatial movement (Tremolo / Increment), static spread positions
+(Spread / Spread Reversed), or a per-cycle walk through the stereo field.
 
 The plugin generates no audio from an input signal. It is a pure synthesizer.
 
@@ -23,6 +28,14 @@ is a whole number.
 The two versions do not share project data — slider numbers differ, so a
 saved project using one will not open correctly under the other. Both ship
 in the suite; pick whichever mental model fits the piece, per project.
+
+**Rebuilt 2026-09-07.** The eight voices moved behind a **Voice** selector,
+taking the slider count from 90 down to 56; five controls that used to be one
+setting for the whole plugin (Waveform, Depth, On Duration, Attack % and
+Release %) became per-voice; **Solo** and a **Pan rate mode** are new, as are
+the six Drift and Ramp controls the rest of the suite already had. Existing
+projects were migrated and sound as they did — see the notes on each control
+for what was written where.
 
 ---
 
@@ -87,7 +100,7 @@ point.
 **Switching into Host x lands Rate Value on 4** — one cycle per bar in 4/4 — because the slider's default of 60 was chosen for BPM mode and means *one cycle every sixty beats* when read as beats, which is half a minute at 120 BPM and too slow to identify by ear. It only does this when you actually change mode, never when a project opens, so a rate you set by hand is never overwritten. This suite is phase music — the value in layers slipping against each
 other — so nothing here forces you onto a note grid.
 
-**Host ratio** — *retired 2026-09-02.* It existed to spare you arithmetic on a multiplier; with Rate Value in beats, *every 4 beats* is typing 4. The control is hidden and does nothing. It stays in the parameter list only because slider IDs can never be renumbered.
+**Host ratio** — *gone.* It was retired in 2026-09-02 and removed outright in the 2026-09-07 rebuild, along with every other slider that no longer had a job. With Rate Value in beats, *every 4 beats* is typing 4.
 
 **Rate Value (Drift only)** `0.001-1000, default 60`
 The global base tremolo rate, in the units set by Rate Mode. Only visible in Drift mode. Individual voice drift values are added to this.
@@ -95,25 +108,13 @@ The global base tremolo rate, in the units set by Rate Mode. Only visible in Dri
 **Binaural Beat Hz (L/R offset)** `0-100 Hz, default 4`
 The frequency difference between each voice's left and right oscillators. At 4 Hz, the left oscillator runs at the voice's base pitch and the right runs 4 Hz higher, creating a 4 Hz binaural beat when heard on headphones. This value is the same for all voices simultaneously.
 
-**On Duration % of Cycle** `0-100%, default 100`
-The proportion of each tremolo cycle during which each voice is in its active state (including attack and release). At 100% the tremolo never fully closes. At 50% each voice is present for half its cycle.
-
-**Attack % of Cycle** `0-100%, default 0`
-Proportion of the on-time spent in the attack ramp, fading from silence to full amplitude.
-
-**Release % of Cycle** `0-100%, default 100`
-Proportion of the on-time spent in the release ramp, fading from full amplitude back to silence. The default of 100% with 0% attack produces a ramp-down envelope — each voice fades out across its full on-time with no hold. Adjusting both attack and release creates a shaped pulse.
-
-> If Attack % + Release % exceeds 100% of the on-time, both are scaled down proportionally so their sum fits within the on-duration.
-
 **Attack Shape** `Linear / Cosine / Logarithmic / Exponential`
-Curve shape applied to the attack ramp.
+Curve shape applied to the attack ramp. **Global**, deliberately: the shape is
+refinement, and the LENGTHS (Attack % and Release %, both per-voice) are where
+the difference between a pad and a blip lives.
 
 **Release Shape** `Linear / Cosine / Logarithmic / Exponential`
-Curve shape applied to the release ramp.
-
-**Depth dB** `-60-0 dB, default -6`
-How far each voice drops in amplitude at the bottom of its tremolo cycle. At 0 dB there is no tremolo depth. At -60 dB voices are effectively silenced at the trough.
+Curve shape applied to the release ramp. Global, same reasoning.
 
 **Transpose (half steps)** `-12 to +12, default 0`
 Shifts every voice up or down by whole note steps, without touching any voice's
@@ -133,46 +134,113 @@ The reference pitch used to calculate all voice frequencies. At 440 Hz, A4 = 440
 
 ---
 
-### Per-Voice Controls (Voices 1-8)
+### The voices, behind one selector
 
-Each voice has six parameters. By default V1 is audible (Gain -6 dB, Active On), V2 is active but silent (Gain -60 dB, Active On — counted in normalization but contributes nothing audibly until you raise its gain), and V3-V8 are inactive (Active Off — bypassed entirely with no CPU cost).
+*Rebuilt 2026-09-07. Until then each voice had its own six sliders and the
+plugin declared ninety; it now declares fifty-six.*
 
-**Vn Gain dB** `-60 to +6 dB, default -6 for every voice`
+Forty-eight per-voice sliders became twelve. You pick a voice with the **Voice**
+selector, and the twelve controls under it are that voice's settings. The other
+seven keep playing exactly as they were — their values live in the plugin's own
+memory, the same way the Drift and Ramp targets already did.
 
-Changed 2026-08-31. Every voice used to default to -60 (silence) except V1, so activating a voice handed you nothing and a 54 dB climb to get it back. `Vn Active` is the on/off; the gain never needed to be one too. A fresh instance still sounds identical -- only V1 is Active by default -- but any voice you switch on is now audible straight away, and you trim down rather than build up.
-Per-voice output level applied before the voice is summed into the mix. -60 dB is effectively silent. Use this to balance voices relative to one another. To fully cut a voice with no CPU cost, prefer Vn Active = Off rather than gain at -60.
+**Voice** `All / Voice 1 … Voice 8, default All`
 
-**Vn Note** `C2 to C6, default C4`
+**All is position 0, and it is the reason the selector is worth having.** Once
+each voice is cheap to set individually, setting them all the *same* becomes the
+tiring job — arrowing 1 to 8 and picking the same waveform eight times. Park the
+selector on **All**, move a control, and every voice takes it. "All sine except
+voice five" is two moves rather than eight.
+
+So there are no separate global copies of Waveform, Depth, On Duration, Attack %
+or Release % any more. **All is the global.**
+
+**What All shows when the voices disagree** is voice 1's value. Reading is
+approximate; writing is exact and reaches all eight. Nothing writes until you
+actually move a control, so parking on All and then adjusting Tone, or opening a
+project, changes nothing.
+
+---
+
+**Gain dB** `-60 to +6 dB, default -6 for every voice`
+Per-voice output level, applied before the voice is summed. -60 dB is
+effectively silent. To cut a voice with no CPU cost, use **Active = Off**
+instead.
+
+**Note** `C2 to C6, default C4`
 The note this voice plays, by name. Step through the list and pick one — there
-is nothing to calculate and no anchor to count from. The range spans four
-octaves, low enough for drones and high enough for shimmer. The left oscillator
-runs at this note's frequency; the right runs at the same frequency plus the
-Binaural Beat Hz offset.
+is nothing to calculate and no anchor to count from. The left oscillator runs at
+this note's frequency; the right runs at the same frequency plus the Binaural
+Beat Hz offset. Global **Transpose** and **Octave shift** move this voice along
+with all the others.
 
-Global **Transpose** and **Octave shift** move this voice along with all the
-others; at their defaults the voice sounds exactly the note shown.
-
-**Vn Fine tune (cents)** `-100 to +100, default 0`
+**Fine tune (cents)** `-100 to +100, default 0`
 Nudges the voice off its named note, in cents. **One hundred cents is exactly
-one note step**, so `+100` here lands on the next note up and `-100` on the next
-one down — which means every pitch is reachable, whichever note you picked.
+one note step**, so `+100` lands on the next note up — every pitch is reachable,
+whichever note you picked. This is the control for detuning voices against each
+other: two voices on the same Note with one a few cents off will beat slowly.
 
-This is the control for detuning voices against each other. Two voices on the
-same Note with one of them a few cents off will beat slowly against each other;
-the further apart, the faster the beating. Set it by ear — nudge until it sits
-where you want. Whole numbers throughout, no decimal point.
+**Drift / Rate** `-1000 to +1000, default 0`
 
-**Vn Drift / Rate** `-1000 to +1000, default 0`
+**In Drift mode** this is an *offset* added to Rate Value, never a value on its
+own. 0 means this voice runs at exactly the base — not stopped. Whether a
+positive offset speeds the voice up or slows it down depends on the unit: faster
+in BPM and Hz, **slower in Seconds and *Every N beats***, where a bigger number
+means a longer gap.
 
-**In Drift mode** this is an *offset* added to Rate Value, never a value on its own. 0 means this voice runs at exactly the base — not stopped. Whether a positive offset speeds the voice up or slows it down depends on the unit: faster in BPM and Hz, **slower in Seconds and Host x**, where a bigger number means a longer gap.
+**In Independent mode** this *is* the voice's rate, directly, in whatever unit
+Rate Mode selects — Rate Value is ignored entirely. Here 0 does mean effectively
+stopped, in every mode.
 
-**In Independent mode** this *is* the voice's value, directly, in whatever unit Rate Mode selects — Rate Value is ignored entirely. Here 0 does mean effectively stopped, in every mode. In Host x it is a beat count: 4 is one cycle every four beats.
+**Phase Offset** `-1000 to +1000, default 0`
+When this voice becomes audible within its tremolo cycle, in the units set by
+Rate Mode (BPM = beats, Seconds = seconds, Hz = cycles). Offset 0 fires the
+voice immediately at playback start. Values wrap freely.
 
-**Vn Phase Offset** `-1000 to +1000, default 0`
-When this voice becomes audible within its tremolo cycle, in the units set by Rate Mode (BPM = beats, Seconds = seconds, Hz = cycles). Offset 0 fires the voice immediately at playback start; offset 8 in Seconds mode means the voice waits 8 seconds before becoming audible. Values wrap freely — there is no clamping.
+**Waveform** *(per-voice since 2026-09-07)*
+This voice's waveform, from the fourteen-slot palette described below. It used
+to be one setting for the whole plugin. Set it on **All** to change every voice
+at once.
 
-**Vn Active** `Off / On, default On for V1 and V2, Off for V3-V8`
-Enables or disables the voice. Off bypasses oscillator computation entirely (no CPU cost) and excludes the voice from the active-voice normalization count.
+**Depth dB** `-60 to 0 dB, default -6`
+How far this voice drops at the bottom of its tremolo cycle. At 0 dB there is no
+tremolo depth at all; at -60 dB the voice is effectively silenced at the trough.
+
+**On Duration % of Cycle** `0-100%, default 100`
+The proportion of this voice's tremolo cycle during which it is in its active
+state (including attack and release). At 100% the tremolo never fully closes; at
+50% the voice is present for half its cycle.
+
+**This is the big one.** Until this build every voice shared one envelope, so
+the plugin made one kind of sound played in a pattern. A voice on for 90% of its
+cycle is a **pad**; one on for 10% is a **rhythm** — and now you can have both
+at once, a shallow near-continuous bed with a hard short blip ticking over it.
+
+**Attack % of Cycle** `0-100%, default 0`
+Proportion of the on-time spent fading up from silence.
+
+**Release % of Cycle** `0-100%, default 100`
+Proportion of the on-time spent fading back down. The default of 100% with 0%
+attack gives a ramp-down envelope: the voice fades out across its whole on-time
+with no hold.
+
+> If Attack % + Release % exceeds 100% of the on-time, both are scaled down
+> proportionally so their sum fits.
+
+**Active** `Off / On, default On for V1 only`
+Enables or disables the voice. Off bypasses its oscillator entirely — no CPU
+cost — and excludes it from the level normalisation count.
+
+**Solo this voice** `Off / On, default Off` *(new 2026-09-07)*
+When **any** voice is soloed, only soloed voices sound. Step the Voice selector
+through with this switched on and the voice that is wrong announces itself;
+before this, hearing one voice alone meant switching seven others off and back
+on again.
+
+**Soloing does not change the level of what is left.** The normaliser counts the
+voices that will actually sound, so soloing one of eight keeps it at the volume
+it had rather than dropping it by 18 dB. Soloing an inactive voice gives
+silence — Active still wins.
 
 ---
 
@@ -257,7 +325,22 @@ How long the pan takes to travel between positions. **0 is an instant switch** �
 Scales the width of pan movement (or for Spread / Spread Reversed, the maximum distance from center). At 100% panning reaches hard left and hard right. At 0% all voices remain centered regardless of mode.
 
 **Pan Base Rate** `0.001-1000, default 60`
-Base rate for pan movement in Increment mode, in the units set by Rate Mode.
+Base rate for pan movement in Increment mode, in the units set by **Pan rate
+mode** below.
+
+**Pan rate mode** `BPM / Seconds / Hz / Every N beats / N per beat, default BPM` *(new 2026-09-07)*
+The pan's **own** rate mode. It used to borrow the tremolo's, which meant you
+could not have the tremolo free-running in Hz while the pan landed on the
+project's beats — and that pairing is most of what bilateral panning is for.
+Every rate in this suite carries its own mode beside its own value; this is the
+pan's.
+
+Only Increment mode uses it. **Tremolo** pan mode pans at each voice's own
+tremolo rate, so it follows the main rate pair, which is what that mode means.
+
+*Existing projects keep the mode they were already running:* the migration wrote
+each instance's tremolo Rate Mode into this control rather than letting it take
+the default, so nothing changed speed.
 
 **Pan Increment per Voice** `-1000–+1000, default 0`
 The per-voice rate offset in Increment mode. Each successive voice's pan rate is offset by this amount from the previous. Setting a positive value spreads voices across different pan speeds; a negative value reverses the direction of the spread.
@@ -350,19 +433,39 @@ A one-time ride of a chosen parameter over a duration, then it holds — the in-
 
 This is the complement to Drift: Drift is a *repeating* wander that always returns; Ramp is a *one-time* move that stays. Between them you can replace most automation-envelope use without leaving the plugin.
 
-**Ramp target (slider 83)** `24 options, default Base Rate`
+**Ramp target** `24 options, default Base Rate`
 Picks which target the `by` amount edits. Same list as the Drift target selector (Base Rate, V1–V8 Rate, Pan Base Rate, Pan Increment, Binaural Beat, Trem On Duration, V1–V8 Gain, Depth dB, Attack %, Release %). Switching the selector saves the current target's `by`/duration/start-delay to the old target and loads the new target's saved values — running ramps on other targets keep going.
 
-**Ramp by (slider 84)** `-1000 to +1000, step 0.001, default 0`
+**Ramp by** `-1000 to +1000, step 0.001, default 0`
 Signed amount for the selected target, in that target's natural unit (rate unit for the rate targets, Hz for Binaural, dB for Gain/Depth, % for On Duration / Attack / Release). **0** = no ride.
 
 - **Base Rate** rides as a multiplicative ratio: at 60 BPM, `by -30` scales every voice by 0.5, so V2's 60.5 → 30.25 — the slow beat between voices is preserved.
 - **The other 23 targets** ride as additive offsets on their own value.
 - In BPM/Hz modes a negative `by` = slower; in Seconds mode a positive `by` = slower (longer period).
 
-**Independent mode note:** slider 3 (base rate) is still the reference for the Base Rate target's `by` interpretation even though it's not used for audio in Independent mode. Per-voice Rate targets ride each voice's own rate directly.
+**Independent mode note:** Rate Value is still the reference for the Base Rate target's `by` interpretation even though it's not used for audio in Independent mode. Per-voice Rate targets ride each voice's own rate directly.
 
-**Ramp duration (slider 85)** `0–60 minutes, default 0` — **per-target**: how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp start delay (slider 87)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves. · **Ramp engage (slider 86)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
+**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes` *(new 2026-09-07)*
+What Ramp duration and Ramp start delay are counted in. **Minutes is the
+default and that is not a free choice** — every saved instance had no such
+control, so Minutes is the unit they were all already running on, and putting
+Cycles at the top of the list would have quietly rewritten a thirty-minute ramp
+into a two-second one. *Cycles* counts this plugin's own tremolo cycles;
+*Beats* follows the live project tempo.
+
+**Ramp duration** `0–1000, default 0` — **per-target**: how long the *selected*
+target takes to travel from baseline to baseline + `by`, in Ramp time units. A
+target with duration 0 doesn't ramp. · **Ramp start delay** `0–1000, default 0`
+— **per-target**: wait this long after engage before *this* target moves. ·
+**Ramp engage** `Off / On, default Off` — **global**: one switch arms every
+configured target.
+
+**Ramp play for** / **Ramp rest for** `0–1000, default 0 each` *(new 2026-09-07)*
+Per-target. The ramp advances for `play`, holds for `rest`, and repeats — so it
+climbs as a **staircase** rather than a smooth glide. The holds come *out* of
+the duration rather than extending it, so Ramp duration goes on meaning "you
+arrive in about this long". Both at 0 is the smooth ramp, which is what every
+existing project has.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off all freeze and resume on re-engage. Each target has its **own** duration and start delay, so different targets can wind down over different timelines from a single engage.
 
@@ -376,7 +479,7 @@ Slow organic wander applied independently to any of **24 targets** — by far th
 
 The per-voice Rate targets are the rhythmic heart: drift each voice's rate independently and the voices wander against each other, which is the essence of polyrhythmic feel — the pattern is never quite the same twice. The expressive targets (per-voice Gain, Depth, Attack/Release) add the *dynamic* dimension — the pattern can breathe in level and character too, not just timing.
 
-Same pattern as Womb v3's drift and the rest of the suite. Switching the **Drift target** selector (slider 78) saves the current sliders 79-82 into the old target's memory slot, then loads the new target's saved values. All 24 configurations persist across project save/load.
+Same pattern as Womb v3's drift and the rest of the suite. Switching the **Drift target** selector saves the current settings into the old target's memory slot, then loads the new target's saved values. All 24 configurations persist across project save/load.
 
 **Drift target** `24 options, default Base Rate`
 - **Base Rate** — uniform Hz delta to every voice; preserves inter-voice rate relationships (the whole pattern breathes together).
@@ -394,8 +497,26 @@ How far above the target's baseline the drift wanders at its peak. Units: the ra
 **Drift down amount** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (cycles)** `1–1000, default 8`
-How many V1 cycles (the global rate) one full drift wave takes for this target. All 24 targets use V1 cycles as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
+**Drift period** `1–1000, default 8`
+How long one full drift wave takes for this target, counted in the unit below.
+
+**Drift period unit** `Cycles / Seconds / Beats, default Cycles` *(new 2026-09-07)*
+What the period counts. **Cycles** is this plugin's native count and the default
+— a period of 8 means eight tremolo cycles, and because it rides the same scale
+as everything else it follows the rate and the project tempo for free.
+**Seconds** is wall clock. **Beats** converts at the live project tempo, so the
+wander follows the host rather than the rhythm.
+
+**Drift play for** / **Drift rest for** `0–1000, default 0 each` *(new 2026-09-07)*
+Per-target, counted in **periods**. Both must be above zero for the gate to
+engage. While resting the drift phase does not advance at all, so the offset
+**freezes where it stopped** rather than sliding back to centre.
+
+**The fraction of the play value chooses where it parks.** `x.25` parks at the
+crest, `x.75` at the trough, `x.0` and `x.5` at no-change. So a whole number
+parks at neutral every time and is nearly inaudible — the awkward fraction is
+the interesting one, because each freeze lands further round the wave than the
+last.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.

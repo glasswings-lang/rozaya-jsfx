@@ -520,3 +520,29 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   prove the fold changed no speed, and range-checks every value against its
   slider's declared min/max. **Run it before committing the source**, since it
   reads the pre-migration layout from `HEAD`.
+
+## Polyrhythm Phase v3 — the 2026-09-07 voices-behind-a-selector rebuild
+
+- **`polyv3_migrate_layout_20260907.py`** — 90 sliders to 56, applying the
+  layout authored in `docs/layouts/polyrhythm-phase-v3.md`. Most of it is a
+  reorder, but **this is the first migration in the repo that REWRITES THE
+  BLOB**: V2–V8's forty-two per-voice values leave the slider line entirely and
+  become twelve `@serialize` banks, alongside four new drift/ramp play-rest
+  banks and a magic bump 2100024 → 2200024. It also writes two values that
+  cannot be left to a declared default — `Pan rate mode` takes the instance's
+  own tremolo Rate Mode (the pan used to borrow it), and `Voice` is seeded to 1
+  rather than `All`, so one stray nudge on a migrated instance cannot write
+  across all eight configured voices. Reads the snapshot and writes the live
+  project, so it is idempotent; dry-run by default. **Refuses rather than
+  guessing** on a quoted token, a missing `<JS_SER>`, a value above the old
+  slider count, an unmapped slider, or an instance count other than 8.
+- **`polyv3_verify_layout_20260907.py`** — the check for it, and it deliberately
+  does NOT import the migration's table. It reads the OLD slider names out of
+  `git show` at a **pinned commit hash** (never `HEAD~n`, which goes stale the
+  moment anything else is committed) and the NEW ones out of the working tree,
+  matches controls BY NAME, and checks four things: every shared control holds
+  the same value; every per-voice value reappears in the blob under its old
+  name; every migrated value fits its new slider's declared min/max; and the
+  line endings and instance counts survived. A value that was ALREADY out of
+  range before is reported separately from one this migration caused — mixing
+  the two buries the real signal. 1176 checks, 0 failures.
