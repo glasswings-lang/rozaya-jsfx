@@ -210,19 +210,23 @@ slider's name, order, range or unit.
 **Heard and good:** Melody's R20/R21 rate block; the Start delay fix in Melody;
 `N per beat` (reached for and built with, which is the strongest test there is);
 both big reorders on finished work; Dapple's immediate rate change; per-cycle pan
-on Polyrhythm; Veil's layout and ramp.
+on Polyrhythm; Veil's layout and ramp; **the Morpher's 2026-09-06 unit-control
+migration** — Rozaya opened a finished project the same day and it sounded exactly
+as it had, which is the 122 instances confirmed on real work rather than by a
+checker.
 
 **NOT heard:** everything from the 2026-09-06 drift/ramp sweep (six plugins), the
 `N per beat` reciprocal fix in all four plugins it touched, the Tremolo Start
-delay fix, the range widenings, and the Morpher's two unit controls.
+delay fix, and the range widenings.
 **Nothing there can regress silently** — every new control defaults to off or to
 what the plugin already meant, and no stored value moved — but none of it has
 been played.
 
-The Morpher is worth naming separately because it is the most-used plugin here:
-its 122 instances were rewritten on 2026-09-06 and the claim that nothing changed
-rests on a 12,200-check verifier, not on ears. **Opening one finished project and
-hearing it be itself is the whole test.**
+**Still unheard on the Morpher specifically**, even though the migration is now
+confirmed: the two new units doing anything OTHER than their defaults. A drift
+period in Cycles or Beats, and a ramp in anything but Minutes, have never been
+played. That is a new capability rather than a risk to old work — the confirmed
+test was that nothing MOVED — so it wants trying, not guarding.
 
 `docs/host-sync-ear-test.md` is still the highest-value thing waiting: five tests,
 about fifteen minutes, three of them never heard on any plugin.

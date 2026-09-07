@@ -141,9 +141,16 @@ the shape of a fix finds plugins that do not need it as readily as ones that do.
   what the change actually did.
 - **Pinned to a commit hash**, not `HEAD~n`, for the reason already in `CLAUDE.md`.
 
-**Nothing here has been heard.** The claim that 122 instances still sound like
-themselves rests on the verifier. Opening one finished project and hearing it be
-itself is the whole test.
+**HEARD, same day.** Rozaya opened a finished project as a test: *"it sounds just
+like it did."* That is the 122 instances confirmed on real work rather than by a
+12,200-check verifier, and it is the status that counts. The verifier was right,
+which is worth knowing about the verifier as well as about the migration.
+
+**What that test did NOT cover, and it is worth being exact:** it proves nothing
+MOVED. Both new units were left at their declared defaults, which is precisely why
+the project sounded unchanged. A drift period in Cycles or Beats, and a ramp in
+anything but Minutes, are still unplayed. That is a new capability to try, not a
+risk to guard.
 
 ---
 
