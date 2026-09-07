@@ -241,6 +241,22 @@ has no rate mode at all now (a principled R20 exception — its rate is EMERGENT
 its four segments), `Set breath rate` is a one-shot that speaks the breath's own
 unit, and Sigh depth is additive instead of a multiplier. **That fix is UNHEARD.**
 
+**The 2026-09-07 Polyrhythm v3 rebuild MIGRATED CLEAN, confirmed by ear** — 90
+sliders to 56, the voices behind a selector, 8 instances across 5 projects.
+Rozaya opened `shapes` (the richest of them: two instances, eight voices each,
+eight distinct notes and a drift ladder) the same day: *"Nothing sounds off which
+is nice"*, having first been *"totally distracted listening to"* it. That is the
+migration confirmed on real work rather than by a checker.
+
+**What that does NOT cover, and the distinction matters here more than usual.**
+Every new control defaults to off or to what the plugin already meant, so a clean
+open proves the OLD work survived and nothing more. The new capabilities have
+never been played: per-voice On Duration / Depth / Attack / Release, per-voice
+Waveform, `Solo this voice`, `Pan rate mode` in anything but the mode the
+tremolo was already in, and all six drift/ramp controls. `Voice = All` writing
+across eight voices is the one to try first — it is the path that will be used
+most and the only one that can change eight things at once.
+
 **NOT heard:** everything from the 2026-09-06 drift/ramp sweep (six plugins), the
 `N per beat` reciprocal fix in all four plugins it touched, the Tremolo Start
 delay fix, and the range widenings.

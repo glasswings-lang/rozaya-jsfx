@@ -4,7 +4,12 @@ Written by hand 2026-09-07, not generated. **Authored BEFORE anything is built.*
 Supersedes the first draft of this document (a flat 96-slider reorder), which is
 in git history if the reasoning is ever wanted.
 
-**Status: BUILT AND MIGRATED 2026-09-07. NOT YET HEARD.**
+**Status: BUILT AND MIGRATED 2026-09-07. THE MIGRATION IS HEARD AND GOOD; THE
+NEW CAPABILITIES ARE NOT.**
+
+Rozaya opened `shapes` the same day -- *"Nothing sounds off which is nice"* --
+which confirms the 8 instances on real work. It does not touch the new
+controls, all of which default to no-change.
 
 Built exactly as authored below -- 56 sliders, the twelve-control voice block,
 `All` at position 0, Solo, the pan's own rate mode, and the six drift/ramp
