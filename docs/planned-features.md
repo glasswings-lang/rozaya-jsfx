@@ -2300,3 +2300,34 @@ point should keep its limit and say why. The Morpher's Stereo width is the live
 example — above 100 it is a widener, and heavy widening is what causes
 mono-cancellation on a speaker, which matters for a suite played on phones and
 HomePods.
+
+## Womb is being used as a NOISE instrument, not as a body (2026-09-06)
+
+Rozaya, on why she had `scattered.rpp` open at all: *"I was half-assed using
+scattered for crashes, womb was the only place I could get different frequencies
+of noise coming in like that."*
+
+**This is a use nobody designed for and it is the strongest kind of signal there
+is** — a thing reached for, not a thing asked for. Womb has three independent
+filtered-noise layers with their own envelopes, frequencies and stereo:
+
+- Bloodflow — noise through a resonant lowpass, swelling once per heartbeat.
+- Breath — noise through separate inhale/exhale filters plus a high-pass and a
+  post-filter, on a four-segment envelope.
+- Both with their own play/rest gating, drift and ramp.
+
+Nothing else in the suite offers that. Veil, Dapple and Bubbler are each one
+character; breath_gen is one breath. **The gap is a noise instrument with several
+independently-tuned bands swelling on their own clocks.**
+
+**What this changes about the bloodflow offset**, which landed the same day: it is
+not primarily an anatomical control. It is a way to stop two noise swells landing
+on top of each other. Framing it as pulse transit time is true and beside the
+point for how it is actually used.
+
+**Not a job yet, and deliberately not scoped here.** Recorded so the next session
+does not "simplify" Womb's three-layer noise engine toward the womb-sound brief in
+its name, and so that if a noise instrument ever gets built, this is the
+requirement it starts from. Ask Rozaya what she is reaching for before designing
+one — the useful question is what the crashes need to DO, not which filters to
+offer.
