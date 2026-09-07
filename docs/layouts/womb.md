@@ -479,3 +479,110 @@ existing entry may move.
    — Milliseconds for the eight that mean milliseconds, Beats for `scattered.rpp`,
    whose 0.14 really is beats. **The permission asked for is withdrawn because the
    problem it was for does not exist.**
+
+---
+
+# Follow-up, 2026-09-06 (evening) — the breath, after hearing it
+
+**The rebuild above was HEARD AND GOOD** — *"Everything else, though, passes. :)"*
+This section is the one thing that did not pass, and it is a regression I
+introduced the same day.
+
+**Status: AUTHORED, NOT BUILT.**
+
+## What went wrong, and it was written down before I did it
+
+Rozaya, using it: *"The every n beats vs. n per beat distinction is confusing in
+practice when it comes to breath segments and breaths per minute."* Then, asked
+whether it was the name fighting the mode or the two competing beat-counts:
+*"It's both. And both interacting with other, which is a third thing that fell out
+and clattered, loudly, on the ground."*
+
+The third thing is the root. I made the four breath segments **proportions of a
+length set elsewhere**. That exact model had already been built, reported broken by
+Rozaya three separate times in August, and deliberately replaced — and the comment
+saying so was in the block I was editing:
+
+> *What this replaced: the four sliders were a RATIO and a separate value set the
+> total. It fitted the shape correctly and was still wrong, because 4-0.5-8-1
+> stopped meaning anything you could count, halving the in and out did not shorten
+> the breath (it only gave the pauses a bigger share), and the total was seeded
+> from the tempo you happened to switch modes at. (Rozaya, three separate reports,
+> 2026-08-30/31.)*
+
+**I quoted the paragraph above it in my own new comment and rebuilt the thing it
+rejected.** Reading a warning is not the same as heeding it. The test that would
+have caught it: *what did this replace, and why?*
+
+## What is NOT the fix
+
+**Removing the control.** That was proposed and Rozaya caught the hole in it:
+*"I think there are times you'd want to be able to adjust all 4 ratoes at once."*
+Correct — and checked: with it gone, the only way to rescale a breath is to
+multiply four numbers by hand, which is precisely the barrier this suite exists to
+remove. (The Drift/Ramp `Breaths/min` target survives either way, but that is
+modulation over time, not setting.)
+
+**Removing the slider rewrite.** Also proposed, also wrong. Rozaya: *"I'm not happy
+with the death of the slider changes; that was a deliberate bend toward honesty
+when rescaling."* Right — after a rescale the four numbers ARE the real durations
+rather than a ratio to decode. R20's "no control writes into another" is against
+SILENT coupling; a one-shot you press, that shows you its result, is the opposite
+of silent. **The rewrite is the honest half and it stays.**
+
+## The three changes
+
+### 1. The breath setup control speaks the breath's own unit
+
+Rozaya: *"Breaths per minute needs to not make up that seconds are slower... 4
+seconds isn't *that*, if set in like 70 bpm or something."* The failure mode: type
+5 breaths a minute while the segments are in beats and they come back as 14 and
+28, which reads as nothing you asked for.
+
+**So what you type and what appears must be the same family:**
+
+| breath unit | the setup control | type 12 and you get |
+|---|---|---|
+| Seconds | **Breaths per minute** | a 12-per-minute breath, segments summing to 5 s |
+| Beats | **Beats per breath** | segments summing to 12 beats |
+
+One-shot in both cases: it scales the four segments once, in their own unit, then
+reads 0 again. Afterwards every number on screen is a real duration, and halving
+the inhale genuinely shortens the breath.
+
+**The trade, chosen deliberately:** per-minute is not reachable while the breath is
+in beats. That is the point — in beats you are thinking in beats, which is why you
+are there. Coherence-rate breathing is a seconds-mode activity.
+
+### 2. The segments get a plain unit
+
+`Breath rate mode` (the five-option R20 picker) goes. The breath has no rate
+control, so it needs no rate mode — it needs to know what its four numbers are in.
+**`Breath unit {Seconds, Beats}`**, declared Seconds.
+
+This is a **principled exception to R20**, like Veil's. The breath's rate is
+EMERGENT from its segments; there is no rate value for a mode to qualify. Forcing
+the five-option picker on it is what produced the `N per beat` nonsense Rozaya hit
+— "eight breaths per beat" is not a thing anyone wants.
+
+### 3. Sigh depth stops being a multiplier
+
+Rozaya: *"that sigh multiplier is the exact same type of problem."* Correct.
+`Sigh depth multiplier` at 1.5 means doing multiplication in your head to set it
+and division to hit a target. It becomes **how much LONGER the sigh breath is**, in
+the breath's own unit — additive, direct, and it composes with everything else.
+
+## What this costs the library
+
+Nothing audible, and that is measured rather than assumed. Every instance holding
+a non-zero `Breaths per minute` has segments that ALREADY sum to exactly the cycle
+it asks for, so the scale is 1 and removing the live scaling changes no sound:
+
+| project | Breaths/min | segments | sum | 60/rate |
+|---|---|---|---|---|
+| back-to-life | 5 | 4/0/8/0 | 12 | 12 |
+| deep-night | 6 | 4/0/6/0 | 10 | 10 |
+| womb-bubbles-proto | 5 | 4.8/0/7.2/0 | 12 | 12 |
+
+The other six hold 0. One more migration of 9 instances, and it should be the
+last — everything Womb is owed is now in this document.

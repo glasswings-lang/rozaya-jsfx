@@ -197,8 +197,14 @@ slider's name, order, range or unit.
   **Resonance Bank is NOT missing one** — its drift period is a RATE by design,
   because each band drifts independently and there is no single cycle to count.
   A name-matching sweep will claim otherwise; it is wrong.
-- **Reorders still owed:** Polyrhythm v1 → v3 (its layout is not authored, which
-  is what blocks it), Passage (blocked on what it is FOR), Sweep Dwell
+- **POLYRHYTHM: v1 IS LEFT ALONE. Decided by Rozaya 2026-09-06** — *"The
+  polyrhythm can just... be left. If we do v3 and then migrate it'll be fine."*
+  So v1 gets NO drift/ramp controls and no reorder; v3 gets its layout and the
+  six, then v1's **84 instances across 17 projects** cross to v3 once and v1
+  retires. Do not migrate those 84 twice. v1's layout does not need authoring —
+  only v3's does, and the v1→v3 conversion after it.
+- **Reorders still owed:** Polyrhythm v3 (layout not authored yet — that is the
+  next job), Passage (blocked on what it is FOR), Sweep Dwell
   (blocked on its `Cycle mode` question, not on effort).
 - **The range sweep: passes 1 and 2 are done** — 176 sliders widened, 0 narrowed,
   verified against all 641 continuous sliders. dB and semitone ranges are held
