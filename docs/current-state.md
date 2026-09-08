@@ -54,12 +54,13 @@ sentence.
 - **The range sweep: passes 1 and 2 are done** — 176 sliders widened, 0
   narrowed, verified against all 641 continuous sliders. dB and semitone ranges
   are held for Rozaya's decision.
-- **R22, the pitch block: the rule is written and agreed, nothing is built.**
-  The full rule is in the plan; do not re-derive it, and in particular do not
-  re-derive the two-mode version that was already killed. It is three jobs in a
-  fixed order: the rule (done), then **Melody and Shepard Tone's voices behind a
-  selector**, then the pitch migration. Those two cannot take a four-control
-  block per voice as they stand, and building the block first would mean
+- **R22, the pitch block: BUILT IN BREATH GENERATOR ONLY, 2026-09-08, unheard.**
+  That is its first and so far only outing anywhere. The full rule is in the
+  plan; do not re-derive it, and in particular do not re-derive the two-mode
+  version that was already killed. The rest is two jobs in a fixed order:
+  **Melody and Shepard Tone's voices behind a selector**, then the pitch
+  migration across the remaining plugins. Those two cannot take a four-control
+  block per voice as they stand, and doing the migration first would mean
   migrating them twice.
   **The Morpher, Passage, Sustain Looper and Bubbler are deferred and out of the
   migration list** — they pitch audio they did not make.
