@@ -7,8 +7,17 @@ first, then build and migrate once. Breath Generator has never had a session of
 its own — every change it carries arrived as part of a suite-wide pass — so this
 is the first time its order has been decided rather than accumulated.
 
-**Cost: 32 sliders → 40, and every one of them moves.** 27 instances across 20
-projects need a slider-line migration. Rozaya, 2026-09-08, on accepting that:
+**Cost: 32 sliders → 40, and every one of them moves.** **4 instances across 3
+live projects** need a slider-line migration: `templates/breathscapes.RPP`,
+`to-play-with-later/micle.RPP`, and `to-play-with-later/organic-movement.RPP`
+(two instances). **Nothing in `finished/` uses this plugin at all.**
+
+**An earlier count in this file said 27 instances across 20 projects. That was
+wrong** — the grep swept `E:/reaper/finished/backups/` and counted seventeen old
+snapshots of the same three files as live projects. Scope a project grep to
+exclude the backups folder, or it will inflate every number you take from it.
+This is the cheapest migration in the suite, which is part of why R22 should be
+prototyped here. Rozaya, 2026-09-08, on accepting that:
 *"I'd reach for the controls being in places that make fucking sence, migration
 again be damned."*
 
@@ -20,13 +29,12 @@ answered a question, this copies the answer rather than re-deriving it. That is
 the whole point of the suite being consistent: a thing learned on one plugin
 should be true of its twin.
 
-## One open question for Rozaya
+## The output control — ANSWERED, it goes in
 
 **Breath Generator has no output level control of any kind.** Not Output dB, not
 Volume, nothing — verified against all 32 sliders. Womb has `Breath Volume`.
-Every other plugin in the suite has an output. Slider 21 below is a proposal,
-not a decision, and it is the only thing here that is not already settled by a
-rule or by Womb.
+Every other plugin in the suite has an output. Rozaya, 2026-09-08: *"We do need
+it I think, yeah."* So slider 21 is decided, not proposed.
 
 ## The order
 
@@ -121,7 +129,7 @@ Names go to sentence case (R5): `Inhale Fade In` → `Inhale fade in`.
 
 | # | control | note |
 |---|---|---|
-| 21 | `Output (dB)` | **NEW, AND THE ONE OPEN QUESTION.** Proposed default 0 dB, range −60…+12. Not built until Rozaya says so. |
+| 21 | `Output (dB)` | **NEW, and approved 2026-09-08.** Default 0 dB (no change to any existing instance), range −60…+12. |
 
 ### Transport — 22–24
 
@@ -188,18 +196,24 @@ naming them here is what stops a later session folding one in on the way past.
 
 ## Build order
 
-1. Rozaya answers the output-level question.
-2. Build the file at 40 sliders, every new control defaulting to off or to what
+1. ~~Rozaya answers the output-level question.~~ **DONE — it goes in.**
+2. **Back up first. DONE 2026-09-08**, at Rozaya's request: the three live
+   projects to
+   `E:/reaper/finished/backups/snapshots/_pre-breathgen-layout-20260908/`, and
+   the installed plugin to
+   `C:/Users/solst/jsfx-backups/breath_gen.pre-20260908-layout.jsfx`. All four
+   copies verified byte-identical to their sources.
+3. Build the file at 40 sliders, every new control defaulting to off or to what
    the plugin already means: `Set breath rate` 0 (= off), `Breath unit` Seconds,
    `Pitch mode` and `Fine tune mode` Hz, `Fine tune value` 0.
-3. **Bump the `@serialize` magic in the same commit as the renumber.** That is
+4. **Bump the `@serialize` magic in the same commit as the renumber.** That is
    the only thing that made the last accidental renumber in this suite
    repairable.
-4. Author the migration from the table above — an exact literal map, with a
+5. Author the migration from the table above — an exact literal map, with a
    count assertion, using `tools/rpp_sliders.py`. Breath Generator is under 64
    sliders both before and after, so the `""` marker at token index 64 does not
    apply; assert that rather than assume it.
-5. Verify by decoding a real project line by control NAME against a
+6. Verify by decoding a real project line by control NAME against a
    pre-migration snapshot, not against the table the migration used. Range-check
    every migrated value against its new slider's declared min/max.
-6. Ask for an ear test. It is not done until it has been heard.
+7. Ask for an ear test. It is not done until it has been heard.
