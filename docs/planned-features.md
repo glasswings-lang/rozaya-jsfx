@@ -2392,3 +2392,29 @@ during that silence cannot click.
 **Note for whoever picks this up:** per-voice waveform makes it SEVEN controls a
 voice, 56 flat parameters. Every per-voice feature makes the flat layout worse and
 the nested-selector question more urgent. They are the same question.
+
+## ysfx — running a plugin without REAPER, and without ears
+
+**Moved here from `CLAUDE.md` on 2026-09-08. It had never actually been written
+down anywhere else**, despite `CLAUDE.md` claiming for weeks that "the details
+are in `docs/planned-features.md`". The consistency plan has a one-line "worth a
+look at some point" and nothing more. Check a pointer before you trust it.
+
+**A JSFX compiler *does* exist outside REAPER, and `CLAUDE.md` said otherwise
+for months without anyone checking.** `ysfx` (github.com/jpcima/ysfx,
+Apache-2.0, CMake, Windows) has a JSFX compiler AND runtime; `jsusfx` is a
+second implementation. Its API covers load, compile with real error messages,
+slider get/set, and offline block processing — so a plugin can be compiled,
+configured, **run**, and its output **read**, with no REAPER and no ears.
+
+**Not built yet.**
+
+**The runtime is the prize, not the compile check.** A compile check catches
+syntax and would have caught none of 2026-09-06's real bugs. Behaviour in this
+suite is currently checked by re-implementing the DSP in Python — which tests my
+*model* of the code and never the code, and is exactly how that day's placement
+"fix" was verified, shipped, and made things worse.
+
+**"We can't compile JSFX" should have been "I haven't looked."** Before writing
+an impossibility into a document, search for the thing being declared
+impossible.

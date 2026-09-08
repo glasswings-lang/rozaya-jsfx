@@ -546,3 +546,33 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   line endings and instance counts survived. A value that was ALREADY out of
   range before is reported separately from one this migration caused — mixing
   the two buries the real signal. 1176 checks, 0 failures.
+
+## doc_budget.py
+
+Checks the docs a session actually reads against a line budget, and exits 1 if
+one is over.
+
+```bash
+python tools/doc_budget.py
+```
+
+**Run it before committing any change to `CLAUDE.md` or under `docs/`.**
+
+It exists because `CLAUDE.md` was cut from 824 lines to 451 on 2026-09-03, from
+1298 to 784 on 2026-09-06, and was back at 1043 by 2026-09-08 — growing about
+fifteen lines per commit and never once shrinking in between. Three separate
+sessions tidied it; it grew back every time. The same thing was happening to the
+other docs: the consistency plan went from 704 lines to 2742 in nine days, the
+session log from 475 to 1998 in four.
+
+Tidying is not the fix, because the growth is structural — every session writes
+down what it learned so the next one does not repeat it, and nothing ever
+deletes. A ceiling is the fix, and a ceiling only holds if something checks it.
+The rules that have held in this repo are the ones a script enforces.
+
+**When it says OVER, do not raise the number.** Delete something, or move it to
+the file where it belongs and leave a one-line pointer. One home per fact.
+
+`docs/session-log.md` is deliberately unbudgeted — it is append-only history and
+capping it would mean rewriting what happened. It gets rotation instead; the
+note at the bottom of the script says how.
