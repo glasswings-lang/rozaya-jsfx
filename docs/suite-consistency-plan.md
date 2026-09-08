@@ -2334,8 +2334,14 @@ equivalent of the nine plugins that had nothing stored on Host x.
 > also the fix Rozaya asked for on 2026-09-07 after a bare `Rate Value` named
 > neither its unit nor its scope.
 >
+> **`Fine tune` is a SECOND pair, always present, always after the first:
+> `Fine tune value`, then `Fine tune mode`, the same `{Hz, Semitones, Cents}`.**
+> It is a finer offset that coexists with the coarse one; it is not the same
+> control at a different scale.
+>
 > **A plugin that pitches audio it did not make — the Morpher, Passage, Sustain
-> Looper — carries the pair ALONE**, because it has no note to offer.
+> Looper — has no note to offer. What those three carry is DEFERRED to their own
+> discussion (see below); do not settle it from here.**
 >
 > **One `Tuning Reference Hz` per plugin**, with the other global pitch
 > controls, not repeated per voice.
@@ -2390,11 +2396,44 @@ one — so a voice can sit a true third above another rather than an equal-
 tempered approximation of one, and a drone can be detuned in Hz against a
 measured reference rather than by ear alone.
 
-**This is why `Fine tune (cents)` does not survive as its own control.** The
-value-and-mode pair does its job and more; keeping both would be two ways to say
-one thing. That is a REDUCTION, and it is the one in this rule that comes from
-correctness rather than tidying — which is the distinction that matters, given
-how the other three reductions here turned out.
+## `Fine tune` SURVIVES, and gets its own mode — the fourth reduction, caught
+
+An earlier draft of this rule deleted `Fine tune (cents)`, on the reasoning that
+the pitch value-and-mode pair "does its job and more, and keeping both would be
+two ways to say one thing". I even flagged it as the one reduction here that
+came from correctness rather than tidying. It did not.
+
+Rozaya, 2026-09-08:
+
+> *"At this specific stage, plugins getting pitch modes doesn't have to mean
+> things get lost. It does mean that fine-tuning should have been a feature from
+> the start, and that was my oversight. But that's a long way from saying, we
+> don't need this control because this other one, requiring more fiddling, looks
+> tidier on paper."*
+
+**They are not two ways to say one thing, and the proof is in the fiddling.**
+Folding fine tune into the pitch pair means that nudging a voice seven cents
+requires switching `Pitch mode` to Cents — which changes what the MAIN pitch
+value means — nudging, and switching back. You cannot hold a coarse offset and a
+fine one at the same time, because there is only one value. A second pair costs
+two sliders and removes a mode-switch from an operation you do by ear, over and
+over, while listening.
+
+**"Tidier on paper" is the exact failure mode**, and this is the fourth time in
+one sitting the same instinct produced a wrong answer here: the `{Note, Hz}`
+mode list, collapsing detune into cents, retiring `Center Octave`, and now this.
+It is recorded in CLAUDE.md as a standing correction, not as four incidents.
+
+**Fine tune gets the full mode list too**, and that is not symmetry for its own
+sake. Rozaya: *"Rate mode features everything you could possibly want. so should
+pitch. so should fine-tune."* A fine tune in **Hz** is how you set a beat
+against another voice — plus three Hz IS the beat frequency, and asking for that
+in cents means knowing the pitch first. That is arithmetic, which is the barrier.
+
+**And the honest history: fine tune was missing suite-wide, not over-served.**
+It exists in exactly one plugin today (Polyrhythm v3), which is why the pitches
+between the note names have been unreachable everywhere else. R22 adds it
+everywhere; it does not tidy it away.
 
 ## Why Hz must stay wide
 
@@ -2592,6 +2631,28 @@ please" — and she was right, two of these I was re-deriving from scratch.**
 - **R17 — no unitless sliders.** Sustain Looper's `Spread (detune amount)`,
   0-100 with no unit, is already condemned by R17's *"x of what?"* test. R22
   does not discover it; it inherits it.
+
+## The Morpher and Passage are their own discussion — NOT settled here
+
+Rozaya, 2026-09-08: *"Morpher and Passage are their own discussion there."*
+
+What is settled is the GENERAL rule: `Note` cannot be one of the modes, because
+a plugin that did not make the audio does not know its pitch. That reasoning is
+why the mode list is three units and it stands.
+
+What is NOT settled is what those two actually end up carrying. An earlier draft
+of this rule wrote "they carry the pair alone" into the rule statement as though
+it were decided. It is not. They are the suite's two spectral plugins, they
+share a capture mechanism, Passage has an owed reorder blocked on what it is
+FOR, and Rozaya has just said its fine-tune surface is part of the answer to
+that — *"passage earns a place by having room for a fine-tune control tapping
+into those pitch modes (flat notes, anyone)?"*
+
+**Sustain Looper is probably in the same conversation** — it is the third
+source-pitching plugin — but Rozaya named two, so do not assume the third.
+
+Take those three out of the migration list until that discussion happens. The
+other eight plugins are buildable from this rule as it stands.
 
 ## The one place R22 CONTRADICTS an existing rule, and the argument for it
 

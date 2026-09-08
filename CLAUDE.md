@@ -225,20 +225,40 @@ slider's name, order, range or unit.
   modes**: a plugin that generates its own sound carries a `Note` picker before
   the pair, and one that pitches audio it did not make (Morpher, Passage,
   Sustain Looper) carries the pair alone — because it does not KNOW the source's
-  pitch, so a note name there is a promise it cannot keep. One note list
-  everywhere, **the full MIDI range C-1 to G9**.
+  pitch, so a note name there is a promise it cannot keep. **`Fine tune` is a
+  SECOND complete pair with the same three modes**, always present — it is a
+  finer offset that coexists with the coarse one, not the same control at
+  another scale, and folding it in would make every by-ear nudge a mode switch.
+  One note list everywhere, **the full MIDI range C-1 to G9**.
+  **The Morpher, Passage and Sustain Looper are DEFERRED to their own
+  discussion** and are not in the migration list — Rozaya, 2026-09-08:
+  *"Morpher and Passage are their own discussion there."* The other eight
+  plugins are buildable from the rule as written.
+  **The kin bridge is the way to TEST this rather than assert it.**
+  `~/AppData/Roaming/REAPER/Scripts/kin_bridge.lua` (F4, Load ReaScript, Run,
+  leave running) writes a manifest of every control's live value twice a second
+  and reads a command mailbox — so a selector can be driven and read back in the
+  REAL plugin instead of in a Python model of it. That is the gap the 2026-09-07
+  Polyrhythm build could not close.
   **My first draft offered `{Note, Hz}` only and Rozaya killed it** — *"the
   minute I'm making decisions like this is the minute I say include all of
   them."* That draft was triage, which this file forbids, and it would have
   forced a unit change on 122 Morpher instances by leaving `Pitch (semitones)`
   nowhere to land. **Do not re-derive the two-mode version.**
-  **The same instinct got caught twice more in one sitting, and the second time
-  it was nearly expensive.** I had also collapsed detune's four units into
+  **The same instinct got caught THREE more times in one sitting, and one of
+  them was nearly expensive.** I had also collapsed detune's four units into
   cents, and proposed RETIRING `Center Octave` on the reasoning that a note
   names its own octave. Opening the block says otherwise: in the Shepards it is
   the centre of the pitch window the octave stack spans, half of a working pair
-  with `Octave Count`. Rozaya, 2026-09-08: *"I know you're overeager. Let's use
-  that to widen ranges, not reduce them."* **Take that as a standing correction,
+  with `Octave Count`. And I deleted `Fine tune (cents)`, on the reasoning that
+  the new pitch pair could do its job — which is false the moment you try to
+  nudge by ear, because it turns a nudge into a mode switch and back. Rozaya:
+  *"that's a long way from saying, we don't need this control because this other
+  one, requiring more fiddling, looks tidier on paper."* **"Tidier on paper" is
+  the name of this failure.** Its cost is always paid by the person doing the
+  fiddling, and never shows up in the document that proposed it.
+  Rozaya, 2026-09-08: *"I know you're overeager. Let's use that to widen ranges,
+  not reduce them."* **Take that as a standing correction,
   not a remark about one document** — the tidying reflex reads as helpfulness on
   the way out the door, and it is the same shape as the condescension failure
   recorded under *Whose job is whose*.
