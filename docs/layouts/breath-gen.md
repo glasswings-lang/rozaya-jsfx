@@ -100,7 +100,7 @@ block carries a `Note` picker.
 | 13 | `Tuning reference (Hz)` | **NEW.** One per plugin. |
 
 **Migration note: the two frequencies are 800 and 600 Hz by default and are real
-values in 27 instances.** They move into the per-target bank behind the selector,
+values in all 4 instances.** They move into the per-target bank behind the selector,
 with `Pitch mode` seeded to `Hz` so every stored number keeps meaning exactly
 what it means today. Nothing is converted to semitones on the way in.
 
