@@ -689,10 +689,24 @@ because they apply every session, not on the day they were learned.
   code did `per = max(per, 1)`, which turns a 0 into the FASTEST drift the
   control can produce — one full wander per rate cycle. Exactly backwards from
   what the control reads as.
-  **The gate was half-built two days earlier.** Commit `7e63784` (2026-09-06)
-  added `&& per > 0` to eleven plugins, plainly meaning 0 = off, and never
-  widened the range so 0 could be reached. Dead code from birth. **A gate on a
-  value the slider cannot produce is not a feature, it is a note-to-self.**
+  **The gate is THREE MONTHS old, not two days — I got this wrong twice and
+  Rozaya asked the question that caught it.** Walked properly, `&& per > 0`
+  first appears in `976dc70` (Womb, 2026-06-09), then eight plugins on
+  **2026-06-11** (`854952d` Tremolo, `e9db305` Breath, `bf846e5` the sweeping
+  filter, `b285560` Heartbeat, `a06ff95` rhythm-track, `d711c52`/`6e7edb1` the
+  Shepards, `d4178a7` Sweep Dwell), Veil in July, and Bubbler / Dapple /
+  stereo-phaser on 2026-09-05. **And the slider was already declared
+  `<1,1000,1>` in the same commit that added the gate**, so it was unreachable
+  from the moment it was written. Dead code from birth, for three months. **A
+  gate on a value the slider cannot produce is not a feature, it is a
+  note-to-self.**
+  **THERE IS NO WINDOW IN WHICH IT WORKED AND THEN BROKE.** That matters,
+  because "it regressed recently" is the comfortable story and it is false —
+  nothing to hear was ever lost. My first attribution said commit `7e63784`,
+  2026-09-06, eleven plugins; that came from a history walk whose `uniq -f2`
+  collapsed the transition and reported the wrong side of it. **Walking a
+  history to find when something appeared: print EVERY commit and read the
+  flip, never summarise inside the pipeline.**
   The fix: range `0..1000` and `0 = off` in the name everywhere, the three
   clamps replaced by the gate, and the Morpher and Passage gated on their
   `td_active` (they had neither, and would have advanced a whole drift cycle per
