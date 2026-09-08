@@ -24,29 +24,84 @@ The envelope applied to each phase is a simple amplitude shape — fade in from 
 
 ## Parameters
 
+### Rate
+
+The breath has **no rate mode**, unlike every other plugin in the suite, and that
+is deliberate: its rate is *emergent* from the four segments below, so there is
+no rate value for a mode to qualify.
+
+**Set breath rate (per minute, or beats per breath; 0 = off)** `0-1000, default 0`
+A one-shot. Type the rate you want and the four segments below are scaled to it,
+keeping their ratio, and this control returns to 0 so the four numbers on screen
+stay the truth. In Seconds it reads as breaths per minute; in Beats it is already
+beats per breath, so it is used as-is. Leave it at 0 and nothing happens.
+
+**Breath unit** `{Seconds, Beats}, default Seconds`
+What the four segments are counted in. Beats follows the project tempo, so the
+breath rides a tempo change instead of ignoring it.
+
+---
+
 ### Timing
 
-**Inhale Duration (sec)** `0.5-20.0 sec, default 4.0`
+The four segments are absolute durations, and **their sum is the breath cycle** --
+which is why halving the inhale genuinely shortens the breath rather than just
+giving the pauses a bigger share.
+
+**Inhale (in breath units)** `0.001-1000, default 4.0`
 Length of the inhale phase. The breath cycle advances through inhale → top pause → exhale → bottom pause in sequence, then loops. Changing this value mid-cycle takes effect at the next state transition; if the new duration is shorter than the current position, the position is immediately clamped to the end of the state.
 
-**Top pause (sec)** `0.0-5.0 sec, default 0.3`
+**Top pause (in breath units)** `0-1000, default 0.3`
 Silence between the end of inhale and the start of exhale. Simulates the natural breath hold at the top of a breath. Set to 0 for an immediate inhale-to-exhale transition.
 
-**Exhale Duration (sec)** `0.5-20.0 sec, default 4.0`
+**Exhale (in breath units)** `0.001-1000, default 4.0`
 Length of the exhale phase.
 
-**Bottom pause (sec)** `0.0-5.0 sec, default 0.3`
+**Bottom pause (in breath units)** `0-1000, default 0.3`
 Silence between the end of exhale and the start of the next inhale. Simulates the natural rest at the bottom of a breath. Set to 0 for an immediate exhale-to-inhale transition.
 
 ---
 
-### Tone
+### Pitch
 
-**Inhale Frequency Hz** `50-2000 Hz, default 800`
-Cutoff frequency of the lowpass filter applied during the inhale phase. Broadband noise content passes through from below; rolloff above the cutoff with a slight resonant peak at cutoff. Inhale defaults sit higher than exhale to match the sharper-turbulence character of inflow (air entering through the nose/mouth has higher-frequency hiss content than the cavity-colored exhale). Lower values produce a deeper, body-heavy rush; higher values add more upper-frequency hiss. Note: due to sinusoidal frequency-to-coefficient mapping, the effective cutoff tracks lower than the displayed value at higher settings, increasingly so above ~1500 Hz.
+The two filter centres -- the inhale's and the exhale's -- sit behind **one**
+pitch block rather than having a control each. Pick which one you are editing
+with `Pitch target`, or pick `All` to move both together.
 
-**Exhale Frequency Hz** `50-2000 Hz, default 600`
-Cutoff frequency of the lowpass filter applied during the exhale phase. Typically set lower than inhale for the cavity-colored character of exhalation. The same frequency mapping caveat applies.
+They are filter centres rather than generated tones, and they still get notes:
+tuning a breath to a note is a real musical act, and the point is musicality
+integrated with the rest of the suite rather than kept separate from it.
+
+**Pitch target** `{All, Inhale, Exhale}, default All`
+Which centre the five controls below are editing. On `All` they read back the
+inhale's values, and moving any of them writes to **both**.
+
+**Note** `C-1 to G9, default G5 (inhale) / D5 (exhale)`
+The note the centre sits on, across the full MIDI range.
+
+**Pitch value (Hz / semitones / cents)** `-1000 to 1000, default 16.009 / 12.670`
+An **offset from the note**, in whichever unit `Pitch mode` names. In Hz it adds
+directly, which is what lets an exact old frequency survive a migration while
+still being named as a note -- the odd-looking defaults are the remainder that
+puts the inhale on exactly 800 Hz and the exhale on exactly 600 Hz.
+
+**Pitch mode** `{Hz, Semitones, Cents}, default Hz`
+What `Pitch value` means. The same three options in the same order wherever
+pitch appears in this suite.
+
+**Fine tune value (Hz / semitones / cents)** `-1000 to 1000, default 0`
+A second, independent offset on top of the first, with its own mode. It exists so
+that nudging by ear never costs a mode switch and back.
+
+**Fine tune mode** `{Hz, Semitones, Cents}, default Hz`
+
+**Tuning reference (Hz)** `20-2000, default 440`
+What A4 is worth. One per plugin.
+
+The inhale defaults sit higher than the exhale to match the sharper-turbulence
+character of inflow. Because of the sinusoidal frequency-to-coefficient mapping
+in the filter, the effective cutoff tracks lower than the stated value at higher
+settings, increasingly so above ~1500 Hz.
 
 ---
 
@@ -185,10 +240,10 @@ For slow wall-clock-feel drift, set a long period (~100 cycles ≈ 7-10 min at t
 **Drift target** `Inhale / Top pause / Exhale / Bottom pause / Breaths/min, default Inhale`
 Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost. The **Breaths/min** target (v2.14) wanders the whole breath rate (all four segments in lockstep, I:E preserved) in breaths/min, rather than one segment in seconds.
 
-**Drift up amount (seconds)** `0.0–10.0, default 0`
+**Drift up amount (units match target)** `0.0–10.0, default 0`
 How many seconds above the baseline segment length the drift wanders at its peak. 0 = drift off on the up side.
 
-**Drift down amount (seconds)** `0.0–10.0, default 0`
+**Drift down amount (units match target)** `0.0–10.0, default 0`
 How many seconds below the baseline segment length the drift wanders at its trough. Independent from Up amount, so asymmetric wander is supported (biological signals don't drift symmetrically). Either being non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (breath cycles)** `0–1000, default 8, 0 = off`
@@ -207,6 +262,14 @@ The old flat-drift block (musical_up, musical_down, musical_period, slow_up, slo
 - old sliders 24–27 → silently discarded or reinterpreted
 
 After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had. The old v2.7 → v2.8 Ramp migration set the precedent of accepting drift / ramp values being reset on upgrade.
+
+---
+
+### Output
+
+**Output (dB)** `-60 to +12, default 0`
+Overall level. Added 2026-09-08 -- the plugin previously had no output control of
+any kind, so the only way to set its level was on the track.
 
 ---
 

@@ -1,6 +1,10 @@
 # Breath Generator — authored target layout
 
-**Status: AUTHORED 2026-09-08. NOT BUILT. NOT HEARD.**
+**Status: BUILT AND MIGRATED 2026-09-08. NOT HEARD.**
+
+The plugin is at 40 sliders, installed, and all 4 instances across the 3 live
+projects are migrated and verified (238 checks by control name against the
+pre-migration snapshot, 0 failures). **Nothing here has been played.**
 
 Written before touching the file, per the standing rule: author the whole layout
 first, then build and migrate once. Breath Generator has never had a session of
@@ -203,7 +207,7 @@ naming them here is what stops a later session folding one in on the way past.
    the installed plugin to
    `C:/Users/solst/jsfx-backups/breath_gen.pre-20260908-layout.jsfx`. All four
    copies verified byte-identical to their sources.
-3. Build the file at 40 sliders, every new control defaulting to off or to what
+3. ~~Build the file at 40 sliders~~ **DONE.**  Was: build at 40 sliders, every new control defaulting to off or to what
    the plugin already means: `Set breath rate` 0 (= off), `Breath unit` Seconds,
    `Pitch mode` and `Fine tune mode` Hz, `Fine tune value` 0.
 4. **Bump the `@serialize` magic in the same commit as the renumber.** That is
@@ -217,3 +221,47 @@ naming them here is what stops a later session folding one in on the way past.
    pre-migration snapshot, not against the table the migration used. Range-check
    every migrated value against its new slider's declared min/max.
 7. Ask for an ear test. It is not done until it has been heard.
+
+
+## What the build turned up that the layout did not predict
+
+Three things only showed up once the code existed, and all three would have been
+silent failures.
+
+**The `All` position needed change-detected writes.** The first implementation
+wrote the visible controls into both targets on every `@slider` pass, so an
+instance parked on `All` would stamp the inhale frequency over the exhale one on
+every single load -- and then save the damage. Polyrhythm v3 already solves this
+with a per-control mirror that writes only when a value actually moved, plus a
+flag adopted in `@block`; that is now copied here. Simulated in both restore
+orders before applying.
+
+**`tuning_ref` was unseeded.** `pitch_to_hz()` reads it and is called from
+`@block`, which can run before `@slider` ever has. Unseeded it is 0, which puts
+every note at 0 Hz and parks both filters on the low clamp.
+
+**The migration's idempotence gate was wrong, and in the dangerous direction.**
+It asked "does this line store a slider above 32?", which never trips for
+`organic-movement.RPP` because that project stores nothing above slider 24. A
+second run would have read the already-migrated slider 5 -- Exhale, a duration
+of 10 -- as a frequency. The gate is now the blob magic, which is exact.
+
+**And two of the four instances had no `<JS_SER>` blob at all**, being old enough
+to predate serialization here. The migration creates one, or the two frequencies
+would have had nowhere to land and both would have reverted to 800/600.
+
+## What to listen for
+
+Nothing should have changed. Every migrated instance keeps its exact
+frequencies, durations, fades and stereo settings, and the new controls all
+default to off or to what the plugin already meant.
+
+The new capabilities have never been played:
+
+- **`Set breath rate`** -- type 10 with Breath unit on Seconds and watch the four
+  segments rescale, keeping their ratio.
+- **`Breath unit = Beats`** -- the breath should then ride the project tempo.
+- **The pitch block** -- this is R22's first outing anywhere. `Pitch target` on
+  `All` moving both filter centres together is the path most likely to be used
+  and the only one that can change two things at once.
+- **`Output (dB)`**.
