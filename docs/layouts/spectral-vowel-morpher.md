@@ -419,3 +419,133 @@ hearable.
 Shepard Tone also has no `mode == 4` branch and is **correct** — its chain returns a
 nominal rate against 60 BPM, where one beat is one second, so `N per beat` and `Hz`
 genuinely coincide and the fallback is right. Checked by reading, not by counting.
+
+## The layers get free pitch — authored 2026-09-08, NOT BUILT
+
+**Status: SPEC AGREED, NOTHING BUILT.** Authored before anything is touched,
+which is the rule this plugin has already paid for breaking.
+
+### The brief, in Rozaya's words
+
+> *"The layers were there to take away drift. My previous technique was to put
+> three instances of Morpher up and scale them up by pitch. But the side effect
+> of that, because they were all on shuffle so they wouldn't be boring, was that
+> they would clash with each other. The layers were supposed to help with the
+> pitch side of it, but I didn't mean for them to stay in lockstep. So we do need
+> fine tune per layer, and we do need all the modes that pitch has — which then
+> takes out the complexity of the octaves and the fifths and all that shit,
+> because you'd be setting it yourself, which opens the door to all kinds of cool
+> shit."*
+
+**The layers solved the RIGHT half of the problem and over-solved the other
+half.** Locking every layer to the same morph position is what stops three
+Shuffled instances clashing, and that lock stays — it is the whole reason layers
+exist. Locking every layer to a FIXED INTERVAL from the main pitch was never
+asked for, and it is what makes the stack feel rigid.
+
+### What changes
+
+**Every layer gets its own pitch, freely set, with the full R22 treatment: a
+pitch pair and a fine tune pair, each `{Hz, Semitones, Cents}`.** The pitch value
+is signed — Rozaya: *"that's why you need the negative numbers as well"*.
+
+**The named-interval ladder goes.** The selector stops being `4 octaves down …
+a fifth up … Custom 3` and becomes `All, Layer 1 … Layer 16`. The thirteen fixed
+intervals and the three Custom slots stop being different kinds of thing; there
+are just sixteen layers, each sitting wherever it is put.
+
+**The Original becomes Layer 1.** Rozaya: *"Original is already represented, or
+will be, as the first layer, shifting falls out there."* It stops being a
+special case — it is the layer whose pitch happens to default to 0, and it can
+now be shifted like any other, which it could not before.
+
+**The global `Pitch` stays, and stays global.** Rozaya: *"keep it global, that's
+what it's for."* Every layer's pitch is an offset from it, so the whole stack
+still transposes in one move; what changed is that the offsets are yours to set
+rather than a ladder's to dictate.
+
+### The layer block, exact
+
+Ten sliders where there are seven. **Being honest about that: the SLIDER count
+grows.** What shrinks is the sixteen-entry ladder of interval names to read
+past, and the two-tier "is this a fixed layer or a Custom one" split — which is
+what the complaint was actually about.
+
+| # | control | note |
+|---|---|---|
+| 1 | `Layer` | `{All, Layer 1 … Layer 16}` |
+| 2 | `Layer active` | unchanged; stays directly under the selector because "is this in play" is the first question about a layer |
+| 3 | `Layer pitch value` | signed, −20000..20000 per R12 carve-out 1 |
+| 4 | `Layer pitch mode` | `{Hz, Semitones, Cents}` |
+| 5 | `Layer fine tune value` | signed |
+| 6 | `Layer fine tune mode` | `{Hz, Semitones, Cents}` |
+| 7 | `Layer level (dB, -60 = off)` | unchanged |
+| 8 | `Layer solo` | unchanged |
+| 9 | `Layer harmonics (0 = full)` | unchanged, a CPU control |
+| 10 | `Layer overtone harmonic` | unchanged |
+
+**Pitch moves ahead of Level, which is a change from today's order.** R19's
+canonical reading order is what the thing IS, then its shape, then output level.
+A layer's pitch is now its identity; its level is its output. `Active` keeps its
+place at the top for the reason already written into the source.
+
+**`All` at position 0**, same as Polyrhythm's `Voice`. Setting every layer's
+pitch at once collapses the stack to unison, which is a real thing to want
+occasionally and a real thing to do by accident — so the write must be
+CHANGE-DETECTED, exactly as Polyrhythm v3's voice block is. Only a control
+actually moved gets written. That build is the reference implementation.
+
+### Defaults: a fresh instance must sound as it does today
+
+`@init` seeds the sixteen layer pitches to the ladder they replace, in the new
+order: Layer 1 = 0 (the Original), then −48, −36, −24, −12, −7, −5, +5, +7, +12,
++24, +36, +48, then the three Custom slots at their current defaults (−12, +12,
+−24). So a new instance is the same instrument; the ladder becomes a starting
+position rather than a cage.
+
+### The migration, and how much of it already exists
+
+**Most of it is built.** This plugin already self-migrates its blob across layer
+reorderings: a version magic (`7700001`..`7700011`), a `permute_bank()` helper,
+and permutation tables. Bumping to **7700012** and adding one permutation is the
+same move it has made four times.
+
+**What the blob owes:** the per-layer banks (`lay_db_base`, `lay_active`,
+`lay_solo`, `lay_nharm`, `lay_ot_harm`) permute into the new order, and
+`lay_semi` grows from 3 entries to 16 and is seeded from the ladder table for
+the thirteen that never had one. The drift and ramp target banks permute too, at
+offset `LAY_T0` — the existing code already does exactly this.
+
+**What the SLIDER LINE owes:** a script, because the line does not self-migrate.
+`tools/morpher_migrate_layer_order.py` is the worked example and does this job
+already. **122 instances across 38 projects**, and this plugin's blob carries
+real captured spectral analysis — so `tools/passage_captures.py` inventories the
+captures before, and every one is verified after. Checking, not hoping.
+
+**The target list's LABELS change** (`4 octaves down level` → `Layer 2 level`)
+which is free, and their ORDER changes, which is not — but the permutation
+already covers it.
+
+### 7700007 put the Original first and it was reverted. That does not bind us.
+
+The source records it: at `7700007` the Original moved to the FRONT of the Layer
+selector, and at `7700008` it moved back to unison, mid-list. The reason is
+written down —
+
+> The list is a PITCH LADDER: four octaves down up to four octaves up, with the
+> original sitting at unison where it belongs. Putting it at either END of the
+> list was the same problem twice: an entry out of musical order.
+
+**That was correct for a ladder and is irrelevant to a free list.** Once every
+layer carries its own pitch there is no musical order for an entry to be out of,
+so the objection dissolves with the thing it was protecting. Recorded here so a
+future session finding `7700007` reverted does not read it as a warning.
+
+### Open, and needing Rozaya rather than me
+
+1. **Should per-layer PITCH be a Drift and Ramp target?** Today only layer LEVEL
+   is (16 of the 24 targets). Drifting a layer's pitch is slow detuning —
+   shimmer, and musically rich. It would take the target list from 24 to 40,
+   which is a long enum to arrow but typing works (R12). **Not decided; do not
+   assume either way.** Adding it later is cheap in a bank and expensive in an
+   enum, which argues for deciding it now rather than after the migration.
