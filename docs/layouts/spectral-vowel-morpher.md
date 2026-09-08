@@ -611,6 +611,29 @@ that is itself moving — the rate, plus any ramp on it, plus the live project
 tempo. The fix there was an absolute felt unit per item, which is exactly what
 `Drift amount unit` already provides. Do not reintroduce this.
 
+### Absolute drift ENDPOINTS: considered, and parked with a reason
+
+`docs/designing-for-dyscalculia.md`'s fix-pattern table says **"Absolute over
+offset — name the thing, don't count from an anchor."** Drift up/down ARE
+offsets, so the rule appears to say drift should state its two ends directly
+("wander between 0.35 s and 0.55 s") and have no offset unit to argue about.
+
+**Raised 2026-09-08, and parked by Rozaya:** *"It would be nice, but it would
+also break globals in a way that I don't have the anything to tackle."*
+
+**She is right, and this is the reason the rule does not transfer cleanly.** An
+offset RIDES the global. Move the rate and every drift range moves with it,
+keeping its relationship to whatever the rate now is — which is what makes a
+single global rate control a whole plugin. Absolute endpoints would pin the
+drift where it was set, so changing the rate would silently pull the rate out of
+its own drift range, and every per-voice or per-target drift would have to be
+re-set by hand afterwards. That is a much bigger problem than the one it fixes.
+
+**So: not a rejected idea, a parked one, and not for effort reasons.** If it is
+ever revisited it needs an answer to "what happens to every drift range when the
+global rate moves", and `Drift amount unit` is the smaller fix that does not
+have to answer that question at all.
+
 **NOT re-opened here: the rate's BPM rule.** CLAUDE.md records that as settled
 BY EAR, twice, and Rozaya explicitly granted it as *"an unusual exception"*. So
 a rate target's `Target default` goes on meaning BPM in every mode, exactly as
