@@ -90,6 +90,14 @@ Rozaya opened `shapes` the same day: *"Nothing sounds off which is nice"*.
 
 **Not heard:**
 
+- **Breath Generator's whole 2026-09-08 layout** — 32 sliders to 40, migrated
+  across 4 instances in 3 live projects. Nothing should have changed: every
+  frequency, duration, fade and stereo setting is preserved exactly and every
+  new control defaults to off. Never played: `Set breath rate`, `Breath unit` on
+  Beats, **R22's pitch block (its first build anywhere in the suite)**, and
+  `Output (dB)`. `Pitch target = All` moving both filter centres together is the
+  one to try first.
+
 - The Womb usability fix from the evening of 2026-09-06 — the breath has no rate
   mode at all now (a principled R20 exception, since its rate is emergent from
   its four segments), `Set breath rate` is a one-shot in the breath's own unit,
