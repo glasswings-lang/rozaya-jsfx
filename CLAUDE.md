@@ -220,10 +220,13 @@ slider's name, order, range or unit.
 - **PITCH: THE RULE IS WRITTEN AND AGREED, NOTHING IS BUILT.** R22 in
   `docs/suite-consistency-plan.md`, settled with Rozaya 2026-09-08. Every pitch
   gets `Note`, `Fine tune (cents)`, `Pitch value`, `Pitch mode`, with the mode
-  always `{Note, Hz, Semitones, Cents}` — R20's shape applied to pitch. Detune
-  gets its own pair too, `{Cents, Semitones, Hz, %}`. One note list everywhere,
-  **C0 to C8** (109 entries, 16-4186 Hz); anything above that is reached in Hz
-  mode.
+  always `{Hz, Semitones, Cents}` — R20's shape applied to pitch. Detune gets
+  its own pair too, `{Cents, Semitones, Hz, %}`. **`Note` is NOT one of the
+  modes**: a plugin that generates its own sound carries a `Note` picker before
+  the pair, and one that pitches audio it did not make (Morpher, Passage,
+  Sustain Looper) carries the pair alone — because it does not KNOW the source's
+  pitch, so a note name there is a promise it cannot keep. One note list
+  everywhere, **the full MIDI range C-1 to G9**.
   **My first draft offered `{Note, Hz}` only and Rozaya killed it** — *"the
   minute I'm making decisions like this is the minute I say include all of
   them."* That draft was triage, which this file forbids, and it would have
@@ -633,6 +636,20 @@ because they apply every session, not on the day they were learned.
   survived a source comment I wrote arguing the two cases were different. They
   were not. Rozaya caught both: *"cycles in fractions? I thought cycles were
   cycles lol"*, and then found the second by using it and hearing nothing.
+- **A LIMIT MAY COME FROM PHYSICS, A STANDARD, OR WHAT THE CODE HONOURS. IT MAY
+  NEVER COME FROM WHAT ONE PERSON HAS HAPPENED TO USE.** Measuring the library
+  tells you a control is too SMALL. It has no authority over where the top goes.
+  Rozaya, 2026-09-08: *"setting things to 'what makes sense' or 'what's already
+  there' is an artificial limit based on one user's usage patterns to a
+  public-facing suite."*
+  **This corrected me twice in one sitting and the second time I had already
+  been told.** Sizing R22's note list, I wrote C1-C7 (covers the 88 stored pitch
+  values plus headroom), was told to widen rather than reduce, wrote C0-C8 — and
+  that was still her projects setting a stranger's ceiling. The answer was the
+  full MIDI range, because a standard is principled and a measurement is not.
+  **The tell: if the justification contains "which covers everything we
+  actually use", it is this mistake.** 20 Hz to 20 kHz is fine — that is the
+  audible range, a fact about ears. `0..1500` because nobody went higher is not.
 - **The dyscalculia rule is about arithmetic, not numbers.** Move the maths to
   the machine; keep the precise control. **Do not hide numbers behind mood
   labels — that was built once, delivered, and was insulting.** See *Whose job

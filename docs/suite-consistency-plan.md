@@ -2318,23 +2318,98 @@ equivalent of the nine plugins that had nothing stored on Host x.
 
 ## The rule
 
-> **Every pitch carries exactly four controls, adjacent, always in this order:
-> `Note`, `Fine tune (cents)`, `Pitch value`, `Pitch mode`. The mode is always
-> `{Note, Hz, Semitones, Cents}` — always those four, always that order. `Note`
-> and `Fine tune` are shown in Note mode; `Pitch value` is shown in the other
-> three and carries that mode's unit. A plugin with two pitches has two
-> complete blocks.**
+> **Every pitch carries a value and a mode, adjacent, in that order:
+> `Pitch value (Hz / semitones / cents)`, then `Pitch mode`. The mode is always
+> `{Hz, Semitones, Cents}` — always those three, always that order. A plugin
+> with two pitches has two complete pairs.**
 >
-> **One note list everywhere: C0 to C8.**
+> **A plugin that GENERATES ITS OWN SOUND also carries a `Note` picker,
+> immediately before the pair, and the pair then reads as an offset from that
+> note. One note list everywhere: the FULL MIDI RANGE, C-1 to G9 (128
+> notes, 8.18 Hz to 12543 Hz).**
+>
+> **All four names are R4/R5 compliant** — sentence case, unit in parentheses at
+> the end. The value slider lists its three units the way `Rate Value (BPM / sec
+> / Hz / beats per cycle / per beat)` already does in four plugins, which is
+> also the fix Rozaya asked for on 2026-09-07 after a bare `Rate Value` named
+> neither its unit nor its scope.
+>
+> **A plugin that pitches audio it did not make — the Morpher, Passage, Sustain
+> Looper — carries the pair ALONE**, because it has no note to offer.
 >
 > **One `Tuning Reference Hz` per plugin**, with the other global pitch
 > controls, not repeated per voice.
 
-This is R20's shape applied to pitch, and the analogy is exact: a value, then a
-mode that says what the value means, with the same options in the same order
-wherever you meet it.
+This is R20's shape applied to pitch: a value, then a mode saying what the value
+means, same options in the same order wherever you meet it.
 
-## Why four modes and not two
+## Why `Note` is not one of the modes — the thing that decides this whole rule
+
+Rozaya, 2026-09-08: *"Because you don't know, except for the plugins that
+generate their own sound, what pitch something actually is."*
+
+**That is not a preference, it is an absence of information, and it is what
+separates this from the triage I keep reaching for.** A note name is a claim
+about what a sound IS. Polyrhythm, Melody, the Shepards, Dapple, Breath, Womb,
+Heartbeat, the rhythm track and the Sculptor all synthesise from a frequency
+they compute, so they know their own pitch exactly and `C4` is true. The
+Morpher, Passage and Sustain Looper are handling audio they did not make — a
+captured vowel, a loaded loop — and have no idea what is in it. Offering
+`Note = C4` there is a promise the plugin cannot keep.
+
+What every plugin CAN honestly offer is a quantity: shift it by this much. That
+is `{Hz, Semitones, Cents}`, and it is universal precisely because it says
+nothing about what the source was.
+
+**Two earlier drafts of this rule got this wrong in opposite directions**, and
+both are recorded so neither comes back:
+
+- `{Note, Hz}`, split by whether a plugin's pitch "was really a note". That was
+  triage — me deciding per plugin what a person may reach for — and Rozaya
+  killed it: *"the minute I'm making decisions like this is the minute I say
+  include all of them."*
+- `{Note, Hz, Semitones, Cents}`, which read her three-unit answer and added
+  `Note` back to it. Wrong for the reason above: it puts a mode in the list that
+  three plugins cannot honestly enter.
+
+**Semitones and Cents are both offsets, and both are needed**, for exactly the
+reason `Every N beats` and `N per beat` are both needed: they are one quantity
+at two scales, and keeping only the coarse one means seven cents is typed as
+`0.07`. That is arithmetic, which is the barrier this suite exists to remove.
+
+## Flat notes, and what this buys that nothing in the suite has
+
+The pair is an OFFSET from the note on a self-generating plugin, so `Cents` mode
+reaches the pitches BETWEEN the names. Rozaya, 2026-09-08: *"flat notes,
+anyone?"*
+
+Nothing in the suite can do that today except Polyrhythm v3, whose `Fine tune
+(cents)` was built for exactly this and exists nowhere else. Under this rule
+every self-generating plugin gets it, and gets it in three units rather than
+one — so a voice can sit a true third above another rather than an equal-
+tempered approximation of one, and a drone can be detuned in Hz against a
+measured reference rather than by ear alone.
+
+**This is why `Fine tune (cents)` does not survive as its own control.** The
+value-and-mode pair does its job and more; keeping both would be two ways to say
+one thing. That is a REDUCTION, and it is the one in this rule that comes from
+correctness rather than tidying — which is the distinction that matters, given
+how the other three reductions here turned out.
+
+## Why Hz must stay wide
+
+`Hz` is the mode that has to reach whatever a person is actually working with,
+and the suite already spans **20 Hz to 20000 Hz** — Resonance Bank's band
+frequency alone goes to 20000. So the Hz end of this control is wide by
+necessity, not by generosity.
+
+**20 Hz to 20000 Hz is a PHYSICAL boundary — the audible range — not a usage
+one, which is why it is allowed to set this ceiling when the library's stored
+values are not.** That is the distinction to apply everywhere: a limit may come
+from physics, from a standard, or from what the code can actually honour. It may
+not come from what one person has happened to use.
+
+## The superseded reasoning, kept so it is not re-derived
 
 The first draft of this rule offered `{Note, Hz}` only, on the reasoning that a
 heartbeat thump is a frequency and a drone voice is a note. **Rozaya killed
@@ -2360,29 +2435,35 @@ reference: the captured sample's pitch in the Morpher and Passage, the loaded
 loop in Sustain Looper, the base note elsewhere. That is what those controls
 already mean; the mode only names it.
 
-## Why C0 to C8, and the number that decided it
+## Why the FULL MIDI range, and why measurement did not decide it
 
-**Measured 2026-09-08 across all 153 project files in the library**: 88 stored
-Hz-pitch values, spanning **40 Hz to 2000 Hz**.
+**The note list is C-1 to G9 — MIDI notes 0 to 127, 8.18 Hz to 12543 Hz.** It is
+that because that is the standard every other piece of music software uses, and
+a standard is a principled boundary. It is NOT sized to anything in this
+library.
 
-The current note pickers (Melody, Polyrhythm v3, Shepard Tone) run C2 to C6 —
-65 Hz to 1046 Hz — which reaches neither Dapple's 40 Hz settings nor the 45 Hz
-heartbeat.
+**Three drafts of this line got smaller and smaller for the same bad reason, and
+the correction is a rule, not a preference.** I wrote C1–C7 first (sized to just
+cover the stored values), then C0–C8 after Rozaya said *"let's use that to widen
+ranges, not reduce them"*. Both were still derived from her projects. She named
+what was actually wrong with that:
 
-**C0 to C8 is 16.35 Hz to 4186 Hz: 109 entries.** The first draft of this rule
-said C1 to C7, sized to just cover what is stored today plus a little headroom.
-Rozaya, 2026-09-08: *"I know you're overeager. Let's use that to widen ranges,
-not reduce them."* Sizing a list to today's measurements is the same guessing
-the range sweep exists to undo — it just guesses from better evidence. Widened.
+> *"We've also established, through repeated trial and error, that no, in fact,
+> setting things to 'what makes sense' or 'what's already there' is an
+> artificial limit based on one user's usage patterns to a public-facing
+> suite."*
+
+**So: MEASUREMENT IS A FLOOR, NEVER A CEILING.** The 2026-09-08 scan of all 153
+project files found 88 stored Hz-pitch values spanning **40 Hz to 2000 Hz**.
+That number's only job is to prove the CURRENT lists are too small — C2–C6 is
+65–1046 Hz and reaches neither Dapple's 40 Hz nor the 45 Hz heartbeat. It has no
+authority over where the top is. A stranger who installs one of these plugins
+has never opened a project in this library.
 
 **A long list is not the cost it looks like.** REAPER's parameter list takes a
-typed value (focus, then Tab, gives an editable field), so reaching C7 is not
-109 presses of the arrow key. That is the same finding that settled the range
-sweep: never split or shrink a control to reduce its number of positions.
-
-Anything above C8 — Resonance Bank's band frequency reaches 20000 — is reached
-in **Hz mode**, which every pitch now has. Nothing is out of reach; the note
-list is one way in, not the only one. A person switching those to Note mode would find the pitch they
+typed value (focus, then Tab, gives an editable field), so reaching G9 is not
+128 presses of the arrow key. That is R12's own reasoning for abandoning
+hand-picked ranges, and it applies unchanged to enum length. A person switching those to Note mode would find the pitch they
 already had was not in the list.
 
 **Widening the list is a MIGRATION, not a rename.** An enum option is an index
@@ -2477,11 +2558,67 @@ retired does exactly one thing and that thing is now pointless. This one does
 something `Octave Count` depends on, and it looks identical from the slider
 list.
 
+## How this sits with the rules that already exist
+
+**Checked 2026-09-08, after Rozaya said "you need to look at existing rules,
+please" — and she was right, two of these I was re-deriving from scratch.**
+
+- **R4 / R5 — names.** Sentence case, unit in parentheses at the end. This
+  sweeps up a pile of existing violations in the pitch surface on the way past:
+  `Tuning Reference Hz` → `Tuning reference (Hz)`, `S1 Frequency Hz` →
+  `S1 frequency (Hz)`, `Inhale Frequency Hz`, `Exhale Frequency Hz`,
+  `Fundamental Hz`, `Root Note`, `Center Octave`, `Octave Count`, `Base Note`.
+  All free — names are not stored in projects.
+- **R6 — mode dependence is annotated once, where meaning changes.** The value
+  slider does not need a `(in Pitch mode units)` tag, because under the
+  contiguity rule the mode slider is sitting next to it saying so.
+- **R7 — contiguity.** R22 is R7 applied to pitch: value then mode, adjacent, no
+  exceptions, and a second pitch gets its own complete pair. (R7's own text
+  still names `Host ratio` as the third member; that was retired by R20 and R7
+  is stale there, not R22.)
+- **R9 — ALREADY SAYS MOST OF THIS, and I did not check before writing it out
+  again.** R9: *"Prefer whichever unit makes ordinary values whole numbers:
+  percent over fraction, dB over linear gain, **cents or semitones over
+  frequency ratios**."* That is the pitch mode list, written down on 2026-08-31.
+  R9 also already carries Rozaya's widening principle in its own words: *"This
+  rule never removes range or precision, and must not be read as doing so."*
+- **R12 — the range, and it is DECIDED, not open.** An earlier draft of R22 left
+  the `Pitch value` range as an open question for Rozaya. It is not one. R12
+  says a numeric slider spans 0–1000 or −1000–1000, and carve-out 1 says
+  *"'1000 or wider' — never a ceiling"* because narrowing permanently clamps
+  saved values. Resonance Bank's band frequency already reaches 20000, so the
+  Hz end must reach 20000 and **the range is −20000..20000**. R12 decided that
+  in August.
+- **R17 — no unitless sliders.** Sustain Looper's `Spread (detune amount)`,
+  0-100 with no unit, is already condemned by R17's *"x of what?"* test. R22
+  does not discover it; it inherits it.
+
+## The one place R22 CONTRADICTS an existing rule, and the argument for it
+
+**R18 says enum OPTIONS always append. Widening the note list from C2–C6 to
+C0–C8 PREPENDS two octaves, which is an insert at the front.** An enum option is
+an index stored inside a slider's value, so every saved note would shift by 24
+semitones. This is the one part of R22 that is not merely new.
+
+**R18's own reasoning is why the exception is arguable here.** It says the
+append rule is *"a workaround for not being able to migrate saved state"*, and
+that the enum carve-out exists because *"no slider-line migration fixes that
+cheaply."* For the note list it does: adding 24 to one integer per voice is
+exact, provable and verifiable by name against a snapshot — it is arithmetic,
+not inference, which is the line `tools/` scripts already have to stay on.
+
+**But the gate R18 names is real and is NOT built.** What protects a third party
+is the plugin's own self-migration from the blob's version magic (Part 4), so it
+repairs an old project on any machine with nothing for anyone to run. That does
+not exist yet. Today the only projects are Rozaya's and a script reaches all of
+them — **and no release has shipped, by standing decision, precisely so that
+stays true.**
+
+**So: the note-list widening is allowed, and it is allowed for a reason that
+expires.** If a release ships before this lands, it stops being allowed and the
+self-migration has to be built first.
+
 ## Open, and needing Rozaya rather than me
 
-1. **The `Pitch value` slider's range.** It serves Hz, semitones and cents at
-   once, so it has to be wide, and CLAUDE.md is explicit that a wide range is
-   the honest choice when one slider carries several units — narrowing it just
-   moves the lie. Resonance Bank's band frequency reaches 20000 Hz, which sets
-   the top. Proposed −20000..20000; not yet put to Rozaya.
-2. **Nothing else.** The rule above is buildable once the two selectors land.
+**Nothing.** The rule above is buildable once the two selectors land. The range
+question an earlier draft raised was already answered by R12.
