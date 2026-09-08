@@ -541,11 +541,36 @@ layer carries its own pitch there is no musical order for an entry to be out of,
 so the objection dissolves with the thing it was protecting. Recorded here so a
 future session finding `7700007` reverted does not read it as a warning.
 
-### Open, and needing Rozaya rather than me
+### Per-layer pitch IS a Drift and Ramp target — decided 2026-09-08
 
-1. **Should per-layer PITCH be a Drift and Ramp target?** Today only layer LEVEL
-   is (16 of the 24 targets). Drifting a layer's pitch is slow detuning —
-   shimmer, and musically rich. It would take the target list from 24 to 40,
-   which is a long enum to arrow but typing works (R12). **Not decided; do not
-   assume either way.** Adding it later is cheap in a bank and expensive in an
-   enum, which argues for deciding it now rather than after the migration.
+Rozaya: *"Yes, something to drift and ramp for sure."* So the target list goes
+from 24 to 40: eight global, then sixteen layer levels, then sixteen layer
+pitches. A long enum to arrow, but typing works (R12), and this is the control
+that turns a stack of fixed copies into something that shimmers.
+
+Two follow-on details fall out of that, **and both are MY reading rather than
+Rozaya's words — check them before building.**
+
+**1. The drift and ramp amount is in CENTS, always, whatever the layer's pitch
+mode is.** This is the same rule the rate already follows: CLAUDE.md settles that
+*"Drift and Ramp amounts are in BPM in EVERY mode"*, because an amount that
+changes meaning when you switch the mode is the silent-unit-change failure. The
+plugin converts; the user never does. Cents is the right fixed unit here because
+the musical action is fine — a few cents of detune is the beating and shimmer
+this exists for — and an octave is still reachable at 1200 inside R12's range.
+
+**2. The sixteen new targets are GROUPED BY LAYER, not appended in a block.**
+So the list reads `Layer 1 level, Layer 1 pitch, Layer 2 level, Layer 2 pitch,
+…` rather than all sixteen levels followed by all sixteen pitches. Working on
+one layer means both its targets are adjacent, which is how the plugin is
+actually used.
+
+**This deliberately does not follow R18's enum-options-append rule, and the
+reason it is allowed is specific to this plugin.** R18 forbids inserting enum
+options because the option index is stored inside a slider's value and *"no
+slider-line migration fixes that cheaply"*. Here both halves are covered: the
+blob self-migrates through `permute_bank()` at offset `LAY_T0`, which already
+handles an arbitrary permutation of the target banks, and the `Drift target` /
+`Ramp target` slider values are remapped by the line migration that this change
+needs anyway. **If either of those is not true when this is built, append
+instead** — the grouping is a convenience and the correctness is not.
