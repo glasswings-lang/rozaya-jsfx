@@ -669,6 +669,19 @@ because they apply every session, not on the day they were learned.
   survived a source comment I wrote arguing the two cases were different. They
   were not. Rozaya caught both: *"cycles in fractions? I thought cycles were
   cycles lol"*, and then found the second by using it and hearing nothing.
+- **A PERCENTAGE OF A MOVING BASE IS THE FORBIDDEN SHAPE, AND IT ALWAYS ARRIVES
+  LOOKING LIKE THE ACCESSIBLE OPTION.** `docs/designing-for-dyscalculia.md`
+  line 120 names it: *"A percentage of a global is a ratio wearing a friendly
+  hat."* A `Slot dwell %` was built here on exactly that reasoning and had to be
+  undone; the fix was a per-item ABSOLUTE in seconds. **Percent is only ever
+  allowed as percentage points of a NAMED, FIXED thing** (`% of inhale`,
+  `% of cycle`), which is R17's rule already.
+  **Proposed again on 2026-09-08** — a drift amount as "±20% of the current
+  rate" — and rejected on sight: *"absolutely fucking not... go read the
+  dyscalculia doc."* It was worse than the version already undone, because the
+  base moves (rate + ramp + live tempo), so the proportion cannot be held in
+  mind even in principle. **The tell is that it feels like it removes a unit
+  problem.** It removes the unit and leaves the arithmetic.
 - **NO UNIT LOCKS. EVER. A unit is a CHOICE, and the most it may ever be is a
   DEFAULT.** Rozaya, 2026-09-08, on my deciding that a pitch drift amount would
   always be in cents: *"The minute that kind of collapse is happening it's a

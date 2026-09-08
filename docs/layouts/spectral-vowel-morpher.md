@@ -589,6 +589,28 @@ target in cents. That is the honest cost of a static enum, and it is cheaper
 than the alternative, which was telling somebody which unit they were allowed to
 think in.
 
+**`Percent` in that list means PERCENTAGE POINTS OF A NAMED THING — never a
+proportion of the current value.** It is there for targets whose natural unit
+already is percent (On Duration, Depth), where "drift by 5" means five points of
+a cycle, a fixed and nameable quantity.
+
+**A "drift by ±20% of the current rate" mode was proposed on 2026-09-08 and
+REJECTED IMMEDIATELY.** Rozaya: *"absolutely fucking not... go read the
+dyscalculia doc."* `docs/designing-for-dyscalculia.md` line 120 has it as one of
+the two named ways to fail *that both look like fixes*:
+
+> *"A percentage of a global is a ratio wearing a friendly hat. A 'Slot dwell %'
+> was added so each step of a morph could be longer or shorter than the others.
+> It defaulted to 100, took whole numbers, and never showed a decimal point —
+> and it was still wrong, because the number only meant anything relative to a
+> shared total, so using it meant computing a proportion."*
+
+**The proposed drift version was worse than the one already undone.** Slot dwell
+was a proportion of a FIXED total; a proportion of the current rate has a base
+that is itself moving — the rate, plus any ramp on it, plus the live project
+tempo. The fix there was an absolute felt unit per item, which is exactly what
+`Drift amount unit` already provides. Do not reintroduce this.
+
 **NOT re-opened here: the rate's BPM rule.** CLAUDE.md records that as settled
 BY EAR, twice, and Rozaya explicitly granted it as *"an unusual exception"*. So
 a rate target's `Target default` goes on meaning BPM in every mode, exactly as
