@@ -2325,7 +2325,7 @@ equivalent of the nine plugins that had nothing stored on Host x.
 > three and carries that mode's unit. A plugin with two pitches has two
 > complete blocks.**
 >
-> **One note list everywhere: C1 to C7.**
+> **One note list everywhere: C0 to C8.**
 >
 > **One `Tuning Reference Hz` per plugin**, with the other global pitch
 > controls, not repeated per voice.
@@ -2360,15 +2360,29 @@ reference: the captured sample's pitch in the Morpher and Passage, the loaded
 loop in Sustain Looper, the base note elsewhere. That is what those controls
 already mean; the mode only names it.
 
-## Why C1 to C7, and the number that decided it
+## Why C0 to C8, and the number that decided it
 
 **Measured 2026-09-08 across all 153 project files in the library**: 88 stored
-Hz-pitch values, spanning **40 Hz to 2000 Hz**. C1 is 32.7 Hz and C7 is 2093 Hz,
-so that list covers every value in use with a little headroom at each end.
+Hz-pitch values, spanning **40 Hz to 2000 Hz**.
 
 The current note pickers (Melody, Polyrhythm v3, Shepard Tone) run C2 to C6 —
 65 Hz to 1046 Hz — which reaches neither Dapple's 40 Hz settings nor the 45 Hz
-heartbeat. A person switching those to Note mode would find the pitch they
+heartbeat.
+
+**C0 to C8 is 16.35 Hz to 4186 Hz: 109 entries.** The first draft of this rule
+said C1 to C7, sized to just cover what is stored today plus a little headroom.
+Rozaya, 2026-09-08: *"I know you're overeager. Let's use that to widen ranges,
+not reduce them."* Sizing a list to today's measurements is the same guessing
+the range sweep exists to undo — it just guesses from better evidence. Widened.
+
+**A long list is not the cost it looks like.** REAPER's parameter list takes a
+typed value (focus, then Tab, gives an editable field), so reaching C7 is not
+109 presses of the arrow key. That is the same finding that settled the range
+sweep: never split or shrink a control to reduce its number of positions.
+
+Anything above C8 — Resonance Bank's band frequency reaches 20000 — is reached
+in **Hz mode**, which every pitch now has. Nothing is out of reach; the note
+list is one way in, not the only one. A person switching those to Note mode would find the pitch they
 already had was not in the list.
 
 **Widening the list is a MIGRATION, not a rename.** An enum option is an index
@@ -2381,17 +2395,25 @@ rule at enum scale, and it is the one genuinely risky part of this job.
 Naming changes cost nothing — names are not stored in projects — so these ride
 along with whichever plugin is being touched:
 
-- **Detune becomes cents everywhere.** It currently has four units for one idea:
-  `Pitch spread (semitones)` (Bubbler), `Pitch spread (%)` (Dapple),
-  `Spread (Hz)` (Morpher, Passage) and `Spread (detune amount)` (Sustain Looper,
-  which is 0-100 with **no unit at all**).
 - **`Transpose` gets one name.** It is `(half steps)` in Melody and Polyrhythm
   v3 and `(semitones)` in Bubbler. Pick `semitones`: four plugins already use
   that word for the same quantity, and it pairs with the new Semitones mode.
-- **`Center Octave` retires.** Once `Note` is absolute and names its own octave,
-  a separate octave-position control says the same thing twice. `Octave shift`
-  (relative, ±4) stays; `Octave Count` in the Shepards is a different thing
-  entirely — how many octaves are stacked — and keeps its name.
+  This is a rename, not a reduction — nothing becomes unreachable.
+
+**Detune gets its own value-and-mode pair, for the same reason pitch does.**
+The first draft said "detune becomes cents everywhere", collapsing the four
+units in use into one. That is the same reducing instinct that produced the
+two-mode pitch list, and it fails the same test: `Pitch spread (%)` in Dapple
+and `Spread (Hz)` in the Morpher are not clumsy spellings of cents, they are
+different questions with different right answers.
+
+> **`Spread value` then `Spread mode`, always `{Cents, Semitones, Hz, %}`,
+> always that order.**
+
+Only one thing is genuinely fixed here: Sustain Looper's `Spread (detune
+amount)` is 0-100 with **no unit at all**, so it has to be told which of the
+four it means. It is a percentage of its existing internal range, so it becomes
+`%` and no stored value moves.
 
 ## The dependency that makes this three jobs, not one
 
@@ -2438,6 +2460,22 @@ Surveyed from source 2026-09-08. `Vn` collapses the per-voice banks.
 **`polyrhythm_phase`'s `Vn Semitones` range of −1000..1000 is eighty-three
 octaves in each direction and cannot be meant.** It is left alone — v1 is frozen
 until it crosses — but it is noted here so the crossing does not carry it over.
+
+**AND `Center Octave` DOES NOT RETIRE. The first draft of this rule said it
+should, and that was a near-miss of exactly the kind this repo has a standing
+rule about.** The reasoning was "once `Note` names its own octave, a separate
+octave-position control says the same thing twice." Opening the block says
+otherwise: in `shepard-tone` it is the centre of the PITCH WINDOW the octave
+stack spans — `center_freq = tuning_ref * pow(2, center_oct - 4)`, with the
+window `Octave Count` octaves wide around it. It is half of a working pair with
+`Octave Count`, not a duplicate of anything. Retiring it would have deleted the
+Shepard's stack.
+
+The rule that catches this is already written down: **before retiring any
+control, open it and ask what else is inside.** A control that is genuinely
+retired does exactly one thing and that thing is now pointless. This one does
+something `Octave Count` depends on, and it looks identical from the slider
+list.
 
 ## Open, and needing Rozaya rather than me
 

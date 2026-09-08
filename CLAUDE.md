@@ -220,14 +220,25 @@ slider's name, order, range or unit.
 - **PITCH: THE RULE IS WRITTEN AND AGREED, NOTHING IS BUILT.** R22 in
   `docs/suite-consistency-plan.md`, settled with Rozaya 2026-09-08. Every pitch
   gets `Note`, `Fine tune (cents)`, `Pitch value`, `Pitch mode`, with the mode
-  always `{Note, Hz, Semitones, Cents}` — R20's shape applied to pitch. One note
-  list everywhere, **C1 to C7**, sized from the 88 stored Hz values in the
-  library, which run 40 Hz to 2000 Hz.
+  always `{Note, Hz, Semitones, Cents}` — R20's shape applied to pitch. Detune
+  gets its own pair too, `{Cents, Semitones, Hz, %}`. One note list everywhere,
+  **C0 to C8** (109 entries, 16-4186 Hz); anything above that is reached in Hz
+  mode.
   **My first draft offered `{Note, Hz}` only and Rozaya killed it** — *"the
   minute I'm making decisions like this is the minute I say include all of
   them."* That draft was triage, which this file forbids, and it would have
   forced a unit change on 122 Morpher instances by leaving `Pitch (semitones)`
   nowhere to land. **Do not re-derive the two-mode version.**
+  **The same instinct got caught twice more in one sitting, and the second time
+  it was nearly expensive.** I had also collapsed detune's four units into
+  cents, and proposed RETIRING `Center Octave` on the reasoning that a note
+  names its own octave. Opening the block says otherwise: in the Shepards it is
+  the centre of the pitch window the octave stack spans, half of a working pair
+  with `Octave Count`. Rozaya, 2026-09-08: *"I know you're overeager. Let's use
+  that to widen ranges, not reduce them."* **Take that as a standing correction,
+  not a remark about one document** — the tidying reflex reads as helpfulness on
+  the way out the door, and it is the same shape as the condescension failure
+  recorded under *Whose job is whose*.
   **There is still NO FREE WINDOW** — every pitch value is in a real project and
   IS the sound — and the job is now three jobs in a fixed order: the rule (done),
   then **the voices behind a selector on Melody and Shepard Tone**, then the
