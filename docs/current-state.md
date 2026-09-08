@@ -68,6 +68,18 @@ sentence.
 
 Only "it has been heard" counts as done.
 
+**The not-heard list is BLOCKED work, not pending work.** It is not a queue and
+it is not a to-do list. Nothing on it may be extended, built on, or "finished",
+and no bug in it may be fixed unasked. **The only correct action on unheard work
+is to ask for an ear test.**
+
+That is written this plainly because the opposite kept happening. Rozaya,
+2026-09-08: *"it was doing the thing of, I'm gonna fix bugs even though you've
+said you haven't heard them. It was like we were having two different
+conversations."* A session that starts work here is not helping — it is adding
+more unheard change on top of unheard change, which makes the listening session
+that eventually has to happen bigger and harder to attribute.
+
 **Heard and good:** Melody's R20/R21 rate block and its Start delay fix; `N per
 beat`; both big reorders on finished work; Dapple's immediate rate change;
 per-cycle pan on Polyrhythm; Veil's layout and ramp; **the Morpher's 2026-09-06

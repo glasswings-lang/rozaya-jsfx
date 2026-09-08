@@ -126,16 +126,19 @@ or tagging, and cut no releases until the sweep finishes.**
 - `src/*.jsfx` — 21 plugins. **Read `docs/jsfx-gotchas.md` before editing one.**
 - `docs/plugins/<plugin>.md` — user-facing reference, one page per plugin.
   Update the page whenever you change a slider.
-- `docs/suite-consistency-plan.md` — authoritative for the sweep: naming rules
-  R1–R22, canonical layout, migration strategy.
+- `docs/suite-consistency-plan.md` — **the rules R1–R22 and nothing else**, in
+  numeric order. A reference you check, not a list of work.
+- `docs/backlog.md` — what each plugin is owed. **Nothing in it is a job you may
+  start unasked**, and anything unheard is blocked rather than pending.
+- `docs/plan-history.md` — why the rules are what they are, and which shapes are
+  already killed. Read it before proposing; never for current facts.
 - `docs/layouts/<plugin>.md` — authored target layout for a pending reorder.
 - `docs/open-bugs.md` — **both entries are closed.** Read them for their burned
   theories before touching the plugin they name, then leave them alone.
 - `docs/session-log.md` — append-only history. Read it for reasoning, never for
   current facts.
-- `docs/versioning.md` — forking, archiving, migrating. Short form: default to
-  editing in place; a new version ships with a migration or it does not ship;
-  archive only when the grep is zero.
+- `docs/versioning.md` — forking, archiving, migrating. Short form: edit in
+  place; a new version ships with a migration or not at all; archive at grep zero.
 - `docs/planned-features.md` — in-flight and deferred design work. **`ysfx` is
   in here: a JSFX compiler AND runtime that works outside REAPER**, not built
   yet. The runtime is the prize — behaviour is currently checked by

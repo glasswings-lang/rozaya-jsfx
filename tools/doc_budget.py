@@ -38,7 +38,9 @@ BUDGETS = {
     "docs/current-state.md": (150, "describes NOW; delete what stopped being now"),
     "docs/working-practice.md": (550, "the incidents behind the rules"),
     "docs/jsfx-gotchas.md": (250, "read before editing any src/*.jsfx"),
-    "docs/suite-consistency-plan.md": (2800, "authoritative for the sweep"),
+    "docs/suite-consistency-plan.md": (1600, "the rules R1-R22, and nothing else"),
+    "docs/backlog.md": (650, "what is owed; NOT a list of work to start"),
+    "docs/plan-history.md": (700, "why the rules are what they are"),
     "docs/planned-features.md": (2500, "in-flight and deferred design work"),
 }
 

@@ -1,110 +1,61 @@
-# Suite consistency plan
+# Suite consistency plan — THE RULES
 
-Started 2026-08-28. **Much of this HAS been built.** The line that used to sit here
-said nothing had been, which was true for three days and has been wrong ever since —
-and it cost real time, because every session opened this file, believed it, and
-re-derived the state from the source. Status is now recorded here. **Keep it recorded.**
+**Budget: 1600 lines.** Run `python tools/doc_budget.py` before committing.
 
-## STATUS — verified against the source 2026-09-04
+**This file is a reference you check, not a list of work.** It holds the rules
+R1–R22 and nothing else. Look up the rule you need, obey it, and close the file.
 
-### Shipped
+**Where the other two thirds went, 2026-09-08.** This document used to be 2742
+lines of three different things stacked together: the rules, a backlog of what
+each plugin is owed, and the history of how each decision was reached. Sessions
+opened it to check one rule and came back with a to-do list, then started work
+Rozaya had not asked for on plugins she had not yet heard. The rules are the
+smallest part of what was here and they were the hardest to find — they are
+numbered R1 to R22 and they were scattered across five parent sections in
+non-numeric order, with R17 buried inside "Where to pick this up" and R18 inside
+"Part 6 revised".
 
-| what | where it stands |
-|---|---|
-| **R16** `Speed ramp` → `Ramp` | done, 70 labels across 14 plugins |
-| **R8** step sizes standardised down | done for dB (0.01) and `Start delay` (0.001) |
-| ~~**R11** one sync block~~ | **SUPERSEDED BY R20, 2026-09-04. Do not build this shape.** Its `Sync to host` / `Host sync target` / `Every N beats` block is what Womb and Melody carry, and both now convert away from it. Measured: across 73 Melody instances, the target selector has NEVER been pointed at anything but `Rate value` — the multi-target capability it exists for has never been used |
-| **R13-revised** Host x means beats, not a multiplier | **COMPLETE 2026-09-04, EAR-TESTED ✓, and now folded into R20.** All thirteen plugins converted; every Host ratio picker retired; every landing block deleted; the rate slider never hides. Ten stored instances migrated by reciprocal. **R20 keeps all of this and adds the two things it left undone: a canonical enum ORDER, and a rate mode of its own for every rate** |
-| **Polyrhythm per-voice gain default** −60 → −6 | done |
-| **Morpher — the entire authored layout** | **LANDED** (`340fd4e`). `Capture average` 28 → 4, `High cut` beside `Low cut`, Drift and Ramp moved to the end, Input/Output relocated, `Layer overtone harmonic` added. `docs/layouts/spectral-vowel-morpher.md` describes a finished job, not a pending one — and it is itself stale: it says 39 sliders, the file has 44 |
-| **Stereo Phaser — rate triple made contiguous** | **LANDED** 2026-09-04, plugin installed and `strangeness.RPP` migrated. First reorder to use a project-file migration rather than runtime repair |
-| **Drift and Ramp play/rest** | **Veil, Tremolo, Morpher** |
-| **Ramp counted in beats** (`Ramp time unit`) | **Veil, Tremolo** only |
+- **`docs/backlog.md`** — what each plugin is owed, the phase ordering, the open
+  questions. **Nothing in it is a job you may start unasked.**
+- **`docs/plan-history.md`** — why each rule is what it is, the shapes that were
+  killed, the cost measurements, and the dated status notes.
 
-### Still true, re-measured 2026-09-04 — this is the remaining work
+Every line of the old document is in one of these three files, verbatim. Nothing
+was rewritten in the split.
 
-- **The rate triple — mostly fixed 2026-09-04.** Every Host ratio picker is now
-  retired and hidden, so the third member of each triple no longer occupies
-  reading order at all. Rate Mode was then brought home to slider 2 in **Rhythm
-  Track** (from 27) and **Shepard Scale** (from 62), both free because neither has
-  any projects. **Two remain stranded: Heartbeat (rate 1, mode 34) and Womb
-  (rate 1, mode 62)**, needing a migration for 1 and 8 projects respectively.
-  Everything else was already adjacent. The original measurement follows.
-- ~~The rate triple is still split in seven plugins.~~ Seven of the nine rows in the
-  table below are unchanged: Tremolo 1/2/**34**, Sweeping Filter 3/4/**39**, Shepard
-  Tone 3/2/**74**, Polyrhythm 3/2/**84**, Heartbeat 1/**34**/35, Shepard Scale
-  1/**62**/63, Rhythm Track 1/**27**/28. The Melody Phase and Womb rows are superseded
-  by R11 and should be read as done.
-- **`Slope` is still 41 in Sweeping Filter, 42 in Sweep Dwell, 5 in Veil.** Veil's is
-  the correct position; the filters move to match it, not the other way round.
-- **Target lists still name sliders that do not exist.** Measured: Womb 4 of 10 wrong,
-  Sweeping Filter 4 of 6 (`Sweep Rate` still does not exist), Breath Gen 3 of 5 —
-  still offering `Breaths/min` for a control it does not have. Some are near-misses on
-  a trailing parenthetical, which is exactly what R2 exists to make mechanical.
-- **Womb's `RSA depth` / `Heart with breath (BPM peak-to-peak)` pair** is untouched.
-  R1 says both become `Heart rate swing per breath (BPM)`.
-- **Phase 2 has otherwise not started.** Remaining reorders, by measured use: Polyrhythm
-  v1 (17 projects), Sweeping Filter (11), Passage (10), Womb (8), Tremolo (8), Melody (7).
-
-### No longer true — do not act on these
-
-- The Morpher audit items in *Why* below. All fixed.
-- Both doc-staleness claims in *Why* below: Bubbler and Dapple document Host x, and
-  neither Polyrhythm page claims 12 waveforms. Verified 2026-09-04.
-- Womb's slider is `Heart rate (BPM)` now, not `BPM`.
-- `Speed ramp start delay` is `Ramp start delay`. R16 shipped.
+**The rules are in numeric order here for the first time.** R11 is superseded and
+lives in the history; its slot below says so.
 
 ---
 
+## The rules, in order
 
-## Why
+- **R1** — The descriptive name wins, and propagates to both ends
+- **R2** — Target strings are derived from slider labels, mechanically
+- **R3** — Every target must have a slider
+- **R4** — Units go in parentheses at the end of the name
+- **R5** — Sentence case throughout
+- **R6** — One phrasing for mode dependence, and only where meaning actually changes
+- **R7** — The rate triple is contiguous, always
+- **R8** — Step size is chosen from the range, not typed
+- **R9** — Where a natural unit forces a bad range, change the unit
+- **R10** — A picker never hides the value it writes
+- **R11** — One tempo-sync block — SUPERSEDED BY R20, 2026-09-04
+- **R12** — Ranges are 0–1000, or −1000–1000 where the sign means something
+- **R13** — No multipliers. Anywhere. (Host x is not a unit.)
+- **R13a** — The sigh multiplier is the same bug, wearing a different hat
+- **R13-revised** — Host x stays a rate mode; Rate Value means BEATS there
+- **R14** — Speed Ramp states a DESTINATION, not a delta
+- **R15** — The sigh gets its own four segments, and the multiplier goes
+- **R16** — It is `Ramp`, not `Speed ramp`
+- **R17** — There are no unitless sliders. "Depth in what?" must have an answer
+- **R18** — New sliders go where they belong. Only enum OPTIONS append.
+- **R19** — Pan modes need one canonical order
+- **R20** — THE RATE BLOCK. This is settled. Do not redesign it.
+- **R21** — the host modes name their DIRECTION, and there are two
+- **R22** — THE PITCH BLOCK. Settled with Rozaya 2026-09-08. Not built.
 
-The suite has been swept four times — Speed Ramp (2026-05-30), per-plugin Drift
-(2026-06-01), the nested-selector Drift conversion (2026-06-12), and Host x sync
-(2026-08-11 onward). Each sweep landed slightly differently, and the plugins written
-between sweeps missed the earlier ones. Nothing is broken in the DSP. What has drifted
-is the **interface**, which for a screen-reader user is the entire plugin.
-
-An audit on 2026-08-27/28 found the damage falls into four kinds:
-
-1. **Target lists name sliders that do not exist.** Womb's drift/ramp selector has ten
-   options and all ten name something other than the slider they modulate — `Heart rate`
-   points at a slider called `BPM`, `RSA depth` points at `Heart with breath (BPM
-   peak-to-peak)`. Sweeping Filter offers `Sweep Rate` and `Pan Sweep Rate` as apparent
-   siblings; only the second is a real slider. Breath Generator offers `Breaths/min` for
-   a control it does not have at all.
-2. **Ordering reflects when a feature was added, not what it belongs with.** `Slope` is
-   slider 41 in Sweeping Filter and slider 5 in Veil. Morpher's `Capture average` is
-   slider 28 while the rest of its Capture group is 1–3. Sweep Dwell's Speed Ramp block
-   is the only block in the suite that cannot be walked contiguously.
-3. **The same concept is worded and cased differently** in different plugins, and
-   sometimes within one file — every plugin that has both carries `Start Delay` and
-   `Speed ramp start delay`.
-4. **Docs are stale in a traceable pattern**: a change landed in source and in at most
-   one doc page. Bubbler and Dapple's entire Host x feature is undocumented. Both
-   Polyrhythm pages list 12 waveforms against a source with 14.
-
-### The structural finding
-
-Every plugin with host sync gets **two of the three rate controls adjacent and strands
-the third.** Which two depends only on which sweep added them.
-
-| | rate slider | Rate Mode | Host ratio |
-|---|---|---|---|
-| Tremolo | 1 | 2 | **34** |
-| Sweeping Filter | 3 | 4 | **39** |
-| Shepard Tone | 3 | 2 | **74** |
-| Melody Phase (v1, v2) | 2 | 1 | **77** |
-| Polyrhythm Phase | 3 | 2 | **84** |
-| Womb | **1** | 62 | 63 |
-| Heartbeat | **1** | 34 | 35 |
-| Shepard Scale | **1** | 62 | 63 |
-| Rhythm Track | **1** | 27 | 28 |
-
-`Rate Value` reads as a meaningless name ("value of what rate?") only when it is
-orphaned from the Rate Mode that says what mode it is in. The fix is adjacency, not a
-rename. This is the clearest single argument for a canonical layout: no amount of
-renaming fixes a control that is sixty sliders from its partner.
+---
 
 ## The governing constraint
 
@@ -126,9 +77,12 @@ A migration written before its layout is a migration you will write again.
 
 ---
 
+
+---
+
 ## Part 1 — Naming rules
 
-### R1. The descriptive name wins, and propagates to both ends
+## R1. The descriptive name wins, and propagates to both ends
 
 Where a slider and a target list name the same thing differently, keep whichever tells a
 stranger what the thing **is**, and push it to both. The winner is sometimes the target
@@ -146,7 +100,7 @@ list and sometimes the slider:
 `Rate Value` is **kept** where the rate triple is contiguous (see R7). It is only
 illegible when orphaned.
 
-### R2. Target strings are derived from slider labels, mechanically
+## R2. Target strings are derived from slider labels, mechanically
 
 > A target option string is the slider's label with its trailing parenthetical removed.
 
@@ -156,7 +110,7 @@ This is the rule that makes the whole thing **enforceable**: a linter can strip 
 parenthetical from every slider label and assert that every target option matches one.
 Without a mechanical rule this drifts again within two sweeps.
 
-### R3. Every target must have a slider
+## R3. Every target must have a slider
 
 A target list may not offer something the user cannot see or set. Two consequences:
 
@@ -169,7 +123,7 @@ A target list may not offer something the user cannot see or set. Two consequenc
   selector. This is the one legitimate case of a target with no dedicated slider. See
   Open Question 1.
 
-### R4. Units go in parentheses at the end of the name
+## R4. Units go in parentheses at the end of the name
 
 `Frequency low (Hz)`, not `Frequency Low Hz`. Currently the suite runs both forms, plus
 a mixed form (`Inhale Duration sec (shape only in Host x)` -- since fixed, see the
@@ -183,7 +137,7 @@ For **enum** sliders the unit belongs in the name and the options stay bare —
 `{-12,-24,-36}Slope (dB/oct)` — so NVDA does not re-read the unit on every arrow step.
 This is already the convention (2026-07-09); it stays.
 
-### R5. Sentence case throughout
+## R5. Sentence case throughout
 
 `Start delay`, not `Start Delay`. `Drift mode`, not `Drift Mode`.
 
@@ -194,7 +148,7 @@ same file. Sentence case is the newer convention and the larger block.
 **Note honestly: this is a source-consistency fix, not an accessibility one.** NVDA does
 not announce capitalisation. It matters for whoever reads the code, including us.
 
-### R6. One phrasing for mode dependence, and only where meaning actually changes
+## R6. One phrasing for mode dependence, and only where meaning actually changes
 
 Six phrasings are in use today (`(or multiplier in Host x)`, `(shape only in Host x)`,
 `(Host x only)`, `(Host x; writes …)`, `(Own BPM only; …)`, `(in Rate Mode units)`).
@@ -205,7 +159,7 @@ genuinely become shape-only, so they keep an annotation. A rate slider that mere
 becomes a multiplier does not need one, because under R7 the Rate Mode slider is sitting
 right next to it saying so.
 
-### R7. The rate triple is contiguous, always
+## R7. The rate triple is contiguous, always
 
 `<rate slider>` → `Rate mode` → `Host ratio`, in that order, adjacent, no exceptions.
 This is what makes `Rate Value` legible and it is what dissolves the `Sweep Rate` /
@@ -216,7 +170,7 @@ current suite calls this one `Unit` where the primary is called `Mode`; standard
 **`mode`**. Sweep Dwell's pan unit offers `Host x` and the other two filters' do not —
 they should all offer it.
 
-### R8. Step size is chosen from the range, not typed
+## R8. Step size is chosen from the range, not typed
 
 Step sizes across the suite do not correlate with range, concept, or precision. They are
 authorial accident. The proof is `Start delay`: the same concept with the same range
@@ -273,7 +227,7 @@ step goes fine to reach the smallest, and the result serves neither. The cure is
 Question 2: size the slider to the largest sensible *change*, not the largest target, and
 bring the targets into a comparable magnitude. **Not** by normalising the units away.
 
-### R9. Where a natural unit forces a bad range, change the unit
+## R9. Where a natural unit forces a bad range, change the unit
 
 The suite already contains both halves of this lesson. `Stereo width` is `0..1` step
 `0.01` in Breath Generator and `0..100` step `1` in the spectral pair. Identical
@@ -293,541 +247,7 @@ exactly that was proposed and rejected.
 
 ---
 
-## Part 2 — Canonical layout
-
-**REWRITTEN AND APPROVED BY ROZAYA 2026-09-05.** The A/B/C/D block structure this
-section used to describe was thrown out on 2026-08-31 (Star: the blocks "were
-arbitrary as shit") and the replacement was never written down — so for five
-days every per-plugin layout was being measured against a ruler nobody believed
-in any more. That is the single thing that made the sweep feel unnavigable.
-
-Sliders are read in **numeric order** regardless of declaration order in the
-file, so this is reading order, and reading order is the whole interface. Rozaya
-arrows the parameter list one control at a time.
-
-### The order
-
-This was not designed top-down. It is what the Sweeping Filter and Tremolo
-layouts independently came out as when authored by hand, described afterwards
-and then approved:
-
-```
-1. What the plugin IS          its identity — the sound, the frequencies, the voices
-2. Its rate                    rate value, then rate mode          (the R20 pair)
-3. The shape of its movement   depth, on-duration, attack + its shape, release + its shape
-4. Stereo and pan
-5. Output level                wet/dry mix, output volume
-6. Transport                   start delay, play for, rest for, what happens at rest
-7. Drift                       target, up, down, period, period unit, shape, play/rest
-8. Ramp                        target, by, time unit, duration, play/rest, engage, start delay
-```
-
-**Why Drift and Ramp are last, and it is not because they matter least.** Their
-selectors reach across every other group — a drift target list names controls
-from sections 1, 3 and 4 — so they cannot sit *inside* any one of them without
-lying about their scope. Transport goes above them because it is also
-plugin-wide but simpler, and you set it once and leave it.
-
-### The four rules inside the order
-
-- **Everything belonging to a layer lives with that layer.** A per-voice,
-  per-band or per-slot group is whole and contiguous, and its own rate, gain,
-  timing and toggles sit inside it. This is what replaced the old block
-  structure: the grouping follows the *thing*, not an abstract category.
-- **A modifier is numbered immediately after the thing it modifies.** Unit
-  selectors, shape selectors, mode selectors. This is the rule that puts
-  `Drift period unit` directly after `Drift period`, and `Attack shape` directly
-  after `Attack` rather than after both amounts.
-- **A second rate carries its own complete pair** (R20). The pan gets its own
-  rate value and its own rate mode, inside the pan group. It never borrows the
-  main rate's mode and nothing points across at it.
-- **Global output goes last before transport**, so it stops interrupting the pan
-  group — which is exactly where the Sweeping Filter's `Wet/dry mix` sits today,
-  at slider 15.
-
-### What this fixes on its own
-
-`Slope` stops being slider 41 and rejoins the frequencies. Womb's `Breaths per
-minute` stops being wedged between the ramp and drift blocks and rejoins the
-breath group. `Heart rate swing per breath` rejoins the heart group. `Direction`
-stops splitting Melody's transport trio. Sweep Dwell's ramp block becomes
-walkable. Every stranded rate mode comes home to sit under its own rate.
-
-That the order resolves nearly every ordering finding in this document without
-being aimed at any of them is the evidence that it is the right shape.
-
----
-
-## Part 3 — Missing features, added in the same bump
-
-Free once we are migrating anyway; expensive as separate version bumps later.
-
-| Plugin | Gains | Note |
-|---|---|---|
-| Breath Generator | `Breaths per minute` | R3; it already offers the target |
-| Resonance Bank | full Speed Ramp block | the only plugin with Drift and no ramp |
-| Veil | Start delay, Play/Rest | has drift + ramp, no transport |
-| Morpher, Passage | Start delay, Play/Rest | same |
-| Bubbler, Dapple, Stereo Phaser | Drift + Speed Ramp | got Host x, never in the drift sweep |
-| Tremolo, Sweeping Filter | `Host x` on the pan rate mode | Sweep Dwell already has it |
-
-Confirm each against use before building — Harmonic Sculptor and Sustain Looper are
-sound-design tools and are deliberately left out.
-
----
-
-## Part 4 — Migration strategy
-
-### What each kind of change actually costs
-
-Not every fix in this document is expensive. The escalation, cheapest first:
-
-| Change | Cost | Why |
-|---|---|---|
-| **Slider label** | free | REAPER restores by ID, never by name |
-| **Target option string** | free | same — the enum's *index* is what is stored |
-| **Step size** | near-free | affects the increment, not the stored value; verify one project for snapping |
-| **Adding a slider at the END** | near-free | absent from old projects, so it takes its default — seed that default to reproduce the old behaviour |
-| **Range** | risky | saved values outside the new range are clamped, silently and permanently |
-| **Renumbering** | needs an `.RPP` migration | values are restored by position |
-| **Target enum order or count** | needs a blob migration | per-target banks are indexed by target number |
-
-This ladder is why Phase 1 exists: rules R1–R6, R8's "accident" half, and R9 sit entirely
-in the top three rows. They can ship without touching a single project.
-
-### Two things break independently, and they need different treatment.
-
-### The slider line — an `.RPP` text migration
-
-REAPER restores plugin values by slider **position**, so renumbering rewrites every
-project. This is the expensive half, and it is also the **easy** kind of migration to
-generate, because the old→new mapping is *authored* rather than inferred: we decide the
-layout, so we know the permutation exactly.
-
-Worked shapes already exist: `tools/passage_migrate_sliders.py` (HOPS table walked in
-order, so a project several layouts behind migrates through in one run) and
-`tools/sweepfilter_migrate_hz.py`.
-
-Hard-won details that carry over unchanged (see CLAUDE.md):
-
-- Index the slider line by **token position**, never by "values with the `-` padding
-  stripped" — REAPER writes `-` between real values, not only as trailing padding.
-- Gate on something that distinguishes migrated from un-migrated. Slider **count**
-  usually does not change; the blob's version magic can.
-- Do not require sliders that only exist on newer layouts.
-- Seed any new slider to whatever **reproduces the old behaviour**, not to the plugin's
-  default. The project should still sound like itself.
-- Snapshot whole projects into their own folder first; per-file `.bak` is the second
-  line, not the first.
-- Verify afterwards that **only the intended tokens moved**.
-
-### The `@serialize` blob — mostly untouched, with one trap
-
-The blob is a raw memory dump with no notion of slider numbering, so **renumbering
-sliders does not touch it**. Captures, banks and per-target drift configs all survive a
-layout change for free.
-
-The trap: per-target drift and ramp configs are stored in memory banks **indexed by
-target number**. So changing a target enum's *order* silently repoints every saved
-config at the wrong target.
-
-**Therefore: target enum order is frozen. Only the strings change.** New targets
-**append** to the end of the enum, never insert — the same rule as sliders, for the same
-reason.
-
-Where a target list's order disagrees with its sliders' order (Sweep Dwell lists High
-dwell, Fade down, Low dwell, Fade up against sliders 3, 5, 4, 7), **the slider numbering
-bends to match the enum**, not the reverse. Since we are renumbering anyway this is free,
-and it keeps the blob untouched.
-
-### The plugin migrates itself — the script is a convenience, not the safety net
-
-**A migration script only protects projects you actually run it over.** Anything on
-another drive, an old backup, a project reopened in 2029 — loads with every value in the
-wrong slot, silently, with nothing to signal it. That is worse than the mess we are
-fixing, and it is the reason the script cannot be the correctness mechanism.
-
-`@serialize` is the one section guaranteed to run on both **load** and **track
-duplicate**, and inside it `file_avail(0) >= 0` means read while `< 0` means write. So on
-read, a plugin can detect that the values it has just been handed belong to the *old*
-layout, permute them into the new positions itself, and push them back with
-`sliderchange(-1)`.
-
-It cannot rewrite the project file's slider line — but it does not need to. It fixes the
-values in memory every time the project opens, on any machine, forever, with nothing for
-anyone to run. The bulk script stays useful for repairing the library in one pass so the
-files on disk are correct too, but nothing depends on remembering to run it.
-
-**Mechanics, and the traps:**
-
-- **Gate on the blob's version magic**, and migrate only what was *restored*, never what
-  was *defaulted*. This is the exact bug that hit the Morpher layer permutation on
-  2026-08-19 — the gate asked "is this blob old?" instead of "does this blob actually
-  contain the thing I am about to permute?", so `@init` defaults got permuted.
-- **Use `sliderchange(-1)`, never `slider_automate`** — the latter writes automation.
-- **Read the blob in one go rather than sequentially.** `n = file_avail(0);
-  file_mem(0, scratch, n);` then inspect `scratch[0]` for the magic. Sequential `file_var`
-  reads advance a cursor that cannot be rewound, so a plugin that guesses wrong about the
-  format has already destroyed its own ability to fall back.
-- **Idempotence falls out for free.** If the project is loaded and not saved, the file on
-  disk still holds the old layout and the old magic, so the next load permutes again —
-  correctly. Save once and both the slider line and the magic are current.
-- **CORRECTION 2026-09-04 — the permute must happen in `@block`, NOT in
-  `@serialize`, and this section as written would have shipped the bug it warns
-  about two bullets earlier.** `@serialize` and REAPER's restore of the slider
-  LINE are two independent paths with no guaranteed relative order (the
-  nested-selector gotcha in CLAUDE.md, and the adopt-on-first-`@slider` gotcha
-  that followed it). A permute running inside `@serialize` can therefore read
-  slider values that have not been restored yet, permute the `@init` DEFAULTS,
-  and push them back with `sliderchange(-1)` — which is exactly "migrate what
-  was DEFAULTED", the failure this document already tells you to avoid.
-
-  **The shape that works, and it is the one already proven here for the picker
-  bug:** `@serialize` only READS the blob and RAISES A FLAG. It touches no
-  sliders. Then the first `@block` after that does the permute and the
-  `sliderchange(-1)`. `@block` cannot run before the instance is configured, so
-  whatever order the restore paths ran in, the values it sees are the real ones.
-
-  ```
-  @serialize
-    n = file_avail(0);
-    n > 0 ? (
-      file_mem(0, scratch, n);          // whole blob, one read, cursor-safe
-      scratch[0] == OLD_MAGIC ? pending_layout_migration = 1;
-    );
-    // ... normal restore ...
-
-  @block
-    pending_layout_migration ? (
-      // permute the visible sliders old -> new, THEN:
-      sliderchange(-1);                 // never slider_automate
-      pending_layout_migration = 0;
-    );
-  ```
-
-  **`pending_layout_migration` must be set in `@serialize` and cleared in
-  `@block`, and must NOT be initialised in `@init`** — `@init` re-runs on every
-  transport play in most of this suite, and clearing the flag there would let a
-  play press eat a migration that had not happened yet.
-
-- **Projects with no blob at all** cannot be identified this way. Those need the bulk
-  script. Worth measuring how many exist before assuming it is nobody.
-
-### Versioning
-
-Per the standing rule in CLAUDE.md: **a new version must ship with a migration, or it
-does not ship.** Melody Phase v2 is the proof — better design, zero projects, no path
-across.
-
-Old versions move to `archive/versions/<plugin>/`, out of `src/`, out of
-`docs/plugins/README.md`. Not alongside. Two live versions is a permanent maintenance
-cost.
-
-**Before archiving anything, run the grep** — a successor existing is not evidence that
-anyone crossed over. Melody Phase v1 was archived while five projects were on it and
-zero on v2, and had to be brought back out.
-
-```bash
-grep -rl <plugin>.jsfx --include=*.RPP /e/reaper
-```
-
----
-
-## Part 5 — Tooling, built first
-
-The tool is what makes a 22-plugin renumber survivable, and it is also what stops this
-rotting a fifth time. Build before touching any plugin — subject to the boundary in the
-next section, which is not optional: tools apply authored decisions and report findings.
-They never make the decisions, and they never certify the result.
-
-### What tooling is allowed to be, and what it must never be
-
-Star, 2026-08-31: *"scripts are notoriously awful at introducing glitches that nobody
-thinks to check for, because the script seems like it works. So everybody assumes it
-worked and never double checks the output. As a noncoder, I need you to double check the
-output."*
-
-This repo already has the evidence — three bugs in two days from loose pattern matching:
-a `grep "^slider"` that also matched `slider_show`, a `.count()` that matched a longer
-line containing the target, and a `startswith("slider")` that dropped a declaration inside
-`@sample`. All three scripts ran clean and wrote a wrong file.
-
-**The line is between a script that DECIDES and a script that APPLIES.**
-
-- **Never let a script infer from source.** A regex over `.jsfx` that works out which
-  sliders to move, or what a name should become, is a script exercising judgment — and
-  when its pattern is subtly wrong it does not fail, it silently does the wrong thing to
-  the right-looking file.
-- **A script may apply an explicitly authored list.** The permutation table for each
-  plugin is written out by hand, slider by slider, and the script only carries it out
-  over the `.RPP` files. The plan already relies on this: the old→new mapping is
-  *authored*, not inferred. Eight project files at sixty-odd tokens each is precisely
-  the work a machine should do and a human should not.
-- **The safe form of an edit is an exact literal match with a count assertion.** Match the
-  full text, assert it occurred exactly once, fail loudly otherwise. That cannot silently
-  hit the wrong line — which is the entire failure mode above.
-
-**And the report is about the OUTPUT, never the run.** "The script completed" and "the
-linter says zero problems" are not results. What counts is: diff the before and after,
-assert only the intended tokens moved, read a sample by hand, and say what was actually
-looked at. A clean exit is the weakest possible evidence, and a lint that reports nothing
-is the easiest thing in the world to trust wrongly.
-
-**Which downgrades Part 5's linter from a safety net to a lead generator.** Its checks are
-worth having because a false report costs a glance while a missed one costs a session —
-but nothing may be declared correct because a tool did not object.
-
-### `docs/layouts/<plugin>.md` — one authored layout per plugin
-
-**Where the per-plugin work lives.** Each plugin gets a file holding, together:
-
-- **what changes and why**, one numbered reason per problem being fixed
-- **the new reading order** as a table, new number against old
-- **the migration** — both halves, positions and any values whose meaning changes
-- **status**: draft / order approved / built / ear-tested
-
-Written **by hand**, per the boundary above. This is the artefact that gets reviewed
-before anything is touched, and reviewing a reading order is something Rozaya can do
-directly — it needs no code reading, which is exactly why it is the review gate.
-
-Done: `melody-phase.md` (order approved 2026-08-31, not built).
-
-### `tools/suite_layout.py`
-
-Holds the canonical layout and, per plugin, the section assignment for each slider.
-Emits:
-
-- the new numbering
-- the old→new permutation table, ready to hand to the migrator
-- a human-readable before/after reading-order diff, for checking by ear-of-the-mind
-  before anything is written
-
-### `tools/migrate_layout.py`
-
-Consumes a permutation table and rewrites `.RPP` slider lines. Token-position indexed,
-CRLF preserved, idempotent, gated so it is safe to re-run over a folder, backs up first.
-One tool plus 22 tables, instead of 22 hand-written migrations.
-
-### `tools/jsfx_lint.py` — new checks
-
-The existing linter catches everything that bites at **load** time (paren balance, empty
-`()`, case-folded names, scientific notation, reserved-variable writes, misplaced slider
-declarations). Every check below catches something that bites **months later, by ear,
-alone**:
-
-1. **Target ↔ slider** (R2): every target option matches a slider label with its
-   trailing parenthetical stripped. Catches all of Womb's ten, Sweeping Filter's
-   `Sweep Rate`, Breath Gen's phantom `Breaths/min`.
-2. **Doc coverage**: every `sliderN:` in source appears on that plugin's page. Catches
-   Bubbler and Dapple's undocumented Host x, and `Pan speed (Linked Sweep)` in all three
-   filters.
-3. **Doc accuracy**: documented default and range match source. Catches Morpher's
-   `Layer level` (page says -60, source says 0, and the same page contradicts itself
-   forty lines earlier), Heartbeat's two wrong defaults, and the four pages still
-   documenting the old narrow rate ranges.
-4. **Doc counts**: "N options" / "N targets" / "N parameters" against the real count.
-   Catches both Polyrhythm pages claiming 12 waveforms against 14.
-5. **Layout**: blocks B/C/D present, contiguous, in canonical internal order.
-6. **Casing** (R5) and **unit placement** (R4).
-
-Lockstep is currently a rule in CLAUDE.md with nothing enforcing it. Checks 2–4 are what
-turn it into a rule with teeth.
-
----
-
-## Part 6 — Order of work
-
-**Phase 0 — tooling and this document.** No plugin changes.
-
-**Phase 1 — naming and steps. Costs no migration.** Slider labels, target strings, and
-step sizes all sit in the top rows of the cost ladder above. Ship it on its own and get
-the largest legibility win immediately, before committing to the expensive part. This is
-the exception to the governing constraint, and the only one.
-
-Included:
-
-- **R1–R6** — every naming fix, slider labels and target strings alike.
-- **R8** — one step per concept, always the *finer* of whatever is already in use
-  (`Start delay` to 0.001, `Output (dB)` to 0.1, drift amounts to 0.01 or below), plus
-  the amount sliders that are currently coarser than the controls they modulate.
-- **A version stamp in every plugin's `@serialize`.** Free, changes nothing audible, and
-  it is what the self-migration above depends on — a plugin cannot tell an old project
-  from a new one without it, and it has to be in the field *before* the renumber, not
-  alongside it. Where a plugin already serialises without a magic, add it using the
-  read-in-one-go technique so legacy blobs are still recognisable rather than scrambled.
-
-Excluded: anything that moves a **range**, which clamps saved values permanently. That
-belongs in Phase 2 with its migration.
-
-The sequencing is the point: the cheap, safe phase is also what makes the expensive phase
-safe.
-
-**Phase 2 — layout renumber plus migrations.** The expensive half. Batched by family, one
-merged branch per batch, ear-tested before the next batch starts:
-
-1. Filters — Veil, Sweeping Filter, Sweep Dwell, Resonance Bank
-2. Body — Breath Generator, Heartbeat, Womb
-3. Sequencers — Melody v1/v2, Polyrhythm v1/v3, Shepard Scale, Shepard Tone, Rhythm Track
-4. Spectral — Morpher, Passage
-5. Texture — Bubbler, Dapple, Stereo Phaser, Tremolo
-
-**Phase 3 — missing features** (Part 3), folded into each batch's version bump rather
-than run as its own pass.
-
-Re-run the project-count grep at the start of each batch. The counts in CLAUDE.md are
-from 2026-08-22 and the note there is explicit that the assumption expires silently.
-
----
-
-## OPEN, AND DELIBERATELY NOT STARTED: pitch needs its own rule (raised 2026-09-05)
-
-Rozaya: *"pitch needs its own whole thing, doesn't it."* It does. Measured the
-same day, before anyone designed anything — **this suite states a pitch seven
-different ways:**
-
-| how | where |
-|---|---|
-| note name WITH octave (48-entry picker, C2..C6) | melody_phase, polyrhythm_phase_v3 |
-| note name WITHOUT one (12-entry) + separate Centre Octave | polyrhythm_phase, shepard-tone |
-| semitones, raw | spectral_vowel_morpher, spectral_vowel_passage, sustain_looper, polyrhythm_phase's per-voice pitch |
-| hertz, directly | dapple, resonance_bank, rhythm-track, womb, heartbeat gen, breath_gen, both sweeping filters |
-| cents | polyrhythm_phase_v3 fine tune, shepard-tone drift |
-| percent | dapple's Pitch spread |
-| semitones, for a spread | bubbler's Pitch spread |
-
-**The three worst, and two are siblings disagreeing with each other:**
-
-1. **Bubbler and Dapple state the same control two ways.** Bubbler: Transpose
-   (semitones) + Pitch spread (semitones). Dapple: Pitch (Hz) + Pitch spread
-   (**percent**). Same family, same job.
-2. **Semitone ranges are unrelated to each other** — sustain_looper ±24,
-   the Morpher ±96, and **polyrhythm_phase's per-voice Semitones ±1000**, which
-   is eighty-three octaves.
-3. **Tuning reference exists in five plugins and is absent from every other one
-   that makes a pitch** — bubbler, dapple, the Morpher, Passage and
-   sustain_looper all produce pitched sound with no way to say what A is.
-
-### Why this is NOT the rate block, and must not be done the same way
-
-**There is no free window.** The rate-mode sweep was cheap because nothing was
-stored on those controls — 47 instances all sitting on a declared default. Every
-pitch value in this table is stored in real projects **and is the sound**.
-Changing a pitch unit changes what you hear, in work that is finished.
-
-**So: write the rule, argue it out, and touch no code until the shape is
-settled.** That is what finally worked for R20 after five sessions each reached
-for a different answer, and pitch is a bigger surface than rates were.
-
-**Deferred deliberately on 2026-09-05**, with the reasoning recorded rather than
-the work half-started. Rozaya: *"It's a thing that needs exploration... I don't
-think we should start that tonight."*
-
----
-
-## Open questions
-
-1. **Selector-backed targets.** Melody v2's 24 `Vn …` target options name sliders that
-   do not exist, because v2 collapsed forty per-voice sliders behind a `Voice` selector.
-   The *target names are good* — `V3 Gain` says exactly what it is. R3's second clause
-   proposes allowing this with a doc requirement. Needs a decision on the exact string
-   form before the linter can check it.
-
-2. **Drift amount ranges — SETTLED 2026-08-28, and the obvious answer is the wrong one.**
-
-   JSFX cannot change a slider's label, units or range at runtime (confirmed against the
-   REAPER SDK docs, 2026-08-28), so one range must serve every target on a selector
-   forever. Today that range is sized to the widest target, which makes the narrow ones
-   unreachable: Heartbeat's `Drift up amount` has step 0.1 while its `Random HRV depth`
-   target spans 0 to 0.08, so the smallest available nudge is larger than the whole
-   parameter. That target cannot be drifted at all.
-
-   **Rejected: normalising the amount to "% of the target's own range."** It solves the
-   arithmetic on paper and creates it in practice — wanting the heart to wander by 4 BPM
-   would mean working out that 4 of 180 is 2.2%. `docs/dyscalculia-accessibility-sweep.md`
-   already settled this: the barrier is **conversion, not numbers**, and hiding values
-   behind a normalised scale is the same rejected move as hiding them behind mood-labels.
-   Rozaya, 2026-08-28: *"I don't want to lose range. I don't want to have to abstract away
-   things because you've decided I can't count."* Native units stay. Both features keep
-   real numbers in the target's own terms.
-
-   **The actual fix is two changes, and neither takes anything away.**
-
-   **(a) RETRACTED 2026-08-31, superseded by R12.** This clause said to size the amount
-   slider to "the largest sensible WANDER, not the largest target", on the reasoning that
-   *"nobody wanders a parameter across its entire existence."*
-
-   That is condescension dressed as design (Star, 2026-08-31: *"'sensible wander' was
-   Claude's condescension toward Rozaya. I'm surprised it stuck around."*), and it is the
-   same move as the rejected "a million positions means the precision is fictional"
-   argument two rules earlier — deciding in advance what someone would plausibly want and
-   then building that ceiling into the control so they cannot exceed it.
-
-   It is also simply **wrong on the music**: sweeping a filter across its entire range
-   over an hour is an ordinary ambient/drone gesture, and the clause would have made it
-   unreachable. The whole point of drift is that it replaces automation envelopes, and an
-   envelope has no such cap.
-
-   **R12 governs instead:** the range is 0–1000 or wider, and reachability of small values
-   is the STEP's job, not the ceiling's. Note the pattern for catching the next one — this
-   clause survived a rewrite because it sounded like restraint. Any rule justified by what
-   the user would "realistically" want is the suspect kind.
-
-   **(b) Where a target is written as a fraction, write it as a percent** (R9).
-   `Random HRV depth` at `0..0.08` becomes `0..8`; `Breath HRV depth` at `0..0.25`
-   becomes `0..25`. Same control, same precision, *larger* numbers — and a drift step of
-   0.1 now lands eighty times inside the small one instead of overshooting it.
-
-   **(b) stands** — it is R9, and it takes nothing away: writing a fraction as a percent
-   is the same control with larger, whole numbers. Together with R12 it brings every
-   target on a selector into a comparable magnitude, which is what makes one shared amount
-   slider workable. This changes target sliders' **ranges**, so it is Phase 2 work with a
-   migration, not Phase 1.
-
-3. **`Capture slot` display base.** Both spectral pages document 1–8; source is 0–7
-   since the 2026-07-09 change, with no display remapping. The docs are stale rather
-   than conventional. Worth deciding whether the suite's selectors are 0-based (matching
-   Resonance Bank and the rest) or 1-based (matching how a person counts slots) before
-   fixing the pages to agree with whichever wins.
-
-4. **Format longevity — settled, recorded here so it is not relitigated.** JSFX is the
-   right home for this suite on a decades horizon, and the reasoning is worth keeping:
-   `.jsfx` files are *source that runs* — no build step, no toolchain, no ABI, no code
-   signing, no certificate, no vendor. VST2 is the cautionary tale (SDK licence
-   withdrawn 2018); VST3's GPL3-or-commercial licensing fights this suite's CC0; native
-   binaries need re-making every few years as operating systems move underneath them.
-   And the flat numbered slider list — the thing causing every ordering problem in this
-   document — is *also* precisely what makes these plugins reachable through OSARA. A
-   custom plugin GUI would trade a naming problem for a blindness problem.
-
-   Where the suite genuinely is at the edge is **tooling, not sound**: there is no
-   compiler that can be run outside REAPER, so every mistake is found by ear, later.
-   Part 5 is the answer to that, and it is why the tooling comes first.
-
-   Worth a look at some point: **YSFX**, a third-party host that loads `.jsfx` files as
-   VST3/LV2 outside REAPER. Current maintenance state unverified. Its existence is
-   itself the argument — someone was able to write a second host for this format because
-   it is small, documented and plain text. Nobody can do that for a compiled binary.
-
----
-
-## Addendum — 2026-08-30
-
-### Where the work actually sits
-
-- **This document is the plan and nothing has been built from it.** It is still
-  untracked; commit it first so it stops being a file that only exists on one machine.
-- **`feature/morpher-layers` is the live branch**, 77 commits ahead of master and
-  unmerged. It contains the whole Host x sweep (`feature/host-tempo-sync` is an ancestor
-  of it, so that branch is finished business).
-- **Uncommitted in the tree:** a `Layer harmonics (0 = full)` slider (38) for the
-  Morpher — a per-layer CPU dial answering the "~4 layers is the ceiling" note in
-  CLAUDE.md. Appended at the end, defaults to no change in sound. Finish or park it
-  before starting a sweep; do not carry it through one.
-- **Ear-tested since the last note:** Womb's Host x heart controls work.
-- Two stale side branches (`feature/gut-sounds`, `feature/vowel-morph`) are old
-  exploration, unmerged and not blocking anything.
-
-### R10. A picker never hides the value it writes
+## R10. A picker never hides the value it writes
 
 The suite's convenience pickers (`Host ratio`, `Breath rate`, the pan-speed pickers)
 were designed to *write a value and get out of the way*. In practice they do the
@@ -862,127 +282,15 @@ Applies to: Tremolo, Sweeping Filter, Sweep Dwell, Heartbeat, Rhythm Track, Melo
 Polyrhythm v1/v3, Shepard Scale, Shepard Tone, Stereo Phaser, Bubbler, Dapple, Womb
 (both its heart picker and its breath picker).
 
-### Womb's breath in Host x — the units are right, the labels are not
 
-Verified in source (`breath_host_scale`, `breath_state_advance`): in **Host x** the breath
-cycle is **`Beats per breath` beats long, full stop**. The four second-sliders
-(`Inhale/Top/Exhale/Bottom Duration sec`) are divided out and used **only as
-proportions** — a 4/0.3/4/0.3 setting means the same shape whether it reads as seconds or
-not. So the plugin is doing the right thing and saying the wrong thing: it is showing four
-numbers in seconds that are not seconds.
+## ~~R11. One tempo-sync block~~ — SUPERSEDED BY R20, 2026-09-04
 
-Under the suite's own rule (*no silent value or unit changes*) an annotation is not
-enough when the **unit itself** stops applying. Two candidate fixes, to be decided:
+**Do not build this shape.** Its `Sync to host` / `Host sync target` /
+`Every N beats` block is what Womb and Melody used to carry, and both have
+converted away from it. The full text, and the measurement that killed it,
+are in `docs/plan-history.md`. R20 below is the rule that replaced it.
 
-1. **Rename to the thing they always are.** `Inhale (shape)`, `Top pause (shape)` … with
-   the seconds parenthetical dropped. Cheap, but it costs the Own-BPM user a real unit.
-2. **Add four `... share` sliders** that are the shape, and let the seconds sliders be
-   seconds only in Own BPM — hiding the pair that does not apply, the way `Breaths per
-   minute` already hides in Host x. Honest in both modes, four more sliders.
-
-Note the same question exists in reverse for `Beats per breath`, which is visible only in
-Host x and is the *correct* control there — R10 makes it always-visible within Host x
-rather than gated behind the picker.
-
-### ~~R11. One tempo-sync block, shaped like Drift and Ramp~~ — SUPERSEDED BY R20, 2026-09-04
-
-**Do not build this. Everything below is kept for its reasoning about the Host
-ratio pickers, which was right, and those pickers are all retired. Its
-replacement — `Sync to host` + `Host sync target` + `Every N beats` — is dead:
-see R20 for what replaced it and for the measurement that killed it.**
-
-
-Decided 2026-08-30 with Rozaya. This **supersedes R10's scope**: R10's "the picker must
-not hide the value" is correct but it is a patch on a control that should not exist.
-
-**What is wrong today.** Host sync is spread across three controls per rate — the rate
-slider, `Rate mode`, and a `Host ratio` menu — and a plugin has one such set per rate,
-plus bespoke extras where a rate did not reduce to one number (Womb grew `Breath rate`
-and `Beats per breath` for exactly that reason). The suite navigates by REAPER's
-**parameter list**, arrowing one control at a time, so every added control is real cost.
-And the `Host ratio` menu is a **grid**: its entries are a fixed list of ratios against
-the beat, so an ordinary want — one cycle every **5** beats of a 4/4 bar, which is the
-kind of thing this suite exists for — is not on it.
-
-**The replacement.** Set `Rate mode` to Host x, and directly beneath it, two controls
-and no others:
-
-```
-Rate mode            (…, Host x)
-  Host sync target   selector — the same list Drift and Ramp already use
-  Every N beats      free value, continuous, no menu
-```
-
-Pick a target, set its beats, move on. Pick a second target to sync a second thing. Two
-controls cover every rate the plugin has, however many that is.
-
-**Why this is the right shape and not just a smaller one:**
-
-- **It is a pattern already learned.** Drift and Ramp are nested selectors over a target
-  list. This is the third instance of the same idiom, pointed at tempo instead of wander.
-  Nothing new to learn, and the target lists are shared — which R2's linter can enforce
-  across all three.
-- **It deletes controls.** Every `Host ratio` menu in the suite goes, and Womb's two
-  bespoke breath-rate controls go with them: the breath becomes an ordinary entry in the
-  target list. Net fewer things in the parameter list, in every plugin.
-- **It is not a grid.** `Every N beats` is a plain continuous number. 5 beats is exactly
-  as reachable as 4.
-- **It syncs more than one thing.** Today `Host ratio` speaks only to the primary rate;
-  pan, secondary sweeps and Womb's breath each needed their own arrangement or went
-  without. One selector covers all of them by construction.
-
-**Decided details:**
-
-- **The target's own rate slider stays visible** (Rozaya, 2026-08-30). It is not hidden
-  and not disabled — it stays in the list showing the value it is running at. Hiding a
-  control because a mode changed is the move that produced every problem in this section.
-- **`Every N beats` is per target**, stored in a bank exactly like Drift's per-target
-  amounts — so a synced heart and a synced breath hold different beat counts at once,
-  and switching the selector edits one without stopping the other. Same mechanics as
-  Drift, including `@serialize` and the derive-in-`@block` rule.
-- Womb's `Breaths per minute` (a one-way rescale that writes the four duration sliders)
-  is the same family of control and is **safe to keep**: the class of failure it used to
-  have — a control writing to another control being stamped over during project load —
-  was diagnosed and fixed suite-wide on 2026-08-23.
-
-**Cost.** Real per-plugin code, not labels: a selector, a per-target bank, `@serialize`,
-and the beats value folded in where each rate is consumed. But every rate in a plugin is
-served by one block, and the block is a copy of one that already exists and is trusted.
-Sliders are **appended**, and the controls it replaces are removed only once the
-replacement is in — so it does not force the Phase 2 renumber to happen first.
-
-**Build order:** Womb first — it has the most rates, it is the one that exposed the
-problem, and it has just been ear-tested, so a regression there is legible. Then the rest
-by family, following the Phase 2 batches.
-
-### Womb's breath sliders stay in SECONDS -- decided 2026-08-30
-
-The addendum above offered two ways to stop the four breath duration sliders
-reading as seconds when Host x makes them proportional. A third was proposed in
-conversation and is the one worth recording, because it is attractive and wrong:
-make them **shares** (or percentages), identical in both modes, with the cycle
-length coming from `Breaths per minute` in Own BPM and `Every N beats` in Host x.
-It unifies the two modes, untangles speed from shape, and needs no annotation.
-
-**Rejected, by Rozaya, on entry cost.** A 4-0.5-8-1 breath is four numbers you can
-feel and type. The same breath in shares is 29.6 / 3.7 / 59.3 / 7.4, reachable
-only by dividing each one by 13.5 -- the conversion barrier
-`docs/dyscalculia-accessibility-sweep.md` exists to refuse. Shares would have
-scaled with the project tempo perfectly well; they simply could not be entered.
-
-**What shipped instead is only a rename**, because the behaviour was already
-right: `Inhale (sec, ratio in Host x)` and its three siblings. Seconds when
-free-running, ratio when synced, and a tempo change stretches the whole shape in
-proportion. Two things fell out for free -- the four target strings in the Drift
-and Ramp lists now match their slider labels minus the parenthetical, satisfying
-R2 for those four, and R6's mixed phrasing is gone from this plugin.
-
-**The general lesson for the rest of the sweep:** a unit that changes meaning
-between modes is a naming problem first. Reach for a redesign only after checking
-that the redesign can still be *entered* in the numbers the user actually thinks
-in -- scaling behaviour is easy to verify and entry cost is easy to forget.
-
-### R12. Ranges are 0–1000, or −1000–1000 where the sign means something
+## R12. Ranges are 0–1000, or −1000–1000 where the sign means something
 
 Decided 2026-08-31 with Star. Unconventional and deliberate: **stop hand-picking a
 range per control.** Today's ranges are authorial accident in exactly the way R8's step
@@ -1073,7 +381,7 @@ and the floor becomes "off" — which is what `-60 = off` already means everywhe
 
 Both are **Phase 2**, folded into each plugin's reorder, because they move ranges.
 
-### R13. No multipliers. Anywhere. (Host x is not a unit.)
+## R13. No multipliers. Anywhere. (Host x is not a unit.)
 
 Decided 2026-08-31 with Star: *"That multiplier is gonna be the death of us."* It is
 already the direct cause of most of what went wrong in the Womb work, and it is still
@@ -1122,7 +430,7 @@ taken from what the value last meant, and the multiplier converted to beats
 Phase v1/v2, Polyrhythm Phase v1/v3, Heartbeat, Rhythm Track, Bubbler, Dapple, Stereo
 Phaser. Womb is done.
 
-### R13a. The sigh multiplier is the same bug, wearing a different hat
+## R13a. The sigh multiplier is the same bug, wearing a different hat
 
 `Sigh depth multiplier` (Womb slider 61, `1.0..3.0`, step `0.05`) survived the 2026-05-30
 sweep because it was not a rate. It has three faults, and Star flagged it as its own
@@ -1146,970 +454,7 @@ the four segments, preserving the I:E ratio as today; only the control changes.
 name promising one. A real sigh is a bigger breath, not merely a slower one. A separate
 `Sigh louder by (dB)` would make the feature honest — worth doing, not part of this.
 
-### R14. Speed Ramp states a DESTINATION, not a delta
-
-Decided 2026-08-31 with Star. `Speed ramp by -35` requires knowing where the parameter
-is and adding. `Speed ramp to 35 BPM` is the end goal stated outright, with no arithmetic
-in it at all. For a control whose whole purpose is *"wind down over the next hour while I
-fall asleep"*, the destination **is** the thing already in mind; the delta is a conversion
-forced on the user to express it. Star, on why this matters more than it looks: *"it's
-more fucking adding than we can deal with sometimes because our cognitive lag is so bad."*
-
-**This reverses a 2026-06-09 decision, and the reason it was reversed the first time is
-the reason it can be reversed back.** Womb v3 originally had destination semantics and
-Rozaya rejected them — because the amount defaulted to 0, so engaging the ramp meant
-"take the heart to 0 BPM" and the sound died. That was a **default problem misdiagnosed as
-a semantics problem**, and we threw out the semantics to fix the default.
-
-**The fix for the actual problem:** on first selecting a target, its destination **seeds
-to where that parameter already is**. "Ramp to where I am" is no change, safely, and any
-move from there states a goal. Identical continuity trick to the one that makes entering
-Host x silent, which the suite has now implemented twice and trusts.
-
-Consequences:
-- The slider becomes `Speed ramp to`, in the **target's own unit** — which R12's
-  `-1000..1000` already accommodates for every target in the suite.
-- Seeding is per target and belongs in `@block` (it reads a bank), per the standing rule.
-- `Speed ramp engage` still gates whether the ramp advances; nothing about the
-  freeze/resume behaviour changes.
-
-**Naming note that generalises:** `by` only reads as a sentence *because a selector sits
-next to it finishing it* — "speed ramp by −35, target Heart rate." Anywhere there is no
-selector to complete the phrase, `by` dangles. This is why `Sigh by` was proposed and
-immediately failed the read-aloud test (*"sigh by... what. what?"*). **Test a slider name
-by saying it aloud with its value and nothing else.**
-
-### R15. The sigh gets its own four segments, and the multiplier goes
-
-Star, 2026-08-31: *"we're trying to apply a very coarse control to a very dynamic thing.
-Because we have the four sections of the normal breath, we don't have the four sections of
-the sigh. And if you look at actual sighing, there is four sections. It's very distinct.
-It's not just a computery shift in the normal breath."*
-
-That is the correct diagnosis and it supersedes R13a's replacement. Scaling all four
-segments by one number preserves the proportions exactly and only stretches time — so what
-comes out is the same breath, slower. A sigh differs in **shape**, not size: a bigger
-inhale against a longer, more passive exhale and a longer settle after it. Different
-ratios, not a different tempo. No single multiplier or delta can express that, which is
-why every naming attempt for one felt wrong.
-
-**Replacement:** `Sigh depth multiplier` is deleted, and the sigh gets **Sigh inhale / Sigh
-top pause / Sigh exhale / Sigh bottom pause**, in the same units as the normal four
-(`sec / beats in Host x`), sitting immediately after `Sigh interval` in the breath group.
-Four plain numbers in a unit already learned. Net +3 sliders in that group.
-
-**Migration is exact and free.** Today's sigh is `normal x multiplier`, so seed the four
-sigh segments at the saved multiplier times the normal four. Every existing project sounds
-identical on load, and from then on the exhale can be pulled long without touching the
-inhale.
-
-**Still open, and it may SIMPLIFY this rather than extend it:** the classic augmented
-sigh is *biphasic* — an inhale, a brief catch, then a second inhale stacked on the first,
-before the long release. Four sections cannot express the stacked second inhale. But a
-catch is arguably an **inhale** feature rather than a sigh one, in which case a sigh is
-just its own four segments plus one deep inhale catch, and no fifth phase is needed. The
-same mechanism also produces the shuddering post-crying breath, which is the distress cue
-Womb currently has no way to make. Written up in `docs/planned-features.md` under
-**Breath catches**. Build the four segments, hear them, then try a catch — in that
-order. Also still true from R13a: there is **no amplitude component** — a
-real sigh is a bigger breath, not only a longer one, and `Sigh louder by (dB)` would make
-the feature honest.
-
-### R16. It is `Ramp`, not `Speed ramp`
-
-Star, 2026-08-31: *"It's not really speed anymore, is it."* Correct, and it has not been
-for a long time. The feature was born scaling a rate; it now rides **every** target on the
-drift list. Womb's ten include S1-S2 gap, RSA depth, the two breath filter frequencies and
-four segment durations. Sweep Dwell's include Resonance. Polyrhythm's include per-voice
-**Gain dB**. Calling all of that "speed" is a fossil of what it did in May.
-
-**And the decision is already made — it just never propagated.** `spectral_vowel_morpher`
-ships `Ramp target` / `Ramp by` / `Ramp duration` / `Ramp engage` / `Ramp start delay`
-today, renamed on exactly this reasoning ("honestly named for a value"). Every other
-plugin still says `Speed ramp`. This is the same failure mode as the multiplier: a good
-call made in one place, not carried across.
-
-**The block becomes**, combining with R14:
-
-```
-Ramp target      selector
-Ramp to          destination, in the target's own unit, seeded from where it is
-Ramp duration    minutes
-Ramp engage      Off / On
-Ramp start delay minutes
-```
-
-Renaming a slider is **free** (R-cost ladder, top row: REAPER restores by ID, never by
-name), so this is Phase 1 work and can ship ahead of any renumber. `Ramp to` needs R14's
-seeding and is Phase 2.
-
-### Breath features propagate to every plugin with a breath
-
-Star, 2026-08-31: *"any other plugin that uses breath should also get these."*
-
-Only **two** plugins have one — `womb_sound_generator_v3` and `breath_gen` — so the blast
-radius is small and there is no reason for them to diverge.
-
-| | Womb | Breath Generator |
-|---|---|---|
-| Four breath segments | yes | yes |
-| Fades + fade mode | yes | yes |
-| **Sigh** (interval + four sigh segments, R15) | has interval + the old multiplier | **has none at all** |
-| **Catches** (inhale + exhale, planned-features) | to add | to add |
-
-**The Breath Generator cannot sigh.** The dedicated breathing plugin has no sigh mechanism
-of any kind, while the womb — where breathing is one layer of three — does. That is
-backwards, and it is the kind of gap this sweep exists to find. It gains `Sigh interval`
-plus the four sigh segments, matching Womb exactly.
-
-**Both gain catches** on the inhale and the exhale once that design settles.
-
-**And both gain the new drift / ramp targets that follow from it** — the four sigh
-segments and the catch controls. Per the standing rule these **append** to the target
-enums and never insert, because per-target banks are indexed by target number. Breath
-Generator's list is only five entries today (`Inhale, Top pause, Exhale, Bottom pause,
-Breaths/min`), so it has the most to gain.
-
-**Catches as a ramp target is the strong one**, and worth stating plainly because it is
-the whole reason this matters: ramping inhale catches from four down to zero over twenty
-minutes **is** the dysregulated-to-coherent journey, expressed as one control instead of
-an envelope nobody can draw.
-
----
-
-## Where to pick this up (as of 2026-08-31)
-
-**Shipped and ear-tested in Womb**, on `feature/morpher-layers`: the host-sync block
-(target selector + free `Every N beats`), heart rate as plain BPM in both modes, the
-breath's four sliders as beats in Host x, systole in beats, and four bug fixes found by
-ear along the way. Deployed to the Effects folder and verified byte-identical to source.
-
-**Designed, not built:** R11–R16, the `0..1` writeup, and breath catches in
-`docs/planned-features.md`.
-
-### What is still unplanned, in the order things block each other
-
-**Blocking:**
-
-1. ~~**Part 2's canonical layout is stale.**~~ **CLOSED 2026-09-05 — rewritten and
-   approved by Rozaya.** It described the A/B/C/D structure thrown out on 2026-08-31 and
-   the replacement was never written, so every per-plugin layout spent five days being
-   measured against a ruler nobody believed in. **This was the item making the whole
-   sweep feel unnavigable, and it was five days of nothing rather than a hard problem.**
-   Read Part 2. Drift and Ramp stay shared and last — their selectors span targets across
-   layers, so splitting them costs fifteen sliders where five do.
-2. ~~**The version forks.**~~ **CLOSED 2026-08-31.** Melody: archive v2, its note picker
-   moves to v1 (`docs/layouts/melody-phase.md`). Polyrhythm: migrate v1's projects up to
-   v3, archive v1 — evidenced in `docs/layouts/polyrhythm-phase.md`, and cheaper than
-   assumed on all three counts (the project count is a backlog not a preference, v3 is a
-   strict superset of what the projects use, and the `@serialize` blobs are identical so
-   drift and ramp configs cross untouched). **Both forks end.**
-3. **Scope.** Harmonic Sculptor is under an overhaul-or-drop question and Rozaya would not
-   reach for it — still open. **Sustain Looper is IN**, corrected 2026-08-31: excluding it
-   was Claude's judgement call, not Rozaya's, on the reasoning that it is a "sound-design
-   tool". It is not — it runs in a project and plays for the length of a piece, which is
-   exactly the profile drift and ramp exist for. Targets below.
-4. ~~**Validation — the real hole.**~~ **MOSTLY CLOSED 2026-08-31**, and the hole was
-   partly invented. Rozaya: *"I can reload a project if I need to. It's how these things
-   get checked easier anyway. I just couldn't be fucked to do it last night because
-   brain."* So reload and track-duplicate ARE testable — **ask for one** when a fix
-   depends on it rather than assuming the path is dark. What remains true: JSFX cannot be
-   compiled outside REAPER, and a clean script run proves nothing.
-
-   **The agreed approach:** ear-testing happens **over weeks of ordinary use**, with the
-   option of one set-aside day at the end for a deliberate pass. So the sweep does not
-   block on a testing phase; it ships in batches and gets confirmed as the plugins get
-   used. What I owe in return is that everything checkable *without* ears is checked
-   before it ships — arithmetic by simulation (as the breath and systole numbers were),
-   migrations by diffing actual output, and the standing lint checks.
-
-**Needed, not blocking:**
-
-5. **Drift period units under host sync.** Periods count heartbeats or breath cycles —
-   should they be beats when synced? Same question already answered twice elsewhere.
-6. **R12 vs Open Question 2.** OQ2 said size drift amounts to the largest sensible
-   *wander*; R12 says everything is 0–1000. R12 probably wins now that fine steps make
-   small values reachable, but two rules currently point different ways.
-7. **The `0..1` inventory.** 176 sliders suite-wide top out at 1.0 or less. Minus enums,
-   they split into dB and percent, and nobody has listed which is which.
-8. **Open Questions 1 and 3** — selector-backed target names, and 0- vs 1-based selectors.
-9. **Per-plugin layouts** — 22 hand-authored orders. The bulk of the work, done per batch.
-
-10. **Nothing is merged or released.** `feature/morpher-layers` is **98 commits ahead of
-    master**, master is 4 ahead of `origin/master`, and the last tag is **v2.20
-    (2026-07-29) — 102 commits ago.** Every plugin Rozaya is currently using was
-    hand-copied into the Effects folder from an unmerged branch, so there is no clean
-    release to fall back to if something turns out wrong. This is not a consistency
-    problem and it is not in the plan, which is exactly why it kept not getting noticed.
-    Merging and tagging is cheap and it is the only thing on this list that reduces risk
-    rather than adding scope.
-
-**Suggested next:** 10 first because it is cheap and protective, then 1 and 4, which
-shape everything else.
-
-### Sustain Looper — drift and ramp targets
-
-Added 2026-08-31 after Rozaya corrected the exclusion. Eight sliders; six are worth
-modulating, and one of them is the most valuable target in the plugin.
-
-| Target | Why |
-|---|---|
-| **Loop position (%)** | **The standout.** Drifting it wanders the loop slowly through the sample, so the timbre evolves instead of repeating. This is the direct answer to the note in CLAUDE.md that *"aliveness comes mostly from the SOURCE, not the plugin"* — it lets the plugin contribute aliveness by travelling through the source rather than sitting on one spot of it. |
-| **Pitch (semitones)** | Slow drift is tape-wobble / organic detune; as a ramp it is a long descent over a night. |
-| **Loop length (ms)** | Changes both the character and how often the repeat comes round. |
-| **Spread (detune amount)** | The ensemble opening and closing over time. |
-| **Output (dB)** | Ramp target: the hour-long fade for sleep use. |
-| Crossfade (% of loop) | Marginal but harmless. |
-| Voices (ensemble) | **No** — integer voice count; changing it mid-play adds and removes oscillators, which clicks. |
-| Sample | No — file selector. |
-
-**It should also gain the transport block** (Start delay, Play for, Rest for): a looper
-that plays for eight cycles and rests for four is an obvious and currently impossible
-thing to ask for.
-
-### R17. There are no unitless sliders. "Depth in what?" must have an answer
-
-Star, 2026-08-31: *"we've always gone — depth in what? x in what? what's the unit?"*
-
-This is sharper than R9 and it supersedes how R9 was being applied. Rewriting `0.25` as
-`25` makes the number easier to read and leaves it **just as unitless**. The reader's
-question was never "how many decimal places", it was **"twenty-five of WHAT?"**
-
-**The test:** ask "x of what?" out loud.
-
-- If the answer is a real quantity — BPM, Hz, dB, seconds, beats, semitones — **use that
-  quantity.** It is not a proportion, it is a measurement that somebody normalised.
-- If the answer is genuinely a proportion of a nameable thing, **name the thing in the
-  slider**: `Inhale fade in (% of inhale)`, `Bloodflow attack (% of cycle)`.
-- If the answer is *"of itself"* or *"of the maximum"* — the control is an abstraction
-  with nothing behind it, and that is the bug. Find the underlying quantity.
-
-**The worked example, and it is another propagation failure.** Heartbeat Generator has
-`Breath HRV Depth` at `0.0..0.25` and `Random HRV Depth` at `0.0..0.08`. Traced to its
-consumption:
-
-```
-cycle_len = cycle_len_base * (1.0 - breath_mod + rand_hrv)
-```
-
-They are fractions of the beat interval. **Womb already names this quantity properly** —
-`Heart with breath (BPM peak-to-peak)` — so the same measurement is honest in one plugin
-and an unlabelled decimal in its sibling. Heartbeat's two become **BPM peak-to-peak**,
-matching Womb. The fraction-to-BPM relation is not linear across tempo, but Womb has
-worked in BPM and converted internally since v2, so the precedent is built and tested.
-
-**Others failing the test today:** `Brightness` (0..1 — of what? it scales a filter, so it
-has an underlying Hz or a mix), `Bloodflow Dicrotic Level`, `Bloodflow Resonance` (the
-filter sweep already learned this one — resonance is honestly expressed in dB of peak, see
-the 2026-08 filter recalibration), and both `Stereo Width` controls (a proportion of full
-decorrelation, so at minimum `% of full width`).
-
-**Note the pattern, since this is the fourth tonight**: the multiplier, the `Ramp` rename,
-the missing sigh, and now this — each is a good decision made in ONE plugin and never
-carried to its siblings. The suite's real failure mode is not bad decisions, it is
-**unpropagated good ones**.
-
-### Three more unpropagated decisions, found by grepping for the pattern
-
-Once R17 named the failure mode — good decisions made in one plugin and never carried
-across — it became something searchable. Found 2026-08-31:
-
-**1. The waveform palette drifted, against an explicit written rule.** CLAUDE.md states:
-*"any new waveform added to Polyrhythm Phase or Melody Phase should land in all four
-plugins at the same slot index."* Measured:
-
-| | waveforms |
-|---|---|
-| Polyrhythm v1, Polyrhythm v3, Harmonic Sculptor | **14** |
-| Melody Phase v1, Melody Phase v2, Shepard Scale, Shepard Tone | **12** |
-
-**Square** and **Pulse** (slots 12–13) never propagated. Cheap to fix and completely safe:
-waveforms append to the end of the enum, so slots 0–11 keep their meaning and no project
-changes. Note this also explains a stale-docs finding already in the plan — both
-Polyrhythm pages document 12 against a source with 14.
-
-**2. Solo exists in two plugins out of six that need it.** This is the biggest of the
-three.
-
-| plugin | things to audition | Solo |
-|---|---|---|
-| Spectral Vowel Morpher | 16 layers | **yes** |
-| Womb | 3 layers | **yes** |
-| Polyrhythm v1 / v3 | 8 voices | no |
-| Melody Phase | 8 voices | no |
-| Shepard Tone | per-voice | no |
-| Resonance Bank | **16 bands** | no |
-
-Solo is not a luxury control, it is *how you hear what you are editing* — Rozaya on the
-Morpher's: *"you solo to hear a thing."* Without one, auditioning a single band in
-Resonance Bank means turning the other **fifteen** down to −60 dB and back afterwards.
-Every plugin with per-voice / per-band / per-layer anything should have Solo, and the
-Morpher's semantics are the reference: **Solo overrides Inactive**, because you solo in
-order to hear something.
-
-**3. `src/heartbeat gen.jsfx` is the only filename in the suite with a space in it.**
-Every other file is hyphenated or underscored. It broke two of my own scripts tonight.
-**Renaming is NOT free** — `.RPP` files reference the plugin by filename, so it needs a
-project rewrite like any migration. Fold it into Heartbeat's own batch rather than doing
-it loose.
-
-### Polyrhythm's per-voice gain default — free to fix, and its sibling already did
-
-Rozaya, 2026-08-31: *"we need a better default for polyrhythm. Bumping gain down is easier
-than raising it every time from 60."*
-
-| | per-voice gain defaults |
-|---|---|
-| Melody Phase | all **−6 dB**; `Active` decides who plays |
-| Shepard Tone | all **0 dB** |
-| **Polyrhythm v1 and v3** | V1 = −6, **V2–V8 = −60** |
-
-**Two faults.** Activating a voice hands you silence and a 54 dB climb, when the plugin
-already has a dedicated on/off (`Active`) so gain never needed to double as one. And
-**V2 ships Active = On with its gain at −60** — a voice paying CPU and counting in the
-active-voice normalizer while being inaudible.
-
-It is also the bug the Morpher already hit and fixed (2026-08-19, in CLAUDE.md):
-`Layer level` defaulted to −60 and every fresh instance muted its own Original before the
-first sample. Same shape, same cause — **−60 used as a default on a control that has a
-separate on/off** — and Melody Phase already carries the corrected form.
-
-**Fix:** V2–V8 default to **−6 dB**, matching Melody. `Active` stays the on/off.
-
-**Cost: nothing.** A default only applies to instances that have never been saved, so no
-existing project changes in any way. **Phase 1, no migration**, and it improves the
-most-used plugin in the suite immediately.
-
-**General rule this yields:** where a control has a dedicated on/off beside it, its value
-must default to a *usable* setting, never to the off sentinel. The sentinel is for the
-user to reach deliberately, not somewhere to be stranded on arrival.
-
----
-
-## Part 6 (revised 2026-08-31) — ordered for durability first, then use
-
-Two constraints replace the old family-based batching:
-
-- **Rozaya's testing energy is the only real time constraint.** Not authoring, not
-  building. So the work is ordered to spend as little of it as possible per unit of
-  benefit, and batched so one listening session covers many changes.
-- **This may not have a year.** Rozaya, 2026-08-31, on the possible collapse of frontier
-  models: *"we may not have the year I hope for."* Treat AI availability as a resource
-  that could end abruptly. **The plan must therefore be ordered so that stopping at any
-  point leaves something whole**, and so that whatever is left undone is the kind of work
-  a person — or a future model with no memory of this — can pick up from the documents.
-
-### Phase 0 — make what already exists durable. Do this first.
-
-Nothing new; purely protective, and currently the weakest link.
-
-- **Merge `feature/morpher-layers` to master, push, tag, release.** 98 commits ahead of
-  master; last tag v2.20 is 102 commits back; master is 4 ahead of origin. Everything in
-  use was hand-copied from an unmerged branch. **If work stopped tonight, there would be
-  no release containing any of it.**
-- Commit the outstanding Morpher `Layer harmonics` work, or drop it deliberately.
-- Confirm `docs/plugins/*` matches what actually shipped for the plugins already changed.
-
-**Test cost: none.** It is all already in use.
-
-### Phase 1 — everything that needs no migration, across every plugin at once
-
-This is where most of the value is, and it is nearly test-free because **nothing moves and
-no saved value changes**. Ship it as one batch, not per plugin.
-
-- **All naming** — R1–R6, R16 (`Ramp`), R17 (units), target strings, `Loop sequence`.
-- **All step sizes** (R8) — always the finer of whatever is in use.
-- **Defaults** — Polyrhythm's V2–V8 gain to −6 dB. Free: defaults only affect unsaved
-  instances.
-- ~~**Enum options only** — `Square` and `Pulse` waveforms in Melody, Shepard Scale and
-  Shepard Tone.~~ **DONE and ear-tested ✓ 2026-09-01** (commit `4f7eb14`). All three pass,
-  Shepard Tone included — which was the one worth testing, since its oscillators sweep
-  continuously and would show aliasing first. Each plugin also gained a **PolyBLEP** helper
-  and a **Pulse width** slider (hidden unless Waveform is Pulse), so the "enum options only,
-  costs nothing" estimate was very slightly wrong: Pulse needs a duty control, which is a
-  new slider. Appended, harmless, and it moves into place in each plugin's Phase 2 reorder.
-  The two Shepards share one `wave_sample(ph)`, which gained a second argument for the
-  per-sample phase increment that PolyBLEP needs. Both Polyrhythm pages were also corrected
-  — they had documented 12 waveforms against a 14-waveform source. **Not** applied to
-  `melody_phase_v2`, which is being archived.
-- **NOT new sliders.** Solo, Breath Generator's sigh, and the missing drift/ramp blocks
-  move to each plugin's Phase 2 reorder, where they land in their proper positions rather
-  than being bolted onto the end. See R18.
-- **A version stamp in every `@serialize`** — free, silent, and the prerequisite for every
-  self-migration in Phase 2. It must be in the field *before* the renumbers.
-
-**Test cost: low.** One pass through the plugins actually in use, listening for anything
-that changed audibly — which nothing should.
-
-### Phase 2 ORDER REVISED 2026-09-05 — readiness first, and drift/ramp jumps the queue
-
-**Agreed with Rozaya 2026-09-05.** The table below orders by project count. That
-was right when it was written and is not right now, for two reasons found by
-working the list rather than reading it:
-
-1. **The top of the list is not startable.** Polyrhythm v1 -> v3 is 17 projects
-   and has no authored layout — only a document arguing the decision. The
-   author-the-layout-first rule (added 2026-09-04, after five migrations in one
-   day) means it cannot begin. **Ordering by use assumes every item is ready;
-   readiness gates it in practice.**
-2. **Four plugins have no Drift and/or no Ramp AT ALL.** Measured 2026-09-05:
-   `bubbler`, `dapple` and `stereo-phaser` have neither; `resonance_bank` has
-   drift and no ramp. They were built after the drift sweep and never added to
-   it. Part 3 folds missing features into each plugin's own reorder, which puts
-   these LAST because those plugins have two or three projects each.
-
-   **That is backwards, and it is the "half-done is unusable" rule.** A plugin
-   that cannot drift is a plugin you do not reach for — which is plausibly WHY
-   it has three projects. Project count is being read as a preference when it
-   is at least partly a consequence. So **Drift and Ramp go into those four
-   BEFORE their reorders, not inside them.**
-
-**The revised order:**
-
-| | what | why here |
-|---|---|---|
-| 1 | **full-feature-sweeping-filter** (11 projects) | the only large one that is READY: layout authored, R20-compliant, no open question. Folds in its own backwards pan unit, so it gets ONE migration |
-| 2 | **Drift + Ramp for `bubbler` and `dapple`** (`stereo-phaser` DONE 2026-09-05) | the ONLY three where appending is also the LOGICAL position — see the correction below |
-| 3 | **Full Feature Tremolo** (7) | layout authored and R20-compliant; same pan-unit fix as the filter |
-| 4 | **polyrhythm_phase v1 -> v3** (17+5) | biggest, and blocked until its layout is AUTHORED |
-| 5 | **womb_sound_generator_v3** (8) | converts off the dead sync-block shape (R20) |
-| 6 | **spectral_vowel_passage** (10) | blocked on a design conversation, not on work — see below |
-| 7 | the singles | `resonance_bank`'s enum needs a version-gated BLOB migration; `sweep-dwell-filter`'s `Cycle mode` needs Passage's answer |
-
-### CORRECTION, same day: "appended, no migration" is true for exactly three plugins
-
-Rozaya, 2026-09-05, on being told the drift/ramp completion would be appended:
-*"Why would that be apending. we just reordered to fix the acumulation of
-apends making a goddamn mess."* Correct, and it contradicts R18 and Part 3,
-both of which this document already contains.
-
-**Measured after the question was asked, and the gap is far bigger than
-"three plugins have no drift":**
-
-| control | plugins that HAVE it | plugins MISSING it |
-|---|---|---|
-| Drift play for / rest for | 4 | **13** |
-| Ramp play for / rest for | 4 | **13** |
-| Ramp time unit (beats) | 3 | **14** |
-| Drift period unit (beats) | 3 | **14** |
-
-Only **Veil**, the **Morpher** and (since 2026-09-05) the **Stereo Phaser** carry
-a complete set. Every other plugin can drift and cannot do the staircase or
-count in beats. This is the rule *"Anything that has Ramp should have all the
-controls that go with Ramp"* having been true on paper and false in the files
-since it was written.
-
-**But the fix is NOT an append, except in three plugins.** The test is whether
-the plugin already HAS a drift block:
-
-- **No drift block and few sliders** — `bubbler` (11), `dapple` (13),
-  `stereo-phaser` (9, done). Drift and Ramp belong LAST in Part 2's order, so
-  appending them lands them exactly where the canonical layout wants them.
-  Append is correct here by accident of arithmetic, and it is worth saying that
-  it is an accident.
-- **An existing drift block** — everything else. The missing controls belong
-  INSIDE that block. `resonance_bank` is the clearest case: drift sits at 9-14
-  and **Mode / Wet-dry / Output Volume sit at 15-17**, so an appended
-  `Drift play for` would land at 18, nine places from `Drift shape`, with the
-  output controls wedged between. That is the disease this whole document
-  exists to cure.
-
-**So the drift/ramp completion is not a shortcut past Phase 2. It IS Phase 2**,
-folded into each plugin's single reorder, which is what Part 3 said all along.
-Only the three above can be done ahead of it.
-
----
-
-**Passage is blocked on a question, not a queue position.** Rozaya, 2026-09-05:
-*"the whole reason I kinda hate using passage is because there's, you know,
-there's no real reason to right now."* It was born to supersede the Morpher and
-in practice does not. **Reordering a plugin nobody wants to open buys nothing,
-and spends a migration across ten projects to buy it.** What it needs first is a
-decision about what it is FOR — the live candidates being durations that follow
-the rate mode's unit (the `(in rate mode units)` control the Sweeping Filter
-already has), and Play for / Rest for gaining their own target lists.
-
----
-
-### Phase 2 — the migrations, ordered by USE, not by family
-
-Measured across 91 projects, 2026-08-31:
-
-| order | plugin | projects | note |
-|---|---|---|---|
-| 1 | ~~**spectral_vowel_morpher**~~ **DONE + EAR-TESTED 2026-09-01** | **38** | 122 instances migrated, 0 problems; 848 captures byte-identical; an existing project reopened correctly. Sync to host and the Pitch+Overtone fix still unheard. |
-| 2 | polyrhythm_phase v1 → v3 | 17 (+5) | fork closes; migrate templates too |
-| 3 | full-feature-sweeping-filter | 11 | |
-| 4 | spectral_vowel_passage | 10 | |
-| 5 | womb_sound_generator_v3 | 8 | partly done already |
-| 6 | Full_Feature_Tremolo | 7 | |
-| 7 | ~~melody_phase~~ **DONE 2026-09-02** | 5 | 58 instances migrated, 0 problems, verified. v2 archived. Awaiting ears. |
-| 8 | breath_gen, bubbler, dapple | 3, 3, 2 | |
-| 9 | heartbeat, resonance_bank, stereo-phaser, sustain_looper, sweep-dwell | 1 each | heartbeat also gets its filename despaced |
-
-**Zero-project plugins go last, or not at all:** harmonic_sculptor, rhythm-track,
-shepard-scale, shepard-tone, veil (melody_phase_v2 is being archived). Veil is the
-interesting one — it shipped in July, was ear-tested and liked, and has still never been
-used in a project. That is a discoverability signal, not a quality one, and it is worth
-asking about before spending a migration on it.
-
-### If it stops
-
-Ordered this way, an abrupt end leaves: a tagged release (Phase 0), a suite that is
-consistently *named* and has its missing controls (Phase 1), and migrations completed for
-the most-used plugins first. The documents carry every decision and the reasoning behind
-it, which is the part that cannot be reconstructed from the source.
-
-### R18. New sliders go where they belong. Only enum OPTIONS append.
-
-Decided 2026-08-31 with Rozaya, correcting a rule I was about to apply past its purpose:
-*"the rule for appending to the end is if it's a new feature, not if it's an extension of
-a thing that should have been there all along... we're doing a big reorder of all the
-things. We shouldn't be pushing them one by one. That's kind of an embarrassment."*
-
-**Is append-at-the-end a real convention outside this repo?** Yes — and the reason it
-exists is the whole point. VST, AU and CLAP identify parameters by index or ID, and hosts
-save automation and preset state against those. Insert a parameter mid-list and every
-saved preset and automation lane silently points at the wrong control. VST3's stable
-parameter IDs exist specifically to escape this; CLAP has its own scheme for the same
-reason.
-
-**So the convention is a workaround for not being able to migrate saved state.** Where
-the state CAN be migrated — and this suite migrates it, deliberately, as the entire
-purpose of this document — the reason evaporates. Applying it during a reorder would bake
-the ordering problem into the release meant to fix it.
-
-**What protects a third party is the self-migration, not the append rule.** The plugin
-detects an old project on load from the blob's version magic and repairs the values in
-memory, on any machine, with nothing for anyone to run (Part 4). Someone with no old
-projects simply gets the clean layout. **That mechanism must be built and verified before
-any renumber ships** — it is the gate, and Rozaya's concern is exactly right: *"the last
-thing I want is for some motherfucker to be shipped a bullshit plugin and think it doesn't
-work and think the rest of them are like that."*
-
-**The one genuine exception, for a different reason.** An enum **option** is stored as an
-index *inside* a slider's value. Insert `Square` into the middle of the waveform list and
-every saved project's waveform changes character; insert a drift target and every
-per-target bank points at the wrong parameter. No slider-line migration fixes that
-cheaply, so **enum options always append** — waveforms at the end of the list, drift and
-ramp targets at the end of theirs.
-
-**The rule, then:**
-
-| thing | where it goes |
-|---|---|
-| a new slider | **its logical position** in the layout |
-| a new enum option (waveform, drift target, mode) | **the end of the list** |
-| an existing slider | wherever the authored layout puts it |
-
-### Decisions approved 2026-08-31
-
-Rozaya approved all of the following leans in one pass. Recorded here so none of them has
-to be re-decided.
-
-| # | Decision | Status |
-|---|---|---|
-| 1 | Heartbeat's `Breath HRV Depth` and `Random HRV Depth` become **BPM peak-to-peak**, matching Womb's `Heart with breath` | approved — Phase 2 (changes range) |
-| 2 | `Bloodflow Resonance` becomes **dB of peak**, as the filters already did | approved — Phase 2 |
-| 3 | Both `Stereo Width` controls become **% of full width** | approved — Phase 2 |
-| 4 | `Brightness` — unit unknown until the code is traced | **not yet a decision**; read first |
-| 5 | `Bloodflow Dicrotic Level` — same | **not yet a decision**; read first |
-| 6 | **Harmonic Sculptor drops out of the sweep.** Zero projects and Rozaya would not reach for it; its overhaul-or-drop question is settled separately | approved |
-| 7 | **Veil is swept anyway.** Zero projects but cheap, and worth learning why it never got used | approved |
-| 8 | **Drift periods stay in cycles**, not beats, under host sync — a cycle is the musically meaningful unit for a wander, and beats would make it drift against itself | approved |
-| 9 | The sigh gains a **loudness** component eventually, not now — a real sigh is a bigger breath, not only a longer one | approved, deferred |
-| 10 | **Capture slots display 1-based.** Disagrees with every other selector in the suite, which is why it was open; people count slots from one | approved — closes Open Question 3 |
-
-Rozaya, on 4 and 5: *"the ones I need to make decisions about I'll do when I can actually
-think."* Those two are mine to research before they become questions at all.
-
-Note 8 closes a question that had been asked and answered twice already in other forms —
-and note 10 deliberately accepts an inconsistency, because matching how a person counts
-beats matching the rest of the suite.
-
-### Items 4 and 5, traced — they are answerable now
-
-Both were held back on 2026-08-31 as "not yet a decision" because I could not say what the
-control scaled. Traced in source; both now have a real answer, and neither needs Rozaya to
-work anything out.
-
-**4. `Brightness` (Womb slider 8, `0..1`) is a lowpass cutoff in Hz.**
-
-```
-lp_cutoff_near = 200.0 + slider8 * 250.0;    ->  200..450 Hz
-lp_cutoff_far  = 175.0 + slider8 * 220.0;    ->  175..395 Hz
-```
-
-It sets the heartbeat's near and far channel cutoffs together. So the honest unit is
-**Hz** — and the useful discovery is that the two curves are **the same ratio the whole way
-along**: `far/near` runs 0.8750 to 0.8778, constant to within 0.002. One Hz control can
-drive both as `far = near * 0.877`, and the difference is inaudible.
-
-→ **Proposal: `Heart lowpass (Hz)`, `175..1000`, replacing `Brightness`.** The user sets a
-frequency, which is a real quantity they can reason about and drift in its own units,
-instead of a 0-to-1 abstraction over two hidden numbers. Migration is exact:
-`Hz = 200 + old * 250`.
-
-**5. `Bloodflow Dicrotic Level` (Womb slider 32, `0..1`) is a proportion of the pulse.**
-
-```
-bf_env_dicrotic = bf_dicrotic_level * (0.5 + 0.5*cos(...));
-bf_env_pulse    = bf_env_main + bf_env_dicrotic;
-```
-
-`bf_env_main` peaks at exactly 1.0, so the dicrotic level is literally the height of the
-secondary bump **as a fraction of the main pulse's peak**. That is a genuine proportion of
-a nameable thing, which R17 allows.
-
-→ **Proposal: `Dicrotic notch (% of pulse height)`, `0..100`.** Migration is `x100`.
-
-Note the asymmetry, which is R17 working as intended: one turned out to be a real
-measurement wearing a normalised disguise, and the other turned out to be an honest
-proportion that simply never said what it was a proportion of. The test told them apart.
-
-### No releases until the sweep is finished
-
-Rozaya, 2026-08-31: *"We're not tagging releases until this is done. It's bad enough that
-the previous release is what I'd consider half-done. We can absolutely push stuff to
-remote. Just not make a release out of it. That's what people grab when they don't want to
-deal with source code."*
-
-**Pushing to `origin` is fine and should continue** — it is what makes the work survive a
-dead disk, and it is addressed to us. **Tagging and publishing a release is a different
-act**: it is a distribution artefact aimed at someone who will never read the source, and
-shipping one mid-sweep hands a stranger a suite that is half-renamed, half-reordered and
-inconsistent with its own documentation.
-
-This corrects Phase 0 as I originally wrote it. Phase 0's value was the **push** — the
-tag and the release added nothing to "if this stops, is the work safe." I bundled three
-different actions under one heading and only one of them was protective.
-
-**Standing rule for the rest of this work:**
-
-| action | during the sweep |
-|---|---|
-| commit | freely |
-| push to `origin` | freely |
-| annotated tag | no |
-| GitHub release | **no** |
-
-The next release is the one that ships the finished sweep, and it should be the first
-thing a stranger could download and find self-consistent.
-
-### CORRECTION to Part 5 — most of the tooling already exists
-
-Rozaya, 2026-08-31: *"didn't we have a script for exactly this?"* Yes, and more of it than
-Part 5 assumed. It says to **build** `tools/migrate_layout.py`; that would have rebuilt
-working code badly. Read `tools/README.md` before writing anything new.
-
-**`tools/passage_migrate_sliders.py` is the layout migrator already.** It solves every
-fiddly part: token-position indexing (never "values with `-` stripped"), CRLF preserved,
-backups first, gating so it is safe to re-run over a folder, and a `HOPS` table walked
-oldest-first so a project several layouts behind migrates through in a single pass. Its
-docstring carries the reasoning too, including why the blob is untouched by a renumber.
-
-**The one thing it cannot do:** its hops are **inserts** — `(count, keep, inserted)`,
-meaning "keep N values, splice these in, shift the rest up." A reorder is an arbitrary
-**permutation**. So the work is to generalise it to accept an authored old→new mapping
-alongside the existing insert hops, not to write a new tool.
-
-**Two others that matter more than I had credited:**
-
-- **`tools/passage_captures.py`** — lists and extracts the captures stored inside a
-  Morpher/Passage `@serialize` blob. This makes the riskiest migration in the suite
-  *checkable*: inventory the captures in all 38 Morpher projects before touching them,
-  and verify afterwards that every one came through. Checking rather than hoping.
-- **`tools/morpher_to_passage.py`** — copies a project from one plugin to a different
-  one. That is exactly the shape the Polyrhythm v1 → v3 migration needs, which was being
-  treated as unbuilt.
-
-**Revised Part 5:**
-
-| need | status |
-|---|---|
-| `.RPP` slider-line rewriting, safely | **exists** — `passage_migrate_sliders.py` |
-| arbitrary permutation (not just inserts) | **generalise the above** |
-| cross-plugin project conversion | **exists in shape** — `morpher_to_passage.py` |
-| blob inspection / verification | **exists** — `passage_captures.py` |
-| enum-index migration | **exists** — `morpher_migrate_layer_order.py` |
-| per-plugin authored layouts | `docs/layouts/*.md`, hand-written |
-| linter | exists; corrected 2026-08-31; a lead generator, not a safety net |
-
-**The general lesson, and it is the same one as the unpropagated decisions:** this repo
-keeps containing the answer already. Check `tools/README.md` and `git log` before
-estimating that something needs building.
-
----
-
-# R19 — Pan modes need one canonical order (raised 2026-09-02)
-
-**Rozaya:** *"the types of panning are just kinda pell mell put in there, and
-that's confusing as shit. I'm not gonna ship something like that on any plugin
-... I don't wanna make a release like that. That's kind of embarrassing."*
-
-**Blocks a release. Does not block pushing to master.**
-
-## What the mess actually is
-
-Every plugin's Pan Mode list grew by appending, so each one is in the order its
-features happened to arrive rather than any order a person could reason about.
-
-- **Polyrhythm** now reads: Tremolo, Increment, Spread, Spread Reversed,
-  Alternating, Alternating (Flipped), Distributed, Distributed (Flipped),
-  Distributed (Ping-pong), Converging, Converging (Ping-pong), Diverging,
-  Diverging (Ping-pong), **Alternating every 2, every 4, every 8**. The three
-  extra Alternating variants are at 13-15, with the whole Distributed /
-  Converging / Diverging family sitting between them and the Alternating they
-  belong to. That was done on 2026-09-02 and it is the clearest example.
-- **Full Feature Tremolo** has no `Alternating (Flipped)`; both sweeping filters
-  do.
-- **rhythm-track** has a shorter list in a different order, plus `Accent L /
-  Weak R` which exists nowhere else.
-- The oscillator plugins lead with four modes (Tremolo / Increment / Spread /
-  Spread Reversed) that no effect plugin has.
-
-## Proposed order — group by WHAT THE PAN DOES
-
-Three groups, in this order, each plugin including only the members it has:
-
-1. **Still** — the pan does not move on its own.
-   `Mono` · `Spread` · `Spread Reversed` · `Accent L / Weak R`
-2. **Stepped** — the pan moves one position per cycle / note. Two-position
-   members first, then multi-position.
-   `Alternating` · `Alternating (Flipped)` · `Alternating every 2` ·
-   `Alternating every 4` · `Alternating every 8` · `Distributed` ·
-   `Distributed (Flipped)` · `Distributed (Ping-pong)` · `Converging` ·
-   `Converging (Ping-pong)` · `Diverging` · `Diverging (Ping-pong)`
-3. **Continuous** — the pan travels on a clock of its own.
-   `Tremolo` · `Increment` · `Pan Sweep` · `Pan Sweep (Flipped)` ·
-   `Linked Sweep`
-
-The grouping is the useful part: **still / stepped / continuous** is the
-distinction a listener actually hears, and it tells you immediately whether a
-mode can drift against the material (only group 3 can).
-
-## Cost, measured 2026-09-02 — and it is asymmetric
-
-The stored value is the POSITION, so reordering moves every saved project's pan
-mode to a different mode. Measured across the whole library:
-
-| plugin | stored values | reorder cost |
-|---|---|---|
-| `melody_phase` | 64 at Pan Mode 2, 8 at 3, **1 at 4** | 0-3 must not move; 4+ costs one control in `simple-sequence` |
-| `polyrhythm_phase` | 35 at 0, 16 at 1, 18 at 2, 15 at 3 | 0-3 must not move |
-| `polyrhythm_phase_v3` | 6 at 0, 2 at 2 | 0-3 must not move |
-
-So **the new modes (4 and up) are effectively free to reorder right now** — one
-instance to re-set, and that window closes as soon as anyone saves a project
-using them. The old 0-3 need a value remap per plugin, which is a small `.RPP`
-script of the same shape as the existing migrations.
-
-The effect plugins (`Full_Feature_Tremolo`, both filters, `rhythm-track`) have
-not been measured yet — run the same count before touching them.
-
-## Decision, 2026-09-02: all of it waits for Phase 2
-
-An earlier draft of this section said to reorder positions 4+ immediately, while
-it cost one control, and leave 0-3 for later. **Rozaya overruled that and was
-right:** *"I say we bloody save it until phase 2. I don't plan to use these
-until this is done. I can't be fucked to keep scraping my figurative skin on
-sharp edges."*
-
-The "do it now while it's free" argument only holds if the new modes are about
-to be used. They are not going to be, so nothing gets saved onto positions 4+
-and **the free window stays open indefinitely** rather than closing. Doing half
-of it now would buy nothing and leave a list that is tidy from 4 up and
-arbitrary below it -- a state someone has to hold in their head, for no gain.
-
-So: **one reorder, in Phase 2, across every plugin that has a Pan Mode**, with
-the value remap for 0-3 written at the same time. The new modes ship in their
-final order or they do not ship.
-
-**Before starting it,** re-run the stored-value count in the table above --
-including the effect plugins, which have never been measured -- because the
-"nothing is saved on 4+" fact expires the moment anyone uses one.
-
----
-
-# R21 — the host modes name their DIRECTION, and there are two (2026-09-05)
-
-**Extends R20; does not overturn it.** One rate value, one rate mode, same
-adjacency. What changes is that the mode enum gains a fifth entry and the fourth
-is renamed to say what it does.
-
-```
-BPM / Seconds / Hz / Every N beats / N per beat
-```
-
-- **`Every N beats`** is what `Host x` already was: one cycle takes N beats.
-  Renamed only — **index 3 does not move**, so the 10 instances stored on it are
-  untouched.
-- **`N per beat`** is new at index 4, appended, so nothing shifts. N cycles fit
-  in one beat.
-
-## Why, and it is a gap the retired pickers used to cover
-
-The pickers deleted on 2026-09-04 offered **both directions in words** — their
-list ran *"every 8 beats … 1 per beat … 8 per beat"*. Retiring them kept the slow
-half and silently dropped the fast one, so *eight cycles per beat* became
-`0.125`: three decimal places, and a reciprocal to work out. That is the exact
-arithmetic this suite exists to remove, and Rozaya found it by hitting it:
-*"Rate value should not have to be set to 0.5 to get 8 bubbles every beat."*
-
-**Neither direction is right on its own, because they are reciprocals.** Whichever
-way the number runs, one end is whole and the other is fractional. Polyrhythm
-lives at the slow end — *every 3 beats* against *every 5 beats* is how voices walk
-past each other — and Bubbler and Dapple live at the fast end. So the mode picks
-which end of your own music is arithmetic-free.
-
-**The sound is identical either way.** Both reach the same rates; only the typing
-differs. That is worth stating because it means this can never be judged by ear,
-only by use.
-
-## What it costs, measured 2026-09-05 before deciding
-
-**Nothing.** Renaming index 3 and appending index 4 move no stored value.
-
-**What was rejected on cost:** sorting the list by DIRECTION, so everything where
-bigger-means-faster sits together. That is arguably the more logical order, and it
-would mean reordering the settled three — **256 stored rate-mode values across 12
-plugins**, including the Morpher's 122 on Seconds alone. The grouping we get for
-free (three ways to say your own speed, then two ways to say it against the
-project) is logical at the level that matters. Rozaya: *"in logical positions
-though"* — this is that, without re-opening R20.
-
-## The conversion, per shape
-
-At 60 BPM one beat is one second, which is the nominal both host modes are
-computed against (never remember a tempo — `@init` wipes it on play).
-
-| mode | nominal cycles/sec | then |
-|---|---|---|
-| `Every N beats` (3) | `1 / N` | × `host_scale` (= tempo/60) |
-| `N per beat` (4) | `N` | × `host_scale` |
-
-So `N per beat` computes exactly like **Hz** does, and only the host_scale gate
-differs. Every `rate_mode == 3` gate that means "are we host-synced" becomes
-`>= 3`; the ones that mean "which conversion" stay exact.
-
-**Three shapes to apply it to:** a shared `rate_to_hz()` (both Polyrhythms,
-Shepard Tone), inline branch chains (most of the rest), and the Morpher, which
-CONVERTS the value on a mode switch and so needs its conversion table extended
-rather than a branch added.
-
----
-
-# R20 — THE RATE BLOCK. This is settled. Do not redesign it. (2026-09-04)
-
-**Supersedes R11 entirely and completes R13-revised.** Decided with Rozaya on
-2026-09-04 after five separate sessions had each reached for a different shape.
-If you are reading the suite for "how does tempo sync work here", stop at this
-section — everything below it is history and two of the shapes it describes are
-dead.
-
-## The rule, in full
-
-**Every rate in a plugin carries exactly two controls, adjacent, in this order:**
-
-```
-<Name> rate value        free number
-<Name> rate mode         {BPM, Seconds, Hz, Host x}   -- ALWAYS these four, ALWAYS this order
-```
-
-- **In Host x, the rate value means EVERY N BEATS.** One cycle takes N beats of
-  the project. Bigger is slower. It is a free number, so `0.333333` — every
-  three beats — is as reachable as `4`.
-- **The mode list is identical everywhere.** Same four entries, same order, in
-  every plugin, for every rate. This is the whole point: the suite is navigated
-  by arrowing the parameter list one control at a time, so position 3 must not
-  mean Hz on one control and BPM on the one under it.
-- **A plugin with two rates has two of these pairs**, each complete and
-  self-contained. The pan gets its own rate value and its own rate mode. It does
-  not borrow the main rate's mode, and nothing points across at it.
-
-**What is forbidden, and each of these has been built at least once:**
-
-- No `Sync to host` switch. Host x is a rate mode; a second switch is a second
-  way to say the same thing.
-- No `Host sync target` selector. Each rate carries its own sync.
-- No separate `Every N beats` slider. The rate value IS that number in Host x.
-- No `Host ratio` picker, or any control whose job is to write a value into
-  another control. All seven were retired 2026-09-04 and they stay retired.
-- No multiplier, anywhere, in any mode.
-
-## Why the two dead shapes existed, so nobody re-derives them
-
-**R11's sync block (Melody, Womb).** Its stated justification was that a plugin
-syncing more than one thing independently cannot express two beat counts in one
-rate value. **That is true and it is the wrong conclusion**, because you do not
-use one rate value for two rates — you give the second rate its own pair.
-
-The real constraint was narrower and is worth stating exactly, because it is a
-missing control rather than a limitation: **Melody's `Pan base rate` (slider 21)
-has no mode of its own.** Read `rate_to_cycle_seconds(pan_base_rate, rate_mode)`
-at melody_phase.jsfx:1116 and :1492 — the pan is handed the SEQUENCER's
-`rate_mode`. So there was nowhere to put Host x for the pan, and three sliders
-were added to reach around the outside. One slider — a pan rate mode — does it
-better, and untangles the pan from the sequencer's units as a side effect.
-
-**Measured, and this is the number that ended the argument.** Across all 73
-Melody Phase instances in the library, 27 have `Sync to host` ON, and **all 27
-have the target set to `Rate value`. Not one points at the pan.** The capability
-those three controls exist to provide has never been used, and it cost three
-positions in the parameter list on every instance since it shipped.
-
-**R13's "sync is not a unit" split.** Overturned by R13-revised on 2026-09-02 and
-still dead. Host x IS a rate mode — it is one of the ways of saying what the
-rate is.
-
-## What each plugin owes
-
-- **The thirteen already on R13-revised** owe only the enum ORDER, plus a rate
-  mode of their own for any rate that lacks one. Measured 2026-09-04: the main
-  Rate Mode is canonical in six plugins; `{Own BPM, Host x}` in four (Womb,
-  Heartbeat, Rhythm Track, Shepard Scale); `{Own Hz, Host x}` in Stereo Phaser;
-  and **every pan unit in the suite runs BACKWARDS** — `{Hz, Seconds, BPM}` on
-  Tremolo and the Sweeping Filter, `{Hz, Seconds, BPM, Host x}` on Sweep Dwell.
-  Resonance Bank's drift period mode is a third order again,
-  `{BPM, Hz, Seconds, Host x}`.
-- **Melody Phase** converts: its 27 synced instances get Rate mode `Host x` and
-  their beats number moved into `Rate value`; sliders 3, 4 and 5 are deleted;
-  the pan gains a rate mode. **Net two fewer controls than it has today.**
-- **Womb** converts the same way. Its 1 Host x instance moves its `Every N
-  beats` into the heart rate slider. **The beats value MOVES; it is not
-  deleted** — see the near-miss note below, which stays true as process even
-  though its conclusion about Womb has been overturned by this rule.
-
-## The enum-order migration, measured 2026-09-04
-
-Reordering an enum changes what a stored index MEANS, so this needs a migration
-even though it is "only naming". Every affected instance in the library:
-
-| what | instances | change |
-|---|---|---|
-| Pan unit, Tremolo / Sweeping Filter / Sweep Dwell | **32** | all stored `Hz`; index 0 → 2 |
-| Stereo Phaser rate mode | **3** | all on the DEFAULT, and its default is `Own Hz` — needs `2` written EXPLICITLY or they silently become BPM |
-| Womb rate mode | **1** | `Host x` index 1 → 3. The other 7 are on BPM and do not move |
-| Melody, Heartbeat, Rhythm Track, Shepard Scale | 0 | Melody's `{BPM, Seconds, Hz}` gains Host x on the END, so its indices are stable |
-
-**36 instances, every one uniform.** Nothing anybody has saved changes how it
-sounds.
-
-## The near-miss this rule must not repeat
-
-**BEFORE DELETING ANY CONTROL THIS RULE RETIRES, OPEN THE BLOCK AND READ IT.**
-On 2026-09-04 a plan document described Womb's `Every N beats` as a leftover and
-it is not — it is half of a working pair. Rozaya: *"host x is the rate mode.
-every N beats is getting the multiplier out of there. neither of them work
-alone."* R20 does retire it, but **by moving its number into the rate value,
-with a migration**, which is a different operation from deleting it. A retired
-`Host ratio` picker writes one slider and does nothing else; a working half of a
-pair does something the other half depends on. Those look identical from the
-slider list and completely different from inside.
-
----
-
-# R13 REVISED — Host x stays a rate mode; Rate Value means BEATS there (2026-09-02)
+## R13 REVISED — Host x stays a rate mode; Rate Value means BEATS there (2026-09-02)
 
 **SUPERSEDED IN PART BY R20 (2026-09-04).** Everything here about Host x being
 a rate mode and Rate Value meaning beats is CORRECT and still in force. What R20
@@ -2169,55 +514,6 @@ justification and they could not evaluate it: *"Only where a plugin has more
 than one thing to sync independently. Melody Phase syncs the sequencer and the
 pan separately, which needs a target selector and a per-target beat count; one
 Rate Value cannot express two. Melody keeps what it has."* Read R20 instead.
-
-## Cost, and why it is much smaller than R13's
-
-Nothing moves position, so **most instances need no migration at all** -- a
-relabel and a changed interpretation. Only instances actually **on Host x** need
-their Rate Value converted, and the conversion is a reciprocal: a stored
-multiplier of 0.5 (half tempo) becomes 2 beats per cycle.
-
-**Counted 2026-09-02, across every project in the library:**
-
-| plugin | instances | on Host x |
-|---|---|---|
-| `full-feature-sweeping-filter` | 20 | **6** — `as-things-are`, `bilateral-with-binaurals`, `noisescape-august-18-2026`, `womb-and-baby-heartbeats-with-bloodflow` |
-| `Full_Feature_Tremolo` | 11 | **4** — `simple-sequence`, `simple-sequence-check` |
-| `womb_sound_generator_v3` | 8 | **1** — `womb-and-baby-heartbeats-with-bloodflow` |
-| `polyrhythm_phase` | 84 | 0 |
-| `dapple` / `bubbler` / `polyrhythm_phase_v3` / `stereo-phaser` / `resonance_bank` / `sweep-dwell-filter` | 37 | 0 |
-| `heartbeat gen` / `rhythm-track` / `shepard-scale` / `shepard-tone` | none in any project | 0 |
-
-**So it is three plugins and eleven instances, not twelve plugins.** Everything
-else is a relabel with nothing stored to convert. Worth noting that
-`polyrhythm_phase` is the suite's most-used plugin by a wide margin — 84
-instances — and not one of them uses host sync.
-
-Do the free ones first: they need no migration, no snapshot, and no ear test
-beyond confirming the label reads right.
-
-## The four shapes this is cleaning up (audited 2026-09-02)
-
-- `melody_phase` -- sync switch + target + Every N beats. Keeps it.
-- `womb_sound_generator_v3` -- **NOT half converted. This was wrong and acting
-  on it would have broken the plugin.** Rozaya, 2026-09-04: *"host x is the
-  rate mode. every N beats is getting the multiplier out of there. neither of
-  them work alone."* Rate Mode `{Own BPM, Host x}` at 62, `Host sync target` at
-  63 and `Every N beats` at 64 are ONE mechanism: the mode says follow the
-  project, the beats value says how fast, and it is the thing that replaced the
-  multiplier. Retiring the beats slider "the same way the picker does", as this
-  document used to say, would delete the working half of a working pair.
-  It reads as a leftover only if you assume R11's separate sync switch is the
-  target -- and R13-REVISED ALREADY OVERTURNED THAT. Womb is the plugin that
-  got there first; the plan never caught up. What it actually needs is its Rate
-  Mode moved next to the rate it governs (62 against a rate at 1), which is a
-  position change, not a redesign.
-- `spectral_vowel_morpher` -- a sync switch and no Every N beats. Half converted
-  the other way.
-- Twelve others -- Host x in the enum plus a Host ratio multiplier picker:
-  both Polyrhythms, both Shepards, Full Feature Tremolo, both sweeping filters,
-  `sweep-dwell-filter`, `heartbeat gen`, `rhythm-track`, `dapple`, `bubbler`,
-  `stereo-phaser`, `resonance_bank`.
 
 ## The recipe — how R13-revised is applied to one plugin
 
@@ -2307,7 +603,368 @@ separate slider, gated on its rate mode. Converting it means Rate Value takes
 that job and the extra slider retires the same way the picker does — check
 which of the two the project instances actually rely on before touching it.
 
-# R22 — THE PITCH BLOCK. Settled with Rozaya 2026-09-08. Not built.
+## R14. Speed Ramp states a DESTINATION, not a delta
+
+Decided 2026-08-31 with Star. `Speed ramp by -35` requires knowing where the parameter
+is and adding. `Speed ramp to 35 BPM` is the end goal stated outright, with no arithmetic
+in it at all. For a control whose whole purpose is *"wind down over the next hour while I
+fall asleep"*, the destination **is** the thing already in mind; the delta is a conversion
+forced on the user to express it. Star, on why this matters more than it looks: *"it's
+more fucking adding than we can deal with sometimes because our cognitive lag is so bad."*
+
+**This reverses a 2026-06-09 decision, and the reason it was reversed the first time is
+the reason it can be reversed back.** Womb v3 originally had destination semantics and
+Rozaya rejected them — because the amount defaulted to 0, so engaging the ramp meant
+"take the heart to 0 BPM" and the sound died. That was a **default problem misdiagnosed as
+a semantics problem**, and we threw out the semantics to fix the default.
+
+**The fix for the actual problem:** on first selecting a target, its destination **seeds
+to where that parameter already is**. "Ramp to where I am" is no change, safely, and any
+move from there states a goal. Identical continuity trick to the one that makes entering
+Host x silent, which the suite has now implemented twice and trusts.
+
+Consequences:
+- The slider becomes `Speed ramp to`, in the **target's own unit** — which R12's
+  `-1000..1000` already accommodates for every target in the suite.
+- Seeding is per target and belongs in `@block` (it reads a bank), per the standing rule.
+- `Speed ramp engage` still gates whether the ramp advances; nothing about the
+  freeze/resume behaviour changes.
+
+**Naming note that generalises:** `by` only reads as a sentence *because a selector sits
+next to it finishing it* — "speed ramp by −35, target Heart rate." Anywhere there is no
+selector to complete the phrase, `by` dangles. This is why `Sigh by` was proposed and
+immediately failed the read-aloud test (*"sigh by... what. what?"*). **Test a slider name
+by saying it aloud with its value and nothing else.**
+
+## R15. The sigh gets its own four segments, and the multiplier goes
+
+Star, 2026-08-31: *"we're trying to apply a very coarse control to a very dynamic thing.
+Because we have the four sections of the normal breath, we don't have the four sections of
+the sigh. And if you look at actual sighing, there is four sections. It's very distinct.
+It's not just a computery shift in the normal breath."*
+
+That is the correct diagnosis and it supersedes R13a's replacement. Scaling all four
+segments by one number preserves the proportions exactly and only stretches time — so what
+comes out is the same breath, slower. A sigh differs in **shape**, not size: a bigger
+inhale against a longer, more passive exhale and a longer settle after it. Different
+ratios, not a different tempo. No single multiplier or delta can express that, which is
+why every naming attempt for one felt wrong.
+
+**Replacement:** `Sigh depth multiplier` is deleted, and the sigh gets **Sigh inhale / Sigh
+top pause / Sigh exhale / Sigh bottom pause**, in the same units as the normal four
+(`sec / beats in Host x`), sitting immediately after `Sigh interval` in the breath group.
+Four plain numbers in a unit already learned. Net +3 sliders in that group.
+
+**Migration is exact and free.** Today's sigh is `normal x multiplier`, so seed the four
+sigh segments at the saved multiplier times the normal four. Every existing project sounds
+identical on load, and from then on the exhale can be pulled long without touching the
+inhale.
+
+**Still open, and it may SIMPLIFY this rather than extend it:** the classic augmented
+sigh is *biphasic* — an inhale, a brief catch, then a second inhale stacked on the first,
+before the long release. Four sections cannot express the stacked second inhale. But a
+catch is arguably an **inhale** feature rather than a sigh one, in which case a sigh is
+just its own four segments plus one deep inhale catch, and no fifth phase is needed. The
+same mechanism also produces the shuddering post-crying breath, which is the distress cue
+Womb currently has no way to make. Written up in `docs/planned-features.md` under
+**Breath catches**. Build the four segments, hear them, then try a catch — in that
+order. Also still true from R13a: there is **no amplitude component** — a
+real sigh is a bigger breath, not only a longer one, and `Sigh louder by (dB)` would make
+the feature honest.
+
+## R16. It is `Ramp`, not `Speed ramp`
+
+Star, 2026-08-31: *"It's not really speed anymore, is it."* Correct, and it has not been
+for a long time. The feature was born scaling a rate; it now rides **every** target on the
+drift list. Womb's ten include S1-S2 gap, RSA depth, the two breath filter frequencies and
+four segment durations. Sweep Dwell's include Resonance. Polyrhythm's include per-voice
+**Gain dB**. Calling all of that "speed" is a fossil of what it did in May.
+
+**And the decision is already made — it just never propagated.** `spectral_vowel_morpher`
+ships `Ramp target` / `Ramp by` / `Ramp duration` / `Ramp engage` / `Ramp start delay`
+today, renamed on exactly this reasoning ("honestly named for a value"). Every other
+plugin still says `Speed ramp`. This is the same failure mode as the multiplier: a good
+call made in one place, not carried across.
+
+**The block becomes**, combining with R14:
+
+```
+Ramp target      selector
+Ramp to          destination, in the target's own unit, seeded from where it is
+Ramp duration    minutes
+Ramp engage      Off / On
+Ramp start delay minutes
+```
+
+Renaming a slider is **free** (R-cost ladder, top row: REAPER restores by ID, never by
+name), so this is Phase 1 work and can ship ahead of any renumber. `Ramp to` needs R14's
+seeding and is Phase 2.
+
+## R17. There are no unitless sliders. "Depth in what?" must have an answer
+
+Star, 2026-08-31: *"we've always gone — depth in what? x in what? what's the unit?"*
+
+This is sharper than R9 and it supersedes how R9 was being applied. Rewriting `0.25` as
+`25` makes the number easier to read and leaves it **just as unitless**. The reader's
+question was never "how many decimal places", it was **"twenty-five of WHAT?"**
+
+**The test:** ask "x of what?" out loud.
+
+- If the answer is a real quantity — BPM, Hz, dB, seconds, beats, semitones — **use that
+  quantity.** It is not a proportion, it is a measurement that somebody normalised.
+- If the answer is genuinely a proportion of a nameable thing, **name the thing in the
+  slider**: `Inhale fade in (% of inhale)`, `Bloodflow attack (% of cycle)`.
+- If the answer is *"of itself"* or *"of the maximum"* — the control is an abstraction
+  with nothing behind it, and that is the bug. Find the underlying quantity.
+
+**The worked example, and it is another propagation failure.** Heartbeat Generator has
+`Breath HRV Depth` at `0.0..0.25` and `Random HRV Depth` at `0.0..0.08`. Traced to its
+consumption:
+
+```
+cycle_len = cycle_len_base * (1.0 - breath_mod + rand_hrv)
+```
+
+They are fractions of the beat interval. **Womb already names this quantity properly** —
+`Heart with breath (BPM peak-to-peak)` — so the same measurement is honest in one plugin
+and an unlabelled decimal in its sibling. Heartbeat's two become **BPM peak-to-peak**,
+matching Womb. The fraction-to-BPM relation is not linear across tempo, but Womb has
+worked in BPM and converted internally since v2, so the precedent is built and tested.
+
+**Others failing the test today:** `Brightness` (0..1 — of what? it scales a filter, so it
+has an underlying Hz or a mix), `Bloodflow Dicrotic Level`, `Bloodflow Resonance` (the
+filter sweep already learned this one — resonance is honestly expressed in dB of peak, see
+the 2026-08 filter recalibration), and both `Stereo Width` controls (a proportion of full
+decorrelation, so at minimum `% of full width`).
+
+**Note the pattern, since this is the fourth tonight**: the multiplier, the `Ramp` rename,
+the missing sigh, and now this — each is a good decision made in ONE plugin and never
+carried to its siblings. The suite's real failure mode is not bad decisions, it is
+**unpropagated good ones**.
+
+## R18. New sliders go where they belong. Only enum OPTIONS append.
+
+Decided 2026-08-31 with Rozaya, correcting a rule I was about to apply past its purpose:
+*"the rule for appending to the end is if it's a new feature, not if it's an extension of
+a thing that should have been there all along... we're doing a big reorder of all the
+things. We shouldn't be pushing them one by one. That's kind of an embarrassment."*
+
+**Is append-at-the-end a real convention outside this repo?** Yes — and the reason it
+exists is the whole point. VST, AU and CLAP identify parameters by index or ID, and hosts
+save automation and preset state against those. Insert a parameter mid-list and every
+saved preset and automation lane silently points at the wrong control. VST3's stable
+parameter IDs exist specifically to escape this; CLAP has its own scheme for the same
+reason.
+
+**So the convention is a workaround for not being able to migrate saved state.** Where
+the state CAN be migrated — and this suite migrates it, deliberately, as the entire
+purpose of this document — the reason evaporates. Applying it during a reorder would bake
+the ordering problem into the release meant to fix it.
+
+**What protects a third party is the self-migration, not the append rule.** The plugin
+detects an old project on load from the blob's version magic and repairs the values in
+memory, on any machine, with nothing for anyone to run (Part 4). Someone with no old
+projects simply gets the clean layout. **That mechanism must be built and verified before
+any renumber ships** — it is the gate, and Rozaya's concern is exactly right: *"the last
+thing I want is for some motherfucker to be shipped a bullshit plugin and think it doesn't
+work and think the rest of them are like that."*
+
+**The one genuine exception, for a different reason.** An enum **option** is stored as an
+index *inside* a slider's value. Insert `Square` into the middle of the waveform list and
+every saved project's waveform changes character; insert a drift target and every
+per-target bank points at the wrong parameter. No slider-line migration fixes that
+cheaply, so **enum options always append** — waveforms at the end of the list, drift and
+ramp targets at the end of theirs.
+
+**The rule, then:**
+
+| thing | where it goes |
+|---|---|
+| a new slider | **its logical position** in the layout |
+| a new enum option (waveform, drift target, mode) | **the end of the list** |
+| an existing slider | wherever the authored layout puts it |
+
+## R19 — Pan modes need one canonical order (raised 2026-09-02)
+
+**Rozaya:** *"the types of panning are just kinda pell mell put in there, and
+that's confusing as shit. I'm not gonna ship something like that on any plugin
+... I don't wanna make a release like that. That's kind of embarrassing."*
+
+**Blocks a release. Does not block pushing to master.**
+
+## What the mess actually is
+
+Every plugin's Pan Mode list grew by appending, so each one is in the order its
+features happened to arrive rather than any order a person could reason about.
+
+- **Polyrhythm** now reads: Tremolo, Increment, Spread, Spread Reversed,
+  Alternating, Alternating (Flipped), Distributed, Distributed (Flipped),
+  Distributed (Ping-pong), Converging, Converging (Ping-pong), Diverging,
+  Diverging (Ping-pong), **Alternating every 2, every 4, every 8**. The three
+  extra Alternating variants are at 13-15, with the whole Distributed /
+  Converging / Diverging family sitting between them and the Alternating they
+  belong to. That was done on 2026-09-02 and it is the clearest example.
+- **Full Feature Tremolo** has no `Alternating (Flipped)`; both sweeping filters
+  do.
+- **rhythm-track** has a shorter list in a different order, plus `Accent L /
+  Weak R` which exists nowhere else.
+- The oscillator plugins lead with four modes (Tremolo / Increment / Spread /
+  Spread Reversed) that no effect plugin has.
+
+## Proposed order — group by WHAT THE PAN DOES
+
+Three groups, in this order, each plugin including only the members it has:
+
+1. **Still** — the pan does not move on its own.
+   `Mono` · `Spread` · `Spread Reversed` · `Accent L / Weak R`
+2. **Stepped** — the pan moves one position per cycle / note. Two-position
+   members first, then multi-position.
+   `Alternating` · `Alternating (Flipped)` · `Alternating every 2` ·
+   `Alternating every 4` · `Alternating every 8` · `Distributed` ·
+   `Distributed (Flipped)` · `Distributed (Ping-pong)` · `Converging` ·
+   `Converging (Ping-pong)` · `Diverging` · `Diverging (Ping-pong)`
+3. **Continuous** — the pan travels on a clock of its own.
+   `Tremolo` · `Increment` · `Pan Sweep` · `Pan Sweep (Flipped)` ·
+   `Linked Sweep`
+
+The grouping is the useful part: **still / stepped / continuous** is the
+distinction a listener actually hears, and it tells you immediately whether a
+mode can drift against the material (only group 3 can).
+
+## R20 — THE RATE BLOCK. This is settled. Do not redesign it. (2026-09-04)
+
+**Supersedes R11 entirely and completes R13-revised.** Decided with Rozaya on
+2026-09-04 after five separate sessions had each reached for a different shape.
+If you are reading the suite for "how does tempo sync work here", stop at this
+section — everything below it is history and two of the shapes it describes are
+dead.
+
+## The rule, in full
+
+**Every rate in a plugin carries exactly two controls, adjacent, in this order:**
+
+```
+<Name> rate value        free number
+<Name> rate mode         {BPM, Seconds, Hz, Host x}   -- ALWAYS these four, ALWAYS this order
+```
+
+- **In Host x, the rate value means EVERY N BEATS.** One cycle takes N beats of
+  the project. Bigger is slower. It is a free number, so `0.333333` — every
+  three beats — is as reachable as `4`.
+- **The mode list is identical everywhere.** Same four entries, same order, in
+  every plugin, for every rate. This is the whole point: the suite is navigated
+  by arrowing the parameter list one control at a time, so position 3 must not
+  mean Hz on one control and BPM on the one under it.
+- **A plugin with two rates has two of these pairs**, each complete and
+  self-contained. The pan gets its own rate value and its own rate mode. It does
+  not borrow the main rate's mode, and nothing points across at it.
+
+**What is forbidden, and each of these has been built at least once:**
+
+- No `Sync to host` switch. Host x is a rate mode; a second switch is a second
+  way to say the same thing.
+- No `Host sync target` selector. Each rate carries its own sync.
+- No separate `Every N beats` slider. The rate value IS that number in Host x.
+- No `Host ratio` picker, or any control whose job is to write a value into
+  another control. All seven were retired 2026-09-04 and they stay retired.
+- No multiplier, anywhere, in any mode.
+
+## Why the two dead shapes existed, so nobody re-derives them
+
+**R11's sync block (Melody, Womb).** Its stated justification was that a plugin
+syncing more than one thing independently cannot express two beat counts in one
+rate value. **That is true and it is the wrong conclusion**, because you do not
+use one rate value for two rates — you give the second rate its own pair.
+
+The real constraint was narrower and is worth stating exactly, because it is a
+missing control rather than a limitation: **Melody's `Pan base rate` (slider 21)
+has no mode of its own.** Read `rate_to_cycle_seconds(pan_base_rate, rate_mode)`
+at melody_phase.jsfx:1116 and :1492 — the pan is handed the SEQUENCER's
+`rate_mode`. So there was nowhere to put Host x for the pan, and three sliders
+were added to reach around the outside. One slider — a pan rate mode — does it
+better, and untangles the pan from the sequencer's units as a side effect.
+
+**Measured, and this is the number that ended the argument.** Across all 73
+Melody Phase instances in the library, 27 have `Sync to host` ON, and **all 27
+have the target set to `Rate value`. Not one points at the pan.** The capability
+those three controls exist to provide has never been used, and it cost three
+positions in the parameter list on every instance since it shipped.
+
+**R13's "sync is not a unit" split.** Overturned by R13-revised on 2026-09-02 and
+still dead. Host x IS a rate mode — it is one of the ways of saying what the
+rate is.
+
+## The near-miss this rule must not repeat
+
+**BEFORE DELETING ANY CONTROL THIS RULE RETIRES, OPEN THE BLOCK AND READ IT.**
+On 2026-09-04 a plan document described Womb's `Every N beats` as a leftover and
+it is not — it is half of a working pair. Rozaya: *"host x is the rate mode.
+every N beats is getting the multiplier out of there. neither of them work
+alone."* R20 does retire it, but **by moving its number into the rate value,
+with a migration**, which is a different operation from deleting it. A retired
+`Host ratio` picker writes one slider and does nothing else; a working half of a
+pair does something the other half depends on. Those look identical from the
+slider list and completely different from inside.
+
+---
+
+## R21 — the host modes name their DIRECTION, and there are two (2026-09-05)
+
+**Extends R20; does not overturn it.** One rate value, one rate mode, same
+adjacency. What changes is that the mode enum gains a fifth entry and the fourth
+is renamed to say what it does.
+
+```
+BPM / Seconds / Hz / Every N beats / N per beat
+```
+
+- **`Every N beats`** is what `Host x` already was: one cycle takes N beats.
+  Renamed only — **index 3 does not move**, so the 10 instances stored on it are
+  untouched.
+- **`N per beat`** is new at index 4, appended, so nothing shifts. N cycles fit
+  in one beat.
+
+## Why, and it is a gap the retired pickers used to cover
+
+The pickers deleted on 2026-09-04 offered **both directions in words** — their
+list ran *"every 8 beats … 1 per beat … 8 per beat"*. Retiring them kept the slow
+half and silently dropped the fast one, so *eight cycles per beat* became
+`0.125`: three decimal places, and a reciprocal to work out. That is the exact
+arithmetic this suite exists to remove, and Rozaya found it by hitting it:
+*"Rate value should not have to be set to 0.5 to get 8 bubbles every beat."*
+
+**Neither direction is right on its own, because they are reciprocals.** Whichever
+way the number runs, one end is whole and the other is fractional. Polyrhythm
+lives at the slow end — *every 3 beats* against *every 5 beats* is how voices walk
+past each other — and Bubbler and Dapple live at the fast end. So the mode picks
+which end of your own music is arithmetic-free.
+
+**The sound is identical either way.** Both reach the same rates; only the typing
+differs. That is worth stating because it means this can never be judged by ear,
+only by use.
+
+## The conversion, per shape
+
+At 60 BPM one beat is one second, which is the nominal both host modes are
+computed against (never remember a tempo — `@init` wipes it on play).
+
+| mode | nominal cycles/sec | then |
+|---|---|---|
+| `Every N beats` (3) | `1 / N` | × `host_scale` (= tempo/60) |
+| `N per beat` (4) | `N` | × `host_scale` |
+
+So `N per beat` computes exactly like **Hz** does, and only the host_scale gate
+differs. Every `rate_mode == 3` gate that means "are we host-synced" becomes
+`>= 3`; the ones that mean "which conversion" stay exact.
+
+**Three shapes to apply it to:** a shared `rate_to_hz()` (both Polyrhythms,
+Shepard Tone), inline branch chains (most of the rest), and the Morpher, which
+CONVERTS the value on a mode switch and so needs its conversion table extended
+rather than a branch added.
+
+---
+
+## R22 — THE PITCH BLOCK. Settled with Rozaya 2026-09-08. Not built.
 
 **Status: RULE AGREED, NOTHING BUILT.** This is deliberately the R20 order of
 operations — write the rule, settle it, *then* build — because that is what
@@ -2542,68 +1199,6 @@ amount)` is 0-100 with **no unit at all**, so it has to be told which of the
 four it means. It is a percentage of its existing internal range, so it becomes
 `%` and no stored value moves.
 
-## The dependency that makes this three jobs, not one
-
-**Melody Phase and Shepard Tone cannot take this block as they stand.** Both
-have eight voices with one flat note slider each. Four controls times eight
-voices is thirty-two sliders replacing eight, on plugins already declaring 86
-and 75.
-
-So the order is:
-
-1. **This rule.** Done, here.
-2. **The voices behind a selector on Melody and Shepard Tone**, the way
-   Polyrhythm v3 got on 2026-09-07. That build is the worked example, including
-   the `All` position, the change-detected writes, and the blob rewrite.
-3. **The pitch migration across eleven plugins**, including the C2→C1 note
-   re-index.
-
-Doing 3 before 2 would put a 32-slider pitch block into two plugins that then
-need re-migrating when the selector lands. That is the "one migration per
-plugin, not one per idea" rule, and breaking it cost five migrations in one day
-on 2026-09-04.
-
-## What each pitch-stating plugin owes
-
-Surveyed from source 2026-09-08. `Vn` collapses the per-voice banks.
-
-| plugin | states pitch as | owes |
-|---|---|---|
-| `breath_gen` | Inhale / Exhale Frequency Hz | two blocks |
-| `bubbler` | Transpose / Pitch spread / Rise, all semitones | one block, detune to cents |
-| `dapple` | Pitch (Hz), Pitch spread (%) | one block, detune to cents |
-| `harmonic_sculptor` | Fundamental Hz | one block |
-| `heartbeat gen` | S1 / S2 Frequency Hz | two blocks |
-| `melody_phase` | Vn Note, Transpose, Octave shift, tuning ref | selector first, then re-index |
-| `polyrhythm_phase` | Base Note, Vn Semitones (**range ±1000**), Center Octave | frozen; inherits at the v1→v3 crossing |
-| `polyrhythm_phase_v3` | Note, Fine tune (cents), Transpose, Octave shift | closest already; needs the value+mode pair and the re-index |
-| `resonance_bank` | Frequency (Hz), per band | one block per band, behind its existing selector |
-| `shepard-scale` | Center Octave, Octave Count, tuning ref | one block |
-| `shepard-tone` | Root Note, Vn Note, Center Octave, Octave Count | selector first, then re-index |
-| `spectral_vowel_morpher` | Pitch (semitones), Layer pitch (semitones), Spread (Hz) | mode pair; **122 instances**, migrate with care |
-| `spectral_vowel_passage` | Pitch (semitones), Spread (Hz) | mode pair, rides its owed reorder |
-| `sustain_looper` | Pitch (semitones), Spread (detune amount) | mode pair, detune to cents |
-
-**`polyrhythm_phase`'s `Vn Semitones` range of −1000..1000 is eighty-three
-octaves in each direction and cannot be meant.** It is left alone — v1 is frozen
-until it crosses — but it is noted here so the crossing does not carry it over.
-
-**AND `Center Octave` DOES NOT RETIRE. The first draft of this rule said it
-should, and that was a near-miss of exactly the kind this repo has a standing
-rule about.** The reasoning was "once `Note` names its own octave, a separate
-octave-position control says the same thing twice." Opening the block says
-otherwise: in `shepard-tone` it is the centre of the PITCH WINDOW the octave
-stack spans — `center_freq = tuning_ref * pow(2, center_oct - 4)`, with the
-window `Octave Count` octaves wide around it. It is half of a working pair with
-`Octave Count`, not a duplicate of anything. Retiring it would have deleted the
-Shepard's stack.
-
-The rule that catches this is already written down: **before retiring any
-control, open it and ask what else is inside.** A control that is genuinely
-retired does exactly one thing and that thing is now pointless. This one does
-something `Octave Count` depends on, and it looks identical from the slider
-list.
-
 ## How this sits with the rules that already exist
 
 **Checked 2026-09-08, after Rozaya said "you need to look at existing rules,
@@ -2736,7 +1331,262 @@ stays true.**
 expires.** If a release ships before this lands, it stops being allowed and the
 self-migration has to be built first.
 
-## Open, and needing Rozaya rather than me
 
-**Nothing.** The rule above is buildable once the two selectors land. The range
-question an earlier draft raised was already answered by R12.
+---
+
+## Part 2 — Canonical layout
+
+## Part 2 — Canonical layout
+
+**REWRITTEN AND APPROVED BY ROZAYA 2026-09-05.** The A/B/C/D block structure this
+section used to describe was thrown out on 2026-08-31 (Star: the blocks "were
+arbitrary as shit") and the replacement was never written down — so for five
+days every per-plugin layout was being measured against a ruler nobody believed
+in any more. That is the single thing that made the sweep feel unnavigable.
+
+Sliders are read in **numeric order** regardless of declaration order in the
+file, so this is reading order, and reading order is the whole interface. Rozaya
+arrows the parameter list one control at a time.
+
+### The order
+
+This was not designed top-down. It is what the Sweeping Filter and Tremolo
+layouts independently came out as when authored by hand, described afterwards
+and then approved:
+
+```
+1. What the plugin IS          its identity — the sound, the frequencies, the voices
+2. Its rate                    rate value, then rate mode          (the R20 pair)
+3. The shape of its movement   depth, on-duration, attack + its shape, release + its shape
+4. Stereo and pan
+5. Output level                wet/dry mix, output volume
+6. Transport                   start delay, play for, rest for, what happens at rest
+7. Drift                       target, up, down, period, period unit, shape, play/rest
+8. Ramp                        target, by, time unit, duration, play/rest, engage, start delay
+```
+
+**Why Drift and Ramp are last, and it is not because they matter least.** Their
+selectors reach across every other group — a drift target list names controls
+from sections 1, 3 and 4 — so they cannot sit *inside* any one of them without
+lying about their scope. Transport goes above them because it is also
+plugin-wide but simpler, and you set it once and leave it.
+
+### The four rules inside the order
+
+- **Everything belonging to a layer lives with that layer.** A per-voice,
+  per-band or per-slot group is whole and contiguous, and its own rate, gain,
+  timing and toggles sit inside it. This is what replaced the old block
+  structure: the grouping follows the *thing*, not an abstract category.
+- **A modifier is numbered immediately after the thing it modifies.** Unit
+  selectors, shape selectors, mode selectors. This is the rule that puts
+  `Drift period unit` directly after `Drift period`, and `Attack shape` directly
+  after `Attack` rather than after both amounts.
+- **A second rate carries its own complete pair** (R20). The pan gets its own
+  rate value and its own rate mode, inside the pan group. It never borrows the
+  main rate's mode and nothing points across at it.
+- **Global output goes last before transport**, so it stops interrupting the pan
+  group — which is exactly where the Sweeping Filter's `Wet/dry mix` sits today,
+  at slider 15.
+
+### What this fixes on its own
+
+`Slope` stops being slider 41 and rejoins the frequencies. Womb's `Breaths per
+minute` stops being wedged between the ramp and drift blocks and rejoins the
+breath group. `Heart rate swing per breath` rejoins the heart group. `Direction`
+stops splitting Melody's transport trio. Sweep Dwell's ramp block becomes
+walkable. Every stranded rate mode comes home to sit under its own rate.
+
+That the order resolves nearly every ordering finding in this document without
+being aimed at any of them is the evidence that it is the right shape.
+
+---
+
+
+---
+
+## Part 4 — Migration strategy
+
+### What each kind of change actually costs
+
+Not every fix in this document is expensive. The escalation, cheapest first:
+
+| Change | Cost | Why |
+|---|---|---|
+| **Slider label** | free | REAPER restores by ID, never by name |
+| **Target option string** | free | same — the enum's *index* is what is stored |
+| **Step size** | near-free | affects the increment, not the stored value; verify one project for snapping |
+| **Adding a slider at the END** | near-free | absent from old projects, so it takes its default — seed that default to reproduce the old behaviour |
+| **Range** | risky | saved values outside the new range are clamped, silently and permanently |
+| **Renumbering** | needs an `.RPP` migration | values are restored by position |
+| **Target enum order or count** | needs a blob migration | per-target banks are indexed by target number |
+
+This ladder is why Phase 1 exists: rules R1–R6, R8's "accident" half, and R9 sit entirely
+in the top three rows. They can ship without touching a single project.
+
+### Two things break independently, and they need different treatment.
+
+### The slider line — an `.RPP` text migration
+
+REAPER restores plugin values by slider **position**, so renumbering rewrites every
+project. This is the expensive half, and it is also the **easy** kind of migration to
+generate, because the old→new mapping is *authored* rather than inferred: we decide the
+layout, so we know the permutation exactly.
+
+Worked shapes already exist: `tools/passage_migrate_sliders.py` (HOPS table walked in
+order, so a project several layouts behind migrates through in one run) and
+`tools/sweepfilter_migrate_hz.py`.
+
+Hard-won details that carry over unchanged (see CLAUDE.md):
+
+- Index the slider line by **token position**, never by "values with the `-` padding
+  stripped" — REAPER writes `-` between real values, not only as trailing padding.
+- Gate on something that distinguishes migrated from un-migrated. Slider **count**
+  usually does not change; the blob's version magic can.
+- Do not require sliders that only exist on newer layouts.
+- Seed any new slider to whatever **reproduces the old behaviour**, not to the plugin's
+  default. The project should still sound like itself.
+- Snapshot whole projects into their own folder first; per-file `.bak` is the second
+  line, not the first.
+- Verify afterwards that **only the intended tokens moved**.
+
+### The `@serialize` blob — mostly untouched, with one trap
+
+The blob is a raw memory dump with no notion of slider numbering, so **renumbering
+sliders does not touch it**. Captures, banks and per-target drift configs all survive a
+layout change for free.
+
+The trap: per-target drift and ramp configs are stored in memory banks **indexed by
+target number**. So changing a target enum's *order* silently repoints every saved
+config at the wrong target.
+
+**Therefore: target enum order is frozen. Only the strings change.** New targets
+**append** to the end of the enum, never insert — the same rule as sliders, for the same
+reason.
+
+Where a target list's order disagrees with its sliders' order (Sweep Dwell lists High
+dwell, Fade down, Low dwell, Fade up against sliders 3, 5, 4, 7), **the slider numbering
+bends to match the enum**, not the reverse. Since we are renumbering anyway this is free,
+and it keeps the blob untouched.
+
+### The plugin migrates itself — the script is a convenience, not the safety net
+
+**A migration script only protects projects you actually run it over.** Anything on
+another drive, an old backup, a project reopened in 2029 — loads with every value in the
+wrong slot, silently, with nothing to signal it. That is worse than the mess we are
+fixing, and it is the reason the script cannot be the correctness mechanism.
+
+`@serialize` is the one section guaranteed to run on both **load** and **track
+duplicate**, and inside it `file_avail(0) >= 0` means read while `< 0` means write. So on
+read, a plugin can detect that the values it has just been handed belong to the *old*
+layout, permute them into the new positions itself, and push them back with
+`sliderchange(-1)`.
+
+It cannot rewrite the project file's slider line — but it does not need to. It fixes the
+values in memory every time the project opens, on any machine, forever, with nothing for
+anyone to run. The bulk script stays useful for repairing the library in one pass so the
+files on disk are correct too, but nothing depends on remembering to run it.
+
+**Mechanics, and the traps:**
+
+- **Gate on the blob's version magic**, and migrate only what was *restored*, never what
+  was *defaulted*. This is the exact bug that hit the Morpher layer permutation on
+  2026-08-19 — the gate asked "is this blob old?" instead of "does this blob actually
+  contain the thing I am about to permute?", so `@init` defaults got permuted.
+- **Use `sliderchange(-1)`, never `slider_automate`** — the latter writes automation.
+- **Read the blob in one go rather than sequentially.** `n = file_avail(0);
+  file_mem(0, scratch, n);` then inspect `scratch[0]` for the magic. Sequential `file_var`
+  reads advance a cursor that cannot be rewound, so a plugin that guesses wrong about the
+  format has already destroyed its own ability to fall back.
+- **Idempotence falls out for free.** If the project is loaded and not saved, the file on
+  disk still holds the old layout and the old magic, so the next load permutes again —
+  correctly. Save once and both the slider line and the magic are current.
+- **CORRECTION 2026-09-04 — the permute must happen in `@block`, NOT in
+  `@serialize`, and this section as written would have shipped the bug it warns
+  about two bullets earlier.** `@serialize` and REAPER's restore of the slider
+  LINE are two independent paths with no guaranteed relative order (the
+  nested-selector gotcha in CLAUDE.md, and the adopt-on-first-`@slider` gotcha
+  that followed it). A permute running inside `@serialize` can therefore read
+  slider values that have not been restored yet, permute the `@init` DEFAULTS,
+  and push them back with `sliderchange(-1)` — which is exactly "migrate what
+  was DEFAULTED", the failure this document already tells you to avoid.
+
+  **The shape that works, and it is the one already proven here for the picker
+  bug:** `@serialize` only READS the blob and RAISES A FLAG. It touches no
+  sliders. Then the first `@block` after that does the permute and the
+  `sliderchange(-1)`. `@block` cannot run before the instance is configured, so
+  whatever order the restore paths ran in, the values it sees are the real ones.
+
+  ```
+  @serialize
+    n = file_avail(0);
+    n > 0 ? (
+      file_mem(0, scratch, n);          // whole blob, one read, cursor-safe
+      scratch[0] == OLD_MAGIC ? pending_layout_migration = 1;
+    );
+    // ... normal restore ...
+
+  @block
+    pending_layout_migration ? (
+      // permute the visible sliders old -> new, THEN:
+      sliderchange(-1);                 // never slider_automate
+      pending_layout_migration = 0;
+    );
+  ```
+
+  **`pending_layout_migration` must be set in `@serialize` and cleared in
+  `@block`, and must NOT be initialised in `@init`** — `@init` re-runs on every
+  transport play in most of this suite, and clearing the flag there would let a
+  play press eat a migration that had not happened yet.
+
+- **Projects with no blob at all** cannot be identified this way. Those need the bulk
+  script. Worth measuring how many exist before assuming it is nobody.
+
+### Versioning
+
+Per the standing rule in CLAUDE.md: **a new version must ship with a migration, or it
+does not ship.** Melody Phase v2 is the proof — better design, zero projects, no path
+across.
+
+Old versions move to `archive/versions/<plugin>/`, out of `src/`, out of
+`docs/plugins/README.md`. Not alongside. Two live versions is a permanent maintenance
+cost.
+
+**Before archiving anything, run the grep** — a successor existing is not evidence that
+anyone crossed over. Melody Phase v1 was archived while five projects were on it and
+zero on v2, and had to be brought back out.
+
+```bash
+grep -rl <plugin>.jsfx --include=*.RPP /e/reaper
+```
+
+---
+
+### No releases until the sweep is finished
+
+Rozaya, 2026-08-31: *"We're not tagging releases until this is done. It's bad enough that
+the previous release is what I'd consider half-done. We can absolutely push stuff to
+remote. Just not make a release out of it. That's what people grab when they don't want to
+deal with source code."*
+
+**Pushing to `origin` is fine and should continue** — it is what makes the work survive a
+dead disk, and it is addressed to us. **Tagging and publishing a release is a different
+act**: it is a distribution artefact aimed at someone who will never read the source, and
+shipping one mid-sweep hands a stranger a suite that is half-renamed, half-reordered and
+inconsistent with its own documentation.
+
+This corrects Phase 0 as I originally wrote it. Phase 0's value was the **push** — the
+tag and the release added nothing to "if this stops, is the work safe." I bundled three
+different actions under one heading and only one of them was protective.
+
+**Standing rule for the rest of this work:**
+
+| action | during the sweep |
+|---|---|
+| commit | freely |
+| push to `origin` | freely |
+| annotated tag | no |
+| GitHub release | **no** |
+
+The next release is the one that ships the finished sweep, and it should be the first
+thing a stranger could download and find self-consistent.
+
