@@ -263,15 +263,25 @@ on 2026-09-04.
 
 ## What each pitch-stating plugin owes
 
+**CORRECTED 2026-09-08.** This table said "two blocks" for `breath_gen` and
+`heartbeat gen`, which contradicts the rule it belongs to. Rozaya settled it the
+same day the table was surveyed and the table was never updated — *"target, then
+select from 2, that way you're able to extend it later if needed, also less
+sliders."* **Every plugin gets exactly ONE pitch block, behind a `Pitch target`
+selector with `All` at position 0, however many pitches it has.** Building from
+the old wording would have put ten sliders into each of those two plugins where
+five belong.
+
+
 Surveyed from source 2026-09-08. `Vn` collapses the per-voice banks.
 
 | plugin | states pitch as | owes |
 |---|---|---|
-| `breath_gen` | Inhale / Exhale Frequency Hz | two blocks |
+| `breath_gen` | Inhale / Exhale Frequency Hz | **one block behind a `Pitch target` selector** |
 | `bubbler` | Transpose / Pitch spread / Rise, all semitones | one block, detune to cents |
 | `dapple` | Pitch (Hz), Pitch spread (%) | one block, detune to cents |
 | `harmonic_sculptor` | Fundamental Hz | one block |
-| `heartbeat gen` | S1 / S2 Frequency Hz | two blocks |
+| `heartbeat gen` | S1 / S2 Frequency Hz | **one block behind a `Pitch target` selector** |
 | `melody_phase` | Vn Note, Transpose, Octave shift, tuning ref | selector first, then re-index |
 | `polyrhythm_phase` | Base Note, Vn Semitones (**range ±1000**), Center Octave | frozen; inherits at the v1→v3 crossing |
 | `polyrhythm_phase_v3` | Note, Fine tune (cents), Transpose, Octave shift | closest already; needs the value+mode pair and the re-index |
