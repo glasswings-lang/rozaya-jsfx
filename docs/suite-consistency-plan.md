@@ -2343,7 +2343,14 @@ equivalent of the nine plugins that had nothing stored on Host x.
 > Looper — has no note to offer. What those three carry is DEFERRED to their own
 > discussion (see below); do not settle it from here.**
 >
-> **One `Tuning Reference Hz` per plugin**, with the other global pitch
+> **A plugin with MORE THAN ONE pitch puts them behind a `Pitch target`
+> selector — one block, not N blocks — with `All` as position 0. A plugin with
+> one pitch has no selector, because a one-entry selector is a control with
+> nothing to choose. Where a selector ALREADY exists over the things that carry
+> pitches (Polyrhythm's `Voice`, Resonance Bank's `Band`), the block joins that
+> one rather than adding a second.**
+>
+> **One `Tuning reference (Hz)` per plugin**, with the other global pitch
 > controls, not repeated per voice.
 
 This is R20's shape applied to pitch: a value, then a mode saying what the value
@@ -2632,6 +2639,51 @@ please" — and she was right, two of these I was re-deriving from scratch.**
   0-100 with no unit, is already condemned by R17's *"x of what?"* test. R22
   does not discover it; it inherits it.
 
+## One pitch block per plugin, behind a target — Rozaya, 2026-09-08
+
+> *"Heartbeat: target, then select from 2, that way you're able to extend it
+> later if needed, also less sliders."*
+
+An earlier draft of this rule gave Heartbeat TWO complete pitch blocks, one for
+each thump, and would have given Womb four. That is ten and twenty sliders where
+there are two and four, and the number grows every time a plugin gains a sound.
+
+**The selector is the suite's own answer and it was already sitting there.**
+`Drift target` and `Ramp target` are one selector over 24 targets; Polyrhythm's
+`Voice` is one over eight; Resonance Bank's `Band` is one over its bands. A
+`Pitch target` is the same pattern, and it makes the block a FIXED cost: every
+plugin has exactly one pitch block no matter how many pitches it has.
+
+**And it is extensible in the way N blocks are not.** A new sound in Heartbeat
+adds one enum option, not five sliders — which is the difference between a
+feature being affordable later and not.
+
+`All` sits at position 0 for the same reason it does on Polyrhythm's `Voice`:
+once per-target is cheap, setting them together becomes the expensive case.
+
+## Filters get notes too — musicality, not classification
+
+> Rozaya, 2026-09-08: *"Filters: yes, they should. Musicality integration, not
+> exclusivity, is the idea here."*
+
+I had asked whether a filter CENTRE should get a pitch block, having found that
+three of the frequencies I listed as pitches are not tones at all: Resonance
+Bank's band centres are peaking-EQ points on incoming audio, and Breath's and
+Womb's inhale/exhale frequencies tune a state-variable filter over noise
+(`in_f = 2*sin(pi * slider5 / srate)` — a coefficient, not an oscillator).
+
+**The question was the wrong shape.** It asked what a control IS, in order to
+decide what a person is allowed to reach for — which is the triage this rule has
+already been corrected for twice. The answer is that tuning a resonant band to a
+note is a real musical act: a bank tuned to a chord, a breath band sitting under
+a drone. The plugin not GENERATING that pitch does not stop it being a pitch you
+want to place.
+
+**So every frequency in the suite that shapes what you hear gets the block**,
+whether it is generated or resonated. The one thing that stays out is the
+source-pitching case (below), and that is not a taste judgement — those plugins
+genuinely do not have the information.
+
 ## The Morpher and Passage are their own discussion — NOT settled here
 
 Rozaya, 2026-09-08: *"Morpher and Passage are their own discussion there."*
@@ -2648,11 +2700,16 @@ FOR, and Rozaya has just said its fine-tune surface is part of the answer to
 that — *"passage earns a place by having room for a fine-tune control tapping
 into those pitch modes (flat notes, anyone)?"*
 
-**Sustain Looper is probably in the same conversation** — it is the third
-source-pitching plugin — but Rozaya named two, so do not assume the third.
+**Sustain Looper and Bubbler are probably in the same conversation** — Sustain
+Looper pitches a file loaded through a file-selector slider, and Bubbler grains
+incoming audio (`dryL = spl0`), so neither knows its source pitch either. Rozaya
+named two; the other two are noted, not assumed.
 
-Take those three out of the migration list until that discussion happens. The
-other eight plugins are buildable from this rule as it stands.
+**Bubbler was in the buildable list until 2026-09-08 and should not have been.**
+I had it down as "one block, detune to cents" without checking whether it makes
+its own sound. It does not.
+
+Take those four out of the migration list until that discussion happens.
 
 ## The one place R22 CONTRADICTS an existing rule, and the argument for it
 

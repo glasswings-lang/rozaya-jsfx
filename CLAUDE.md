@@ -230,10 +230,23 @@ slider's name, order, range or unit.
   finer offset that coexists with the coarse one, not the same control at
   another scale, and folding it in would make every by-ear nudge a mode switch.
   One note list everywhere, **the full MIDI range C-1 to G9**.
-  **The Morpher, Passage and Sustain Looper are DEFERRED to their own
-  discussion** and are not in the migration list — Rozaya, 2026-09-08:
-  *"Morpher and Passage are their own discussion there."* The other eight
-  plugins are buildable from the rule as written.
+  **A plugin with more than one pitch puts them behind a `Pitch target`
+  selector — one block, never N blocks** (Rozaya: *"target, then select from 2,
+  that way you're able to extend it later if needed, also less sliders"*). So a
+  new sound costs one enum option, not five sliders. Where a selector already
+  exists over the pitch-carrying things (Polyrhythm's `Voice`, Resonance Bank's
+  `Band`), the block joins it.
+  **FILTER CENTRES GET THE BLOCK TOO** — Resonance Bank's bands, Breath's and
+  Womb's inhale/exhale, none of which are generated tones. Rozaya: *"Filters:
+  yes, they should. Musicality integration, not exclusivity, is the idea
+  here."* I had asked whether a filter centre "counts as" a pitch, which is the
+  triage shape again: it asks what a control IS in order to decide what someone
+  may reach for. Tuning a band to a note is a real musical act.
+  **DEFERRED to their own discussion, and OUT of the migration list: the
+  Morpher, Passage, Sustain Looper and Bubbler** — the four that pitch audio
+  they did not make. Rozaya named the first two; the others are the same case.
+  **Bubbler was in my "buildable" list until I checked whether it makes its own
+  sound. It does not** (`dryL = spl0`), and I had not looked.
   **The kin bridge is the way to TEST this rather than assert it.**
   `~/AppData/Roaming/REAPER/Scripts/kin_bridge.lua` (F4, Load ReaScript, Run,
   leave running) writes a manifest of every control's live value twice a second
