@@ -659,7 +659,7 @@ Which is what makes a breath out of slots possible: **fade in is the inhale, hol
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
 How far it wanders above (up) and below (down) the parameter's current value, in that parameter's own units — Texture in its 0–100, Pitch in semitones, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
-**Drift period (seconds)** `1 to 600, default 30`
+**Drift period (seconds)** `0 to 600, default 30, 0 = off`
 How long one full wander takes, in real seconds (this instrument has no tempo, so the period is wall-clock, not beats). 30 is a gentle sway; a few minutes is barely-there evolution.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`

@@ -236,7 +236,7 @@ slider54:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 slider55:0<0,10,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq,Bloodflow offset}>Drift target
 slider56:0<0,2000,0.01>Drift up amount (units match target)
 slider57:0<0,2000,0.01>Drift down amount (units match target)
-slider58:8<1,1000,1>Drift period (in drift period units)
+slider58:8<0,1000,1>Drift period (in drift period units, 0 = off)
 // Declared CYCLES, unlike the Morpher's, because this period already counted
 // heartbeats or breath cycles -- Cycles IS the current meaning here, so the
 // suite default and the back-compatible one are the same answer.

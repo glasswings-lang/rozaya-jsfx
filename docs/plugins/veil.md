@@ -96,7 +96,7 @@ The amount is in the **target's own unit**: Hz for a cutoff (use the big end of
 the range), 0–1 for a resonance (use the small end). You tune it *by ear* — nudge
 until the wander feels right.
 
-**Drift period** `1–600, default 20` — how long one full wander cycle takes, in
+**Drift period** `0–600, default 20, 0 = off` — how long one full wander cycle takes, in
 whatever unit **Drift period unit** is set to (below). **Give Left and Right
 cutoffs *different* periods** (say 20 and 31) and the width itself breathes — the
 signature Veil move.

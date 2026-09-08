@@ -508,7 +508,7 @@ How far above the target's baseline the drift wanders at its peak. Units: the ra
 **Drift down amount** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period** `1–1000, default 8`
+**Drift period** `0–1000, default 8, 0 = off`
 How long one full drift wave takes for this target, counted in the unit below.
 
 **Drift period unit** `Cycles / Seconds / Beats, default Cycles` *(new 2026-09-07)*

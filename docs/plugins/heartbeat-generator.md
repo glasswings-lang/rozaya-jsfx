@@ -208,7 +208,7 @@ How far above the target's baseline the drift wanders at its peak. Units are BPM
 **Drift down amount** `0.0–50.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric biological-feel wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (heartbeats)** `1–1000, default 8`
+**Drift period (heartbeats)** `0–1000, default 8, 0 = off`
 How many heartbeats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period unit is the same across all 4 targets because heartbeat rate is the kin's master clock.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`

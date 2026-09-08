@@ -191,7 +191,7 @@ How many seconds above the baseline segment length the drift wanders at its peak
 **Drift down amount (seconds)** `0.0–10.0, default 0`
 How many seconds below the baseline segment length the drift wanders at its trough. Independent from Up amount, so asymmetric wander is supported (biological signals don't drift symmetrically). Either being non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (breath cycles)** `1–1000, default 8`
+**Drift period (breath cycles)** `0–1000, default 8, 0 = off`
 How many breath cycles one full drift wave takes for this target. 8 cycles = wander completes one Sine/Triangle period (or one random-target interpolation) every 8 breaths. Short = jittery, long = barely-perceptible wander.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`

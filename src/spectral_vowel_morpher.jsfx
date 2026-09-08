@@ -312,7 +312,7 @@ slider34:0<0,1,1{Pass-through,Silence}>Output at rest
 slider35:0<0,23,1{Texture,Spread,Pitch,Stereo width,Low cut,Output level,Overtone harmonic,High cut,4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level}>Drift target
 slider36:0<0,1000,0.01>Drift up amount (units match target)
 slider37:0<0,1000,0.01>Drift down amount (units match target)
-slider38:30<1,1000,0.01>Drift period (in drift period units)
+slider38:30<0,1000,0.01>Drift period (in drift period units, 0 = off)
 // Drift period unit. Same three options as everywhere else in the suite, but it
 // declares SECONDS rather than the usual Cycles, for two reasons that agree:
 // every one of the 122 instances in the library means seconds today (a declared
@@ -1546,7 +1546,11 @@ base_gain = layer_gain[LAY_ORIG];
 // control, which has been true since the drift work and was never noticed
 // because touching a control is what you do next anyway.
 dvi = 0; loop(N_TARGETS,
-  td_active[dvi]  = (target_drift_up[dvi] > 0 || target_drift_down[dvi] > 0) ? 1 : 0;
+  // Period 0 turns this target's drift OFF, matching the rest of the suite
+  // (2026-09-08). Without it a 0 makes `max(dper * srate, 1)` advance a whole
+  // drift cycle per SAMPLE -- the fastest possible wander, where the control
+  // plainly reads as a disable.
+  td_active[dvi]  = (target_drift_up[dvi] > 0 || target_drift_down[dvi] > 0) && target_drift_per[dvi] > 0 ? 1 : 0;
   mod_active[dvi] = (td_active[dvi] || ramp_by_mem[dvi] != 0) ? 1 : 0;
   dvi += 1;
 );

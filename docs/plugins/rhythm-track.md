@@ -302,7 +302,7 @@ How far above the target's baseline the drift wanders at its peak. Units are **B
 **Drift down amount (slider 24)** `0.0–50.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (slider 25, beats)** `1–1000, default 8`
+**Drift period (slider 25, beats)** `0–1000, default 8, 0 = off`
 How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
 **Drift shape (slider 26)** `Sine / Triangle / Random, default Sine`

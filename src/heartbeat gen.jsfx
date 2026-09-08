@@ -109,7 +109,7 @@ slider32:0<0,1,1{Off,On}>Ramp engage
 slider18:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Drift target
 slider19:0<0,1000,0.01>Drift up amount (units match target)
 slider20:0<0,1000,0.01>Drift down amount (units match target)
-slider21:8<1,1000,1>Drift period
+slider21:8<0,1000,1>Drift period (0 = off)
 // What the period is COUNTED IN. Cycles is this plugin's native count -- one
 // heartbeat -- and the default, which is exactly what this control did before
 // the unit existed. Seconds is wall clock. Beats counts the PROJECT tempo, a

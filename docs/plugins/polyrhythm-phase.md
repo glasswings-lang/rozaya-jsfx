@@ -374,7 +374,7 @@ How far above the target's baseline the drift wanders at its peak. Units: the ra
 **Drift down amount** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (cycles)** `1–1000, default 8`
+**Drift period (cycles)** `0–1000, default 8, 0 = off`
 How many V1 cycles (the global rate) one full drift wave takes for this target. All 24 targets use V1 cycles as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`

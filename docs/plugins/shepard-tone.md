@@ -293,7 +293,7 @@ How far above the target's baseline the drift wanders at its peak. Units are the
 **Drift down amount (slider 71)** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (slider 72, cycles)** `1–1000, default 8`
+**Drift period (slider 72, cycles)** `0–1000, default 8, 0 = off`
 How many glissando cycles one full drift wave takes for this target. All eleven targets use glissando cycles (paced by the global Rate Value clock) as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
 **Drift shape (slider 73)** `Sine / Triangle / Random, default Sine`

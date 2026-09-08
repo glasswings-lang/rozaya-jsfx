@@ -134,6 +134,10 @@ the default. A cycle is this plugin's own: twenty cycles means twenty of whateve
 it is doing, so the wander stretches when you slow the plugin down. Seconds is
 wall clock and ignores the rate. Beats follows the project tempo live.
 
+**Setting the period to 0 switches that target's drift off**, which is the quick
+disable. Until 2026-09-08 the control's minimum was 1 and 0 was unreachable, so
+the only way to stop a drift was zeroing both amounts.
+
 It is referenced against the rate BEFORE drift is applied, so drifting the rate
 cannot modulate its own drift period.
 

@@ -358,7 +358,7 @@ How far above the target's baseline the drift wanders at its peak. Units: the ra
 **Drift down amount (slider 36)** `0.0–5000.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (slider 37, cycles)** `1–1000, default 8`
+**Drift period (slider 37, cycles)** `0–1000, default 8, 0 = off`
 How many filter LFO cycles one full drift wave takes for this target. All six targets use LFO cycles as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
 **Drift shape (slider 38)** `Sine / Triangle / Random, default Sine`

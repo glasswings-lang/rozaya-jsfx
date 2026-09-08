@@ -330,7 +330,7 @@ slider73:25<1,99,0.1>Pulse Width % (50 = square)
 slider74:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Drift target
 slider75:0<0,1000,0.01>Drift up amount (units match target)
 slider76:0<0,1000,0.01>Drift down amount (units match target)
-slider77:8<1,1000,1>Drift period (cycles)
+slider77:8<0,1000,1>Drift period (cycles, 0 = off)
 slider78:0<0,2,1{Sine,Triangle,Random}>Drift shape
 
 // Speed ramp target selector (v2.10) — picks which of the 24 targets
@@ -1344,11 +1344,15 @@ i = 0;
 loop(N_TARGETS,
   up    = target_drift_up[i];
   down  = target_drift_down[i];
-  per   = max(target_drift_per[i], 1);
+  per   = target_drift_per[i];
   shape = target_drift_shape[i];
 
   drift_offset_local = 0;
-  (up > 0 || down > 0) ? (
+  // A period of 0 turns this target's drift OFF. That is the quick disable --
+  // Rozaya reaches for it, and until 2026-09-08 the slider's minimum was 1 so
+  // 0 was unreachable, and in three plugins it was clamped UP to 1, which is the
+  // FASTEST drift the control can make. Exactly backwards from what it reads as.
+  (up > 0 || down > 0) && per > 0 ? (
     new_phase = target_drift_phase[i] + drift_phase_inc_base / per;
     new_phase >= 1.0 ? (
       new_phase -= 1.0;

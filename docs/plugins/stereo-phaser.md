@@ -160,6 +160,10 @@ required giving this plugin save/restore for the first time.
   Seconds ignores the rate; Beats follows the project tempo. It is referenced
   against the rate BEFORE drift, so drifting the rate cannot modulate its own
   drift period.
+
+**Setting the period to 0 switches that target's drift off**, which is the quick
+disable. Until 2026-09-08 the control's minimum was 1 and 0 was unreachable, so
+the only way to stop a drift was zeroing both amounts.
 - **Drift period unit set to Beats**, period 4 at 90 BPM: one wander every 2.67
   seconds, and it stretches and shrinks live when the project tempo changes.
 - **Drift play/rest**: the wander runs for a while and then FREEZES WHERE IT STANDS

@@ -64,7 +64,7 @@ slider9:0<0,1000,0.01>Drift down amount (units match target)
 // Host-synced projects. The unit is deliberately NOT in this label: NVDA
 // re-reads the parameter name on every arrow step, and a name that lies half
 // the time is worse than one that's short.
-slider10:20<1,1000,0.01>Drift period
+slider10:20<0,1000,0.01>Drift period (0 = off)
 // Host tempo sync for the drift period. Veil has no rate — the only musical
 // length in it is the drift period, so that is the only thing Host x touches.
 // Seconds is the default; Beats reinterprets slider10 as beats and follows the

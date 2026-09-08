@@ -117,7 +117,7 @@ Maximum upward excursion of the drift, in the target parameter's natural units (
 **Drift down amount** `0 to 1000, default 0`
 Maximum downward excursion. Asymmetric Up vs Down lets the drift sit slightly off-center for a biological-feel rather than purely symmetric.
 
-**Drift period (BPM / Hz / sec / beats per cycle by mode)** `0 to 1000, default 0`
+**Drift period (BPM / Hz / sec / beats per cycle by mode; 0 = off)** `0 to 1000, default 0`
 Length of one drift cycle. What the number *means* is set by Drift period mode below, and the slider's own name lists the four possibilities so it never changes meaning silently. **A period of 0 disables this drift target for this band**, even if Drift up and Drift down are non-zero.
 
 **Drift period mode** `BPM / Hz / Seconds / Host x, default Seconds`

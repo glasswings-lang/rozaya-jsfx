@@ -73,7 +73,7 @@ slider10:0<0,5,1{Rate,Range min Hz,Range max Hz,Feedback,Stereo spread,Wet/dry m
 // converts, you never do.
 slider11:0<0,1000,0.01>Drift up amount (units match target)
 slider12:0<0,1000,0.01>Drift down amount (units match target)
-slider13:20<1,1000,0.01>Drift period
+slider13:20<0,1000,0.01>Drift period (0 = off)
 slider14:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 slider15:0<0,2,1{Sine,Triangle,Random}>Drift shape
 slider16:0<0,1000,0.01>Drift play for (periods, 0 = always)

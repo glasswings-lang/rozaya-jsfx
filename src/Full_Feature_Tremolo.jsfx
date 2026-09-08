@@ -182,7 +182,7 @@ slider39:0<0,1000,0.1>Ramp start delay (minutes)
 slider24:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Drift target
 slider25:0<0,1000,0.01>Drift up amount (units match target)
 slider26:0<0,1000,0.01>Drift down amount (units match target)
-slider27:8<1,1000,1>Drift period (cycles)
+slider27:8<0,1000,1>Drift period (cycles, 0 = off)
 // NEW 2026-09-05. {Cycles, Seconds, Beats} -- the rule settled the same morning.
 // The authored layout said {Seconds, Beats}; it was written a day earlier, and
 // Cycles is what THIS plugin natively counts, so nothing saved changes meaning.

@@ -682,6 +682,23 @@ because they apply every session, not on the day they were learned.
   base moves (rate + ramp + live tempo), so the proportion cannot be held in
   mind even in principle. **The tell is that it feels like it removes a unit
   problem.** It removes the unit and leaves the arithmetic.
+- **`Drift period` = 0 MEANS OFF, in all 19 plugins. Fixed 2026-09-08; it never
+  worked before that.** Rozaya: *"Sometimes I turn drift period off quickly to
+  disable it."* It did not disable anything. The declared minimum was **1** in
+  18 of 19 plugins, so 0 was unreachable; and in Melody and both Polyrhythms the
+  code did `per = max(per, 1)`, which turns a 0 into the FASTEST drift the
+  control can produce — one full wander per rate cycle. Exactly backwards from
+  what the control reads as.
+  **The gate was half-built two days earlier.** Commit `7e63784` (2026-09-06)
+  added `&& per > 0` to eleven plugins, plainly meaning 0 = off, and never
+  widened the range so 0 could be reached. Dead code from birth. **A gate on a
+  value the slider cannot produce is not a feature, it is a note-to-self.**
+  The fix: range `0..1000` and `0 = off` in the name everywhere, the three
+  clamps replaced by the gate, and the Morpher and Passage gated on their
+  `td_active` (they had neither, and would have advanced a whole drift cycle per
+  SAMPLE at 0). **No migration was needed and none was written** — because the
+  minimum had always been 1, no saved project can hold a period below it, which
+  is a one-grep argument and beat three failed library scans.
 - **NO UNIT LOCKS. EVER. A unit is a CHOICE, and the most it may ever be is a
   DEFAULT.** Rozaya, 2026-09-08, on my deciding that a pitch drift amount would
   always be in cents: *"The minute that kind of collapse is happening it's a
