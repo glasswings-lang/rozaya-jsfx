@@ -778,11 +778,28 @@ because they apply every session, not on the day they were learned.
 
 - **Host sync, four rules that were settled by ear and should not be re-derived.**
   (From the 2026-08 tempo-sync sweep.)
-  - **Drift and Ramp amounts are in BPM in every mode, Host x included.** The
-    plugin converts (`D BPM` = `D/tempo` in multiplier terms); the user never
-    does. The multiplier form was tried twice and fails both times: at 0.1 slider
-    steps the value you want is not reachable, and where the step is fine it
-    still forces arithmetic to hit a musical destination.
+  - **~~Drift and Ramp amounts are in BPM in every mode, Host x included.~~
+    THIS OVERSTATES WHAT THE CODE DOES — corrected 2026-09-08 by reading it.**
+    `host_bpm_delta()` is two lines and converts ONLY in the host modes:
+    `rate_mode >= 3 ? bpm_amt / max(host_bpm, 0.001) : bpm_amt`. In BPM, Seconds
+    and Hz the amount is handed back untouched and added to the rate value in
+    THAT mode's own unit — which is what the slider label has said all along
+    (`Drift up amount (units match target)`). Verified in two plugins.
+    **So the live behaviour is: the amount is in the rate's current unit for
+    three modes, and in BPM for the other two.** The host-mode special case is
+    right and necessary — there the rate value is a beat COUNT, so adding 5 to
+    it means five more beats per cycle, i.e. slower, and a raw add is nonsense.
+    What is wrong is the claim of uniformity: **the amount silently changes unit
+    when the rate mode changes**, which is the failure this file has a rule
+    against.
+    The multiplier form was still tried twice and still fails both times: at 0.1
+    slider steps the value you want is not reachable, and where the step is fine
+    it still forces arithmetic to hit a musical destination. That part stands.
+    **The fix is the per-target `Drift amount unit` / `Ramp by unit` control**
+    (see the Morpher layout doc), where `Target default` at position 0 preserves
+    exactly today's behaviour for every saved instance and every other position
+    is the user's choice. Do not "fix" this by picking a uniform unit — that is
+    the unit lock, and it is forbidden above.
   - **Lock what is constant; accumulate what is modulated.** Position-locking
     answers *"where would this be if it had run at this rate all along"*, which
     stops being the right question the moment drift or a ramp moves the rate.
