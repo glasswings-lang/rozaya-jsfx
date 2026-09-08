@@ -669,6 +669,23 @@ because they apply every session, not on the day they were learned.
   survived a source comment I wrote arguing the two cases were different. They
   were not. Rozaya caught both: *"cycles in fractions? I thought cycles were
   cycles lol"*, and then found the second by using it and hearing nothing.
+- **NO UNIT LOCKS. EVER. A unit is a CHOICE, and the most it may ever be is a
+  DEFAULT.** Rozaya, 2026-09-08, on my deciding that a pitch drift amount would
+  always be in cents: *"The minute that kind of collapse is happening it's a
+  sign to stare at it harder... Still, the same principles apply. No unit locks.
+  ever."*
+  **Why it happened is the reusable part.** A JSFX enum cannot change its
+  options depending on what a selector points at, so "the unit list depends on
+  the target" has no direct expression — and instead of SAYING that, I picked
+  one unit and wrote it up as a principle. **A workaround presented as a rule is
+  the tell.** The fix was one per-target `Drift amount unit` slider with
+  `Target default` at position 0, which keeps every saved value honest and makes
+  the old fixed unit a default rather than a cage.
+  **The one standing exception is the rate's "amounts are in BPM in every
+  mode"**, which was settled by ear twice and which Rozaya explicitly granted as
+  *"an unusual exception"*. Do not extend it to anything else, and do not
+  re-derive it as a general principle — it is a default that predates the
+  control that would have expressed it properly.
 - **A LIMIT MAY COME FROM PHYSICS, A STANDARD, OR WHAT THE CODE HONOURS. IT MAY
   NEVER COME FROM WHAT ONE PERSON HAS HAPPENED TO USE.** Measuring the library
   tells you a control is too SMALL. It has no authority over where the top goes.

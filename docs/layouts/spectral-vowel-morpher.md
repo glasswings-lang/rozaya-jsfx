@@ -551,13 +551,51 @@ that turns a stack of fixed copies into something that shimmers.
 Two follow-on details fall out of that, **and both are MY reading rather than
 Rozaya's words — check them before building.**
 
-**1. The drift and ramp amount is in CENTS, always, whatever the layer's pitch
-mode is.** This is the same rule the rate already follows: CLAUDE.md settles that
-*"Drift and Ramp amounts are in BPM in EVERY mode"*, because an amount that
-changes meaning when you switch the mode is the silent-unit-change failure. The
-plugin converts; the user never does. Cents is the right fixed unit here because
-the musical action is fine — a few cents of detune is the beating and shimmer
-this exists for — and an octave is still reachable at 1200 inside R12's range.
+**1. ~~The drift and ramp amount is in CENTS, always.~~ WRONG, AND WITHDRAWN
+THE SAME DAY.** The drift/ramp AMOUNT gets its own unit control.
+
+I had written that a pitch drift amount is always in cents whatever the layer's
+pitch mode is, reasoning by analogy to the rate rule (*"Drift and Ramp amounts
+are in BPM in EVERY mode"*). Rozaya:
+
+> *"This right here argues for pitch either supporting the rest or being its own
+> drift section. The minute that kind of collapse is happening it's a sign to
+> stare at it harder. I'll hand you that it's an unusual exception to almost
+> everything else in here, if not actually everything else in here. Still, the
+> same principles apply. **No unit locks. ever.**"*
+
+**The collapse was a workaround wearing a principle's clothes.** A JSFX enum
+cannot change its options depending on what a selector points at, so "the unit
+list should depend on the target" has no direct expression — and rather than
+saying that, I picked one unit and dressed the constraint up as a rule. That is
+the same shape as every other reduction caught this week: tidier in the
+document, worse in the hand.
+
+**The fix, and it costs one slider on each block:**
+
+> `Drift amount unit` and `Ramp by unit`, both PER-TARGET (they join the
+> existing nested selector alongside up/down/period), both
+> `{Target default, Hz, Cents, Semitones, BPM, Seconds, dB, Percent}`.
+
+**`Target default` is position 0 and is the live value for every saved
+instance** — it means "whatever this target's natural unit already was", so
+nothing moves on migration and the declared default is honest. Every other
+position is an override reached for deliberately. That is not a lock: the plugin
+still converts and the user still does no arithmetic, but the CHOICE of unit is
+theirs.
+
+The list carries units that make no sense for some targets — drifting a dB
+target in cents. That is the honest cost of a static enum, and it is cheaper
+than the alternative, which was telling somebody which unit they were allowed to
+think in.
+
+**NOT re-opened here: the rate's BPM rule.** CLAUDE.md records that as settled
+BY EAR, twice, and Rozaya explicitly granted it as *"an unusual exception"*. So
+a rate target's `Target default` goes on meaning BPM in every mode, exactly as
+today. **But her principle plainly points at it**, and this note says so rather
+than letting a future session find the tension and guess: under `Drift amount
+unit` the BPM rule stops being a lock and becomes a DEFAULT, which is what it
+should have been. Whether to say that out loud in R20 is its own conversation.
 
 **2. The sixteen new targets are GROUPED BY LAYER, not appended in a block.**
 So the list reads `Layer 1 level, Layer 1 pitch, Layer 2 level, Layer 2 pitch,
