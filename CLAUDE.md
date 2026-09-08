@@ -217,11 +217,23 @@ slider's name, order, range or unit.
   for Rozaya's decision. See `docs/planned-features.md` for the rule, which has
   two halves: widen the guesses, AND narrow anything promising more than the code
   honours.
-- **PITCH IS NEXT AND IS DELIBERATELY NOT STARTED.** The suite states a pitch
-  seven different ways. Unlike the rate sweep there is **no free window** — every
-  pitch value is in a real project and IS the sound. Write the rule, settle it
-  with Rozaya, then build. That is the R20 way, and it is what finally worked
-  after five sessions each guessed differently.
+- **PITCH: THE RULE IS WRITTEN AND AGREED, NOTHING IS BUILT.** R22 in
+  `docs/suite-consistency-plan.md`, settled with Rozaya 2026-09-08. Every pitch
+  gets `Note`, `Fine tune (cents)`, `Pitch value`, `Pitch mode`, with the mode
+  always `{Note, Hz, Semitones, Cents}` — R20's shape applied to pitch. One note
+  list everywhere, **C1 to C7**, sized from the 88 stored Hz values in the
+  library, which run 40 Hz to 2000 Hz.
+  **My first draft offered `{Note, Hz}` only and Rozaya killed it** — *"the
+  minute I'm making decisions like this is the minute I say include all of
+  them."* That draft was triage, which this file forbids, and it would have
+  forced a unit change on 122 Morpher instances by leaving `Pitch (semitones)`
+  nowhere to land. **Do not re-derive the two-mode version.**
+  **There is still NO FREE WINDOW** — every pitch value is in a real project and
+  IS the sound — and the job is now three jobs in a fixed order: the rule (done),
+  then **the voices behind a selector on Melody and Shepard Tone**, then the
+  pitch migration. Those two plugins cannot take a four-control block per voice
+  as they stand (32 sliders replacing 8, at 86 and 75 declared), and building
+  the block first would mean migrating them twice.
 
 ### What has been heard, and what has not
 

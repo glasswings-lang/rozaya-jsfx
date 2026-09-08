@@ -2306,3 +2306,144 @@ those without room to snapshot, migrate, verify independently and ear-test.
 separate slider, gated on its rate mode. Converting it means Rate Value takes
 that job and the extra slider retires the same way the picker does — check
 which of the two the project instances actually rely on before touching it.
+
+# R22 — THE PITCH BLOCK. Settled with Rozaya 2026-09-08. Not built.
+
+**Status: RULE AGREED, NOTHING BUILT.** This is deliberately the R20 order of
+operations — write the rule, settle it, *then* build — because that is what
+finally worked for the rate after five sessions each guessed differently. The
+pitch has more at stake than the rate did: **there is no free window.** Every
+pitch value in this suite is in a real project and IS the sound. There is no
+equivalent of the nine plugins that had nothing stored on Host x.
+
+## The rule
+
+> **Every pitch carries exactly four controls, adjacent, always in this order:
+> `Note`, `Fine tune (cents)`, `Pitch value`, `Pitch mode`. The mode is always
+> `{Note, Hz, Semitones, Cents}` — always those four, always that order. `Note`
+> and `Fine tune` are shown in Note mode; `Pitch value` is shown in the other
+> three and carries that mode's unit. A plugin with two pitches has two
+> complete blocks.**
+>
+> **One note list everywhere: C1 to C7.**
+>
+> **One `Tuning Reference Hz` per plugin**, with the other global pitch
+> controls, not repeated per voice.
+
+This is R20's shape applied to pitch, and the analogy is exact: a value, then a
+mode that says what the value means, with the same options in the same order
+wherever you meet it.
+
+## Why four modes and not two
+
+The first draft of this rule offered `{Note, Hz}` only, on the reasoning that a
+heartbeat thump is a frequency and a drone voice is a note. **Rozaya killed
+that, and was right to:** *"the minute I'm making decisions like this is the
+minute I say include all of them."*
+
+That draft was TRIAGE, which this suite's own rule forbids — a feature goes
+everywhere its parent already is, and deciding per plugin which controls a
+person may reach for is the same mistake in a different coat. It also had a
+concrete cost I had not noticed: **`Pitch (semitones)` is how the Morpher,
+Passage, Sustain Looper and Bubbler already state pitch.** A `{Note, Hz}` list
+gives those four nowhere to land, so the "tidy" rule would have forced a unit
+change on 122 Morpher instances plus Passage's, for nothing. Rozaya named the
+three missing units in five words and the gap closed.
+
+**Semitones and Cents are both offsets, and both are needed, for exactly the
+reason `Every N beats` and `N per beat` are both needed.** They are the same
+quantity at two scales. Keeping only semitones means seven cents is typed as
+`0.07` — arithmetic, which is the barrier this suite exists to remove.
+
+**What the offset modes are an offset FROM** is the plugin's own natural
+reference: the captured sample's pitch in the Morpher and Passage, the loaded
+loop in Sustain Looper, the base note elsewhere. That is what those controls
+already mean; the mode only names it.
+
+## Why C1 to C7, and the number that decided it
+
+**Measured 2026-09-08 across all 153 project files in the library**: 88 stored
+Hz-pitch values, spanning **40 Hz to 2000 Hz**. C1 is 32.7 Hz and C7 is 2093 Hz,
+so that list covers every value in use with a little headroom at each end.
+
+The current note pickers (Melody, Polyrhythm v3, Shepard Tone) run C2 to C6 —
+65 Hz to 1046 Hz — which reaches neither Dapple's 40 Hz settings nor the 45 Hz
+heartbeat. A person switching those to Note mode would find the pitch they
+already had was not in the list.
+
+**Widening the list is a MIGRATION, not a rename.** An enum option is an index
+stored inside a slider's value, so moving the bottom of the list from C2 to C1
+shifts every saved note by twelve semitones. This is the R18 append-never-insert
+rule at enum scale, and it is the one genuinely risky part of this job.
+
+## What falls out for free
+
+Naming changes cost nothing — names are not stored in projects — so these ride
+along with whichever plugin is being touched:
+
+- **Detune becomes cents everywhere.** It currently has four units for one idea:
+  `Pitch spread (semitones)` (Bubbler), `Pitch spread (%)` (Dapple),
+  `Spread (Hz)` (Morpher, Passage) and `Spread (detune amount)` (Sustain Looper,
+  which is 0-100 with **no unit at all**).
+- **`Transpose` gets one name.** It is `(half steps)` in Melody and Polyrhythm
+  v3 and `(semitones)` in Bubbler. Pick `semitones`: four plugins already use
+  that word for the same quantity, and it pairs with the new Semitones mode.
+- **`Center Octave` retires.** Once `Note` is absolute and names its own octave,
+  a separate octave-position control says the same thing twice. `Octave shift`
+  (relative, ±4) stays; `Octave Count` in the Shepards is a different thing
+  entirely — how many octaves are stacked — and keeps its name.
+
+## The dependency that makes this three jobs, not one
+
+**Melody Phase and Shepard Tone cannot take this block as they stand.** Both
+have eight voices with one flat note slider each. Four controls times eight
+voices is thirty-two sliders replacing eight, on plugins already declaring 86
+and 75.
+
+So the order is:
+
+1. **This rule.** Done, here.
+2. **The voices behind a selector on Melody and Shepard Tone**, the way
+   Polyrhythm v3 got on 2026-09-07. That build is the worked example, including
+   the `All` position, the change-detected writes, and the blob rewrite.
+3. **The pitch migration across eleven plugins**, including the C2→C1 note
+   re-index.
+
+Doing 3 before 2 would put a 32-slider pitch block into two plugins that then
+need re-migrating when the selector lands. That is the "one migration per
+plugin, not one per idea" rule, and breaking it cost five migrations in one day
+on 2026-09-04.
+
+## What each pitch-stating plugin owes
+
+Surveyed from source 2026-09-08. `Vn` collapses the per-voice banks.
+
+| plugin | states pitch as | owes |
+|---|---|---|
+| `breath_gen` | Inhale / Exhale Frequency Hz | two blocks |
+| `bubbler` | Transpose / Pitch spread / Rise, all semitones | one block, detune to cents |
+| `dapple` | Pitch (Hz), Pitch spread (%) | one block, detune to cents |
+| `harmonic_sculptor` | Fundamental Hz | one block |
+| `heartbeat gen` | S1 / S2 Frequency Hz | two blocks |
+| `melody_phase` | Vn Note, Transpose, Octave shift, tuning ref | selector first, then re-index |
+| `polyrhythm_phase` | Base Note, Vn Semitones (**range ±1000**), Center Octave | frozen; inherits at the v1→v3 crossing |
+| `polyrhythm_phase_v3` | Note, Fine tune (cents), Transpose, Octave shift | closest already; needs the value+mode pair and the re-index |
+| `resonance_bank` | Frequency (Hz), per band | one block per band, behind its existing selector |
+| `shepard-scale` | Center Octave, Octave Count, tuning ref | one block |
+| `shepard-tone` | Root Note, Vn Note, Center Octave, Octave Count | selector first, then re-index |
+| `spectral_vowel_morpher` | Pitch (semitones), Layer pitch (semitones), Spread (Hz) | mode pair; **122 instances**, migrate with care |
+| `spectral_vowel_passage` | Pitch (semitones), Spread (Hz) | mode pair, rides its owed reorder |
+| `sustain_looper` | Pitch (semitones), Spread (detune amount) | mode pair, detune to cents |
+
+**`polyrhythm_phase`'s `Vn Semitones` range of −1000..1000 is eighty-three
+octaves in each direction and cannot be meant.** It is left alone — v1 is frozen
+until it crosses — but it is noted here so the crossing does not carry it over.
+
+## Open, and needing Rozaya rather than me
+
+1. **The `Pitch value` slider's range.** It serves Hz, semitones and cents at
+   once, so it has to be wide, and CLAUDE.md is explicit that a wide range is
+   the honest choice when one slider carries several units — narrowing it just
+   moves the lie. Resonance Bank's band frequency reaches 20000 Hz, which sets
+   the top. Proposed −20000..20000; not yet put to Rozaya.
+2. **Nothing else.** The rule above is buildable once the two selectors land.
