@@ -218,8 +218,14 @@ naming them here is what stops a later session folding one in on the way past.
   a new capability rather than a placement question, and folding it in here would
   make this migration two jobs.
 - **No sigh.** Same reasoning.
-- **No new drift or ramp targets.** The pitch controls do not become modulation
-  targets in this pass. Adding sliders does not require adding targets.
+- ~~**No new drift or ramp targets.**~~ **WRONG, and undone 2026-09-09.** I
+  wrote that as a scope boundary; it was triage. Rozaya: *"breath gen doesn't
+  have pitch as a drift target set at all"* — and **Womb, the same breath with
+  the same two filter centres, has had `Inhale Freq` and `Exhale Freq` as drift
+  targets all along.** `Inhale pitch` and `Exhale pitch` are now appended to
+  both the drift and ramp target lists, taking both to seven. Appended, so every
+  stored index keeps its meaning; verified by running drift on target 0 before
+  and after and getting bit-identical output.
 
 ## Build order
 

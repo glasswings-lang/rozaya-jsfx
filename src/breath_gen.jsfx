@@ -115,7 +115,7 @@ slider24:0<0,1000,1>Rest for (breaths)
 // --- Drift (nested selector, per target) ----------------------------------
 // Pick a target, then the controls below hold THAT target's config. All five
 // targets drift in parallel; the selector only chooses which you are editing.
-slider25:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Drift target
+slider25:0<0,6,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min,Inhale pitch,Exhale pitch}>Drift target
 // UNITS MATCH TARGET, corrected 2026-09-08. These said "(seconds)" and Breath
 // Generator was the ONLY plugin in the suite that did -- the other eighteen say
 // this. Its own target list includes Breaths/min, so "seconds" was lying for
@@ -138,7 +138,7 @@ slider32:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 // --- Ramp (nested selector, per target) -----------------------------------
 // Ramp start delay rejoins its own block here. It sat at slider 32, seven
 // places away, because it was appended later when append-only was the rule.
-slider33:0<0,4,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min}>Ramp target
+slider33:0<0,6,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min,Inhale pitch,Exhale pitch}>Ramp target
 slider34:0<-1000,1000,0.001>Ramp by
 // One unit for duration AND start delay, so they always mean the same as each
 // other. DEFAULT IS 2, Minutes, which is what this block always did; index 0
@@ -261,7 +261,9 @@ total_breath_samples = 0;
 // Engage (global) is a freeze/resume gate; only transport play resets the
 // per-target ramp clocks. As of v2.14 the ramp is PER-TARGET: each target has
 // its own `by`, duration, start delay, and progress clock (banks below).
-N_SPEED_TARGETS              = 5;
+// 7 as of 2026-09-09: Inhale pitch and Exhale pitch appended. The banks are
+// 16-slot aligned, so this costs no re-layout.
+N_SPEED_TARGETS              = 7;
 speed_ramp_target_value_mem  = 4096;  // signed `by` per target (CONFIG)
 
 // --- v2.9 Drift target memory banks ---
@@ -278,7 +280,7 @@ speed_ramp_target_value_mem  = 4096;  // signed `by` per target (CONFIG)
 //   3 = Bottom Pause
 //   4 = Breaths/min (aggregate — scales all four segments in lockstep,
 //       preserving I:E ratio; units = breaths per minute, signed)
-N_TARGETS = 5;
+N_TARGETS = 7;
 target_drift_up     = 4112;
 target_drift_down   = 4128;
 target_drift_per    = 4144;
@@ -359,20 +361,24 @@ function pitch_capture(psel, pbank, pval, pslot) (
 tuning_ref       = 440;
 breath_unit      = 0;
 breath_unit_sec  = 1;
-breath_set_ready = 0;    // the one-shot cannot fire until @block arms it
+breath_set_ready = 0;    // nothing may fire until @block arms it
+speed_ramp_inpitch_offset = 0;
+speed_ramp_expitch_offset = 0;
 out_gain         = 1;
 
 // Resolve one pitch target to Hz. Note first, then the coarse pair as an OFFSET
 // from that note, then the fine pair on top. Hz is an offset rather than an
 // absolute, which is what lets the migration keep an old frequency exactly
 // while still naming a note for it.
-function pitch_to_hz(idx) local(m, v, f, fm, hz) (
+function pitch_to_hz(idx, voff) local(m, v, f, fm, hz) (
   // The value IS the pitch. Hz is the frequency; Semitones is the MIDI note
   // number (60 = middle C); Cents is the same axis at x100. Nothing here is an
   // offset from anything -- that was the shape that turned this into a second
   // fine tune.
   m = pitch_mode_mem[idx];
-  v = pitch_val_mem[idx];
+  // voff is drift + ramp, added to the VALUE and therefore in the value's own
+  // unit -- semitones drift in semitones, Hz in Hz, cents in cents.
+  v = pitch_val_mem[idx] + voff;
   hz = m == 1 ? tuning_ref * pow(2, (v - 69) / 12) :
        m == 2 ? tuning_ref * pow(2, (v / 100 - 69) / 12) :
                 v;
@@ -756,8 +762,12 @@ brm_total > 0.001 ? (
 // computed in @block, because the two restore paths have no guaranteed order:
 // @slider running first would derive from @init defaults and nothing would
 // recompute when the bank filled in underneath.
-pitch_hz_mem[1] = pitch_to_hz(1);
-pitch_hz_mem[2] = pitch_to_hz(2);
+// Drift and ramp on the two filter centres. The offsets are computed in
+// @sample, so these use the PREVIOUS block's values -- about 11 ms behind at a
+// 512-sample block, on a modulator whose whole point is being slow. The filter
+// coefficients below have only ever updated per block anyway.
+pitch_hz_mem[1] = pitch_to_hz(1, target_drift_offset[5] + speed_ramp_inpitch_offset);
+pitch_hz_mem[2] = pitch_to_hz(2, target_drift_offset[6] + speed_ramp_expitch_offset);
 
 // Stereo width spreads L and R filter centres apart. Unchanged in behaviour --
 // only the source of the two centre frequencies moved.
@@ -829,6 +839,12 @@ speed_ramp_top_offset    = speed_ramp_ramp_t_mem[1] * speed_ramp_target_value_me
 speed_ramp_exhale_offset = speed_ramp_ramp_t_mem[2] * speed_ramp_target_value_mem[2];
 speed_ramp_bot_offset    = speed_ramp_ramp_t_mem[3] * speed_ramp_target_value_mem[3];
 speed_ramp_bpm_offset    = speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_mem[4];
+// The two pitch targets. Their amounts are in the PITCH's own unit -- whatever
+// `Pitch mode` says -- which is what "units match target" means on the amount
+// sliders, and it falls out for free because the offset is added to the pitch
+// VALUE before it is converted to Hz.
+speed_ramp_inpitch_offset = speed_ramp_ramp_t_mem[5] * speed_ramp_target_value_mem[5];
+speed_ramp_expitch_offset = speed_ramp_ramp_t_mem[6] * speed_ramp_target_value_mem[6];
 
 // Per-target drift wave computation. Each of 4 targets gets a phase
 // counter advancing per sample at rate 1 / (period_cycles * one_cycle_samples).
@@ -1086,25 +1102,31 @@ nr = noise_seed2 * (2.0 / 2147483647.0) - 1.0;
 // what was RESTORED, never what was DEFAULTED". Gated on "this blob HAS the
 // field", so an older blob keeps its drift and ramp config and leaves the pitch
 // banks at @init's defaults, which are the 800/600 Hz this plugin always had.
-sr_magic = 2300000 + N_TARGETS;
+// 2026-09-09: two targets appended, so every per-target bank grew from 5 to 7
+// and the stream length changed with it. The magic ENCODES the count, which is
+// what makes an older blob safe to read: sr_n below is the count that blob was
+// written with, so file_mem consumes exactly what is there and the two new
+// slots keep @init's zeros. Appending targets never moves a stored index.
+sr_magic = 2400000 + N_TARGETS;
 file_var(0, sr_magic);
-(sr_magic == 2300000 + N_TARGETS || sr_magic == 2200000 + N_TARGETS || sr_magic == 2100000 + N_TARGETS) ? (
-  file_mem(0, speed_ramp_target_value_mem, N_SPEED_TARGETS);
-  file_mem(0, speed_ramp_dur_mem,          N_SPEED_TARGETS);
-  file_mem(0, speed_ramp_delay_mem,        N_SPEED_TARGETS);
+sr_n = sr_magic == 2400000 + N_TARGETS ? N_TARGETS : 5;
+(sr_magic == 2400000 + N_TARGETS || sr_magic == 2300005 || sr_magic == 2200005 || sr_magic == 2100005) ? (
+  file_mem(0, speed_ramp_target_value_mem, sr_n);
+  file_mem(0, speed_ramp_dur_mem,          sr_n);
+  file_mem(0, speed_ramp_delay_mem,        sr_n);
   file_var(0, last_speed_target);
-  file_mem(0, target_drift_up,    N_TARGETS);
-  file_mem(0, target_drift_down,  N_TARGETS);
-  file_mem(0, target_drift_per,   N_TARGETS);
-  file_mem(0, target_drift_shape, N_TARGETS);
+  file_mem(0, target_drift_up,    sr_n);
+  file_mem(0, target_drift_down,  sr_n);
+  file_mem(0, target_drift_per,   sr_n);
+  file_mem(0, target_drift_shape, sr_n);
   file_var(0, last_target_select);
-  sr_magic >= 2200000 + N_TARGETS ? (
-    file_mem(0, drift_play_mem, N_TARGETS);
-    file_mem(0, drift_rest_mem, N_TARGETS);
-    file_mem(0, sr_play_mem,    N_SPEED_TARGETS);
-    file_mem(0, sr_rest_mem,    N_SPEED_TARGETS);
+  sr_magic >= 2200005 ? (
+    file_mem(0, drift_play_mem, sr_n);
+    file_mem(0, drift_rest_mem, sr_n);
+    file_mem(0, sr_play_mem,    sr_n);
+    file_mem(0, sr_rest_mem,    sr_n);
   );
-  sr_magic >= 2300000 + N_TARGETS ? (
+  sr_magic >= 2300005 ? (
     file_mem(0, pitch_note_mem, N_PITCH);
     file_mem(0, pitch_val_mem,  N_PITCH);
     file_mem(0, pitch_mode_mem, N_PITCH);
