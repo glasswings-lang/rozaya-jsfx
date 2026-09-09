@@ -111,8 +111,12 @@ readout-only first version: *"So does the note name do anything? cause it needs
 to."* Right — a note list you cannot pick from is half a control, and picking a
 name instead of knowing that 60 is middle C is the entire point of having names.
 
-Two-way binding is the shape that broke the rate block in August, and it is safe
-here for one specific reason: the **mirror** (`pui_last`) says which end the user
+Two-way binding is the shape that broke **Womb** in August — its `Every N beats`
+value and the heart's BPM readout each held the same fact, either could be moved,
+and the code had to guess which. (Not to be confused with the *other* August
+fault, the Sweeping Filter's, which was about a tracker being adopted in
+`@slider` and capturing a default. Different bug.) It is safe here for one
+specific reason: the **mirror** (`pui_last`) says which end the user
 actually moved this pass, so nothing has to guess. REAPER fires `@slider` per
 parameter change, so only one end moves at a time, and the mirror is adopted in
 `@block` where it cannot capture a default. **The reconciliation runs BEFORE the
