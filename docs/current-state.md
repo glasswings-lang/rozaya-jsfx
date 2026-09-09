@@ -3,7 +3,7 @@
 **Budget: 150 lines. Over it? This file describes NOW — delete what stopped
 being now.** Narrative belongs in `docs/session-log.md`, not here.
 
-*Checked against the tree 2026-09-08.*
+*Checked against the tree 2026-09-09.*
 
 ## The branch
 
@@ -48,13 +48,12 @@ sentence.
 - **The range sweep: passes 1 and 2 are done** — 176 sliders widened, 0
   narrowed, verified against all 641 continuous sliders. dB and semitone ranges
   are held for Rozaya's decision.
-- **R22, the pitch block: built once and REVERTED. Nothing ships it.** See the
-  Breath Generator entry below before building it again. The rule is in the
-  plan; do not re-derive it, and do not re-derive the killed two-mode version.
-  The rest is two jobs in order: **Melody and Shepard Tone's voices behind a
-  selector**, then the pitch migration.
-  **The Morpher, Passage, Sustain Looper and Bubbler are deferred and out of the
-  migration list** — they pitch audio they did not make.
+- **R22, the pitch block: built in Breath Generator ONLY, and heard good
+  2026-09-09.** Its shape was rebuilt twice by Rozaya in the hearing; the plan's
+  written rule is now BEHIND the built one — read
+  `docs/layouts/breath-gen.md` for what actually ships. **R22 opens with an
+  attribution warning: parts of it were mine and cited back to her as settled.**
+  Only *"Morpher and Passage are their own discussion"* is hers.
 
 ## What has been heard, and what has not
 
@@ -78,25 +77,27 @@ per-cycle pan on Polyrhythm; Veil's layout and ramp; **the Morpher's 2026-09-06
 migration** (122 instances, confirmed on real work); **the 2026-09-06 Womb
 rebuild** (70 sliders across 9 projects) — *"Everything else, though, passes.
 :)"*; **the 2026-09-07 Polyrhythm v3 migration** (8 instances, 5 projects) —
-Rozaya opened `shapes` the same day: *"Nothing sounds off which is nice"*.
+Rozaya opened `shapes` the same day: *"Nothing sounds off which is nice"*;
+**Breath Generator's 40-slider layout, 2026-09-09** — *"it works end-to-end"* —
+after two rebuilds of the pitch block and one of the rate control, all three
+confirmed by running the plugin (`tools/jsfx_run`) before she ever heard them.
+
+**The 2026-09-08 version of that build was heard and REVERTED** — *"This is
+deeply, deeply broken"* — and **the cause was never found**. It behaved
+correctly on every path the runner could construct. The leading explanation is
+REAPER's per-filename compile cache: `breath_gen.jsfx` was overwritten with a
+40-slider version while REAPER already knew that name as a 32-slider plugin.
+Unproven. **So when promoting, quit REAPER fully before reopening anything.**
+The broken pair is kept at
+`snapshots/_broken-breathgen-20260908-forensics/`.
 
 **Not heard:**
 
-- **BREATH GENERATOR'S 2026-09-08 LAYOUT WAS BUILT, HEARD, AND REVERTED THE
-  SAME DAY.** Rozaya: *"This is deeply, deeply broken... whatever the prior
-  claude set it to, it only holds on the first inhale, then it falls away to
-  those stored values."* Broken in BOTH Seconds and Beats.
-  **`src/breath_gen.jsfx` in the repo is the 40-slider version; the INSTALLED
-  plugin and all three projects are back on the 32-slider one.** They diverge on
-  purpose. Do not reinstall from `src/` until the fault is found.
-  The broken plugin and the migrated projects are kept for forensics at
-  `E:/reaper/finished/backups/snapshots/_broken-breathgen-20260908-forensics/`.
-  **Two bugs are proved and NEITHER explains the symptom**: `@slider` computes
-  segment lengths without `breath_unit_sec` (Beats only, so not this), and
-  `Pitch target = All` writes only the control you moved while each target holds
-  a different Hz remainder, so moving the Note collapses both filters together.
-  **The open question is whether the fault is mine at all** — this plugin had
-  not been played in months, so it may predate the change.
+- The Breath Generator 40-slider build is **HEARD AND GOOD as of 2026-09-09**
+  (see above) but is **NOT PROMOTED**: it is installed only as the separate
+  `breath_gen_TEST40.jsfx`, and the real plugin plus all three projects are
+  still on the 32-slider layout. Promotion needs a NEW migration — the pitch
+  encoding changed — and a full REAPER restart, see below.
 
 - The Womb usability fix from the evening of 2026-09-06 — the breath has no rate
   mode at all now (a principled R20 exception, since its rate is emergent from
