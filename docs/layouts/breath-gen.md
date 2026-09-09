@@ -55,7 +55,7 @@ produces `N per beat`, and eight breaths per beat is not a thing anyone wants.
 
 | # | control | note |
 |---|---|---|
-| 1 | `Set breath rate (per minute, or beats per breath; 0 = off)` | **NEW.** A one-shot, exactly as Womb's. Writes the four segments, preserving their ratio. This is the whole point of the change: today, ten breaths a minute has to be worked out as four durations by hand. |
+| 1 | `Breath rate (per minute, or beats per breath)` | **NEW, and REBUILT 2026-09-09 as a LIVE TWO-WAY control, not the one-shot originally authored here.** It always shows the rate the segments imply, and typing into it rescales them, ratio kept. Rozaya: *"it either has to write to the 4 segments or the 4 segments have to write to it, or both. but it 0s out and reaper reads it and clamps."* Womb's `Set breath rate` is still the one-shot; this one is not. |
 | 2 | `Breath unit` `{Seconds, Beats}` | **NEW.** What the four segments below are counted in. |
 
 ### The shape of the breath — 3–6
@@ -250,8 +250,8 @@ naming them here is what stops a later session folding one in on the way past.
    `C:/Users/solst/jsfx-backups/breath_gen.pre-20260908-layout.jsfx`. All four
    copies verified byte-identical to their sources.
 3. ~~Build the file at 40 sliders~~ **DONE.**  Was: build at 40 sliders, every new control defaulting to off or to what
-   the plugin already means: `Set breath rate` 0 (= off), `Breath unit` Seconds,
-   `Pitch mode` and `Fine tune mode` Hz, `Fine tune value` 0.
+   the plugin already means: `Breath unit` Seconds, `Pitch mode` Hz,
+   `Fine tune` 0.
 4. **Bump the `@serialize` magic in the same commit as the renumber.** That is
    the only thing that made the last accidental renumber in this suite
    repairable.
@@ -300,8 +300,9 @@ default to off or to what the plugin already meant.
 
 The new capabilities have never been played:
 
-- **`Set breath rate`** -- type 10 with Breath unit on Seconds and watch the four
-  segments rescale, keeping their ratio.
+- **`Breath rate`** -- type 10 with Breath unit on Seconds and watch the four
+  segments rescale, keeping their ratio; then move one segment and watch the rate
+  follow it back.
 - **`Breath unit = Beats`** -- the breath should then ride the project tempo.
 - **The pitch block** -- this is R22's first outing anywhere. `Pitch target` on
   `All` moving both filter centres together is the path most likely to be used

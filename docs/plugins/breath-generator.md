@@ -30,11 +30,13 @@ The breath has **no rate mode**, unlike every other plugin in the suite, and tha
 is deliberate: its rate is *emergent* from the four segments below, so there is
 no rate value for a mode to qualify.
 
-**Set breath rate (per minute, or beats per breath; 0 = off)** `0-1000, default 0`
-A one-shot. Type the rate you want and the four segments below are scaled to it,
-keeping their ratio, and this control returns to 0 so the four numbers on screen
-stay the truth. In Seconds it reads as breaths per minute; in Beats it is already
-beats per breath, so it is used as-is. Leave it at 0 and nothing happens.
+**Breath rate (per minute, or beats per breath)** `0-1000, default 6.977`
+A live, **two-way** control, not a one-shot. It always shows the rate the breath
+actually has: move any of the four segments below and this follows, and type a
+rate here and the four segments rescale to it, keeping their ratio. In Seconds it
+reads as breaths per minute; in Beats it is already beats per breath. It never
+writes itself back to zero — a control that destroys its own value leaves the
+plugin and REAPER disagreeing about what it holds, and REAPER wins.
 
 **Breath unit** `{Seconds, Beats}, default Seconds`
 What the four segments are counted in. Beats follows the project tempo, so the
@@ -74,26 +76,29 @@ integrated with the rest of the suite rather than kept separate from it.
 
 **Pitch target** `{All, Inhale, Exhale}, default All`
 Which centre the five controls below are editing. On `All` they read back the
-inhale's values, and moving any of them writes to **both**.
-
-**Note** `C-1 to G9, default G5 (inhale) / D5 (exhale)`
-The note the centre sits on, across the full MIDI range.
-
-**Pitch value (Hz / semitones / cents)** `-1000 to 1000, default 16.009 / 12.670`
-An **offset from the note**, in whichever unit `Pitch mode` names. In Hz it adds
-directly, which is what lets an exact old frequency survive a migration while
-still being named as a note -- the odd-looking defaults are the remainder that
-puts the inhale on exactly 800 Hz and the exhale on exactly 600 Hz.
+inhale's values, and moving any of them writes to **both**. A control that has
+not moved is never written, so parking on `All` is safe.
 
 **Pitch mode** `{Hz, Semitones, Cents}, default Hz`
-What `Pitch value` means. The same three options in the same order wherever
-pitch appears in this suite.
+What `Pitch value` means. It comes FIRST, before the value, because it decides
+whether the note readout means anything -- the one place in the suite where mode
+precedes value, and deliberately so.
 
-**Fine tune value (Hz / semitones / cents)** `-1000 to 1000, default 0`
-A second, independent offset on top of the first, with its own mode. It exists so
-that nudging by ear never costs a mode switch and back.
+**Note name** `C-1 to G9, default G5 (inhale) / D5 (exhale)`
+The same pitch said as a note. It works **both ways**: pick C4 or type 60 into
+`Pitch value`, whichever costs you less, and the other follows. Only meaningful
+in `Semitones` mode, where semitones and note positions are the same axis.
 
-**Fine tune mode** `{Hz, Semitones, Cents}, default Hz`
+**Pitch value (Hz / semitones / cents)** `0-20000, default 800 (inhale) / 600 (exhale)`
+**The pitch itself**, not an offset from anything. In `Hz` it is the frequency;
+in `Semitones` it is the MIDI note number, so 60 is middle C; in `Cents` it is
+that same axis times 100.
+
+**Fine tune** `-1000 to 1000, default 0`
+The **one** fine tune, in the unit below. There is exactly one, so nudging by ear
+never turns into two controls doing the same job.
+
+**Fine tune unit** `{Hz, Semitones, Cents}, default Cents`
 
 **Tuning reference (Hz)** `20-2000, default 440`
 What A4 is worth. One per plugin.
@@ -162,106 +167,116 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 
 **Transport behavior**: conventional. Stop silences; play re-initializes everything (breath state, period counter, rest timer) and starts fresh from an inhale.
 
+### The seven drift and ramp targets
+
+Both blocks below aim at the same seven targets, and the list is in the order the
+plugin's own controls are in:
+
+`Breath rate`, `Inhale`, `Top pause`, `Exhale`, `Bottom pause`, `Inhale pitch`,
+`Exhale pitch`.
+
+Pick one with the target selector and the controls under it hold **that**
+target's settings; all seven run in parallel regardless of which one is on
+screen. Switching the selector saves what is showing and loads the new target's
+values, so nothing is lost by looking.
+
+`Breath rate` scales all four segments in lockstep, keeping the inhale-to-exhale
+ratio, so it is the whole-breath wind-down rather than one segment's. The two
+pitch targets move the filter centres, in whatever unit that target's
+`Pitch value` is in -- semitones drift in semitones, Hz in Hz.
+
+**Each target takes its turn.** The five that are read once per event -- the rate
+and the four segments -- step forward by one whole step when **their own**
+segment begins, so a period of `4` on the inhale means four inhales, walked in
+four even steps. That makes them genuinely independent of each other: drifting
+the inhale every 2 and the exhale every 3 gives exactly that, where before both
+were sampled off one free-running clock whose length the other targets were busy
+changing. The two pitch targets are not stepped -- they are applied continuously,
+so they can draw the whole curve, and they can move *within* a single breath,
+which a segment length can never do.
+
 ### Ramp
 
-> **Added 2026-09-06.** These controls existed in a dozen other plugins and not
-> here, which is exactly the inconsistency the suite sweep exists to remove — a
-> thing learned on one plugin should be true of all of them.
+A one-way journey: the target travels from where it is to `by` further on, over
+the duration, once.
 
-**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
-What the duration and start delay are counted in — one unit for both, so they
-always mean the same thing as each other. **Minutes** is the default and is what
-this block always did. **Seconds** is there so a thirty-second ramp can be typed
-as `30` rather than as `0.5` minutes. **Cycles** counts this plugin's own cycles,
-referenced against the rate *before* drift and ramp touch it, so a ramp cannot
-alter its own clock. **Beats** follows the project tempo, live.
+**Ramp target** `seven targets, default Breath rate`
 
-**Ramp play for** `0–1000, default 0` · **Ramp rest for** `0–1000, default 0`
-Per-target, in ramp time units. Turns the smooth ride into a **staircase**: the
-ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
-ramp, which is the default. The holds come **out of** the duration rather than
-extending it, so Ramp duration goes on meaning "you arrive in about this long".
+**Ramp by** `-1000 to 1000, default 0`
+Signed, in the target's own unit. Negative shortens a segment or slows the breath
+rate; positive lengthens or speeds it. 0 means this target does not ramp.
 
-Nested-selector pattern matching Womb v3. Pick a target — Inhale, Top pause, Exhale, Bottom pause, or Breaths/min — and set a signed `by` amount (seconds for the four segments, breaths/min for the aggregate); that target ramps from its baseline toward `baseline + by` over the duration. All five targets ramp in parallel; the selector just changes which target's `by` you're currently editing.
+**Ramp time unit** `{Breaths, Seconds, Minutes, Beats}, default Minutes`
+One unit for the duration **and** the start delay, so they always mean the same
+as each other. **Breaths** counts whole breaths -- all four segments -- at the
+length *before* drift and ramp touch it, so a ramp cannot alter its own clock.
+**Beats** follows the project tempo, live.
 
-*(v2.14 reorg: the Ramp block is now a contiguous selector-first group at sliders **30–34** — target 30, by 31, duration 32, engage 33, start-delay 34. Old IDs 17–20 + 29 are retired; Ramp configs reset on upgrade.)*
+**Ramp duration** `0-1000, default 0` — per-target. How long this target takes to
+arrive. 0 means it does not ramp.
 
-**Ramp target (slider 30)** `Inhale / Top pause / Exhale / Bottom pause / Breaths/min, default Inhale`
-The 5-option selector (v2.14 adds **Breaths/min**). Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 5 targets ramp regardless of which one is selected — selector switching never stops a ramp. The **Breaths/min** target is a proportional scale across all four segments in lockstep (preserving the I:E ratio), in breaths per minute — the whole-breath-rate wind-down, distinct from the per-segment targets it composes with. Its `by` is read as breaths/min rather than seconds (negative = slower breath).
+**Ramp play for** `0-1000, default 0` · **Ramp rest for** `0-1000, default 0`
+Per-target. Turns the smooth ride into a **staircase**: advance for `play`, hold
+for `rest`, repeat. Both zero is the smooth ramp. The holds come *out of* the
+duration rather than extending it, so `Ramp duration` goes on meaning "you arrive
+in about this long".
 
-**Ramp duration (slider 32)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 doesn't ramp.
+**Ramp engage** `{Off, On}, default Off` — global. One switch arms every
+configured target, each riding its own duration after its own start delay. It is
+a freeze/resume gate, not a reset: only transport play restarts a ramp.
 
-**Ramp engage (slider 33)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay. Freeze/resume gate — while On each target's clock advances; while Off all freeze and resume on re-engage. Engage does NOT reset the ramps — only transport play does.
+**Ramp start delay** `0-1000, default 0` — per-target, in ramp time units. Wait
+this long after engage before *this* target starts moving, so targets can be
+staggered. Useful for "fall asleep first, then begin the wind-down."
 
-**Ramp by (slider 31)** `-20 to +20 sec, step 0.1, default 0`
-Signed delta in seconds for the selected target. **0** = no change. **Negative** = shorten that segment (faster breath if Inhale/Exhale; tighter cycle if Top/Bottom). **Positive** = lengthen (slower / more spacious). Examples: Inhale target with `by` +4 ramps inhale from 4 sec → 8 sec over the duration; Bottom Pause target with `by` -0.2 shortens bottom pause toward minimum. Each target stores its own amount independently.
+**Filter timbre is unchanged by a segment ramp.** It adjusts lengths, not filter
+coefficients — a longer inhale sounds like a normal inhale, stretched.
 
-**Ramp start delay (slider 34)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Part of the contiguous 30–34 block. Useful for "fall asleep first, then begin the wind-down."
+### Drift
 
-**Migration history.** *v2.7:* the old single "Ramp" multiplier (0.1–4.0) became a target selector, and the audio path changed to per-segment length adjustments (additive) — so Ramp composes additively with Drift instead of multiplicatively. *v2.14:* the block was renumbered into the contiguous selector-first group at sliders **30–34** (old IDs 17–20 + 29 retired), and the **Breaths/min** aggregate target was added. Ramp configs reset to defaults on upgrade — reconfigure after loading.
+An endless gentle wander, rather than a journey with a destination.
 
-**Filter timbre is unchanged.** Ramp adjusts segment lengths, not filter coefficients — a longer inhale sounds exactly like a normal inhale, just stretched.
+**Drift target** `seven targets, default Breath rate`
 
-**Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. This is the ONLY thing that resets the ramp — slider changes (selector switch, engage toggle, anything) don't restart it.
+**Drift up amount (units match target)** `0-1000, default 0`
+How far above baseline the wander reaches at its peak.
 
-### Drift (v2.9 nested-selector)
+**Drift down amount (units match target)** `0-1000, default 0`
+How far below. Independent of up, so asymmetric wander is supported — biological
+signals do not drift symmetrically. Either one above zero turns drift on for that
+target; both zero is off.
 
-> **Added 2026-09-06**, for the same reason as the Ramp controls above.
+**Drift period** `0-1000, default 8, 0 = off`
+One full wave, counted in the unit below.
 
-**Drift period unit** `Cycles / Seconds / Beats, default Cycles`
-What the period above is counted in. **Cycles** counts this plugin's own cycles —
-exactly what the control did before this unit existed, and it follows the rate
-for free. **Seconds** is wall clock. **Beats** counts the project tempo, so the
-wander follows the host rather than the plugin, and it follows a live tempo
-change. The period is measured against the rate *before* drift touches it, so
-drifting a rate cannot modulate its own drift period.
+**Drift period unit** `{Breaths, Seconds, Beats}, default Breaths`
+For the five stepped targets this counts **turns of that target** — eight inhales,
+not eight of anything else. It is called `Breaths` rather than the suite's usual
+`Cycles` because here the thing that repeats is a whole breath, and the plugin
+already counts in breaths on `Play for` and `Rest for`. **Seconds** is wall clock
+and **Beats** follows the project tempo; both are the right choice for the two
+pitch targets, which run continuously.
 
-**Drift play for** `0–64 periods, default 0` · **Drift rest for** `0–64 periods, default 0`
-Makes the drift come and go instead of wandering forever. It drifts for `play`
-periods, then **freezes exactly where it stopped** for `rest` periods, then
-carries on. Both must be above zero or the gate is off entirely — which is what
-`0` means, and why the default is "always".
+**Drift shape** `{Sine, Triangle, Random}, default Sine`
+Sine is smooth, Triangle is linear ramps with turnarounds, Random interpolates
+smoothly between fresh random targets at each period boundary.
 
-It freezes in place rather than returning to centre, and that is the interesting
-part: **the fraction of the play value chooses where it parks.** `x.25` parks at
-the crest, `x.75` at the trough, and `x.0` or `x.5` at no change at all. So a
-whole number parks at neutral every time and is nearly inaudible, while an
-awkward fraction is the one worth using — each freeze lands further round the
-wave than the last, so `1.75` cycles through four park points before repeating
-and `1.2` through five. Setting only `Drift down` wastes half of them, because
-every park on the positive half lands at no change.
+**Drift play for** `0-1000, default 0` · **Drift rest for** `0-1000, default 0`
+Makes the drift come and go. It drifts for `play` periods, **freezes exactly
+where it stopped** for `rest` periods, then carries on. Both must be above zero
+or the gate is off, which is what `0` means.
 
-Slow organic wander applied independently to each of the four breath segment durations. Each segment can have its own drift configuration; all four drift in parallel. The selector chooses which segment's drift you're currently editing — the others keep running with their last-saved configuration.
+Freezing in place rather than returning to centre is the interesting part: **the
+fraction of the play value chooses where it parks.** `x.25` parks at the crest,
+`x.75` at the trough, `x.0` and `x.5` at no change at all. So a whole number
+parks at neutral every time and is nearly inaudible, while an awkward fraction is
+the one worth using — `1.75` cycles through four park points before repeating,
+`1.2` through five. Setting only `Drift down` wastes half of them, because every
+park on the positive half lands at no change.
 
-Same pattern as Womb v3's drift and Ramp. Switching the **Drift target** selector saves the current sliders 22-25 into the old target's memory slot, then loads the new target's saved values. All four configurations persist across project save/load.
-
-For slow wall-clock-feel drift, set a long period (~100 cycles ≈ 7-10 min at typical breath rates). The old v2.8 "musical vs slow" split is gone — there's a single period unit (breath cycles), and you express the timescale you want with the period value.
-
-**Drift target** `Inhale / Top pause / Exhale / Bottom pause / Breaths/min, default Inhale`
-Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost. The **Breaths/min** target (v2.14) wanders the whole breath rate (all four segments in lockstep, I:E preserved) in breaths/min, rather than one segment in seconds.
-
-**Drift up amount (units match target)** `0.0–10.0, default 0`
-How many seconds above the baseline segment length the drift wanders at its peak. 0 = drift off on the up side.
-
-**Drift down amount (units match target)** `0.0–10.0, default 0`
-How many seconds below the baseline segment length the drift wanders at its trough. Independent from Up amount, so asymmetric wander is supported (biological signals don't drift symmetrically). Either being non-zero activates drift for the target; both 0 = drift off.
-
-**Drift period (breath cycles)** `0–1000, default 8, 0 = off`
-How many breath cycles one full drift wave takes for this target. 8 cycles = wander completes one Sine/Triangle period (or one random-target interpolation) every 8 breaths. Short = jittery, long = barely-perceptible wander.
-
-**Drift shape** `Sine / Triangle / Random, default Sine`
-Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
-
-#### Migration from v2.8
-
-The old flat-drift block (musical_up, musical_down, musical_period, slow_up, slow_down, slow_period, drift_shape on sliders 21-27) was 7 sliders covering the whole-breath-cycle period. v2.9 is 5 sliders covering 4 independent targets, reusing slider IDs 21-25; sliders 26 and 27 are no longer declared. Old project values get reinterpreted:
-
-- old slider21 (musical_up, default 0) → new Drift target (selector, defaults to Inhale)
-- old slider22 (musical_down, default 0) → new Drift up amount (defaults 0)
-- old slider23 (musical_period, default 8) → new Drift down amount — interpreted as 8 sec, which will produce strong drift on the Inhale segment
-- old sliders 24–27 → silently discarded or reinterpreted
-
-After upgrade, reset drift sliders to defaults if you'd never configured the old flat drift, or reconfigure under the new nested-selector pattern if you had. The old v2.7 → v2.8 Ramp migration set the precedent of accepting drift / ramp values being reset on upgrade.
+**Transport:** stop silences; play re-initialises everything and starts fresh from
+an inhale. Both blocks reset only on a transport play edge — never on a slider
+move.
 
 ---
 

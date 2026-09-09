@@ -82,22 +82,25 @@ Rozaya opened `shapes` the same day: *"Nothing sounds off which is nice"*;
 after two rebuilds of the pitch block and one of the rate control, all three
 confirmed by running the plugin (`tools/jsfx_run`) before she ever heard them.
 
-**The 2026-09-08 version of that build was heard and REVERTED** — *"This is
-deeply, deeply broken"* — and **the cause was never found**. It behaved
-correctly on every path the runner could construct. The leading explanation is
-REAPER's per-filename compile cache: `breath_gen.jsfx` was overwritten with a
-40-slider version while REAPER already knew that name as a 32-slider plugin.
-Unproven. **So when promoting, quit REAPER fully before reopening anything.**
-The broken pair is kept at
-`snapshots/_broken-breathgen-20260908-forensics/`.
+**The 2026-09-08 version was heard, REVERTED — *"This is deeply, deeply
+broken"* — and its cause never found.** Leading theory is REAPER's per-filename
+compile cache; unproven, so **quit REAPER fully before reopening after any
+promotion**. Pair kept at `snapshots/_broken-breathgen-20260908-forensics/`.
 
 **Not heard:**
 
-- The Breath Generator 40-slider build is **HEARD AND GOOD as of 2026-09-09**
-  (see above) but is **NOT PROMOTED**: it is installed only as the separate
-  `breath_gen_TEST40.jsfx`, and the real plugin plus all three projects are
-  still on the 32-slider layout. Promotion needs a NEW migration — the pitch
-  encoding changed — and a full REAPER restart, see below.
+- **The Breath Generator 40-slider build is PROMOTED, 2026-09-09.**
+  `breath_gen.jsfx` IS the 40-slider plugin, the `_TEST40` copy is deleted, and
+  all four instances across the three projects are migrated. What was heard on
+  2026-09-09 was the live plugin; **the migrated PROJECTS have not been opened
+  since**, so an open-and-play of `breathscapes`, `micle` and `organic-movement`
+  is the ear test now owed. Backups: `snapshots/_pre-breathgen-promote-20260909/`.
+  Promoting caught a reload bug no ear could have found: `@serialize`'s pitch
+  write-back still used the pre-rebuild slider order, so **every reload restored
+  Pitch value = 0** — a filter centre of 1 Hz. Fixed and measured with
+  `jsfx_run --list --rpp`, which now applies project state before listing.
+  Old-on-old against new-on-migrated is **bit-identical over 40 s on all
+  three** — envelope and timing only; the runner cannot see filter frequency.
 
 - The Womb usability fix from the evening of 2026-09-06 — the breath has no rate
   mode at all now (a principled R20 exception, since its rate is emergent from
@@ -116,9 +119,6 @@ The broken pair is kept at
 - The Morpher's two new units doing anything other than their defaults. A drift
   period in Cycles or Beats, and a ramp in anything but Minutes.
 
-Nothing in that list can regress silently — every new control defaults to off or
-to what the plugin already meant, and no stored value moved. But none of it has
-been played.
 
 `docs/host-sync-ear-test.md` is still the highest-value thing waiting: five
 tests, about fifteen minutes, three of them never heard on any plugin.

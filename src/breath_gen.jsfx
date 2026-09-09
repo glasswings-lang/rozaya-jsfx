@@ -495,7 +495,11 @@ drift_cfg_inited != 1 ? (
   loop(N_PITCH,
     pitch_mode_mem[i] = 0;
     pitch_fine_mem[i] = 0;
-    pitch_fmod_mem[i] = 0;
+    // 2 = Cents, matching slider12's DECLARED default. These two have to agree:
+    // pitch_capture writes a bank only when its control moves, so a fresh
+    // instance that read `Cents` on the control while the bank held `Hz` would
+    // apply the first fine tune anyone typed in the wrong unit.
+    pitch_fmod_mem[i] = 2;
     i += 1;
   );
   pitch_val_mem[0] = 800; pitch_note_mem[0] = 79;
@@ -1227,9 +1231,14 @@ sr_n = sr_magic == 2400000 + N_TARGETS ? N_TARGETS : 5;
     // treatment. `All` reads back from Inhale.
     slider7 = last_pitch_target;
     prs = pitch_read_slot(last_pitch_target);
-    slider8  = pitch_note_mem[prs];
-    slider9  = pitch_val_mem[prs];
-    slider10 = pitch_mode_mem[prs];
+    // ORDER MATCHES @slider's read-back, and it is not the order the banks are
+    // declared in. The pitch block was rebuilt mode-first on 2026-09-09; @slider
+    // was updated and THIS was not, so a saved project reloaded with mode, note
+    // and value rotated between them. Live twiddling never showed it, because
+    // this path only runs on load and track-duplicate.
+    slider8  = pitch_mode_mem[prs];
+    slider9  = pitch_note_mem[prs];
+    slider10 = pitch_val_mem[prs];
     slider11 = pitch_fine_mem[prs];
     slider12 = pitch_fmod_mem[prs];
     // Re-point the mirror at what was just restored, or the next @slider pass

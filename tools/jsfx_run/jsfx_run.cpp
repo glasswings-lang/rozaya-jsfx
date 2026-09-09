@@ -225,32 +225,6 @@ int main(int argc, char **argv)
     // everything you had asked for. It now lists what the plugin actually
     // HOLDS, after a real block has run -- which is the only version that can
     // show you a value the plugin computed for itself.
-    if (list_only) {
-        ysfx_set_sample_rate(fx, sr);
-        ysfx_set_block_size(fx, block);
-        for (const Assign &a : before) ysfx_slider_set_value(fx, a.idx, a.val);
-        ysfx_init(fx);
-        {
-            std::vector<float> l(block, 0.0f), r(block, 0.0f);
-            const float *ii[2] = { l.data(), r.data() };
-            float *oo[2] = { l.data(), r.data() };
-            ysfx_process_float(fx, ii, oo, 2, 2, block);
-            for (const auto &st : stages) {
-                for (const Assign &a : st) ysfx_slider_set_value(fx, a.idx, a.val);
-                ysfx_process_float(fx, ii, oo, 2, 2, block);
-            }
-        }
-        for (uint32_t i = 0; i < ysfx_max_sliders; ++i) {
-            if (!ysfx_slider_exists(fx, i)) continue;
-            ysfx_slider_range_t r{};
-            ysfx_slider_get_range(fx, i, &r);
-            std::printf("  slider%-3u %-52s [%g .. %g step %g] = %g%s\n",
-                        i + 1, ysfx_slider_get_name(fx, i),
-                        r.min, r.max, r.inc, ysfx_slider_get_value(fx, i),
-                        ysfx_slider_is_enum(fx, i) ? "  (enum)" : "");
-        }
-        return 0;
-    }
 
     ysfx_set_sample_rate(fx, sr);
     ysfx_set_block_size(fx, block);
@@ -280,6 +254,33 @@ int main(int argc, char **argv)
     // Sliders set by hand, which is the fresh-instance path.
     for (const Assign &a : before) ysfx_slider_set_value(fx, a.idx, a.val);
     if (!rpp) ysfx_init(fx);
+
+    // --list now runs AFTER a project's state has been restored, so it can show
+    // what the plugin actually holds on reload -- the only way to see a bug that
+    // lives in @serialize's write-back. Without --rpp it behaves exactly as
+    // before: declared defaults, plus anything --slider set, after one block.
+    if (list_only) {
+        {
+            std::vector<float> l(block, 0.0f), r(block, 0.0f);
+            const float *ii[2] = { l.data(), r.data() };
+            float *oo[2] = { l.data(), r.data() };
+            ysfx_process_float(fx, ii, oo, 2, 2, block);
+            for (const auto &st : stages) {
+                for (const Assign &a : st) ysfx_slider_set_value(fx, a.idx, a.val);
+                ysfx_process_float(fx, ii, oo, 2, 2, block);
+            }
+        }
+        for (uint32_t i = 0; i < ysfx_max_sliders; ++i) {
+            if (!ysfx_slider_exists(fx, i)) continue;
+            ysfx_slider_range_t r{};
+            ysfx_slider_get_range(fx, i, &r);
+            std::printf("  slider%-3u %-52s [%g .. %g step %g] = %g%s\n",
+                        i + 1, ysfx_slider_get_name(fx, i),
+                        r.min, r.max, r.inc, ysfx_slider_get_value(fx, i),
+                        ysfx_slider_is_enum(fx, i) ? "  (enum)" : "");
+        }
+        return 0;
+    }
 
     uint32_t total = (uint32_t)(seconds * sr);
     uint32_t win = (uint32_t)(rms_ms * 0.001 * sr);

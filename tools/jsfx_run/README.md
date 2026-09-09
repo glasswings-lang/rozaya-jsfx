@@ -45,6 +45,9 @@ cmake --build build --config Release
 # every slider, with its real parsed range and default
 jsfx_run src/breath_gen.jsfx --list
 
+# what the plugin HOLDS after a project is restored -- the reload path
+jsfx_run src/breath_gen.jsfx --rpp E:/reaper/templates/breathscapes.RPP          --fx breath_gen --list
+
 # run a REAL project's state -- slider line AND the <JS_SER> blob
 jsfx_run src/breath_gen.jsfx --rpp E:/reaper/templates/breathscapes.RPP \
          --fx breath_gen --seconds 36 --rms 500
@@ -87,6 +90,12 @@ any migration is called done:
   gap between `@slider`, `@block` and `@serialize` is where several real bugs in
   this suite have lived. A clean run here does NOT prove REAPER is clean.
 - **Anything needing ears.** It measures difference, never quality.
+
+**`--list` applies `--rpp` state before listing, as of 2026-09-09.** It used to
+list declared defaults only, which is why it could not see that Breath
+Generator's `@serialize` was restoring the pitch block in the wrong order --
+mode, note and value rotated between them on every project reload, for a filter
+centre of 1 Hz. A reload bug is invisible to a tool that never reloads.
 
 **A tool that quietly covers less than it claims is worse than none.** On
 2026-09-08 this tool produced a bit-identical measurement that was completely

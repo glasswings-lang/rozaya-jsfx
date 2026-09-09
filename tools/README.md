@@ -503,6 +503,14 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   against each instance's untouched `@serialize` blob. Verify the result, never
   the exit code: the first run of the migration exited cleanly while silently
   eating one line per instance.
+- **`breathgen_promote_20260909.py`** — the 32→40-slider Breath Generator move,
+  four instances across three projects. Every instance's forty values are written
+  out in full rather than mapped by rule, because the pitch could not survive a
+  rule: it left the slider line for per-target banks inside the `@serialize`
+  blob, so each instance also gets a freshly written 96-float blob (two of the
+  four had no `<JS_SER>` at all). Verified by loading each migrated project back
+  into the real plugin with `jsfx_run --list --rpp`, and by an old-on-old against
+  new-on-migrated render that is bit-identical over 40 seconds.
 - **`melody_migrate_r20.py`** — the 2026-09-06 R20/R21 conversion: retires
   Melody's `Sync to host` / `Host sync target` / `Every N beats` trio, folds a
   synced instance's beat count into `Rate value` with `Rate mode` = *Every N
