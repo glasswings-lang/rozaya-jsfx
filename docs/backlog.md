@@ -24,6 +24,51 @@ Moved out of the plan 2026-09-08, verbatim.
 
 ---
 
+## PROPOSED R23 — drift steps on the target's own turn (raised 2026-09-09)
+
+**Status: PROPOSED by Claude, from a problem Rozaya found. NOT settled, NOT
+built anywhere except Breath Generator. Do not cite it as decided.**
+
+> A drift target that is READ ONCE PER OCCURRENCE steps once per occurrence, and
+> its period counts those occurrences. A target read CONTINUOUSLY drifts
+> continuously, and its period is time.
+
+**The problem, in her words:** *"while one segment is going, the other three keep
+drifting, which means effectively anything you set as independent bits for drift
+per segment is basically being thrown away. Like, you don't get to say drift this
+thing every two cycles and drift this thing every four. it's being fucked."*
+
+**Every plugin in the suite with drift advances its phase continuously, per
+sample — all twelve, checked 2026-09-09.** That is right for a target the engine
+reads all the time, and wrong for one it reads once per event: the value is
+sampled once per occurrence from a free-running oscillator, so the period does
+not mean what it says, the shape is barely represented, and — the part that
+actually bites — the targets are not independent, because the period is measured
+against a cycle length the other targets are busy changing.
+
+**Fixed in Breath Generator only**, 2026-09-09, and measured: inhale on a period
+of 2 and exhale on 3, together, each repeating on its own count. The five stepped
+targets advance 1/period once when their own segment begins; the two pitch
+targets stay continuous because they are applied every block and can render the
+whole curve — which also lets them move WITHIN a breath, something a duration can
+never do.
+
+**Who else has per-occurrence targets, and is therefore wrong today:**
+
+| plugin | targets read once per occurrence |
+|---|---|
+| `womb_sound_generator_v3` | Inhale, Top pause, Exhale, Bottom pause, S1-S2 gap |
+| `melody_phase` | V1–V8 Note duration, Attack %, Release % |
+| `polyrhythm_phase_v3` | On Duration, Attack %, Release % |
+| `Full_Feature_Tremolo` | On Duration %, Attack %, Release % |
+| `shepard-scale` | Note Length %, Attack %, Release % |
+| `heartbeat gen` | S1-S2 gap |
+
+Womb is the closest twin — the identical four breath segments — so it is the
+obvious second, and the one where the fix is already written.
+
+---
+
 ## Part 3 — Missing features, added in the same bump
 
 Free once we are migrating anyway; expensive as separate version bumps later.
@@ -46,37 +91,23 @@ sound-design tools and are deliberately left out.
 
 **Blocking:**
 
-1. ~~**Part 2's canonical layout is stale.**~~ **CLOSED 2026-09-05 — rewritten and
-   approved by Rozaya.** It described the A/B/C/D structure thrown out on 2026-08-31 and
-   the replacement was never written, so every per-plugin layout spent five days being
-   measured against a ruler nobody believed in. **This was the item making the whole
-   sweep feel unnavigable, and it was five days of nothing rather than a hard problem.**
-   Read Part 2. Drift and Ramp stay shared and last — their selectors span targets across
-   layers, so splitting them costs fifteen sliders where five do.
-2. ~~**The version forks.**~~ **CLOSED 2026-08-31.** Melody: archive v2, its note picker
-   moves to v1 (`docs/layouts/melody-phase.md`). Polyrhythm: migrate v1's projects up to
-   v3, archive v1 — evidenced in `docs/layouts/polyrhythm-phase.md`, and cheaper than
-   assumed on all three counts (the project count is a backlog not a preference, v3 is a
-   strict superset of what the projects use, and the `@serialize` blobs are identical so
-   drift and ramp configs cross untouched). **Both forks end.**
+1. ~~**Part 2's canonical layout is stale.**~~ **CLOSED 2026-09-05** — rewritten
+   and approved. Read Part 2; Drift and Ramp stay shared and last.
+2. ~~**The version forks.**~~ **CLOSED 2026-08-31.** Melody: archive v2, its note
+   picker moves to v1. Polyrhythm: migrate v1's projects up to v3, archive v1.
+   Both forks end.
 3. **Scope.** Harmonic Sculptor is under an overhaul-or-drop question and Rozaya would not
    reach for it — still open. **Sustain Looper is IN**, corrected 2026-08-31: excluding it
    was Claude's judgement call, not Rozaya's, on the reasoning that it is a "sound-design
    tool". It is not — it runs in a project and plays for the length of a piece, which is
    exactly the profile drift and ramp exist for. Targets below.
-4. ~~**Validation — the real hole.**~~ **MOSTLY CLOSED 2026-08-31**, and the hole was
-   partly invented. Rozaya: *"I can reload a project if I need to. It's how these things
-   get checked easier anyway. I just couldn't be fucked to do it last night because
-   brain."* So reload and track-duplicate ARE testable — **ask for one** when a fix
-   depends on it rather than assuming the path is dark. What remains true: JSFX cannot be
-   compiled outside REAPER, and a clean script run proves nothing.
-
-   **The agreed approach:** ear-testing happens **over weeks of ordinary use**, with the
-   option of one set-aside day at the end for a deliberate pass. So the sweep does not
-   block on a testing phase; it ships in batches and gets confirmed as the plugins get
-   used. What I owe in return is that everything checkable *without* ears is checked
-   before it ships — arithmetic by simulation (as the breath and systole numbers were),
-   migrations by diffing actual output, and the standing lint checks.
+4. ~~**Validation — the real hole.**~~ **CLOSED.** Reload and track-duplicate ARE
+   testable — ask for one. And since 2026-09-09 `tools/jsfx_run` compiles and
+   RUNS a plugin outside REAPER, so behaviour can be measured before she ever
+   hears it. Read its README for what it cannot see; the list is real.
+   Ear-testing happens over weeks of ordinary use, so the sweep does not block on
+   a testing phase. What I owe in return is that everything checkable without
+   ears IS checked before it ships.
 
 **Needed, not blocking:**
 
