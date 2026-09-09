@@ -107,8 +107,7 @@ promotion**. Pair kept at `snapshots/_broken-breathgen-20260908-forensics/`.
   2026-09-09 drift stepping** — six of eleven targets now step on their own turn.
   Eight of nine live projects render bit-identical; **`to-sleep-within` is the
   one that changes**, because it is the only one with a stepped drift running.
-  That project also has its drift misfiled onto Heart rate by an
-  older-than-current blob — pre-existing, unfixed, and worth an ear.
+  It also has its drift misfiled onto Heart rate by an old blob — pre-existing.
 - Everything from the 2026-09-06 drift/ramp sweep (six plugins), the `N per
   beat` reciprocal fix in all four plugins it touched, the Tremolo Start delay
   fix, and the range widenings.
