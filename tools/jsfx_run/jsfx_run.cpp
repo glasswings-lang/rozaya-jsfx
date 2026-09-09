@@ -177,7 +177,8 @@ int main(int argc, char **argv)
     bool list_only = false, quiet = false;
     const char *csv = nullptr, *rpp = nullptr, *fxmatch = nullptr;
     int which = 1;
-    std::vector<Assign> before, after;
+    std::vector<Assign> before;
+    std::vector<std::vector<Assign>> stages(1);
 
     for (int i = 2; i < argc; ++i) {
         std::string a = argv[i];
@@ -198,8 +199,9 @@ int main(int argc, char **argv)
         else if (a == "--slider" || a == "--set-after") {
             Assign as{};
             if (!parse_assign(next(), as)) { std::fprintf(stderr, "bad assignment\n"); return 2; }
-            (a == "--slider" ? before : after).push_back(as);
+            (a == "--slider" ? before : stages.back()).push_back(as);
         }
+        else if (a == "--stage") stages.push_back({});
         else { std::fprintf(stderr, "unknown option %s\n", a.c_str()); usage(); return 2; }
     }
 
@@ -233,8 +235,10 @@ int main(int argc, char **argv)
             const float *ii[2] = { l.data(), r.data() };
             float *oo[2] = { l.data(), r.data() };
             ysfx_process_float(fx, ii, oo, 2, 2, block);
-            for (const Assign &a : after) ysfx_slider_set_value(fx, a.idx, a.val);
-            ysfx_process_float(fx, ii, oo, 2, 2, block);
+            for (const auto &st : stages) {
+                for (const Assign &a : st) ysfx_slider_set_value(fx, a.idx, a.val);
+                ysfx_process_float(fx, ii, oo, 2, 2, block);
+            }
         }
         for (uint32_t i = 0; i < ysfx_max_sliders; ++i) {
             if (!ysfx_slider_exists(fx, i)) continue;
@@ -298,7 +302,7 @@ int main(int argc, char **argv)
 
     double accL = 0, accR = 0, pkL = 0, pkR = 0;
     uint32_t inwin = 0, done = 0;
-    bool applied_after = false;
+    size_t stage_i = 0;
 
     while (done < total) {
         uint32_t n = block;
@@ -307,10 +311,13 @@ int main(int argc, char **argv)
         ysfx_process_float(fx, ins, outs, 2, 2, n);
 
         // A hand-moved control lands after the engine is running, never during
-        // the load. That distinction has mattered in this suite more than once.
-        if (!applied_after && !after.empty()) {
-            for (const Assign &a : after) ysfx_slider_set_value(fx, a.idx, a.val);
-            applied_after = true;
+        // the load. Each --stage group lands one block after the last, which
+        // NESTED SELECTORS require: set the selector, let @slider run, THEN set
+        // that target's values, exactly as a person does it. Both at once writes
+        // the values to the PREVIOUSLY selected target.
+        if (stage_i < stages.size()) {
+            for (const Assign &a : stages[stage_i]) ysfx_slider_set_value(fx, a.idx, a.val);
+            stage_i++;
         }
 
         for (uint32_t k = 0; k < n; ++k) {

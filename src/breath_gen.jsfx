@@ -132,8 +132,13 @@ slider25:0<0,6,1{Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,E
 slider26:0<0,1000,0.01>Drift up amount (units match target)
 slider27:0<0,1000,0.01>Drift down amount (units match target)
 slider28:8<0,1000,1>Drift period (0 = off)
-// What the period is COUNTED IN. `Breaths` is this plugin's native count and
-// the default -- exactly what this control did before the unit existed.
+// What the period is COUNTED IN -- and for the five STEPPED targets (the rate
+// and the four segments) it counts TURNS OF THAT TARGET. A period of 4 on the
+// inhale is four inhales, walked in four even steps. See the note by
+// drift_is_stepped() in @init for why.
+//
+// Seconds and Beats still read as wall clock and project tempo, and they remain
+// the right choice for the two pitch targets, which run continuously.
 //
 // IT IS CALLED `Breaths`, NOT `Cycles`, as of 2026-09-09. The suite's standard
 // name is Cycles, and it means "one whole turn of whatever this plugin repeats"
@@ -347,6 +352,30 @@ pitch_fmod_mem = 4496;   // fine mode                   (CONFIG)
 pitch_hz_mem   = 4512;   // DERIVED in @block, never here
 pui_last       = 4528;   // mirror of the five visible pitch controls (RUNTIME)
 brm_last       = 4544;   // mirror of the rate + four segments  (RUNTIME)
+drift_step_mem = 4560;   // "your turn came round" flags, per target (RUNTIME)
+
+// WHICH TARGETS STEP, AND WHICH FLOW.
+//
+// Targets 0-4 -- the breath rate and the four segment lengths -- are read ONCE,
+// at the moment that segment begins. A drift phase that spins continuously
+// underneath them is throwing nearly all of its motion away, and worse, it
+// couples them: the period was computed against the CURRENT breath length,
+// which is itself being drifted by the other targets. So "drift this every 2"
+// and "drift that every 4" were not independent at all.
+//
+// Rozaya, 2026-09-09: "if we're gonna have independent bits, we need to have
+// them, you know, actually drifting on their turn... Why are we counting
+// everything in a cycle? Why are they not just tending to their own segments?"
+//
+// So those five now advance by exactly 1/period ONCE PER OCCURRENCE of their
+// own thing. The period counts turns of that segment -- 8 means eight inhales --
+// which is deterministic, independent of every other target, and immune to the
+// breath length moving underneath it.
+//
+// Targets 5 and 6, the two filter centres, are NOT stepped. They are applied
+// continuously in @block, so they can render the whole curve, and a time-based
+// period is exactly right for them.
+function drift_is_stepped(idx) ( idx < 5; );
 pitch_ui_inited = 0;     // adopted in @block; while 0, @slider writes nothing
 
 // --- The Pitch target selector's three operations -------------------------
@@ -483,11 +512,13 @@ loop(N_SPEED_TARGETS,
   speed_ramp_ramp_t_mem[i]        = 0;
   speed_ramp_delay_elapsed_mem[i] = 0;
   drift_pr_accum_mem[i] = 0; drift_pr_resting_mem[i] = 0;
+  drift_step_mem[i] = 0;
   sr_pr_accum_mem[i]    = 0; sr_pr_resting_mem[i]    = 0;
   i += 1;
 );
 i = 0;
 loop(N_TARGETS,
+  drift_step_mem[i]      = 0;
   target_drift_phase[i]  = rand(1);
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
@@ -897,13 +928,24 @@ loop(N_TARGETS,
     // Drift play/rest, per target, counted in PERIODS. While resting the phase
     // does not advance at all, so the offset FREEZES where it stopped rather
     // than returning to centre.
+    // How much phase this sample is worth. A STEPPED target gets a whole
+    // 1/period, but only on the sample its segment begins; a continuous one
+    // gets the usual per-sample slice. Play/rest ticks on the same quantity, so
+    // "rest for N periods" keeps meaning the same thing either way.
+    drift_is_stepped(i) ? (
+      d_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
+      drift_step_mem[i] = 0;
+    ) : (
+      d_tick = 1.0 / period_samples;
+    );
+
     d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,
-                         1.0 / period_samples,
+                         d_tick,
                          drift_play_mem[i], drift_rest_mem[i]);
     // One-armed pairs: an empty else-branch is a silent compile failure in eel2.
     d_frozen ? ( new_phase = target_drift_phase[i]; );
     !d_frozen ? (
-      new_phase = target_drift_phase[i] + 1.0 / period_samples;
+      new_phase = target_drift_phase[i] + d_tick;
       new_phase >= 1.0 ? (
         new_phase -= 1.0;
         shape == 2 ? (
@@ -999,13 +1041,16 @@ state_pos >= state_len ? (
     !pr_resting ? (
       breath_state = 0;
       state_len = inhale_len;
+      // A new breath begins: the rate's turn and the inhale's turn.
+      drift_step_mem[0] = 1;
+      drift_step_mem[1] = 1;
     );
   ) : (
     // Normal advance within a breath (0→1, 1→2, 2→3).
     breath_state = (breath_state + 1) % 4;
-    breath_state == 1 ? state_len = top_len;
-    breath_state == 2 ? state_len = exhale_len;
-    breath_state == 3 ? state_len = bot_len;
+    breath_state == 1 ? ( state_len = top_len;    drift_step_mem[2] = 1; );
+    breath_state == 2 ? ( state_len = exhale_len; drift_step_mem[3] = 1; );
+    breath_state == 3 ? ( state_len = bot_len;    drift_step_mem[4] = 1; );
   );
 );
 
