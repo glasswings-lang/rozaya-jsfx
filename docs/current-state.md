@@ -5,12 +5,6 @@ being now.** Narrative belongs in `docs/session-log.md`, not here.
 
 *Checked against the tree 2026-09-08.*
 
-This file has been allowed to grow twice before, as a section of `CLAUDE.md`.
-By 2026-09-06 it was 566 lines and its top three bullets were all marked
-*(superseded)* — a file whose only job is to say what is true today had become
-a diary. The long-form version, with every incident written out, is at commit
-`a1fdab6`.
-
 ## The branch
 
 - On `feature/melody-reorder`, pushed, unmerged. **Re-run
@@ -54,14 +48,11 @@ sentence.
 - **The range sweep: passes 1 and 2 are done** — 176 sliders widened, 0
   narrowed, verified against all 641 continuous sliders. dB and semitone ranges
   are held for Rozaya's decision.
-- **R22, the pitch block: BUILT IN BREATH GENERATOR ONLY, 2026-09-08, unheard.**
-  That is its first and so far only outing anywhere. The full rule is in the
-  plan; do not re-derive it, and in particular do not re-derive the two-mode
-  version that was already killed. The rest is two jobs in a fixed order:
-  **Melody and Shepard Tone's voices behind a selector**, then the pitch
-  migration across the remaining plugins. Those two cannot take a four-control
-  block per voice as they stand, and doing the migration first would mean
-  migrating them twice.
+- **R22, the pitch block: built once and REVERTED. Nothing ships it.** See the
+  Breath Generator entry below before building it again. The rule is in the
+  plan; do not re-derive it, and do not re-derive the killed two-mode version.
+  The rest is two jobs in order: **Melody and Shepard Tone's voices behind a
+  selector**, then the pitch migration.
   **The Morpher, Passage, Sustain Looper and Bubbler are deferred and out of the
   migration list** — they pitch audio they did not make.
 
@@ -91,13 +82,21 @@ Rozaya opened `shapes` the same day: *"Nothing sounds off which is nice"*.
 
 **Not heard:**
 
-- **Breath Generator's whole 2026-09-08 layout** — 32 sliders to 40, migrated
-  across 4 instances in 3 live projects. Nothing should have changed: every
-  frequency, duration, fade and stereo setting is preserved exactly and every
-  new control defaults to off. Never played: `Set breath rate`, `Breath unit` on
-  Beats, **R22's pitch block (its first build anywhere in the suite)**, and
-  `Output (dB)`. `Pitch target = All` moving both filter centres together is the
-  one to try first.
+- **BREATH GENERATOR'S 2026-09-08 LAYOUT WAS BUILT, HEARD, AND REVERTED THE
+  SAME DAY.** Rozaya: *"This is deeply, deeply broken... whatever the prior
+  claude set it to, it only holds on the first inhale, then it falls away to
+  those stored values."* Broken in BOTH Seconds and Beats.
+  **`src/breath_gen.jsfx` in the repo is the 40-slider version; the INSTALLED
+  plugin and all three projects are back on the 32-slider one.** They diverge on
+  purpose. Do not reinstall from `src/` until the fault is found.
+  The broken plugin and the migrated projects are kept for forensics at
+  `E:/reaper/finished/backups/snapshots/_broken-breathgen-20260908-forensics/`.
+  **Two bugs are proved and NEITHER explains the symptom**: `@slider` computes
+  segment lengths without `breath_unit_sec` (Beats only, so not this), and
+  `Pitch target = All` writes only the control you moved while each target holds
+  a different Hz remainder, so moving the Note collapses both filters together.
+  **The open question is whether the fault is mine at all** — this plugin had
+  not been played in months, so it may predate the change.
 
 - The Womb usability fix from the evening of 2026-09-06 — the breath has no rate
   mode at all now (a principled R20 exception, since its rate is emergent from
