@@ -28,8 +28,8 @@ here, not instead of obeying it.
   Plain language is not the same as leaving ideas out — explain the complexity
   in English rather than dropping it, because you often cannot tell which part
   is load-bearing.
-- **Walls of text, to-do lists and decisions dressed as menus are a cost, not a
-  service.** Bring a recommendation.
+- **Walls of text, to-do lists and decisions dressed as menus are a cost.** Bring
+  a recommendation.
 - **Rozaya is a non-coder and does not read this repo** — not the source, not
   the docs, not this file. Everything in `docs/` is YOUR working memory, not
   theirs. **Never point at a file and expect it to be opened.** If it matters,
