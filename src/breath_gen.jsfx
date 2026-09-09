@@ -132,10 +132,21 @@ slider25:0<0,6,1{Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,E
 slider26:0<0,1000,0.01>Drift up amount (units match target)
 slider27:0<0,1000,0.01>Drift down amount (units match target)
 slider28:8<0,1000,1>Drift period (0 = off)
-// What the period is COUNTED IN. Cycles is this plugin's native count -- one
-// full breath, inhale through bottom pause -- and the default, which is exactly
-// what this control did before the unit existed. Beats counts PROJECT tempo.
-slider29:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+// What the period is COUNTED IN. `Breaths` is this plugin's native count and
+// the default -- exactly what this control did before the unit existed.
+//
+// IT IS CALLED `Breaths`, NOT `Cycles`, as of 2026-09-09. The suite's standard
+// name is Cycles, and it means "one whole turn of whatever this plugin repeats"
+// -- but you have to already know that. Here the thing that repeats is a breath,
+// all four segments of it, and the plugin already counts in breaths on Play for
+// and Rest for. Rozaya asked whether a cycle meant one inhale, or an
+// inhale-and-exhale pair: *"if so, it should be a lil more literal than that"*.
+// It is one WHOLE breath, and the drifted segment is a part of that breath, not
+// a cycle of its own -- with the defaults the inhale is 4 of 8.6 seconds, and
+// that proportion moves the moment any segment changes.
+//
+// Index 0 either way, so nothing stored is reinterpreted.
+slider29:0<0,2,1{Breaths,Seconds,Beats}>Drift period unit
 slider30:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Counted in PERIODS. Both must be above zero or the gate is off. While resting
 // the phase does not advance, so the offset FREEZES where it stopped rather
@@ -151,10 +162,12 @@ slider33:0<0,6,1{Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,E
 slider34:0<-1000,1000,0.001>Ramp by
 // One unit for duration AND start delay, so they always mean the same as each
 // other. DEFAULT IS 2, Minutes, which is what this block always did; index 0
-// would silently reinterpret every saved ramp. Cycles counts whole breaths at
-// the length BEFORE drift and ramp touch it, so a ramp cannot alter its own
-// clock.
-slider35:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+// would silently reinterpret every saved ramp.
+//
+// `Breaths` rather than the suite's `Cycles`, for the same reason as the drift
+// period unit above. It counts whole breaths at the length BEFORE drift and ramp
+// touch it, so a ramp cannot alter its own clock.
+slider35:2<0,3,1{Breaths,Seconds,Minutes,Beats}>Ramp time unit
 slider36:0<0,1000,0.1>Ramp duration (in ramp time units)
 // The ramp advances for `play`, holds for `rest`, and repeats -- a staircase
 // instead of a smooth glide. The holds come OUT of the duration rather than
@@ -803,7 +816,7 @@ slider39 ? (
   i = 0;
   // Ramp time unit (slider35). One factor turns the block's time values into
   // seconds, so Duration and Start delay always mean the same as each other.
-  // Cycles is one whole breath. Beats is 60/project tempo, recomputed per sample
+  // `Breaths` is one whole breath, all four segments. Beats is 60/project tempo, recomputed per sample
   // so it follows a live tempo change rather than remembering one.
   ramp_time_scale =
     slider35 == 3 ? 60 / max(tempo, 0.001) :
@@ -872,8 +885,9 @@ loop(N_TARGETS,
 
   drift_offset_local = 0;
   (up > 0 || down > 0) && per > 0 ? (
-    // Drift period unit (slider29). Cycles is one whole breath, which is what
-    // this control always counted. Seconds is wall clock. Beats counts the
+    // Drift period unit (slider29). `Breaths` is one WHOLE breath -- all four
+    // segments -- which is what this control always counted, whichever target
+    // is being drifted. Seconds is wall clock. Beats counts the
     // PROJECT tempo.
     period_samples =
       slider29 == 2 ? max(per * 60 / max(tempo, 0.001) * srate, 1) :

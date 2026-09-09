@@ -176,7 +176,7 @@ Order unchanged; the block moves as a unit from 17–24.
 | 26 | `Drift up amount (units match target)` | **LABEL FIX.** Currently reads `(seconds)`. |
 | 27 | `Drift down amount (units match target)` | **LABEL FIX.** |
 | 28 | `Drift period (0 = off)` | — |
-| 29 | `Drift period unit` `{Cycles, Seconds, Beats}` | — |
+| 29 | `Drift period unit` `{Breaths, Seconds, Beats}` | **`Breaths`, not the suite's `Cycles`**, from 2026-09-09. A cycle here is one WHOLE breath — all four segments — whichever target is drifted, and the plugin already counts in breaths on Play for / Rest for. Same index, nothing reinterpreted. |
 | 30 | `Drift shape` `{Sine, Triangle, Random}` | — |
 | 31 | `Drift play for (periods, 0 = always)` | — |
 | 32 | `Drift rest for (periods, 0 = always)` | — |
@@ -198,7 +198,7 @@ the block here.
 |---|---|
 | 33 | `Ramp target` |
 | 34 | `Ramp by` |
-| 35 | `Ramp time unit` `{Cycles, Seconds, Minutes, Beats}` |
+| 35 | `Ramp time unit` `{Breaths, Seconds, Minutes, Beats}` |
 | 36 | `Ramp duration (in ramp time units)` |
 | 37 | `Ramp play for (0 = smooth)` |
 | 38 | `Ramp rest for (0 = smooth)` |
