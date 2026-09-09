@@ -100,16 +100,24 @@ name for, and it got caught again.
 |---|---|---|
 | 7 | `Pitch target` `{All, Inhale, Exhale}` | `All` at position 0. |
 | 8 | `Pitch mode` `{Hz, Semitones, Cents}` | **Mode first**, deliberately — it decides whether the readout below means anything. Inverts R20's value-then-mode order on purpose. |
-| 9 | `Note name (readout)` | **Not a control.** Written BY the plugin from `Pitch value` in Semitones mode, and `slider_show` hides it in every other mode, where it would be lying. |
+| 9 | `Note name` | **A real control, both ways.** Pick C4 or type 60 — move either and the other follows. `slider_show` hides it outside Semitones mode, where it would be lying. |
 | 10 | `Pitch value (Hz / semitones / cents)` | **THE pitch.** Hz is the frequency; Semitones is the MIDI note number (60 = middle C); Cents is the same axis ×100. |
 | 11 | `Fine tune` | The only fine tune. There is exactly one. |
 | 12 | `Fine tune unit` `{Hz, Semitones, Cents}` | |
 | 13 | `Tuning reference (Hz)` | One per plugin. |
 
-**The readout is ONE-DIRECTIONAL and must stay that way.** Pitch value writes the
-note name; the note name never writes back. A two-way binding is what broke the
-rate block in August — with both ends writing, the code has to guess which one
-the user moved, and it guesses wrong.
+**The note binding is TWO-WAY, and safe because of the mirror.** Rozaya, on the
+readout-only first version: *"So does the note name do anything? cause it needs
+to."* Right — a note list you cannot pick from is half a control, and picking a
+name instead of knowing that 60 is middle C is the entire point of having names.
+
+Two-way binding is the shape that broke the rate block in August, and it is safe
+here for one specific reason: the **mirror** (`pui_last`) says which end the user
+actually moved this pass, so nothing has to guess. REAPER fires `@slider` per
+parameter change, so only one end moves at a time, and the mirror is adopted in
+`@block` where it cannot capture a default. **The reconciliation runs BEFORE the
+banks are captured** — the other order banks the stale half, and the sound lags
+the display by one edit.
 
 **Migration note:** the two frequencies now migrate as themselves — `Pitch mode`
 = Hz, `Pitch value` = 300. The earlier note-plus-remainder encoding produced
