@@ -102,10 +102,13 @@ promotion**. Pair kept at `snapshots/_broken-breathgen-20260908-forensics/`.
   Old-on-old against new-on-migrated is **bit-identical over 40 s on all
   three** — envelope and timing only; the runner cannot see filter frequency.
 
-- The Womb usability fix from the evening of 2026-09-06 — the breath has no rate
-  mode at all now (a principled R20 exception, since its rate is emergent from
-  its four segments), `Set breath rate` is a one-shot in the breath's own unit,
-  and Sigh depth is additive.
+- The Womb usability fix of 2026-09-06 (no breath rate mode — a principled R20
+  exception; `Set breath rate` a one-shot; Sigh depth additive), **and its
+  2026-09-09 drift stepping** — six of eleven targets now step on their own turn.
+  Eight of nine live projects render bit-identical; **`to-sleep-within` is the
+  one that changes**, because it is the only one with a stepped drift running.
+  That project also has its drift misfiled onto Heart rate by an
+  older-than-current blob — pre-existing, unfixed, and worth an ear.
 - Everything from the 2026-09-06 drift/ramp sweep (six plugins), the `N per
   beat` reciprocal fix in all four plugins it touched, the Tremolo Start delay
   fix, and the range widenings.
@@ -139,12 +142,10 @@ asserting one.
 carries twelve per-voice banks and four drift/ramp play-rest banks that v1 has
 no equivalent of, and its magic is 2200024 against v1's 2100024.
 
-It is still tractable — the stream layout is fully known, `tools/rpp_sliders.py`
-handles the value line, and `tools/polyv3_migrate_layout_20260907.py` is a
-worked example of writing that exact blob. But it is **its own job, with its own
-authored conversion and its own verifier**: v1's forty per-voice values per
-instance have to move off the slider line and into the blob, for 84 instances.
-Skipping that step is what killed Melody v2.
+Still tractable — `tools/polyv3_migrate_layout_20260907.py` is a worked example
+of writing that blob. But it is **its own job, with its own authored conversion
+and verifier**: v1's forty per-voice values per instance move off the slider line
+into the blob, 84 times. Skipping that is what killed Melody v2.
 
 **v1's slider line is over 64 values**, so the `""` marker at token index 64
 applies at the source end even though v3 no longer has it.
