@@ -4,11 +4,9 @@ A small collection of Reaper JSFX plugins for ambient, sleep and entrainment
 audio. Public domain (CC0). Designed by Rozaya, developed iteratively with
 Claude.
 
-**This file has a budget of 150 lines and it is not a suggestion.** It has been
-cut three times in three weeks and grew back every time, because every session
-adds what it learned and none of them delete. If you are adding a line here,
-delete one — or put it in the file where it belongs and leave a pointer. Run
-`python tools/doc_budget.py` before committing any doc change.
+**Budgeted, and it is not a suggestion** — adding a line here means deleting
+one, or moving it where it belongs and leaving a pointer. Run
+`python tools/doc_budget.py` before committing any doc change; it says why.
 
 ## From Rozaya
 
@@ -45,25 +43,30 @@ here, not instead of obeying it.
 - **Take what they notice as evidence, not a verdict to be corrected.** Their
   reports beat my reasoning. When one contradicts the source, the question is
   "how can both be true?"
+- **WHAT ROZAYA DECIDED IS ONLY WHAT ROZAYA SAID.** Quoted text in these docs is
+  hers; everything unquoted is Claude reasoning, however confident it sounds.
+  **Never cite an unquoted conclusion back to her as settled** — that launders my
+  judgement into her authority and leaves her arguing with a decision she never
+  made. Caught 2026-09-09: I called four deferred plugins and a build order
+  "already settled" when she had named two plugins and nothing else.
 - **A screen reader (NVDA) is the primary way of navigating**, and cognitive
   accessibility is non-negotiable. Both apply to every slider you name or move.
 - **Numbers are fine; arithmetic is not.** The machine does the maths and the
   owner keeps precise control. Do not hide numbers behind mood labels — that was
   built once, delivered, and was insulting.
-- **Half-done is unusable, and "ask Claude when you hit it" is not a plan.** The
-  target is a suite that is self-sufficient without me — feature-complete and
-  consistent, so a thing learned on one plugin is true of all of them.
-  **Propagation is not polish. It is the deliverable.**
+- **Half-done is unusable.** The target is a suite self-sufficient without me,
+  so a thing learned on one plugin is true of all of them. **Propagation is not
+  polish. It is the deliverable.**
 - **A feature goes everywhere its parent already is. No triage.** Propagate a
   fix the same way, and say which plugins you checked and cleared, not only
   which you fixed.
 - **Leave no debris in `E:/reaper` or `E:/reaper/finished`.** By screen reader
-  every stray backup has to be read past. Backups go to the homes under
-  *Layout*; a `-TEST` copy is promoted or deleted before the end of the exchange
-  that made it, never left "for now".
-- **Before retiring any control, open it and read what else is in the block.** A
-  control that looks like a leftover is sometimes half of a working pair. And do
-  not trust a document over the source.
+  every stray backup has to be read past. A `-TEST` copy is promoted or deleted
+  before the end of the exchange that made it.
+- **Before retiring any control, open it and read what else is in the block** —
+  it is sometimes half of a working pair. Never trust a document over the source.
+- **Deploy what you ask them to test.** Rozaya, 2026-09-09: *"I can't hear a
+  pitch block that doesn't exist."* Say where it is and that it is current.
 - **No unit locks, ever.** A unit is a choice; the most it may ever be is a
   default.
 - **A limit may come from physics, a standard, or what the code honours — never
@@ -158,14 +161,13 @@ or tagging, and cut no releases until the sweep finishes.**
 ## Values, and branches
 
 **CC0, original implementations only. Gentle by default** — sleep and ambient
-use, no harsh transients, and mono compatibility matters because these get
-played on phone speakers. **Hand-editable text and JSON**, because modders are
-first-class users. **No new dependencies** — pure JSFX (eel2), no extensions.
+use, no harsh transients, mono compatibility. **Hand-editable text and JSON.**
+**No new dependencies in a plugin** — pure JSFX (eel2). Dev tooling is exempt:
+`tools/jsfx_run` builds on ysfx and is how behaviour gets measured now.
 
 `master` is stable; work on `feature/*` and merge `--ff-only`. **"Validated by
-ear" is the actual gate and it is not a formality** — ask for an ear test rather
-than assuming that path is dark, and say plainly which parts of a change have
-been heard and which have not. Pushing is fine any time; a release is not.
+ear" is the actual gate and it is not a formality** — ask, and say plainly which
+parts have been heard. Pushing is fine any time; a release is not.
 
 ## Active plugin under heaviest development
 

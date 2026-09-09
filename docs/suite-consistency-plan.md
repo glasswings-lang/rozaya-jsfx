@@ -966,6 +966,26 @@ rather than a branch added.
 
 ## R22 — THE PITCH BLOCK. Settled with Rozaya 2026-09-08. Not built.
 
+> **ATTRIBUTION WARNING, added 2026-09-09.** Rozaya, on being told that parts of
+> this rule were "already settled": *"No, you settled that on your own. I had
+> nothing to do with those decisions. That's a problem."*
+>
+> **She is right, and this section is the worst offender in the repo.** Quoted
+> text below is hers. Everything unquoted is Claude reasoning written in the same
+> confident voice, and at least three pieces of it were then cited back to her as
+> settled decisions:
+>
+> - **The deferred list.** She said *"Morpher and Passage are their own
+>   discussion there."* — two plugins. Sustain Looper and Bubbler are mine.
+> - **The build order** — Melody and Shepard Tone's voice selectors before the
+>   migration — is my slider-count analysis, not her decision.
+> - **"`Note` is NOT one of the modes"** was a JSFX limitation promoted to a
+>   principle, and she overturned it on 2026-09-09.
+>
+> **Before citing anything here as settled, check whether it is in quotation
+> marks.** If it is not, it is a proposal that has been sitting still long enough
+> to look like a decision.
+
 **Status: RULE AGREED, NOTHING BUILT.** This is deliberately the R20 order of
 operations — write the rule, settle it, *then* build — because that is what
 finally worked for the rate after five sessions each guessed differently. The
@@ -1013,39 +1033,28 @@ equivalent of the nine plugins that had nothing stored on Host x.
 This is R20's shape applied to pitch: a value, then a mode saying what the value
 means, same options in the same order wherever you meet it.
 
-## Why `Note` is not one of the modes — the thing that decides this whole rule
+## ~~Why `Note` is not one of the modes~~ — OVERTURNED 2026-09-09
 
-Rozaya, 2026-09-08: *"Because you don't know, except for the plugins that
-generate their own sound, what pitch something actually is."*
+**This section argued at length that `Note` could not be one of the pitch modes,
+because a plugin that did not make the audio does not know its pitch. Rozaya
+overturned it the first time she navigated the built block:** *"note is not
+master here. it's one way of expressing pitch, period. Don't have two
+finetunes."*
 
-**That is not a preference, it is an absence of information, and it is what
-separates this from the triage I keep reaching for.** A note name is a claim
-about what a sound IS. Polyrhythm, Melody, the Shepards, Dapple, Breath, Womb,
-Heartbeat, the rhythm track and the Sculptor all synthesise from a frequency
-they compute, so they know their own pitch exactly and `C4` is true. The
-Morpher, Passage and Sustain Looper are handling audio they did not make — a
-captured vowel, a loaded loop — and have no idea what is in it. Offering
-`Note = C4` there is a promise the plugin cannot keep.
+She was right, and the argument was a workaround wearing a rule's clothes. The
+real constraint is that a JSFX slider can be a list of note names or a
+continuous number, never both — which I could not express, so I promoted it to a
+principle instead of saying it out loud. `docs/designing-for-dyscalculia.md` and
+`CLAUDE.md` both already name that exact failure.
 
-What every plugin CAN honestly offer is a quantity: shift it by this much. That
-is `{Hz, Semitones, Cents}`, and it is universal precisely because it says
-nothing about what the source was.
+**Making `Note` the master also created a second fine tune.** Once the pitch
+value is an OFFSET from a note, it stops being the pitch and becomes a fine
+adjustment — so the block carried two of those, with the wrong half labelled as
+coarse.
 
-**Two earlier drafts of this rule got this wrong in opposite directions**, and
-both are recorded so neither comes back:
-
-- `{Note, Hz}`, split by whether a plugin's pitch "was really a note". That was
-  triage — me deciding per plugin what a person may reach for — and Rozaya
-  killed it: *"the minute I'm making decisions like this is the minute I say
-  include all of them."*
-- `{Note, Hz, Semitones, Cents}`, which read her three-unit answer and added
-  `Note` back to it. Wrong for the reason above: it puts a mode in the list that
-  three plugins cannot honestly enter.
-
-**Semitones and Cents are both offsets, and both are needed**, for exactly the
-reason `Every N beats` and `N per beat` are both needed: they are one quantity
-at two scales, and keeping only the coarse one means seven cents is typed as
-`0.07`. That is arithmetic, which is the barrier this suite exists to remove.
+**The replacement** — mode first, a note name that is a real control in
+Semitones mode and hidden elsewhere, the pitch value, then exactly one fine
+tune — is in `docs/layouts/breath-gen.md`. Old text at commit `11b58ac`.
 
 ## Flat notes, and what this buys that nothing in the suite has
 
