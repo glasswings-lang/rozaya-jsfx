@@ -69,9 +69,9 @@ here, not instead of obeying it.
   pitch block that doesn't exist."* Say where it is and that it is current.
 - **No unit locks, ever.** A unit is a choice; the most it may ever be is a
   default.
-- **A limit may come from physics, a standard, or what the code honours — never
-  from what one person has happened to use.** "Which covers everything we
-  actually use" is the tell.
+- **A limit comes from physics, a standard, or what the code honours — never
+  from what one person happens to use.** "Covers everything we actually use" is
+  the tell.
 - **Never change what a control MEANS without saying so on the control itself.**
 
 ### Whose job is whose

@@ -982,9 +982,8 @@ rather than a branch added.
 > - **"`Note` is NOT one of the modes"** was a JSFX limitation promoted to a
 >   principle, and she overturned it on 2026-09-09.
 >
-> **Before citing anything here as settled, check whether it is in quotation
-> marks.** If it is not, it is a proposal that has been sitting still long enough
-> to look like a decision.
+> **Before citing anything here as settled, check for quotation marks.** Without
+> them it is a proposal that sat still long enough to look like a decision.
 
 **Status: RULE AGREED, NOTHING BUILT.** This is deliberately the R20 order of
 operations — write the rule, settle it, *then* build — because that is what
