@@ -66,8 +66,7 @@ here, not instead of obeying it.
   it is sometimes half of a working pair. Never trust a document over the source.
 - **Deploy what you ask them to test.** Rozaya, 2026-09-09: *"I can't hear a
   pitch block that doesn't exist."* Say where it is and that it is current.
-- **No unit locks, ever.** A unit is a choice; the most it may ever be is a
-  default.
+- **No unit locks, ever.** A unit is a choice; at most it is a default.
 - **A limit comes from physics, a standard, or what the code honours — never
   from what one person happens to use.** "Covers everything we actually use" is
   the tell.
