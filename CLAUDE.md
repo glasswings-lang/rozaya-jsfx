@@ -34,10 +34,9 @@ here, not instead of obeying it.
   the docs, not this file. Everything in `docs/` is YOUR working memory, not
   theirs. **Never point at a file and expect it to be opened.** If it matters,
   say it in the conversation, at the moment it matters.
-- **There is no second reader.** Nobody else can audit these plugins, so
-  whatever substitutes for a human reviewing the diff — a plain-English account,
-  a check you can describe, a thing that can be heard — is load-bearing here in
-  a way it would not be elsewhere.
+- **There is no second reader.** Nobody else can audit these plugins, so what
+  substitutes for a human reviewing the diff — a plain-English account, a check
+  you can describe, a thing that can be heard — is load-bearing here.
 - **Never ask Rozaya to verify your work.** Verify it yourself: run it, test it,
   report only what you confirmed. If you are unsure, say so and go check.
 - **Take what they notice as evidence, not a verdict to be corrected.** Their
