@@ -218,7 +218,24 @@ int main(int argc, char **argv)
     }
     std::printf("loaded and compiled: %s\n", ysfx_get_name(fx) ? ysfx_get_name(fx) : path);
 
+    // --list used to return HERE, before any slider or project state was
+    // applied, so it printed the DECLARED defaults and silently ignored
+    // everything you had asked for. It now lists what the plugin actually
+    // HOLDS, after a real block has run -- which is the only version that can
+    // show you a value the plugin computed for itself.
     if (list_only) {
+        ysfx_set_sample_rate(fx, sr);
+        ysfx_set_block_size(fx, block);
+        for (const Assign &a : before) ysfx_slider_set_value(fx, a.idx, a.val);
+        ysfx_init(fx);
+        {
+            std::vector<float> l(block, 0.0f), r(block, 0.0f);
+            const float *ii[2] = { l.data(), r.data() };
+            float *oo[2] = { l.data(), r.data() };
+            ysfx_process_float(fx, ii, oo, 2, 2, block);
+            for (const Assign &a : after) ysfx_slider_set_value(fx, a.idx, a.val);
+            ysfx_process_float(fx, ii, oo, 2, 2, block);
+        }
         for (uint32_t i = 0; i < ysfx_max_sliders; ++i) {
             if (!ysfx_slider_exists(fx, i)) continue;
             ysfx_slider_range_t r{};

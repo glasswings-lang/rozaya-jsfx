@@ -16,10 +16,18 @@ desc: Breath Generator
 // was granted 2026-09-06: forcing the five options on a breath produces
 // "N per beat", and eight breaths per beat is not a thing anyone wants.
 //
-// A ONE-SHOT. Scales the four segments to the requested rate, preserving their
-// ratio, then puts itself back to 0 so the four numbers on screen stay the
-// truth. Never saves a value, so it can never fire on load.
-slider1:0<0,1000,0.001>Set breath rate (per minute, or beats per breath; 0 = off)
+// A LIVE, TWO-WAY control -- NOT a one-shot. It always shows the rate the breath
+// actually has, and setting it rescales the four segments below, keeping their
+// ratio. Move a segment and this follows; move this and the segments follow.
+//
+// IT MUST NEVER WRITE ITSELF BACK TO ZERO. The first version did exactly that --
+// wrote the segments, then zeroed itself so the four numbers "stayed the truth".
+// Rozaya, 2026-09-09: "the breaths per minute thing *cannot* be allowed to snap
+// back to 0. it either has to write to the 4 segments or the 4 segments have to
+// write to it, or both. but it 0s out and reaper reads it and clamps to the
+// nearest thing." A control that destroys its own value leaves the plugin and
+// REAPER disagreeing about what it holds, and REAPER wins.
+slider1:6.976744<0,1000,0.001>Breath rate (per minute, or beats per breath)
 // What the four segments below are counted in. Beats follows the project tempo.
 slider2:0<0,1,1{Seconds,Beats}>Breath unit
 
@@ -313,7 +321,8 @@ pitch_mode_mem = 4464;   // 0 Hz, 1 semitones, 2 cents  (CONFIG)
 pitch_fine_mem = 4480;   // fine offset                 (CONFIG)
 pitch_fmod_mem = 4496;   // fine mode                   (CONFIG)
 pitch_hz_mem   = 4512;   // DERIVED in @block, never here
-pui_last       = 4528;   // mirror of the five visible controls (RUNTIME)
+pui_last       = 4528;   // mirror of the five visible pitch controls (RUNTIME)
+brm_last       = 4544;   // mirror of the rate + four segments  (RUNTIME)
 pitch_ui_inited = 0;     // adopted in @block; while 0, @slider writes nothing
 
 // --- The Pitch target selector's three operations -------------------------
@@ -483,36 +492,47 @@ tuning_ref = slider13;
 breath_unit = slider2;
 out_gain = pow(10, slider21 / 20);
 
-// --- Set breath rate: the ONE-SHOT ----------------------------------------
-// Scales the four segments to the requested rate, preserving their ratio, then
-// puts itself back to 0 so the four numbers on screen stay the truth.
+// --- Breath rate <-> the four segments. TWO-WAY, and never a one-shot -------
+// The rate is EMERGENT from the segments, so this control is a second window
+// onto the same fact -- exactly like Note name and Pitch value below. Same
+// mechanism, same reason it is safe: the MIRROR says which end the user moved,
+// so nothing guesses.
 //
-// GUARDED ON breath_set_ready, WHICH IS ADOPTED IN @block AND NOT HERE. On a
+// The previous version wrote the segments and then set ITSELF to 0. That is the
+// bug Rozaya found: the plugin sets its variable to 0, REAPER still holds
+// whatever it had, and the two disagree about a control that is meant to be
+// authoritative.
+//
+// Gated on breath_set_ready, which is adopted in @block and NOT here -- on a
 // fresh or duplicated instance @slider runs while REAPER is still handing over
-// saved values, so a flag adopted here takes a default and the real value
-// arriving a moment later reads as a user edit -- which is how a picker came to
-// stamp a hand-set rate on every load (proved 2026-08-23). While the flag is 0
-// this fires nothing at all, which is the safe direction.
-//
-// It also cannot fire on a saved value, because it never saves one: it zeroes
-// itself after every use and the migration seeds it to 0.
-breath_set_ready && slider1 > 0 ? (
+// saved values, and a flag adopted here would capture a default (proved
+// 2026-08-23 on the Sweeping Filter).
+breath_set_ready ? (
   bs_total = slider3 + slider4 + slider5 + slider6;
-  bs_total > 0.001 ? (
-    // The target cycle IN THE SEGMENTS' OWN UNIT. Seconds: the control is
-    // breaths per minute, so one breath is 60/rate seconds. Beats: the control
-    // is already beats per breath, so it IS the target.
-    bs_target = breath_unit == 0 ? 60 / max(slider1, 0.001) : slider1;
-    bs_k = bs_target / bs_total;
-    slider3 = min(1000, max(0.001, slider3 * bs_k));
-    slider4 = min(1000, max(0,     slider4 * bs_k));
-    slider5 = min(1000, max(0.001, slider5 * bs_k));
-    slider6 = min(1000, max(0,     slider6 * bs_k));
+  slider1 != brm_last[0] ? (
+    // THE RATE WAS SET. Rescale the segments, keeping their ratio.
+    (slider1 > 0 && bs_total > 0.001) ? (
+      // The target cycle IN THE SEGMENTS' OWN UNIT. Seconds: the control reads
+      // as breaths per minute, so one breath is 60/rate seconds. Beats: it is
+      // already beats per breath, so it IS the target.
+      bs_target = breath_unit == 0 ? 60 / slider1 : slider1;
+      bs_k = bs_target / bs_total;
+      slider3 = min(1000, max(0.001, slider3 * bs_k));
+      slider4 = min(1000, max(0,     slider4 * bs_k));
+      slider5 = min(1000, max(0.001, slider5 * bs_k));
+      slider6 = min(1000, max(0,     slider6 * bs_k));
+      // sliderchange, NOT slider_automate: the user moved the rate, not the four
+      // segments, so those must not write automation they were never given.
+      sliderchange(-1);
+    );
   );
-  slider1 = 0;
-  // sliderchange, NOT slider_automate: makes the values stick and refreshes the
-  // display without writing automation the user never asked for.
-  sliderchange(-1);
+  // The OTHER half -- showing the rate the segments imply -- is in @block, not
+  // here. On load @slider runs BEFORE @block has armed the flag, does nothing,
+  // and then never runs again because no parameter changed; the readout would
+  // sit on its declared default forever. @block runs every block regardless of
+  // what happened when, which is the same reason bank-derived values live there.
+  brm_last[0] = slider1; brm_last[1] = slider3; brm_last[2] = slider4;
+  brm_last[3] = slider5; brm_last[4] = slider6;
 );
 
 // --- Pitch target selector -------------------------------------------------
@@ -692,7 +712,13 @@ last_target_select != sel_target ? (
 // @block cannot run before the instance is configured, so this arms the
 // one-shot only once REAPER has finished handing over saved values. Adopting
 // it in @slider would let a default fire it.
-breath_set_ready = 1;
+!breath_set_ready ? (
+  // Seed the rate mirror from the RAW sliders, once, here rather than in
+  // @slider -- @block cannot run before the instance is configured.
+  brm_last[0] = slider1; brm_last[1] = slider3; brm_last[2] = slider4;
+  brm_last[3] = slider5; brm_last[4] = slider6;
+  breath_set_ready = 1;
+);
 
 // Adopt the pitch UI mirror from the RAW sliders, once, here rather than in
 // @slider. @block cannot run before the instance is configured, so this reads
@@ -709,6 +735,21 @@ breath_set_ready = 1;
 // tempo change is followed rather than remembered -- the `@init` re-runs on
 // transport play, so anything that remembers a tempo loses it.
 breath_unit_sec = breath_unit == 1 ? 60 / max(tempo, 0.001) : 1;
+
+// The breath rate READOUT, derived from the four segments every block. Its
+// other half -- setting the rate to rescale the segments -- is in @slider,
+// because that one is a user edit. These two never fight: @slider makes the
+// segments match the rate, this makes the rate match the segments, and after
+// either one they already agree.
+brm_total = slider3 + slider4 + slider5 + slider6;
+brm_total > 0.001 ? (
+  brm_now = breath_unit == 0 ? 60 / brm_total : brm_total;
+  abs(brm_now - slider1) > 0.0005 ? (
+    slider1 = brm_now;
+    brm_last[0] = brm_now;
+    sliderchange(-1);
+  );
+);
 
 // --- Pitch, DERIVED FROM THE BANKS, so it belongs here --------------------
 // Not in @slider. A value derived from a bank that @serialize restores must be
