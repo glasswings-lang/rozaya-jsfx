@@ -63,10 +63,24 @@ any migration is called done:
 
 ## What it CANNOT tell you — read this before trusting a clean result
 
-- **Timbre, for anything noise-based.** ysfx's EEL2 handles the `%` in this
-  suite's Park-Miller noise generators differently from REAPER's, so the noise
-  degenerates and the filters rail to DC. Envelope, timing and filter TUNING
-  stay perfectly readable; the actual sound does not. Verified on breath_gen.
+- **Filter FREQUENCY, for anything noise-based — and this is bigger than it
+  sounds.** Measured on breath_gen 2026-09-09: moving a filter centre from 300 Hz
+  to 1200 Hz changes the output by 2.4e-07. Four times the frequency, and the
+  runner sees essentially nothing, because the degenerate noise rails the filter
+  to DC and the DC level barely depends on the cutoff. **Anything about pitch,
+  cutoff or resonance in a noise-based plugin is INVISIBLE here.** A clean result
+  means nothing; it is an ear test.
+- **Nested selectors bite the command line exactly as they bite a user.**
+  `--slider 25=5 --slider 26=30` does NOT drift target 5 by 30. Setting the
+  selector makes @slider save the visible values to the OLD target and load the
+  new one's, so the amount lands on the previous target and is then overwritten.
+  Set the selector with `--slider` and the values with `--set-after`, which is
+  also the order a person does it in. This produced a false PASS on 2026-09-09
+  that was committed before it was caught.
+  The cause: ysfx's EEL2 handles the `%` in this suite's Park-Miller noise
+  generators differently from REAPER's, so the noise degenerates. **Envelope and
+  timing stay perfectly readable** — that half is genuinely reliable and caught
+  three real bugs the same day.
 - **64 sliders maximum.** `polyrhythm_phase` (86) will not load.
 - **REAPER's restore ORDER.** `ysfx_load_state` applies sliders and serialized
   data in one defined order. REAPER makes no such guarantee, and the ordering

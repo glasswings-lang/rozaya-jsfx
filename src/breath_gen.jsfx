@@ -115,7 +115,16 @@ slider24:0<0,1000,1>Rest for (breaths)
 // --- Drift (nested selector, per target) ----------------------------------
 // Pick a target, then the controls below hold THAT target's config. All five
 // targets drift in parallel; the selector only chooses which you are editing.
-slider25:0<0,6,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min,Inhale pitch,Exhale pitch}>Drift target
+// TARGET ORDER MIRRORS THE PLUGIN'S OWN CONTROLS, top to bottom: the rate, then
+// the four segments, then the two filter centres. REORDERED on 2026-09-09
+// rather than appended to, because Rozaya established that drift is configured
+// in ZERO instances -- verified against all four before touching it -- so no
+// stored index could be repointed. Reordering an enum is normally forbidden for
+// exactly that reason.
+//
+// `Breaths/min` was also renamed `Breath rate`, to match the control it targets
+// (R2: target strings come from slider labels, mechanically).
+slider25:0<0,6,1{Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Exhale pitch}>Drift target
 // UNITS MATCH TARGET, corrected 2026-09-08. These said "(seconds)" and Breath
 // Generator was the ONLY plugin in the suite that did -- the other eighteen say
 // this. Its own target list includes Breaths/min, so "seconds" was lying for
@@ -138,7 +147,7 @@ slider32:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 // --- Ramp (nested selector, per target) -----------------------------------
 // Ramp start delay rejoins its own block here. It sat at slider 32, seven
 // places away, because it was appended later when append-only was the rule.
-slider33:0<0,6,1{Inhale,Top pause,Exhale,Bottom pause,Breaths/min,Inhale pitch,Exhale pitch}>Ramp target
+slider33:0<0,6,1{Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Exhale pitch}>Ramp target
 slider34:0<-1000,1000,0.001>Ramp by
 // One unit for duration AND start delay, so they always mean the same as each
 // other. DEFAULT IS 2, Minutes, which is what this block always did; index 0
@@ -833,12 +842,12 @@ slider39 ? (
 // Per-target Speed Ramp offsets (parallel — all 5 ramp regardless of which
 // target the selector is currently showing). Each target gets its own
 // `ramp_t * stored_amount` in its native unit (seconds for breath segments;
-// breaths/min for the aggregate target 4).
-speed_ramp_inhale_offset = speed_ramp_ramp_t_mem[0] * speed_ramp_target_value_mem[0];
-speed_ramp_top_offset    = speed_ramp_ramp_t_mem[1] * speed_ramp_target_value_mem[1];
-speed_ramp_exhale_offset = speed_ramp_ramp_t_mem[2] * speed_ramp_target_value_mem[2];
-speed_ramp_bot_offset    = speed_ramp_ramp_t_mem[3] * speed_ramp_target_value_mem[3];
-speed_ramp_bpm_offset    = speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_mem[4];
+// breaths/min for the aggregate target 0).
+speed_ramp_bpm_offset    = speed_ramp_ramp_t_mem[0] * speed_ramp_target_value_mem[0];
+speed_ramp_inhale_offset = speed_ramp_ramp_t_mem[1] * speed_ramp_target_value_mem[1];
+speed_ramp_top_offset    = speed_ramp_ramp_t_mem[2] * speed_ramp_target_value_mem[2];
+speed_ramp_exhale_offset = speed_ramp_ramp_t_mem[3] * speed_ramp_target_value_mem[3];
+speed_ramp_bot_offset    = speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_mem[4];
 // The two pitch targets. Their amounts are in the PITCH's own unit -- whatever
 // `Pitch mode` says -- which is what "units match target" means on the amount
 // sliders, and it falls out for free because the offset is added to the pitch
@@ -916,7 +925,7 @@ loop(N_TARGETS,
 // 60/tempo in Beats), so everything below is unchanged arithmetic on seconds.
 base_breath_total = max((slider3 + slider4 + slider5 + slider6) * breath_unit_sec, 0.001);
 base_breath_rate  = 60 / base_breath_total;
-breath_rate_delta = target_drift_offset[4] + speed_ramp_bpm_offset;
+breath_rate_delta = target_drift_offset[0] + speed_ramp_bpm_offset;
 breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_breath_rate;
 
 // Effective per-segment lengths: baseline (from slider) + Speed Ramp
@@ -924,10 +933,10 @@ breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_brea
 // These OVERWRITE the @slider-set values each sample so that Speed Ramp's
 // continuous progress, drift wander, and rate aggregate are all reflected
 // in segment length at every sample.
-inhale_len = max(floor(srate * breath_unit_sec * max((slider3 + speed_ramp_inhale_offset + target_drift_offset[0]) / breath_rate_scale, 0.1)), 1);
-top_len    = max(floor(srate * breath_unit_sec * max((slider4 + speed_ramp_top_offset    + target_drift_offset[1]) / breath_rate_scale, 0  )), 1);
-exhale_len = max(floor(srate * breath_unit_sec * max((slider5 + speed_ramp_exhale_offset + target_drift_offset[2]) / breath_rate_scale, 0.1)), 1);
-bot_len    = max(floor(srate * breath_unit_sec * max((slider6 + speed_ramp_bot_offset    + target_drift_offset[3]) / breath_rate_scale, 0  )), 1);
+inhale_len = max(floor(srate * breath_unit_sec * max((slider3 + speed_ramp_inhale_offset + target_drift_offset[1]) / breath_rate_scale, 0.1)), 1);
+top_len    = max(floor(srate * breath_unit_sec * max((slider4 + speed_ramp_top_offset    + target_drift_offset[2]) / breath_rate_scale, 0  )), 1);
+exhale_len = max(floor(srate * breath_unit_sec * max((slider5 + speed_ramp_exhale_offset + target_drift_offset[3]) / breath_rate_scale, 0.1)), 1);
+bot_len    = max(floor(srate * breath_unit_sec * max((slider6 + speed_ramp_bot_offset    + target_drift_offset[4]) / breath_rate_scale, 0  )), 1);
 total_breath_samples = inhale_len + top_len + exhale_len + bot_len;
 
 // (Path A: @init re-runs on transport play and resets all runtime —

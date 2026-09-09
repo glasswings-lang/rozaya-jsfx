@@ -223,9 +223,22 @@ naming them here is what stops a later session folding one in on the way past.
   have pitch as a drift target set at all"* — and **Womb, the same breath with
   the same two filter centres, has had `Inhale Freq` and `Exhale Freq` as drift
   targets all along.** `Inhale pitch` and `Exhale pitch` are now appended to
-  both the drift and ramp target lists, taking both to seven. Appended, so every
-  stored index keeps its meaning; verified by running drift on target 0 before
-  and after and getting bit-identical output.
+  both the drift and ramp target lists, taking both to seven.
+
+  **And then REORDERED, 2026-09-09**, because Rozaya established that drift is
+  configured in zero instances — verified against all four before touching it —
+  so no stored index could be repointed. Both lists now mirror the plugin's own
+  controls top to bottom: **Breath rate, Inhale, Top pause, Exhale, Bottom pause,
+  Inhale pitch, Exhale pitch.** `Breaths/min` was renamed `Breath rate` to match
+  the control it targets. Reordering an enum is normally forbidden; it is safe
+  here only because nothing stores an index.
+
+  **The pitch drift is wired but UNPROVEN, and cannot be proven by the runner.**
+  Moving a filter centre from 300 Hz to 1200 Hz changes its output by 2.4e-07 —
+  the degenerate noise rails the filter to DC, so cutoff is invisible. Drift on
+  the two pitch targets measures the same magnitude as setting the pitch by
+  hand, which is consistent with it working and is not evidence that it does.
+  **This one is an ear test.**
 
 ## Build order
 
