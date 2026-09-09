@@ -208,6 +208,30 @@ How far above the target's baseline the drift wanders at its peak. Units are BPM
 **Drift down amount** `0.0–50.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric biological-feel wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
+### Whose turn it is (2026-09-09)
+
+Some drift targets are read by the engine **once per event** rather than
+continuously. Those now advance their wander by exactly one step of
+`1 / period` at that moment, and not at all in between — so a period of 8 is
+eight of that event, and it stays eight however much the other targets move.
+
+Before this they were sampled out of a wander that never stopped spinning:
+almost all the motion was thrown away, the period did not count what it said,
+and the targets were not independent of each other. Rozaya found it, 2026-09-09.
+
+**Stepped here:** **Heart rate** and the **S1-S2 gap**, both once per
+heartbeat. The heart rate's period counts heartbeats while being the thing that
+changes a heartbeat's length, so continuously it was measuring itself with a
+ruler it was stretching. A real heart also settles a beat's length when the beat
+starts.
+
+**Not stepped:** Breath HRV depth and Random HRV depth, which are applied to the
+cycle length every sample.
+
+A stepped wander is a staircase with as many steps as its period has events.
+Long periods sound much as they did; short ones are more obviously
+event-to-event.
+
 **Drift period (heartbeats)** `0–1000, default 8, 0 = off`
 How many heartbeats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period unit is the same across all 4 targets because heartbeat rate is the kin's master clock.
 

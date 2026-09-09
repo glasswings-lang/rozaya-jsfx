@@ -10,11 +10,9 @@ being now.** Narrative belongs in `docs/session-log.md`, not here.
 - On `feature/melody-reorder`, pushed, unmerged. **Re-run
   `git rev-list --count master..HEAD` rather than believing any number written
   here** — a count in this file has gone stale twice.
-- **Do not propose merging or tagging.** Rozaya, 2026-09-05: *"I am not tagging
-  that. This is not done."* Pushing is right and welcome; a tag is a
-  distribution artefact and the sweep is mid-flight.
-- **No releases until the sweep finishes** — shipping one now hands a stranger
-  a half-renamed suite.
+- **Do not propose merging or tagging, and cut no release.** Rozaya,
+  2026-09-05: *"I am not tagging that. This is not done."* Pushing is welcome; a
+  tag is a distribution artefact and the sweep is mid-flight.
 
 ## The consistency sweep
 
@@ -28,12 +26,10 @@ sentence.
 
 - **The rate block (R20) and both host modes (R21): built everywhere.** True as
   of 2026-09-06 and not before.
-- **Drift/Ramp: 16 of 19 plugins complete.** Passage is the only plugin that
-  still needs the work done to it. Polyrhythm v1 is owed them only in the sense
-  that it will inherit them when it crosses to v3.
-  **Resonance Bank is not missing one** — its drift period is a rate by design,
-  because each band drifts independently and there is no single cycle to count.
-  A name-matching sweep will claim otherwise; it is wrong.
+- **Drift/Ramp: 16 of 19 plugins complete.** Passage is the only one still owed
+  the work; Polyrhythm v1 inherits when it crosses to v3. **Resonance Bank is
+  not missing one** — its drift period is a rate by design. A name-matching
+  sweep will claim otherwise; it is wrong.
 - **Polyrhythm v1 is left alone.** Decided by Rozaya 2026-09-06: *"The
   polyrhythm can just... be left. If we do v3 and then migrate it'll be fine."*
   v1 gets no drift/ramp controls and no reorder. v3 gets its layout and the six,
@@ -82,10 +78,9 @@ Rozaya opened `shapes` the same day: *"Nothing sounds off which is nice"*;
 after two rebuilds of the pitch block and one of the rate control, all three
 confirmed by running the plugin (`tools/jsfx_run`) before she ever heard them.
 
-**The 2026-09-08 version was heard, REVERTED — *"This is deeply, deeply
-broken"* — and its cause never found.** Leading theory is REAPER's per-filename
-compile cache; unproven, so **quit REAPER fully before reopening after any
-promotion**. Pair kept at `snapshots/_broken-breathgen-20260908-forensics/`.
+**Quit REAPER fully before reopening after any promotion** — from the
+2026-09-08 breath build that was heard, reverted and never explained; pair kept
+at `snapshots/_broken-breathgen-20260908-forensics/`.
 
 **Not heard:**
 
@@ -108,6 +103,10 @@ promotion**. Pair kept at `snapshots/_broken-breathgen-20260908-forensics/`.
   Eight of nine live projects render bit-identical; **`to-sleep-within` is the
   one that changes**, because it is the only one with a stepped drift running.
   It also has its drift misfiled onto Heart rate by an old blob — pre-existing.
+- **R23 is SWEPT, 2026-09-09** — Heartbeat Generator, Melody, Bubbler and Dapple
+  too. Every plugin with drift was read; twelve are cleared and must not be
+  "fixed" — `docs/backlog.md` has the table. Every live project renders identical
+  before and after except `to-sleep-within`. Unheard, all of it.
 - Everything from the 2026-09-06 drift/ramp sweep (six plugins), the `N per
   beat` reciprocal fix in all four plugins it touched, the Tremolo Start delay
   fix, and the range widenings.

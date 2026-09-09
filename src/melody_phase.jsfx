@@ -586,6 +586,33 @@ drift_pr_resting_mem = 1120;  // (RUNTIME)
 sr_pr_accum_mem      = 1152;  // (RUNTIME)
 sr_pr_resting_mem    = 1184;  // (RUNTIME)
 
+// --- "your turn came round" flags, per target (2026-09-09) ------------------
+// Next free slot after this one: 1248.
+drift_step_mem       = 1216;  // (RUNTIME)
+
+// WHICH TARGETS STEP, AND WHICH FLOW.
+//
+// A target the engine reads ONCE PER EVENT was being sampled out of a wander
+// that never stopped spinning: nearly all the motion was thrown away and the
+// period did not count what it said it counted. Rozaya, 2026-09-09.
+//
+// Here that is targets 18-27, and ONLY those. This plugin says so itself, two
+// hundred lines down: "Done ONCE per note here (not per-sample) -- a note's
+// length and envelope shape are fixed for the duration of its ring."
+//   18..25  V1-V8 Note duration -- each steps when ITS voice is triggered.
+//   26, 27  Attack % / Release % -- shared, so they step on ANY note trigger.
+//
+// Everything else stays continuous, and that is not an oversight:
+//   0       Rate value    -- its period is referenced against
+//                            samples_per_primary_cycle, taken PRE-drift, so it
+//                            never measures itself. (Womb's heart rate DID, and
+//                            that is why Womb's steps and this does not.)
+//   1..8    V Timing      -- the step boundary is a threshold compared every
+//                            sample, so the wander is expressed, not sampled.
+//   9       Pan base rate -- continuous.
+//   10..17  V Gain        -- continuous, applied every sample.
+function drift_is_stepped(idx) ( idx >= 18 && idx <= 27; );
+
 // Drift CONFIG (up/down/period/shape) + selector tracker — initialized
 // ONCE per plugin instance, guarded by drift_cfg_inited so @init
 // re-running on every transport play does NOT wipe the user's drift
@@ -620,6 +647,7 @@ loop(N_TARGETS,
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
+  drift_step_mem[i]      = 0;
   speed_ramp_ramp_t_mem[i]        = 0;
   speed_ramp_delay_elapsed_mem[i] = 0;
   drift_pr_accum_mem[i]   = 0; drift_pr_resting_mem[i] = 0;
@@ -919,6 +947,14 @@ function trigger_seq_voice(prev_idx) (
     );
     v_pan_cycle_pos[seq_index] = percycle_pan(pan_cycle_index, pan_cycle_steps);
   );
+
+  // A note's turn comes round. The voice's own Note duration steps, and the
+  // shared Attack/Release step too, because they are read at every trigger.
+  // Raised whether or not this voice sounds -- a rest still takes its place in
+  // the pattern, exactly as a silenced beat still takes its place in Womb.
+  drift_step_mem[18 + seq_index] = 1;
+  drift_step_mem[26] = 1;
+  drift_step_mem[27] = 1;
 
   v_note_seconds[seq_index] > 0.0001 ? (
     // Sample this note's expressive drift at trigger time and recompute
@@ -1560,6 +1596,14 @@ loop(N_TARGETS,
     // resting the phase does not advance at all, so shape_val below is
     // recomputed from the HELD phase and the offset simply stays where it
     // stopped -- freeze in place, not a return to centre.
+    // A STEPPED target gets a whole 1/period, but only on the sample its own
+    // turn comes; a continuous one gets the usual per-sample slice. Play/rest
+    // ticks on the same quantity, so "rest for N periods" keeps its meaning.
+    drift_is_stepped(i) ? (
+      drift_per_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
+      drift_step_mem[i] = 0;
+    );
+
     d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,
                          drift_per_tick, drift_play_mem[i], drift_rest_mem[i]);
     // One-armed on purpose: an empty else-branch is a silent compile failure in

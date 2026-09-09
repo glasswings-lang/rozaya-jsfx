@@ -372,6 +372,31 @@ How far above the target's baseline the drift wanders at its peak. Units: the ra
 **Drift down amount** `0.0–20.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
+### Whose turn it is (2026-09-09)
+
+Some drift targets are read by the engine **once per event** rather than
+continuously. Those now advance their wander by exactly one step of
+`1 / period` at that moment, and not at all in between — so a period of 8 is
+eight of that event, and it stays eight however much the other targets move.
+
+Before this they were sampled out of a wander that never stopped spinning:
+almost all the motion was thrown away, the period did not count what it said,
+and the targets were not independent of each other. Rozaya found it, 2026-09-09.
+
+**Stepped here:** the eight **Note duration** targets, plus **Attack %** and
+**Release %**. A note's length and envelope shape are read once, when the note
+fires, and are then fixed for its whole ring — so each voice's Note duration
+steps when *that* voice plays, and the shared Attack/Release step on every note.
+
+**Not stepped, and correctly so:** Rate value, the eight V Timing targets, Pan
+base rate and the eight Gains. Their values are read every sample, so the wander
+is fully expressed. Rate value in particular measures its period against the
+rate *before* drift, so it never measures itself.
+
+A stepped wander is a staircase with as many steps as its period has events.
+Long periods sound much as they did; short ones are more obviously
+event-to-event.
+
 **Drift period** `0–1000, default 8, 0 = off`
 How long one full drift wave takes for this target, counted in whatever the unit
 below says.

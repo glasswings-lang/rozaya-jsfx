@@ -306,6 +306,22 @@ drift_pr_resting_mem = 4384;
 sr_pr_accum_mem      = 4400;
 sr_pr_resting_mem    = 4416;
 
+// --- "your turn came round" flags, per target (2026-09-09) ------------------
+// Next free slot after this one: 4448.
+drift_step_mem       = 4432;   // RUNTIME
+
+// WHICH TARGETS STEP, AND WHICH FLOW. Same rule as Womb, whose heart this one
+// is a sibling of.
+//
+//   0 Heart rate      STEPPED. Its period counts heartbeats and it is what
+//                     changes a heartbeat's length, so continuously it was
+//                     measuring itself with a ruler it was stretching. A real
+//                     heart settles a beat's length when the beat starts.
+//   1 S1-S2 gap       STEPPED. Read once per beat, at the S2 trigger.
+//   2 Breath HRV depth   continuous -- applied to the cycle length every sample.
+//   3 Random HRV depth   continuous -- likewise.
+function drift_is_stepped(idx) ( idx < 2; );
+
 // Shared play/rest gate, byte-identical to the one in Melody, the Sweeping
 // Filter, Tremolo, Phaser, Bubbler, Dapple, Resonance Bank and the Morpher.
 // `tick` is how much of one play/rest unit passes per sample, so the caller owns
@@ -365,6 +381,7 @@ loop(N_TARGETS,
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
+  drift_step_mem[i]      = 0;
   i += 1;
 );
 
@@ -655,13 +672,24 @@ loop(N_TARGETS,
     // Drift play/rest, per target, counted in PERIODS. While resting the phase
     // does not advance at all, so the offset FREEZES where it stopped rather
     // than returning to centre.
+    // How much phase this sample is worth. A STEPPED target gets a whole
+    // 1/period, but only on the sample its own beat begins; a continuous one
+    // gets the usual per-sample slice. Play/rest ticks on the same quantity, so
+    // "rest for N periods" keeps meaning the same thing either way.
+    drift_is_stepped(i) ? (
+      d_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
+      drift_step_mem[i] = 0;
+    ) : (
+      d_tick = 1.0 / period_samples;
+    );
+
     d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,
-                         1.0 / period_samples,
+                         d_tick,
                          drift_play_mem[i], drift_rest_mem[i]);
     // One-armed pairs: an empty else-branch is a silent compile failure in eel2.
     d_frozen ? ( new_phase = target_drift_phase[i]; );
     !d_frozen ? (
-      new_phase = target_drift_phase[i] + 1.0 / period_samples;
+      new_phase = target_drift_phase[i] + d_tick;
       new_phase >= 1.0 ? (
         new_phase -= 1.0;
         shape == 2 ? (
@@ -743,6 +771,11 @@ cycle_len = max(cycle_len, floor(srate * 60.0 / 1000.0));
 phase += 1;
 phase >= cycle_len ? (
   phase = 0;
+  // A new heartbeat begins: the heart rate's turn and the S1-S2 gap's turn.
+  // Raised on the CYCLE, not on the audible beat -- the play/rest gate silences
+  // beats without stopping the cycle, and drift should follow the cycle.
+  drift_step_mem[0] = 1;
+  drift_step_mem[1] = 1;
   // Per-beat Play/Rest gate. On each new heartbeat, advance the
   // period counter; if it reaches the threshold for the current
   // state, flip play↔rest and reset the counter. Then suppress the

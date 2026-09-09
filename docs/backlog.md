@@ -24,42 +24,39 @@ Moved out of the plan 2026-09-08, verbatim.
 
 ---
 
-## PROPOSED R23 — drift steps on the target's own turn (raised 2026-09-09)
+## R23 — drift steps on the target's own turn (2026-09-09)
 
-**Status: from a problem Rozaya found. Built in Breath Generator and, as of
-2026-09-09, Womb -- both APPROVED by her in conversation, target by target.
-The shape of the rule is still Claude's wording; do not cite the wording back
-as hers.**
+**From a problem Rozaya found, and approved by her plugin by plugin. The wording
+below is Claude's; do not cite it back as hers.**
 
 > A drift target that is READ ONCE PER OCCURRENCE steps once per occurrence, and
 > its period counts those occurrences. A target read CONTINUOUSLY drifts
 > continuously, and its period is time.
 
-**The problem, in her words:** *"while one segment is going, the other three keep
-drifting, which means effectively anything you set as independent bits for drift
-per segment is basically being thrown away. Like, you don't get to say drift this
+**In her words:** *"while one segment is going, the other three keep drifting,
+which means effectively anything you set as independent bits for drift per
+segment is basically being thrown away. Like, you don't get to say drift this
 thing every two cycles and drift this thing every four. it's being fucked."*
 
-**Every plugin with drift advanced its phase continuously, per sample — all
-twelve, checked 2026-09-09.** Right for a target read all the time, wrong for one
-read once per event: sampled from a free-running oscillator, the period does not
-mean what it says and the targets are not independent, because the period is
-measured against a cycle length the others are busy changing. Measured in both
-builds: two targets on periods of 2 and 3 now repeat on their own counts.
+**THE SWEEP IS DONE, 2026-09-09.** Every plugin with drift was READ, not
+name-matched, and the earlier table here was wrong in both directions — it named
+three plugins that never needed it and missed two that did.
 
-**Who else has per-occurrence targets, and is therefore wrong today:**
-
-| plugin | targets read once per occurrence |
+| plugin | targets that step, and on what |
 |---|---|
-| ~~`womb`~~ | **DONE 2026-09-09** — heart rate, S1-S2 gap, four segments, Breaths/min. The heart rate steps too: "it doesn't lose motion" was the wrong test. |
-| `melody_phase` | V1–V8 Note duration, Attack %, Release % |
-| `polyrhythm_phase_v3` | On Duration, Attack %, Release % |
-| `Full_Feature_Tremolo` | On Duration %, Attack %, Release % |
-| `shepard-scale` | Note Length %, Attack %, Release % |
-| `heartbeat gen` | S1-S2 gap |
+| `breath_gen` | breath rate + four segments, on their own segment |
+| `womb` | heart rate + S1-S2 gap per beat; four segments + Breaths/min per breath |
+| `heartbeat gen` | heart rate + S1-S2 gap, per beat |
+| `melody_phase` | V1-V8 Note duration on that voice's note; Attack %/Release % on any note |
+| `bubbler` | Timing randomness, Transpose, Pitch spread, per bubble (left stream counts) |
+| `dapple` | Timing randomness, Pitch, Pitch spread, per bubble (left stream counts) |
 
-**Still open, and NOT to be started unasked:** Melody, Polyrhythm v3, Tremolo,
-Shepard Scale and the Heartbeat Generator.
+**Checked and CLEARED — do not "fix" these.** Tremolo, Shepard Scale, Shepard
+Tone, Sweep Dwell, Sweeping Filter, Polyrhythm v3, Veil, Stereo Phaser, Morpher,
+Passage, Resonance Bank, Rhythm Track. Their controls feed a shape redrawn every
+sample, or a threshold compared every sample, so the wander is expressed rather
+than sampled. Tremolo, Shepard Scale and Polyrhythm v3 were on the old list and
+should not have been. Polyrhythm v1 is out by the standing decision to leave it.
 
 **One thing to settle before propagating further.** A stepped target advances
 `1 / period` on its turn and ignores `Drift period unit` entirely, so choosing

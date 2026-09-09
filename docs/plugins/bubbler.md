@@ -129,6 +129,33 @@ any of the others.
 BPM whatever the rate mode says, because that is the suite's rule everywhere —
 the plugin converts, you never do.
 
+### Whose turn it is (2026-09-09)
+
+Some drift targets are read by the engine **once per event** rather than
+continuously. Those now advance their wander by exactly one step of
+`1 / period` at that moment, and not at all in between — so a period of 8 is
+eight of that event, and it stays eight however much the other targets move.
+
+Before this they were sampled out of a wander that never stopped spinning:
+almost all the motion was thrown away, the period did not count what it said,
+and the targets were not independent of each other. Rozaya found it, 2026-09-09.
+
+**Stepped here:** **Timing randomness**, **Transpose** and **Pitch spread**.
+All three are read at the moment a bubble is born and then belong to that
+bubble, so they step once per bubble.
+
+Counted on the **left** stream only. Left and right spawn independently, so
+counting both would make "every 8 bubbles" mean eight at Timing randomness 0 and
+about four once you raise it — one control quietly changing what another means.
+Both channels read the same drifted value either way.
+
+**Not stepped:** Bubble rate, Rise, Bubble length, Stereo width, Dry/wet and
+Output, all of which are read every sample.
+
+A stepped wander is a staircase with as many steps as its period has events.
+Long periods sound much as they did; short ones are more obviously
+event-to-event.
+
 **Drift period** can be counted in **cycles, seconds or beats** — and cycles is
 the default. A cycle is this plugin's own: twenty cycles means twenty of whatever
 it is doing, so the wander stretches when you slow the plugin down. Seconds is
