@@ -490,6 +490,40 @@ ramp_rest_mem    = 8496;   // CONFIG: rest window
 ramp_pr_accum    = 8512;   // RUNTIME
 ramp_pr_resting  = 8528;   // RUNTIME
 
+// --- "your turn came round" flags, per target (2026-09-09) ------------------
+// Next free slot after this one: 8560.
+drift_step_mem   = 8544;   // RUNTIME
+
+// WHICH TARGETS STEP, AND WHICH FLOW.
+//
+// A target the engine reads ONCE PER EVENT was, until now, sampled out of a
+// free-running oscillator. Nearly all of the wander was thrown away, the period
+// did not count what it said it counted, and -- the part that actually bites --
+// the targets were not independent of each other, because the period was
+// measured against a cycle length the other targets were busy changing.
+//
+// Rozaya, 2026-09-09: "while one segment is going, the other three keep
+// drifting, which means effectively anything you set as independent bits for
+// drift per segment is basically being thrown away."
+//
+// So those targets now advance by exactly 1/period ONCE, on the sample their own
+// thing begins. Which ones, and why each:
+//
+//   0 Heart rate    STEPPED. Its period counts heartbeats and it is what
+//                   changes a heartbeat's length, so continuously it was
+//                   measuring itself with a ruler it was stretching. A real
+//                   heart also settles a beat's length when the beat starts;
+//                   variation between beats is what HRV is.
+//   1 S1-S2 gap     STEPPED. Read once per heartbeat, at S2.
+//   2..5 segments   STEPPED. Read once, when that segment begins.
+//   6 RSA depth     continuous -- applied every sample to the heart rate.
+//   7 Breaths/min   STEPPED, on the whole breath, since it scales all four
+//                   segments together and they are read at their own starts.
+//   8,9 breath freqs continuous -- filter centres, applied every sample, so
+//                   they render the whole curve and can move WITHIN a breath.
+//   10 Bloodflow offset  continuous -- read every sample as a phase shift.
+function drift_is_stepped(idx) ( idx < 6 || idx == 7; );
+
 // Play/rest gate, shared by Drift and Ramp. Returns 1 while this target is in
 // its REST window, 0 otherwise; ticks the accumulator either way so the two
 // windows stay in step. Off entirely unless BOTH windows are above 0 -- one of
@@ -600,6 +634,7 @@ loop(N_TARGETS,
   target_drift_prev[i]   = 0;
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
+  drift_step_mem[i]      = 0;
   i += 1;
 );
 
@@ -1114,16 +1149,27 @@ loop(N_TARGETS,
                         : max(total_breath_samples / max(breath_host_scale, 0.0001), 1);
     period_samples = max(per * period_base, 1);
 
+    // How much phase this sample is worth. A STEPPED target gets a whole
+    // 1/period, but only on the sample its own thing begins; a continuous one
+    // gets the usual per-sample slice. Play/rest ticks on the same quantity, so
+    // "rest for N periods" keeps meaning the same thing either way.
+    drift_is_stepped(i) ? (
+      d_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
+      drift_step_mem[i] = 0;
+    ) : (
+      d_tick = 1.0 / period_samples;
+    );
+
     // Drift play/rest. Windows are whole PERIODS. While resting the phase is
     // held, so the offset FREEZES where it stopped rather than returning to
     // centre -- the staircase, not a reset.
     d_frozen = pr_frozen(drift_pr_accum, drift_pr_resting, i,
-                         1.0 / period_samples,
+                         d_tick,
                          drift_play_mem[i], drift_rest_mem[i]);
     // One-armed on purpose: an empty else-branch is a silent compile failure.
     d_frozen ? ( new_phase = target_drift_phase[i]; );
     !d_frozen ? (
-      new_phase = target_drift_phase[i] + 1.0 / period_samples;
+      new_phase = target_drift_phase[i] + d_tick;
       new_phase >= 1.0 ? (
         new_phase -= 1.0;
         shape == 2 ? (
@@ -1311,6 +1357,11 @@ cycle_len = max(cycle_len_base, floor(srate * 60.0 / 1000.0));
 hb_phase += 1;
 hb_phase >= cycle_len ? (
   hb_phase = 0;
+  // A new heartbeat begins: the heart rate's turn and the S1-S2 gap's turn.
+  // Raised on the CYCLE, not on the audible beat -- the play/rest gate silences
+  // beats without stopping the cycle, and drift should follow the cycle.
+  drift_step_mem[0] = 1;
+  drift_step_mem[1] = 1;
   pr_hb_enabled ? (
     pr_hb_beat >= (pr_hb_resting ? rest_for_hb : play_for_hb) ? (
       pr_hb_resting = 1 - pr_hb_resting;
@@ -1444,6 +1495,10 @@ breath_state_pos >= breath_state_len ? (
         sigh_time_since_last = 0;
       );
       breath_state     = 0;
+      // A new breath begins: the inhale's turn, and the whole breath's turn --
+      // Breaths/min scales all four segments together, so a breath is its unit.
+      drift_step_mem[2] = 1;
+      drift_step_mem[7] = 1;
       // Multiply by sigh_scale if sigh_active; otherwise use the
       // currently-drifted inhale_len as-is. Same pattern applies at every
       // state transition below — drift wanders the underlying segment
@@ -1456,9 +1511,18 @@ breath_state_pos >= breath_state_len ? (
     // multiplied by sigh_scale if we're mid-sigh. sigh_active stays set
     // through all four states of the sigh breath; it clears at the
     // next 3->0 transition above.
-    breath_state == 1 ? breath_state_len = sigh_active ? max(floor(top_len    * sigh_scale), 1) : top_len;
-    breath_state == 2 ? breath_state_len = sigh_active ? max(floor(exhale_len * sigh_scale), 1) : exhale_len;
-    breath_state == 3 ? breath_state_len = sigh_active ? max(floor(bot_len    * sigh_scale), 1) : bot_len;
+    breath_state == 1 ? (
+      breath_state_len = sigh_active ? max(floor(top_len    * sigh_scale), 1) : top_len;
+      drift_step_mem[3] = 1;
+    );
+    breath_state == 2 ? (
+      breath_state_len = sigh_active ? max(floor(exhale_len * sigh_scale), 1) : exhale_len;
+      drift_step_mem[4] = 1;
+    );
+    breath_state == 3 ? (
+      breath_state_len = sigh_active ? max(floor(bot_len    * sigh_scale), 1) : bot_len;
+      drift_step_mem[5] = 1;
+    );
   );
 );
 
@@ -1477,6 +1541,11 @@ pr_br_resting ? (
       sigh_time_since_last = 0;
     );
     breath_state     = 0;
+    // Rest-exit starts a real new breath, so it owes the same two turns as the
+    // 3->0 path above. Missing this would skip a step every time the Breath
+    // play/rest gate let go.
+    drift_step_mem[2] = 1;
+    drift_step_mem[7] = 1;
     breath_state_len = sigh_active ? max(floor(inhale_len * sigh_scale), 1) : inhale_len;
     breath_state_pos = 0;
   );

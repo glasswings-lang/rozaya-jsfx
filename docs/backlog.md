@@ -26,8 +26,10 @@ Moved out of the plan 2026-09-08, verbatim.
 
 ## PROPOSED R23 — drift steps on the target's own turn (raised 2026-09-09)
 
-**Status: PROPOSED by Claude, from a problem Rozaya found. NOT settled, NOT
-built anywhere except Breath Generator. Do not cite it as decided.**
+**Status: from a problem Rozaya found. Built in Breath Generator and, as of
+2026-09-09, Womb -- both APPROVED by her in conversation, target by target.
+The shape of the rule is still Claude's wording; do not cite the wording back
+as hers.**
 
 > A drift target that is READ ONCE PER OCCURRENCE steps once per occurrence, and
 > its period counts those occurrences. A target read CONTINUOUSLY drifts
@@ -38,34 +40,33 @@ drifting, which means effectively anything you set as independent bits for drift
 per segment is basically being thrown away. Like, you don't get to say drift this
 thing every two cycles and drift this thing every four. it's being fucked."*
 
-**Every plugin in the suite with drift advances its phase continuously, per
-sample — all twelve, checked 2026-09-09.** That is right for a target the engine
-reads all the time, and wrong for one it reads once per event: the value is
-sampled once per occurrence from a free-running oscillator, so the period does
-not mean what it says, the shape is barely represented, and — the part that
-actually bites — the targets are not independent, because the period is measured
-against a cycle length the other targets are busy changing.
-
-**Fixed in Breath Generator only**, 2026-09-09, and measured: inhale on a period
-of 2 and exhale on 3, together, each repeating on its own count. The five stepped
-targets advance 1/period once when their own segment begins; the two pitch
-targets stay continuous because they are applied every block and can render the
-whole curve — which also lets them move WITHIN a breath, something a duration can
-never do.
+**Every plugin with drift advanced its phase continuously, per sample — all
+twelve, checked 2026-09-09.** Right for a target read all the time, wrong for one
+read once per event: sampled from a free-running oscillator, the period does not
+mean what it says and the targets are not independent, because the period is
+measured against a cycle length the others are busy changing. Measured in both
+builds: two targets on periods of 2 and 3 now repeat on their own counts.
 
 **Who else has per-occurrence targets, and is therefore wrong today:**
 
 | plugin | targets read once per occurrence |
 |---|---|
-| `womb_sound_generator_v3` | Inhale, Top pause, Exhale, Bottom pause, S1-S2 gap |
+| ~~`womb`~~ | **DONE 2026-09-09** — heart rate, S1-S2 gap, four segments, Breaths/min. The heart rate steps too: "it doesn't lose motion" was the wrong test. |
 | `melody_phase` | V1–V8 Note duration, Attack %, Release % |
 | `polyrhythm_phase_v3` | On Duration, Attack %, Release % |
 | `Full_Feature_Tremolo` | On Duration %, Attack %, Release % |
 | `shepard-scale` | Note Length %, Attack %, Release % |
 | `heartbeat gen` | S1-S2 gap |
 
-Womb is the closest twin — the identical four breath segments — so it is the
-obvious second, and the one where the fix is already written.
+**Still open, and NOT to be started unasked:** Melody, Polyrhythm v3, Tremolo,
+Shepard Scale and the Heartbeat Generator.
+
+**One thing to settle before propagating further.** A stepped target advances
+`1 / period` on its turn and ignores `Drift period unit` entirely, so choosing
+`Seconds` or `Beats` on a stepped target silently behaves as `Cycles`. That is a
+control meaning something other than what it says, which is the rule this suite
+takes most seriously. It is shipped that way in Breath Generator and Womb.
+Raised 2026-09-09, undecided.
 
 ---
 

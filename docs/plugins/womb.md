@@ -41,7 +41,8 @@ Migration from v2: the audio-shaping sliders 1-47 keep their meaning, so the hea
 
 Identical to v2 for the three audio layers (see [Womb Sound Generator v2 → Signal Architecture](#womb-sound-generator-v2) for the full description). The change is in **how the drift modulations are computed and applied**:
 
-Each of the 10 drift targets has its own phase counter advancing per sample. The phase advance scales with Ramp so all drifts slow together when Ramp engages. Per-target up amount, down amount, period, and shape are stored in a per-instance memory bank — the slider 56-58 values you see at any moment reflect whichever target is currently selected.
+Each drift target has its own phase counter. **Six of them step on their own
+turn** and the rest advance per sample -- see "Whose turn it is" below. The phase advance scales with Ramp so all drifts slow together when Ramp engages. Per-target up amount, down amount, period, and shape are stored in a per-instance memory bank — the slider 56-58 values you see at any moment reflect whichever target is currently selected.
 
 Target indices and units:
 
@@ -58,7 +59,7 @@ Target indices and units:
 | Inhale Freq | 8 | Hz (inhale breath-noise filter cutoff — brightness) | breath cycles |
 | Exhale Freq | 9 | Hz (exhale breath-noise filter cutoff — brightness) | breath cycles |
 
-Each drift offset is added to the target's baseline slider value per sample. For example: with Heart rate target's up/down at 5/5 and a period of 8 heartbeats with Sine shape, the effective BPM each beat wanders within ±5 of the baseline slider 1 value, completing one full sine over 8 beats.
+Each drift offset is added to the target's baseline slider value per sample. For example: with Heart rate target's up/down at 5/5 and a period of 8 heartbeats with Sine shape, the effective BPM wanders within ±5 of the baseline slider 1 value, completing one full sine over 8 beats -- in eight steps, one per beat, since Heart rate is a stepped target.
 
 ---
 
@@ -90,7 +91,32 @@ Switching the selector saves the current values of sliders 55-58 to the previous
 
 ### Drift period (slider 58)
 
-`Drift period (heartbeats or breath cycles)` — how many parent-rhythm cycles one full drift wave takes. Range 1-1000 step 1. The unit auto-matches the target: heartbeats for Heart rate and S1-S2 gap, breath cycles for the four breath segments and RSA depth.
+`Drift period (in drift period units)` — how many cycles one full drift wave takes. Range 1-1000 step 1. In `Cycles` the unit auto-matches the target: heartbeats for Heart rate and S1-S2 gap, breath cycles for the breath targets.
+
+### Whose turn it is (2026-09-09)
+
+Six targets are read by the engine **once per event** rather than continuously:
+Heart rate and the S1-S2 gap once per heartbeat, the four breath segments when
+each segment begins, and Breaths/min when each breath begins. Those six now
+advance their wander by exactly one step of `1 / period` at that moment, and
+nothing in between. So a period of 4 on the inhale is four inhales, walked in
+four even steps, and it stays four inhales however much the other targets move.
+
+Before this they were sampled out of a wander that never stopped spinning, so
+almost all of the motion was thrown away, the period did not count what it said,
+and the targets were not independent of each other -- their periods were measured
+against a cycle length the other targets were busy changing. Rozaya found it,
+2026-09-09.
+
+The remaining targets -- RSA depth, the two breath filter frequencies, and the
+bloodflow offset -- are read every sample, so they keep drifting continuously.
+That is right for them: they can draw the whole curve, and they can move *within*
+a single breath, which a segment length can never do.
+
+**What changes for you:** a stepped wander is a staircase with as many steps as
+its period has cycles. Long periods sound much as they did. Short ones are more
+obviously beat-to-beat or breath-to-breath -- which, for the heart, is what heart
+rate variability actually is.
 
 Period 1 with Random shape gives beat-to-beat (or breath-to-breath) jitter — each cycle gets a fresh random value within the up/down range.
 
