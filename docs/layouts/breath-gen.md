@@ -81,32 +81,43 @@ recorded, and `breathscapes.RPP` already has 8 typed into a sibling.
 
 ### Pitch — 7–13
 
-R22, one block behind a target. **Not two blocks** — the backlog table said two
-and was corrected 2026-09-08; Rozaya settled it as *"target, then select from 2,
-that way you're able to extend it later if needed, also less sliders."*
+R22, one block behind a target. **The rule was rebuilt on 2026-09-09 after the
+first version was heard and rejected.**
 
-Placed here because Womb puts `Inhale/Exhale Frequency Hz` exactly here, between
-the segments and the fades.
+**What was wrong with the first version.** It had a `Note` picker as the coarse
+control and a `Pitch value` that was an OFFSET from it, plus a `Fine tune` pair.
+Rozaya: *"you're doing one job twice... note is not master here. it's one way of
+expressing pitch, period."* Making the value an offset turned it into a second
+fine tune sitting above the real one, with the wrong half labelled as coarse.
+Remove the master relationship and the duplication disappears.
 
-These are **filter centres, not generated tones**, and they get the block anyway
-— Rozaya, 2026-09-08: *"Filters: yes, they should. Musicality integration, not
-exclusivity, is the idea here."* Breath Generator makes its own sound, so the
-block carries a `Note` picker.
+**And `Note is not a mode` was a workaround dressed as a rule.** R22 stated it as
+a principle. The actual reason is that a JSFX slider can be a list of note names
+or a continuous number, never both. That is the failure this repo already has a
+name for, and it got caught again.
 
 | # | control | note |
 |---|---|---|
-| 7 | `Pitch target` `{All, Inhale, Exhale}` | **NEW.** `All` at position 0. |
-| 8 | `Note` (C-1 … G9) | **NEW.** Full MIDI range — a standard, not a measurement of what these projects happen to use. |
-| 9 | `Pitch value (Hz / semitones / cents)` | replaces sliders 5 and 6 |
-| 10 | `Pitch mode` `{Hz, Semitones, Cents}` | **NEW.** |
-| 11 | `Fine tune value (Hz / semitones / cents)` | **NEW.** A second complete pair, always present. |
-| 12 | `Fine tune mode` `{Hz, Semitones, Cents}` | **NEW.** |
-| 13 | `Tuning reference (Hz)` | **NEW.** One per plugin. |
+| 7 | `Pitch target` `{All, Inhale, Exhale}` | `All` at position 0. |
+| 8 | `Pitch mode` `{Hz, Semitones, Cents}` | **Mode first**, deliberately — it decides whether the readout below means anything. Inverts R20's value-then-mode order on purpose. |
+| 9 | `Note name (readout)` | **Not a control.** Written BY the plugin from `Pitch value` in Semitones mode, and `slider_show` hides it in every other mode, where it would be lying. |
+| 10 | `Pitch value (Hz / semitones / cents)` | **THE pitch.** Hz is the frequency; Semitones is the MIDI note number (60 = middle C); Cents is the same axis ×100. |
+| 11 | `Fine tune` | The only fine tune. There is exactly one. |
+| 12 | `Fine tune unit` `{Hz, Semitones, Cents}` | |
+| 13 | `Tuning reference (Hz)` | One per plugin. |
 
-**Migration note: the two frequencies are 800 and 600 Hz by default and are real
-values in all 4 instances.** They move into the per-target bank behind the selector,
-with `Pitch mode` seeded to `Hz` so every stored number keeps meaning exactly
-what it means today. Nothing is converted to semitones on the way in.
+**The readout is ONE-DIRECTIONAL and must stay that way.** Pitch value writes the
+note name; the note name never writes back. A two-way binding is what broke the
+rate block in August — with both ends writing, the code has to guess which one
+the user moved, and it guesses wrong.
+
+**Migration note:** the two frequencies now migrate as themselves — `Pitch mode`
+= Hz, `Pitch value` = 300. The earlier note-plus-remainder encoding produced
+values like `6.335232` on screen and is gone.
+
+**Verified by running it** (`tools/jsfx_run`), not by reading: a fresh instance
+is sample-identical to the pre-change plugin, and Hz 300, Semitones 62.3486 and
+Cents 6234.86 all produce bit-identical output.
 
 ### Fades — 14–18
 
