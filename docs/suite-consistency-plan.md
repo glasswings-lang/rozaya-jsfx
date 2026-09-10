@@ -451,15 +451,10 @@ name promising one. A real sigh is a bigger breath, not merely a slower one. A s
 
 ## R13 REVISED — Host x stays a rate mode; Rate Value means BEATS there (2026-09-02)
 
-**SUPERSEDED IN PART BY R20 (2026-09-04).** Everything here about Host x being
-a rate mode and Rate Value meaning beats is CORRECT and still in force. What R20
-overturns is the paragraph below headed *Where the heavier R13 shape still earns
-its keep* — it does not earn its keep anywhere, and that paragraph is what sent
-multiple sessions to build a sync block that the measurements say nobody uses.
-
-**This supersedes R13's "split Rate mode from a Sync to host switch" for every
-plugin with a single sync target.** Rozaya raised it and the reasoning is
-better than the original.
+**Host x is a rate mode, and in it Rate Value means beats. That is in force.**
+Rozaya raised it and the reasoning is better than the original R13, which had
+split Rate mode from a `Sync to host` switch. **Read R20 for the rate block as a
+whole**; the one shape R20 killed is in `docs/history/R13.md`.
 
 **What R13 got right and what it got wrong** is in `docs/history/R13.md`.
 
@@ -991,12 +986,11 @@ one — so a voice can sit a true third above another rather than an equal-
 tempered approximation of one, and a drone can be detuned in Hz against a
 measured reference rather than by ear alone.
 
-## `Fine tune` SURVIVES, and gets its own mode — the fourth reduction, caught
+## `Fine tune` is its own pair, always present
 
-An earlier draft of this rule deleted `Fine tune (cents)`, on the reasoning that
-the pitch value-and-mode pair "does its job and more, and keeping both would be
-two ways to say one thing". I even flagged it as the one reduction here that
-came from correctness rather than tidying. It did not.
+**Keep it.** It was once proposed for deletion, on the reasoning that the pitch
+value-and-mode pair "does its job and more" — see `docs/history/R22.md`. It does
+not, and here is why.
 
 Rozaya, 2026-09-08:
 
@@ -1131,9 +1125,8 @@ please" — and she was right, two of these I was re-deriving from scratch.**
   frequency ratios**."* That is the pitch mode list, written down on 2026-08-31.
   R9 also already carries Rozaya's widening principle in its own words: *"This
   rule never removes range or precision, and must not be read as doing so."*
-- **R12 — the range, and it is DECIDED, not open.** An earlier draft of R22 left
-  the `Pitch value` range as an open question for Rozaya. It is not one. R12
-  says a numeric slider spans 0–1000 or −1000–1000, and carve-out 1 says
+- **R12 — the range, and R12 already decided it.** A numeric slider spans
+  0–1000 or −1000–1000, and carve-out 1 says
   *"'1000 or wider' — never a ceiling"* because narrowing permanently clamps
   saved values. Resonance Bank's band frequency already reaches 20000, so the
   Hz end must reach 20000 and **the range is −20000..20000**. R12 decided that
