@@ -116,8 +116,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   reasons (`docs/history/R22.md`).
 - **R23 is SWEPT** — fourteen plugins cleared and not to be "fixed"
   (`docs/backlog.md` has the table).
-- The 2026-09-06 drift/ramp sweep, the `N per beat` fix, Tremolo's Start delay
-  fix, the range widenings.
+- The 2026-09-06 drift/ramp sweep, `N per beat`, Tremolo's Start delay, the ranges.
 - **Every new capability on Polyrhythm v3.** Never played: per-voice On Duration /
   Depth / Attack / Release, per-voice Waveform, `Solo this voice`, `Pan rate mode`
   in a new mode, all six drift/ramp controls. **`Voice = All` first** — the
