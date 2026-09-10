@@ -72,9 +72,11 @@ the 2026-09-07 Polyrhythm v3 migration (8 instances, 5 projects); Breath
 Generator's 40-slider layout, 2026-09-09 — *"it works end-to-end"*. The quotes
 and the how are in `docs/session-log.md`.
 
-**Quit REAPER fully before reopening after any promotion** — from the 2026-09-08
-breath build heard, reverted and never explained; pair kept at
-`snapshots/_broken-breathgen-20260908-forensics/`.
+**After any promotion the plugin must be re-read from disk.** Rozaya: *"You
+don't need to quit reaper, you just need to open a new project and then reopen
+one, or load the plugin onto a new track in that new one."* Cheaper than the
+full quit this used to demand, and it matters — see the 2026-09-08 breath build
+heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 **Not heard:**
 
