@@ -250,12 +250,24 @@ target; both zero is off.
 One full wave, counted in the unit below.
 
 **Drift period unit** `{Breaths, Seconds, Beats}, default Breaths`
-For the five stepped targets this counts **turns of that target** — eight inhales,
-not eight of anything else. It is called `Breaths` rather than the suite's usual
-`Cycles` because here the thing that repeats is a whole breath, and the plugin
+For a target set to `With the target` this counts **turns of that target** — eight
+inhales, not eight of anything else. It is called `Breaths` rather than the suite's
+usual `Cycles` because here the thing that repeats is a whole breath, and the plugin
 already counts in breaths on `Play for` and `Rest for`. **Seconds** is wall clock
-and **Beats** follows the project tempo; both are the right choice for the two
-pitch targets, which run continuously.
+and **Beats** follows the project tempo.
+
+**Drift movement** `{With the target, On a clock}` *(new 2026-09-09)*
+Whether this target's drift moves in step with its own thing, or runs continuously
+underneath it. `With the target` advances the drift exactly one step each time that
+target happens — an inhale's drift moves on each inhale — so it is deterministic,
+independent of every other target, and unaffected by the breath length changing
+underneath it. `On a clock` advances it continuously, drawing the whole curve,
+which is what anything applied continuously wants.
+
+Per target, like everything else in the block. **Defaults are what the plugin did
+before this control existed**: the breath rate and the four segments arrive on
+`With the target`, the two pitch targets on `On a clock`. Nothing you have saved
+changed. Both are ordinary artistic choices and neither is the plugin's to make.
 
 **Drift shape** `{Sine, Triangle, Random}, default Sine`
 Sine is smooth, Triangle is linear ramps with turnarounds, Random interpolates

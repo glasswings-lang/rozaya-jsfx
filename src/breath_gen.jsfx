@@ -152,19 +152,37 @@ slider28:8<0,1000,1>Drift period (0 = off)
 //
 // Index 0 either way, so nothing stored is reinterpreted.
 slider29:0<0,2,1{Breaths,Seconds,Beats}>Drift period unit
-slider30:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
+// Rozaya, 2026-09-09: the choice between the two "should have been a switch
+// from the very beginning" -- both are valid artistic decisions and neither is
+// the plugin's to make.
+//
+// `With the target` advances the drift by exactly one step each time that
+// target's own thing happens: an inhale's drift moves on each inhale, and a
+// period of 8 means eight inhales. Deterministic, independent of every other
+// target, and immune to the breath length moving underneath it.
+//
+// `On a clock` advances it continuously, so it draws the whole curve. That is
+// right for anything applied continuously rather than read once -- the two
+// pitch targets are set to it by default for that reason.
+//
+// DEFAULTS PRESERVE TODAY'S BEHAVIOUR EXACTLY: the rate and the four segments
+// default to `With the target`, the two pitch targets to `On a clock`. That is
+// what drift_is_stepped() hardcoded before this control existed.
+slider30:0<0,1,1{With the target,On a clock}>Drift movement
+slider31:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Counted in PERIODS. Both must be above zero or the gate is off. While resting
 // the phase does not advance, so the offset FREEZES where it stopped rather
 // than returning to centre -- and the FRACTION of the play value chooses where
 // it parks: x.25 crest, x.75 trough, x.0 and x.5 neutral.
-slider31:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider32:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider32:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider33:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp (nested selector, per target) -----------------------------------
 // Ramp start delay rejoins its own block here. It sat at slider 32, seven
 // places away, because it was appended later when append-only was the rule.
-slider33:0<0,6,1{Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Exhale pitch}>Ramp target
-slider34:0<-1000,1000,0.001>Ramp by
+slider34:0<0,6,1{Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Exhale pitch}>Ramp target
+slider35:0<-1000,1000,0.001>Ramp by
 // One unit for duration AND start delay, so they always mean the same as each
 // other. DEFAULT IS 2, Minutes, which is what this block always did; index 0
 // would silently reinterpret every saved ramp.
@@ -172,16 +190,16 @@ slider34:0<-1000,1000,0.001>Ramp by
 // `Breaths` rather than the suite's `Cycles`, for the same reason as the drift
 // period unit above. It counts whole breaths at the length BEFORE drift and ramp
 // touch it, so a ramp cannot alter its own clock.
-slider35:2<0,3,1{Breaths,Seconds,Minutes,Beats}>Ramp time unit
-slider36:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider36:2<0,3,1{Breaths,Seconds,Minutes,Beats}>Ramp time unit
+slider37:0<0,1000,0.1>Ramp duration (in ramp time units)
 // The ramp advances for `play`, holds for `rest`, and repeats -- a staircase
 // instead of a smooth glide. The holds come OUT of the duration rather than
 // extending it, so Ramp duration goes on meaning "you arrive in about this
 // long". Both zero is the smooth ramp.
-slider37:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider38:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider39:0<0,1,1{Off,On}>Ramp engage
-slider40:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider38:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider39:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider40:0<0,1,1{Off,On}>Ramp engage
+slider41:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -353,6 +371,7 @@ pitch_hz_mem   = 4512;   // DERIVED in @block, never here
 pui_last       = 4528;   // mirror of the five visible pitch controls (RUNTIME)
 brm_last       = 4544;   // mirror of the rate + four segments  (RUNTIME)
 drift_step_mem = 4560;   // "your turn came round" flags, per target (RUNTIME)
+target_drift_moves = 4576;  // 0 = with the target, 1 = on a clock (CONFIG)
 
 // WHICH TARGETS STEP, AND WHICH FLOW.
 //
@@ -375,7 +394,7 @@ drift_step_mem = 4560;   // "your turn came round" flags, per target (RUNTIME)
 // Targets 5 and 6, the two filter centres, are NOT stepped. They are applied
 // continuously in @block, so they can render the whole curve, and a time-based
 // period is exactly right for them.
-function drift_is_stepped(idx) ( idx < 5; );
+function drift_is_stepped(idx) ( target_drift_moves[idx] == 0; );
 pitch_ui_inited = 0;     // adopted in @block; while 0, @slider writes nothing
 
 // --- The Pitch target selector's three operations -------------------------
@@ -480,6 +499,9 @@ drift_cfg_inited != 1 ? (
     target_drift_down[i]  = 0;
     target_drift_per[i]   = 8;
     target_drift_shape[i] = 0;
+    // Defaults reproduce what drift_is_stepped() hardcoded: the rate and the
+    // four segments step with their own thing, the two pitch targets flow.
+    target_drift_moves[i] = i < 5 ? 0 : 1;
     i += 1;
   );
   last_target_select = 0;
@@ -692,35 +714,35 @@ new_pr_enabled = (play_for_breaths > 0 && rest_for_breaths > 0);
 );
 pr_enabled = new_pr_enabled;
 
-// Speed ramp target selector save/restore. slider33 = target; slider34 =
-// per-target `by`; slider36 = per-target duration; slider40 = per-target start
-// delay (all three per-target as of v2.14). slider39 (engage) stays GLOBAL.
+// Speed ramp target selector save/restore. slider34 = target; slider35 =
+// per-target `by`; slider37 = per-target duration; slider41 = per-target start
+// delay (all three per-target as of v2.14). slider40 (engage) stays GLOBAL.
 // When the selector changes, save the three per-target sliders to the OLD
 // slot, then load the NEW slot's stored values. Otherwise capture live edits.
-sel_speed_target = slider33;
+sel_speed_target = slider34;
 last_speed_target != sel_speed_target ? (
-  speed_ramp_target_value_mem[last_speed_target] = slider34;
-  speed_ramp_dur_mem[last_speed_target]          = slider36;
-  speed_ramp_delay_mem[last_speed_target]        = slider40;
-  sr_play_mem[last_speed_target]                 = slider37;
-  sr_rest_mem[last_speed_target]                 = slider38;
-  slider34 = speed_ramp_target_value_mem[sel_speed_target];
-  slider36 = speed_ramp_dur_mem[sel_speed_target];
-  slider40 = speed_ramp_delay_mem[sel_speed_target];
-  slider_automate(slider34);
-  slider_automate(slider36);
-  slider37 = sr_play_mem[sel_speed_target];
-  slider38 = sr_rest_mem[sel_speed_target];
-  slider_automate(slider40);
+  speed_ramp_target_value_mem[last_speed_target] = slider35;
+  speed_ramp_dur_mem[last_speed_target]          = slider37;
+  speed_ramp_delay_mem[last_speed_target]        = slider41;
+  sr_play_mem[last_speed_target]                 = slider38;
+  sr_rest_mem[last_speed_target]                 = slider39;
+  slider35 = speed_ramp_target_value_mem[sel_speed_target];
+  slider37 = speed_ramp_dur_mem[sel_speed_target];
+  slider41 = speed_ramp_delay_mem[sel_speed_target];
+  slider_automate(slider35);
   slider_automate(slider37);
+  slider38 = sr_play_mem[sel_speed_target];
+  slider39 = sr_rest_mem[sel_speed_target];
+  slider_automate(slider41);
   slider_automate(slider38);
+  slider_automate(slider39);
   last_speed_target = sel_speed_target;
 ) : (
-  speed_ramp_target_value_mem[sel_speed_target] = slider34;
-  speed_ramp_dur_mem[sel_speed_target]          = slider36;
-  speed_ramp_delay_mem[sel_speed_target]        = slider40;
-  sr_play_mem[sel_speed_target]                 = slider37;
-  sr_rest_mem[sel_speed_target]                 = slider38;
+  speed_ramp_target_value_mem[sel_speed_target] = slider35;
+  speed_ramp_dur_mem[sel_speed_target]          = slider37;
+  speed_ramp_delay_mem[sel_speed_target]        = slider41;
+  sr_play_mem[sel_speed_target]                 = slider38;
+  sr_rest_mem[sel_speed_target]                 = slider39;
 );
 // No engage-edge detection. `Ramp engage` (global) is a freeze/resume
 // gate, handled in @sample by advancing each target's own ramp clock.
@@ -735,30 +757,34 @@ sel_target = slider25;
 sel_up     = slider26;
 sel_down   = slider27;
 sel_per    = slider28;
-sel_shape  = slider30;
-sel_dplay  = slider31;
-sel_drest  = slider32;
+sel_shape  = slider31;
+sel_moves  = slider30;
+sel_dplay  = slider32;
+sel_drest  = slider33;
 
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
   target_drift_down[last_target_select]  = sel_down;
   target_drift_per[last_target_select]   = sel_per;
   target_drift_shape[last_target_select] = sel_shape;
+  target_drift_moves[last_target_select] = sel_moves;
   drift_play_mem[last_target_select]     = sel_dplay;
   drift_rest_mem[last_target_select]     = sel_drest;
 
   slider26 = target_drift_up[sel_target];
   slider27 = target_drift_down[sel_target];
   slider28 = target_drift_per[sel_target];
-  slider30 = target_drift_shape[sel_target];
+  slider31 = target_drift_shape[sel_target];
+  slider30 = target_drift_moves[sel_target];
   slider_automate(slider26);
   slider_automate(slider27);
   slider_automate(slider28);
-  slider31 = drift_play_mem[sel_target];
-  slider32 = drift_rest_mem[sel_target];
-  slider_automate(slider30);
+  slider32 = drift_play_mem[sel_target];
+  slider33 = drift_rest_mem[sel_target];
   slider_automate(slider31);
+  slider_automate(slider30);
   slider_automate(slider32);
+  slider_automate(slider33);
 
   last_target_select = sel_target;
 ) : (
@@ -766,6 +792,7 @@ last_target_select != sel_target ? (
   target_drift_down[sel_target]  = sel_down;
   target_drift_per[sel_target]   = sel_per;
   target_drift_shape[sel_target] = sel_shape;
+  target_drift_moves[sel_target] = sel_moves;
   drift_play_mem[sel_target]     = sel_dplay;
   drift_rest_mem[sel_target]     = sel_drest;
 );
@@ -843,20 +870,20 @@ ex_f_r = min(2.0 * sin($pi * (pitch_hz_mem[2] * (1.0 - stereo_width * 0.12)) * s
 // docs/v2.9-render-state-bug.md.)
 
 // Advance each target's own ramp clock (v2.14 per-target timeline). Engage
-// (slider39, GLOBAL) is the freeze/resume gate: while On, each target whose
+// (slider40, GLOBAL) is the freeze/resume gate: while On, each target whose
 // duration > 0 advances its own ramp_t 0->1 over its own duration, after its
 // own start delay; while Off, all clocks freeze and resume. Only transport
 // play (via @init) resets them.
-slider39 ? (
+slider40 ? (
   i = 0;
-  // Ramp time unit (slider35). One factor turns the block's time values into
+  // Ramp time unit (slider36). One factor turns the block's time values into
   // seconds, so Duration and Start delay always mean the same as each other.
   // `Breaths` is one whole breath, all four segments. Beats is 60/project tempo, recomputed per sample
   // so it follows a live tempo change rather than remembering one.
   ramp_time_scale =
-    slider35 == 3 ? 60 / max(tempo, 0.001) :
-    slider35 == 2 ? 60 :
-    slider35 == 1 ? 1 :
+    slider36 == 3 ? 60 / max(tempo, 0.001) :
+    slider36 == 2 ? 60 :
+    slider36 == 1 ? 1 :
                     max(total_breath_samples, 1) / srate;
   loop(N_SPEED_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
@@ -1179,10 +1206,10 @@ nr = noise_seed2 * (2.0 / 2147483647.0) - 1.0;
 // what makes an older blob safe to read: sr_n below is the count that blob was
 // written with, so file_mem consumes exactly what is there and the two new
 // slots keep @init's zeros. Appending targets never moves a stored index.
-sr_magic = 2400000 + N_TARGETS;
+sr_magic = 2500000 + N_TARGETS;
 file_var(0, sr_magic);
-sr_n = sr_magic == 2400000 + N_TARGETS ? N_TARGETS : 5;
-(sr_magic == 2400000 + N_TARGETS || sr_magic == 2300005 || sr_magic == 2200005 || sr_magic == 2100005) ? (
+sr_n = (sr_magic == 2500000 + N_TARGETS || sr_magic == 2400000 + N_TARGETS) ? N_TARGETS : 5;
+(sr_magic == 2500000 + N_TARGETS || sr_magic == 2400000 + N_TARGETS || sr_magic == 2300005 || sr_magic == 2200005 || sr_magic == 2100005) ? (
   file_mem(0, speed_ramp_target_value_mem, sr_n);
   file_mem(0, speed_ramp_dur_mem,          sr_n);
   file_mem(0, speed_ramp_delay_mem,        sr_n);
@@ -1206,6 +1233,12 @@ sr_n = sr_magic == 2400000 + N_TARGETS ? N_TARGETS : 5;
     file_mem(0, pitch_fmod_mem, N_PITCH);
     file_var(0, last_pitch_target);
   );
+  // 2026-09-09: Drift movement, per target. An older blob has no such field, so
+  // the bank keeps @init's defaults -- which are precisely the behaviour that
+  // blob was written under. Nothing stored changes meaning.
+  sr_magic >= 2500000 ? (
+    file_mem(0, target_drift_moves, sr_n);
+  );
 
   // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
   // on WRITE it is < 0. @serialize is the only section guaranteed to run on
@@ -1213,20 +1246,21 @@ sr_n = sr_magic == 2400000 + N_TARGETS ? N_TARGETS : 5;
   // force the visible config sliders to match the restored banks for the
   // restored selectors, correcting any transient @slider clobber.
   file_avail(0) >= 0 ? (
-    slider34 = speed_ramp_target_value_mem[last_speed_target]; // Speed ramp `by`
-    slider36 = speed_ramp_dur_mem[last_speed_target];          // Speed ramp duration
-    slider40 = speed_ramp_delay_mem[last_speed_target];        // Speed ramp start delay
+    slider35 = speed_ramp_target_value_mem[last_speed_target]; // Speed ramp `by`
+    slider37 = speed_ramp_dur_mem[last_speed_target];          // Speed ramp duration
+    slider41 = speed_ramp_delay_mem[last_speed_target];        // Speed ramp start delay
     slider26 = target_drift_up[last_target_select];            // Drift up
     slider27 = target_drift_down[last_target_select];          // Drift down
     slider28 = target_drift_per[last_target_select];           // Drift period
-    slider30 = target_drift_shape[last_target_select];         // Drift shape
+    slider31 = target_drift_shape[last_target_select];         // Drift shape
+    slider30 = target_drift_moves[last_target_select];         // Drift movement
     // The four new per-target sliders need this exactly as much as the ones
     // above -- they are backed by live sliders, so they are what a transient
     // @slider can clobber to zero on a track duplicate.
-    slider37 = sr_play_mem[last_speed_target];                 // Ramp play for
-    slider38 = sr_rest_mem[last_speed_target];                 // Ramp rest for
-    slider31 = drift_play_mem[last_target_select];             // Drift play for
-    slider32 = drift_rest_mem[last_target_select];             // Drift rest for
+    slider38 = sr_play_mem[last_speed_target];                 // Ramp play for
+    slider39 = sr_rest_mem[last_speed_target];                 // Ramp rest for
+    slider32 = drift_play_mem[last_target_select];             // Drift play for
+    slider33 = drift_rest_mem[last_target_select];             // Drift rest for
     // The pitch block is backed by live sliders too, so it needs the same
     // treatment. `All` reads back from Inhale.
     slider7 = last_pitch_target;

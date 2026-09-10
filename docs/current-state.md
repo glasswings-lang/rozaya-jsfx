@@ -84,6 +84,19 @@ at `snapshots/_broken-breathgen-20260908-forensics/`.
 
 **Not heard:**
 
+- **`Drift movement`, Breath Generator's new slider 30, 2026-09-09.** Per target:
+  `With the target` or `On a clock`. Rozaya: the choice *"should have been a switch
+  from the very beginning"*. INSERTED beside the period controls, not appended --
+  her call, migration accepted: *"Don't apend when we can aford not to."* Sliders
+  30-40 moved to 31-41; all four instances across the three projects migrated,
+  blob magic 2400007 -> 2500007 with the new bank appended holding exactly what
+  `drift_is_stepped()` hardcoded. **Old-on-old against new-on-migrated is
+  bit-identical over 40 s on all three projects**, and flipping the switch on the
+  Inhale changes the stream one breath in, where the first step falls. Backups at
+  `snapshots/_pre-driftmoves-20260909/`. The ear test owed is an open-and-play,
+  plus the one thing the runner cannot see: the two pitch targets set to `With the
+  target`, which is a filter centre and therefore invisible to measurement.
+
 - **The Breath Generator 40-slider build is PROMOTED, 2026-09-09.**
   `breath_gen.jsfx` IS the 40-slider plugin, the `_TEST40` copy is deleted, and
   all four instances across the three projects are migrated. What was heard on
