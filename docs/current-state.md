@@ -39,8 +39,8 @@ sentence.
   largest reorder in the suite so far.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
-- **R22, the pitch block: built in Breath Generator and Dapple. Breath Gen heard
-  good 2026-09-09.** Rebuilt twice by Rozaya in the hearing, so the plan's written
+- **R22: built in Breath Generator, Dapple and Bubbler. Breath Gen heard good
+  2026-09-09.** Rebuilt twice by Rozaya in the hearing, so the plan's written
   rule is BEHIND the built one — `docs/layouts/breath-gen.md` is what ships.
   **R22 opens with an attribution warning**: parts were mine, cited back as
   settled. Only *"Morpher and Passage are their own discussion"* is hers.
@@ -77,23 +77,23 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 **Not heard:**
 
-- **Dapple has the R22 pitch block, 2026-09-09** — second plugin to get it, after
-  Breath Gen, per `docs/layouts/dapple.md`. 33 sliders -> 38. All 14 instances in
-  `bubbles` and `womb-bubbles-proto` migrated, **both bit-identical over 25 s** —
-  `bubbles` is eleven Dapples tuned 40-420 Hz. Blob untouched. Backups at
-  `_pre-dapple-pitch-20260909/`.
+- **Dapple and Bubbler have the R22 block, 2026-09-09.** Dapple took Breath Gen's
+  unchanged (33 -> 38 sliders); Bubbler took the SHIFT form Rozaya designed,
+  `Source note` saying where zero is and defaulting to `None` (31 -> 37). Layouts
+  authored for both. **All 24 instances over five projects migrated, every one
+  bit-identical**; on Bubbler `C4 -> G4` renders identical to typing `7`, so the
+  note path and the number path agree. Blobs untouched. Backups:
+  `_pre-dapple-pitch-` and `_pre-bubbler-transpose-20260909/`.
 
-- **`Drift movement` — the whole sweep, 2026-09-09.** Per-target switch in all
-  six plugins that had stepping: Breath Gen (30), Bubbler (20), Dapple (22),
-  Womb (60), Heartbeat (23), Melody (76). Rozaya: it *"should have been a switch
-  from the very beginning"*. Inserted beside the period controls, never appended.
-  **110 instances across 24 projects migrated; every project bit-identical**, and
-  the switch is measured changing the sound in five of six. Defaults are what
-  `drift_is_stepped()` hardcoded. Backups: `_pre-driftmoves-*-20260909/`.
-  Bubbler's could NOT be demonstrated — drift on Bubbler ignores the runner,
-  before this change as much as after; pre-existing. Womb/Melody blobs untouched:
-  seven stored formats between them, all readable. Owed: an open-and-play, and a
-  Breath Gen pitch target on `With the target`, which is ears-only.
+- **`Drift movement` — the whole sweep, 2026-09-09.** Per-target switch in all six
+  plugins that had stepping: Breath Gen, Bubbler, Dapple, Womb, Heartbeat, Melody.
+  Rozaya: it *"should have been a switch from the very beginning"*. Inserted, never
+  appended. **110 instances over 24 projects migrated, every project
+  bit-identical**; measured changing the sound in five of six. Defaults are what
+  `drift_is_stepped()` hardcoded. Backups: `_pre-driftmoves-*-20260909/`. Bubbler's
+  could NOT be shown — drift on Bubbler ignores the runner, before as much as
+  after; pre-existing. Owed: an open-and-play, and a Breath Gen pitch target on
+  `With the target`, which is ears-only.
 
 
 

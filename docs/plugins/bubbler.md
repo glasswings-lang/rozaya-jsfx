@@ -51,7 +51,19 @@ This used to be `Own rate / Host x`, where "Own rate" meant per second. It defau
 
 **Timing randomness %** `0–100, default 70` — spacing irregularity. High = naturally scattered.
 
-**Transpose (semitones)** `-36 to +36, default +12` — base pitch shift for each grain. Positive = up (bright droplets); **negative = down (deep, underwater)**. −24 to −36 on a sustained tone is the submerged sound.
+**Transpose** *(the block, new 2026-09-09)* — how far each grain is shifted.
+
+- **Source note (where zero is)** `{None, C-1 … G9}, default None` — you tell it what
+  note the incoming audio is. It cannot work that out for itself. At **None** nothing
+  below changes and the semitone number is simply the control, exactly as before.
+- **Target note** — only appears once Source note is set. Pick the note you want to
+  hear and the shift is worked out for you, so you never do the subtraction yourself.
+- **Transpose value (Hz / semitones / cents)** — **the shift**, always, whatever else
+  is set. Nothing hides it or takes it over.
+- **Transpose unit** `{Hz, Semitones, Cents}, default Semitones`.
+- **Fine tune** and **Fine tune unit** `default Cents` — the one fine tune.
+- **Tuning reference (Hz)** `default 440` — what an Hz shift is measured from. Without
+  an anchor, "shift by 30 Hz" would not name an interval at all.
 
 **Pitch spread (semitones)** `0–24, default 7` — random pitch variation per bubble. 0 = all land on the same transposition; up = shimmering variety.
 
