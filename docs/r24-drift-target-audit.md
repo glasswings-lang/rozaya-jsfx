@@ -54,10 +54,8 @@ Missing lists are from the audit reads, not individually re-checked.
   reference, Tone resonance, Strong/Weak volume, Strong/Weak decay, Pan spread.
   The tick is pre-rendered in `@slider`, so these need a re-render path.
 - **veil** — 4 of 16. Missing: Output.
-- **polyrhythm_phase_v3** — 24 of 32. Missing 9 global: Tuning reference, Pulse
-  width, Tone, Edge, Movement, Body, Pan spread, Pan glide, Reverse drift offset.
-  Missing 40 per voice: Fine tune, Depth, On duration, Attack, Release, each ×8;
-  the last four currently share one target each.
+- **polyrhythm_phase_v3** — DONE 2026-09-10: 88 targets, each per-voice control
+  with an "(all voices)" entry that copies into eight. Phase Offset is not one.
 - **shepard-tone** — DONE 2026-09-10: 40 targets.
 - **shepard-scale** — DONE 2026-09-10: 45 targets.
 - **harmonic_sculptor** — ARCHIVED 2026-09-10, not owed anything.

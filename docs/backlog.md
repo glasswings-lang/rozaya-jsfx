@@ -316,7 +316,7 @@ Surveyed from source 2026-09-08. `Vn` collapses the per-voice banks.
 | `heartbeat gen` | S1 / S2 Frequency Hz | **one block behind a `Pitch target` selector** |
 | `melody_phase` | Vn Note, Transpose, Octave shift, tuning ref | selector first, then re-index |
 | `polyrhythm_phase` | Base Note, Vn Semitones (**range ±1000**), Center Octave | frozen; inherits at the v1→v3 crossing |
-| `polyrhythm_phase_v3` | Note, Fine tune (cents), Transpose, Octave shift | closest already; needs the value+mode pair and the re-index |
+| `polyrhythm_phase_v3` | Pitch mode, Note name, Pitch value, Fine tune + unit, per voice | **DONE 2026-09-10**, Breath Gen's block behind the Voice selector |
 | `resonance_bank` | Frequency (Hz), per band | one block per band, behind its existing selector |
 | `shepard-scale` | Center Octave, Octave Count, tuning ref | one block |
 | `shepard-tone` | Root Note, Vn Note, Center Octave, Octave Count | selector first, then re-index |

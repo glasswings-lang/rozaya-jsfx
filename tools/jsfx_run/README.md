@@ -125,6 +125,13 @@ identical and a comparison means something.
   data in one defined order. REAPER makes no such guarantee, and the ordering
   gap between `@slider`, `@block` and `@serialize` is where several real bugs in
   this suite have lived. A clean run here does NOT prove REAPER is clean.
+- **Change detection sees what you set, not what you meant.** On a selector's
+  `All`, setting a control to the value voice 1 already shows is no change, and
+  nothing is written to the other voices. Set it to something else first.
+- **Each `--stage` is a block later, and that block plays.** Setting a mode and
+  then its value leaves one block of the old value in the new mode, which moves
+  an oscillator's phase for good. Compare such runs by measured frequency, or set
+  both sides on the same stages.
 - **Anything needing ears.** It measures difference, never quality.
 
 **`--list` applies `--rpp` state before listing, as of 2026-09-09.** It used to

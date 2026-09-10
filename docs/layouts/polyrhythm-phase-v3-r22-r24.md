@@ -1,8 +1,14 @@
 # Polyrhythm Phase v3 — pitch block and full drift targets
 
-**Status: AUTHORED 2026-09-10, before building.** One migration for both halves,
-per the agreed approach: a plugin's pitch block and its drift targets go in
-together.
+**Status: BUILT, MIGRATED AND INSTALLED 2026-09-10. NOT HEARD.** One migration
+for both halves. All 8 instances render bit-identical, old plugin on the snapshot
+against new on the migrated project. A fresh instance, and a fresh instance with
+notes, fine tunes, transpose, pan, character and play/rest set, match old against
+new. A crafted 2200024 save with drift and ramp on the four shared envelope
+targets, a voice's rate and a voice's gain renders identically. Every one of the
+80 non-"all voices" targets moves the sound; A4 measures 440 Hz as Semitones 69,
+Hz 440 and Cents 6900; an all-voices entry reads back from voice 5 and 8, and
+parking on one while moving Tone leaves each voice's setup alone.
 
 ## Decided with Rozaya, 2026-09-10
 

@@ -554,6 +554,15 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   line endings and instance counts survived. A value that was ALREADY out of
   range before is reported separately from one this migration caused — mixing
   the two buries the real signal. 1176 checks, 0 failures.
+- **`polyv3_migrate_r22r24_20260910.py`** — 56 sliders to 59, applying
+  `docs/layouts/polyrhythm-phase-v3-r22-r24.md`: the visible voice's note index
+  gains 36 into Note name and Pitch value, Pitch mode is written Semitones and
+  Fine tune unit Cents, and both target selectors are remapped from 24 targets to
+  88. Slider line only; the plugin migrates a 2200024 blob itself. Skips a line
+  already storing slider 57+, dry-run by default. Verified by rendering the old
+  plugin on the snapshot against the new plugin on every migrated instance: 8 of
+  8 bit-identical, plus a crafted old save with drift and ramp on the four shared
+  envelope targets.
 
 ## doc_budget.py
 

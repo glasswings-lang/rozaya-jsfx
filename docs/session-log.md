@@ -62,6 +62,33 @@ Newest entries are the most likely to still be accurate.
 
 ---
 
+## 2026-09-10 — Polyrhythm v3: Breath Gen's pitch block per voice, and 88 targets
+
+Rozaya pointed at the shape: *"breath gen handled this nicely, actually"*. The
+five pitch controls sit with the other per-voice controls, and each voice has its
+own mode and fine tune unit — *"since in theory that would apply to the 'all'
+option too."*
+
+**The all-voices entries came out of a misunderstanding worth keeping.** I
+offered to keep the four SHARED envelope targets (one wander every voice
+follows). Rozaya asked whether I meant "the control that lets drift automate
+everything else" — which was the other thing: an entry that COPIES one setup into
+eight, like the Voice selector's All. Same sound for Sine and Triangle; they
+differ only with Random. *"Same, then, we just had to figure out what each other
+meant. I was going to try to describe that and couldn't."*
+
+**What that forced in the code:** the Drift and Ramp selectors had to become
+change-detected. A wholesale capture while parked on an all-voices entry would
+have flattened eight voices' setups on any stray `@slider` pass — the exact trap
+the Voice selector was built around on 2026-09-07.
+
+**Two test traps, both mine, neither the plugin's.** On `All`, writing a value
+equal to what voice 1 already shows is no change, so change detection rightly
+writes nothing — my "switch every voice on" left voices 2–8 off and 56 targets
+looked dead. And a mode-then-value setting takes two blocks, so the block between
+plays the old number in the new mode and offsets the phase for good: those
+comparisons are frequencies, measured, not samples.
+
 ## 2026-09-07 — Polyrhythm v3: the voices go behind a selector
 
 **The largest reorder in the suite so far: 90 sliders to 56.** Built exactly as

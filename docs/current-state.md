@@ -31,9 +31,9 @@ sentence.
 - **Polyrhythm v1 is left alone**, Rozaya 2026-09-06. Its **84 instances across
   17 projects** cross to v3 once, then v1 retires. Do not migrate those 84 twice.
 - **Reorders owed:** Passage (blocked on what it is FOR), Sweep Dwell (blocked on its `Cycle mode` question).
-- **Polyrhythm v3 is done** — built and migrated 2026-09-07, 90 sliders to 56,
-  the eight voices behind a **Voice** selector with an `All` position. The
-  largest reorder in the suite so far.
+- **Polyrhythm v3** — voices behind a `Voice` selector 2026-09-07; per-voice pitch
+  block and 88 Drift/Ramp targets with all-voices entries 2026-09-10, 59 sliders.
+  8 instances bit-identical both times. `docs/layouts/polyrhythm-phase-v3-r22-r24.md`.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
 - **R22:** Breath Gen's block was rebuilt twice in the hearing, so the plan's rule
@@ -77,8 +77,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   targets in control order. `docs/layouts/shepards-r22-r24.md`. Ears owed.
 
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
-  Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell, Shepard Scale. Owed: the
-  two sweeping filters, Resonance Bank, Polyrhythm.** Rozaya: doing some and not
+  Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell, Shepard Scale, Polyrhythm v3.
+  Owed: the two sweeping filters, Resonance Bank.** Rozaya: doing some and not
   others is *"shipping a pool ... and only having water that fills half the
   fucking pool"*. Four shapes: Dapple took Breath Gen's block unchanged;
   **Bubbler took the SHIFT form Rozaya designed** — `Source note` says where zero
@@ -115,10 +115,10 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - **R23 is SWEPT** — fourteen plugins cleared and not to be "fixed"
   (`docs/backlog.md` has the table).
 - The 2026-09-06 drift/ramp sweep, `N per beat`, Tremolo's Start delay, the ranges.
-- **Polyrhythm v3's new controls.** Per-voice Attack/Release MEASURED 2026-09-10,
-  each voice its own, soloed both ways; Rozaya: *"ear-tested by somebody in here
-  and passing, per-voice"*, no written record found. No record of play: per-voice
-  On Duration, Depth, Waveform, Solo, Pan rate mode, drift/ramp, `Voice = All`.
+- **Polyrhythm v3's new controls.** Per-voice Attack/Release MEASURED 2026-09-10;
+  Rozaya: *"ear-tested by somebody in here and passing, per-voice"*, no written
+  record. Never heard: the pitch block, the 88 targets, per-voice On Duration,
+  Tremolo amount, Waveform, Solo, Pan rate mode, `Voice = All`.
 - The Morpher's two new units off their defaults: a drift period in Cycles or
   Beats, a ramp in anything but Minutes.
 
