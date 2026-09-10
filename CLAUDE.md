@@ -107,6 +107,9 @@ read what else is in the block** -- never trust a document over the source.
 - `docs/plugins/<plugin>.md` -- user-facing reference; update it whenever you
   change a slider. `plan-history.md` and `session-log.md` are reasoning only rather than current facts. 
   `ls docs/` rather than guessing at the rest.
+- **Instruction files hold instructions only.** This file and the rules plan say
+  what to do. How it was learned goes in `docs/history/<RULE>.md`,
+  `docs/session-log.md` or `docs/working-practice.md`.
 - `tools/` -- indexed in `tools/README.md`. `jsfx_run` compiles and RUNS a plugin
   outside REAPER, so behaviour is measured here rather than predicted. Every
   `.RPP` migration builds on `rpp_sliders.py`.

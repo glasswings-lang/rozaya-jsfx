@@ -57,6 +57,7 @@ lives in the history; its slot below says so.
 - **R20** — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere
 - **R21** — The host modes name their DIRECTION, and there are two
 - **R22** — THE PITCH BLOCK, settled with Rozaya 2026-09-08: a pitch value and a pitch mode, adjacent. Not built yet.
+- **R24** — Every control that shapes the sound is a Drift and Ramp target
 
 ---
 
@@ -1237,7 +1238,20 @@ self-migration has to be built first.
 
 ---
 
-## Part 2 — Canonical layout
+## R24 — Every control that shapes the sound is a Drift and Ramp target
+
+Star, 2026-09-10: *"all the targets ... that directly affect your sound should
+absolutely be drift candidates."* Drift and Ramp exist to replace automation.
+
+- **A target:** any continuous control that changes what you hear — pitch, fine
+  tune, tuning reference, gain, output, pan spread and glide, binaural beat,
+  glide time, pulse width, filter frequencies, resonance, mix.
+- **Not a target:** modes, unit selectors, shape pickers, on/off switches, and
+  structural counts such as sequence length.
+- **A new sound-shaping control gets its target in the same change that adds it.**
+- Drift and Ramp share one target list. New targets append to it (R18).
+
+---
 
 ## Part 2 — Canonical layout
 
