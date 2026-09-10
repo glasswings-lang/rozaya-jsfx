@@ -20,7 +20,7 @@ Anything on the not-heard list there is BLOCKED, not pending: it cannot be built
 on, extended, or "finished" until it has been heard. The correct action on
 unheard work is to ask for an ear test, never to add to it.
 
-Moved out of the plan 2026-09-08, verbatim.
+Moved out of the plan 2026-09-08, verbatim. The R24 drift-target audit is in `docs/r24-drift-target-audit.md`.
 
 ---
 
