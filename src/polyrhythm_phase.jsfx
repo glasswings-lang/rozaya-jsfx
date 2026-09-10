@@ -24,7 +24,7 @@ slider6:0<0,100,0.1>Attack % of Cycle
 slider7:100<0,100,0.1>Release % of Cycle
 slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider9:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
-slider10:-6<-60,0,0.01>Depth dB
+slider10:-6<-60,0,0.01>Tremolo amount (dB, 0 = strongest)
 slider11:440<20,2000,0.1>Tuning Reference Hz
 
 // ===== BASE PITCH =====
@@ -308,7 +308,7 @@ slider73:25<1,99,0.1>Pulse Width % (50 = square)
 //   V1-V8 Gain      — wanders each voice's level (dB), per-sample, so
 //                     the voices swell and recede independently —
 //                     dynamics. (v2.10 expressive add.)
-//   Depth dB        — wanders the tremolo depth (shallower/deeper).
+//   Tremolo amount  — wanders how strongly voices pulse (0 dB = strongest).
 //   Attack %        — wanders the tremolo attack-shoulder length.
 //   Release %       — wanders the tremolo release-shoulder length.
 //
@@ -317,7 +317,7 @@ slider73:25<1,99,0.1>Pulse Width % (50 = square)
 //
 // Up/Down amount is in the target's natural unit: the rate's current
 // unit (BPM / Seconds / Hz) for the rate targets, Hz for Binaural Beat,
-// dB for the Gain targets + Depth dB, percent for Trem On Duration +
+// dB for the Gain targets + Tremolo amount, percent for Trem On Duration +
 // Attack/Release. The 0-100 range covers all; rate targets in Hz mode
 // use the low end.
 //
@@ -327,7 +327,7 @@ slider73:25<1,99,0.1>Pulse Width % (50 = square)
 // selector. The per-target memory bank re-spaced (16 → 32 slots/array)
 // to fit 24 targets, so v2.9 saved drift configs reset on load (the
 // selector still defaults to Base Rate). Reconfigure after upgrading.
-slider74:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Drift target
+slider74:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Tremolo amount (dB),Attack %,Release %}>Drift target
 slider75:0<0,1000,0.01>Drift up amount (units match target)
 slider76:0<0,1000,0.01>Drift down amount (units match target)
 slider77:8<0,1000,1>Drift period (cycles, 0 = off)
@@ -339,7 +339,7 @@ slider78:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Base-Rate ramp keeps working unchanged. Lives at 79 (a slider ID
 // freed when the v2.8 flat-drift block collapsed); the other four
 // Speed Ramp sliders stay at 65-68.
-slider79:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Ramp target
+slider79:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Tremolo amount (dB),Attack %,Release %}>Ramp target
 
 
 @init
@@ -508,7 +508,7 @@ speed_scale_current      = 1.0;
 //   11      = Binaural Beat     (units: Hz)
 //   12      = Trem On Duration  (units: %)
 //   13..20  = V1..V8 Gain        (units: dB) — v2.10
-//   21      = Depth dB           (units: dB) — v2.10
+//   21      = Tremolo amount     (units: dB) — v2.10
 //   22      = Attack %           (units: %)  — v2.10
 //   23      = Release %          (units: %)  — v2.10
 N_TARGETS = 24;
@@ -1443,7 +1443,7 @@ eff_aw + eff_rw > eff_on_frac ? (
 );
 eff_re_start = eff_on_frac - eff_rw;
 
-// Depth dB drift (target 21): wanders the tremolo depth. Recompute the
+// Tremolo amount drift (target 21): wanders the tremolo depth. Recompute the
 // sc / amount pair (the @slider math) from the drifted depth so the
 // target_gain formula below uses the wandered depth. amount is the
 // always-on floor (1 - 2^(depth/6)); sc is the LFO-driven swing.
@@ -1593,7 +1593,7 @@ loop(n_voices,
     //    play period: target_gain = lfo_val * (sc + amount). This drops
     //    the always-on Depth floor (`amount`) and lets the release tail
     //    decay all the way to 0 — so the voice actually reaches silence
-    //    before the rest freeze, regardless of Depth dB setting.
+    //    before the rest freeze, regardless of Tremolo amount setting.
     //
     //    Peak of release (lfo_val = 1, at re_start): gain = sc + amount,
     //    same as the normal peak. So no discontinuity entering release.
@@ -1620,7 +1620,7 @@ loop(n_voices,
     ) : (
       // Trem On Duration (12) / Attack % (22) / Release % (23) drift
       // fold in via eff_on_frac / eff_att_frac / eff_rel_frac (computed
-      // once per sample above). Depth dB drift (21) folds in via
+      // once per sample above). Tremolo amount drift (21) folds in via
       // eff_sc / eff_amount. calc_lfo does its own att/rel-vs-on
       // normalization internally, so passing the drifted fractions is
       // enough for the envelope shape.

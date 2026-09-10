@@ -90,8 +90,15 @@ How Rate Value is interpreted.
 **On Duration % of Cycle** `0-100%, default 50`
 The proportion of each cycle during which the tremolo is in its active (non-silent) state — including attack and release time. At 50%, the signal is present for half the cycle and absent for the other half. At 100%, the tremolo never fully closes. At 0%, the output is silence.
 
-**Depth dB** `-60-0 dB, default -6`
-How far the signal drops at the bottom of the tremolo cycle. At 0 dB there is no depth and the output is unaffected. At -60 dB the signal is effectively silenced at the trough. The depth is converted internally to a linear gain multiplier.
+**Tremolo amount (dB, 0 = strongest)** `-60 to 0 dB, default -6`
+How strongly the signal pulses. **0 dB is the strongest pulse:** it dips
+to silence at the bottom of each cycle. **-60 dB is no pulse at all:** it holds
+steady. The default of -6 is a gentle swell that never goes quiet. This is the
+same control, with the same range and behaviour, as REAPER's own stock Tremolo,
+where it is called `Amount (dB)`.
+
+*Renamed 2026-09-10 from `Depth dB`. The sound did not change. Until then this
+manual described it backwards, which is what the old name invited.*
 
 **Attack %** `0-100%, default 0`
 Proportion of the on-time spent fading in from silence to full level. At 0%, the tremolo opens instantly at the start of each on-period. Attack and Release proportions are expressed relative to the on-time, not the full cycle — so an Attack of 50% means the first half of the on-duration is the attack ramp. If Attack % + Release % exceeds 100% of the on-time, both are scaled down proportionally.
@@ -260,9 +267,9 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 ### Ramp (v2.14 nested-selector)
 
-In-plugin one-time morph over time. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same six targets as Drift** — Rate Value, Depth dB, Pan Sweep Rate, On Duration %, Attack %, Release %. All six ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
+In-plugin one-time morph over time. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same six targets as Drift** — Rate Value, Tremolo amount (dB), Pan Sweep Rate, On Duration %, Attack %, Release %. All six ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Ramp target (slider 24)** `Rate Value / Depth dB / Pan Sweep Rate / On Duration % / Attack % / Release %, default Rate Value`
+**Ramp target (slider 24)** `Rate Value / Tremolo amount (dB) / Pan Sweep Rate / On Duration % / Attack % / Release %, default Rate Value`
 Picks which target the `by` amount applies to. Switching the selector saves slider 25 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
 **Ramp by (slider 25)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
@@ -280,13 +287,13 @@ A ~100 ms smoother sits between the Rate slider and the effective frequency, so 
 
 ### Drift (v2.9 nested-selector)
 
-Slow organic wander applied independently to any of six targets: Rate Value, Depth dB, Pan Sweep Rate, On Duration %, Attack %, or Release %. Each target can have its own drift configuration; all six drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
+Slow organic wander applied independently to any of six targets: Rate Value, Tremolo amount (dB), Pan Sweep Rate, On Duration %, Attack %, or Release %. Each target can have its own drift configuration; all six drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
 Same pattern as Womb v3's drift and the rest of the sweep (target list now shared with Ramp as of v2.14). Switching the **Drift target** selector saves the current sliders 30-33 into the old target's memory slot, then loads the new target's saved values. All six configurations persist across project save/load.
 
-Drift on Depth dB makes the tremolo breathe deeper and shallower over time; drift on On Duration / Attack / Release wanders the *shape* of each pulse rather than its rate. Combine a slow Rate Value drift with a faster Depth drift for a modulation that wanders in both speed and intensity on independent schedules.
+Drift on Tremolo amount makes the tremolo breathe stronger and gentler over time; drift on On Duration / Attack / Release wanders the *shape* of each pulse rather than its rate. Combine a slow Rate Value drift with a faster Depth drift for a modulation that wanders in both speed and intensity on independent schedules.
 
-**Drift target (slider 29)** `Rate Value / Depth dB / Pan Sweep Rate / On Duration % / Attack % / Release %, default Rate Value`
+**Drift target (slider 29)** `Rate Value / Tremolo amount (dB) / Pan Sweep Rate / On Duration % / Attack % / Release %, default Rate Value`
 Picks which target's drift configuration sliders 30-33 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount (slider 30)** `0.0–100.0, default 0` (units match target)

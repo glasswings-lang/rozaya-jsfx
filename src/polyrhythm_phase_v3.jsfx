@@ -112,7 +112,7 @@ slider20:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,
 // other together. The two envelope CURVES (Attack/Release Shape) and the four
 // timbre controls stay global -- that is where refinement lives, and this is
 // where identity lives.
-slider21:-6<-60,0,0.01>Depth dB
+slider21:-6<-60,0,0.01>Tremolo amount (dB, 0 = strongest)
 slider22:100<0,100,0.1>On Duration % of Cycle
 slider23:0<0,100,0.1>Attack % of Cycle
 slider24:100<0,100,0.1>Release % of Cycle
@@ -212,7 +212,7 @@ slider40:0<0,1000,1>Rest for (cycles)
 // Up/Down amount is in the target's natural unit: the rate's current unit for
 // the rate targets, Hz for Binaural Beat, dB for the Gain targets and Depth,
 // percent for On Duration / Attack / Release.
-slider41:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Drift target
+slider41:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Tremolo amount (dB),Attack %,Release %}>Drift target
 slider42:0<0,1000,0.01>Drift up amount (units match target)
 slider43:0<0,1000,0.01>Drift down amount (units match target)
 slider44:8<0,1000,1>Drift period (0 = off)
@@ -240,7 +240,7 @@ slider48:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 // Base Rate (target 0) rides as a multiplicative RATIO so every voice scales
 // in proportional lockstep, preserving the slow beats between them. The other
 // 23 targets ride as additive offsets in their own units.
-slider49:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Depth dB,Attack %,Release %}>Ramp target
+slider49:0<0,23,1{Base Rate,V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Pan Base Rate,Pan Increment,Binaural Beat,Trem On Duration,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Tremolo amount (dB),Attack %,Release %}>Ramp target
 slider50:0<-1000,1000,0.001>Ramp by (units match target)
 // What the duration and start delay are COUNTED IN. The DECLARED DEFAULT IS 2,
 // Minutes, and that is not a free choice: every saved instance has this control
@@ -421,7 +421,7 @@ speed_scale_current      = 1.0;
 //   11      = Binaural Beat     (units: Hz)
 //   12      = Trem On Duration  (units: %)
 //   13..20  = V1..V8 Gain        (units: dB) — v2.10
-//   21      = Depth dB           (units: dB) — v2.10
+//   21      = Tremolo amount     (units: dB) — v2.10
 //   22      = Attack %           (units: %)  — v2.10
 //   23      = Release %          (units: %)  — v2.10
 N_TARGETS = 24;
@@ -1767,7 +1767,7 @@ loop(n_voices,
     //    play period: target_gain = lfo_val * (sc + amount). This drops
     //    the always-on Depth floor (`amount`) and lets the release tail
     //    decay all the way to 0 — so the voice actually reaches silence
-    //    before the rest freeze, regardless of Depth dB setting.
+    //    before the rest freeze, regardless of Tremolo amount setting.
     //
     //    Peak of release (lfo_val = 1, at re_start): gain = sc + amount,
     //    same as the normal peak. So no discontinuity entering release.

@@ -31,7 +31,7 @@ in the suite; pick whichever mental model fits the piece, per project.
 
 **Rebuilt 2026-09-07.** The eight voices moved behind a **Voice** selector,
 taking the slider count from 90 down to 56; five controls that used to be one
-setting for the whole plugin (Waveform, Depth, On Duration, Attack % and
+setting for the whole plugin (Waveform, Tremolo amount, On Duration, Attack % and
 Release %) became per-voice; **Solo** and a **Pan rate mode** are new, as are
 the six Drift and Ramp controls the rest of the suite already had. Existing
 projects were migrated and sound as they did — see the notes on each control
@@ -160,7 +160,7 @@ tiring job — arrowing 1 to 8 and picking the same waveform eight times. Park t
 selector on **All**, move a control, and every voice takes it. "All sine except
 voice five" is two moves rather than eight.
 
-So there are no separate global copies of Waveform, Depth, On Duration, Attack %
+So there are no separate global copies of Waveform, Tremolo amount, On Duration, Attack %
 or Release % any more. **All is the global.**
 
 **What All shows when the voices disagree** is voice 1's value. Reading is
@@ -213,9 +213,15 @@ This voice's waveform, from the fourteen-slot palette described below. It used
 to be one setting for the whole plugin. Set it on **All** to change every voice
 at once.
 
-**Depth dB** `-60 to 0 dB, default -6`
-How far this voice drops at the bottom of its tremolo cycle. At 0 dB there is no
-tremolo depth at all; at -60 dB the voice is effectively silenced at the trough.
+**Tremolo amount (dB, 0 = strongest)** `-60 to 0 dB, default -6`
+How strongly this voice pulses. **0 dB is the strongest pulse:** the voice dips
+to silence at the bottom of each cycle. **-60 dB is no pulse at all:** it holds
+steady. The default of -6 is a gentle swell that never goes quiet. This is the
+same control, with the same range and behaviour, as REAPER's own stock Tremolo,
+where it is called `Amount (dB)`.
+
+*Renamed 2026-09-10 from `Depth dB`. The sound did not change. Until then this
+manual described it backwards, which is what the old name invited.*
 
 **On Duration % of Cycle** `0-100%, default 100`
 The proportion of this voice's tremolo cycle during which it is in its active
@@ -430,7 +436,7 @@ A per-voice cyclic gate. Each voice plays for **Play for** cycles of its own tre
 
 The feature is **disabled when either slider is 0** (the default). With both at 0, polyrhythm_phase behaves exactly like v1 — no gating, no behavior change.
 
-**The release of the final cycle reaches actual silence.** Normally the Depth dB slider sets an always-on floor under the tremolo — at the default -6 dB, the LFO modulates between roughly 50% and 75% gain and never goes quiet. That floor would make the gate's rest entry sound like a soft thud (50% → 0% in ~15 ms). The gate's final cycle drops that floor during the release portion of the LFO, so the release tail decays all the way to 0 and the rest freeze lands on actual silence. Cycles 1 through (Play for − 1) keep the normal Depth-floored shape; only the last release changes.
+**The release of the final cycle reaches actual silence.** Normally the Tremolo amount slider sets an always-on floor under the tremolo — at the default -6 dB, the LFO modulates between roughly 50% and 75% gain and never goes quiet. That floor would make the gate's rest entry sound like a soft thud (50% → 0% in ~15 ms). The gate's final cycle drops that floor during the release portion of the LFO, so the release tail decays all the way to 0 and the rest freeze lands on actual silence. Cycles 1 through (Play for − 1) keep the normal Depth-floored shape; only the last release changes.
 
 **Use a non-zero Release setting** for the clean rest entry this feature is designed for. Release = 0% has zero release-zone width, so the depth-floor override never fires and you get a sharp cutoff at the rest boundary instead of a glide to silence.
 
@@ -445,7 +451,7 @@ A one-time ride of a chosen parameter over a duration, then it holds — the in-
 This is the complement to Drift: Drift is a *repeating* wander that always returns; Ramp is a *one-time* move that stays. Between them you can replace most automation-envelope use without leaving the plugin.
 
 **Ramp target** `24 options, default Base Rate`
-Picks which target the `by` amount edits. Same list as the Drift target selector (Base Rate, V1–V8 Rate, Pan Base Rate, Pan Increment, Binaural Beat, Trem On Duration, V1–V8 Gain, Depth dB, Attack %, Release %). Switching the selector saves the current target's `by`/duration/start-delay to the old target and loads the new target's saved values — running ramps on other targets keep going.
+Picks which target the `by` amount edits. Same list as the Drift target selector (Base Rate, V1–V8 Rate, Pan Base Rate, Pan Increment, Binaural Beat, Trem On Duration, V1–V8 Gain, Tremolo amount, Attack %, Release %). Switching the selector saves the current target's `by`/duration/start-delay to the old target and loads the new target's saved values — running ramps on other targets keep going.
 
 **Ramp by** `-1000 to +1000, step 0.001, default 0`
 Signed amount for the selected target, in that target's natural unit (rate unit for the rate targets, Hz for Binaural, dB for Gain/Depth, % for On Duration / Attack / Release). **0** = no ride.
@@ -499,11 +505,11 @@ Same pattern as Womb v3's drift and the rest of the suite. Switching the **Drift
 - **Binaural Beat** — wanders the L/R frequency offset (the beat frequency itself drifts), applied uniformly to all voices' R channel.
 - **Trem On Duration** — wanders the on-portion of the tremolo cycle (how long each pulse stays open).
 - **V1–V8 Gain** — wanders each voice's level (dB) per-sample, so voices swell and recede independently. This is the dynamics dimension — the single biggest contributor to a pattern that feels alive rather than looping.
-- **Depth dB** — wanders the tremolo depth (the pulse gets shallower and deeper over time).
+- **Tremolo amount** — wanders how strongly the voices pulse. 0 dB is the strongest, so drifting up makes the pulse stronger.
 - **Attack %** / **Release %** — wander the tremolo envelope shoulders (onsets and tails soften/sharpen).
 
 **Drift up amount** `0.0–100.0, default 0` (units match target)
-How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for the rate targets, Hz for Binaural Beat, dB for the Gain targets and Depth dB, percent for Trem On Duration and Attack/Release. Rate targets in Hz mode use the low end; Gain/Depth dB use modest values (a few dB is a strong swell). 0 = drift off on the up side.
+How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for the rate targets, Hz for Binaural Beat, dB for the Gain targets and Tremolo amount, percent for Trem On Duration and Attack/Release. Rate targets in Hz mode use the low end; Gain/Tremolo amount use modest values (a few dB is a strong swell). 0 = drift off on the up side.
 
 **Drift down amount** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
@@ -537,7 +543,7 @@ Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random
 - **Per-voice Rate drift vs. the per-voice Drift/Rate slider.** Each voice already has a static Drift/Rate value (its rate offset in Drift mode, or its rate in Independent mode). The new V1–V8 Rate drift targets add *time-varying wander* on top of that static value — the voice's rate now moves around its set point on a slow schedule.
 - **Pan Base Rate / Pan Increment drift only affect Increment pan mode.** In Tremolo pan mode the pan follows each voice's tremolo rate (already moved by Base Rate / per-voice Rate drift); Spread modes are static positions.
 - **Mode-direction asymmetry on the rate targets:** in BPM and Hz modes a positive drift amount speeds up; in Seconds mode (period) a positive amount slows down.
-- **Per-voice Gain drift is continuous (per-sample), so it's a smooth volume swell.** Depth / Attack / Release drift are global (one wander shared across all voices). Together with per-voice Rate and Gain drift, the same notes can wander in timing AND dynamics on independent schedules — the closest the plugin gets to "an unforced live ensemble."
+- **Per-voice Gain drift is continuous (per-sample), so it's a smooth volume swell.** Tremolo amount / Attack / Release drift are global (one wander shared across all voices). Together with per-voice Rate and Gain drift, the same notes can wander in timing AND dynamics on independent schedules — the closest the plugin gets to "an unforced live ensemble."
 
 #### Transport behavior
 

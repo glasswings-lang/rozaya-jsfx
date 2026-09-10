@@ -1,7 +1,7 @@
 # Open bugs
 
-**Entries 1 and 2 are CLOSED. Entry 3 is OPEN, and is not a job until Rozaya
-decides which side changes.** A closed entry stays here for its reasoning and its
+**Entries 1 and 2 are CLOSED. Entry 3 is FIXED and waits only on Rozaya meeting
+the new name in REAPER.** A closed entry stays here for its reasoning and its
 burned theories, so they are not re-derived — read them before touching the
 plugin they name, then leave them alone.
 
@@ -10,10 +10,14 @@ only when it has been fixed *and* heard.
 
 ---
 
-## 3. Polyrhythm v1 and v3 — `Depth dB` works the opposite way to its manual — OPEN
+## 3. Polyrhythm v1, v3 and Full Feature Tremolo — `Depth dB` worked the opposite way to its manual — FIXED 2026-09-10
 
-Found 2026-09-10 while measuring per-voice envelopes. Not fixed; nobody was sent
-to fix it.
+Found 2026-09-10 while measuring per-voice envelopes. **Resolved the same day,
+Rozaya's call, after it asked whether the design or the manual broke convention.**
+The code is REAPER's stock `guitar/tremolo` line for line (`Amount (dB)`,
+-60..0, default -6), so the MANUAL was wrong, in all three plugins, since the
+first release. Manuals corrected; the control is now `Tremolo amount (dB, 0 = strongest)`.
+No sound changed. Full Feature Tremolo measured the same way at 60 BPM.
 
 **The code:** `amount = pow(2, depth / 6)`, then gain = `lfo * 0.5 * amount +
 (1 - amount)`. So **0 dB pulses fully** (trough silent, peak 0.5), the -6 dB

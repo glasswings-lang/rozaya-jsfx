@@ -89,7 +89,7 @@ control it used to write into).
 | 1 | Rate value (BPM / sec / Hz / beats per cycle) | 1 |
 | 2 | Rate mode | 2 |
 | 3 | On duration (% of cycle) | 3 |
-| 4 | Depth (dB) | 4 |
+| 4 | Tremolo amount (dB, 0 = strongest) | 4 |
 | 5 | Attack (% of cycle) | 5 |
 | 6 | Attack shape | 7 |
 | 7 | Release (% of cycle) | 6 |
@@ -226,7 +226,7 @@ instances across the library.
 
 ## Still owed after this, and deliberately not folded in
 
-- **R12 ranges and R17 units.** `Pan spread` is `0..1`, `Depth dB` is `-60..0`.
+- **R12 ranges and R17 units.** `Pan spread` is `0..1`, `Tremolo amount` is `-60..0`.
   Those are suite-wide decisions with their own migration shape, and pulling
   them in here would mean authoring the `0..1` inventory first.
 - **The Pan Mode reorder (R19).** Frozen until the whole suite does it at once,

@@ -19,7 +19,7 @@ slider1:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle / per be
 // tools/ratemode_migrate_order.py.
 slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider3:50<0,100,0.1>On Duration % of Cycle
-slider4:-6<-60,0,0.01>Depth dB
+slider4:-6<-60,0,0.01>Tremolo amount (dB, 0 = strongest)
 slider5:0<0,100,0.1>Attack %
 slider7:0<0,100,0.1>Release %
 slider6:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
@@ -129,7 +129,7 @@ slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 // the automation-replacement sweep, see docs/planned-features.md). Ships in
 // v2.14. Pick a target (slider32), then slider33 is the `by` amount for THAT
 // target; all 6 targets ramp in parallel and the selector only chooses which
-// one slider33 is editing. Same 6 targets as Drift (Rate Value, Depth dB,
+// one slider33 is editing. Same 6 targets as Drift (Rate Value, Tremolo amount (dB),
 // Pan Sweep Rate, On Duration %, Attack %, Release %). Engage (slider38) is a
 // freeze/resume gate (NOT a restart edge); only transport play resets ramp_t.
 // A ~100 ms smoother sits between the Rate slider and freq so manual Rate
@@ -148,7 +148,7 @@ slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 // Ramp + Drift configs on upgrade (both off-by-default; the tremolo sound on
 // sliders 1-23 is untouched). Re-add the instance for clean defaults, or
 // reconfigure. See the manual's migration note.
-slider32:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Ramp target
+slider32:0<0,5,1{Rate Value,Tremolo amount (dB),Pan Sweep Rate,On Duration %,Attack %,Release %}>Ramp target
 slider33:0<-1000,1000,0.001>Ramp by (units match target)
 slider35:0<0,1000,0.1>Ramp duration (in ramp time units)
 slider38:0<0,1,1{Off,On}>Ramp engage
@@ -163,7 +163,7 @@ slider39:0<0,1000,0.1>Ramp start delay (in ramp time units)
 //
 // Targets:
 //   Rate Value      — wanders the tremolo rate.
-//   Depth dB        — wanders the modulation depth.
+//   Tremolo amount  — wanders how strongly it pulses (0 dB = strongest).
 //   Pan Sweep Rate  — wanders the Pan Sweep Rate (pan modes 9/10 only).
 //   On Duration %   — wanders the on-portion of each cycle.
 //   Attack %        — wanders the attack ramp length.
@@ -179,7 +179,7 @@ slider39:0<0,1000,0.1>Ramp start delay (in ramp time units)
 // covers all of them; rate/pan-rate targets in Hz mode use the low end.
 // (Drift IDs shifted +1 from the old 28-32 layout in the v2.14 reorg above —
 // same reset story.)
-slider24:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Drift target
+slider24:0<0,5,1{Rate Value,Tremolo amount (dB),Pan Sweep Rate,On Duration %,Attack %,Release %}>Drift target
 slider25:0<0,1000,0.01>Drift up amount (units match target)
 slider26:0<0,1000,0.01>Drift down amount (units match target)
 slider27:8<0,1000,1>Drift period (0 = off)
@@ -437,7 +437,7 @@ speed_scale_current      = 1.0;
 //
 // Targets:
 //   0 = Rate Value      (units: rate's current unit)
-//   1 = Depth dB        (units: dB)
+//   1 = Tremolo amount  (units: dB)
 //   2 = Pan Sweep Rate  (units: Pan Sweep Rate's unit; modes 9/10 only)
 //   3 = On Duration %   (units: %)
 //   4 = Attack %        (units: %)
@@ -1032,7 +1032,7 @@ rate_drift_user != 0 ? (
 freq = max(freq + rate_drift_hz, 0.001);
 // ===== DRIFT BLOCK END =====
 
-// Depth dB drift + Speed Ramp (target 1): fold into depth, then compute
+// Tremolo amount drift + Speed Ramp (target 1): fold into depth, then compute
 // amount/sc. Clamp to the slider's range (-60..0 dB).
 eff_depth = max(-60, min(0, depth + target_drift_offset[1] + speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1]));
 amount = 2 ^ (eff_depth / 6);

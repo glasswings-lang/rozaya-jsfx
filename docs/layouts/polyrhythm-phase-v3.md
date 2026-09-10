@@ -168,7 +168,7 @@ the selector and twelve.
 | 18 | Drift / Rate | 28 |
 | 19 | Phase Offset | 29 |
 | 20 | Waveform | 14 |
-| 21 | Depth dB | 10 |
+| 21 | Tremolo amount (dB, 0 = strongest) | 10 |
 | 22 | On Duration % of Cycle | 5 |
 | 23 | Attack % of Cycle | 6 |
 | 24 | Release % of Cycle | 7 |
