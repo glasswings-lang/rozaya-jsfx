@@ -10,12 +10,10 @@ desc: Binaural Polyrhythm Oscillator v3 (note-based)
 // the same defaults, and per-voice cycle counting keeps fast-drift
 // voices paced ahead of slow ones in real time.
 //
-// v2 (src/polyrhythm_phase.jsfx) continues to ship for players who
-// think in rates rather than notes, and to keep existing REAPER
-// projects working — sliders were reorganized in v3 for maintenance
-// convenience, so v2 project files will load against v3 with
-// settings landing on the wrong controls. Pick the version whose
-// mental model fits the piece; both are current.
+// v2 is ARCHIVED (archive/versions/polyrhythm_phase/v2.jsfx, 2026-09-10).
+// Every project that used it was converted to this plugin by
+// tools/polyv1_to_v3_crossing_20260910.py and verified by render, 144 of
+// 144 identical. This is the only Polyrhythm.
 
 // ===== GLOBAL CONTROLS =====
 // Layout authored in docs/layouts/polyrhythm-phase-v3.md BEFORE anything was

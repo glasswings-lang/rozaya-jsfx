@@ -26,10 +26,10 @@ sentence.
 
 - **The rate block (R20) and both host modes (R21): built everywhere.** True as
   of 2026-09-06 and not before.
-- **Drift/Ramp: 16 of 19 complete.** Passage is owed it; Polyrhythm v1 inherits
-  at v3. **Resonance Bank is not missing one** — its period is a rate by design.
-- **Polyrhythm v1 is left alone**, Rozaya 2026-09-06. Its **84 instances across
-  17 projects** cross to v3 once, then v1 retires. Do not migrate those 84 twice.
+- **Drift/Ramp: complete except Passage.** **Resonance Bank is not missing one** —
+  its period is a rate by design.
+- **Polyrhythm v1 CROSSED AND ARCHIVED 2026-09-10.** 144 instances in 31 files
+  (E:/reaper, TrackTemplates, Tensor's folder), all bit-identical by render.
 - **Reorders owed:** Passage (blocked on what it is FOR), Sweep Dwell (blocked on its `Cycle mode` question).
 - **Polyrhythm v3** — voices behind a `Voice` selector 2026-09-07; per-voice pitch
   block and 88 Drift/Ramp targets with all-voices entries 2026-09-10, 59 sliders.
@@ -132,17 +132,9 @@ leave running) writes every control's live value twice a second and reads a
 command mailbox, so a control can be driven and read back in the **real**
 plugin. Use it to test a claim instead of asserting one.
 
-## The v1 → v3 Polyrhythm crossing
+## The v1 → v3 Polyrhythm crossing — DONE 2026-09-10
 
-**Their `@serialize` blobs are no longer byte-identical.** That was true until
-2026-09-07 and was the stated reason the migration was tractable. v3's blob now
-carries twelve per-voice banks and four drift/ramp play-rest banks that v1 has
-no equivalent of, and its magic is 2200024 against v1's 2100024.
-
-Still tractable — `tools/polyv3_migrate_layout_20260907.py` is a worked example
-of writing that blob. But it is **its own job, with its own authored conversion
-and verifier**: v1's forty per-voice values per instance move off the slider line
-into the blob, 84 times. Skipping that is what killed Melody v2.
-
-**v1's slider line is over 64 values**, so the `""` marker at token index 64
-applies at the source end even though v3 no longer has it.
+`docs/layouts/polyrhythm-v1-to-v3-crossing.md`. Snapshot
+`_pre-polyv1-crossing-20260910/`; the old plugin is `archive/versions/polyrhythm_phase/v2.jsfx`
+and `C:/Users/solst/jsfx-backups/polyrhythm_phase.archived-20260910.jsfx`.
+Unconverted: the `.RPP-bak` files beside those projects, which REAPER wrote.

@@ -63,6 +63,12 @@ here's the old one for recovery and reference."
   projects. It saved nothing beyond its sliders, so sculpted harmonic levels did
   not survive a reload.
 
+- `polyrhythm_phase/v2.jsfx` and `polyrhythm-phase.md` — the semitone-offset
+  Polyrhythm that shipped as `src/polyrhythm_phase.jsfx` until 2026-09-10, when
+  Rozaya asked for it archived: *"then I can finally put that old version into
+  archived where it belongs."* Both tests passed: v3 is its successor, and all
+  144 instances (E:/reaper, TrackTemplates, Tensor's folder) were converted first
+  and verified by render. The grep now returns only `.RPP-bak` files REAPER wrote.
 - `polyrhythm_phase/v1.jsfx` — Binaural Polyrhythm Oscillator before
   the v2 fold-in that merged Play/Rest gating into the main plugin
   (commit `70f0e2e`, May 2026). Pre-fold the gating lived in a separate

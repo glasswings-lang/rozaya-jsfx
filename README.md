@@ -18,8 +18,7 @@ ever read about the one you took.
 | **[Heartbeat Generator](docs/plugins/heartbeat-generator.md)**<br>`heartbeat gen.jsfx` | A synthesized heartbeat. Two resonant voices, a "near" and a "far", give it depth; the rate wanders the way a real one does rather than looping mechanically. |
 | **[Breath Generator](docs/plugins/breath-generator.md)**<br>`breath_gen.jsfx` | A breathing cycle — inhale, pause, exhale, pause — with the length, tone and envelope of each phase set separately. |
 | **[Womb Sound Generator](docs/plugins/womb.md)**<br>`womb_sound_generator_v3.jsfx` | Heartbeat, breath and bloodflow together as one body, heard from inside. Any of seven things can be set drifting slowly, and it sighs on its own every so often. |
-| **[Polyrhythm Phase](docs/plugins/polyrhythm-phase.md)**<br>`polyrhythm_phase.jsfx` | Up to eight tuned voices at once, each pulsing at its own rate so the pattern between them never quite repeats. Each voice is a stereo pair slightly detuned against itself — the binaural beat. |
-| **[Polyrhythm Phase v3](docs/plugins/polyrhythm-phase-v3.md)**<br>`polyrhythm_phase_v3.jsfx` | The same engine, but voices are picked **by note name** instead of by counting semitones from a root. This is where new work happens; see *Two Polyrhythms* below. |
+| **[Polyrhythm Phase v3](docs/plugins/polyrhythm-phase-v3.md)**<br>`polyrhythm_phase_v3.jsfx` | Up to eight tuned voices at once, each pulsing at its own rate so the pattern between them never quite repeats. Each voice names its note, and is a stereo pair slightly detuned against itself — the binaural beat. |
 | **[Melody Phase](docs/plugins/melody-phase.md)**<br>`melody_phase.jsfx` | The sequencer sibling. The same eight voices, but they play one after another instead of together — each holding for its own length before handing over. Notes are picked by name, with glide and legato. |
 | **[Dapple](docs/plugins/dapple.md)**<br>`dapple.jsfx` | Scattered droplets that pop on irregular timing and chirp upward as they fade. Somewhere between rain on glass and a pointillist wash. It started as an attempt at water and became its own thing. |
 
@@ -51,17 +50,13 @@ ever read about the one you took.
 | **[Shepard Scale Generator](docs/plugins/shepard-scale.md)**<br>`shepard-scale.jsfx` | The Shepard scale illusion as a step sequencer: every note sounds higher than the last, and after twelve steps you are back where you began. |
 | **[Shepard Tone Generator](docs/plugins/shepard-tone.md)**<br>`shepard-tone.jsfx` | The same illusion made continuous — the Shepard-Risset glissando, sliding forever without arriving. Up to eight voices, each rooted on its own pitch class. |
 
-### Two Polyrhythms, and which to use
+### Retired versions
 
-Both are current and both are shipped. **Polyrhythm Phase v3 is where new work
-happens**; v1 gets only what keeps it working. The difference that matters when
-choosing is how a voice is pitched — v1 counts semitones from a root note, v3
-picks a note by name. Existing v1 projects are untouched and safe; a migration
-across is planned but not written, so **v1 stays until it exists.**
-
-Womb v1 and v2, and Melody Phase v2, are no longer shipped. They are frozen in
+The older Polyrhythm Phase (`polyrhythm_phase.jsfx`), Womb v1 and v2, and Melody
+Phase v2 are no longer shipped. They are frozen in
 [`archive/versions/`](archive/versions/) with their manuals, so an old project
-that needs one can still open it.
+that needs one can still open it. Every project that used the older Polyrhythm
+was converted to v3 on 2026-09-10 and renders identically.
 
 ## Documentation
 

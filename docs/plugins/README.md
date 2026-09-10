@@ -22,7 +22,6 @@ nothing else to open.
 | Heartbeat Generator | `heartbeat gen.jsfx` | [heartbeat-generator.md](heartbeat-generator.md) |
 | Breath Generator | `breath_gen.jsfx` | [breath-generator.md](breath-generator.md) |
 | Womb Sound Generator | `womb_sound_generator_v3.jsfx` | [womb.md](womb.md) |
-| Polyrhythm Phase | `polyrhythm_phase.jsfx` | [polyrhythm-phase.md](polyrhythm-phase.md) |
 | Polyrhythm Phase v3 (Note-Based) | `polyrhythm_phase_v3.jsfx` | [polyrhythm-phase-v3.md](polyrhythm-phase-v3.md) |
 | Melody Phase (flat per-voice sliders) | `melody_phase.jsfx` | [melody-phase.md](melody-phase.md) |
 | Dapple | `dapple.jsfx` | [dapple.md](dapple.md) |

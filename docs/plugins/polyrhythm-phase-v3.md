@@ -15,19 +15,12 @@ continuous spatial movement (Tremolo / Increment), static spread positions
 
 The plugin generates no audio from an input signal. It is a pure synthesizer.
 
-**How v3 differs from v2.** The engine is identical — same oscillators, same
-tremolo, same drift, same everything you hear. The difference is entirely in
-how you set pitch. In [v2](polyrhythm-phase.md), each voice takes a *semitone
-offset* counted from a base note, so placing a voice means working out how far
-it sits from an anchor. In v3, each voice simply **names its note** — you pick
-`G4` from a list — and a separate **Fine tune** control nudges it off that
-note in cents. No counting, no offsets, no theory. A cent is one hundredth of
-a note step, so `+100` cents is exactly one note up, and every value you touch
-is a whole number.
-
-The two versions do not share project data — slider numbers differ, so a
-saved project using one will not open correctly under the other. Both ship
-in the suite; pick whichever mental model fits the piece, per project.
+**The older Polyrhythm is archived (2026-09-10).** It set each voice by counting
+semitones from a Base Note and Center Octave; v3 has each voice **name its
+note**. Every project that used the older one was converted: each voice now
+shows its real note, Transpose and Octave shift start at 0, and all 144
+instances render identically. The older plugin and its manual are in
+`archive/versions/polyrhythm_phase/`.
 
 **Rebuilt 2026-09-07.** The eight voices moved behind a **Voice** selector,
 taking the slider count from 90 down to 56; five controls that used to be one

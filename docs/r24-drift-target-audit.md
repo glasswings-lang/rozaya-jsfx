@@ -1,6 +1,6 @@
 # R24 audit — Drift and Ramp targets, 2026-09-10
 
-Every plugin in `src/` read in full against R24. Polyrhythm v1 excluded (frozen).
+Every plugin in `src/` read in full against R24. Polyrhythm v1 excluded (archived 2026-09-10).
 "Room" is how many targets the per-target banks hold before one overlaps the next.
 Nothing here is a job to start unasked.
 

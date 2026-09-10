@@ -62,6 +62,36 @@ Newest entries are the most likely to still be accurate.
 
 ---
 
+## 2026-09-10 — The older Polyrhythm crosses to v3, and is archived
+
+Rozaya: *"We should try with the 84, then I can finally put that old version
+into archived where it belongs."*
+
+**The notes said 84 instances. There were 144.** The 84 were `E:/reaper`. A wider
+search found 12 more in REAPER's TrackTemplates — the templates Rozaya starts
+projects from, which would have broken silently the moment the old plugin left
+the Effects folder — and 48 in `E:/tensor's-rpp-projects`. Rozaya, on Tensor's:
+*"Go ahead with Tensor's, it'd probably appreciate it."* Real note names per
+voice rather than the old key as Transpose: *"that'll be easier to figure out
+later"*.
+
+**Why bit-identity needed a second reference.** The voices move from v1's slider
+line (doubles) into v3's blob (float32), so a drift of 0.05 becomes
+0.0500000007. The check renders the old plugin on a copy with exactly that
+rounding applied; that and v3 are byte-identical, and the rounding on its own
+measured 1.5e-08 at worst.
+
+**Two things the survey caught that the plan would not have.** 69 of the 84 saved
+only sliders 1–59, so the conversion writes v1's defaults, not v3's. And one of
+Tensor's voices sat between notes, which the first survey missed because it only
+looked at active voices; the converter refused, and it became nearest note plus
+cents.
+
+**One checker bug, caught by its own count.** A resume keyed by file NAME would
+have skipped 14 of Tensor's instances, because several share names with
+Rozaya's. The run said 32 already done when the log held 18. Keyed by full path,
+rerun from scratch: 144 of 144.
+
 ## 2026-09-10 — Polyrhythm v3: Breath Gen's pitch block per voice, and 88 targets
 
 Rozaya pointed at the shape: *"breath gen handled this nicely, actually"*. The

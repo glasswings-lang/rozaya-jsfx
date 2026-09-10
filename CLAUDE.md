@@ -131,5 +131,5 @@ time; a release is not. **"Validated by ear" is the gate and not a formality** -
 say plainly which parts have been heard, and **deploy what you ask them to
 test**: *"I can't hear a pitch block that doesn't exist."*
 
-**Polyrhythm Phase v3** is where a new feature gets built and judged. v1 gets
-only what keeps it working until its 84 instances cross over.
+**Polyrhythm Phase v3** is the only Polyrhythm. The older one was archived
+2026-09-10 after all 144 instances crossed, bit-identical.

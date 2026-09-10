@@ -564,6 +564,24 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   8 bit-identical, plus a crafted old save with drift and ramp on the four shared
   envelope targets.
 
+## Polyrhythm Phase v1 → v3 — the 2026-09-10 crossing
+
+- **`polyv1_to_v3_crossing_20260910.py`** — applies
+  `docs/layouts/polyrhythm-v1-to-v3-crossing.md` to the files it is GIVEN (the
+  scope is authored, never searched for): renames the `<JS>` line, writes a
+  59-slider v3 line, and writes a native 2300088 blob, creating `<JS_SER>` where
+  an instance had none. Each voice becomes its absolute MIDI note; a voice
+  between notes becomes the nearest note plus cents. Unstored v1 sliders take
+  v1's defaults. Reproduces v1's no-blob load, where the visible Drift and Ramp
+  values land on target 0. Refuses on a quoted token, an unknown blob or a
+  line-count surprise.
+- **`polyv1_to_v3_verify_20260910.py`** — renders every instance three ways (old
+  plugin on the snapshot; old plugin with bank-bound values rounded to float32;
+  new plugin on the converted file) and requires the last two byte-identical.
+  `--jobs N` runs in parallel; `--skip-log` resumes, keyed by FULL path, because
+  Tensor's files share names with Rozaya's. 144 of 144 identical; the float32
+  rounding itself measured at most 1.5e-08.
+
 ## doc_budget.py
 
 Checks the docs a session actually reads against a line budget, and exits 1 if

@@ -165,11 +165,11 @@ Moved out of `CLAUDE.md` 2026-09-08, verbatim.
 
 1. Update `slider14`'s option list at the top of the file. Range becomes `0,N,1` where N+1 is the new option count.
 2. Add a new `: waveform == K ? (...)` branch in the `@sample` voice loop's waveform chain. Compute `osc_l` from `osc_phase_l[i]` and `osc_r` from `osc_phase_r[i]`. Multiply by `gain_l[i] * v_gain[i]` (and `gain_r[i]` for R).
-3. Update the Waveform section of `docs/plugins/polyrhythm-phase.md` **and
-   `polyrhythm-phase-v3.md`** with a one-line description. (`docs/rozaya_jsfx_manual.md`
+3. Update the Waveform section of `docs/plugins/polyrhythm-phase-v3.md` with a
+   one-line description. (The older Polyrhythm was archived 2026-09-10.) (`docs/rozaya_jsfx_manual.md`
    is a stub redirect since the 2026-07-08 split — don't write to it.)
 4. **A new waveform lands in all five plugins that share the palette** at the same
-   slot index: both Polyrhythms, Melody Phase, Shepard Scale, Shepard Tone, and
+   slot index: Polyrhythm v3, Melody Phase, Shepard Scale, Shepard Tone, and
    Harmonic Sculptor. Diverging palettes between siblings is the exact
    inconsistency the 2026-05-24 sweep cleaned up.
 5. **Append it — never insert.** An enum option is an index stored inside a
