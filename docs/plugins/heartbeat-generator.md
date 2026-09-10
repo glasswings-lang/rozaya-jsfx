@@ -219,13 +219,19 @@ Before this they were sampled out of a wander that never stopped spinning:
 almost all the motion was thrown away, the period did not count what it said,
 and the targets were not independent of each other. Rozaya found it, 2026-09-09.
 
-**Stepped here:** **Heart rate** and the **S1-S2 gap**, both once per
+**It is a switch now, not a rule (2026-09-09).** `Drift movement`, sitting with
+the period controls, is per target: `With the target` or `On a clock`. Rozaya:
+it *"should have been a switch from the very beginning"* -- both are ordinary
+artistic choices and neither is the plugin's to make. The defaults below are
+what the plugin used to decide on its own, so nothing saved changed.
+
+**Defaults to `With the target`:** **Heart rate** and the **S1-S2 gap**, both once per
 heartbeat. The heart rate's period counts heartbeats while being the thing that
 changes a heartbeat's length, so continuously it was measuring itself with a
 ruler it was stretching. A real heart also settles a beat's length when the beat
 starts.
 
-**Not stepped:** Breath HRV depth and Random HRV depth, which are applied to the
+**Defaults to `On a clock`:** Breath HRV depth and Random HRV depth, which are applied to the
 cycle length every sample.
 
 A stepped wander is a staircase with as many steps as its period has events.

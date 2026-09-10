@@ -383,12 +383,18 @@ Before this they were sampled out of a wander that never stopped spinning:
 almost all the motion was thrown away, the period did not count what it said,
 and the targets were not independent of each other. Rozaya found it, 2026-09-09.
 
-**Stepped here:** the eight **Note duration** targets, plus **Attack %** and
+**It is a switch now, not a rule (2026-09-09).** `Drift movement`, sitting with
+the period controls, is per target: `With the target` or `On a clock`. Rozaya:
+it *"should have been a switch from the very beginning"* -- both are ordinary
+artistic choices and neither is the plugin's to make. The defaults below are
+what the plugin used to decide on its own, so nothing saved changed.
+
+**Defaults to `With the target`:** the eight **Note duration** targets, plus **Attack %** and
 **Release %**. A note's length and envelope shape are read once, when the note
 fires, and are then fixed for its whole ring — so each voice's Note duration
 steps when *that* voice plays, and the shared Attack/Release step on every note.
 
-**Not stepped, and correctly so:** Rate value, the eight V Timing targets, Pan
+**Defaults to `On a clock`:** Rate value, the eight V Timing targets, Pan
 base rate and the eight Gains. Their values are read every sample, so the wander
 is fully expressed. Rate value in particular measures its period against the
 rate *before* drift, so it never measures itself.

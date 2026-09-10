@@ -95,6 +95,13 @@ Switching the selector saves the current values of sliders 55-58 to the previous
 
 ### Whose turn it is (2026-09-09)
 
+**It is a switch now, not a rule (2026-09-09).** `Drift movement`, sitting with
+the period controls, is per target: `With the target` or `On a clock`. Rozaya:
+it *"should have been a switch from the very beginning"* -- both are ordinary
+artistic choices and neither is the plugin's to make. The defaults below are
+what the plugin used to decide on its own, so nothing saved changed.
+
+
 Six targets are read by the engine **once per event** rather than continuously:
 Heart rate and the S1-S2 gap once per heartbeat, the four breath segments when
 each segment begins, and Breaths/min when each breath begins. Those six now

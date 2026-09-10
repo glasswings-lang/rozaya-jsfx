@@ -78,22 +78,22 @@ breath build heard, reverted and never explained; pair kept at
 
 **Not heard:**
 
-- **`Drift movement` in Bubbler (20) and Dapple (22), 2026-09-09.** Same switch,
-  same insert. All 24 instances over five projects migrated; **none had drift
-  config stored**, so only the slider line moved, and all five render
-  bit-identical over 30 s. Dapple's switch demonstrably changes the sound;
-  **Bubbler's could not be demonstrated — drift on Bubbler does not respond to
-  the runner at all, before this change as much as after.** Pre-existing, and
-  Rozaya's call whether to chase it. Backups at `_pre-driftmoves-bubdap-20260909/`.
-  `docs/backlog.md`'s "built and REVERTED" entry was stale and is corrected.
+- **`Drift movement` — the whole sweep, 2026-09-09.** Whether a target's drift
+  steps with its own thing or runs on a clock is now a per-target switch in all
+  six plugins that had stepping: Breath Gen (slider 30), Bubbler (20), Dapple
+  (22), Womb (60), Heartbeat (23), Melody (76). Rozaya: it *"should have been a
+  switch from the very beginning"*. INSERTED beside the period controls on their
+  call, never appended. **110 instances across 24 projects migrated; every
+  project renders bit-identical**, and the switch is measured changing the sound
+  in five of the six. Defaults are exactly what `drift_is_stepped()` hardcoded.
+  Backups: the three `_pre-driftmoves-*-20260909/` snapshots.
+  Bubbler's switch could NOT be demonstrated — drift on Bubbler ignores the
+  runner entirely, before this change as much as after; pre-existing, unchased.
+  Womb/Melody blobs were left alone: seven stored formats between them, all
+  still readable, so only slider lines moved. Owed: an open-and-play, and a
+  Breath Gen pitch target on `With the target` — a filter centre, so ears-only.
 
-- **`Drift movement`, Breath Generator slider 30, 2026-09-09.** Per target:
-  `With the target` or `On a clock` -- Rozaya: it *"should have been a switch from
-  the very beginning"*. INSERTED on their call, sliders 30-40 moving to 31-41;
-  four instances migrated, magic 2400007 -> 2500007, defaults exactly what
-  `drift_is_stepped()` hardcoded, **bit-identical over 40 s on all three**.
-  Backups at `_pre-driftmoves-20260909/`. Owed: an open-and-play, plus a pitch
-  target on `With the target` -- a filter centre, so ears-only.
+
 
 - **The Breath Generator 40-slider build is PROMOTED, 2026-09-09.** It IS the
   live plugin, `_TEST40` deleted, four instances migrated. **The migrated
