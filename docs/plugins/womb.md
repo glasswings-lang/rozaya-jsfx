@@ -67,6 +67,16 @@ Each drift offset is added to the target's baseline slider value per sample. For
 
 ### Global Controls
 
+**The four frequencies are pitch blocks now (2026-09-09).** S1, S2, Inhale and
+Exhale each carry `<name> pitch mode` `{Hz, Semitones, Cents}`, a `<name> note
+name` (a real control both ways; only visible in Semitones), the pitch value
+itself, and a fine tune with its own unit. One `Tuning reference (Hz)` serves the
+whole plugin and sits with the master controls. **Each block stays in its own
+layer**, beside that sound's own decay and volume — Rozaya: *"womb is 3-layered.
+just replicate the block where it needs to be."* Mode defaults to Hz, so every
+saved project reads exactly as it did. Drift and Ramp on Inhale Freq / Exhale
+Freq follow the value's own unit.
+
 Sliders 1-47: identical to [Womb Sound Generator v2](#womb-sound-generator-v2). See that section for full descriptions of BPM, the three layer Volume / Solo sliders, heartbeat sound parameters (Systole ms, S1/S2 Frequency Hz, Decay ms, Brightness, Stereo Width ms), breath sound parameters (Inhale/Top Pause/Exhale/Bottom Pause durations, Frequencies, Fade In/Out, Stereo Width, Post-filter), bloodflow parameters (Filter Hz, Dicrotic Level, Resonance, Attack, Decay, Stereo Width), Start Delay, and per-layer Play/Rest gates.
 
 **Layout as of 2026-09-06** (see `docs/layouts/womb.md` for the full authored order): sliders 1-15 are the heartbeat, 16-36 the breath, 37-46 bloodflow, 47-54 master and transport, 55-62 the Drift block, 63-70 the Ramp block. Heart-with-breath / RSA depth is slider 3, beside the heart rate it modifies; the Sigh pair is 32-33, inside the breath group; Breaths per minute is 16, at the head of the breath group with its own rate mode beside it.
