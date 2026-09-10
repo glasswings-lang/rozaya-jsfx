@@ -38,8 +38,7 @@ one variable, because eel2 folds case.
 
 Missing lists are from the audit reads, not individually re-checked.
 
-- **melody_phase** — 28 of 32. Missing 16: V1–V8 pitch, Tuning reference, Binaural
-  beat, Pulse width, Glide time, Pan spread, Pan glide, Pan increment, Master gain.
+- **melody_phase** — DONE 2026-09-10: 55 targets, including Play for and Rest for.
 - **womb** — 11 of 16. Missing 31: S1/S2 pitch, fine tune, decay, volume;
   Brightness; HB stereo width; HB master volume; Inhale/Exhale fine tune; four
   fades; Breath high-pass, post-filter Hz, post-filter Q; Sigh extra length;

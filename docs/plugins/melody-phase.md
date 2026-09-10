@@ -120,7 +120,13 @@ voice. Change it and all eight fine tunes are read in the new unit. Each voice's
 fine tune says `(in fine tune units)` so you can tell, from the voice itself,
 where its unit is set. Renamed 2026-09-10; the old label said neither.
 
-**Transpose (half steps)** `-12 – 12` · **Octave shift** `-4 – 4`
+**Pitch mode** `Hz / Semitones / Cents, default Semitones`
+What every voice's *Pitch* value means. **Semitones:** the MIDI note number, 60
+is middle C, and each voice's Note name follows it both ways. **Hz:** the
+frequency itself. **Cents:** the MIDI note times 100, so 6950 is a quarter tone
+above A4.
+
+**Transpose (semitones)** `-12 – 12` · **Octave shift** `-4 – 4`
 Move every voice together. The intervals between voices stay the same. At 0 and 0
 the note names on the voices are literally true.
 
@@ -226,8 +232,11 @@ Good for legato / flowing melodies where you want one bending tone instead of ar
 
 ### Per Voice (V1–V8)
 
-**Vn Note** `C2 – C6`
-This voice's note, by name. Transpose and Octave shift move it along with every other voice.
+**Vn Note** `C-1 – G9`
+This voice's note, by name. Shown in Semitones mode, where picking a name sets the Pitch and moving the Pitch moves the name.
+
+**Vn Pitch (Hz / semitones / cents)** `0 – 20000`
+This voice's pitch, in whatever *Pitch mode* says. Transpose and Octave shift move it along with every other voice.
 
 **Vn Fine tune (in fine tune units)** `-1000 – 1000, default 0`
 Nudges this voice off its note, in whatever *Fine tune unit (for every voice)* says. In Cents, 50 is a quarter tone.
@@ -322,8 +331,8 @@ The feature is **disabled when either of Play for / Rest for is 0** (the default
 
 A **one-time signed-delta ride** on any target over a set duration — the in-plugin substitute for a REAPER automation envelope, the "wind down / wind up once" move (vs Drift's endless wander). As of v2.14 it reaches **all 28 Drift targets** (same target set), each on its own timeline, using the same nested-selector pattern as Drift and the rest of the suite. Pick a target, set its `by` / duration / start delay; one global **engage** arms every configured target's ramp at once.
 
-**Ramp target** `28 options, default Rate Value`
-Which parameter this ramp acts on — identical list to the Drift target selector (Rate Value, V1–V8 Timing, Pan Rate, V1–V8 Gain, V1–V8 Note dur, Attack %, Release %). Switching it saves the three per-target sliders (68/69/71) into the old target's slot and loads the new target's stored values. All 28 targets ramp in parallel; the selector only chooses which one you're editing.
+**Ramp target** `55 options, default Rate value`
+Which parameter this ramp acts on — the same list as Drift target. All 55 ramp in parallel; the selector only chooses which one you are editing.
 
 **Ramp by** `-1000 to +1000, step 0.001, default 0` (units match target)
 Signed delta the target moves by over the duration (from 0 at the start to the full `by` at the end, then held). Units follow the target: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. **0** = no ramp for this target. For Rate Value / Pan Rate the sign follows Rate Mode — in BPM/Hz modes negative `by` = slower, in Seconds mode (period) positive `by` = slower.
@@ -365,13 +374,9 @@ The target set is built to let a sequence *breathe*: timing (rubato), dynamics (
 
 Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **Drift target** selector saves the current amount / period / shape / play / rest values into the old target's memory slot, then loads the new target's saved values. All 28 configurations persist across project save/load.
 
-**Drift target** `28 options, default Rate Value`
-- **Rate Value** — wanders the global melody rate; stretches the whole timeline (sequencer + envelopes + pan together). The old single drift target.
-- **V1–V8 Timing** — wanders each voice's step length ("Next voice in", in cycles). The rhythm breathes: voices fall slightly early or late against the grid on independent schedules. Wanders *when the next voice takes over*, not the ringing note's length.
-- **Pan Rate** — wanders the Pan Base Rate (Tremolo / Increment pan modes only).
-- **V1–V8 Gain** — wanders each voice's volume (dB), continuously per-sample, so the line swells and recedes. This is the **dynamics** axis — the core of "breathing." Each voice undulates independently.
-- **V1–V8 Note dur** — wanders each voice's Note duration (cycles). **Articulation:** notes drift between overlapping (legato) and separated (staccato). Sampled once per note at trigger.
-- **Attack % / Release %** — wander the global attack and release lengths (%). Onsets and tails soften and sharpen. Sampled per note at trigger.
+**Drift target** `55 options, default Rate value`
+
+Every control that shapes the sound, in the order the controls appear: Rate value, Pulse width, Tuning reference, Transpose, Binaural beat, Attack, Release, Glide time, Pan spread, Pan glide, Pan base rate, Pan increment; then for each voice its Pitch, Fine tune, Next voice in, Note duration and Gain; then Master gain, Play for and Rest for. Amounts are in each target's own unit. Play for and Rest for round to whole steps.
 
 **Drift up amount** `0.0–20.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. Dial small values in Seconds / Hz modes. 0 = drift off on the up side.
@@ -396,8 +401,9 @@ it *"should have been a switch from the very beginning"* -- both are ordinary
 artistic choices and neither is the plugin's to make. The defaults below are
 what the plugin used to decide on its own, so nothing saved changed.
 
-**Defaults to `With the target`:** the eight **Note duration** targets, plus **Attack %** and
-**Release %**. A note's length and envelope shape are read once, when the note
+**Defaults to `With the target`:** each voice's **Pitch**, **Fine tune** and **Note duration**, stepping when that voice plays; and **Transpose**, **Attack**, **Release**, **Play for** and **Rest for**, stepping on every note. Everything else defaults to `On a clock`.
+
+The eight **Note duration** targets, plus **Attack** and **Release**, were the original stepped ones. A note's length and envelope shape are read once, when the note
 fires, and are then fixed for its whole ring — so each voice's Note duration
 steps when *that* voice plays, and the shared Attack/Release step on every note.
 

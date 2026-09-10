@@ -104,6 +104,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   targets, and loop moves crossfade instead of cutting. 4 instances migrated,
   bit-identical with the sample loaded. `docs/layouts/sustain-looper.md`.
 
+- **Melody Phase, 2026-09-10:** pitch mode and a pitch per voice, 55 drift
+  targets in control order. 73 instances bit-identical. `docs/layouts/melody-phase-r22-r24.md`.
+
 - **The Breath Generator 40-slider build is PROMOTED.** Four instances migrated,
   bit-identical over 40 s on all three; the migrated PROJECTS have not been
   opened since. Backups: `_pre-breathgen-promote-20260909/`.

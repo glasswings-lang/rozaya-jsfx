@@ -1248,6 +1248,11 @@ absolutely be drift candidates."* Drift and Ramp exist to replace automation.
   glide time, pulse width, filter frequencies, resonance, mix.
 - **Not a target:** modes, unit selectors, shape pickers, on/off switches, and
   structural counts such as sequence length.
+- **Play for and Rest for ARE targets; Start delay is not.** Star, 2026-09-10:
+  *"play for and rest for though I absolutely can. that's the featheriest timing
+  trick I can think of"*.
+- **Target options go in the order of the controls they reach**, never appended
+  to save a migration. Star, 2026-09-10.
 - **A new sound-shaping control gets its target in the same change that adds it.**
 - Drift and Ramp share one target list. New targets append to it (R18).
 
