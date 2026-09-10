@@ -72,11 +72,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 **Not heard:**
 
-- **Shepard Tone and Scale: drift and ramp reach everything** — per-voice/note
-  Gain and Pan and the binaural beat, Tone 11 targets -> 28, Scale 4 -> 29,
-  appended so nothing stored moves. Scale also gained twelve per-note detunes.
-  Their banks overlapped until 2026-09-10; now 64 apart, and a ramp surviving a
-  drift on another target is measured on both. Ears owed.
+- **Shepard Tone and Scale, 2026-09-10:** Tone's voice control split into Rate and
+  Fine tune; Scale's fine tunes sit with their notes; pitch acts live; 40 and 45
+  targets in control order. `docs/layouts/shepards-r22-r24.md`. Ears owed.
 
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
   Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell, Shepard Scale. Owed: the

@@ -66,23 +66,29 @@ Only meaningful when Waveform is set to **Pulse**, and hidden from the parameter
 **Binaural Beat Hz** `0-100 Hz, default 0`
 Offsets the right channel oscillator frequencies by this many Hz, adding a binaural beat across all notes simultaneously.
 
-**Tuning Reference Hz** `400-480 Hz, default 440`
+**Tuning Reference Hz** `20-2000 Hz, default 440`
 The A4 reference frequency used to calculate all note pitches.
+
+**Fine tune unit (for every note)** `Hz / Semitones / Cents, default Cents`
+What every note's *Fine tune* is counted in.
 
 ---
 
 ### Per-Note Controls (C through B)
 
-Each of the twelve chromatic notes has three parameters.
+Each of the twelve chromatic notes has four controls, together: Active, Gain, Pan, Fine tune.
 
 **Active** `Off / On`
-Enables or disables this note in the sequence. When off, behavior depends on the Inactive Notes setting. The gain and pan controls for this note are hidden when inactive.
+Whether this note is part of the scale. When off, behavior depends on the Inactive Notes setting. The note's other controls are hidden while it is off.
 
 **Gain dB** `-60–+6 dB, default 0`
-Volume of this note relative to the others. Allows individual notes to be emphasized or de-emphasized within the sequence. Hidden when the note is inactive.
+Volume of this note relative to the others. Allows individual notes to be emphasized or de-emphasized within the sequence.
 
 **Pan** `-100–+100, default 0`
-Stereo position of this note. Negative values place it left, positive values right, 0 is center. Uses constant-power panning. Hidden when the note is inactive.
+Stereo position of this note. Negative values place it left, positive values right, 0 is center. Uses constant-power panning.
+
+**Fine tune (in fine tune units)** `-1000–+1000, default 0`
+Nudges this note off its pitch, in the unit set by *Fine tune unit*. Detuning single notes is the whole of just intonation and every unequal temperament. It acts while playing, and it moves the pitch without moving where the octaves fade.
 
 ### Start Delay
 
@@ -140,8 +146,8 @@ arrive in about this long" however you set the staircase.
 
 In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same four targets as Drift** — BPM, Note Length %, Attack %, Release %. It is **fully per-target**: each target has its own `by`, its own duration, and its own start delay, so different targets can wind down over different timelines from a single engage. Only **engage** is global.
 
-**Ramp target (slider 52)** `Tempo / Note Length % / Attack % / Release %, default Tempo`
-Picks which target the `by`, duration, and start delay sliders are currently editing. Switching the selector saves those three into the old target's memory slot, then loads the new target's stored values. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
+**Ramp target** `45 options, default Rate value`
+The same list as Drift target. Switching it saves the current values into the old target and loads the new one's.
 
 **Ramp by (slider 53)** `-300 to +300, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over that target's duration. **0** = no change (safe default). For **Note Length / Attack / Release** it's in percentage points. The wide ±300 range is headroom shared across targets — only the target's own sensible span is meaningful (e.g. a note-length ramp beyond ±100 is clamped).
@@ -199,8 +205,8 @@ Same pattern as Womb v3's drift and the matching block in Heartbeat / Breath Gen
 
 For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (beats, paced by the BPM clock), and you express the timescale you want with the period value.
 
-**Drift target (slider 57)** `Tempo / Note Length % / Attack % / Release %, default Tempo`
-Picks which target's drift configuration sliders 58-61 reflect. Switching the selector saves and loads automatically — no live edits are lost.
+**Drift target** `45 options, default Rate value`
+Every control that shapes the sound, in the order the controls appear: Rate value, Attack, Release, Note length, Pulse width, Binaural beat, Tuning reference; then for each note C through B its Gain, Pan and Fine tune; then Play for and Rest for. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount (slider 58)** `0.0–100.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are BPM for BPM, % for Note Length / Attack / Release. 0 = drift off on the up side. Note that going much above ±20 BPM on the BPM target will sound dramatic — typical musical use is 5–15 BPM.
@@ -283,12 +289,6 @@ reachable as 4, which no note-division grid can express.
 > **Switching modes changes what BPM means, and nothing rescales it.** 120 is 120
 > BPM free-running, and in Host x it is a note every 120 beats — very slow. Set the
 > mode first, then the value.
-
-**Host ratio (retired)** — hidden, and does nothing.
-It used to be a menu of ratios that wrote a **multiplier** into BPM. The multiplier
-is gone, so the menu that translated it has no job left: "every 4 beats" is now
-typing 4. The slider stays in the file because slider positions are how REAPER
-remembers a saved project, so removing one would shift every control above it.
 
 ---
 

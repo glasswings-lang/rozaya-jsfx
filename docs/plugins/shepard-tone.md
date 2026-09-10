@@ -71,13 +71,6 @@ Tempo changes apply live, including mid-playback. The sweep rate, the Play/Rest
 cycle counter and Start Delay all follow. **Pitch does not** — a tempo change
 moves the glissando, it doesn't transpose the tone.
 
-**Host ratio (retired)** — hidden, and does nothing.
-It used to be a menu of ratios that wrote a **multiplier** into Rate Value. The
-multiplier is gone, so the menu that translated it has no job left: "every 4
-beats" is now typing 4. The slider stays in the file because slider positions
-are how REAPER remembers a saved project, so removing one would shift every
-control above it in every project.
-
 > **Switching Rate Mode changes what Rate Value means, and nothing rescales it
 > for you.** 0.5 is 0.5 BPM in BPM mode, and in Host x it is half a beat per
 > cycle — two sweeps every beat, which is very fast. Set the mode first, then
@@ -114,8 +107,11 @@ Offsets the right channel oscillator frequencies by this many Hz, adding a binau
 **Root Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B, default C`
 The global tonic. Per-voice Note sliders are interpreted as offsets from this value. Setting Root Note to D and a voice Note to E produces F# (D + a major second).
 
-**Tuning Reference Hz** `400-480 Hz, default 440`
-The A4 reference frequency used to calculate all oscillator pitches.
+**Tuning Reference Hz** `20-2000 Hz, default 440`
+The A4 reference frequency used to calculate all oscillator pitches. Changing it while playing retunes every voice at once.
+
+**Fine tune unit (for every voice)** `Hz / Semitones / Cents, default Cents`
+What every voice's *Fine tune* is counted in.
 
 
 #### Why the multiplier went, and why nothing hides any more
@@ -142,23 +138,25 @@ in both Polyrhythms and was fixed the same day.
 
 ### Per-Voice Controls (Voices 1-8)
 
-Each voice has five parameters. Voice 1 is active by default; Voices 2-8 are inactive.
+Each voice has seven controls: Note, Fine tune, Direction, Rate, Gain, Pan, Active. Voice 1 is active by default; Voices 2-8 are inactive.
 
 **Vn Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B`
-The pitch class of this voice, relative to Root Note. Combined with Root Note, this determines the interval relationship between voices.
+The pitch class of this voice, relative to Root Note. Changing it while playing moves the voice straight to the new note.
 
-**Vn Pan** `-100–+100, default 0`
-Stereo position of this voice. Negative values place it left, positive values right, 0 is center. Uses constant-power panning. Pan and binaural beats can be used simultaneously — the binaural beat is preserved across the pan field.
+**Vn Fine tune (in fine tune units)** `-1000–+1000, default 0`
+A pitch offset on all of this voice's oscillators, in both drift modes, in the unit set by *Fine tune unit*. In cents it reaches ten semitones either way. It moves the pitch without moving where the octaves fade, which is a different sound from changing the note. Small values make voices beat against each other. It acts while playing.
 
 **Vn Direction** `Asc / Desc`
 Whether this voice sweeps upward or downward. Setting two voices to opposite directions creates counterpoint — one pitch class continuously rising, another continuously falling.
 
-**Vn Drift / Rate** `-1000–+1000, default 0`
-In Synced mode: a cents offset applied to all of this voice's oscillators. Positive values pitch the voice slightly sharp; negative values slightly flat. Creates subtle beating between voices without changing their sweep rates.
-In Independent mode: this voice's sweep rate directly, in the units set by Rate Mode.
+**Vn Rate (in rate mode units; 0 = holds still)** `-1000–+1000, default 0`
+Independent mode only, and hidden in Synced mode. This voice's own sweep speed, in the units set by Rate Mode. At 0 or below the voice does not sweep at all: it holds as a steady chord of its note in every octave.
 
 **Vn Gain dB** `-60–+6 dB, default 0`
 Per-voice output level, applied before the voice is summed into the mix.
+
+**Vn Pan** `-100–+100, default 0`
+Stereo position of this voice. Negative values place it left, positive values right, 0 is center. Uses constant-power panning. The binaural beat is preserved across the pan field.
 
 **Vn Active** `Off / On`
 Enables or disables the voice. Inactive voices contribute nothing to the output and are excluded from normalization.
@@ -221,8 +219,8 @@ arrive in about this long" however you set the staircase.
 
 In-plugin one-time morph over time, without automation. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same eleven targets as Drift** — the global Rate Value, each of the 8 voices' sweep rates, Fade In %, and Fade Out %. It is **fully per-target**: each target has its own `by`, its own duration, and its own start delay, so different targets can wind down over different timelines from a single engage. Only **engage** is global.
 
-**Ramp target (slider 64)** `Rate Value / V1 Rate … V8 Rate / Fade In % / Fade Out %, default Rate Value`
-Picks which target the `by`, duration, and start delay sliders are currently editing. Switching the selector saves those three into the old target's memory slot, then loads the new target's stored values. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
+**Ramp target** `40 options, default Rate value`
+The same list as Drift target. Switching it saves the current values into the old target and loads the new one's.
 
 **Ramp by (slider 65)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over that target's duration. **0** = no change (safe default). For the rate targets (Rate Value + per-voice) the delta is in **the rate's currently-displayed unit**:
@@ -282,9 +280,8 @@ Same pattern as Womb v3's drift and the rest of the sweep, scaled up to the larg
 
 The per-voice targets are what make this plugin's drift special: with **Independent** drift mode and a different drift configuration on each voice, every voice wanders its own sweep rate on its own schedule — the voices breathe against each other, drifting in and out of phase. This is the continuous-glissando analogue of Polyrhythm Phase's per-voice character.
 
-**The per-voice targets are mode-aware** (both Drift and Ramp), matching what the per-voice slider itself controls: in **Independent** mode a per-voice target wanders that voice's **rate**; in **Synced** mode it wanders that voice's **cents detune** (pitch), leaving the shared sweep rate locked so sync is preserved. (Before v2.14 they always acted on rate, which broke sync when used in Synced mode.)
-
-**Drift target (slider 69)** `Rate Value / V1 Rate … V8 Rate / Fade In % / Fade Out %, default Rate Value`
+**Drift target** `40 options, default Rate value`
+Every control that shapes the sound, in the order the controls appear: Rate value, Fade in, Fade out, Pulse width, Binaural beat, Tuning reference; then for each voice its Fine tune, Rate, Gain and Pan; then Play for and Rest for. A voice's Rate target only acts in Independent mode; its Fine tune target acts in both.
 Picks which target's drift configuration sliders 70-73 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount (slider 70)** `0.0–100.0, default 0` (units match target)

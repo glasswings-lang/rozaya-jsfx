@@ -58,9 +58,8 @@ Missing lists are from the audit reads, not individually re-checked.
   width, Tone, Edge, Movement, Body, Pan spread, Pan glide, Reverse drift offset.
   Missing 40 per voice: Fine tune, Depth, On duration, Attack, Release, each ×8;
   the last four currently share one target each.
-- **shepard-tone** — 28 on room 16. Missing: Tuning reference, Pulse width.
-- **shepard-scale** — 29 on room 16. Missing: Tuning reference, Pulse width, the
-  twelve per-note fine tunes. Fine tune only reaches the oscillators on rebuild.
+- **shepard-tone** — DONE 2026-09-10: 40 targets.
+- **shepard-scale** — DONE 2026-09-10: 45 targets.
 - **harmonic_sculptor** — ARCHIVED 2026-09-10, not owed anything.
 - **spectral_vowel_morpher** — 24 of 32. Missing 26: Morph, Auto-morph time, Wash
   grain, Denoise, Overtone lift, Overtone width, Input level, three Custom layer
