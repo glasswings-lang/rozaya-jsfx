@@ -39,10 +39,10 @@ sentence.
   largest reorder in the suite so far.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
-- **R22: 4 of 16 plugins with a frequency. See the rollout entry below.** Rebuilt twice by Rozaya in the hearing, so the plan's written
-  rule is BEHIND the built one — `docs/layouts/breath-gen.md` is what ships.
-  **R22 opens with an attribution warning**: parts were mine, cited back as
-  settled. Only *"Morpher and Passage are their own discussion"* is hers.
+- **R22: 4 of 16 plugins with a frequency; see the rollout entry below.** Breath
+  Gen's block was rebuilt twice in the hearing, so the plan's rule is BEHIND the
+  built one — `docs/layouts/breath-gen.md` is what ships. **R22 opens with an
+  attribution warning**: parts were mine, cited back as settled.
 
 ## What has been heard, and what has not
 
