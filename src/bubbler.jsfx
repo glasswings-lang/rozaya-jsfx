@@ -329,7 +329,7 @@ tr_ui_inited ? (
       slider_automate(slider5);
     );
   );
-) : ( tr_ui_inited = 1; );
+);
 last_tgt_note = slider5;
 last_tval     = slider6;
 // Nothing to measure from while Source note is None, so the target is not shown.
@@ -417,6 +417,17 @@ last_target_select != sel_target ? (
 );
 
 @block
+// ADOPT THE MIRROR HERE, NOT IN @slider. A tracker adopted in @slider can
+// capture a DEFAULT -- @slider may run with declared defaults before a project's
+// saved values are applied, and the next pass then reads the load itself as a
+// user edit and writes one half of the pair over the other. That is the August
+// 2026 Sweeping Filter fault, and Breath Generator adopts in @block for exactly
+// this reason. While the flag is 0 the binding writes nothing.
+!tr_ui_inited ? (
+  last_tgt_note = slider5;
+  last_tval = slider6;
+  tr_ui_inited = 1;
+);
 // Project tempo, once per block. Used when Drift period unit or Ramp time
 // unit is set to Beats.
 host_bpm = max(tempo, 0.001);
