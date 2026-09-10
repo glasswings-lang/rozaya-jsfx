@@ -128,31 +128,22 @@ Moved out of `CLAUDE.md` 2026-09-08, verbatim.
 - **JSFX can LOAD audio samples — it's not just live DSP.** Idiom (from stock `guitar/amp-model-dual`, used in `src/sustain_looper.jsfx`): a file-selector slider `sliderN:/foldername:default:Name` presents a dropdown of files in `<REAPER resource>/Data/foldername/` (NVDA-navigable as a list-parameter, same family as enum dropdowns). Then `fh = file_open(sliderN); file_riff(fh, nch, sr); n = file_avail(fh)/nch; file_mem(fh, buf, n*nch); file_close(fh);` reads interleaved samples. Reload only when `sliderN|0` changes. **Formats:** WAV and OGG are reliable; FLAC/MP3 are NOT guaranteed — export loop sources as WAV. **Memory:** ~8 million slots/instance by default (≈80 s of 48 kHz stereo, interleaved), max 32M via `options:maxmem=33554432` (≈5.5 min) — keep loaded samples short. `file_riff` with nch `'rqsr'` + a target SR auto-resamples (REAPER 6.29+).
 - **JSFX `fft()`/`ifft()` operate on PERMUTED bin order.** To read or edit frequency bins by index you MUST call `fft_permute(buf,size)` after `fft()`, do the work in natural order, then `fft_ipermute(buf,size)` before `ifft()`. Skipping it corrupts the spectrum — a magnitude-preserving op (e.g. phase randomization) will *grow harmonics on a pure sine*, which is impossible if implemented right and is the diagnostic tell. (Surfaced building the Paulstretch-style `smear_stretch`, now archived.)
 - **Muted/inaudible layers still cost full CPU — gate expensive per-grain / per-block DSP (FFTs especially) on the layer's LEVEL, or a busy project crackles.** JSFX runs the code whether or not its output is audible. In `spectral_vowel_morpher` at Texture 0 (pure voice, wash muted), the wash engine still ran two `FFTSIZE` inverse FFTs *per grain* on audio being multiplied by zero — a real per-grain load that tipped busy projects into occasional real-time-deadline misses: **non-clipping crackle on ~every slot.** That's the diagnostic tell — the crackle scales with project CPU load, NOT with signal level, and it eases when you free CPU / mute other tracks (a clip-driven crackle would do the opposite). **Fix:** gate the heavy work on the layer being audible — `have > 0 && wlevel > 0.0001 ? gen_grain();` — mirroring whatever guard the sibling/parallel layer already has (here the voice engine's `hlevel` guard). Keep the accumulator draining (read-and-clear) so the layer fades back cleanly over ~one grain when its level rises off 0; output is bit-identical while muted. Applies to ANY plugin computing a voice/band/layer whose gain can reach 0 — skip its expensive DSP when silent, not merely its output. (Fixed 2026-07-10, shipped **v2.18**, commit `1affa90`.)
-- **`jsfx_run` FEEDS SILENCE, so an EFFECT plugin renders nothing and every
-  comparison passes.** It has no input option -- `--slider`, `--rpp`,
-  `--set-after`, `--seconds`, and nothing that supplies audio. A pure filter like
-  `sweep-dwell-filter` therefore outputs 529,200 zero samples, and old-versus-new
-  compares bit-identical no matter what you changed, including breaking it
-  completely. **This is the most dangerous of the runner's failure modes because
-  it always passes.** Check for a non-zero sample before believing any effect
-  plugin's result. Generators are fine. (2026-09-09)
+- **`jsfx_run` feeds silence unless told otherwise.** An effect plugin given
+  silence outputs silence, and every comparison passes. Use `--input noise` or
+  `--input sine` for effects, and check for a non-zero sample.
 
-- **On `shepard-scale` and `shepard-tone`, ANY jsfx_run run with a control
-  changed is NOT REPRODUCIBLE — the same command twice gives different output.**
-  Only the untouched-default comparison is trustworthy on those two. Measured
-  2026-09-09 with both `--slider` and `--set-after`; every other plugin in the
-  suite tested reproducible with both. Cause not yet found — the only `rand()` in
-  either is the drift Random shape, which those runs never selected. **So a
-  "this target works" test on these two is not evidence, and neither is its
-  absence.** They need ears. (2026-09-09)
+- **Shepard Tone and Scale runs with a control changed were once recorded as not
+  reproducible.** On 2026-09-10 they were, with both tool builds, including drift
+  and ramp runs. Their drift and ramp banks overlapped until that day, which may
+  have been the cause. Run a test twice before relying on it.
 
-- **`jsfx_run` SILENTLY TRUNCATES a project line over 64 sliders, so it cannot
-  verify a plugin with more than 64.** It applies the values up to slider 64 and
-  drops the rest without a word. A migration that moves values across that
-  boundary changes WHICH settings get applied, so old-versus-new renders differ
-  with nothing wrong in the plugin. This cost a full revert-and-reinstate of
-  Womb on 2026-09-09 before it was found. **Check the "N sliders" line against
-  what the file actually holds before trusting any comparison.** (2026-09-09)
+- **Build `jsfx_run` against the ysfx fork** (`tools/jsfx_run/README.md`). The
+  original library drops every slider above 64 without a word, so any comparison
+  on a larger plugin compares a subset.
+
+- **A zero-effect test proves nothing.** Before believing "A and B render the
+  same", show that the change under test makes a difference somewhere. A stepped
+  drift with a whole-number period of 2 parks at zero on every step, for example.
 
 - **A new memory bank goes ABOVE the plugin's audio buffers, and you have to LOOK
   where those start.** Rhythm Track's tick buffer is 65536 words from offset 0, so

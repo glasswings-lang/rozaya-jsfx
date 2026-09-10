@@ -272,7 +272,7 @@ int main(int argc, char **argv)
     }
 
     // Sliders set by hand, which is the fresh-instance path.
-    for (const Assign &a : before) ysfx_slider_set_value(fx, a.idx, a.val);
+    for (const Assign &a : before) ysfx_slider_set_value(fx, a.idx, a.val, true);
     if (!rpp) ysfx_init(fx);
 
     // --list now runs AFTER a project's state has been restored, so it can show
@@ -286,7 +286,7 @@ int main(int argc, char **argv)
             float *oo[2] = { l.data(), r.data() };
             ysfx_process_float(fx, ii, oo, 2, 2, block);
             for (const auto &st : stages) {
-                for (const Assign &a : st) ysfx_slider_set_value(fx, a.idx, a.val);
+                for (const Assign &a : st) ysfx_slider_set_value(fx, a.idx, a.val, true);
                 ysfx_process_float(fx, ii, oo, 2, 2, block);
             }
         }
@@ -363,7 +363,7 @@ int main(int argc, char **argv)
         // that target's values, exactly as a person does it. Both at once writes
         // the values to the PREVIOUSLY selected target.
         if (stage_i < stages.size()) {
-            for (const Assign &a : stages[stage_i]) ysfx_slider_set_value(fx, a.idx, a.val);
+            for (const Assign &a : stages[stage_i]) ysfx_slider_set_value(fx, a.idx, a.val, true);
             stage_i++;
         }
 

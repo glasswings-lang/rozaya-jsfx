@@ -3,7 +3,8 @@ project(jsfx_run CXX)
 
 # Point this at a ysfx checkout that has already been configured and built.
 # See README.md in this directory for the exact commands.
-set(YSFX_DIR "C:/git-src/ysfx" CACHE PATH "ysfx source directory")
+# Joep Vanlier's maintained fork: 256 sliders, where the original stops at 64.
+set(YSFX_DIR "C:/git-src/ysfx-joep" CACHE PATH "ysfx source directory")
 set(YSFX_BUILD "${YSFX_DIR}/build" CACHE PATH "ysfx build directory")
 
 add_executable(jsfx_run jsfx_run.cpp)

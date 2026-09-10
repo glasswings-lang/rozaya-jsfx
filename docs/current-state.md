@@ -80,8 +80,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - **Shepard Tone and Scale: drift and ramp reach everything** — per-voice/note
   Gain and Pan and the binaural beat, Tone 11 targets -> 28, Scale 4 -> 29,
   appended so nothing stored moves. Scale also gained twelve per-note detunes.
-  **Defaults bit-identical is ALL that is verified**: any run on these two with a
-  control changed is not reproducible (`docs/jsfx-gotchas.md`). Ears owed.
+  Their banks overlapped until 2026-09-10; now 64 apart, and a ramp surviving a
+  drift on another target is measured on both. Ears owed.
 
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
   Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell, Shepard Scale. Owed: the

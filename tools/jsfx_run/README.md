@@ -19,9 +19,14 @@ That was never true; nobody had looked.
 
 Needs CMake and MSVC (Build Tools 2022 is enough).
 
+Build against **Joep Vanlier's maintained fork** of ysfx. It supports 256
+sliders, as REAPER does; the original jpcima/ysfx stops at 64. Its
+`ysfx_slider_set_value` takes a fourth `notify` argument, which `jsfx_run.cpp`
+passes as `true`.
+
 ```bash
-git clone --depth 1 --recurse-submodules https://github.com/jpcima/ysfx.git C:/git-src/ysfx
-cd C:/git-src/ysfx
+git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/JoepVanlier/ysfx.git C:/git-src/ysfx-joep
+cd C:/git-src/ysfx-joep
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64 \
       -DCMAKE_BUILD_TYPE=Release -DYSFX_PORTABLE=ON \
       -DYSFX_PLUGIN=OFF -DYSFX_GFX=OFF -DYSFX_TOOLS=OFF -DYSFX_TESTS=OFF
@@ -85,13 +90,12 @@ identical and a comparison means something.
 
 ## What it CANNOT tell you — read this before trusting a clean result
 
-- **Filter FREQUENCY, for anything noise-based — and this is bigger than it
-  sounds.** Measured on breath_gen 2026-09-09: moving a filter centre from 300 Hz
-  to 1200 Hz changes the output by 2.4e-07. Four times the frequency, and the
-  runner sees essentially nothing, because the degenerate noise rails the filter
-  to DC and the DC level barely depends on the cutoff. **Anything about pitch,
-  cutoff or resonance in a noise-based plugin is INVISIBLE here.** A clean result
-  means nothing; it is an ear test.
+- **Noise-based plugins, on the original library only.** Its EEL2 mishandles the
+  `%` in this suite's Park-Miller noise, so the noise rails to DC and filter
+  frequency, cutoff and resonance are invisible. The fork build produces real
+  noise: on breath_gen, moving the filter centre from 300 Hz to 1200 Hz takes the
+  zero-crossing rate from 1471 to 2484 per second (2026-09-10). Measurements of
+  noise-based plugins made before that date could not see frequency.
 - **Nested selectors bite the command line exactly as they bite a user.**
   `--slider 25=5 --slider 26=30` does NOT drift target 5 by 30. Setting the
   selector makes @slider save the visible values to the OLD target and load the
@@ -99,22 +103,14 @@ identical and a comparison means something.
   Set the selector with `--slider` and the values with `--set-after`, which is
   also the order a person does it in. This produced a false PASS on 2026-09-09
   that was committed before it was caught.
-  The cause: ysfx's EEL2 handles the `%` in this suite's Park-Miller noise
-  generators differently from REAPER's, so the noise degenerates. **Envelope and
-  timing stay perfectly readable** — that half is genuinely reliable and caught
-  three real bugs the same day.
-- **A PROJECT LINE OVER 64 SLIDERS IS SILENTLY TRUNCATED, and this is the worst
-  thing in this file.** It does not refuse and it does not warn. `--rpp` applies
-  only the values at or below slider 64 and drops the rest; the "N sliders"
-  it prints is the count it actually applied, so `61 sliders` from a line holding
-  87 values is the tell. **Any comparison of a >64-slider plugin is therefore a
-  comparison of a SUBSET**, and if a migration moves values across the boundary,
-  the two runs are made from different settings and will differ for no musical
-  reason. Measured 2026-09-09 on `melody_phase` and `womb_sound_generator_v3`.
-  Exposed today: `melody_phase` (96), `womb_sound_generator_v3` (88),
-  `polyrhythm_phase` (86), `shepard-tone` (75). Under the line and therefore
-  trustworthy: Bubbler (37), Dapple (38), Heartbeat (40), Rhythm Track (39),
-  Breath Generator (41).
+- **Controls with a two-way mirror** (note name and pitch value) only capture a
+  change made after the first block. Set them with `--set-after`, or the change
+  is silently ignored.
+- **Built against the original jpcima/ysfx, it silently drops every slider above
+  64**, in `--rpp`, `--slider` and `--list`. The fork build reaches all 256.
+  Still check the "N sliders" line against what the project line holds.
+  **Any measurement on a plugin over 64 sliders made before 2026-09-10 was made
+  on a subset.**
 - **REAPER's restore ORDER.** `ysfx_load_state` applies sliders and serialized
   data in one defined order. REAPER makes no such guarantee, and the ordering
   gap between `@slider`, `@block` and `@serialize` is where several real bugs in
