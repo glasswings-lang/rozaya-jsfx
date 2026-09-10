@@ -78,8 +78,10 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - **Shepard Tone and Scale reach everything now.** Per-voice/per-note **Gain**
   and **Pan** and the **binaural beat** were unreachable by drift while Melody and
   Polyrhythm could drift theirs. Tone 11 targets -> 28, Scale 4 -> 29, APPENDED so
-  no stored index moves; neither plugin is in any project. Defaults bit-identical,
-  each new target verified amount-vs-zero on a fixed target.
+  no stored index moves; neither plugin is in any project. **Defaults are
+  bit-identical and that is ALL that is verified** — any run on these two with a
+  control changed is not reproducible, so the per-target checks are worthless.
+  Scale also gained twelve per-note detunes. Ears owed on all of it.
 
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
   Heartbeat, Womb. Owed: 11.** Rozaya: doing some and not others is *"shipping a
@@ -112,8 +114,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - The Womb usability fix of 2026-09-06 and its 2026-09-09 drift stepping. Eight
   of nine projects bit-identical; `to-sleep-within` differs for pre-existing
   reasons (`docs/history/R22.md`).
-- **R23 is SWEPT, 2026-09-09** — Heartbeat and Melody too; fourteen plugins are
-  cleared and must not be "fixed" (`docs/backlog.md` has the table).
+- **R23 is SWEPT** — fourteen plugins cleared and not to be "fixed"
+  (`docs/backlog.md` has the table).
 - The 2026-09-06 drift/ramp sweep, the `N per beat` fix, Tremolo's Start delay
   fix, the range widenings.
 - **Every new capability on Polyrhythm v3.** Never played: per-voice On Duration /
