@@ -111,14 +111,18 @@ Duty cycle for the **Pulse** waveform — the fraction of each cycle the wave sp
 
 Only meaningful when Waveform is set to **Pulse**, and hidden from the parameter list entirely on every other waveform.
 
-**Tuning Reference Hz** `400 – 480`
+**Tuning reference (Hz)** `20 – 2000, default 440`
 Frequency of A4. Standard concert pitch is 440.
 
-**Root Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B`
-The base note. Each voice's Semitones field is relative to this.
+**Fine tune unit (for every voice)** `Hz / Semitones / Cents, default Cents`
+What every voice's *Fine tune* is counted in — one unit for all eight, not one per
+voice. Change it and all eight fine tunes are read in the new unit. Each voice's
+fine tune says `(in fine tune units)` so you can tell, from the voice itself,
+where its unit is set. Renamed 2026-09-10; the old label said neither.
 
-**Center Octave** `0 – 8`
-Octave of the root note. With Root Note = A and Center Octave = 4, the base frequency is A4 = 440 Hz (at default tuning).
+**Transpose (half steps)** `-12 – 12` · **Octave shift** `-4 – 4`
+Move every voice together. The intervals between voices stay the same. At 0 and 0
+the note names on the voices are literally true.
 
 **Loop** `Off / On`
 When on, the sequence wraps from the last active voice back to the first. When off, the sequence plays one full pass and stops.
@@ -222,8 +226,11 @@ Good for legato / flowing melodies where you want one bending tone instead of ar
 
 ### Per Voice (V1–V8)
 
-**Vn Semitones from root** `-24 – 24`
-This voice's note, in semitones above (positive) or below (negative) the global Root Note + Center Octave.
+**Vn Note** `C2 – C6`
+This voice's note, by name. Transpose and Octave shift move it along with every other voice.
+
+**Vn Fine tune (in fine tune units)** `-1000 – 1000, default 0`
+Nudges this voice off its note, in whatever *Fine tune unit (for every voice)* says. In Cents, 50 is a quarter tone.
 
 **Vn Next voice in (cycles)** `0.01 – 16`
 How long until the sequencer hands off from this voice to the next active one, in cycles of the global rate. Controls *sequence timing* — when does V[n+1] start? Vn's own note may continue ringing past this handoff (overlap) or end before it (rest), depending on the "Note duration" slider below.

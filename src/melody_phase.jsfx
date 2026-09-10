@@ -54,7 +54,7 @@ slider4:25<1,99,0.1>Pulse width (%, 50 = square)
 slider5:440<20,2000,0.1>Tuning reference (Hz)
 // ONE unit for all eight fine tunes, not one per voice. Rozaya declined the
 // selector this rule assumed was necessary; see docs/history/R22.md.
-slider6:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
+slider6:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit (for every voice)
 // Where the whole set sits, and it is the SAME pair Polyrhythm v3 uses.
 //
 // Root note and Center octave used to live here, and they had to go the moment
@@ -132,56 +132,56 @@ slider26:1<0,1,1{Off,On}>Loop sequence
 //     root you have to remember is arithmetic; a note name is recognition. The
 //     old value converts exactly -- see the migration note in the layout doc. ---
 slider27:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V1 Note
-slider28:0<-1000,1000,0.001>V1 Fine tune
+slider28:0<-1000,1000,0.001>V1 Fine tune (in fine tune units)
 slider29:1<0.001,1000,0.001>V1 Next voice in (cycles)
 slider30:1<0,1000,0.001>V1 Note duration (cycles; 0 = silent)
 slider31:-6<-60,6,0.01>V1 Gain dB
 slider32:1<0,1,1{Off,On}>V1 Active
 
 slider33:26<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V2 Note
-slider34:0<-1000,1000,0.001>V2 Fine tune
+slider34:0<-1000,1000,0.001>V2 Fine tune (in fine tune units)
 slider35:1<0.001,1000,0.001>V2 Next voice in (cycles)
 slider36:1<0,1000,0.001>V2 Note duration (cycles; 0 = silent)
 slider37:-6<-60,6,0.01>V2 Gain dB
 slider38:0<0,1,1{Off,On}>V2 Active
 
 slider39:28<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V3 Note
-slider40:0<-1000,1000,0.001>V3 Fine tune
+slider40:0<-1000,1000,0.001>V3 Fine tune (in fine tune units)
 slider41:1<0.001,1000,0.001>V3 Next voice in (cycles)
 slider42:1<0,1000,0.001>V3 Note duration (cycles; 0 = silent)
 slider43:-6<-60,6,0.01>V3 Gain dB
 slider44:0<0,1,1{Off,On}>V3 Active
 
 slider45:29<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V4 Note
-slider46:0<-1000,1000,0.001>V4 Fine tune
+slider46:0<-1000,1000,0.001>V4 Fine tune (in fine tune units)
 slider47:1<0.001,1000,0.001>V4 Next voice in (cycles)
 slider48:1<0,1000,0.001>V4 Note duration (cycles; 0 = silent)
 slider49:-6<-60,6,0.01>V4 Gain dB
 slider50:0<0,1,1{Off,On}>V4 Active
 
 slider51:31<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V5 Note
-slider52:0<-1000,1000,0.001>V5 Fine tune
+slider52:0<-1000,1000,0.001>V5 Fine tune (in fine tune units)
 slider53:1<0.001,1000,0.001>V5 Next voice in (cycles)
 slider54:1<0,1000,0.001>V5 Note duration (cycles; 0 = silent)
 slider55:-6<-60,6,0.01>V5 Gain dB
 slider56:0<0,1,1{Off,On}>V5 Active
 
 slider57:33<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V6 Note
-slider58:0<-1000,1000,0.001>V6 Fine tune
+slider58:0<-1000,1000,0.001>V6 Fine tune (in fine tune units)
 slider59:1<0.001,1000,0.001>V6 Next voice in (cycles)
 slider60:1<0,1000,0.001>V6 Note duration (cycles; 0 = silent)
 slider61:-6<-60,6,0.01>V6 Gain dB
 slider62:0<0,1,1{Off,On}>V6 Active
 
 slider63:35<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V7 Note
-slider64:0<-1000,1000,0.001>V7 Fine tune
+slider64:0<-1000,1000,0.001>V7 Fine tune (in fine tune units)
 slider65:1<0.001,1000,0.001>V7 Next voice in (cycles)
 slider66:1<0,1000,0.001>V7 Note duration (cycles; 0 = silent)
 slider67:-6<-60,6,0.01>V7 Gain dB
 slider68:0<0,1,1{Off,On}>V7 Active
 
 slider69:36<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V8 Note
-slider70:0<-1000,1000,0.001>V8 Fine tune
+slider70:0<-1000,1000,0.001>V8 Fine tune (in fine tune units)
 slider71:1<0.001,1000,0.001>V8 Next voice in (cycles)
 slider72:1<0,1000,0.001>V8 Note duration (cycles; 0 = silent)
 slider73:-6<-60,6,0.01>V8 Gain dB
