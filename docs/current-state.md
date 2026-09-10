@@ -52,17 +52,18 @@ sentence.
 
 Only "it has been heard" counts as done.
 
-**The not-heard list is BLOCKED work, not pending work.** It is not a queue and
-it is not a to-do list. Nothing on it may be extended, built on, or "finished",
-and no bug in it may be fixed unasked. **The only correct action on unheard work
-is to ask for an ear test.**
+**Unheard is not blocked, and asking for an ear test is not free.** Rozaya,
+2026-09-09: *"It's OK that I haven't heard them, I'll test them when all the
+features are there to test ... doing that repeatedly just makes me want to throw
+shit."* This list records what is owed a hearing and it may grow. **One
+listening session with everything in place beats five partial ones** — every
+promotion costs a full REAPER restart, and the restarts are the cost.
 
-That is written this plainly because the opposite kept happening. Rozaya,
+**What is still forbidden is starting work nobody asked for.** Rozaya,
 2026-09-08: *"it was doing the thing of, I'm gonna fix bugs even though you've
 said you haven't heard them. It was like we were having two different
-conversations."* A session that starts work here is not helping — it is adding
-more unheard change on top of unheard change, which makes the listening session
-that eventually has to happen bigger and harder to attribute.
+conversations."* Build what was asked, propagate it, measure it, add it to this
+list — and do not go hunting the list for jobs of your own.
 
 **Heard and good:** Melody's R20/R21 rate block and Start delay fix; `N per
 beat`; both big reorders on finished work; Dapple's immediate rate change;
