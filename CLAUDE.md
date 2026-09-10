@@ -101,6 +101,9 @@ read what else is in the block** -- never trust a document over the source.
 - `docs/jsfx-gotchas.md` -- read before editing a `.jsfx`.
 - `docs/working-practice.md` -- the incident behind every rule above. Read it
   there before arguing with one, not instead of obeying it.
+- `docs/history/<RULE>.md` -- one rule's history: the shapes already tried and
+  killed. Read the one rule you are about to argue with. `docs/plan-history.md`
+  is the older general version of the same thing.
 - `docs/plugins/<plugin>.md` -- user-facing reference; update it whenever you
   change a slider. `plan-history.md` and `session-log.md` are reasoning only rather than current facts. 
   `ls docs/` rather than guessing at the rest.

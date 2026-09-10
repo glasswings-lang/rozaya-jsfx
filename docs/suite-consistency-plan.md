@@ -17,8 +17,11 @@ non-numeric order, with R17 buried inside "Where to pick this up" and R18 inside
 
 - **`docs/backlog.md`** — what each plugin is owed, the phase ordering, the open
   questions. **Nothing in it is a job you may start unasked.**
-- **`docs/plan-history.md`** — why each rule is what it is, the shapes that were
-  killed, the cost measurements, and the dated status notes.
+- **`docs/history/<RULE>.md`** — one rule's history, capped at 200 lines each:
+  the shapes tried and killed for THAT rule. Started 2026-09-09 when Rozaya
+  asked why there was one history file rather than one per rule.
+- **`docs/plan-history.md`** — the older general version of the same thing: cost
+  measurements, dated status notes, and superseded shapes not yet filed per rule.
 
 Every line of the old document is in one of these three files, verbatim. Nothing
 was rewritten in the split.
@@ -497,23 +500,8 @@ music -- "I'm not just designing for locks." A free beat count loses nothing.
 **And it costs no new sliders.** No `Sync to host`, no `Host sync target`, no
 `Every N beats`. The `Host ratio` multiplier picker becomes redundant.
 
-## ~~Where the heavier R13 shape still earns its keep~~ — WRONG. KILLED BY R20, 2026-09-04.
-
-**This paragraph is the single most expensive sentence in this document. Do not
-act on it.** It said the sync block earns its keep where a plugin syncs more
-than one thing independently, and named Melody Phase. It is wrong twice over:
-
-- **A second rate does not need a selector. It needs its own rate mode.** One
-  Rate Value cannot express two beat counts — true, and irrelevant, because the
-  second rate has its own value. Melody's pan lacked a MODE, not a selector.
-- **Nobody has ever used the capability.** 73 Melody instances, 27 synced, all
-  27 targeting `Rate value`. Zero pointing at the pan.
-
-The original text is preserved here because it was quoted back at Rozaya as a
-justification and they could not evaluate it: *"Only where a plugin has more
-than one thing to sync independently. Melody Phase syncs the sequencer and the
-pan separately, which needs a target selector and a per-target beat count; one
-Rate Value cannot express two. Melody keeps what it has."* Read R20 instead.
+**One shape was tried and killed here** — the heavier sync block, which the plan
+once called its most expensive sentence. It is in `docs/history/R13.md`.
 
 ## The recipe — how R13-revised is applied to one plugin
 
@@ -1032,28 +1020,9 @@ equivalent of the nine plugins that had nothing stored on Host x.
 This is R20's shape applied to pitch: a value, then a mode saying what the value
 means, same options in the same order wherever you meet it.
 
-## ~~Why `Note` is not one of the modes~~ — OVERTURNED 2026-09-09
-
-**This section argued at length that `Note` could not be one of the pitch modes,
-because a plugin that did not make the audio does not know its pitch. Rozaya
-overturned it the first time she navigated the built block:** *"note is not
-master here. it's one way of expressing pitch, period. Don't have two
-finetunes."*
-
-She was right, and the argument was a workaround wearing a rule's clothes. The
-real constraint is that a JSFX slider can be a list of note names or a
-continuous number, never both — which I could not express, so I promoted it to a
-principle instead of saying it out loud. `docs/designing-for-dyscalculia.md` and
-`CLAUDE.md` both already name that exact failure.
-
-**Making `Note` the master also created a second fine tune.** Once the pitch
-value is an OFFSET from a note, it stops being the pitch and becomes a fine
-adjustment — so the block carried two of those, with the wrong half labelled as
-coarse.
-
-**The replacement** — mode first, a note name that is a real control in
-Semitones mode and hidden elsewhere, the pitch value, then exactly one fine
-tune — is in `docs/layouts/breath-gen.md`. Old text at commit `11b58ac`.
+**`Note` was once argued out of the mode list, and Rozaya overturned it** on
+2026-09-09: *"note is not master here. it's one way of expressing pitch,
+period."* The argument is in `docs/history/R22.md`.
 
 ## Flat notes, and what this buys that nothing in the suite has
 

@@ -44,11 +44,23 @@ BUDGETS = {
     "docs/planned-features.md": (2500, "in-flight and deferred design work"),
 }
 
+# docs/history/<RULE>.md -- one file per rule, each capped on its own.
+#
+# Rozaya asked on 2026-09-09 why there was a history FILE rather than history
+# FILES. There was no reason: the 2026-09-08 split cut the old plan into three
+# and history happened to be one of the three. Per rule is better -- a session
+# reading R13 reads R13's history rather than seven hundred lines of everything
+# -- and a per-file cap means one rule's history can never crowd out another's.
+PER_RULE_HISTORY = (200, "one rule's history; read it to check what was already killed")
+
 
 def main() -> int:
     rows = []
     worst = 0
-    for rel, (budget, purpose) in sorted(BUDGETS.items()):
+    budgets = dict(BUDGETS)
+    for f in sorted((ROOT / "docs" / "history").glob("*.md")):
+        budgets[f.relative_to(ROOT).as_posix()] = PER_RULE_HISTORY
+    for rel, (budget, purpose) in sorted(budgets.items()):
         path = ROOT / rel
         if not path.exists():
             rows.append((rel, None, budget, purpose))
