@@ -1192,8 +1192,8 @@ argument is in `docs/history/R22.md` and must not be cited from here again.
 
 What is settled is only the quoted line above: these two are their own
 discussion. What they end up carrying is NOT settled, and one draft of this rule
-wrote "they carry the pair alone" into the rule statement as though it were. They are the suite's two spectral plugins, they
-share a capture mechanism, Passage has an owed reorder blocked on what it is
+wrote "they carry the pair alone" into the rule statement as though it were.
+They are the suite's two spectral plugins, they share a capture mechanism, Passage has an owed reorder blocked on what it is
 FOR, and Rozaya has just said its fine-tune surface is part of the answer to
 that — *"passage earns a place by having room for a fine-tune control tapping
 into those pitch modes (flat notes, anyone)?"*
