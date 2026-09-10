@@ -72,11 +72,6 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 **Not heard:**
 
-- **`jsfx_run --input` now exists** — it fed silence, so every EFFECT compared
-  identical whatever changed. With real audio: Sweep Dwell's defaults are
-  bit-identical, its frequencies respond, semitone mode works; **Bubbler and
-  Dapple re-verified**, all five projects identical.
-
 - **Shepard Tone and Scale: drift and ramp reach everything** — per-voice/note
   Gain and Pan and the binaural beat, Tone 11 targets -> 28, Scale 4 -> 29,
   appended so nothing stored moves. Scale also gained twelve per-note detunes.
@@ -105,7 +100,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   after; pre-existing. Owed: an open-and-play, and a Breath Gen pitch target on
   `With the target`, which is ears-only.
 
-
+- **Sustain Looper, 2026-09-10:** Bubbler's pitch block, Drift and Ramp on eight
+  targets, and loop moves crossfade instead of cutting. 4 instances migrated,
+  bit-identical with the sample loaded. `docs/layouts/sustain-looper.md`.
 
 - **The Breath Generator 40-slider build is PROMOTED.** Four instances migrated,
   bit-identical over 40 s on all three; the migrated PROJECTS have not been

@@ -48,17 +48,40 @@ Size of the looped chunk. Small lengths become a tone; longer lengths sustain a 
 **Crossfade (% of loop)** `0 to 100, default 40`
 How much of the loop end crossfades into the start. Raise until the seam is inaudible. Broadband sources (breath) need very little; tonal sources need more.
 
-**Pitch (semitones)** `-24 to +24, default 0`
-Transposes playback, tape-style (pitch and formants move together). The file's own sample rate is auto-corrected so it plays at its true pitch at 0.
+Moving Loop position or Loop length while it plays never cuts. If the loop moves away from where the playhead is, the playhead moves to the same place in the new loop and crossfades from where it was over 30 ms.
 
-**Output (dB)** `-24 to +12, default 0`
-Final output level.
+### Pitch
+
+The same block as Bubbler, because the looper cannot know what note its sample is. Transposes playback tape-style (pitch and formants move together). The file's own sample rate is auto-corrected, so at 0 it plays at its true pitch.
+
+**Source note (where zero is)** `None, C-1 to G9, default None`
+Tell the plugin what note the sample is. At None, the transpose value works on its own.
+
+**Target note** `C-1 to G9`
+Shown once Source note is set and Transpose unit is Semitones. Pick the note you want to hear; the transpose value follows, and moving the value moves the note.
+
+**Transpose value (Hz / semitones / cents)** `default 0` · **Transpose unit** `Hz / Semitones / Cents, default Semitones`
+The shift. Hz is measured from the tuning reference.
+
+**Fine tune** `default 0` · **Fine tune unit** `Hz / Semitones / Cents, default Cents`
+A finer shift on top.
+
+**Tuning reference (Hz)** `20 to 2000, default 440`
+
+### Ensemble and output
 
 **Voices (ensemble)** `0 to 12, default 6`
 Number of detuned ensemble voices stacked on the loop. 0 = a single clean loop; higher = a thicker section.
 
-**Spread (detune amount)** `0 to 100, default 50`
+**Spread (%)** `0 to 100, default 50`
 How far the ensemble voices detune apart and drift. Low = tight and subtle; high = wide and lush (very high goes warbly).
+
+**Output (dB)** `-24 to +12, default 0`
+Final output level.
+
+### Drift and Ramp
+
+Both reach eight targets, in the order the controls appear: Loop position, Loop length, Crossfade, Transpose, Fine tune, Tuning reference, Spread, Output. Amounts are in each target's own unit. Drift period unit is Seconds or Beats; Ramp time unit is Seconds, Minutes or Beats. Both work like every other plugin in the suite, including play and rest.
 
 ---
 

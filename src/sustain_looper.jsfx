@@ -5,44 +5,111 @@ desc: Sustain Looper (loads a sample, clean crossfade loop + ensemble)
 // https://creativecommons.org/publicdomain/zero/1.0/
 //
 // Loads a WAV directly and loops a section of it FOREVER, cleanly, in the
-// original timbre — the sampler "sustain loop" (choir/string pads) made
-// ACCESSIBLE. No live capture, no freeze timing: pick the file from the
-// dropdown and it's loaded. A crossfade hides the loop seam, so loop points
-// do NOT have to be matched by eye — set the region by ear, raise the
-// crossfade until the repeat is seamless.
+// original timbre -- the sampler "sustain loop" (choir/string pads) made
+// ACCESSIBLE. Pick the file from the dropdown and it's loaded. A crossfade hides
+// the loop seam, so loop points do NOT have to be matched by eye.
 //
-// ENSEMBLE: Voices stacks N detuned copies of the loop (a real section,
-// not a chorus), each a different amount sharp/flat and drifting on slow
-// LFOs, spread across the stereo field. Spread sets how detuned/lush. It's
-// true detune (no delay, no comb) so it beats like a choir, and it masks
-// any residual loop repetition. Voices = 0 -> pure clean single loop.
+// ENSEMBLE: Voices stacks N detuned copies of the loop, each a different amount
+// sharp/flat and drifting on slow LFOs, spread across the stereo field. Spread
+// sets how detuned. Voices = 0 -> pure clean single loop.
 //
 // SETUP: put .wav files in REAPER's resource folder under
 //   Data\glasswings_samples\   then pick from the "Sample" dropdown.
 //
-// USE: pick a Sample, press play. Loop a STEADY sustained stretch (the held
-// middle, not a swell). Crossfade up till seamless. Voices/Spread to taste.
-// Outputs the loop only. Run the transport (or arm+monitor) so it sounds.
+// Layout: docs/layouts/sustain-looper.md.
 
 slider1:/glasswings_samples:none:Sample
 slider2:50<0,100,0.1>Loop position (%)
 slider3:500<5,4000,1>Loop length (ms)
 slider4:40<0,100,1>Crossfade (% of loop)
-slider5:0<-24,24,0.1>Pitch (semitones)
-slider6:0<-24,12,0.01>Output (dB)
-slider7:6<0,12,1>Voices (ensemble)
-slider8:50<0,100,1>Spread (detune amount)
+// --- Pitch: Bubbler's shift form. The looper does not know its sample's pitch,
+//     so Source note says where zero is. At None the transpose value stands
+//     alone, which is what every migrated instance holds. ---
+slider5:0<0,128,1{None,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Source note (where zero is)
+slider6:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Target note
+slider7:0<-20000,20000,0.001>Transpose value (Hz / semitones / cents)
+slider8:1<0,2,1{Hz,Semitones,Cents}>Transpose unit
+slider9:0<-1000,1000,0.001>Fine tune
+slider10:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
+slider11:440<20,2000,0.1>Tuning reference (Hz)
+slider12:6<0,12,1>Voices (ensemble)
+slider13:50<0,100,1>Spread (%)
+slider14:0<-24,12,0.01>Output (dB)
+// --- Drift (nested selector) ---
+slider15:0<0,7,1{Loop position,Loop length,Crossfade,Transpose,Fine tune,Tuning reference,Spread,Output}>Drift target
+slider16:0<0,20000,0.01>Drift up amount (units match target)
+slider17:0<0,20000,0.01>Drift down amount (units match target)
+slider18:20<0,1000,0.01>Drift period (0 = off)
+// No Cycles: the looper has no rate to count cycles of.
+slider19:0<0,1,1{Seconds,Beats}>Drift period unit
+slider20:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider21:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider22:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+// --- Ramp (nested selector; signed delta) ---
+slider23:0<0,7,1{Loop position,Loop length,Crossfade,Transpose,Fine tune,Tuning reference,Spread,Output}>Ramp target
+slider24:0<-20000,20000,0.001>Ramp by (units match target)
+slider25:1<0,2,1{Seconds,Minutes,Beats}>Ramp time unit
+slider26:0<0,1000,0.01>Ramp duration (in ramp time units)
+slider27:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider28:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider29:0<0,1,1{Off,On}>Ramp engage
+slider30:0<0,1000,0.01>Ramp start delay (in ramp time units)
 
 @init
+// ext_noinit stays: @init re-running on play would drop the loaded sample, and
+// @slider (which loads it) does not run on play. Drift and Ramp runtime is reset
+// on transport start in @block instead.
 ext_noinit = 1;
-rv  = 0;            // ensemble voice read positions (up to 12)
-smp = 64;           // sample buffer (above the voice-position slots)
+N_TARGETS = 8;   // Loop position, Loop length, Crossfade, Transpose, Fine tune,
+                 // Tuning reference, Spread, Output
+
+rv    = 0;       // ensemble voice read positions (up to 12)
+jrv   = 16;      // where each voice was when its loop region moved
+jtv   = 32;      // each voice's crossfade progress from there, 0..1
+vlive = 48;      // 1 once a voice has been placed, so later moves fade
+
+// Per-target banks, 32 apart, 64..735.
+speed_ramp_by_mem            = 64;    // CONFIG
+speed_ramp_dur_mem           = 96;    // CONFIG
+speed_ramp_delay_mem         = 128;   // CONFIG
+speed_ramp_ramp_t_mem        = 160;   // RUNTIME
+speed_ramp_delay_elapsed_mem = 192;   // RUNTIME
+drift_up_mem                 = 224;   // CONFIG
+drift_down_mem               = 256;   // CONFIG
+drift_per_mem                = 288;   // CONFIG
+drift_shape_mem              = 320;   // CONFIG
+drift_phase_mem              = 352;   // RUNTIME
+drift_prev_mem               = 384;   // RUNTIME
+drift_curr_mem               = 416;   // RUNTIME
+drift_offset_mem             = 448;   // RUNTIME
+drift_play_mem               = 480;   // CONFIG
+drift_rest_mem               = 512;   // CONFIG
+drift_pr_resting_mem         = 544;   // RUNTIME
+drift_pr_accum_mem           = 576;   // RUNTIME
+sr_play_mem                  = 608;   // CONFIG
+sr_rest_mem                  = 640;   // CONFIG
+sr_pr_resting_mem            = 672;   // RUNTIME
+sr_pr_accum_mem              = 704;   // RUNTIME
+
+smp = 1024;      // sample buffer, above every bank; its length is the file's
 lslider1 = -1;
 nframes = 0;
 nch = 0;
 file_sr = 0;
 r = 0;
+r_live = 0;
+j_r = 0;
+j_t = 1;
 glfo = 0.0;
+jstep = 1 / max(0.03 * srate, 1);
+host_bpm = 120;
+last_playing = 0;
+tr_ui_inited  = 0;
+last_tgt_note = 60;
+last_tval     = 0;
+
+i = 0;
+loop(12, jtv[i] = 1; vlive[i] = 0; i += 1; );
 
 // read frame p (fractional) of channel ch from the interleaved sample buffer
 function rdc(p, ch) local(i0, i1, fr) (
@@ -65,6 +132,70 @@ function lr(pos, ch) local(f) (
   );
 );
 
+// A shift, in semitones, from a value in unit u. Hz is measured from the tuning
+// reference, which is what lets a shift be said in Hz at all. Same as Bubbler.
+function sl_semis_from(u, v, ref) local(rr) (
+  rr = max(ref, 0.001);
+  u == 0 ? 12 * log(max(rr + v, 0.001) / rr) / log(2) :
+  u == 2 ? v / 100 :
+           v;
+);
+
+// Shared play/rest window counter, the suite's one implementation.
+function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
+  play > 0 && rest > 0 ? (
+    accum_bank[idx] += tick;
+    accum_bank[idx] >= (resting_bank[idx] ? rest : play) ? (
+      accum_bank[idx] = 0;
+      resting_bank[idx] = 1 - resting_bank[idx];
+    );
+    resting_bank[idx];
+  ) : ( 0; );
+);
+
+function reset_runtime() local(k) (
+  k = 0;
+  loop(N_TARGETS,
+    speed_ramp_ramp_t_mem[k] = 0;
+    speed_ramp_delay_elapsed_mem[k] = 0;
+    drift_phase_mem[k] = 0;
+    drift_prev_mem[k] = 0;
+    drift_curr_mem[k] = 0;
+    drift_offset_mem[k] = 0;
+    drift_pr_resting_mem[k] = 0;
+    drift_pr_accum_mem[k] = 0;
+    sr_pr_resting_mem[k] = 0;
+    sr_pr_accum_mem[k] = 0;
+    k += 1;
+  );
+);
+
+drift_cfg_inited != 1 ? (
+  i = 0;
+  loop(N_TARGETS,
+    speed_ramp_by_mem[i] = 0; speed_ramp_dur_mem[i] = 0; speed_ramp_delay_mem[i] = 0;
+    drift_up_mem[i] = 0; drift_down_mem[i] = 0; drift_per_mem[i] = 20; drift_shape_mem[i] = 0;
+    drift_play_mem[i] = 0; drift_rest_mem[i] = 0; sr_play_mem[i] = 0; sr_rest_mem[i] = 0;
+    i += 1;
+  );
+  drift_cfg_inited = 1;
+);
+reset_runtime();
+
+@block
+// Adopt the pitch mirror here, not in @slider, so a restore can never read as
+// a user edit (Bubbler, Breath Generator).
+!tr_ui_inited ? (
+  last_tgt_note = slider6;
+  last_tval = slider7;
+  tr_ui_inited = 1;
+);
+host_bpm = max(tempo, 0.001);
+jstep = 1 / max(0.03 * srate, 1);
+is_playing = play_state == 1 || play_state == 5;
+is_playing && !last_playing ? reset_runtime();
+last_playing = is_playing;
+
 @slider
 fidx = slider1 | 0;
 fidx != lslider1 ? (
@@ -81,18 +212,168 @@ fidx != lslider1 ? (
   );
 );
 
-pos01    = slider2 * 0.01;
-loop_req = max(32, slider3 * 0.001 * srate);
-xf01     = slider4 * 0.01;
+// Target note and transpose value write to each other while a Source note is
+// set and the unit is Semitones. The value is never gated.
+tr_ui_inited ? (
+  slider5 > 0 && slider8 == 1 ? (
+    slider6 != last_tgt_note ? (
+      slider7 = slider6 - (slider5 - 1);
+      slider_automate(slider7);
+    ) : slider7 != last_tval ? (
+      slider6 = max(0, min(127, floor(slider7 + (slider5 - 1) + 0.5)));
+      slider_automate(slider6);
+    );
+  );
+);
+last_tgt_note = slider6;
+last_tval     = slider7;
+slider_show(slider6, slider5 > 0 && slider8 == 1);
+
 sr_ratio = (file_sr > 0) ? file_sr / srate : 1;
-pitch_ratio = 2 ^ (slider5 / 12) * sr_ratio;
-out_gain = 2 ^ (slider6 / 6);
-nv       = slider7 | 0;
-spreadamt = slider8 * 0.01;
+nv       = slider12 | 0;
 chR = nch > 1 ? 1 : 0;
 
+// Ramp target selector save/restore. slider29 (engage) and slider25 (unit) are
+// global.
+sel_speed_target = slider23;
+last_speed_target != sel_speed_target ? (
+  speed_ramp_by_mem[last_speed_target]    = slider24;
+  speed_ramp_dur_mem[last_speed_target]   = slider26;
+  speed_ramp_delay_mem[last_speed_target] = slider30;
+  sr_play_mem[last_speed_target]          = slider27;
+  sr_rest_mem[last_speed_target]          = slider28;
+  slider24 = speed_ramp_by_mem[sel_speed_target];
+  slider26 = speed_ramp_dur_mem[sel_speed_target];
+  slider30 = speed_ramp_delay_mem[sel_speed_target];
+  slider27 = sr_play_mem[sel_speed_target];
+  slider28 = sr_rest_mem[sel_speed_target];
+  slider_automate(slider24);
+  slider_automate(slider26);
+  slider_automate(slider30);
+  slider_automate(slider27);
+  slider_automate(slider28);
+  last_speed_target = sel_speed_target;
+) : (
+  speed_ramp_by_mem[sel_speed_target]    = slider24;
+  speed_ramp_dur_mem[sel_speed_target]   = slider26;
+  speed_ramp_delay_mem[sel_speed_target] = slider30;
+  sr_play_mem[sel_speed_target]          = slider27;
+  sr_rest_mem[sel_speed_target]          = slider28;
+);
+
+// Drift target selector save/restore. slider19 (unit) is global.
+sel_target = slider15;
+last_target_select != sel_target ? (
+  drift_up_mem[last_target_select]    = slider16;
+  drift_down_mem[last_target_select]  = slider17;
+  drift_per_mem[last_target_select]   = slider18;
+  drift_shape_mem[last_target_select] = slider20;
+  drift_play_mem[last_target_select]  = slider21;
+  drift_rest_mem[last_target_select]  = slider22;
+  slider16 = drift_up_mem[sel_target];
+  slider17 = drift_down_mem[sel_target];
+  slider18 = drift_per_mem[sel_target];
+  slider20 = drift_shape_mem[sel_target];
+  slider21 = drift_play_mem[sel_target];
+  slider22 = drift_rest_mem[sel_target];
+  slider_automate(slider16);
+  slider_automate(slider17);
+  slider_automate(slider18);
+  slider_automate(slider20);
+  slider_automate(slider21);
+  slider_automate(slider22);
+  last_target_select = sel_target;
+) : (
+  drift_up_mem[sel_target]    = slider16;
+  drift_down_mem[sel_target]  = slider17;
+  drift_per_mem[sel_target]   = slider18;
+  drift_shape_mem[sel_target] = slider20;
+  drift_play_mem[sel_target]  = slider21;
+  drift_rest_mem[sel_target]  = slider22;
+);
+
 @sample
+// --- Ramp clocks. Engage is a freeze/resume gate; transport start resets. ---
+ramp_time_scale = slider25 == 2 ? 60 / host_bpm : slider25 == 1 ? 60 : 1;
+slider29 ? (
+  i = 0;
+  loop(N_TARGETS,
+    speed_ramp_dur_mem[i] > 0 ? (
+      sr_delay_samples = speed_ramp_delay_mem[i] * ramp_time_scale * srate;
+      speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
+        speed_ramp_delay_elapsed_mem[i] += 1;
+      ) : (
+        sr_pl = sr_play_mem[i];
+        sr_rs = sr_rest_mem[i];
+        sr_pr_on = sr_pl > 0 && sr_rs > 0;
+        sr_hold = pr_frozen(sr_pr_accum_mem, sr_pr_resting_mem, i,
+                            1.0 / (ramp_time_scale * srate), sr_pl, sr_rs);
+        !sr_hold ? (
+          sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * ramp_time_scale);
+          sr_pr_on ? sr_step *= (sr_pl + sr_rs) / sr_pl;
+          speed_ramp_ramp_t_mem[i] += sr_step;
+          speed_ramp_ramp_t_mem[i] > 1.0 ? speed_ramp_ramp_t_mem[i] = 1.0;
+        );
+      );
+    );
+    i += 1;
+  );
+);
+
+// --- Drift, per target, continuous. The offset bank holds drift plus ramp. ---
+i = 0;
+loop(N_TARGETS,
+  up    = drift_up_mem[i];
+  down  = drift_down_mem[i];
+  per   = drift_per_mem[i];
+  shape = drift_shape_mem[i];
+  drift_offset_local = 0;
+  (up > 0 || down > 0) && per > 0 ? (
+    per_seconds = slider19 == 1 ? per * 60 / host_bpm : per;
+    period_samples = max(per_seconds * srate, 1);
+    d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,
+                         1.0 / period_samples, drift_play_mem[i], drift_rest_mem[i]);
+    d_frozen ? (
+      new_phase = drift_phase_mem[i];
+    ) : (
+      new_phase = drift_phase_mem[i] + 1.0 / period_samples;
+      new_phase >= 1.0 ? (
+        new_phase -= 1.0;
+        shape == 2 ? (
+          drift_prev_mem[i] = drift_curr_mem[i];
+          drift_curr_mem[i] = rand(2) - 1;
+        );
+      );
+      drift_phase_mem[i] = new_phase;
+    );
+    shape == 0 ? (
+      shape_val = sin(2 * $pi * new_phase);
+    ) : shape == 1 ? (
+      shape_val = new_phase < 0.25 ? (4 * new_phase) :
+                  new_phase < 0.75 ? (2 - 4 * new_phase) :
+                                     (4 * new_phase - 4);
+    ) : (
+      shape_val = drift_prev_mem[i] + (drift_curr_mem[i] - drift_prev_mem[i]) * new_phase;
+    );
+    drift_offset_local = shape_val > 0 ? shape_val * up : shape_val * down;
+  );
+  drift_offset_mem[i] = drift_offset_local + speed_ramp_ramp_t_mem[i] * speed_ramp_by_mem[i];
+  i += 1;
+);
+
 nframes >= 64 ? (
+  // Effective values: each control plus its drift and ramp, clamped to the
+  // control's own range.
+  pos01       = max(0, min(100, slider2 + drift_offset_mem[0])) * 0.01;
+  loop_req    = max(32, max(5, min(4000, slider3 + drift_offset_mem[1])) * 0.001 * srate);
+  xf01        = max(0, min(100, slider4 + drift_offset_mem[2])) * 0.01;
+  eff_ref     = max(20, min(2000, slider11 + drift_offset_mem[5]));
+  semis       = sl_semis_from(slider8, slider7 + drift_offset_mem[3], eff_ref)
+              + sl_semis_from(slider10, slider9 + drift_offset_mem[4], eff_ref);
+  pitch_ratio = 2 ^ (semis / 12) * sr_ratio;
+  spreadamt   = max(0, min(100, slider13 + drift_offset_mem[6])) * 0.01;
+  out_gain    = 2 ^ ((slider14 + drift_offset_mem[7]) / 6);
+
   REGN = nframes;
   X = xf01 * loop_req * 0.5; X = max(X, 4);
   L = min(loop_req, REGN - X - 16); L = max(L, 32);
@@ -100,10 +381,30 @@ nframes >= 64 ? (
   usable = REGN - L - X; usable < 0 ? usable = 0;
   S = X + pos01 * usable;
   E = S + L;
-  (r < S || r >= E) ? r = S;
+
+  // THE PLAYHEAD. The first placement goes to the loop start, as it always did.
+  // After that, a region move that leaves the playhead outside wraps it into the
+  // new region at the same place in the loop, and crossfades from where it was
+  // over 30 ms, so it never cuts.
+  (r < S || r >= E) ? (
+    r_live ? (
+      j_r = r; j_t = 0;
+      r = S + (r - S) - floor((r - S) / L) * L;
+    ) : (
+      r = S;
+    );
+  );
+  r_live = 1;
 
   oL = lr(r, 0);
   oR = lr(r, chR);
+  j_t < 1 ? (
+    jg = j_t * 0.5 * $pi;
+    oL = oL * sin(jg) + rdc(j_r, 0) * cos(jg);
+    oR = oR * sin(jg) + rdc(j_r, chR) * cos(jg);
+    j_r += pitch_ratio;
+    j_t += jstep;
+  );
   r += pitch_ratio;
   r >= E ? r -= L;
 
@@ -114,10 +415,25 @@ nframes >= 64 ? (
     sumL = 0; sumR = 0;
     vi = 0;
     loop(nv,
-      (rv[vi] < S || rv[vi] >= E) ? rv[vi] = S + (vi/nv)*L;   // staggered start
+      (rv[vi] < S || rv[vi] >= E) ? (
+        vlive[vi] ? (
+          jrv[vi] = rv[vi]; jtv[vi] = 0;
+          rv[vi] = S + (rv[vi] - S) - floor((rv[vi] - S) / L) * L;
+        ) : (
+          rv[vi] = S + (vi/nv)*L;      // staggered start
+        );
+      );
+      vlive[vi] = 1;
       cents = (nv>1 ? (vi/(nv-1) - 0.5)*2 : 0)*spread_cents + wander*sin(glfo + vi*0.7);
       det = 2 ^ (cents/1200);
       sL = lr(rv[vi], 0); sR = lr(rv[vi], chR);
+      jtv[vi] < 1 ? (
+        vg = jtv[vi] * 0.5 * $pi;
+        sL = sL * sin(vg) + rdc(jrv[vi], 0) * cos(vg);
+        sR = sR * sin(vg) + rdc(jrv[vi], chR) * cos(vg);
+        jrv[vi] += pitch_ratio*det;
+        jtv[vi] += jstep;
+      );
       pan = nv>1 ? vi/(nv-1) : 0.5;
       sumL += sL*cos(pan*$pi*0.5);
       sumR += sR*sin(pan*$pi*0.5);
@@ -134,4 +450,39 @@ nframes >= 64 ? (
   spl1 = oR * out_gain;
 ) : (
   spl0 = 0; spl1 = 0;
+);
+
+@serialize
+// Drift and Ramp configs per target. Magic encodes the target count.
+sl_magic = 4100000 + N_TARGETS;
+file_var(0, sl_magic);
+sl_magic == 4100000 + N_TARGETS ? (
+  file_mem(0, speed_ramp_by_mem,    N_TARGETS);
+  file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
+  file_mem(0, speed_ramp_delay_mem, N_TARGETS);
+  file_mem(0, sr_play_mem,          N_TARGETS);
+  file_mem(0, sr_rest_mem,          N_TARGETS);
+  file_var(0, last_speed_target);
+  file_mem(0, drift_up_mem,    N_TARGETS);
+  file_mem(0, drift_down_mem,  N_TARGETS);
+  file_mem(0, drift_per_mem,   N_TARGETS);
+  file_mem(0, drift_shape_mem, N_TARGETS);
+  file_mem(0, drift_play_mem,  N_TARGETS);
+  file_mem(0, drift_rest_mem,  N_TARGETS);
+  file_var(0, last_target_select);
+  // On read, put the visible config sliders back to the restored banks.
+  file_avail(0) >= 0 ? (
+    slider24 = speed_ramp_by_mem[last_speed_target];
+    slider26 = speed_ramp_dur_mem[last_speed_target];
+    slider30 = speed_ramp_delay_mem[last_speed_target];
+    slider27 = sr_play_mem[last_speed_target];
+    slider28 = sr_rest_mem[last_speed_target];
+    slider16 = drift_up_mem[last_target_select];
+    slider17 = drift_down_mem[last_target_select];
+    slider18 = drift_per_mem[last_target_select];
+    slider20 = drift_shape_mem[last_target_select];
+    slider21 = drift_play_mem[last_target_select];
+    slider22 = drift_rest_mem[last_target_select];
+    sliderchange(-1);
+  );
 );

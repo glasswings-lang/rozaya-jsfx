@@ -69,8 +69,7 @@ Missing lists are from the audit reads, not individually re-checked.
   pitches, sixteen layer overtone harmonics. Save format keyed to `N_TARGETS`.
 - **spectral_vowel_passage** — 14 of 16 per slot. Missing: Wash grain, Overtone
   lift, Overtone width (17 total, one over).
-- **sustain_looper** — no Drift, no save. Candidates: Loop position, Loop length,
-  Crossfade, Pitch, Output, Spread. Only slots 12–63 are free before the sample.
+- **sustain_looper** — DONE 2026-09-10: 8 targets, including the new pitch block.
 - **bubbler** — 9 of 16. Missing: Fine tune, Tuning reference.
 - **dapple** — 11 of 16. Missing: Fine tune, Tuning reference.
 - **full-feature-sweeping-filter** — 6 of 16. Missing: On duration, Depth, Attack,

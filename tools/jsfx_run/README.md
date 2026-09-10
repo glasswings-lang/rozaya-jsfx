@@ -69,6 +69,16 @@ any migration is called done:
 > streams must be **bit-identical**. "Nothing should sound different" stops being
 > a prediction and becomes a measurement.
 
+## Plugins that load a file — `--data-root`
+
+```bash
+jsfx_run src/sustain_looper.jsfx --rpp "E:/reaper/finished/energy healing vol. 2.RPP" \
+         --fx sustain_looper --data-root C:/Users/solst/AppData/Roaming/REAPER/Data
+```
+
+Without `--data-root` a file-selector slider has no files to choose from, the
+sample never loads, and the plugin renders silence. Check for a non-zero sample.
+
 ## Feed it something — `--input`
 
 **It used to feed silence and nothing else, and that made every EFFECT plugin

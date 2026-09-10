@@ -42,6 +42,8 @@ static void usage()
         "                      the <JS_SER> blob -- exactly as a host would\n"
         "  --fx SUBSTR         which plugin inside that project (substring match)\n"
         "  --instance N        which instance of it, 1-based, default 1\n"
+        "  --data-root DIR     REAPER's Data folder, so file-selector sliders\n"
+        "                      (samples) load the file a project names\n"
         "  --slider N=V        set slider N (1-based, as written in the .jsfx) to V.\n"
         "                      Repeatable. Applied BEFORE @init, like a project load.\n"
         "  --set-after N=V     same, but applied AFTER init and the first block --\n"
@@ -91,7 +93,10 @@ static std::vector<uint8_t> b64decode(const std::string &s)
 // Parse the value line the way tools/rpp_sliders.py does, and for the same
 // reasons: a '-' means nothing stored, and past 64 sliders REAPER writes a
 // quoted "" marker at token index 64 which is NOT a slider.
-static void parse_value_line(const std::string &line,
+// A quoted token on a file-selector slider is a FILENAME. It is looked up in
+// the slider's file list, which ysfx fills from --data-root, and applied as
+// that index. Without --data-root there is no list and the file is skipped.
+static void parse_value_line(ysfx_t *fx, const std::string &line,
                              std::vector<ysfx_state_slider_t> &out)
 {
     std::vector<std::string> tok;
@@ -106,7 +111,28 @@ static void parse_value_line(const std::string &line,
         if (k == 64 && tok.size() > 64) continue;          // the "" marker
         uint32_t sid = (k < 64) ? (uint32_t)k : (uint32_t)(k - 1);
         if (sid >= ysfx_max_sliders) break;
-        if (tok[k] == "-" || tok[k].front() == '"') continue;
+        if (tok[k] == "-") continue;
+        if (tok[k].front() == '"') {
+            if (!ysfx_slider_is_path(fx, sid)) continue;
+            std::string name = tok[k].substr(1, tok[k].size() >= 2 ? tok[k].size() - 2 : 0);
+            uint32_t n = ysfx_slider_get_enum_size(fx, sid);
+            std::vector<const char *> names(n);
+            ysfx_slider_get_enum_names(fx, sid, names.data(), n);
+            bool found = false;
+            for (uint32_t e = 0; e < n; ++e) {
+                if (names[e] && name == names[e]) {
+                    ysfx_state_slider_t s{};
+                    s.index = sid;
+                    s.value = (ysfx_real)e;
+                    out.push_back(s);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                std::fprintf(stderr, "slider%u: file \"%s\" not found (set --data-root)\n", sid + 1, name.c_str());
+            continue;
+        }
         ysfx_state_slider_t s{};
         s.index = sid;
         s.value = std::strtod(tok[k].c_str(), nullptr);
@@ -115,7 +141,7 @@ static void parse_value_line(const std::string &line,
 }
 
 // Returns false if the plugin was not found in the project.
-static bool load_from_rpp(const char *rpp, const char *fxmatch,
+static bool load_from_rpp(ysfx_t *fx, const char *rpp, const char *fxmatch,
                           std::vector<ysfx_state_slider_t> &sliders,
                           std::vector<uint8_t> &blob, int which)
 {
@@ -143,7 +169,7 @@ static bool load_from_rpp(const char *rpp, const char *fxmatch,
             if (p == std::string::npos) continue;
             char c0 = t[p];
             if (std::isdigit((unsigned char)c0) || c0 == '-' || c0 == '"') {
-                parse_value_line(t, sliders);
+                parse_value_line(fx, t, sliders);
                 break;
             }
         }
@@ -186,7 +212,7 @@ int main(int argc, char **argv)
     int in_mode = 0;              // 0 silence, 1 noise, 2 sine
     double in_hz = 220.0, in_db = -12.0;
     bool list_only = false, quiet = false;
-    const char *csv = nullptr, *rpp = nullptr, *fxmatch = nullptr;
+    const char *csv = nullptr, *rpp = nullptr, *fxmatch = nullptr, *data_root = nullptr;
     int which = 1;
     std::vector<Assign> before;
     std::vector<std::vector<Assign>> stages(1);
@@ -216,6 +242,7 @@ int main(int argc, char **argv)
         else if (a == "--rpp") rpp = next();
         else if (a == "--fx") fxmatch = next();
         else if (a == "--instance") which = (int)std::strtol(next(), nullptr, 10);
+        else if (a == "--data-root") data_root = next();
         else if (a == "--slider" || a == "--set-after") {
             Assign as{};
             if (!parse_assign(next(), as)) { std::fprintf(stderr, "bad assignment\n"); return 2; }
@@ -226,6 +253,10 @@ int main(int argc, char **argv)
     }
 
     ysfx_config_t *cfg = ysfx_config_new();
+    // Without the built-in readers, ysfx recognises no file as audio, so every
+    // file-selector list comes back empty and file_open() finds nothing.
+    ysfx_register_builtin_audio_formats(cfg);
+    if (data_root) ysfx_set_data_root(cfg, data_root);
     ysfx_t *fx = ysfx_new(cfg);
 
     if (!ysfx_load_file(fx, path, 0)) {
@@ -257,7 +288,7 @@ int main(int argc, char **argv)
         if (!fxmatch) fxmatch = ".jsfx";
         std::vector<ysfx_state_slider_t> ss;
         std::vector<uint8_t> blob;
-        if (!load_from_rpp(rpp, fxmatch, ss, blob, which)) return 1;
+        if (!load_from_rpp(fx, rpp, fxmatch, ss, blob, which)) return 1;
         ysfx_state_t st{};
         st.sliders = ss.data();
         st.slider_count = (uint32_t)ss.size();
