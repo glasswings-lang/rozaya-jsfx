@@ -59,11 +59,10 @@ shit."* This list records what is owed a hearing and it may grow. **One
 listening session with everything in place beats five partial ones** — every
 promotion costs a full REAPER restart, and the restarts are the cost.
 
-**What is still forbidden is starting work nobody asked for.** Rozaya,
-2026-09-08: *"it was doing the thing of, I'm gonna fix bugs even though you've
-said you haven't heard them. It was like we were having two different
-conversations."* Build what was asked, propagate it, measure it, add it to this
-list — and do not go hunting the list for jobs of your own.
+**What is still forbidden is starting work nobody asked for.** Rozaya: *"it was
+doing the thing of, I'm gonna fix bugs even though you've said you haven't heard
+them. It was like we were having two different conversations."* Build what was
+asked, propagate, measure, add it here — never hunt this list for jobs.
 
 **Heard and good:** Melody's R20/R21 rate block and Start delay fix; `N per
 beat`; both big reorders on finished work; Dapple's immediate rate change;
