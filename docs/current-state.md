@@ -26,22 +26,20 @@ sentence.
 
 - **The rate block (R20) and both host modes (R21): built everywhere.** True as
   of 2026-09-06 and not before.
-- **Drift/Ramp: 16 of 19 plugins complete.** Passage is the only one still owed
-  it; Polyrhythm v1 inherits when it crosses to v3. **Resonance Bank is not
-  missing one** — its drift period is a rate by design, whatever a name-matching
-  sweep claims.
+- **Drift/Ramp: 16 of 19 complete.** Passage is the only one owed it; Polyrhythm
+  v1 inherits when it crosses to v3. **Resonance Bank is not missing one** — its
+  drift period is a rate by design, whatever a name-matching sweep claims.
 - **Polyrhythm v1 is left alone.** Rozaya, 2026-09-06: *"The polyrhythm can
   just... be left. If we do v3 and then migrate it'll be fine."* No drift/ramp
   and no reorder; its **84 instances across 17 projects** cross to v3 once, then
   v1 retires. Do not migrate those 84 twice.
-- **Reorders still owed:** Passage (blocked on what it is FOR), Sweep Dwell
+- **Reorders owed:** Passage (blocked on what it is FOR) and Sweep Dwell
   (blocked on its `Cycle mode` question, not effort).
 - **Polyrhythm v3 is done** — built and migrated 2026-09-07, 90 sliders to 56,
   the eight voices behind a **Voice** selector with an `All` position. The
   largest reorder in the suite so far.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
-  verified against all 641 continuous sliders. dB and semitone ranges held for
-  Rozaya's decision.
+  verified against all 641. dB and semitone ranges held for Rozaya's decision.
 - **R22, the pitch block: built in Breath Generator ONLY, heard good
   2026-09-09.** Rebuilt twice by Rozaya in the hearing, so the plan's written
   rule is BEHIND the built one — `docs/layouts/breath-gen.md` is what ships.
