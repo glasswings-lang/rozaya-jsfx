@@ -1025,10 +1025,10 @@ spl1 = out * sin(pan_pos * $pi * 0.5);
 // trailing bytes land in the new banks -- "migrate what was RESTORED, never what
 // was DEFAULTED". Gated on "this blob HAS the field", so an older blob keeps its
 // Drift and Ramp config and simply leaves the new banks at @init's zeros (off).
-sr_magic = 2300000 + N_TARGETS;
+sr_magic = 2400000 + N_TARGETS;
 file_var(0, sr_magic);
-(sr_magic == 2300000 + N_TARGETS || sr_magic == 2200000 + N_TARGETS ||
- sr_magic == 2100000 + N_TARGETS) ? (
+(sr_magic == 2400000 + N_TARGETS || sr_magic == 2300000 + N_TARGETS ||
+ sr_magic == 2200000 + N_TARGETS || sr_magic == 2100000 + N_TARGETS) ? (
   file_mem(0, target_drift_up,     N_TARGETS);
   file_mem(0, target_drift_down,   N_TARGETS);
   file_mem(0, target_drift_per,    N_TARGETS);
@@ -1038,7 +1038,9 @@ file_var(0, sr_magic);
   file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
   file_mem(0, speed_ramp_delay_mem, N_TARGETS);
   file_var(0, last_sr_target);
-  sr_magic == 2200000 + N_TARGETS ? (
+  // 2300000 saves never wrote these, so they are read from 2200000 and from
+  // 2400000 on.
+  (sr_magic == 2200000 + N_TARGETS || sr_magic >= 2400000) ? (
     file_mem(0, drift_play_mem, N_TARGETS);
     file_mem(0, drift_rest_mem, N_TARGETS);
     file_mem(0, sr_play_mem,    N_TARGETS);

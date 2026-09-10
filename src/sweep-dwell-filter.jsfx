@@ -266,7 +266,7 @@ function sdf_hz(m, v, f, fm) local(hz) (
                  hz + f;
   min(max(hz, 20), 20000);
 );
-tuning_ref = 440;
+tuning_ref = slider55 >= 20 ? slider55 : 440;
 sdf_ui_init = 0;
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
 // NO ext_noinit: REAPER re-runs @init on every transport play / render
@@ -555,12 +555,32 @@ FILT_RES_DB_MAX = 34;                     // total emphasis Resonance = 1 asks f
                                           // (34, not 24: the retired core hit ~+29 dB
                                           //  at Resonance 0.98 and migrated projects
                                           //  need to be representable)
-svf_l  = 4400;
-svf_r  = 4400 + 2*FILT_MAXSTAGES;
-svf_qb = 4400 + 4*FILT_MAXSTAGES;     // 1/Q per section
-memset(4400, 0, 5*FILT_MAXSTAGES);
+// 4432, the first slot after the play/rest banks. It was 4400, which is
+// sr_pr_accum_mem and sr_pr_resting_mem.
+svf_l  = 4432;
+svf_r  = 4432 + 2*FILT_MAXSTAGES;
+svf_qb = 4432 + 4*FILT_MAXSTAGES;     // 1/Q per section
+memset(4432, 0, 5*FILT_MAXSTAGES);
 
 @slider
+
+tuning_ref = slider55;
+// Note name and value are one control two ways, as in Womb. Mirrors are
+// adopted in @block so a restore cannot read as a user edit.
+sdf_ui_init ? (
+  slider1 == 1 ? (
+    slider2 != sdf_ln0 ? ( slider3 = slider2; slider_automate(slider3); ) :
+    slider3 != sdf_lv0 ? ( slider2 = max(0, min(127, floor(slider3 + 0.5))); slider_automate(slider2); );
+  );
+  slider6 == 1 ? (
+    slider7 != sdf_ln1 ? ( slider8 = slider7; slider_automate(slider8); ) :
+    slider8 != sdf_lv1 ? ( slider7 = max(0, min(127, floor(slider8 + 0.5))); slider_automate(slider7); );
+  );
+);
+sdf_ln0 = slider2; sdf_lv0 = slider3;
+sdf_ln1 = slider7; sdf_lv1 = slider8;
+slider_show(slider2, slider1 == 1);
+slider_show(slider7, slider6 == 1);
 
 sdf_low  = sdf_hz(slider1, slider3, slider4, slider5);
 sdf_high = sdf_hz(slider6, slider8, slider9, slider10);
@@ -725,6 +745,11 @@ last_target_select != sel_target ? (
 
 
 @block
+!sdf_ui_init ? (
+  sdf_ln0 = slider2; sdf_lv0 = slider3;
+  sdf_ln1 = slider7; sdf_lv1 = slider8;
+  sdf_ui_init = 1;
+);
 // --- Restore-order guard for the change-detecting controls below -----------
 //     These trackers answer "did the user just move this control?". Adopted
 //     HERE, not in @slider: on a fresh or duplicated instance @slider runs

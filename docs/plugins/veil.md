@@ -130,14 +130,14 @@ and holds. All targets ramp in parallel on their own clocks.
 on both cutoffs = the voice slowly CLEARING** (the muffle opening, as if the baby
 were growing); negative = deepening / darkening.
 
-**Ramp duration (minutes)** `0–60, default 0` — how long the ride takes.
+**Ramp duration (in ramp time units)** `0–60, default 0` — how long the ride takes.
 `0` = off.
 
 **Ramp engage** `Off / On, default Off` — a freeze/resume gate. While On the
 ramp advances; flip Off and it freezes where it is; back On and it resumes (it does
 *not* restart). Only pressing transport Play restarts a ramp from the beginning.
 
-**Ramp start delay (minutes)** `0–60, default 0` — wait this long after
+**Ramp start delay (in ramp time units)** `0–60, default 0` — wait this long after
 engaging before the ride begins. "Let me settle first, then start clearing."
 
 

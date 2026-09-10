@@ -150,9 +150,9 @@ slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 // reconfigure. See the manual's migration note.
 slider32:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Ramp target
 slider33:0<-1000,1000,0.001>Ramp by (units match target)
-slider35:0<0,1000,0.1>Ramp duration (minutes)
+slider35:0<0,1000,0.1>Ramp duration (in ramp time units)
 slider38:0<0,1,1{Off,On}>Ramp engage
-slider39:0<0,1000,0.1>Ramp start delay (minutes)
+slider39:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / the rest of
 // the sweep. Pick a target (slider24), then sliders 30-33 hold THAT target's
@@ -182,7 +182,7 @@ slider39:0<0,1000,0.1>Ramp start delay (minutes)
 slider24:0<0,5,1{Rate Value,Depth dB,Pan Sweep Rate,On Duration %,Attack %,Release %}>Drift target
 slider25:0<0,1000,0.01>Drift up amount (units match target)
 slider26:0<0,1000,0.01>Drift down amount (units match target)
-slider27:8<0,1000,1>Drift period (cycles, 0 = off)
+slider27:8<0,1000,1>Drift period (0 = off)
 // NEW 2026-09-05. {Cycles, Seconds, Beats} -- the rule settled the same morning.
 // The authored layout said {Seconds, Beats}; it was written a day earlier, and
 // Cycles is what THIS plugin natively counts, so nothing saved changes meaning.

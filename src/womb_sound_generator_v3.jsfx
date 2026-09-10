@@ -1360,7 +1360,8 @@ systole_samples = max(1, min(systole_samples, max(cycle_len_base, 2) - 1));
 // Ramp, in breaths/min) shifts the whole breath rate; each segment's
 // effective duration is then divided by the scale (faster rate = shorter
 // segments). Composes with the per-segment drift + ramp offsets below.
-base_breath_total = max(slider26 + slider27 + slider28 + slider29, 0.001);
+// In seconds, whatever the breath unit, so this really is breaths per minute.
+base_breath_total = max((slider26 + slider27 + slider28 + slider29) * (breath_unit == 1 ? beat_sec : 1), 0.001);
 base_breath_rate  = 60 / base_breath_total;
 breath_rate_delta = target_drift_offset[7] + speed_ramp_bpm_offset;
 breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_breath_rate;

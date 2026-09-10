@@ -494,38 +494,40 @@ pr_rest_duration_samples = 0;
 // drift their per-voice gain. Rozaya: "Drift is replacing automation, nobody's
 // gonna automate everything but options are better than their absence."
 // APPENDED, so no stored target index moves (R18: enum options always append).
+// 2026-09-10: the banks are 64 apart. At 16 apart these targets ran into each
+// other's banks, so drift offsets overwrote ramp settings while playing.
 N_TARGETS = 29;
 target_drift_up     = 640;
-target_drift_down   = 656;
-target_drift_per    = 672;
-target_drift_shape  = 688;
-target_drift_phase  = 704;
-target_drift_prev   = 720;
-target_drift_curr   = 736;
-target_drift_offset = 752;
+target_drift_down   = 704;
+target_drift_per    = 768;
+target_drift_shape  = 832;
+target_drift_phase  = 896;
+target_drift_prev   = 960;
+target_drift_curr   = 1024;
+target_drift_offset = 1088;
 
 // Speed ramp per-target banks (v2.14). Mirror the drift banks; 16-slot-spaced
 // after target_drift_offset (752). `by` / duration / start-delay are CONFIG
 // (survive transport, restored by @serialize); ramp_t / delay_elapsed are
 // RUNTIME (reset every @init / transport play).
-speed_ramp_by_mem            = 768;  // signed delta per target (CONFIG)
-speed_ramp_dur_mem           = 784;  // duration minutes per target (CONFIG)
-speed_ramp_delay_mem         = 800;  // start-delay minutes per target (CONFIG)
-speed_ramp_ramp_t_mem        = 816;  // ramp progress 0..1 per target (RUNTIME)
-speed_ramp_delay_elapsed_mem = 832;  // delay sample counter per target (RUNTIME)
+speed_ramp_by_mem            = 1152;  // signed delta per target (CONFIG)
+speed_ramp_dur_mem           = 1216;  // duration minutes per target (CONFIG)
+speed_ramp_delay_mem         = 1280;  // start-delay minutes per target (CONFIG)
+speed_ramp_ramp_t_mem        = 1344;  // ramp progress 0..1 per target (RUNTIME)
+speed_ramp_delay_elapsed_mem = 1408;  // delay sample counter per target (RUNTIME)
 
 // Drift and Ramp play/rest, per target (2026-09-06). 16-slot-spaced like the
 // banks above. play/rest are CONFIG (survive a transport re-init, restored by
 // @serialize); accumulator and resting flag are RUNTIME. FIRST FREE SLOT AFTER
-// THIS BLOCK IS 976 -- re-derive rather than trusting this comment.
-drift_play_mem       = 848;
-drift_rest_mem       = 864;
-sr_play_mem          = 880;
-sr_rest_mem          = 896;
-drift_pr_accum_mem   = 912;
-drift_pr_resting_mem = 928;
-sr_pr_accum_mem      = 944;
-sr_pr_resting_mem    = 960;
+// THIS BLOCK IS 1984 -- re-derive rather than trusting this comment.
+drift_play_mem       = 1472;
+drift_rest_mem       = 1536;
+sr_play_mem          = 1600;
+sr_rest_mem          = 1664;
+drift_pr_accum_mem   = 1728;
+drift_pr_resting_mem = 1792;
+sr_pr_accum_mem      = 1856;
+sr_pr_resting_mem    = 1920;
 
 // Shared play/rest gate, byte-identical to the one in Melody, the Sweeping
 // Filter, Tremolo, Phaser, Bubbler, Dapple, Resonance Bank and the Morpher.

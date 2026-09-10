@@ -6,7 +6,12 @@ Nothing here is a job to start unasked.
 
 ## Live memory and save bugs, present before any R24 work
 
-Each confirmed by reading the offsets and code directly.
+Each confirmed by reading the offsets and code directly. **All fixed in `src/` on
+2026-09-10** except Harmonic Sculptor and Sustain Looper. All installed except
+Sweep Dwell, whose `src/` waits on migrating `surges.RPP`.
+
+Not fixed, harmless as used today: in both Shepards `NUM_OSC` and `num_osc` are
+one variable, because eel2 folds case.
 
 - **shepard-tone:** `N_TARGETS = 28` on banks 16 apart (576–911). Drift, ramp and
   play/rest banks overlap: drift offsets overwrite ramp `by` every sample, and
