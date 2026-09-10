@@ -28,19 +28,16 @@ sentence.
   of 2026-09-06 and not before.
 - **Drift/Ramp: 16 of 19 complete.** Passage is owed it; Polyrhythm v1 inherits
   at v3. **Resonance Bank is not missing one** — its period is a rate by design.
-- **Polyrhythm v1 is left alone.** Rozaya, 2026-09-06: *"The polyrhythm can
-  just... be left. If we do v3 and then migrate it'll be fine."* No drift/ramp
-  and no reorder; its **84 instances across 17 projects** cross to v3 once, then
-  v1 retires. Do not migrate those 84 twice.
+- **Polyrhythm v1 is left alone**, Rozaya 2026-09-06. Its **84 instances across
+  17 projects** cross to v3 once, then v1 retires. Do not migrate those 84 twice.
 - **Reorders owed:** Passage (blocked on what it is FOR), Sweep Dwell (blocked on its `Cycle mode` question).
 - **Polyrhythm v3 is done** — built and migrated 2026-09-07, 90 sliders to 56,
   the eight voices behind a **Voice** selector with an `All` position. The
   largest reorder in the suite so far.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
-- **R22: 4 of 16 plugins with a frequency; see the rollout entry below.** Breath
-  Gen's block was rebuilt twice in the hearing, so the plan's rule is BEHIND the
-  built one — `docs/layouts/breath-gen.md` ships, and R22 opens with an
+- **R22:** Breath Gen's block was rebuilt twice in the hearing, so the plan's rule
+  is BEHIND the built one — `docs/layouts/breath-gen.md` ships. R22 opens with an
   attribution warning: parts of it were mine, cited back as settled.
 
 ## What has been heard, and what has not
@@ -75,25 +72,28 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 **Not heard:**
 
-- **Shepard Tone and Scale reach everything now.** Per-voice/per-note **Gain**
-  and **Pan** and the **binaural beat** were unreachable by drift while Melody and
-  Polyrhythm could drift theirs. Tone 11 targets -> 28, Scale 4 -> 29, APPENDED so
-  no stored index moves; neither plugin is in any project. **Defaults are
-  bit-identical and that is ALL that is verified** — any run on these two with a
-  control changed is not reproducible, so the per-target checks are worthless.
-  Scale also gained twelve per-note detunes. Ears owed on all of it.
+- **`jsfx_run --input` now exists** — it fed silence, so every EFFECT compared
+  identical whatever changed. With real audio: Sweep Dwell's defaults are
+  bit-identical, its frequencies respond, semitone mode works; **Bubbler and
+  Dapple re-verified**, all five projects identical.
+
+- **Shepard Tone and Scale: drift and ramp reach everything** — per-voice/note
+  Gain and Pan and the binaural beat, Tone 11 targets -> 28, Scale 4 -> 29,
+  appended so nothing stored moves. Scale also gained twelve per-note detunes.
+  **Defaults bit-identical is ALL that is verified**: any run on these two with a
+  control changed is not reproducible (`docs/jsfx-gotchas.md`). Ears owed.
 
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
-  Heartbeat, Womb. Owed: 11.** Rozaya: doing some and not others is *"shipping a
-  pool ... and only having water that fills half the fucking pool"*. **Every
-  migrated instance is bit-identical bar one, and that one is a pre-existing
-  fault** (`docs/history/R22.md`). Four shapes so far: Dapple took Breath Gen's
-  block unchanged; **Bubbler took the SHIFT form Rozaya designed**, where `Source
-  note` says where zero is, defaults to `None`, and the semitone value is never
-  gated; Heartbeat's two went behind an {All, S1, S2} target and its migration
-  CREATES the blob it never had; **Womb got four blocks replicated IN PLACE, one
-  per layer** — *"just replicate the block where it needs to be"* — 71 sliders to
-  88, one shared tuning reference, no blob touched.
+  Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell, Shepard Scale. Owed: the
+  two sweeping filters, Resonance Bank, Polyrhythm.** Rozaya: doing some and not
+  others is *"shipping a pool ... and only having water that fills half the
+  fucking pool"*. Four shapes: Dapple took Breath Gen's block unchanged;
+  **Bubbler took the SHIFT form Rozaya designed** — `Source note` says where zero
+  is, defaults to `None`, and the semitone value is never gated; Heartbeat's two
+  went behind an {All, S1, S2} target, its migration CREATING the blob it never
+  had; **Womb and Sweep Dwell replicate the block IN PLACE**, keeping their
+  migrations line-only. **Melody and Shepard needed no selector**: a voice already
+  has its note, so it gains one fine tune — nine controls, not thirty-two.
 
 - **`Drift movement` — the whole sweep, 2026-09-09.** Per-target switch in all six
   plugins that had stepping: Breath Gen, Bubbler, Dapple, Womb, Heartbeat, Melody.
