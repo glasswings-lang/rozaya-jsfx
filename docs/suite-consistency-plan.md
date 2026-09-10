@@ -190,17 +190,11 @@ is set by the widest value you would ever want to reach. How many positions that
 is not a problem to be solved.** Where two plugins disagree on the step for the same
 control, **take the finer one.**
 
-An earlier draft of this rule said the opposite — that a slider should land in roughly
-100–1000 positions, and that a million positions meant the precision was fictional. That
-was wrong, and the reason it was wrong matters:
+**Typing is available in both places** — focus a parameter and Tab for an editable
+field, or type into the box beside the slider in the FX dialog. Two earlier drafts of this
+rule assumed otherwise and are in `docs/history/R8.md`.
 
-**CORRECTED 2026-08-31 (Star).** An earlier version of this paragraph claimed you can
-only arrow in the parameter list, never type. That is wrong: focus a parameter, Tab, and
-there is an editable value field — and in the FX dialog you can type into the box beside
-the slider. **Typing is available in both places.**
-
-The rule survives the correction, but for a different and better reason. What a step
-controls is not how far you have to travel — you can always type — it is **which values
+What a step controls is not how far you have to travel — you can always type — it is **which values
 exist at all**. A step of 0.1 where 0.05 is needed means 0.05 cannot be set by any means,
 typed or arrowed, because the control quantises to the step. So a coarse step does not
 make a value awkward to reach; it deletes it.
@@ -469,18 +463,7 @@ multiple sessions to build a sync block that the measurements say nobody uses.
 plugin with a single sync target.** Rozaya raised it and the reasoning is
 better than the original.
 
-## What R13 got right and what it got wrong
-
-Right: the **multiplier** was dishonest. In Host x, Rate Value silently became a
-factor on the project tempo and nothing on the control said so.
-
-Wrong: the diagnosis. R13 blamed Host x's *position* -- "sync is not a unit" --
-and moved it out of the rate mode list into its own switch. But **Host x is a
-rate mode.** It is one of the ways you say what the rate is. Rozaya:
-
-> "specify that rate value doesn't apply to host x, and/or make it mean every n
-> beats in host x and specify that, while leaving host x where it is, as what it
-> is -- a rate mode"
+**What R13 got right and what it got wrong** is in `docs/history/R13.md`.
 
 ## The revision
 
@@ -857,30 +840,8 @@ dead.
   another control. All seven were retired 2026-09-04 and they stay retired.
 - No multiplier, anywhere, in any mode.
 
-## Why the two dead shapes existed, so nobody re-derives them
-
-**R11's sync block (Melody, Womb).** Its stated justification was that a plugin
-syncing more than one thing independently cannot express two beat counts in one
-rate value. **That is true and it is the wrong conclusion**, because you do not
-use one rate value for two rates — you give the second rate its own pair.
-
-The real constraint was narrower and is worth stating exactly, because it is a
-missing control rather than a limitation: **Melody's `Pan base rate` (slider 21)
-has no mode of its own.** Read `rate_to_cycle_seconds(pan_base_rate, rate_mode)`
-at melody_phase.jsfx:1116 and :1492 — the pan is handed the SEQUENCER's
-`rate_mode`. So there was nowhere to put Host x for the pan, and three sliders
-were added to reach around the outside. One slider — a pan rate mode — does it
-better, and untangles the pan from the sequencer's units as a side effect.
-
-**Measured, and this is the number that ended the argument.** Across all 73
-Melody Phase instances in the library, 27 have `Sync to host` ON, and **all 27
-have the target set to `Rate value`. Not one points at the pan.** The capability
-those three controls exist to provide has never been used, and it cost three
-positions in the parameter list on every instance since it shipped.
-
-**R13's "sync is not a unit" split.** Overturned by R13-revised on 2026-09-02 and
-still dead. Host x IS a rate mode — it is one of the ways of saying what the
-rate is.
+**Why the two dead shapes existed**, so nobody re-derives them, is in
+`docs/history/R20.md`.
 
 ## The near-miss this rule must not repeat
 
@@ -1089,31 +1050,8 @@ values are not.** That is the distinction to apply everywhere: a limit may come
 from physics, from a standard, or from what the code can actually honour. It may
 not come from what one person has happened to use.
 
-## The superseded reasoning, kept so it is not re-derived
-
-The first draft of this rule offered `{Note, Hz}` only, on the reasoning that a
-heartbeat thump is a frequency and a drone voice is a note. **Rozaya killed
-that, and was right to:** *"the minute I'm making decisions like this is the
-minute I say include all of them."*
-
-That draft was TRIAGE, which this suite's own rule forbids — a feature goes
-everywhere its parent already is, and deciding per plugin which controls a
-person may reach for is the same mistake in a different coat. It also had a
-concrete cost I had not noticed: **`Pitch (semitones)` is how the Morpher,
-Passage, Sustain Looper and Bubbler already state pitch.** A `{Note, Hz}` list
-gives those four nowhere to land, so the "tidy" rule would have forced a unit
-change on 122 Morpher instances plus Passage's, for nothing. Rozaya named the
-three missing units in five words and the gap closed.
-
-**Semitones and Cents are both offsets, and both are needed, for exactly the
-reason `Every N beats` and `N per beat` are both needed.** They are the same
-quantity at two scales. Keeping only semitones means seven cents is typed as
-`0.07` — arithmetic, which is the barrier this suite exists to remove.
-
-**What the offset modes are an offset FROM** is the plugin's own natural
-reference: the captured sample's pitch in the Morpher and Passage, the loaded
-loop in Sustain Looper, the base note elsewhere. That is what those controls
-already mean; the mode only names it.
+**The reasoning this replaced**, kept so it is not re-derived, is in
+`docs/history/R22.md`.
 
 ## Why the FULL MIDI range, and why measurement did not decide it
 
