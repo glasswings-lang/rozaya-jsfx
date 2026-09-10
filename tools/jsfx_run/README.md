@@ -64,6 +64,25 @@ any migration is called done:
 > streams must be **bit-identical**. "Nothing should sound different" stops being
 > a prediction and becomes a measurement.
 
+## Feed it something — `--input`
+
+**It used to feed silence and nothing else, and that made every EFFECT plugin
+untestable while appearing to pass.** A pure filter renders 529,200 zero samples,
+so old-versus-new compares bit-identical no matter what you changed, including
+deleting the audio path. Added 2026-09-09 after exactly that happened.
+
+```bash
+jsfx_run src/sweep-dwell-filter.jsfx --input noise --seconds 12 --csv out.csv
+jsfx_run src/veil.jsfx --input sine --input-hz 440 --input-db -6 --csv out.csv
+```
+
+`silence` (the default, unchanged), `noise`, or `sine` with `--input-hz` and
+`--input-db`. **Both generators are deterministic** — a fixed-seed LCG rather than
+`rand()`, which is process-global — so two runs of the same command are byte
+identical and a comparison means something.
+
+**Check for a non-zero sample before believing any effect plugin's result.**
+
 ## What it CANNOT tell you — read this before trusting a clean result
 
 - **Filter FREQUENCY, for anything noise-based — and this is bigger than it

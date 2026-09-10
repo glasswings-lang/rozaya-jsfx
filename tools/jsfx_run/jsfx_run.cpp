@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>   // std::fill, for the input generator
 #include <cmath>
 #include <string>
 #include <vector>
@@ -30,6 +31,12 @@ static void usage()
         "  --list              print every slider (id, name, range, current) and exit\n"
         "  --sr N              sample rate, default 44100\n"
         "  --block N           block size, default 512\n"
+        "  --input MODE        what to FEED it: silence (default), noise, sine.\n"
+        "                      An EFFECT renders nothing from silence, so every\n"
+        "                      comparison passes -- including on code you broke.\n"
+        "                      Both generators are deterministic.\n"
+        "  --input-hz F        tone frequency for --input sine, default 220\n"
+        "  --input-db D        input level in dBFS, default -12\n"
         "  --seconds S         how long to run, default 10\n"
         "  --rpp FILE          load a REAL project's state -- the slider line AND\n"
         "                      the <JS_SER> blob -- exactly as a host would\n"
@@ -174,6 +181,10 @@ int main(int argc, char **argv)
     const char *path = argv[1];
     double sr = 44100.0, seconds = 10.0, rms_ms = 50.0;
     uint32_t block = 512;
+    // What to feed the plugin. Silence is what this tool always did, and it is
+    // what makes every effect plugin untestable -- see --input in the usage.
+    int in_mode = 0;              // 0 silence, 1 noise, 2 sine
+    double in_hz = 220.0, in_db = -12.0;
     bool list_only = false, quiet = false;
     const char *csv = nullptr, *rpp = nullptr, *fxmatch = nullptr;
     int which = 1;
@@ -190,6 +201,15 @@ int main(int argc, char **argv)
         else if (a == "--quiet") quiet = true;
         else if (a == "--sr") sr = std::strtod(next(), nullptr);
         else if (a == "--block") block = (uint32_t)std::strtoul(next(), nullptr, 10);
+        else if (a == "--input") {
+            std::string m = next();
+            if (m == "noise") in_mode = 1;
+            else if (m == "sine") in_mode = 2;
+            else if (m == "silence") in_mode = 0;
+            else { std::fprintf(stderr, "unknown --input mode\n"); return 1; }
+        }
+        else if (a == "--input-hz") in_hz = std::strtod(next(), nullptr);
+        else if (a == "--input-db") in_db = std::strtod(next(), nullptr);
         else if (a == "--seconds") seconds = std::strtod(next(), nullptr);
         else if (a == "--rms") rms_ms = std::strtod(next(), nullptr);
         else if (a == "--csv") csv = next();
@@ -301,6 +321,8 @@ int main(int argc, char **argv)
     if (!quiet)
         std::printf("\n  time(s)        rmsL        rmsR      peakL      peakR\n");
 
+    uint32_t in_seed = 22222u;   // fixed seed, so runs are reproducible
+    double in_phase = 0.0;
     double accL = 0, accR = 0, pkL = 0, pkR = 0;
     uint32_t inwin = 0, done = 0;
     size_t stage_i = 0;
@@ -308,6 +330,30 @@ int main(int argc, char **argv)
     while (done < total) {
         uint32_t n = block;
         if (done + n > total) n = total - done;
+
+        // Fill the input. DETERMINISTIC on purpose -- a fixed-seed LCG rather
+        // than rand(), which is process-global and would not reproduce.
+        if (in_mode == 0) {
+            std::fill(inL.begin(), inL.begin() + n, 0.0f);
+            std::fill(inR.begin(), inR.begin() + n, 0.0f);
+        } else {
+            const double amp = std::pow(10.0, in_db / 20.0);
+            const double tau = 6.283185307179586;
+            for (uint32_t k = 0; k < n; ++k) {
+                if (in_mode == 1) {
+                    in_seed = in_seed * 1664525u + 1013904223u;
+                    double a1 = ((double)((in_seed >> 8) & 0xFFFFFF) / 8388608.0) - 1.0;
+                    in_seed = in_seed * 1664525u + 1013904223u;
+                    double a2 = ((double)((in_seed >> 8) & 0xFFFFFF) / 8388608.0) - 1.0;
+                    inL[k] = (float)(a1 * amp);
+                    inR[k] = (float)(a2 * amp);
+                } else {
+                    inL[k] = inR[k] = (float)(std::sin(in_phase) * amp);
+                    in_phase += tau * in_hz / sr;
+                    if (in_phase > tau) in_phase -= tau;
+                }
+            }
+        }
 
         ysfx_process_float(fx, ins, outs, 2, 2, n);
 
