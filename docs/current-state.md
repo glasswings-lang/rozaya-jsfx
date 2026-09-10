@@ -76,14 +76,16 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 **Not heard:**
 
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
-  Heartbeat. Owed: 12. WOMB WAS BUILT AND REVERTED — read `docs/history/R22.md`
-  before trying it again.** Rozaya: doing some and not others is *"shipping a pool
-  ... and only having water that fills half the fucking pool"*. **Every instance
-  migrated so far is bit-identical.** Three shapes so far: Dapple took Breath
-  Gen's block unchanged; **Bubbler took the SHIFT form Rozaya designed**, where
-  `Source note` says where zero is, defaults to `None`, and the semitone value is
-  never gated; Heartbeat's two went behind an {All, S1, S2} target, and its one
-  instance had no blob while storing S2 at 75, so that migration CREATES one.
+  Heartbeat, Womb. Owed: 11.** Rozaya: doing some and not others is *"shipping a
+  pool ... and only having water that fills half the fucking pool"*. **Every
+  migrated instance is bit-identical bar one, and that one is a pre-existing
+  fault** (`docs/history/R22.md`). Four shapes so far: Dapple took Breath Gen's
+  block unchanged; **Bubbler took the SHIFT form Rozaya designed**, where `Source
+  note` says where zero is, defaults to `None`, and the semitone value is never
+  gated; Heartbeat's two went behind an {All, S1, S2} target and its migration
+  CREATES the blob it never had; **Womb got four blocks replicated IN PLACE, one
+  per layer** — *"just replicate the block where it needs to be"* — 71 sliders to
+  88, one shared tuning reference, no blob touched.
 
 - **`Drift movement` — the whole sweep, 2026-09-09.** Per-target switch in all six
   plugins that had stepping: Breath Gen, Bubbler, Dapple, Womb, Heartbeat, Melody.
@@ -104,17 +106,14 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   `_pre-breathgen-promote-20260909/`; the reload bug it caught is in the session
   log.
 
-- The Womb usability fix of 2026-09-06 (no breath rate mode — a principled R20
-  exception; `Set breath rate` a one-shot; Sigh depth additive), **and its
-  2026-09-09 drift stepping** — six of eleven targets step on their own turn.
-  Eight of nine live projects render bit-identical; **`to-sleep-within` changes**,
-  being the only one with a stepped drift running (its drift is also misfiled
-  onto Heart rate by an old blob — pre-existing).
+- The Womb usability fix of 2026-09-06, and its 2026-09-09 drift stepping — six
+  of eleven targets step on their own turn. Eight of nine projects bit-identical;
+  **`to-sleep-within` changes**, and that instance is pre-existingly faulty — its
+  blob is a format the plugin cannot read (`docs/history/R22.md`).
 - **R23 is SWEPT, 2026-09-09** — Heartbeat and Melody too; fourteen plugins are
-  cleared and must not be "fixed" (`docs/backlog.md` has the table). Every live
-  project renders identical except `to-sleep-within`.
-- The 2026-09-06 drift/ramp sweep, the `N per beat` reciprocal fix, the Tremolo
-  Start delay fix, the range widenings.
+  cleared and must not be "fixed" (`docs/backlog.md` has the table).
+- The 2026-09-06 drift/ramp sweep, the `N per beat` fix, Tremolo's Start delay
+  fix, the range widenings.
 - **Every new capability on Polyrhythm v3.** A clean open proves the old work
   survived and nothing more. Never played: per-voice On Duration / Depth /
   Attack / Release, per-voice Waveform, `Solo this voice`, `Pan rate mode` in a

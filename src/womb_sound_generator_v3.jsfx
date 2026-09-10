@@ -90,16 +90,32 @@ slider5:0<0,3,1{Milliseconds,Seconds,Beats,% of heartbeat}>Systole unit
 // S1 then S2, each with its own frequency, decay and volume together. These six
 // used to be split across three separated pairs, so tuning ONE heart sound
 // meant visiting three places in the list.
-slider6:45<20,1000,1>S1 Frequency Hz
-slider7:60<10,1000,1>S1 Decay ms
-slider8:1.0<0.0,1.0,0.01>S1 Volume
-slider9:120<60,1000,1>S2 Frequency Hz
-slider10:25<5,1000,1>S2 Decay ms
-slider11:0.7<0.0,1.0,0.01>S2 Volume
-slider12:0.3<0.0,1.0,0.01>Brightness
-slider13:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
-slider14:1.0<0.0,1.0,0.01>HB Master Volume
-slider15:0<0,1,1{Off,Solo}>Heartbeat Solo
+// --- S1 pitch (R22) -------------------------------------------------
+// Replicated in place rather than pulled out behind one selector. Rozaya,
+// 2026-09-09: "womb is 3-layered. just replicate the block where it needs
+// to be" -- so the first heart sound keeps its place beside its own decay and volume.
+slider6:0<0,2,1{Hz,Semitones,Cents}>S1 pitch mode
+slider7:30<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>S1 note name
+slider8:45<0,20000,0.001>S1 pitch (Hz / semitones / cents)
+slider9:0<-1000,1000,0.001>S1 fine tune
+slider10:2<0,2,1{Hz,Semitones,Cents}>S1 fine tune unit
+slider11:60<10,1000,1>S1 Decay ms
+slider12:1.0<0.0,1.0,0.01>S1 Volume
+// --- S2 pitch (R22) -------------------------------------------------
+// Replicated in place rather than pulled out behind one selector. Rozaya,
+// 2026-09-09: "womb is 3-layered. just replicate the block where it needs
+// to be" -- so the second heart sound keeps its place beside its own decay and volume.
+slider13:0<0,2,1{Hz,Semitones,Cents}>S2 pitch mode
+slider14:47<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>S2 note name
+slider15:120<0,20000,0.001>S2 pitch (Hz / semitones / cents)
+slider16:0<-1000,1000,0.001>S2 fine tune
+slider17:2<0,2,1{Hz,Semitones,Cents}>S2 fine tune unit
+slider18:25<5,1000,1>S2 Decay ms
+slider19:0.7<0.0,1.0,0.01>S2 Volume
+slider20:0.3<0.0,1.0,0.01>Brightness
+slider21:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
+slider22:1.0<0.0,1.0,0.01>HB Master Volume
+slider23:0<0,1,1{Off,Solo}>Heartbeat Solo
 
 // --- BREATH ----------------------------------------------------------------
 // SET BREATH RATE -- a one-shot SETUP action, not a live rate.
@@ -130,7 +146,7 @@ slider15:0<0,1,1{Off,Solo}>Heartbeat Solo
 // could count, halving the in and out did not shorten the breath (it only gave the
 // pauses a bigger share)". With a one-shot the segments are always durations, and
 // halving the inhale genuinely shortens the breath.
-slider16:0<0,1000,0.001>Set breath rate (per minute, or beats per breath; 0 = off)
+slider24:0<0,1000,0.001>Set breath rate (per minute, or beats per breath; 0 = off)
 // What the four segments below are counted in. NOT the five-option rate mode --
 // the breath has no rate CONTROL, its rate is EMERGENT from its segments, so
 // there is no rate value for a mode to qualify. A principled R20 exception, like
@@ -138,37 +154,53 @@ slider16:0<0,1000,0.001>Set breath rate (per minute, or beats per breath; 0 = of
 // eight breaths per beat is not a thing anyone wants. (Rozaya, 2026-09-06: "The
 // every n beats vs. n per beat distinction is confusing in practice when it comes
 // to breath segments and breaths per minute.")
-slider17:0<0,1,1{Seconds,Beats}>Breath unit
+slider25:0<0,1,1{Seconds,Beats}>Breath unit
 // The shape of the breath, and its LENGTH -- their sum is the cycle. Absolute
 // durations, always, in the unit above.
-slider18:4.0<0.001,1000,0.001>Inhale (in breath units)
-slider19:0.3<0,1000,0.01>Top pause (in breath units)
-slider20:4.0<0.001,1000,0.001>Exhale (in breath units)
-slider21:0.3<0,1000,0.01>Bottom pause (in breath units)
-slider22:250<50,2000,1>Inhale Frequency Hz
-slider23:170<50,2000,1>Exhale Frequency Hz
-slider24:0.3<0.0,1.0,0.01>Inhale Fade In
-slider25:0.2<0.0,1.0,0.01>Inhale Fade Out
-slider26:0.2<0.0,1.0,0.01>Exhale Fade In
-slider27:0.3<0.0,1.0,0.01>Exhale Fade Out
-slider28:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade Mode
-slider29:80<20,20000,1>Breath High-pass Hz
-slider30:500<50,4000,1>Breath Post-filter Hz
-slider31:1.5<0.5,8.0,0.1>Breath Post-filter Q
+slider26:4.0<0.001,1000,0.001>Inhale (in breath units)
+slider27:0.3<0,1000,0.01>Top pause (in breath units)
+slider28:4.0<0.001,1000,0.001>Exhale (in breath units)
+slider29:0.3<0,1000,0.01>Bottom pause (in breath units)
+// --- Inhale pitch (R22) -------------------------------------------------
+// Replicated in place rather than pulled out behind one selector. Rozaya,
+// 2026-09-09: "womb is 3-layered. just replicate the block where it needs
+// to be" -- so the inhale filter centre keeps its place beside its own decay and volume.
+slider30:0<0,2,1{Hz,Semitones,Cents}>Inhale pitch mode
+slider31:59<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Inhale note name
+slider32:250<0,20000,0.001>Inhale pitch (Hz / semitones / cents)
+slider33:0<-1000,1000,0.001>Inhale fine tune
+slider34:2<0,2,1{Hz,Semitones,Cents}>Inhale fine tune unit
+// --- Exhale pitch (R22) -------------------------------------------------
+// Replicated in place rather than pulled out behind one selector. Rozaya,
+// 2026-09-09: "womb is 3-layered. just replicate the block where it needs
+// to be" -- so the exhale filter centre keeps its place beside its own decay and volume.
+slider35:0<0,2,1{Hz,Semitones,Cents}>Exhale pitch mode
+slider36:53<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Exhale note name
+slider37:170<0,20000,0.001>Exhale pitch (Hz / semitones / cents)
+slider38:0<-1000,1000,0.001>Exhale fine tune
+slider39:2<0,2,1{Hz,Semitones,Cents}>Exhale fine tune unit
+slider40:0.3<0.0,1.0,0.01>Inhale Fade In
+slider41:0.2<0.0,1.0,0.01>Inhale Fade Out
+slider42:0.2<0.0,1.0,0.01>Exhale Fade In
+slider43:0.3<0.0,1.0,0.01>Exhale Fade Out
+slider44:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade Mode
+slider45:80<20,20000,1>Breath High-pass Hz
+slider46:500<50,4000,1>Breath Post-filter Hz
+slider47:1.5<0.5,8.0,0.1>Breath Post-filter Q
 // Periodic deep breaths. When a sigh fires, the next breath's inhale stretches
 // by the depth multiplier (and reads as deeper, because the longer inhale
 // envelope rises higher under the same fade shape). 0 interval = no sighs.
-slider32:0<0,1000,0.001>Sigh interval (minutes, 0=off)
+slider48:0<0,1000,0.001>Sigh interval (minutes, 0=off)
 // How much LONGER the sigh breath is than an ordinary one, in breath units --
 // not a multiplier. Rozaya, 2026-09-06: "that sigh multiplier is the exact same
 // type of problem" as the others -- setting one means multiplying in your head
 // and hitting a target means dividing. The extra is spread across all four
 // segments in proportion, so the sigh keeps the breath's shape and simply takes
 // longer. 0 = a sigh is the same length as any other breath.
-slider33:4<0,1000,0.01>Sigh extra length (in breath units)
-slider34:0.5<0.0,1.0,0.01>Breath Stereo Width
-slider35:0.5<0.0,1.0,0.01>Breath Volume
-slider36:0<0,1,1{Off,Solo}>Breath Solo
+slider49:4<0,1000,0.01>Sigh extra length (in breath units)
+slider50:0.5<0.0,1.0,0.01>Breath Stereo Width
+slider51:0.5<0.0,1.0,0.01>Breath Volume
+slider52:0<0,1,1{Off,Solo}>Breath Solo
 
 // --- BLOODFLOW -------------------------------------------------------------
 // Bloodflow has no rate of its own -- it reads the heart's phase directly, one
@@ -186,7 +218,7 @@ slider36:0<0,1,1{Off,Solo}>Breath Solo
 // The offset WRAPS into one heartbeat, so a whole heartbeat of offset is the
 // same as none -- which is why its unit is a percentage and not a cycle count.
 // 25 puts the flow a quarter of a beat behind the thump; 50 puts it halfway.
-slider37:0<-1000,1000,0.001>Bloodflow offset (wraps at one heartbeat)
+slider53:0<-1000,1000,0.001>Bloodflow offset (wraps at one heartbeat)
 // SAME LIST AS SYSTOLE, and for the same reason. This said `Cycles` for one
 // hour and it was wrong in a way that made the whole control look broken: an
 // offset is WRAPPED into one heartbeat, so in cycles every whole number -- 1, 2,
@@ -204,28 +236,30 @@ slider37:0<-1000,1000,0.001>Bloodflow offset (wraps at one heartbeat)
 // the project, and `% of heartbeat` scales with the heart rate. Defaulting to
 // the percentage because it is the one to reach for first; the offset's own
 // default is 0, so the unit changes nothing until it is moved.
-slider38:3<0,3,1{Milliseconds,Seconds,Beats,% of heartbeat}>Bloodflow offset unit
-slider39:0.15<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
-slider40:0.85<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
-slider41:0.1<0,1,0.01>Bloodflow Dicrotic Level
-slider42:250<20,2000,1>Bloodflow Filter Hz
-slider43:0.2<0.0,0.95,0.01>Bloodflow Resonance
-slider44:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
-slider45:0.7<0.0,1.0,0.01>Bloodflow Volume
-slider46:0<0,1,1{Off,Solo}>Bloodflow Solo
+slider54:3<0,3,1{Milliseconds,Seconds,Beats,% of heartbeat}>Bloodflow offset unit
+slider55:0.15<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
+slider56:0.85<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
+slider57:0.1<0,1,0.01>Bloodflow Dicrotic Level
+slider58:250<20,2000,1>Bloodflow Filter Hz
+slider59:0.2<0.0,0.95,0.01>Bloodflow Resonance
+slider60:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
+slider61:0.7<0.0,1.0,0.01>Bloodflow Volume
+slider62:0<0,1,1{Off,Solo}>Bloodflow Solo
 
 // --- MASTER AND TRANSPORT --------------------------------------------------
-slider47:0<0,1,1{Normal,Flipped}>Master Stereo Flip
+// ONE tuning reference for the whole plugin, per R22 -- not one per block.
+slider63:440<20,2000,0.1>Tuning reference (Hz)
+slider64:0<0,1,1{Normal,Flipped}>Master Stereo Flip
 // Sit silent for this long after playback starts, then begin normally.
-slider48:0<0,1000,0.001>Start delay (beats)
+slider65:0<0,1000,0.001>Start delay (beats)
 // Play/rest gates, per layer, independent. Each counts in its own layer's
 // natural unit, which is why they are not one shared pair.
-slider49:0<0,1000,1>HB: Play for (beats)
-slider50:0<0,1000,1>HB: Rest for (beats)
-slider51:0<0,1000,1>Breath: Play for (breaths)
-slider52:0<0,1000,1>Breath: Rest for (breaths)
-slider53:0<0,1000,1>Bloodflow: Play for (heartbeats)
-slider54:0<0,1000,1>Bloodflow: Rest for (heartbeats)
+slider66:0<0,1000,1>HB: Play for (beats)
+slider67:0<0,1000,1>HB: Rest for (beats)
+slider68:0<0,1000,1>Breath: Play for (breaths)
+slider69:0<0,1000,1>Breath: Rest for (breaths)
+slider70:0<0,1000,1>Bloodflow: Play for (heartbeats)
+slider71:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 
 // --- DRIFT (nested-selector pattern, see header) ----------------------------
 // Pick a target, then the controls below hold THAT target's drift config.
@@ -233,14 +267,14 @@ slider54:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // slot and loads the new target's values in. All targets drift in parallel.
 // APPEND to the target list, never insert -- these indices are stored in
 // projects AND are the bank position.
-slider55:0<0,10,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq,Bloodflow offset}>Drift target
-slider56:0<0,2000,0.01>Drift up amount (units match target)
-slider57:0<0,2000,0.01>Drift down amount (units match target)
-slider58:8<0,1000,1>Drift period (in drift period units, 0 = off)
+slider72:0<0,10,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq,Bloodflow offset}>Drift target
+slider73:0<0,2000,0.01>Drift up amount (units match target)
+slider74:0<0,2000,0.01>Drift down amount (units match target)
+slider75:8<0,1000,1>Drift period (in drift period units, 0 = off)
 // Declared CYCLES, unlike the Morpher's, because this period already counted
 // heartbeats or breath cycles -- Cycles IS the current meaning here, so the
 // suite default and the back-compatible one are the same answer.
-slider59:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider76:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
@@ -251,29 +285,29 @@ slider59:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // advances it continuously, drawing the whole curve.
 //
 // DEFAULTS REPRODUCE WHAT drift_is_stepped() HARDCODED, so nothing saved moves.
-slider60:0<0,1,1{With the target,On a clock}>Drift movement
-slider61:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider62:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider63:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider77:0<0,1,1{With the target,On a clock}>Drift movement
+slider78:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider79:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider80:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- RAMP -------------------------------------------------------------------
 // Ramps the selected target by `by` over `duration`, after a start delay.
 // `by` is a signed DELTA in the target's own units, not a destination -- 0
 // means no ramp, negative means decrease (slower heart, shorter inhale).
 // Each target is additive and independent.
-slider64:0<0,10,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq,Bloodflow offset}>Ramp target
-slider65:0<-2000,2000,0.001>Ramp by
+slider81:0<0,10,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq,Bloodflow offset}>Ramp target
+slider82:0<-2000,2000,0.001>Ramp by
 // Declared MINUTES, which is both the suite default and what the duration and
 // start delay already meant, so no saved instance changes meaning.
-slider66:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider67:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider83:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+slider84:0<0,1000,0.1>Ramp duration (in ramp time units)
 // Turns the smooth ride into a STAIRCASE. The rests come OUT of the duration
 // rather than extending it, so a stepped ramp and a smooth one of the same
 // length arrive together. Off unless BOTH are above 0.
-slider68:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider69:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider70:0<0,1,1{Off,On}>Ramp engage
-slider71:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider85:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider86:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider87:0<0,1,1{Off,On}>Ramp engage
+slider88:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
@@ -439,8 +473,8 @@ breath_host_scale = 1;
 last_hs_sel = 0;
 bpm_smoothed             = slider1;
 
-// Speed ramp state. ramp_t advances 0->1 over slider67 minutes while
-// engaged. The target selector (slider64) picks which parameter to ramp;
+// Speed ramp state. ramp_t advances 0->1 over slider84 minutes while
+// engaged. The target selector (slider81) picks which parameter to ramp;
 // only that parameter's effective value gets an additive offset. All
 // targets are additive — Heart BPM ramp affects only the heart, not the
 // breath cycle (the v2 multiplicative all-three-layers wind-down was
@@ -535,6 +569,26 @@ target_drift_moves = 8560;   // CONFIG -- 0 with the target, 1 clock
 //                   they render the whole curve and can move WITHIN a breath.
 //   10 Bloodflow offset  continuous -- read every sample as a phase shift.
 function drift_is_stepped(idx) ( target_drift_moves[idx] == 0; );
+
+// --- Pitch (R22) ----------------------------------------------------------
+// Four blocks, replicated in place, one shared tuning reference. Takes VALUES
+// rather than slider numbers because eel2 cannot index sliders dynamically.
+// The value IS the pitch; nothing here is an offset from a note.
+function womb_pitch_hz(m, v, f, fm) local(hz) (
+  hz = m == 1 ? tuning_ref * pow(2, (v - 69) / 12) :
+       m == 2 ? tuning_ref * pow(2, (v / 100 - 69) / 12) :
+                v;
+  hz = fm == 1 ? hz * pow(2, f / 12) :
+       fm == 2 ? hz * pow(2, f / 1200) :
+                 hz + f;
+  min(max(hz, 20), 20000);
+);
+// The note bindings are INLINE, not a function. eel2 passes parameters BY
+// VALUE, so a function that assigns to `note` or `val` writes to a local copy
+// and nothing ever reaches the slider -- the binding would be silently dead.
+// Caught 2026-09-09 by chasing a render difference.
+tuning_ref     = 440;
+womb_pui_init  = 0;
 
 // Play/rest gate, shared by Drift and Ramp. Returns 1 while this target is in
 // its REST window, 0 otherwise; ticks the accumulator either way so the two
@@ -652,7 +706,7 @@ loop(N_TARGETS,
 );
 
 // One-way BPM rescale state.
-last_bpm = slider16;
+last_bpm = slider24;
 
 // --- Sigh mechanism ---
 // Pure wall-clock timer (no scaling — 5-minute interval is 5 real minutes
@@ -682,7 +736,7 @@ sigh_active          = 0;
 // mode am I" must stay exact, because using one formula for both runs the
 // plugin at the wrong speed, silently.
 rate_mode        = slider2;
-breath_unit = slider17;   // 0 = seconds, 1 = beats
+breath_unit = slider25;   // 0 = seconds, 1 = beats
 
 // --- Set breath rate: the ONE-SHOT ----------------------------------------
 // Scales the four segments to the requested rate, preserving their ratio, then
@@ -698,20 +752,20 @@ breath_unit = slider17;   // 0 = seconds, 1 = beats
 //
 // It also cannot fire on a saved value, because it never saves one: the
 // migration zeroes it and it zeroes itself after every use.
-breath_set_ready && slider16 > 0 ? (
-  bs_total = slider18 + slider19 + slider20 + slider21;
+breath_set_ready && slider24 > 0 ? (
+  bs_total = slider26 + slider27 + slider28 + slider29;
   bs_total > 0.001 ? (
     // The target cycle, IN THE SEGMENTS' OWN UNIT. Seconds: the control is
     // breaths per minute, so one breath is 60/rate seconds. Beats: the control
     // is already beats per breath, so it IS the target.
-    bs_target = breath_unit == 0 ? 60 / max(slider16, 0.001) : slider16;
+    bs_target = breath_unit == 0 ? 60 / max(slider24, 0.001) : slider24;
     bs_k      = bs_target / bs_total;
-    slider18 = min(1000, max(0.001, slider18 * bs_k));
-    slider19 = min(1000, max(0,     slider19 * bs_k));
-    slider20 = min(1000, max(0.001, slider20 * bs_k));
-    slider21 = min(1000, max(0,     slider21 * bs_k));
+    slider26 = min(1000, max(0.001, slider26 * bs_k));
+    slider27 = min(1000, max(0,     slider27 * bs_k));
+    slider28 = min(1000, max(0.001, slider28 * bs_k));
+    slider29 = min(1000, max(0,     slider29 * bs_k));
   );
-  slider16 = 0;
+  slider24 = 0;
   // sliderchange, NOT slider_automate: this makes the values stick and refreshes
   // REAPER's display without writing automation the user never asked for.
   sliderchange(-1);
@@ -743,14 +797,47 @@ rate_mode_inited && last_rate_mode != rate_mode ? ( last_rate_mode = rate_mode; 
 // bpm_target and systole_samples are DERIVED IN @block, not here: both host
 // modes read the live tempo, and a tempo change does not re-run @slider, so a
 // value computed here would go stale the moment the project tempo moved.
-s1_vol = slider8;
-s2_vol = slider11;
-s1_freq = slider6; s2_freq = slider9;
+s1_vol = slider12;
+s2_vol = slider19;
+tuning_ref = slider63;
+// AUTOMATE ONLY WHAT ACTUALLY MOVED. Calling slider_automate every pass on
+// controls nobody touched is noise the host has to process, and Breath
+// Generator is careful not to.
+womb_pui_init ? (
+  slider6 == 1 ? (
+    slider7 != wp_ln0 ? ( slider8 = slider7; slider_automate(slider8); ) :
+    slider8 != wp_lv0 ? ( slider7 = max(0, min(127, floor(slider8 + 0.5))); slider_automate(slider7); );
+  );
+  slider13 == 1 ? (
+    slider14 != wp_ln1 ? ( slider15 = slider14; slider_automate(slider15); ) :
+    slider15 != wp_lv1 ? ( slider14 = max(0, min(127, floor(slider15 + 0.5))); slider_automate(slider14); );
+  );
+  slider30 == 1 ? (
+    slider31 != wp_ln2 ? ( slider32 = slider31; slider_automate(slider32); ) :
+    slider32 != wp_lv2 ? ( slider31 = max(0, min(127, floor(slider32 + 0.5))); slider_automate(slider31); );
+  );
+  slider35 == 1 ? (
+    slider36 != wp_ln3 ? ( slider37 = slider36; slider_automate(slider37); ) :
+    slider37 != wp_lv3 ? ( slider36 = max(0, min(127, floor(slider37 + 0.5))); slider_automate(slider36); );
+  );
+);
+wp_ln0 = slider7;  wp_lv0 = slider8;
+wp_ln1 = slider14; wp_lv1 = slider15;
+wp_ln2 = slider31; wp_lv2 = slider32;
+wp_ln3 = slider36; wp_lv3 = slider37;
+// A note name is a lie outside Semitones, so each is shown only there.
+slider_show(slider7,  slider6  == 1);
+slider_show(slider14, slider13 == 1);
+slider_show(slider31, slider30 == 1);
+slider_show(slider36, slider35 == 1);
 
-s1_center_near = slider6 * 1.1; s2_center_near = slider9 * 1.15;
-s1_center_far  = slider6 * 1.28; s2_center_far = slider9 * 1.25;
-lp_cutoff_near = 200.0 + slider12 * 250.0;
-lp_cutoff_far  = 175.0 + slider12 * 220.0;
+s1_freq = womb_pitch_hz(slider6, slider8, slider9, slider10);
+s2_freq = womb_pitch_hz(slider13, slider15, slider16, slider17);
+
+s1_center_near = s1_freq * 1.1; s2_center_near = s2_freq * 1.15;
+s1_center_far  = s1_freq * 1.28; s2_center_far = s2_freq * 1.25;
+lp_cutoff_near = 200.0 + slider20 * 250.0;
+lp_cutoff_far  = 175.0 + slider20 * 220.0;
 
 s1_res_f_near = min(2.0 * sin($pi * s1_center_near * srate_inv), 0.98);
 s2_res_f_near = min(2.0 * sin($pi * s2_center_near * srate_inv), 0.98);
@@ -759,12 +846,12 @@ s1_res_f_far = min(2.0 * sin($pi * s1_center_far * srate_inv), 0.98);
 s2_res_f_far = min(2.0 * sin($pi * s2_center_far * srate_inv), 0.98);
 lp_f_far = min(2.0 * sin($pi * lp_cutoff_far * srate_inv), 0.98);
 
-s1_decay = exp(-srate_inv / (slider7 * 0.001));
-s2_decay = exp(-srate_inv / (slider10 * 0.001));
+s1_decay = exp(-srate_inv / (slider11 * 0.001));
+s2_decay = exp(-srate_inv / (slider18 * 0.001));
 
-hb_delay_samples = floor(srate * abs(slider13) * 0.001);
+hb_delay_samples = floor(srate * abs(slider21) * 0.001);
 hb_delay_samples = min(hb_delay_samples, hb_delay_buf_size - 1);
-new_hb_sign = slider13 >= 0 ? 1 : -1;
+new_hb_sign = slider21 >= 0 ? 1 : -1;
 new_hb_sign != hb_delay_sign ? (
   s1_res_low_near = 0; s1_res_band_near = 0;
   s2_res_low_near = 0; s2_res_band_near = 0;
@@ -784,10 +871,10 @@ hb_delay_sign = new_hb_sign;
 // 1.0; and it was HIDDEN in host mode while still able to write, which is the
 // 2026-08-23 bug shape. Now the rate scales the ADVANCE in @block instead, and
 // these four keep whatever the user typed, forever.
-inhale_len = max(floor(srate * slider18), 1);
-top_len    = max(floor(srate * slider19), 1);
-exhale_len = max(floor(srate * slider20), 1);
-bot_len    = max(floor(srate * slider21), 1);
+inhale_len = max(floor(srate * slider26), 1);
+top_len    = max(floor(srate * slider27), 1);
+exhale_len = max(floor(srate * slider28), 1);
+bot_len    = max(floor(srate * slider29), 1);
 
 breath_state == 0 ? breath_state_len = inhale_len;
 breath_state == 1 ? breath_state_len = top_len;
@@ -795,38 +882,38 @@ breath_state == 2 ? breath_state_len = exhale_len;
 breath_state == 3 ? breath_state_len = bot_len;
 breath_state_pos = min(breath_state_pos, breath_state_len - 1);
 
-in_f_l = min(2.0 * sin($pi * (slider22 * (1.0 + slider34 * 0.15)) * srate_inv), 0.98);
-in_f_r = min(2.0 * sin($pi * (slider22 * (1.0 - slider34 * 0.15)) * srate_inv), 0.98);
-ex_f_l = min(2.0 * sin($pi * (slider23 * (1.0 + slider34 * 0.12)) * srate_inv), 0.98);
-ex_f_r = min(2.0 * sin($pi * (slider23 * (1.0 - slider34 * 0.12)) * srate_inv), 0.98);
-hp_f   = min(2.0 * sin($pi * slider29 * srate_inv), 0.98);
+in_f_l = min(2.0 * sin($pi * (womb_pitch_hz(slider30, slider32, slider33, slider34) * (1.0 + slider50 * 0.15)) * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * (womb_pitch_hz(slider30, slider32, slider33, slider34) * (1.0 - slider50 * 0.15)) * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * (womb_pitch_hz(slider35, slider37, slider38, slider39) * (1.0 + slider50 * 0.12)) * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * (womb_pitch_hz(slider35, slider37, slider38, slider39) * (1.0 - slider50 * 0.12)) * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * slider45 * srate_inv), 0.98);
 
 // Bloodflow
-bf_filter_hz      = slider42;
-bf_dicrotic_level = slider41;
-bf_res            = slider43;
-bf_attack         = max(slider39, 0.001);
-bf_decay          = max(slider40, 0.001);
-bf_stereo_width   = slider44;
+bf_filter_hz      = slider58;
+bf_dicrotic_level = slider57;
+bf_res            = slider59;
+bf_attack         = max(slider55, 0.001);
+bf_decay          = max(slider56, 0.001);
+bf_stereo_width   = slider60;
 
 bf_attack + bf_decay > 1.0 ? (
-  bf_attack = slider39 / (slider39 + slider40);
-  bf_decay  = slider40 / (slider39 + slider40);
+  bf_attack = slider55 / (slider55 + slider56);
+  bf_decay  = slider56 / (slider55 + slider56);
 );
 
-bpf_f = min(2.0 * sin($pi * slider30 * srate_inv), 0.98);
-bpf_q = 1.0 / slider31;
+bpf_f = min(2.0 * sin($pi * slider46 * srate_inv), 0.98);
+bpf_q = 1.0 / slider47;
 
 // start_delay_sec is derived in @block -- it needs bpm_target, which follows the
 // live tempo in both host modes and so cannot be computed here.
 
 // Play/Rest reads.
-play_for_hb   = slider49;
-rest_for_hb   = slider50;
+play_for_hb   = slider66;
+rest_for_hb   = slider67;
 pr_hb_enabled = (play_for_hb > 0 && rest_for_hb > 0);
 
-play_for_br      = slider51;
-rest_for_br      = slider52;
+play_for_br      = slider68;
+rest_for_br      = slider69;
 new_pr_br_enabled = (play_for_br > 0 && rest_for_br > 0);
 total_breath_samples = inhale_len + top_len + exhale_len + bot_len;
 !new_pr_br_enabled && pr_br_resting ? (
@@ -837,42 +924,42 @@ total_breath_samples = inhale_len + top_len + exhale_len + bot_len;
 );
 pr_br_enabled = new_pr_br_enabled;
 
-play_for_bf   = slider53;
-rest_for_bf   = slider54;
+play_for_bf   = slider70;
+rest_for_bf   = slider71;
 pr_bf_enabled = (play_for_bf > 0 && rest_for_bf > 0);
 
-// Speed ramp target selector save/restore. slider64 = target; slider65 =
-// per-target `by`; slider67 = per-target duration; slider71 = per-target start
-// delay (all three per-target as of v2.14). slider70 (engage) stays GLOBAL.
+// Speed ramp target selector save/restore. slider81 = target; slider82 =
+// per-target `by`; slider84 = per-target duration; slider88 = per-target start
+// delay (all three per-target as of v2.14). slider87 (engage) stays GLOBAL.
 // When the selector changes, save the three per-target sliders to the OLD
 // slot, then load the NEW slot's stored values. Otherwise capture live edits.
 // Play for / Rest for joined this set on 2026-09-06 and are per-target like
 // the rest of it. Ramp time unit and Ramp engage stay GLOBAL: a unit is how you
 // read every target's numbers, not a property of one of them.
-sel_speed_target = slider64;
+sel_speed_target = slider81;
 last_speed_target != sel_speed_target ? (
-  speed_ramp_target_value_mem[last_speed_target] = slider65;
-  speed_ramp_dur_mem[last_speed_target]          = slider67;
-  speed_ramp_delay_mem[last_speed_target]        = slider71;
-  ramp_play_mem[last_speed_target]               = slider68;
-  ramp_rest_mem[last_speed_target]               = slider69;
-  slider65 = speed_ramp_target_value_mem[sel_speed_target];
-  slider67 = speed_ramp_dur_mem[sel_speed_target];
-  slider71 = speed_ramp_delay_mem[sel_speed_target];
-  slider68 = ramp_play_mem[sel_speed_target];
-  slider69 = ramp_rest_mem[sel_speed_target];
-  slider_automate(slider65);
-  slider_automate(slider67);
-  slider_automate(slider71);
-  slider_automate(slider68);
-  slider_automate(slider69);
+  speed_ramp_target_value_mem[last_speed_target] = slider82;
+  speed_ramp_dur_mem[last_speed_target]          = slider84;
+  speed_ramp_delay_mem[last_speed_target]        = slider88;
+  ramp_play_mem[last_speed_target]               = slider85;
+  ramp_rest_mem[last_speed_target]               = slider86;
+  slider82 = speed_ramp_target_value_mem[sel_speed_target];
+  slider84 = speed_ramp_dur_mem[sel_speed_target];
+  slider88 = speed_ramp_delay_mem[sel_speed_target];
+  slider85 = ramp_play_mem[sel_speed_target];
+  slider86 = ramp_rest_mem[sel_speed_target];
+  slider_automate(slider82);
+  slider_automate(slider84);
+  slider_automate(slider88);
+  slider_automate(slider85);
+  slider_automate(slider86);
   last_speed_target = sel_speed_target;
 ) : (
-  speed_ramp_target_value_mem[sel_speed_target] = slider65;
-  speed_ramp_dur_mem[sel_speed_target]          = slider67;
-  speed_ramp_delay_mem[sel_speed_target]        = slider71;
-  ramp_play_mem[sel_speed_target]               = slider68;
-  ramp_rest_mem[sel_speed_target]               = slider69;
+  speed_ramp_target_value_mem[sel_speed_target] = slider82;
+  speed_ramp_dur_mem[sel_speed_target]          = slider84;
+  speed_ramp_delay_mem[sel_speed_target]        = slider88;
+  ramp_play_mem[sel_speed_target]               = slider85;
+  ramp_rest_mem[sel_speed_target]               = slider86;
 );
 
 // Speed ramp engage is a freeze/resume gate, NOT a restart trigger.
@@ -890,14 +977,14 @@ last_speed_target != sel_speed_target ? (
 // then load the NEW target's saved values into sliders 55-58.
 // If the target didn't change, write the current slider values into
 // the current target's slot (so edits are captured live).
-sel_target = slider55;
-sel_up     = slider56;
-sel_down   = slider57;
-sel_per    = slider58;
-sel_shape  = slider61;
-sel_moves  = slider60;
-sel_dplay  = slider62;
-sel_drest  = slider63;
+sel_target = slider72;
+sel_up     = slider73;
+sel_down   = slider74;
+sel_per    = slider75;
+sel_shape  = slider78;
+sel_moves  = slider77;
+sel_dplay  = slider79;
+sel_drest  = slider80;
 
 last_target_select != sel_target ? (
   // Save current sliders into the OLD target's slot
@@ -910,19 +997,19 @@ last_target_select != sel_target ? (
   drift_rest_mem[last_target_select]     = sel_drest;
 
   // Load the NEW target's saved values into the sliders.
-  slider56 = target_drift_up[sel_target];
-  slider57 = target_drift_down[sel_target];
-  slider58 = target_drift_per[sel_target];
-  slider61 = target_drift_shape[sel_target];
-  slider60 = target_drift_moves[sel_target];
-  slider62 = drift_play_mem[sel_target];
-  slider63 = drift_rest_mem[sel_target];
-  slider_automate(slider56);
-  slider_automate(slider57);
-  slider_automate(slider58);
-  slider_automate(slider61);
-  slider_automate(slider62);
-  slider_automate(slider63);
+  slider73 = target_drift_up[sel_target];
+  slider74 = target_drift_down[sel_target];
+  slider75 = target_drift_per[sel_target];
+  slider78 = target_drift_shape[sel_target];
+  slider77 = target_drift_moves[sel_target];
+  slider79 = drift_play_mem[sel_target];
+  slider80 = drift_rest_mem[sel_target];
+  slider_automate(slider73);
+  slider_automate(slider74);
+  slider_automate(slider75);
+  slider_automate(slider78);
+  slider_automate(slider79);
+  slider_automate(slider80);
 
   last_target_select = sel_target;
 ) : (
@@ -946,6 +1033,15 @@ last_target_select != sel_target ? (
 // computed in @block instead -- see the note there.
 
 @block
+// ADOPT THE PITCH MIRRORS HERE, NOT IN @slider -- a tracker adopted in @slider
+// can capture a DEFAULT, which is the August 2026 Sweeping Filter fault.
+!womb_pui_init ? (
+  wp_ln0 = slider7;  wp_lv0 = slider8;
+  wp_ln1 = slider14; wp_lv1 = slider15;
+  wp_ln2 = slider31; wp_lv2 = slider32;
+  wp_ln3 = slider36; wp_lv3 = slider37;
+  womb_pui_init = 1;
+);
 // --- Restore-order guard for the change-detecting controls below -----------
 //     These trackers answer "did the user just move this control?". Adopted
 //     HERE, not in @slider: on a fresh or duplicated instance @slider runs
@@ -1047,9 +1143,9 @@ sys_is_pct = slider5 == 3;
 // targets, breath cycles for the breath ones -- so there is no single factor
 // to compute here. Same option list, same meaning, different arithmetic.)
 hb_cycle_sec   = 60 / max(bpm_target, 0.01);
-ramp_unit_sec  = slider66 == 0 ? hb_cycle_sec :
-                 slider66 == 1 ? 1 :
-                 slider66 == 2 ? 60 : beat_sec;
+ramp_unit_sec  = slider83 == 0 ? hb_cycle_sec :
+                 slider83 == 1 ? 1 :
+                 slider83 == 2 ? 60 : beat_sec;
 
 // BLOODFLOW OFFSET: how many CYCLES one unit of the offset control is worth,
 // since bf_cycle_pos is a fraction of a cycle. A factor rather than a finished
@@ -1057,13 +1153,13 @@ ramp_unit_sec  = slider66 == 0 ? hb_cycle_sec :
 // per sample. Cycles is already the answer; the other two are lengths of time
 // divided by the cycle.
 bf_unit_to_cycles =
-  slider38 == 0 ? 0.001 / max(hb_cycle_sec, 0.0001) :   // milliseconds
-  slider38 == 1 ? 1 / max(hb_cycle_sec, 0.0001) :       // seconds
-  slider38 == 2 ? beat_sec / max(hb_cycle_sec, 0.0001) :// beats
+  slider54 == 0 ? 0.001 / max(hb_cycle_sec, 0.0001) :   // milliseconds
+  slider54 == 1 ? 1 / max(hb_cycle_sec, 0.0001) :       // seconds
+  slider54 == 2 ? beat_sec / max(hb_cycle_sec, 0.0001) :// beats
                   0.01;                                 // % of one heartbeat
 
 // Start delay counts HEARTBEATS, as its name says, in every mode.
-start_delay_sec = slider48 * 60 / max(bpm_target, 0.001);
+start_delay_sec = slider65 * 60 / max(bpm_target, 0.001);
 
 @sample
 
@@ -1071,14 +1167,14 @@ start_delay_sec = slider48 * 60 / max(bpm_target, 0.001);
 bpm_smoothed += (bpm_target - bpm_smoothed) * rate_smoother_coeff;
 
 // Advance each target's own ramp clock (v2.14 per-target timeline). Engage
-// (slider70, GLOBAL) is the freeze/resume gate: while On, each target whose
+// (slider87, GLOBAL) is the freeze/resume gate: while On, each target whose
 // duration > 0 advances its own ramp_t 0->1 over its own duration, after its
 // own start delay; while Off, all clocks freeze and resume. Only transport
 // play (via @init) resets them.
-// Ramp time unit (slider66) replaces the hard 60 that used to make all three
+// Ramp time unit (slider83) replaces the hard 60 that used to make all three
 // of these read in minutes: the duration, the start delay and the play/rest
 // windows, together, which is why one control covers the four of them.
-slider70 ? (
+slider87 ? (
   i = 0;
   loop(N_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
@@ -1109,8 +1205,8 @@ slider70 ? (
 // Compute per-target Speed Ramp effect. ALL 7 targets ramp in parallel
 // (same shape as drift — see the drift loop below). Each target's offset
 // is `ramp_t * stored_amount` where the stored amount comes from the
-// per-target memory bank, not from slider65. The @slider block keeps the
-// bank in sync with slider65 for the currently-selected target (live
+// per-target memory bank, not from slider82. The @slider block keeps the
+// bank in sync with slider82 for the currently-selected target (live
 // edits captured; non-selected targets stay at their saved amounts).
 // This way switching the selector doesn't stop any ramp — the selector
 // just changes which target's amount you're currently editing.
@@ -1156,12 +1252,12 @@ loop(N_TARGETS,
     // drift period of "3 breath cycles" would be three cycles of a breath that
     // is not the one you can hear. Heart periods need no equivalent: their base
     // is cycle_len_base, which already scales. (1 in Own BPM, so untouched.)
-    // Drift period unit (slider59). CYCLES is what this always counted, and it
+    // Drift period unit (slider76). CYCLES is what this always counted, and it
     // is per-target: heartbeats for the heart-side targets, breath cycles for
     // the breath ones. Seconds and Beats are wall clock and project tempo, and
     // are the same for every target because they are not cycles of anything.
-    period_base = slider59 == 1 ? srate :
-                  slider59 == 2 ? srate * beat_sec :
+    period_base = slider76 == 1 ? srate :
+                  slider76 == 2 ? srate * beat_sec :
                   i < 2 ? max(cycle_len_base, 1)
                         : max(total_breath_samples / max(breath_host_scale, 0.0001), 1);
     period_samples = max(per * period_base, 1);
@@ -1264,7 +1360,7 @@ systole_samples = max(1, min(systole_samples, max(cycle_len_base, 2) - 1));
 // Ramp, in breaths/min) shifts the whole breath rate; each segment's
 // effective duration is then divided by the scale (faster rate = shorter
 // segments). Composes with the per-segment drift + ramp offsets below.
-base_breath_total = max(slider18 + slider19 + slider20 + slider21, 0.001);
+base_breath_total = max(slider26 + slider27 + slider28 + slider29, 0.001);
 base_breath_rate  = 60 / base_breath_total;
 breath_rate_delta = target_drift_offset[7] + speed_ramp_bpm_offset;
 breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_breath_rate;
@@ -1273,15 +1369,15 @@ breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_brea
 // Breaths/min aggregate scale. Drift wanders each segment cycle-to-cycle;
 // Speed Ramp adds a one-way movement over the configured duration; the
 // aggregate scales the whole breath rate.
-effective_inhale_sec = max((slider18 + target_drift_offset[2] + speed_ramp_inhale_offset) / breath_rate_scale, 0.01);
-effective_top_sec    = max((slider19 + target_drift_offset[3] + speed_ramp_top_offset)    / breath_rate_scale, 0);
-effective_exhale_sec = max((slider20 + target_drift_offset[4] + speed_ramp_exhale_offset) / breath_rate_scale, 0.01);
-effective_bot_sec    = max((slider21 + target_drift_offset[5] + speed_ramp_bot_offset)    / breath_rate_scale, 0);
+effective_inhale_sec = max((slider26 + target_drift_offset[2] + speed_ramp_inhale_offset) / breath_rate_scale, 0.01);
+effective_top_sec    = max((slider27 + target_drift_offset[3] + speed_ramp_top_offset)    / breath_rate_scale, 0);
+effective_exhale_sec = max((slider28 + target_drift_offset[4] + speed_ramp_exhale_offset) / breath_rate_scale, 0.01);
+effective_bot_sec    = max((slider29 + target_drift_offset[5] + speed_ramp_bot_offset)    / breath_rate_scale, 0);
 // Sigh extra length -> the scale the four segments ride during a sigh. The
 // control says how much LONGER the sigh breath is, in breath units; spreading it
 // in proportion keeps the breath's shape and simply stretches it. Derived from
 // the EFFECTIVE lengths, so a sigh during drift stretches the drifted breath.
-sigh_extra_total = max(slider33, 0);
+sigh_extra_total = max(slider49, 0);
 sigh_base_total  = max(effective_inhale_sec + effective_top_sec +
                        effective_exhale_sec + effective_bot_sec, 0.001);
 sigh_scale       = (sigh_base_total + sigh_extra_total) / sigh_base_total;
@@ -1298,12 +1394,14 @@ bot_len    = max(floor(srate * effective_bot_sec), 1);
 // value. Gated by breath_freq_active so unused instances keep the cached coeffs
 // and pay nothing. Clamped to 20 Hz so a big negative offset can't invert sin().
 breath_freq_active ? (
-  eff_in_freq = max(slider22 + target_drift_offset[8] + speed_ramp_in_freq_offset, 20);
-  eff_ex_freq = max(slider23 + target_drift_offset[9] + speed_ramp_ex_freq_offset, 20);
-  in_f_l = min(2.0 * sin($pi * (eff_in_freq * (1.0 + slider34 * 0.15)) * srate_inv), 0.98);
-  in_f_r = min(2.0 * sin($pi * (eff_in_freq * (1.0 - slider34 * 0.15)) * srate_inv), 0.98);
-  ex_f_l = min(2.0 * sin($pi * (eff_ex_freq * (1.0 + slider34 * 0.12)) * srate_inv), 0.98);
-  ex_f_r = min(2.0 * sin($pi * (eff_ex_freq * (1.0 - slider34 * 0.12)) * srate_inv), 0.98);
+  eff_in_freq = womb_pitch_hz(slider30, slider32 + target_drift_offset[8] + speed_ramp_in_freq_offset,
+                            slider33, slider34);
+  eff_ex_freq = womb_pitch_hz(slider35, slider37 + target_drift_offset[9] + speed_ramp_ex_freq_offset,
+                            slider38, slider39);
+  in_f_l = min(2.0 * sin($pi * (eff_in_freq * (1.0 + slider50 * 0.15)) * srate_inv), 0.98);
+  in_f_r = min(2.0 * sin($pi * (eff_in_freq * (1.0 - slider50 * 0.15)) * srate_inv), 0.98);
+  ex_f_l = min(2.0 * sin($pi * (eff_ex_freq * (1.0 + slider50 * 0.12)) * srate_inv), 0.98);
+  ex_f_r = min(2.0 * sin($pi * (eff_ex_freq * (1.0 - slider50 * 0.12)) * srate_inv), 0.98);
 );
 
 // Note: the sigh stretch (sigh_scale) is NOT applied here. It's
@@ -1333,7 +1431,7 @@ breath_state_advance = breath_host_scale;
 // Sigh timer advances in wall-clock seconds. Pure wall-clock with no
 // scaling: a 5-minute sigh interval is 5 real minutes, regardless of
 // what Speed Ramp or drift are doing.
-slider32 > 0 ? (
+slider48 > 0 ? (
   sigh_time_since_last += 1.0 / srate;
 );
 
@@ -1486,7 +1584,7 @@ hb_delay_sign == 1 ? (
 ) : (
   hb_l = heart_far; hb_r = heart_near;
 );
-hb_l *= slider14; hb_r *= slider14;
+hb_l *= slider22; hb_r *= slider22;
 
 // --- BREATH ---
 breath_state_pos += breath_state_advance;
@@ -1507,7 +1605,7 @@ breath_state_pos >= breath_state_len ? (
       // sigh first (it covered all 4 states of the breath we just finished),
       // then check the timer — if it's time, this NEW breath is the sigh.
       sigh_active = 0;
-      slider32 > 0 && sigh_time_since_last >= slider32 * 60 ? (
+      slider48 > 0 && sigh_time_since_last >= slider48 * 60 ? (
         sigh_active = 1;
         sigh_time_since_last = 0;
       );
@@ -1553,7 +1651,7 @@ pr_br_resting ? (
     // transition for sigh purposes too. Same sigh-fire logic as the
     // normal 3->0 path above.
     sigh_active = 0;
-    slider32 > 0 && sigh_time_since_last >= slider32 * 60 ? (
+    slider48 > 0 && sigh_time_since_last >= slider48 * 60 ? (
       sigh_active = 1;
       sigh_time_since_last = 0;
     );
@@ -1588,7 +1686,7 @@ ex_hp2_r = br_hp_r - ex_lp_r - breath_lp_q * ex_bp_r;
 ex_bp_r += ex_f_r * ex_hp2_r;
 
 (breath_state == 0) ? (
-  br_env_raw = apply_fade(breath_phase_pos, slider24, slider25, slider28);
+  br_env_raw = apply_fade(breath_phase_pos, slider40, slider41, slider44);
   br_env     = br_floor + (1.0 - br_floor) * br_env_raw;
   br_l = in_lp_l * br_env * 1.5;
   br_r = in_lp_r * br_env * 1.5;
@@ -1596,7 +1694,7 @@ ex_bp_r += ex_f_r * ex_hp2_r;
   br_l = in_lp_l * br_floor * 1.5;
   br_r = in_lp_r * br_floor * 1.5;
 ) : (breath_state == 2) ? (
-  br_env_raw = apply_fade(breath_phase_pos, slider26, slider27, slider28);
+  br_env_raw = apply_fade(breath_phase_pos, slider42, slider43, slider44);
   br_env     = br_floor + (1.0 - br_floor) * br_env_raw;
   br_l = ex_lp_l * br_env * 1.5;
   br_r = ex_lp_r * br_env * 1.5;
@@ -1604,7 +1702,7 @@ ex_bp_r += ex_f_r * ex_hp2_r;
   br_l = ex_lp_l * br_floor * 1.5;
   br_r = ex_lp_r * br_floor * 1.5;
 );
-br_l *= slider35; br_r *= slider35;
+br_l *= slider51; br_r *= slider51;
 
 bpf_low_l += bpf_f * bpf_band_l;
 bpf_high_l = br_l - bpf_low_l - bpf_q * bpf_band_l;
@@ -1625,7 +1723,7 @@ br_r = bpf_low_r;
 // Drift target 10 and Ramp target 10 wander the offset in the control's own
 // units, exactly as every other target does, so they are added before the unit
 // factor is applied rather than after.
-bf_offset_cycles = (slider37 + target_drift_offset[10] + speed_ramp_bf_off_offset)
+bf_offset_cycles = (slider53 + target_drift_offset[10] + speed_ramp_bf_off_offset)
                    * bf_unit_to_cycles;
 bf_cycle_pos = hb_phase / max(cycle_len, 1) - bf_offset_cycles;
 bf_cycle_pos -= floor(bf_cycle_pos);
@@ -1665,8 +1763,8 @@ bf_fb_r = bf_res + bf_res / (1.0 - bf_cut_r);
 bf_n3_r = bf_n3_r + bf_cut_r * (n6 - bf_n3_r + bf_fb_r * (bf_n3_r - bf_n4_r));
 bf_n4_r = bf_n4_r + bf_cut_r * (bf_n3_r - bf_n4_r);
 
-bf_l = bf_n4_l * bf_env * slider45 * 12.0;
-bf_r = bf_n4_r * bf_env * slider45 * 12.0;
+bf_l = bf_n4_l * bf_env * slider61 * 12.0;
+bf_r = bf_n4_r * bf_env * slider61 * 12.0;
 
 target_bf_mix = pr_bf_enabled && pr_bf_resting ? 0 : 1;
 bf_output_mix = bf_output_mix * pr_smooth + target_bf_mix * (1 - pr_smooth);
@@ -1674,20 +1772,20 @@ bf_l *= bf_output_mix;
 bf_r *= bf_output_mix;
 
 // --- SOLO LOGIC ---
-any_solo = (slider15 > 0) || (slider36 > 0) || (slider46 > 0);
+any_solo = (slider23 > 0) || (slider52 > 0) || (slider62 > 0);
 any_solo ? (
-  hb_l = slider15  > 0 ? hb_l : 0;
-  hb_r = slider15  > 0 ? hb_r : 0;
-  br_l = slider36 > 0 ? br_l : 0;
-  br_r = slider36 > 0 ? br_r : 0;
-  bf_l = slider46 > 0 ? bf_l : 0;
-  bf_r = slider46 > 0 ? bf_r : 0;
+  hb_l = slider23  > 0 ? hb_l : 0;
+  hb_r = slider23  > 0 ? hb_r : 0;
+  br_l = slider52 > 0 ? br_l : 0;
+  br_r = slider52 > 0 ? br_r : 0;
+  bf_l = slider62 > 0 ? bf_l : 0;
+  bf_r = slider62 > 0 ? bf_r : 0;
 ) : 0;
 
 out_l = hb_l + br_l + bf_l;
 out_r = hb_r + br_r + bf_r;
 
-slider47 == 0 ? (
+slider64 == 0 ? (
   spl0 = out_l; spl1 = out_r;
 ) : (
   spl0 = out_r; spl1 = out_l;
@@ -1773,18 +1871,18 @@ file_var(0, sr_magic);
   file_avail(0) >= 0 ? (
     last_speed_target  = min(N_TARGETS - 1, max(0, last_speed_target));
     last_target_select = min(N_TARGETS - 1, max(0, last_target_select));
-    slider65 = speed_ramp_target_value_mem[last_speed_target]; // Ramp by
-    slider67 = speed_ramp_dur_mem[last_speed_target];          // Ramp duration
-    slider71 = speed_ramp_delay_mem[last_speed_target];        // Ramp start delay
-    slider68 = ramp_play_mem[last_speed_target];               // Ramp play for
-    slider69 = ramp_rest_mem[last_speed_target];               // Ramp rest for
-    slider56 = target_drift_up[last_target_select];            // Drift up
-    slider57 = target_drift_down[last_target_select];          // Drift down
-    slider58 = target_drift_per[last_target_select];           // Drift period
-    slider61 = target_drift_shape[last_target_select];         // Drift shape
-    slider60 = target_drift_moves[last_target_select];
-    slider62 = drift_play_mem[last_target_select];             // Drift play for
-    slider63 = drift_rest_mem[last_target_select];             // Drift rest for
+    slider82 = speed_ramp_target_value_mem[last_speed_target]; // Ramp by
+    slider84 = speed_ramp_dur_mem[last_speed_target];          // Ramp duration
+    slider88 = speed_ramp_delay_mem[last_speed_target];        // Ramp start delay
+    slider85 = ramp_play_mem[last_speed_target];               // Ramp play for
+    slider86 = ramp_rest_mem[last_speed_target];               // Ramp rest for
+    slider73 = target_drift_up[last_target_select];            // Drift up
+    slider74 = target_drift_down[last_target_select];          // Drift down
+    slider75 = target_drift_per[last_target_select];           // Drift period
+    slider78 = target_drift_shape[last_target_select];         // Drift shape
+    slider77 = target_drift_moves[last_target_select];
+    slider79 = drift_play_mem[last_target_select];             // Drift play for
+    slider80 = drift_rest_mem[last_target_select];             // Drift rest for
     // sliderchange, NOT slider_automate: this is a restore, and automating it
     // would write automation the user never asked for.
     sliderchange(-1);
