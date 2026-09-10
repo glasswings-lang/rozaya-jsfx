@@ -36,8 +36,8 @@ sentence.
   then v1's **84 instances across 17 projects** cross to v3 once and v1 retires.
   Do not migrate those 84 twice. Only v3's layout needs authoring, plus the
   v1→v3 conversion after it.
-- **Reorders still owed:** Passage (blocked on what it is FOR) and Sweep Dwell
-  (blocked on its `Cycle mode` question, not on effort).
+- **Reorders still owed:** Passage (blocked on what it is FOR), Sweep Dwell
+  (blocked on its `Cycle mode` question, not effort).
 - **Polyrhythm v3 is done** — built and migrated 2026-09-07, 90 sliders to 56,
   the eight voices behind a **Voice** selector with an `All` position. The
   largest reorder in the suite so far.
@@ -67,35 +67,29 @@ conversations."* A session that starts work here is not helping — it is adding
 more unheard change on top of unheard change, which makes the listening session
 that eventually has to happen bigger and harder to attribute.
 
-**Heard and good:** Melody's R20/R21 rate block and its Start delay fix; `N per
+**Heard and good:** Melody's R20/R21 rate block and Start delay fix; `N per
 beat`; both big reorders on finished work; Dapple's immediate rate change;
-per-cycle pan on Polyrhythm; Veil's layout and ramp; **the Morpher's 2026-09-06
-migration** (122 instances, confirmed on real work); **the 2026-09-06 Womb
-rebuild** (70 sliders across 9 projects) — *"Everything else, though, passes.
-:)"*; **the 2026-09-07 Polyrhythm v3 migration** (8 instances, 5 projects) —
-Rozaya opened `shapes` the same day: *"Nothing sounds off which is nice"*;
-**Breath Generator's 40-slider layout, 2026-09-09** — *"it works end-to-end"* —
-after two rebuilds of the pitch block and one of the rate control, all three
-confirmed by running the plugin (`tools/jsfx_run`) before she ever heard them.
+per-cycle pan on Polyrhythm; Veil's layout and ramp; the Morpher's 2026-09-06
+migration (122 instances); the 2026-09-06 Womb rebuild (70 sliders, 9 projects);
+the 2026-09-07 Polyrhythm v3 migration (8 instances, 5 projects); Breath
+Generator's 40-slider layout, 2026-09-09 — *"it works end-to-end"*. The quotes
+and the how are in `docs/session-log.md`.
 
-**Quit REAPER fully before reopening after any promotion** — from the
-2026-09-08 breath build that was heard, reverted and never explained; pair kept
-at `snapshots/_broken-breathgen-20260908-forensics/`.
+**Quit REAPER fully before reopening after any promotion** — from the 2026-09-08
+breath build heard, reverted and never explained; pair kept at
+`snapshots/_broken-breathgen-20260908-forensics/`.
 
 **Not heard:**
 
-- **`Drift movement`, Breath Generator's new slider 30, 2026-09-09.** Per target:
-  `With the target` or `On a clock`. Rozaya: the choice *"should have been a switch
-  from the very beginning"*. INSERTED beside the period controls, not appended --
-  her call, migration accepted: *"Don't apend when we can aford not to."* Sliders
-  30-40 moved to 31-41; all four instances across the three projects migrated,
-  blob magic 2400007 -> 2500007 with the new bank appended holding exactly what
-  `drift_is_stepped()` hardcoded. **Old-on-old against new-on-migrated is
-  bit-identical over 40 s on all three projects**, and flipping the switch on the
-  Inhale changes the stream one breath in, where the first step falls. Backups at
-  `snapshots/_pre-driftmoves-20260909/`. The ear test owed is an open-and-play,
-  plus the one thing the runner cannot see: the two pitch targets set to `With the
-  target`, which is a filter centre and therefore invisible to measurement.
+- **`Drift movement`, Breath Generator slider 30, 2026-09-09.** Per target:
+  `With the target` or `On a clock` -- Rozaya: it *"should have been a switch from
+  the very beginning"*. INSERTED beside the period controls on their call, sliders
+  30-40 moving to 31-41; all four instances migrated, magic 2400007 -> 2500007.
+  Defaults are exactly what `drift_is_stepped()` hardcoded, and **old-on-old
+  against new-on-migrated is bit-identical over 40 s on all three projects**.
+  Backups at `snapshots/_pre-driftmoves-20260909/`. Owed: an open-and-play, plus
+  a pitch target on `With the target` -- a filter centre, so invisible to the
+  runner and ears-only.
 
 - **The Breath Generator 40-slider build is PROMOTED, 2026-09-09.**
   `breath_gen.jsfx` IS the 40-slider plugin, the `_TEST40` copy is deleted, and
@@ -103,40 +97,33 @@ at `snapshots/_broken-breathgen-20260908-forensics/`.
   2026-09-09 was the live plugin; **the migrated PROJECTS have not been opened
   since**, so an open-and-play of `breathscapes`, `micle` and `organic-movement`
   is the ear test now owed. Backups: `snapshots/_pre-breathgen-promote-20260909/`.
-  Promoting caught a reload bug no ear could have found: `@serialize`'s pitch
-  write-back still used the pre-rebuild slider order, so **every reload restored
-  Pitch value = 0** — a filter centre of 1 Hz. Fixed and measured with
-  `jsfx_run --list --rpp`, which now applies project state before listing.
-  Old-on-old against new-on-migrated is **bit-identical over 40 s on all
-  three** — envelope and timing only; the runner cannot see filter frequency.
+  Old-on-old against new-on-migrated is **bit-identical over 40 s on all three**
+  — envelope and timing only; the runner cannot see filter frequency. The reload
+  bug promoting it caught is written up in `docs/session-log.md`.
 
 - The Womb usability fix of 2026-09-06 (no breath rate mode — a principled R20
   exception; `Set breath rate` a one-shot; Sigh depth additive), **and its
-  2026-09-09 drift stepping** — six of eleven targets now step on their own turn.
-  Eight of nine live projects render bit-identical; **`to-sleep-within` is the
-  one that changes**, because it is the only one with a stepped drift running.
-  It also has its drift misfiled onto Heart rate by an old blob — pre-existing.
-- **R23 is SWEPT, 2026-09-09** — Heartbeat Generator and Melody too. Bubbler and
-  Dapple were built and REVERTED at Rozaya's call; fourteen plugins are cleared
-  and must not be "fixed" — `docs/backlog.md` has the table and the reasoning.
-  Every live project renders identical before and after except `to-sleep-within`.
-  Unheard, all of it.
-- Everything from the 2026-09-06 drift/ramp sweep (six plugins), the `N per
-  beat` reciprocal fix in all four plugins it touched, the Tremolo Start delay
-  fix, and the range widenings.
+  2026-09-09 drift stepping** — six of eleven targets step on their own turn.
+  Eight of nine live projects render bit-identical; **`to-sleep-within` changes**,
+  being the only one with a stepped drift running (its drift is also misfiled
+  onto Heart rate by an old blob — pre-existing).
+- **R23 is SWEPT, 2026-09-09** — Heartbeat and Melody too; Bubbler and Dapple
+  built then REVERTED at Rozaya's call, and fourteen plugins are cleared and must
+  not be "fixed" (`docs/backlog.md` has the table). Every live project renders
+  identical except `to-sleep-within`. Unheard, all of it.
+- The 2026-09-06 drift/ramp sweep (six plugins), the `N per beat` reciprocal fix
+  in all four plugins it touched, the Tremolo Start delay fix, the range widenings.
 - **Every new capability on Polyrhythm v3.** A clean open proves the old work
   survived and nothing more. Never played: per-voice On Duration / Depth /
-  Attack / Release, per-voice Waveform, `Solo this voice`, `Pan rate mode` in
-  any mode the tremolo was not already in, and all six drift/ramp controls.
-  **`Voice = All` writing across eight voices is the one to try first** — the
-  path that will be used most, and the only one that can change eight things at
-  once.
-- The Morpher's two new units doing anything other than their defaults. A drift
-  period in Cycles or Beats, and a ramp in anything but Minutes.
+  Attack / Release, per-voice Waveform, `Solo this voice`, `Pan rate mode` in a
+  new mode, and all six drift/ramp controls. **`Voice = All` writing across eight
+  voices is the one to try first** — the most-used path, and the only one that
+  can change eight things at once.
+- The Morpher's two new units off their defaults: a drift period in Cycles or
+  Beats, a ramp in anything but Minutes.
 
-
-`docs/host-sync-ear-test.md` is still the highest-value thing waiting: five
-tests, about fifteen minutes, three of them never heard on any plugin.
+`docs/host-sync-ear-test.md` is the highest-value thing waiting: five tests,
+fifteen minutes, three never heard on any plugin.
 
 ## The tool that closes the gap
 
