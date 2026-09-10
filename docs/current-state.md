@@ -39,8 +39,7 @@ sentence.
   largest reorder in the suite so far.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
-- **R22: built in Breath Generator, Dapple and Bubbler. Breath Gen heard good
-  2026-09-09.** Rebuilt twice by Rozaya in the hearing, so the plan's written
+- **R22: 4 of 16 plugins with a frequency. See the rollout entry below.** Rebuilt twice by Rozaya in the hearing, so the plan's written
   rule is BEHIND the built one — `docs/layouts/breath-gen.md` is what ships.
   **R22 opens with an attribution warning**: parts were mine, cited back as
   settled. Only *"Morpher and Passage are their own discussion"* is hers.
@@ -77,13 +76,14 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 **Not heard:**
 
-- **Dapple and Bubbler have the R22 block, 2026-09-09.** Dapple took Breath Gen's
-  unchanged (33 -> 38 sliders); Bubbler took the SHIFT form Rozaya designed,
-  `Source note` saying where zero is and defaulting to `None` (31 -> 37). Layouts
-  authored for both. **All 24 instances over five projects migrated, every one
-  bit-identical**; on Bubbler `C4 -> G4` renders identical to typing `7`, so the
-  note path and the number path agree. Blobs untouched. Backups:
-  `_pre-dapple-pitch-` and `_pre-bubbler-transpose-20260909/`.
+- **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
+  Heartbeat. Owed: 12.** Rozaya: doing some and not others is *"shipping a pool
+  ... and only having water that fills half the fucking pool"*. **Every instance
+  migrated so far is bit-identical.** Three shapes so far: Dapple took Breath
+  Gen's block unchanged; **Bubbler took the SHIFT form Rozaya designed**, where
+  `Source note` says where zero is, defaults to `None`, and the semitone value is
+  never gated; Heartbeat's two went behind an {All, S1, S2} target, and its one
+  instance had no blob while storing S2 at 75, so that migration CREATES one.
 
 - **`Drift movement` — the whole sweep, 2026-09-09.** Per-target switch in all six
   plugins that had stepping: Breath Gen, Bubbler, Dapple, Womb, Heartbeat, Melody.

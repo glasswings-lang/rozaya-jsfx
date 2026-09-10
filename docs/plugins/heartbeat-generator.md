@@ -46,7 +46,18 @@ Output level for S1, applied after envelope shaping and independently of S2.
 **S1 Decay ms** `10-200 ms, default 60`
 How quickly S1 fades after its attack peak. Longer values produce a sustained, resonant thud; shorter values a sharper knock.
 
-**S1 Frequency Hz** `20-120 Hz, default 45`
+**Pitch** *(the block, new 2026-09-09)* — the two thump frequencies, now one set of
+controls behind a target rather than two separate sliders.
+
+- **Pitch target** `{All, S1, S2}` — which thump you are editing. `All` writes to both.
+- **Pitch mode** `{Hz, Semitones, Cents}, default Hz` — what the value means.
+- **Note name** — a real control both ways; only visible in Semitones.
+- **Pitch value (Hz / semitones / cents)** — the pitch. S1 defaults to 45, S2 to 120.
+- **Fine tune** / **Fine tune unit** `default Cents` — the one fine tune.
+- **Tuning reference (Hz)** `default 440`.
+
+Tuning a heart to a note is a musical act, not a category error — Rozaya:
+*"Musicality integration, not exclusivity, is the idea here."*
 Base frequency of the S1 resonant filter. The near voice center is derived at ×1.1 and the far at ×1.28, so this value is the lower anchor of the frequency cluster. Lower values produce a deeper, more subsonic thump.
 
 ---
