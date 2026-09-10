@@ -8,7 +8,7 @@ keyboard sense; they are sources and shapers you set going and then live with.
 
 ## Plugins
 
-Twenty-one plugins. Each installs on its own and has its own page, so you only
+Twenty plugins. Each installs on its own and has its own page, so you only
 ever read about the one you took.
 
 ### Synthesizers — they make sound from nothing
