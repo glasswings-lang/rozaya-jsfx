@@ -46,17 +46,18 @@ name-matched. The earlier table here named three plugins that never needed it.
 | `heartbeat gen` | heart rate + S1-S2 gap, per beat |
 | `melody_phase` | V1-V8 Note duration on that voice's note; Attack/Release on any note |
 
-**BUBBLER AND DAPPLE WERE BUILT AND REVERTED. Do not rebuild them.** Rozaya:
-*"it's a bubbler. why would it need to be locked to literally anything?"* The
-fault this rule exists for is a period measured against a clock the drift itself
-changes; a bubbler's is referenced against the PRE-drift rate, so it never lied,
-and bubbles arrive often enough that nothing was thrown away. It failed both
-tests. The tell was needing an invented "the left stream counts" tie-break to
-behave — an arbitrary rule to make something work means the something is wrong.
+**BUBBLER AND DAPPLE: this entry was STALE, corrected 2026-09-09.** It said they
+were built, reverted, and must not be rebuilt. The revert did happen — the tell
+was an invented "the left stream counts" tie-break — but stepping then came BACK
+deliberately, counting every birth on either channel (`272a438`), and nobody
+updated this. Rozaya: *"The stepping was deliberately live, that shit's stale in
+the doc."* Both now carry `Drift movement`, so neither the plugin nor this file
+decides it: the three targets read once at a bubble's birth default to `With the
+target`, everything continuous to `On a clock`.
 
 **Checked and CLEARED — do not "fix" these.** Tremolo, Shepard Scale, Shepard
 Tone, Sweep Dwell, Sweeping Filter, Polyrhythm v3, Veil, Stereo Phaser, Morpher,
-Passage, Resonance Bank, Rhythm Track, plus Bubbler and Dapple above. Their
+Passage, Resonance Bank, Rhythm Track. Their
 controls feed a shape or a threshold recomputed every sample, so the wander is
 expressed rather than sampled. The first three were on the old list
 wrongly; Polyrhythm v1 is out by the standing decision to leave it.
@@ -304,7 +305,6 @@ selector with `All` at position 0, however many pitches it has.** Building from
 the old wording would have put ten sliders into each of those two plugins where
 five belong.
 
-
 Surveyed from source 2026-09-08. `Vn` collapses the per-voice banks.
 
 | plugin | states pitch as | owes |
@@ -371,7 +371,6 @@ including the effect plugins, which have never been measured -- because the
 "nothing is saved on 4+" fact expires the moment anyone uses one.
 
 ---
-
 
 ---
 
@@ -548,7 +547,6 @@ Ordered this way, an abrupt end leaves: a tagged release (Phase 0), a suite that
 consistently *named* and has its missing controls (Phase 1), and migrations completed for
 the most-used plugins first. The documents carry every decision and the reasoning behind
 it, which is the part that cannot be reconstructed from the source.
-
 
 ---
 

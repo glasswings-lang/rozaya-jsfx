@@ -27,29 +27,26 @@ sentence.
 - **The rate block (R20) and both host modes (R21): built everywhere.** True as
   of 2026-09-06 and not before.
 - **Drift/Ramp: 16 of 19 plugins complete.** Passage is the only one still owed
-  the work; Polyrhythm v1 inherits when it crosses to v3. **Resonance Bank is
-  not missing one** — its drift period is a rate by design. A name-matching
-  sweep will claim otherwise; it is wrong.
-- **Polyrhythm v1 is left alone.** Decided by Rozaya 2026-09-06: *"The
-  polyrhythm can just... be left. If we do v3 and then migrate it'll be fine."*
-  v1 gets no drift/ramp controls and no reorder. v3 gets its layout and the six,
-  then v1's **84 instances across 17 projects** cross to v3 once and v1 retires.
-  Do not migrate those 84 twice. Only v3's layout needs authoring, plus the
-  v1→v3 conversion after it.
+  it; Polyrhythm v1 inherits when it crosses to v3. **Resonance Bank is not
+  missing one** — its drift period is a rate by design, whatever a name-matching
+  sweep claims.
+- **Polyrhythm v1 is left alone.** Rozaya, 2026-09-06: *"The polyrhythm can
+  just... be left. If we do v3 and then migrate it'll be fine."* No drift/ramp
+  and no reorder; its **84 instances across 17 projects** cross to v3 once, then
+  v1 retires. Do not migrate those 84 twice.
 - **Reorders still owed:** Passage (blocked on what it is FOR), Sweep Dwell
   (blocked on its `Cycle mode` question, not effort).
 - **Polyrhythm v3 is done** — built and migrated 2026-09-07, 90 sliders to 56,
   the eight voices behind a **Voice** selector with an `All` position. The
   largest reorder in the suite so far.
-- **The range sweep: passes 1 and 2 are done** — 176 sliders widened, 0
-  narrowed, verified against all 641 continuous sliders. dB and semitone ranges
-  are held for Rozaya's decision.
-- **R22, the pitch block: built in Breath Generator ONLY, and heard good
-  2026-09-09.** Its shape was rebuilt twice by Rozaya in the hearing; the plan's
-  written rule is now BEHIND the built one — read
-  `docs/layouts/breath-gen.md` for what actually ships. **R22 opens with an
-  attribution warning: parts of it were mine and cited back to her as settled.**
-  Only *"Morpher and Passage are their own discussion"* is hers.
+- **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
+  verified against all 641 continuous sliders. dB and semitone ranges held for
+  Rozaya's decision.
+- **R22, the pitch block: built in Breath Generator ONLY, heard good
+  2026-09-09.** Rebuilt twice by Rozaya in the hearing, so the plan's written
+  rule is BEHIND the built one — `docs/layouts/breath-gen.md` is what ships.
+  **R22 opens with an attribution warning**: parts were mine, cited back as
+  settled. Only *"Morpher and Passage are their own discussion"* is hers.
 
 ## What has been heard, and what has not
 
@@ -81,25 +78,30 @@ breath build heard, reverted and never explained; pair kept at
 
 **Not heard:**
 
+- **`Drift movement` in Bubbler (20) and Dapple (22), 2026-09-09.** Same switch,
+  same insert. All 24 instances over five projects migrated; **none had drift
+  config stored**, so only the slider line moved, and all five render
+  bit-identical over 30 s. Dapple's switch demonstrably changes the sound;
+  **Bubbler's could not be demonstrated — drift on Bubbler does not respond to
+  the runner at all, before this change as much as after.** Pre-existing, and
+  Rozaya's call whether to chase it. Backups at `_pre-driftmoves-bubdap-20260909/`.
+  `docs/backlog.md`'s "built and REVERTED" entry was stale and is corrected.
+
 - **`Drift movement`, Breath Generator slider 30, 2026-09-09.** Per target:
   `With the target` or `On a clock` -- Rozaya: it *"should have been a switch from
-  the very beginning"*. INSERTED beside the period controls on their call, sliders
-  30-40 moving to 31-41; all four instances migrated, magic 2400007 -> 2500007.
-  Defaults are exactly what `drift_is_stepped()` hardcoded, and **old-on-old
-  against new-on-migrated is bit-identical over 40 s on all three projects**.
-  Backups at `snapshots/_pre-driftmoves-20260909/`. Owed: an open-and-play, plus
-  a pitch target on `With the target` -- a filter centre, so invisible to the
-  runner and ears-only.
+  the very beginning"*. INSERTED on their call, sliders 30-40 moving to 31-41;
+  four instances migrated, magic 2400007 -> 2500007, defaults exactly what
+  `drift_is_stepped()` hardcoded, **bit-identical over 40 s on all three**.
+  Backups at `_pre-driftmoves-20260909/`. Owed: an open-and-play, plus a pitch
+  target on `With the target` -- a filter centre, so ears-only.
 
-- **The Breath Generator 40-slider build is PROMOTED, 2026-09-09.**
-  `breath_gen.jsfx` IS the 40-slider plugin, the `_TEST40` copy is deleted, and
-  all four instances across the three projects are migrated. What was heard on
-  2026-09-09 was the live plugin; **the migrated PROJECTS have not been opened
-  since**, so an open-and-play of `breathscapes`, `micle` and `organic-movement`
-  is the ear test now owed. Backups: `snapshots/_pre-breathgen-promote-20260909/`.
-  Old-on-old against new-on-migrated is **bit-identical over 40 s on all three**
-  — envelope and timing only; the runner cannot see filter frequency. The reload
-  bug promoting it caught is written up in `docs/session-log.md`.
+- **The Breath Generator 40-slider build is PROMOTED, 2026-09-09.** It IS the
+  live plugin, `_TEST40` deleted, four instances migrated. **The migrated
+  PROJECTS have not been opened since**, so an open-and-play of `breathscapes`,
+  `micle` and `organic-movement` is the ear test owed. Backups:
+  `_pre-breathgen-promote-20260909/`. **Bit-identical over 40 s on all three** —
+  envelope and timing only; the runner cannot see filter frequency. The reload
+  bug it caught is in `docs/session-log.md`.
 
 - The Womb usability fix of 2026-09-06 (no breath rate mode — a principled R20
   exception; `Set breath rate` a one-shot; Sigh depth additive), **and its
@@ -128,11 +130,9 @@ fifteen minutes, three never heard on any plugin.
 ## The tool that closes the gap
 
 `~/AppData/Roaming/REAPER/Scripts/kin_bridge.lua` (F4, Load ReaScript, Run,
-leave running) writes a manifest of every control's live value twice a second
-and reads a command mailbox — so a control can be driven and read back in the
-**real** plugin rather than in a Python model of it. That is the gap the
-2026-09-07 Polyrhythm build could not close. Use it to test a claim instead of
-asserting one.
+leave running) writes every control's live value twice a second and reads a
+command mailbox, so a control can be driven and read back in the **real**
+plugin. Use it to test a claim instead of asserting one.
 
 ## The v1 → v3 Polyrhythm crossing
 

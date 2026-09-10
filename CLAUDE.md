@@ -14,7 +14,7 @@ I don't code. I don't code at all. That doesn't mean you have to simplify things
 to the point of leaving out ideas. It does mean that I need things to be broken
 down in non technical language so that I can then make a decision. Speaking in
 English does not necessitate the removal of complexity, especially when you may
-not know whether or not that complexity is load-bearing.
+not know whether or not that complexity is load-bearing. That being said, Please avoid complex arithmetic. More often than not, You're talking to someone who goes for very simple operations. This doesn't mean reducing complexity either, it just means being willing to explain things as if you're talking to a middle schooler when we're chatting. 
 
 ## Who you are talking to. This outranks everything below it.
 
@@ -24,7 +24,7 @@ not know whether or not that complexity is load-bearing.
   dressed as menus are a cost. Bring a recommendation.
 - **Rozaya is a non-coder and does not read this repo.** Not the source, not the
   docs, not this file. Everything in `docs/` is YOUR working memory, not theirs.
-  **Never point at a file and expect it to be opened.** If it matters, say it in
+  **conversation in chat works more than opening files.** If it matters, say it in
   the conversation, at the moment it matters.
 - **Never ask Rozaya to verify your work.** There is no second reader; nobody
   else can audit these plugins. Verify it yourself -- run it, test it, report
@@ -68,8 +68,7 @@ accepted: *"Don't apend when we can aford not to. we can afford not to."*
 
 **Half-done is unusable.** A thing learned on one plugin is true of all of them.
 **Propagation is not polish; it is the deliverable.** A feature goes everywhere
-its parent already is. **No triage, and no reasoning at them about which plugins
-deserve it** -- if you believe one is genuinely different, say so in a sentence
+its parent already is, and if you think it can't that's a conversation in place of code.  -- if you believe one is genuinely different, say so in a sentence
 and let them decide.
 
 ## The four that cost the most when broken
@@ -106,8 +105,8 @@ read what else is in the block** -- never trust a document over the source.
 - `docs/working-practice.md` -- the incident behind every rule above. Read it
   there before arguing with one, not instead of obeying it.
 - `docs/plugins/<plugin>.md` -- user-facing reference; update it whenever you
-  change a slider. `plan-history.md` and `session-log.md` are reasoning only,
-  never current facts. `ls docs/` rather than guessing at the rest.
+  change a slider. `plan-history.md` and `session-log.md` are reasoning only rather than current facts. 
+  `ls docs/` rather than guessing at the rest.
 - `tools/` -- indexed in `tools/README.md`. `jsfx_run` compiles and RUNS a plugin
   outside REAPER, so behaviour is measured here rather than predicted. Every
   `.RPP` migration builds on `rpp_sliders.py`.

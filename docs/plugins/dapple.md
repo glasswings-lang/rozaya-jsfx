@@ -150,13 +150,16 @@ Before this they were sampled out of a wander that never stopped spinning:
 almost all the motion was thrown away, the period did not count what it said,
 and the targets were not independent of each other. Rozaya found it, 2026-09-09.
 
-**Stepped here:** **Timing randomness**, **Pitch** and **Pitch spread**,
-read when a bubble is born and then fixed for that bubble. Counted on the
-**left** stream only, for the same reason as Bubbler: otherwise Timing
-randomness would silently change what the period means.
+**It is a switch now, not a rule (2026-09-09).** `Drift movement`, next to the
+period controls, is per target: `With the target` or `On a clock`. Rozaya: it
+*"should have been a switch from the very beginning"*.
 
-**Not stepped:** Bubble rate, Resonance, Bubble length, Rise, Tone vs noise,
-Excite from input, Stereo width and Output — all read every sample.
+**Defaults to `With the target`:** **Timing randomness**, **Pitch** and **Pitch
+spread**, read when a bubble is born and then fixed for that bubble. **Every
+birth counts, on either channel** — the old left-stream-only tie-break is gone.
+
+**Defaults to `On a clock`:** Bubble rate, Resonance, Bubble length, Rise, Tone
+vs noise, Excite from input, Stereo width and Output — all read every sample.
 
 A stepped wander is a staircase with as many steps as its period has events.
 Long periods sound much as they did; short ones are more obviously

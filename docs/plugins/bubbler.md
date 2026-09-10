@@ -140,16 +140,20 @@ Before this they were sampled out of a wander that never stopped spinning:
 almost all the motion was thrown away, the period did not count what it said,
 and the targets were not independent of each other. Rozaya found it, 2026-09-09.
 
-**Stepped here:** **Timing randomness**, **Transpose** and **Pitch spread**.
-All three are read at the moment a bubble is born and then belong to that
-bubble, so they step once per bubble.
+**It is a switch now, not a rule (2026-09-09).** `Drift movement`, next to the
+period controls, is per target: `With the target` or `On a clock`. Rozaya: it
+*"should have been a switch from the very beginning"* — both are ordinary
+artistic choices and neither is the plugin's to make.
 
-Counted on the **left** stream only. Left and right spawn independently, so
-counting both would make "every 8 bubbles" mean eight at Timing randomness 0 and
-about four once you raise it — one control quietly changing what another means.
-Both channels read the same drifted value either way.
+**Defaults to `With the target`:** **Timing randomness**, **Transpose** and
+**Pitch spread**. All three are read at the moment a bubble is born and then
+belong to that bubble, so they step once per bubble.
 
-**Not stepped:** Bubble rate, Rise, Bubble length, Stereo width, Dry/wet and
+**Every birth counts, on either channel.** An earlier build counted the left
+stream only; that tie-break is gone, and needing it at all was the sign the
+first attempt was wrong.
+
+**Defaults to `On a clock`:** Bubble rate, Rise, Bubble length, Stereo width, Dry/wet and
 Output, all of which are read every sample.
 
 A stepped wander is a staircase with as many steps as its period has events.
