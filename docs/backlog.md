@@ -33,30 +33,33 @@ below is Claude's; do not cite it back as hers.**
 > its period counts those occurrences. A target read CONTINUOUSLY drifts
 > continuously, and its period is time.
 
-**In her words:** *"while one segment is going, the other three keep drifting,
-which means effectively anything you set as independent bits for drift per
-segment is basically being thrown away. Like, you don't get to say drift this
-thing every two cycles and drift this thing every four. it's being fucked."*
+**In her words:** *"you don't get to say drift this thing every two cycles and
+drift this thing every four. it's being fucked."*
 
 **THE SWEEP IS DONE, 2026-09-09.** Every plugin with drift was READ, not
-name-matched, and the earlier table here was wrong in both directions — it named
-three plugins that never needed it and missed two that did.
+name-matched. The earlier table here named three plugins that never needed it.
 
 | plugin | targets that step, and on what |
 |---|---|
 | `breath_gen` | breath rate + four segments, on their own segment |
-| `womb` | heart rate + S1-S2 gap per beat; four segments + Breaths/min per breath |
+| `womb` | heart rate + S1-S2 gap per beat; segments + Breaths/min per breath |
 | `heartbeat gen` | heart rate + S1-S2 gap, per beat |
-| `melody_phase` | V1-V8 Note duration on that voice's note; Attack %/Release % on any note |
-| `bubbler` | Timing randomness, Transpose, Pitch spread, per bubble (left stream counts) |
-| `dapple` | Timing randomness, Pitch, Pitch spread, per bubble (left stream counts) |
+| `melody_phase` | V1-V8 Note duration on that voice's note; Attack/Release on any note |
+
+**BUBBLER AND DAPPLE WERE BUILT AND REVERTED. Do not rebuild them.** Rozaya:
+*"it's a bubbler. why would it need to be locked to literally anything?"* The
+fault this rule exists for is a period measured against a clock the drift itself
+changes; a bubbler's is referenced against the PRE-drift rate, so it never lied,
+and bubbles arrive often enough that nothing was thrown away. It failed both
+tests. The tell was needing an invented "the left stream counts" tie-break to
+behave — an arbitrary rule to make something work means the something is wrong.
 
 **Checked and CLEARED — do not "fix" these.** Tremolo, Shepard Scale, Shepard
 Tone, Sweep Dwell, Sweeping Filter, Polyrhythm v3, Veil, Stereo Phaser, Morpher,
-Passage, Resonance Bank, Rhythm Track. Their controls feed a shape redrawn every
-sample, or a threshold compared every sample, so the wander is expressed rather
-than sampled. Tremolo, Shepard Scale and Polyrhythm v3 were on the old list and
-should not have been. Polyrhythm v1 is out by the standing decision to leave it.
+Passage, Resonance Bank, Rhythm Track, plus Bubbler and Dapple above. Their
+controls feed a shape or a threshold recomputed every sample, so the wander is
+expressed rather than sampled. The first three were on the old list
+wrongly; Polyrhythm v1 is out by the standing decision to leave it.
 
 **One thing to settle before propagating further.** A stepped target advances
 `1 / period` on its turn and ignores `Drift period unit` entirely, so choosing

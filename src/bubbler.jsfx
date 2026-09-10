@@ -147,35 +147,6 @@ drift_curr_mem               = db + 272;   // RUNTIME (Random shape)
 drift_offset_mem             = db + 288;   // RUNTIME
 drift_pr_resting_mem         = db + 304;   // RUNTIME
 drift_pr_accum_mem           = db + 320;   // RUNTIME
-drift_step_mem               = db + 336;   // RUNTIME -- "your turn came round"
-
-// WHICH TARGETS STEP, AND WHICH FLOW (2026-09-09).
-//
-// A target the engine reads ONCE PER EVENT was being sampled out of a wander
-// that never stopped spinning: nearly all the motion was thrown away and the
-// period did not count what it said. Rozaya, 2026-09-09.
-//
-// Here the event is A BUBBLE BEING BORN. Three values are read at that moment
-// and then belong to that bubble for its whole life:
-//   1 Timing randomness -- the jitter roll for the NEXT gap.
-//   2 Transpose         -- baked into this bubble's playback ratio.
-//   3 Pitch spread      -- likewise.
-// Those three now step once per bubble, so a period of 8 is eight bubbles.
-//
-// Everything else is read every sample and keeps drifting continuously:
-//   0 Bubble rate  -- the gap is re-read every sample and compared, so the
-//                     wander is expressed, not sampled; and its period is
-//                     referenced against the PRE-drift rate, so it never
-//                     measures itself.
-//   4 Rise         -- applied inside the playback loop, per sample.
-//   5 Bubble length-- feeds eff_decay, which is applied to EVERY sounding
-//                     bubble every sample, not just new ones.
-//   6,7,8 Stereo width / Dry-wet / Output -- continuous.
-//
-// THE LEFT STREAM COUNTS. Left and right spawn independently, so counting both
-// would make "every 8 bubbles" mean eight at Timing randomness 0 and about four
-// once you raise it -- one control quietly changing what another one means.
-function drift_is_stepped(idx) ( idx >= 1 && idx <= 3; );
 
 // Shared play/rest window counter. `tick` is how much of ONE window passes per
 // sample, which lets each caller keep its own units: Drift passes
@@ -219,7 +190,6 @@ loop(N_TARGETS,
   drift_prev_mem[j] = 0;         drift_curr_mem[j] = 0;
   drift_offset_mem[j] = 0;
   drift_pr_resting_mem[j] = 0;   drift_pr_accum_mem[j] = 0;
-  drift_step_mem[j] = 0;
   j += 1;
 );
 
@@ -424,23 +394,13 @@ loop(N_TARGETS,
     // play value chooses where it parks: x.25 crest, x.75 trough, x.0 and x.5
     // neutral. A whole number therefore parks at no-change every time and is
     // nearly inaudible; an awkward fraction is the interesting one.
-    // A STEPPED target gets a whole 1/period, but only on the sample a bubble
-    // was born; a continuous one gets the usual per-sample slice. Play/rest
-    // ticks on the same quantity, so "rest for N periods" keeps its meaning.
-    drift_is_stepped(di) ? (
-      d_tick = drift_step_mem[di] ? 1.0 / max(per, 0.001) : 0;
-      drift_step_mem[di] = 0;
-    ) : (
-      d_tick = 1.0 / period_samples;
-    );
-
     d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, di,
-                         d_tick,
+                         1.0 / period_samples,
                          drift_play_mem[di], drift_rest_mem[di]);
     d_frozen ? (
       new_phase = drift_phase_mem[di];
     ) : (
-      new_phase = drift_phase_mem[di] + d_tick;
+      new_phase = drift_phase_mem[di] + 1.0 / period_samples;
       new_phase >= 1.0 ? (
         new_phase -= 1.0;
         shape == 2 ? (
@@ -549,14 +509,6 @@ elapsedL >= max(eff_meanIntv * jfacL, 1) ? (
   // is re-read every sample above, so drifting or ramping the rate moves
   // this bubble's due time as it goes.
   jfacL = 1 + eff_jitter * (rt * 2 - 1);
-  // A bubble was born: the three values it just read take their turn.
-  // COUNTED ON THE LEFT STREAM ONLY, and that is deliberate. Left and right
-  // spawn independently, so counting both would make "every 8 bubbles" mean
-  // eight when Timing randomness is 0 and about four once you turn it up --
-  // the period would change meaning as a side effect of a different control.
-  // Both channels read the same drifted value anyway; this only decides what
-  // counts as one turn.
-  drift_step_mem[1] = 1; drift_step_mem[2] = 1; drift_step_mem[3] = 1;
   elapsedL = 0;
 );
 sumL = 0; j = 0;

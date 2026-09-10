@@ -103,10 +103,11 @@ at `snapshots/_broken-breathgen-20260908-forensics/`.
   Eight of nine live projects render bit-identical; **`to-sleep-within` is the
   one that changes**, because it is the only one with a stepped drift running.
   It also has its drift misfiled onto Heart rate by an old blob — pre-existing.
-- **R23 is SWEPT, 2026-09-09** — Heartbeat Generator, Melody, Bubbler and Dapple
-  too. Every plugin with drift was read; twelve are cleared and must not be
-  "fixed" — `docs/backlog.md` has the table. Every live project renders identical
-  before and after except `to-sleep-within`. Unheard, all of it.
+- **R23 is SWEPT, 2026-09-09** — Heartbeat Generator and Melody too. Bubbler and
+  Dapple were built and REVERTED at Rozaya's call; fourteen plugins are cleared
+  and must not be "fixed" — `docs/backlog.md` has the table and the reasoning.
+  Every live project renders identical before and after except `to-sleep-within`.
+  Unheard, all of it.
 - Everything from the 2026-09-06 drift/ramp sweep (six plugins), the `N per
   beat` reciprocal fix in all four plugins it touched, the Tremolo Start delay
   fix, and the range widenings.

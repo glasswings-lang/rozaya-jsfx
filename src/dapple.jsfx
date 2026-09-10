@@ -151,26 +151,6 @@ drift_curr_mem               = db + 272;   // RUNTIME
 drift_offset_mem             = db + 288;   // RUNTIME
 drift_pr_resting_mem         = db + 304;   // RUNTIME
 drift_pr_accum_mem           = db + 320;   // RUNTIME
-drift_step_mem               = db + 336;   // RUNTIME -- "your turn came round"
-
-// WHICH TARGETS STEP, AND WHICH FLOW (2026-09-09). Same rule as Bubbler, whose
-// grain engine this one is a sibling of.
-//
-// The event is A BUBBLE BEING BORN. Three values are read at that moment and
-// then belong to that bubble:
-//   1 Timing randomness -- the jitter roll for the NEXT gap.
-//   2 Pitch             -- baked into this bubble's starting frequency.
-//   3 Pitch spread      -- likewise.
-// Those three step once per bubble, so a period of 8 is eight bubbles.
-//
-// Everything else is read every sample, inside the playback loop, and keeps
-// drifting continuously: 0 Bubble rate (a threshold compared per sample, and
-// its period is referenced against the PRE-drift rate so it never measures
-// itself), 4 Resonance, 5 Bubble length, 6 Rise, 7 Tone vs noise,
-// 8 Excite from input, 9 Stereo width, 10 Output.
-//
-// THE LEFT STREAM COUNTS -- see the note at the spawn site.
-function drift_is_stepped(idx) ( idx >= 1 && idx <= 3; );
 
 // Shared play/rest window counter. `tick` is how much of ONE window passes per
 // sample, which lets each caller keep its own units. Off unless BOTH > 0.
@@ -209,7 +189,6 @@ loop(N_TARGETS,
   drift_prev_mem[j] = 0;         drift_curr_mem[j] = 0;
   drift_offset_mem[j] = 0;
   drift_pr_resting_mem[j] = 0;   drift_pr_accum_mem[j] = 0;
-  drift_step_mem[j] = 0;
   j += 1;
 );
 
@@ -413,23 +392,13 @@ loop(N_TARGETS,
     // play value chooses where it parks: x.25 crest, x.75 trough, x.0 and x.5
     // neutral -- so a whole number parks at no-change every time and is nearly
     // inaudible, and an awkward fraction is the interesting one.
-    // A STEPPED target gets a whole 1/period, but only on the sample a bubble
-    // was born; a continuous one gets the usual per-sample slice. Play/rest
-    // ticks on the same quantity, so "rest for N periods" keeps its meaning.
-    drift_is_stepped(di) ? (
-      d_tick = drift_step_mem[di] ? 1.0 / max(per, 0.001) : 0;
-      drift_step_mem[di] = 0;
-    ) : (
-      d_tick = 1.0 / period_samples;
-    );
-
     d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, di,
-                         d_tick,
+                         1.0 / period_samples,
                          drift_play_mem[di], drift_rest_mem[di]);
     d_frozen ? (
       new_phase = drift_phase_mem[di];
     ) : (
-      new_phase = drift_phase_mem[di] + d_tick;
+      new_phase = drift_phase_mem[di] + 1.0 / period_samples;
       new_phase >= 1.0 ? (
         new_phase -= 1.0;
         shape == 2 ? (
@@ -542,12 +511,6 @@ elapsedL >= max(eff_meanIntv * jfacL, 1) ? (
   // is re-read every sample above, so drifting or ramping the rate moves
   // this bubble's due time as it goes.
   jfacL = 1 + eff_jitter * (rt * 2 - 1);
-  // A bubble was born: the three values it just read take their turn.
-  // COUNTED ON THE LEFT STREAM ONLY. Left and right spawn independently, so
-  // counting both would make "every 8 bubbles" mean eight at Timing randomness
-  // 0 and about four once you raise it -- one control quietly changing what
-  // another one means. Both channels read the same drifted value anyway.
-  drift_step_mem[1] = 1; drift_step_mem[2] = 1; drift_step_mem[3] = 1;
   elapsedL = 0;
 );
 sumL = 0; j = 0;
