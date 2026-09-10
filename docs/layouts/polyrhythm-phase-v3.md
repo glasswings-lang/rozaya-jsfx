@@ -31,8 +31,9 @@ and `tools/polyv3_verify_layout_20260907.py`; snapshot at
   migrated one has eight configured voices, and parking on `All` would mean one
   stray nudge writes across all of them.
 
-**What is still owed:** an ear test, and the v1 -> v3 crossing (its own job, as
-the migration notes below say).
+**What is still owed:** an ear test of the rest, and the v1 -> v3 crossing (its
+own job, as the migration notes below say). Per-voice Attack and Release were
+measured working on 2026-09-10, and Rozaya remembers them heard and passing.
 
 **Scale.** v3 has **8 instances across 5 projects**. v1 has **84 across 17** and is
 NOT touched by this job - it crosses later, once, and then retires.

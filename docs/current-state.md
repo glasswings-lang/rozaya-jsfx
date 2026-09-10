@@ -115,10 +115,10 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - **R23 is SWEPT** — fourteen plugins cleared and not to be "fixed"
   (`docs/backlog.md` has the table).
 - The 2026-09-06 drift/ramp sweep, `N per beat`, Tremolo's Start delay, the ranges.
-- **Every new capability on Polyrhythm v3.** Never played: per-voice On Duration /
-  Depth / Attack / Release, per-voice Waveform, `Solo this voice`, `Pan rate mode`
-  in a new mode, all six drift/ramp controls. **`Voice = All` first** — the
-  most-used path, and the only one that changes eight things at once.
+- **Polyrhythm v3's new controls.** Per-voice Attack/Release MEASURED 2026-09-10,
+  each voice its own, soloed both ways; Rozaya: *"ear-tested by somebody in here
+  and passing, per-voice"*, no written record found. No record of play: per-voice
+  On Duration, Depth, Waveform, Solo, Pan rate mode, drift/ramp, `Voice = All`.
 - The Morpher's two new units off their defaults: a drift period in Cycles or
   Beats, a ramp in anything but Minutes.
 

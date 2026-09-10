@@ -1,11 +1,35 @@
 # Open bugs
 
-**Both entries are currently CLOSED.** Neither is a job. An entry stays here for
-its reasoning and its burned theories, so they are not re-derived — read them
-before touching the plugin they name, then leave them alone.
+**Entries 1 and 2 are CLOSED. Entry 3 is OPEN, and is not a job until Rozaya
+decides which side changes.** A closed entry stays here for its reasoning and its
+burned theories, so they are not re-derived — read them before touching the
+plugin they name, then leave them alone.
 
 Things that are known-broken and NOT fixed. Newest first. A bug leaves this file
 only when it has been fixed *and* heard.
+
+---
+
+## 3. Polyrhythm v1 and v3 — `Depth dB` works the opposite way to its manual — OPEN
+
+Found 2026-09-10 while measuring per-voice envelopes. Not fixed; nobody was sent
+to fix it.
+
+**The code:** `amount = pow(2, depth / 6)`, then gain = `lfo * 0.5 * amount +
+(1 - amount)`. So **0 dB pulses fully** (trough silent, peak 0.5), the -6 dB
+default swings between 0.5 and 0.75, and **-60 dB does not pulse at all**.
+
+**The manual** (`docs/plugins/polyrhythm-phase-v3.md`, `Depth dB`) says the
+reverse: 0 dB is no depth, -60 dB silences the trough.
+
+**Measured with `jsfx_run`, fresh instance, 100 ms RMS:** depth -60 holds level
+0.354 flat; depth 0 falls from 0.177 to 0.002 across every cycle.
+
+**v1 has the same formula** (`src/polyrhythm_phase.jsfx`, `amount = pow(2,
+depth_db / 6)`), so every saved project was set by ear against the code, not the
+manual. Changing the code would change their sound; the manual or the label is
+the cheap side. Also worth knowing: the pulse's loudest point drops as depth
+grows (0.75 at -6 dB, 0.5 at 0 dB).
 
 ---
 
