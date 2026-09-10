@@ -32,8 +32,7 @@ sentence.
   just... be left. If we do v3 and then migrate it'll be fine."* No drift/ramp
   and no reorder; its **84 instances across 17 projects** cross to v3 once, then
   v1 retires. Do not migrate those 84 twice.
-- **Reorders owed:** Passage (blocked on what it is FOR) and Sweep Dwell
-  (blocked on its `Cycle mode` question, not effort).
+- **Reorders owed:** Passage (blocked on what it is FOR), Sweep Dwell (blocked on its `Cycle mode` question).
 - **Polyrhythm v3 is done** — built and migrated 2026-09-07, 90 sliders to 56,
   the eight voices behind a **Voice** selector with an `All` position. The
   largest reorder in the suite so far.
@@ -41,8 +40,8 @@ sentence.
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
 - **R22: 4 of 16 plugins with a frequency; see the rollout entry below.** Breath
   Gen's block was rebuilt twice in the hearing, so the plan's rule is BEHIND the
-  built one — `docs/layouts/breath-gen.md` is what ships. **R22 opens with an
-  attribution warning**: parts were mine, cited back as settled.
+  built one — `docs/layouts/breath-gen.md` ships, and R22 opens with an
+  attribution warning: parts of it were mine, cited back as settled.
 
 ## What has been heard, and what has not
 
