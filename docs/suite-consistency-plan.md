@@ -298,11 +298,9 @@ ever be wanted, and each one a ceiling nobody agreed to.
 value does something real. Pick the step from the finest adjustment ever wanted (R8), and
 let the position count be whatever it is.
 
-**Why the position count stopped mattering** — this is what makes the rule possible, and
-it is a correction, not a preference. Typing works: the FX dialog has a box beside the
-slider, and in the parameter list you focus a parameter, press Tab, and there is an
-editable field. So you type the value and nudge by ear from there. An earlier draft of R8
-argued the opposite from an arrow-only premise that was simply wrong.
+**Why the position count does not matter** — typing works. The FX dialog has a box
+beside the slider, and in the parameter list you focus a parameter, press Tab, and there
+is an editable field. So you type the value and nudge by ear from there.
 
 **Three carve-outs, and the first one has teeth:**
 
@@ -583,14 +581,9 @@ fall asleep"*, the destination **is** the thing already in mind; the delta is a 
 forced on the user to express it. Star, on why this matters more than it looks: *"it's
 more fucking adding than we can deal with sometimes because our cognitive lag is so bad."*
 
-**This reverses a 2026-06-09 decision, and the reason it was reversed the first time is
-the reason it can be reversed back.** Womb v3 originally had destination semantics and
-Rozaya rejected them — because the amount defaulted to 0, so engaging the ramp meant
-"take the heart to 0 BPM" and the sound died. That was a **default problem misdiagnosed as
-a semantics problem**, and we threw out the semantics to fix the default.
-
-**The fix for the actual problem:** on first selecting a target, its destination **seeds
-to where that parameter already is**. "Ramp to where I am" is no change, safely, and any
+**On first selecting a target, its destination seeds to where that parameter already
+is.** This is the part that makes the rule safe, and it is not optional — destination
+semantics were tried once before and failed without it (`docs/history/R14.md`). "Ramp to where I am" is no change, safely, and any
 move from there states a goal. Identical continuity trick to the one that makes entering
 Host x silent, which the suite has now implemented twice and trusts.
 
@@ -1154,9 +1147,9 @@ please" — and she was right, two of these I was re-deriving from scratch.**
 > *"Heartbeat: target, then select from 2, that way you're able to extend it
 > later if needed, also less sliders."*
 
-An earlier draft of this rule gave Heartbeat TWO complete pitch blocks, one for
-each thump, and would have given Womb four. That is ten and twenty sliders where
-there are two and four, and the number grows every time a plugin gains a sound.
+One block per plugin, not one per sound. Heartbeat with a block per thump would
+be ten sliders where there are two, and Womb four blocks would be twenty where
+there are four — and the count grows every time a plugin gains a sound.
 
 **The selector is the suite's own answer and it was already sitting there.**
 `Drift target` and `Ramp target` are one selector over 24 targets; Polyrhythm's
@@ -1198,13 +1191,15 @@ genuinely do not have the information.
 
 Rozaya, 2026-09-08: *"Morpher and Passage are their own discussion there."*
 
-What is settled is the GENERAL rule: `Note` cannot be one of the modes, because
-a plugin that did not make the audio does not know its pitch. That reasoning is
-why the mode list is three units and it stands.
+**This paragraph used to say the opposite and was wrong until 2026-09-09.** It
+claimed as settled that `Note` cannot be one of the modes, because a plugin that
+did not make the audio does not know its pitch. Rozaya overturned exactly that:
+*"note is not master here. it's one way of expressing pitch, period."* The
+argument is in `docs/history/R22.md` and must not be cited from here again.
 
-What is NOT settled is what those two actually end up carrying. An earlier draft
-of this rule wrote "they carry the pair alone" into the rule statement as though
-it were decided. It is not. They are the suite's two spectral plugins, they
+What is settled is only the quoted line above: these two are their own
+discussion. What they end up carrying is NOT settled, and one draft of this rule
+wrote "they carry the pair alone" into the rule statement as though it were. They are the suite's two spectral plugins, they
 share a capture mechanism, Passage has an owed reorder blocked on what it is
 FOR, and Rozaya has just said its fine-tune surface is part of the answer to
 that — *"passage earns a place by having room for a fine-tune control tapping
