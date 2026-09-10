@@ -25,7 +25,6 @@ nothing else to open.
 | Polyrhythm Phase | `polyrhythm_phase.jsfx` | [polyrhythm-phase.md](polyrhythm-phase.md) |
 | Polyrhythm Phase v3 (Note-Based) | `polyrhythm_phase_v3.jsfx` | [polyrhythm-phase-v3.md](polyrhythm-phase-v3.md) |
 | Melody Phase (flat per-voice sliders) | `melody_phase.jsfx` | [melody-phase.md](melody-phase.md) |
-| Harmonic Sculptor | `harmonic_sculptor.jsfx` | [harmonic-sculptor.md](harmonic-sculptor.md) |
 | Dapple | `dapple.jsfx` | [dapple.md](dapple.md) |
 
 ### Effects

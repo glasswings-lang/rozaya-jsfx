@@ -58,6 +58,11 @@ here's the old one for recovery and reference."
 
 ## Current contents
 
+- `harmonic_sculptor/v1.jsfx` and `harmonic-sculptor.md` — retired with no
+  successor, Rozaya's call, 2026-09-10: never used outside testing, zero
+  projects. It saved nothing beyond its sliders, so sculpted harmonic levels did
+  not survive a reload.
+
 - `polyrhythm_phase/v1.jsfx` — Binaural Polyrhythm Oscillator before
   the v2 fold-in that merged Play/Rest gating into the main plugin
   (commit `70f0e2e`, May 2026). Pre-fold the gating lived in a separate

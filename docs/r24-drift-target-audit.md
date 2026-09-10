@@ -62,8 +62,7 @@ Missing lists are from the audit reads, not individually re-checked.
 - **shepard-tone** — 28 on room 16. Missing: Tuning reference, Pulse width.
 - **shepard-scale** — 29 on room 16. Missing: Tuning reference, Pulse width, the
   twelve per-note fine tunes. Fine tune only reaches the oscillators on rebuild.
-- **harmonic_sculptor** — no Drift. Candidates: Fundamental, Master gain, Attack,
-  Release, Pulse width, the 64 harmonic levels.
+- **harmonic_sculptor** — ARCHIVED 2026-09-10, not owed anything.
 - **spectral_vowel_morpher** — 24 of 32. Missing 26: Morph, Auto-morph time, Wash
   grain, Denoise, Overtone lift, Overtone width, Input level, three Custom layer
   pitches, sixteen layer overtone harmonics. Save format keyed to `N_TARGETS`.

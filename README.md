@@ -21,7 +21,6 @@ ever read about the one you took.
 | **[Polyrhythm Phase](docs/plugins/polyrhythm-phase.md)**<br>`polyrhythm_phase.jsfx` | Up to eight tuned voices at once, each pulsing at its own rate so the pattern between them never quite repeats. Each voice is a stereo pair slightly detuned against itself — the binaural beat. |
 | **[Polyrhythm Phase v3](docs/plugins/polyrhythm-phase-v3.md)**<br>`polyrhythm_phase_v3.jsfx` | The same engine, but voices are picked **by note name** instead of by counting semitones from a root. This is where new work happens; see *Two Polyrhythms* below. |
 | **[Melody Phase](docs/plugins/melody-phase.md)**<br>`melody_phase.jsfx` | The sequencer sibling. The same eight voices, but they play one after another instead of together — each holding for its own length before handing over. Notes are picked by name, with glide and legato. |
-| **[Harmonic Sculptor](docs/plugins/harmonic-sculptor.md)**<br>`harmonic_sculptor.jsfx` | Builds a sound from 64 sine harmonics, each set by ear. The suite's tool for *designing source material* — sculpt a timbre, render it, loop it. |
 | **[Dapple](docs/plugins/dapple.md)**<br>`dapple.jsfx` | Scattered droplets that pop on irregular timing and chirp upward as they fade. Somewhere between rain on glass and a pointillist wash. It started as an attempt at water and became its own thing. |
 
 ### Samplers — they work from sound you give them

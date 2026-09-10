@@ -90,7 +90,7 @@ Both reach eight targets, in the order the controls appear: Loop position, Loop 
 - **Loop steady material.** The loop is invisible when the region has nothing distinctive happening — a held, steady sustain. If the source has vibrato or a swell baked in, looping a chunk repeats that wiggle obviously. Loop the held middle and add movement at playback with the ensemble instead.
 - **Crossfade is your loop-point substitute.** You never place exact loop points. Set position and length roughly by ear, then raise Crossfade until the seam disappears.
 - **Broadband sources are easiest.** Breath and noise loop seamlessly with almost no crossfade, because noise has no repeating events. Pure tones are the hardest, and want the ensemble for life.
-- **The render-and-loop pipeline.** Pair it with Harmonic Sculptor (or noise through Resonance Bank for breath): design a timbre → render to a WAV in the samples folder → load here → sustain. Pitch-shifting one vowel sample also slides it through neighbouring vowels (the formants move with the pitch), so a few base samples cover a continuum.
+- **The render-and-loop pipeline.** Pair it with noise through Resonance Bank, or any synth you like: design a timbre → render to a WAV in the samples folder → load here → sustain. Pitch-shifting one vowel sample also slides it through neighbouring vowels (the formants move with the pitch), so a few base samples cover a continuum.
 - **Transport must be moving** for it to sound — it is a generator, and REAPER only runs it while audio is flowing. Loop the transport, or arm the track and monitor.
 
 ---
