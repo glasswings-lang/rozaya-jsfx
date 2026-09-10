@@ -84,7 +84,18 @@ any migration is called done:
   generators differently from REAPER's, so the noise degenerates. **Envelope and
   timing stay perfectly readable** — that half is genuinely reliable and caught
   three real bugs the same day.
-- **64 sliders maximum.** `polyrhythm_phase` (86) will not load.
+- **A PROJECT LINE OVER 64 SLIDERS IS SILENTLY TRUNCATED, and this is the worst
+  thing in this file.** It does not refuse and it does not warn. `--rpp` applies
+  only the values at or below slider 64 and drops the rest; the "N sliders"
+  it prints is the count it actually applied, so `61 sliders` from a line holding
+  87 values is the tell. **Any comparison of a >64-slider plugin is therefore a
+  comparison of a SUBSET**, and if a migration moves values across the boundary,
+  the two runs are made from different settings and will differ for no musical
+  reason. Measured 2026-09-09 on `melody_phase` and `womb_sound_generator_v3`.
+  Exposed today: `melody_phase` (96), `womb_sound_generator_v3` (88),
+  `polyrhythm_phase` (86), `shepard-tone` (75). Under the line and therefore
+  trustworthy: Bubbler (37), Dapple (38), Heartbeat (40), Rhythm Track (39),
+  Breath Generator (41).
 - **REAPER's restore ORDER.** `ysfx_load_state` applies sliders and serialized
   data in one defined order. REAPER makes no such guarantee, and the ordering
   gap between `@slider`, `@block` and `@serialize` is where several real bugs in

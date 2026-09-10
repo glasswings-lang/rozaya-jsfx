@@ -52,6 +52,9 @@ slider4:25<1,99,0.1>Pulse width (%, 50 = square)
 
 // --- Pitch. Where the sequence sits, before any per-voice note is applied. ---
 slider5:440<20,2000,0.1>Tuning reference (Hz)
+// ONE unit for all eight fine tunes, not one per voice. Rozaya declined the
+// selector this rule assumed was necessary; see docs/history/R22.md.
+slider6:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
 // Where the whole set sits, and it is the SAME pair Polyrhythm v3 uses.
 //
 // Root note and Center octave used to live here, and they had to go the moment
@@ -68,38 +71,38 @@ slider5:440<20,2000,0.1>Tuning reference (Hz)
 // They are also what stops C2..C6 being a ceiling: four octaves and an octave
 // of half steps in each direction reaches well past anything audible either
 // way, so the picker is a comfortable middle rather than a limit.
-slider6:0<-12,12,1>Transpose (half steps)
-slider7:0<-4,4,1>Octave shift
-slider8:0<0,1000,0.001>Binaural beat (Hz, L/R offset)
+slider7:0<-12,12,1>Transpose (half steps)
+slider8:0<-4,4,1>Octave shift
+slider9:0<0,1000,0.001>Binaural beat (Hz, L/R offset)
 
 // --- Envelope. Each shape sits with the stage it shapes; they used to be four
 //     apart (Attack%, Release%, Attack shape, Release shape). ---
-slider9:10<0,100,0.1>Attack (% of note duration)
-slider10:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack shape
-slider11:30<0,100,0.1>Release (% of note duration)
-slider12:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
+slider10:10<0,100,0.1>Attack (% of note duration)
+slider11:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack shape
+slider12:30<0,100,0.1>Release (% of note duration)
+slider13:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
 
 // --- Glide / portamento. When Glide time > 0, each new voice's pitch starts at
 //     the previous voice's target frequency and slides to its own over this many
 //     seconds. Legato glide changes how the new voice's envelope is triggered. ---
-slider13:0<0,1000,0.001>Glide time (seconds; 0 = off)
-slider14:0<0,1,1{Off,On}>Legato glide
+slider14:0<0,1000,0.001>Glide time (seconds; 0 = off)
+slider15:0<0,1,1{Off,On}>Legato glide
 
 // --- Pan -- mirrors Polyrhythm Phase. ---
-slider15:0<0,1,1{Off,On}>Pan enabled
-slider16:2<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
-slider17:100<0,100,0.1>Pan spread (%)
-slider18:10<0,1000,0.1>Pan glide ms (0 = instant)
-slider19:8<2,1000,1>Cycle steps (per-cycle modes)
-slider20:1<0.001,1000,0.001>Pan base rate (Tremolo / Increment modes)
+slider16:0<0,1,1{Off,On}>Pan enabled
+slider17:2<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
+slider18:100<0,100,0.1>Pan spread (%)
+slider19:10<0,1000,0.1>Pan glide ms (0 = instant)
+slider20:8<2,1000,1>Cycle steps (per-cycle modes)
+slider21:1<0.001,1000,0.001>Pan base rate (Tremolo / Increment modes)
 // The pan's OWN rate mode (R20). Until 2026-09-05 the pan borrowed the
 // sequencer's, which is exactly why R11 needed a `Host sync target` selector --
 // there was nowhere else to put the pan's sync. One slider replaced three.
 // Same five entries as every rate mode in the suite; in `Every N beats` the pan
 // takes N beats to go round once, and in `N per beat` it goes round N times per
 // beat. The two are reciprocals, so neither is right alone.
-slider21:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan rate mode
-slider22:0<-1000,1000,0.001>Pan increment per voice (Increment mode)
+slider22:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan rate mode
+slider23:0<-1000,1000,0.001>Pan increment per voice (Increment mode)
 
 // --- The sequence: how many steps, in what order, and does it go round again.
 //     `Loop sequence` is welded to Direction rather than merely near it --
@@ -107,7 +110,7 @@ slider22:0<-1000,1000,0.001>Pan increment per voice (Increment mode)
 //     Up wraps or stops and bounding the bounce count in the Up-Down modes.
 //     Renamed from `Loop`, which in REAPER already means the transport loop over
 //     a time selection, so a slider called just that read as "loop what?". ---
-slider23:0<0,8,1{All Active,1,2,3,4,5,6,7,8}>Sequence length
+slider24:0<0,8,1{All Active,1,2,3,4,5,6,7,8}>Sequence length
 // Walk order through the active voices in the pool (the first seq_length_eff
 // slots). Inactive voices are skipped in all directions; bounce modes flip
 // direction at the pool's edges. Repeat/no-repeat controls whether the boundary
@@ -120,95 +123,103 @@ slider23:0<0,8,1{All Active,1,2,3,4,5,6,7,8}>Sequence length
 //   Down-Up (no repeat)      4, 3, 2, 1, 2, 3, 4, 3, ...
 // Loop sequence Off + Up or Down: one pass, then stop. Off + any bounce mode:
 // one complete bounce cycle (back to the starting edge), then stop.
-slider24:0<0,5,1{Up,Down,Up-Down (repeat),Up-Down (no repeat),Down-Up (repeat),Down-Up (no repeat)}>Direction
-slider25:1<0,1,1{Off,On}>Loop sequence
+slider25:0<0,5,1{Up,Down,Up-Down (repeat),Up-Down (no repeat),Down-Up (repeat),Down-Up (no repeat)}>Direction
+slider26:1<0,1,1{Off,On}>Loop sequence
 
 // --- Per-voice (5 each, V1 = 26-30 ... V8 = 61-65).
 //     `Vn Note` replaces `Vn Semitones from root`: an absolute note name, the
 //     same C2..C6 list Polyrhythm v3 and Melody v2 use. A semitone offset from a
 //     root you have to remember is arithmetic; a note name is recognition. The
 //     old value converts exactly -- see the migration note in the layout doc. ---
-slider26:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V1 Note
-slider27:1<0.001,1000,0.001>V1 Next voice in (cycles)
-slider28:1<0,1000,0.001>V1 Note duration (cycles; 0 = silent)
-slider29:-6<-60,6,0.01>V1 Gain dB
-slider30:1<0,1,1{Off,On}>V1 Active
+slider27:24<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V1 Note
+slider28:0<-1000,1000,0.001>V1 Fine tune
+slider29:1<0.001,1000,0.001>V1 Next voice in (cycles)
+slider30:1<0,1000,0.001>V1 Note duration (cycles; 0 = silent)
+slider31:-6<-60,6,0.01>V1 Gain dB
+slider32:1<0,1,1{Off,On}>V1 Active
 
-slider31:26<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V2 Note
-slider32:1<0.001,1000,0.001>V2 Next voice in (cycles)
-slider33:1<0,1000,0.001>V2 Note duration (cycles; 0 = silent)
-slider34:-6<-60,6,0.01>V2 Gain dB
-slider35:0<0,1,1{Off,On}>V2 Active
+slider33:26<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V2 Note
+slider34:0<-1000,1000,0.001>V2 Fine tune
+slider35:1<0.001,1000,0.001>V2 Next voice in (cycles)
+slider36:1<0,1000,0.001>V2 Note duration (cycles; 0 = silent)
+slider37:-6<-60,6,0.01>V2 Gain dB
+slider38:0<0,1,1{Off,On}>V2 Active
 
-slider36:28<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V3 Note
-slider37:1<0.001,1000,0.001>V3 Next voice in (cycles)
-slider38:1<0,1000,0.001>V3 Note duration (cycles; 0 = silent)
-slider39:-6<-60,6,0.01>V3 Gain dB
-slider40:0<0,1,1{Off,On}>V3 Active
+slider39:28<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V3 Note
+slider40:0<-1000,1000,0.001>V3 Fine tune
+slider41:1<0.001,1000,0.001>V3 Next voice in (cycles)
+slider42:1<0,1000,0.001>V3 Note duration (cycles; 0 = silent)
+slider43:-6<-60,6,0.01>V3 Gain dB
+slider44:0<0,1,1{Off,On}>V3 Active
 
-slider41:29<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V4 Note
-slider42:1<0.001,1000,0.001>V4 Next voice in (cycles)
-slider43:1<0,1000,0.001>V4 Note duration (cycles; 0 = silent)
-slider44:-6<-60,6,0.01>V4 Gain dB
-slider45:0<0,1,1{Off,On}>V4 Active
+slider45:29<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V4 Note
+slider46:0<-1000,1000,0.001>V4 Fine tune
+slider47:1<0.001,1000,0.001>V4 Next voice in (cycles)
+slider48:1<0,1000,0.001>V4 Note duration (cycles; 0 = silent)
+slider49:-6<-60,6,0.01>V4 Gain dB
+slider50:0<0,1,1{Off,On}>V4 Active
 
-slider46:31<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V5 Note
-slider47:1<0.001,1000,0.001>V5 Next voice in (cycles)
-slider48:1<0,1000,0.001>V5 Note duration (cycles; 0 = silent)
-slider49:-6<-60,6,0.01>V5 Gain dB
-slider50:0<0,1,1{Off,On}>V5 Active
+slider51:31<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V5 Note
+slider52:0<-1000,1000,0.001>V5 Fine tune
+slider53:1<0.001,1000,0.001>V5 Next voice in (cycles)
+slider54:1<0,1000,0.001>V5 Note duration (cycles; 0 = silent)
+slider55:-6<-60,6,0.01>V5 Gain dB
+slider56:0<0,1,1{Off,On}>V5 Active
 
-slider51:33<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V6 Note
-slider52:1<0.001,1000,0.001>V6 Next voice in (cycles)
-slider53:1<0,1000,0.001>V6 Note duration (cycles; 0 = silent)
-slider54:-6<-60,6,0.01>V6 Gain dB
-slider55:0<0,1,1{Off,On}>V6 Active
+slider57:33<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V6 Note
+slider58:0<-1000,1000,0.001>V6 Fine tune
+slider59:1<0.001,1000,0.001>V6 Next voice in (cycles)
+slider60:1<0,1000,0.001>V6 Note duration (cycles; 0 = silent)
+slider61:-6<-60,6,0.01>V6 Gain dB
+slider62:0<0,1,1{Off,On}>V6 Active
 
-slider56:35<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V7 Note
-slider57:1<0.001,1000,0.001>V7 Next voice in (cycles)
-slider58:1<0,1000,0.001>V7 Note duration (cycles; 0 = silent)
-slider59:-6<-60,6,0.01>V7 Gain dB
-slider60:0<0,1,1{Off,On}>V7 Active
+slider63:35<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V7 Note
+slider64:0<-1000,1000,0.001>V7 Fine tune
+slider65:1<0.001,1000,0.001>V7 Next voice in (cycles)
+slider66:1<0,1000,0.001>V7 Note duration (cycles; 0 = silent)
+slider67:-6<-60,6,0.01>V7 Gain dB
+slider68:0<0,1,1{Off,On}>V7 Active
 
-slider61:36<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V8 Note
-slider62:1<0.001,1000,0.001>V8 Next voice in (cycles)
-slider63:1<0,1000,0.001>V8 Note duration (cycles; 0 = silent)
-slider64:-6<-60,6,0.01>V8 Gain dB
-slider65:0<0,1,1{Off,On}>V8 Active
+slider69:36<0,48,1{C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6}>V8 Note
+slider70:0<-1000,1000,0.001>V8 Fine tune
+slider71:1<0.001,1000,0.001>V8 Next voice in (cycles)
+slider72:1<0,1000,0.001>V8 Note duration (cycles; 0 = silent)
+slider73:-6<-60,6,0.01>V8 Gain dB
+slider74:0<0,1,1{Off,On}>V8 Active
 
 // --- Output level for the whole plugin. At the end of the sound section, after
 //     everything it scales, rather than in the middle of it at slider 8. ---
-slider66:-6<-60,0,0.01>Master gain (dB)
+slider75:-6<-60,0,0.01>Master gain (dB)
 
 // --- Transport. Start delay, then the Play/Rest gate -- contiguous now that
 //     Direction has moved up to sit with Sequence length and Loop sequence. ---
 // Sit silent for N units after playback starts, then resume normally. Units
 // match Rate mode (BPM beats / Seconds / Hz cycles, interpreted against Rate
 // value). 0 disables. Re-arms on every transport stop/start.
-slider67:0<0,1000,0.001>Start delay (in rate mode units)
+slider76:0<0,1000,0.001>Start delay (in rate mode units)
 // Per-step gate: fire N notes normally, then walk silently through M more
 // steps, then resume -- forever. Each "step" is one voice's "Next voice in"
 // period, whether or not that voice's Note duration is non-zero. The firing
 // note finishes its natural envelope, so a rest is a clean tail-out.
-slider68:0<0,1000,1>Play for (steps)
-slider69:0<0,1000,1>Rest for (steps)
-slider70:0<0,1,1{Walk through,Freeze in place}>Rest mode
+slider77:0<0,1000,1>Play for (steps)
+slider78:0<0,1000,1>Rest for (steps)
+slider79:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // --- Drift: suite-wide automation replacement (nested-selector pattern).
 //     Pick a target; it wanders by up/down amounts over a period in cycles.
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
-slider71:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan base rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note duration,V2 Note duration,V3 Note duration,V4 Note duration,V5 Note duration,V6 Note duration,V7 Note duration,V8 Note duration,Attack %,Release %}>Drift target
-slider72:0<0,1000,0.01>Drift up amount (units match target)
-slider73:0<0,1000,0.01>Drift down amount (units match target)
-slider74:8<0,1000,1>Drift period (cycles, 0 = off)
+slider80:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan base rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note duration,V2 Note duration,V3 Note duration,V4 Note duration,V5 Note duration,V6 Note duration,V7 Note duration,V8 Note duration,Attack %,Release %}>Drift target
+slider81:0<0,1000,0.01>Drift up amount (units match target)
+slider82:0<0,1000,0.01>Drift down amount (units match target)
+slider83:8<0,1000,1>Drift period (cycles, 0 = off)
 // What the period is COUNTED IN. Cycles is this plugin's native count and the
 // default -- a period of 8 means eight sequencer cycles, and it follows the rate
 // for free. Seconds is wall clock. Beats converts at the LIVE project tempo, so
 // the wander follows the host rather than the melody. Cycles is the default
 // everywhere the plugin HAS a rate to count cycles of; Veil is the one
 // exception, and it is exempt because it has no rate at all.
-slider75:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider84:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
@@ -219,8 +230,8 @@ slider75:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // advances it continuously, drawing the whole curve.
 //
 // DEFAULTS REPRODUCE WHAT drift_is_stepped() HARDCODED, so nothing saved moves.
-slider76:0<0,1,1{With the target,On a clock}>Drift movement
-slider77:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider85:0<0,1,1{With the target,On a clock}>Drift movement
+slider86:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Drift play/rest, per target, counted in PERIODS. Both must be above zero for
 // the gate to engage. While resting the drift phase does not advance at all, so
 // the offset FREEZES where it stopped rather than returning to centre -- and the
@@ -228,13 +239,13 @@ slider77:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // x.0 and x.5 neutral. So a whole number parks at no-change every time and is
 // nearly inaudible, and an awkward fraction is the interesting one, because each
 // freeze lands further round the wave than the last.
-slider78:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider79:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider87:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider88:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp: a one-time slow RIDE of a parameter. Pick a target, where to take
 //     it and over how long, arm Engage, and it glides there once and holds.
 //     Nested-selector like Drift; all targets ride in parallel off one Engage. ---
-slider80:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan base rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note duration,V2 Note duration,V3 Note duration,V4 Note duration,V5 Note duration,V6 Note duration,V7 Note duration,V8 Note duration,Attack %,Release %}>Ramp target
+slider89:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V6 Timing,V7 Timing,V8 Timing,Pan base rate,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Note duration,V2 Note duration,V3 Note duration,V4 Note duration,V5 Note duration,V6 Note duration,V7 Note duration,V8 Note duration,Attack %,Release %}>Ramp target
 // R14 says this should state a DESTINATION (`Ramp to`), not a delta, and it
 // will -- but the engine still computes `ramp_t * by`, so renaming it alone
 // would be a label that lies about what the number does. Destination
@@ -243,23 +254,23 @@ slider80:0<0,27,1{Rate value,V1 Timing,V2 Timing,V3 Timing,V4 Timing,V5 Timing,V
 // it lands (the value lives in a bank the plugin can migrate itself), and
 // every instance in the library currently has this at 0 with duration 0, so
 // nothing is riding on it either way. Left honest until then.
-slider81:0<-1000,1000,0.001>Ramp by (units match target)
+slider90:0<-1000,1000,0.001>Ramp by (units match target)
 // What the duration and start delay are COUNTED IN. The DECLARED DEFAULT IS 2,
 // Minutes, and that is not a free choice: every instance in the library has this
 // control unset, so the default is the live value all of them run on, and
 // putting Cycles at index 0 would silently rewrite a thirty-minute ramp into a
 // two-second one. The near-miss that established this is in CLAUDE.md.
-slider82:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider83:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider91:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+slider92:0<0,1000,0.1>Ramp duration (in ramp time units)
 // Ramp play/rest, per target: the ramp advances for `play`, holds for `rest`,
 // and repeats, so it climbs as a staircase rather than a smooth glide. The holds
 // come OUT of the duration rather than extending it -- the advancing step is
 // scaled by (play+rest)/play -- so Ramp duration goes on meaning "you arrive in
 // about this long". Both zero is the smooth ramp.
-slider84:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider85:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider86:0<0,1,1{Off,On}>Ramp engage
-slider87:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider93:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider94:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider95:0<0,1,1{Off,On}>Ramp engage
+slider96:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 @init
 // Rate drift and Ramp are in BPM in EVERY mode -- "BPM is BPM". This mattered
@@ -599,7 +610,12 @@ sr_pr_resting_mem    = 1184;  // (RUNTIME)
 
 // --- "your turn came round" flags, per target (2026-09-09) ------------------
 // Next free slot after this one: 1248.
-drift_step_mem       = 1216;  // (RUNTIME)
+drift_step_mem       = 1216;
+// Per-voice fine tune, in the unit at slider6. ABOVE everything else -- the
+// first attempt put it at 144, which is v_step_seconds. Read the plugin's own
+// map before choosing an offset; the numbers are not transferable between
+// plugins in this suite.
+v_fine               = 1280;  // (RUNTIME)
 target_drift_moves = 1248;   // CONFIG -- 0 with the target, 1 clock
 
 // WHICH TARGETS STEP, AND WHICH FLOW.
@@ -1066,29 +1082,29 @@ tuning_ref    = slider5;
 // octave used to. Polyrhythm v3's arrangement exactly: base_note is a signed
 // half-step offset rather than a pitch class, and Octave shift is the octave
 // measured from 4, so 0 / 0 leaves the note names literally true.
-base_note     = slider6;
-center_octave = 4 + slider7;
-loop_enabled  = slider25;
-master_gain   = db_to_lin(slider66);
-binaural_hz   = slider8;
-attack_pct    = slider9 / 100;
-release_pct   = slider11 / 100;
-attack_shape  = slider10;
-release_shape = slider12;
-seq_length_cfg = slider23;
-pan_enabled    = slider15;
-pan_mode       = slider16;
+base_note     = slider7;
+center_octave = 4 + slider8;
+loop_enabled  = slider26;
+master_gain   = db_to_lin(slider75);
+binaural_hz   = slider9;
+attack_pct    = slider10 / 100;
+release_pct   = slider12 / 100;
+attack_shape  = slider11;
+release_shape = slider13;
+seq_length_cfg = slider24;
+pan_enabled    = slider16;
+pan_mode       = slider17;
 
-pan_spread     = slider17 / 100;
-pan_base_rate  = slider20;
+pan_spread     = slider18 / 100;
+pan_base_rate  = slider21;
 // The pan's own rate mode, and its own sync gate. `>= 3` is the widened
 // "am I host-synced" test (R21); the exact "which mode am I" question is asked
 // only inside rate_to_cycle_seconds().
-pan_rate_mode  = slider21;
+pan_rate_mode  = slider22;
 pan_synced     = pan_rate_mode >= 3;
-pan_increment  = slider22;
-glide_time     = slider13;
-legato_enabled = slider14;
+pan_increment  = slider23;
+glide_time     = slider14;
+legato_enabled = slider15;
 // Glide coefficient: one-pole smoother applied per sample to
 // v_freq_current_l/r, with glide_time as the time constant.
 // When glide_time = 0 we just snap (handled inline at the
@@ -1112,7 +1128,7 @@ glide_coeff   = glide_time > 0.0001 ? exp(-1 / max(srate * glide_time, 1)) : 0;
 // not a sweep. Default 10 reproduces the old behaviour exactly, including the
 // legato coupling; only an explicit 0 overrides it, so a legato project can
 // still reach a hard switch if it asks for one.
-pan_glide_sec   = slider18 / 1000;
+pan_glide_sec   = slider19 / 1000;
 pan_smooth_time = pan_glide_sec <= 0 ? 0 :
   ((legato_enabled && glide_time > 0.0001) ? max(pan_glide_sec, glide_time) : pan_glide_sec);
 pan_smooth_coeff_global = pan_smooth_time <= 0 ? 0 : exp(-1 / (srate * pan_smooth_time));
@@ -1136,14 +1152,14 @@ loop(8,
   // `- 24` turns the Note picker's index into semitones about C4, which is
   // where the old "0 semitones from root" sat. Transpose and Octave shift are
   // applied downstream in semitones_to_hz, so the three compose.
-  i == 0 ? ( v_semitones[i] = slider26 - 24; v_step_cycles = slider27; v_note_cycles = slider28; v_gain_db = slider29; v_active[i] = slider30; );
-  i == 1 ? ( v_semitones[i] = slider31 - 24; v_step_cycles = slider32; v_note_cycles = slider33; v_gain_db = slider34; v_active[i] = slider35; );
-  i == 2 ? ( v_semitones[i] = slider36 - 24; v_step_cycles = slider37; v_note_cycles = slider38; v_gain_db = slider39; v_active[i] = slider40; );
-  i == 3 ? ( v_semitones[i] = slider41 - 24; v_step_cycles = slider42; v_note_cycles = slider43; v_gain_db = slider44; v_active[i] = slider45; );
-  i == 4 ? ( v_semitones[i] = slider46 - 24; v_step_cycles = slider47; v_note_cycles = slider48; v_gain_db = slider49; v_active[i] = slider50; );
-  i == 5 ? ( v_semitones[i] = slider51 - 24; v_step_cycles = slider52; v_note_cycles = slider53; v_gain_db = slider54; v_active[i] = slider55; );
-  i == 6 ? ( v_semitones[i] = slider56 - 24; v_step_cycles = slider57; v_note_cycles = slider58; v_gain_db = slider59; v_active[i] = slider60; );
-  i == 7 ? ( v_semitones[i] = slider61 - 24; v_step_cycles = slider62; v_note_cycles = slider63; v_gain_db = slider64; v_active[i] = slider65; );
+  i == 0 ? ( v_semitones[i] = slider27 - 24; v_fine[i] = slider28; v_step_cycles = slider29; v_note_cycles = slider30; v_gain_db = slider31; v_active[i] = slider32; );
+  i == 1 ? ( v_semitones[i] = slider33 - 24; v_fine[i] = slider34; v_step_cycles = slider35; v_note_cycles = slider36; v_gain_db = slider37; v_active[i] = slider38; );
+  i == 2 ? ( v_semitones[i] = slider39 - 24; v_fine[i] = slider40; v_step_cycles = slider41; v_note_cycles = slider42; v_gain_db = slider43; v_active[i] = slider44; );
+  i == 3 ? ( v_semitones[i] = slider45 - 24; v_fine[i] = slider46; v_step_cycles = slider47; v_note_cycles = slider48; v_gain_db = slider49; v_active[i] = slider50; );
+  i == 4 ? ( v_semitones[i] = slider51 - 24; v_fine[i] = slider52; v_step_cycles = slider53; v_note_cycles = slider54; v_gain_db = slider55; v_active[i] = slider56; );
+  i == 5 ? ( v_semitones[i] = slider57 - 24; v_fine[i] = slider58; v_step_cycles = slider59; v_note_cycles = slider60; v_gain_db = slider61; v_active[i] = slider62; );
+  i == 6 ? ( v_semitones[i] = slider63 - 24; v_fine[i] = slider64; v_step_cycles = slider65; v_note_cycles = slider66; v_gain_db = slider67; v_active[i] = slider68; );
+  i == 7 ? ( v_semitones[i] = slider69 - 24; v_fine[i] = slider70; v_step_cycles = slider71; v_note_cycles = slider72; v_gain_db = slider73; v_active[i] = slider74; );
 
   v_step_seconds[i] = max(v_step_cycles * cycle_seconds, 0.001);
   v_note_seconds[i] = max(v_note_cycles * cycle_seconds, 0);
@@ -1154,6 +1170,16 @@ loop(8,
   // offset (in Hz, applied to R only). When binaural_hz=0, L and R
   // run at identical frequencies — same shape as Polyrhythm Phase.
   hz_base = semitones_to_hz(base_note, center_octave, v_semitones[i]);
+  // The per-voice fine tune, in the ONE unit chosen at slider6. Cents is the
+  // default because it is what microtonal music actually speaks: 100 cents is a
+  // semitone at every pitch, a quarter tone is 50, the syntonic comma is 21.5,
+  // and a trained ear resolves about 5. Hz is absolute and so cannot mean one
+  // interval at two pitches -- it is offered, not recommended.
+  v_fine[i] != 0 ? (
+    hz_base = slider6 == 0 ? hz_base + v_fine[i] :
+              slider6 == 1 ? hz_base * pow(2, v_fine[i] / 12) :
+                             hz_base * pow(2, v_fine[i] / 1200);
+  );
   v_freq_l[i] = hz_base;
   v_freq_r[i] = hz_base + binaural_hz;
 
@@ -1220,7 +1246,7 @@ loop(8,
 // collapsed all seven walk modes into Alternating whenever few voices were up.
 // Spread uses the voice count because Spread ranks VOICES across the field;
 // that is a different question with a coincidentally similar answer.
-pan_cycle_steps = max(2, slider19);
+pan_cycle_steps = max(2, slider20);
 // The every-N alternations count in their own pattern length (2N), not in
 // voices -- otherwise a four-voice project could never reach the second half
 // of an "every 4" and would sit on one side forever.
@@ -1247,23 +1273,23 @@ pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : 
 
 // Show pan sub-sliders only when pan is enabled, and only the
 // ones relevant to the chosen mode (matches PRP's UX).
-slider_show(slider16, pan_enabled);
+slider_show(slider17, pan_enabled);
 // Shown for every per-cycle mode from Alternating up, matching the filters.
 // It is NOT only the walks: the cycle index wraps at Cycle Steps, so an ODD
 // value makes Alternating limp -- 0,1,2,0,1,2 gives -1,+1,-1,-1,+1,-1. Hiding
 // the control would hide the cause. The every-N modes are excluded because they
 // count in their own pattern length (2N) and genuinely ignore this.
-slider_show(slider19, pan_enabled && pan_mode >= 4 && pan_mode <= 12);
+slider_show(slider20, pan_enabled && pan_mode >= 4 && pan_mode <= 12);
+slider_show(slider19, pan_enabled);
 slider_show(slider18, pan_enabled);
-slider_show(slider17, pan_enabled);
-slider_show(slider20, pan_enabled && (pan_mode == 0 || pan_mode == 1));
 slider_show(slider21, pan_enabled && (pan_mode == 0 || pan_mode == 1));
-slider_show(slider22, pan_enabled && pan_mode == 1);
+slider_show(slider22, pan_enabled && (pan_mode == 0 || pan_mode == 1));
+slider_show(slider23, pan_enabled && pan_mode == 1);
 
 // Start Delay — convert the user-facing value to seconds. BPM beats
 // and Hz cycles are interpreted against Rate Value (so 1 beat at
 // 60 BPM = 1 second). Seconds mode is literal seconds.
-start_delay_units = slider67;
+start_delay_units = slider76;
 // Every non-Seconds mode means "this many CYCLES", so the conversion is
 // just units x cycle_seconds. That's identical to the old per-mode
 // arithmetic (BPM: 60/value, Hz: 1/value)
@@ -1276,7 +1302,7 @@ rate_mode == 1 ? start_delay_sec = start_delay_units :
 // switching from one to the other mid-playback flips the walk
 // immediately. For bounce modes (2-5) we leave seq_dir alone — it's
 // managed by the sequencer's bounce logic in @sample.
-direction_mode   = slider24;
+direction_mode   = slider25;
 bounce_active    = (direction_mode >= 2);
 bounce_is_repeat = (direction_mode == 2 || direction_mode == 4);
 direction_mode == 0 ? seq_dir =  1;
@@ -1284,28 +1310,28 @@ direction_mode == 1 ? seq_dir = -1;
 
 // Play/Rest gate: integer step counts. Both must be > 0 for the
 // gate to engage; 0 in either slider disables.
-play_for_steps = slider68;
-rest_for_steps = slider69;
+play_for_steps = slider77;
+rest_for_steps = slider78;
 pr_enabled     = (play_for_steps > 0 && rest_for_steps > 0);
-rest_mode      = slider70;
+rest_mode      = slider79;
 
 // Speed ramp engage-edge.
 // No engage-edge detection. Engage is a freeze/resume gate handled
 // in @sample. Only transport play resets ramp_t.
 
 // Drift target selector save/restore (nested-selector pattern).
-// Switching slider71 saves sliders 73-76 into the OLD target's slot,
+// Switching slider80 saves sliders 73-76 into the OLD target's slot,
 // then loads the NEW target's stored config into sliders 73-76.
 // Otherwise captures live edits to the current target's slot. All 28
 // targets drift in parallel from @sample regardless of selection.
-sel_target = slider71;
-sel_up     = slider72;
-sel_down   = slider73;
-sel_per    = slider74;
-sel_shape  = slider77;
-sel_moves  = slider76;
-sel_dplay  = slider78;
-sel_drest  = slider79;
+sel_target = slider80;
+sel_up     = slider81;
+sel_down   = slider82;
+sel_per    = slider83;
+sel_shape  = slider86;
+sel_moves  = slider85;
+sel_dplay  = slider87;
+sel_drest  = slider88;
 
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
@@ -1316,19 +1342,19 @@ last_target_select != sel_target ? (
   drift_play_mem[last_target_select]     = sel_dplay;
   drift_rest_mem[last_target_select]     = sel_drest;
 
-  slider72 = target_drift_up[sel_target];
-  slider73 = target_drift_down[sel_target];
-  slider74 = target_drift_per[sel_target];
-  slider77 = target_drift_shape[sel_target];
-  slider76 = target_drift_moves[sel_target];
-  slider78 = drift_play_mem[sel_target];
-  slider79 = drift_rest_mem[sel_target];
-  slider_automate(slider72);
-  slider_automate(slider73);
-  slider_automate(slider74);
-  slider_automate(slider77);
-  slider_automate(slider78);
-  slider_automate(slider79);
+  slider81 = target_drift_up[sel_target];
+  slider82 = target_drift_down[sel_target];
+  slider83 = target_drift_per[sel_target];
+  slider86 = target_drift_shape[sel_target];
+  slider85 = target_drift_moves[sel_target];
+  slider87 = drift_play_mem[sel_target];
+  slider88 = drift_rest_mem[sel_target];
+  slider_automate(slider81);
+  slider_automate(slider82);
+  slider_automate(slider83);
+  slider_automate(slider86);
+  slider_automate(slider87);
+  slider_automate(slider88);
 
   last_target_select = sel_target;
 ) : (
@@ -1342,18 +1368,18 @@ last_target_select != sel_target ? (
 );
 
 // Speed Ramp target selector save/restore (nested-selector, mirrors the
-// drift block above). slider80 = target; slider81 = per-target `by`;
-// slider83 = per-target duration; slider87 = per-target start delay (all
-// three per-target). slider86 (engage) stays GLOBAL. Switching slider80
+// drift block above). slider89 = target; slider90 = per-target `by`;
+// slider92 = per-target duration; slider96 = per-target start delay (all
+// three per-target). slider95 (engage) stays GLOBAL. Switching slider89
 // saves the three per-target sliders into the OLD target's slots, then
 // loads the NEW target's stored values. Otherwise captures live edits. All
 // 28 targets ramp in parallel from @sample, each on its own duration/delay.
-sr_sel_target = slider80;
-sr_sel_by     = slider81;
-sr_sel_dur    = slider83;
-sr_sel_delay  = slider87;
-sr_sel_play   = slider84;
-sr_sel_rest   = slider85;
+sr_sel_target = slider89;
+sr_sel_by     = slider90;
+sr_sel_dur    = slider92;
+sr_sel_delay  = slider96;
+sr_sel_play   = slider93;
+sr_sel_rest   = slider94;
 
 last_sr_target != sr_sel_target ? (
   speed_ramp_by_mem[last_sr_target]    = sr_sel_by;
@@ -1362,16 +1388,16 @@ last_sr_target != sr_sel_target ? (
   sr_play_mem[last_sr_target]          = sr_sel_play;
   sr_rest_mem[last_sr_target]          = sr_sel_rest;
 
-  slider81 = speed_ramp_by_mem[sr_sel_target];
-  slider83 = speed_ramp_dur_mem[sr_sel_target];
-  slider87 = speed_ramp_delay_mem[sr_sel_target];
-  slider84 = sr_play_mem[sr_sel_target];
-  slider85 = sr_rest_mem[sr_sel_target];
-  slider_automate(slider81);
-  slider_automate(slider83);
-  slider_automate(slider87);
-  slider_automate(slider84);
-  slider_automate(slider85);
+  slider90 = speed_ramp_by_mem[sr_sel_target];
+  slider92 = speed_ramp_dur_mem[sr_sel_target];
+  slider96 = speed_ramp_delay_mem[sr_sel_target];
+  slider93 = sr_play_mem[sr_sel_target];
+  slider94 = sr_rest_mem[sr_sel_target];
+  slider_automate(slider90);
+  slider_automate(slider92);
+  slider_automate(slider96);
+  slider_automate(slider93);
+  slider_automate(slider94);
 
   last_sr_target = sr_sel_target;
 ) : (
@@ -1442,7 +1468,7 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 // Read the RAW sliders, not the @slider-local copies, for the same reason the
 // derivation lives here at all.
 seq_synced = slider2 >= 3;
-pan_synced = slider21 >= 3;
+pan_synced = slider22 >= 3;
 // --- Which tempo to trust, and for how long ---------------------------------
 // REAPER reports `tempo` as its 120 placeholder for the first stretch after a
 // project opens, before the project's own tempo is applied. host_scale is
@@ -1502,13 +1528,13 @@ cfg_sig_now != cfg_sig ? ( cfg_sig = cfg_sig_now; cfg_stable = 0; )
 // here keeps Attack %, Release %, Note duration proportions
 // intact across speed changes).
 // Advance each target's own Speed Ramp clock (v2.14 per-target timeline).
-// Engage (slider86, GLOBAL) is the freeze/resume gate: while On, every
+// Engage (slider95, GLOBAL) is the freeze/resume gate: while On, every
 // target whose duration > 0 advances its own ramp_t 0->1 over its own
 // duration, after its own start delay; while Off, all clocks freeze and
 // resume from where they are. Only transport play (via @init) resets them,
 // so different targets can wind down over different timelines from one engage.
-slider86 ? (
-  // Ramp time unit (slider82). One factor turns the block's time values into
+slider95 ? (
+  // Ramp time unit (slider91). One factor turns the block's time values into
   // seconds, so Duration and Start delay always mean the same thing as each
   // other. Cycles counts THIS plugin's own sequencer cycles, referenced against
   // cycle_seconds -- the rate BEFORE drift and ramp touch it, so a ramp cannot
@@ -1517,9 +1543,9 @@ slider86 ? (
   // default would rewrite their live ramps. A beat is 60/tempo s, recomputed
   // per sample so Beats follows a live tempo change rather than remembering one.
   ramp_time_scale =
-    slider82 == 3 ? 60 / max(host_bpm, 0.001) :
-    slider82 == 2 ? 60 :
-    slider82 == 1 ? 1 :
+    slider91 == 3 ? 60 / max(host_bpm, 0.001) :
+    slider91 == 2 ? 60 :
+    slider91 == 1 ? 1 :
                     max(cycle_seconds, 0.00001);
   i = 0;
   loop(N_TARGETS,
@@ -1594,7 +1620,7 @@ loop(N_TARGETS,
   // 0 was unreachable, and in three plugins it was clamped UP to 1, which is the
   // FASTEST drift the control can make. Exactly backwards from what it reads as.
   (up > 0 || down > 0) && per > 0 ? (
-    // Drift period unit (slider75). Cycles is this plugin's native count -- a
+    // Drift period unit (slider84). Cycles is this plugin's native count -- a
     // period of 8 means eight sequencer cycles, and because the advance already
     // carries speed_scale_current and host_scale it follows the rate and the
     // project tempo for free. Seconds is wall clock, so neither factor applies.
@@ -1605,8 +1631,8 @@ loop(N_TARGETS,
     // off the PRE-drift rate, so drifting the rate cannot modulate its own
     // drift period.
     drift_per_tick =
-      slider75 == 2 ? 1.0 / max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
-      slider75 == 1 ? 1.0 / max(per * srate, 1) :
+      slider84 == 2 ? 1.0 / max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
+      slider84 == 1 ? 1.0 / max(per * srate, 1) :
                       speed_scale_current * host_scale / (per * samples_per_primary_cycle);
 
     // Drift play/rest (sliders 77/78), per target, counted in PERIODS. While
@@ -2600,21 +2626,21 @@ file_var(0, ser_magic);
   // zero whichever target was selected on the copy. Adds no data — format
   // unchanged.
   file_avail(0) >= 0 ? (
-    slider72 = target_drift_up[last_target_select];      // Drift up
-    slider73 = target_drift_down[last_target_select];    // Drift down
-    slider74 = target_drift_per[last_target_select];     // Drift period
-    slider77 = target_drift_shape[last_target_select];   // Drift shape
-    slider76 = target_drift_moves[last_target_select];
+    slider81 = target_drift_up[last_target_select];      // Drift up
+    slider82 = target_drift_down[last_target_select];    // Drift down
+    slider83 = target_drift_per[last_target_select];     // Drift period
+    slider86 = target_drift_shape[last_target_select];   // Drift shape
+    slider85 = target_drift_moves[last_target_select];
     // The four new per-target play/rest sliders need this exactly as much as
     // the ones above -- they are backed by live sliders, so they are the ones a
     // transient @slider can clobber to zero on a track duplicate.
-    slider78 = drift_play_mem[last_target_select];  // Drift play for
-    slider79 = drift_rest_mem[last_target_select];  // Drift rest for
-    slider81 = speed_ramp_by_mem[last_sr_target];        // Speed ramp by
-    slider83 = speed_ramp_dur_mem[last_sr_target];       // Speed ramp duration
-    slider87 = speed_ramp_delay_mem[last_sr_target];     // Speed ramp start delay
-    slider84 = sr_play_mem[last_sr_target];      // Ramp play for
-    slider85 = sr_rest_mem[last_sr_target];      // Ramp rest for
+    slider87 = drift_play_mem[last_target_select];  // Drift play for
+    slider88 = drift_rest_mem[last_target_select];  // Drift rest for
+    slider90 = speed_ramp_by_mem[last_sr_target];        // Speed ramp by
+    slider92 = speed_ramp_dur_mem[last_sr_target];       // Speed ramp duration
+    slider96 = speed_ramp_delay_mem[last_sr_target];     // Speed ramp start delay
+    slider93 = sr_play_mem[last_sr_target];      // Ramp play for
+    slider94 = sr_rest_mem[last_sr_target];      // Ramp rest for
     sliderchange(-1);
   );
 );
