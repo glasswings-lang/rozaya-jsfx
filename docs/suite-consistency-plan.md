@@ -30,30 +30,30 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R1** — The descriptive name wins, and propagates to both ends
-- **R2** — Target strings are derived from slider labels, mechanically
-- **R3** — Every target must have a slider
-- **R4** — Units go in parentheses at the end of the name
-- **R5** — Sentence case throughout
-- **R6** — One phrasing for mode dependence, and only where meaning actually changes
-- **R7** — The rate triple is contiguous, always
-- **R8** — Step size is chosen from the range, not typed
-- **R9** — Where a natural unit forces a bad range, change the unit
-- **R10** — A picker never hides the value it writes
+- **R1** — The descriptive name wins, and travels to both ends
+- **R2** — A target string is its slider's label, derived mechanically
+- **R3** — Every target has a slider you can reach
+- **R4** — The unit goes in parentheses at the end of the name
+- **R5** — Names are sentence case throughout
+- **R6** — One phrasing for mode dependence, used where the meaning actually changes
+- **R7** — The rate controls sit together, always
+- **R8** — The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
+- **R9** — Choose the unit that makes ordinary values whole numbers
+- **R10** — The value stays visible; a picker jumps to a value and gets out of the way
 - **R11** — One tempo-sync block — SUPERSEDED BY R20, 2026-09-04
-- **R12** — Ranges are 0–1000, or −1000–1000 where the sign means something
-- **R13** — No multipliers. Anywhere. (Host x is not a unit.)
-- **R13a** — The sigh multiplier is the same bug, wearing a different hat
+- **R12** — A numeric range spans 0–1000, or −1000–1000 where the sign does something real
+- **R13** — Every rate reads in a real unit, and Host x is one of them
+- **R13a** — The sigh states its change in the breath's own unit
 - **R13-revised** — Host x stays a rate mode; Rate Value means BEATS there
-- **R14** — Speed Ramp states a DESTINATION, not a delta
-- **R15** — The sigh gets its own four segments, and the multiplier goes
-- **R16** — It is `Ramp`, not `Speed ramp`
-- **R17** — There are no unitless sliders. "Depth in what?" must have an answer
-- **R18** — New sliders go where they belong. Only enum OPTIONS append.
-- **R19** — Pan modes need one canonical order
-- **R20** — THE RATE BLOCK. This is settled. Do not redesign it.
-- **R21** — the host modes name their DIRECTION, and there are two
-- **R22** — THE PITCH BLOCK. Settled with Rozaya 2026-09-08. Not built.
+- **R14** — Ramp states WHERE IT IS GOING, in the target's own unit
+- **R15** — The sigh gets its own four segments
+- **R16** — The feature is called `Ramp`, because it rides every target
+- **R17** — Every slider names its unit: "depth in what?" has an answer
+- **R18** — A new slider goes where it belongs; a new enum OPTION goes at the end of its list
+- **R19** — Pan modes run in one canonical order: still, then stepped, then continuous
+- **R20** — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere
+- **R21** — The host modes name their DIRECTION, and there are two
+- **R22** — THE PITCH BLOCK, settled with Rozaya 2026-09-08: a pitch value and a pitch mode, adjacent. Not built yet.
 
 ---
 
@@ -82,7 +82,7 @@ A migration written before its layout is a migration you will write again.
 
 ## Part 1 — Naming rules
 
-## R1. The descriptive name wins, and propagates to both ends
+## R1. The descriptive name wins, and travels to both ends
 
 Where a slider and a target list name the same thing differently, keep whichever tells a
 stranger what the thing **is**, and push it to both. The winner is sometimes the target
@@ -100,7 +100,7 @@ list and sometimes the slider:
 `Rate Value` is **kept** where the rate triple is contiguous (see R7). It is only
 illegible when orphaned.
 
-## R2. Target strings are derived from slider labels, mechanically
+## R2. A target string is its slider's label, derived mechanically
 
 > A target option string is the slider's label with its trailing parenthetical removed.
 
@@ -110,7 +110,7 @@ This is the rule that makes the whole thing **enforceable**: a linter can strip 
 parenthetical from every slider label and assert that every target option matches one.
 Without a mechanical rule this drifts again within two sweeps.
 
-## R3. Every target must have a slider
+## R3. Every target has a slider you can reach
 
 A target list may not offer something the user cannot see or set. Two consequences:
 
@@ -123,7 +123,7 @@ A target list may not offer something the user cannot see or set. Two consequenc
   selector. This is the one legitimate case of a target with no dedicated slider. See
   Open Question 1.
 
-## R4. Units go in parentheses at the end of the name
+## R4. The unit goes in parentheses at the end of the name
 
 `Frequency low (Hz)`, not `Frequency Low Hz`. Currently the suite runs both forms, plus
 a mixed form (`Inhale Duration sec (shape only in Host x)` -- since fixed, see the
@@ -137,7 +137,7 @@ For **enum** sliders the unit belongs in the name and the options stay bare —
 `{-12,-24,-36}Slope (dB/oct)` — so NVDA does not re-read the unit on every arrow step.
 This is already the convention (2026-07-09); it stays.
 
-## R5. Sentence case throughout
+## R5. Names are sentence case throughout
 
 `Start delay`, not `Start Delay`. `Drift mode`, not `Drift Mode`.
 
@@ -148,7 +148,7 @@ same file. Sentence case is the newer convention and the larger block.
 **Note honestly: this is a source-consistency fix, not an accessibility one.** NVDA does
 not announce capitalisation. It matters for whoever reads the code, including us.
 
-## R6. One phrasing for mode dependence, and only where meaning actually changes
+## R6. One phrasing for mode dependence, used where the meaning actually changes
 
 Six phrasings are in use today (`(or multiplier in Host x)`, `(shape only in Host x)`,
 `(Host x only)`, `(Host x; writes …)`, `(Own BPM only; …)`, `(in Rate Mode units)`).
@@ -159,7 +159,7 @@ genuinely become shape-only, so they keep an annotation. A rate slider that mere
 becomes a multiplier does not need one, because under R7 the Rate Mode slider is sitting
 right next to it saying so.
 
-## R7. The rate triple is contiguous, always
+## R7. The rate controls sit together, always
 
 `<rate slider>` → `Rate mode` → `Host ratio`, in that order, adjacent, no exceptions.
 This is what makes `Rate Value` legible and it is what dissolves the `Sweep Rate` /
@@ -170,7 +170,7 @@ current suite calls this one `Unit` where the primary is called `Mode`; standard
 **`mode`**. Sweep Dwell's pan unit offers `Host x` and the other two filters' do not —
 they should all offer it.
 
-## R8. Step size is chosen from the range, not typed
+## R8. The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
 
 Step sizes across the suite do not correlate with range, concept, or precision. They are
 authorial accident. The proof is `Start delay`: the same concept with the same range
@@ -227,7 +227,7 @@ step goes fine to reach the smallest, and the result serves neither. The cure is
 Question 2: size the slider to the largest sensible *change*, not the largest target, and
 bring the targets into a comparable magnitude. **Not** by normalising the units away.
 
-## R9. Where a natural unit forces a bad range, change the unit
+## R9. Choose the unit that makes ordinary values whole numbers
 
 The suite already contains both halves of this lesson. `Stereo width` is `0..1` step
 `0.01` in Breath Generator and `0..100` step `1` in the spectral pair. Identical
@@ -247,7 +247,7 @@ exactly that was proposed and rejected.
 
 ---
 
-## R10. A picker never hides the value it writes
+## R10. The value stays visible; a picker jumps to a value and gets out of the way
 
 The suite's convenience pickers (`Host ratio`, `Breath rate`, the pan-speed pickers)
 were designed to *write a value and get out of the way*. In practice they do the
@@ -290,7 +290,7 @@ Polyrhythm v1/v3, Shepard Scale, Shepard Tone, Stereo Phaser, Bubbler, Dapple, W
 converted away from it. The full text, and the measurement that killed it,
 are in `docs/plan-history.md`. R20 below is the rule that replaced it.
 
-## R12. Ranges are 0–1000, or −1000–1000 where the sign means something
+## R12. A numeric range spans 0–1000, or −1000–1000 where the sign does something real
 
 Decided 2026-08-31 with Star. Unconventional and deliberate: **stop hand-picking a
 range per control.** Today's ranges are authorial accident in exactly the way R8's step
@@ -381,7 +381,7 @@ and the floor becomes "off" — which is what `-60 = off` already means everywhe
 
 Both are **Phase 2**, folded into each plugin's reorder, because they move ranges.
 
-## R13. No multipliers. Anywhere. (Host x is not a unit.)
+## R13. Every rate reads in a real unit, and Host x is one of them
 
 Decided 2026-08-31 with Star: *"That multiplier is gonna be the death of us."* It is
 already the direct cause of most of what went wrong in the Womb work, and it is still
@@ -430,7 +430,7 @@ taken from what the value last meant, and the multiplier converted to beats
 Phase v1/v2, Polyrhythm Phase v1/v3, Heartbeat, Rhythm Track, Bubbler, Dapple, Stereo
 Phaser. Womb is done.
 
-## R13a. The sigh multiplier is the same bug, wearing a different hat
+## R13a. The sigh states its change in the breath's own unit
 
 `Sigh depth multiplier` (Womb slider 61, `1.0..3.0`, step `0.05`) survived the 2026-05-30
 sweep because it was not a rate. It has three faults, and Star flagged it as its own
@@ -603,7 +603,7 @@ separate slider, gated on its rate mode. Converting it means Rate Value takes
 that job and the extra slider retires the same way the picker does — check
 which of the two the project instances actually rely on before touching it.
 
-## R14. Speed Ramp states a DESTINATION, not a delta
+## R14. Ramp states WHERE IT IS GOING, in the target's own unit
 
 Decided 2026-08-31 with Star. `Speed ramp by -35` requires knowing where the parameter
 is and adding. `Speed ramp to 35 BPM` is the end goal stated outright, with no arithmetic
@@ -636,7 +636,7 @@ selector to complete the phrase, `by` dangles. This is why `Sigh by` was propose
 immediately failed the read-aloud test (*"sigh by... what. what?"*). **Test a slider name
 by saying it aloud with its value and nothing else.**
 
-## R15. The sigh gets its own four segments, and the multiplier goes
+## R15. The sigh gets its own four segments
 
 Star, 2026-08-31: *"we're trying to apply a very coarse control to a very dynamic thing.
 Because we have the four sections of the normal breath, we don't have the four sections of
@@ -672,7 +672,7 @@ order. Also still true from R13a: there is **no amplitude component** — a
 real sigh is a bigger breath, not only a longer one, and `Sigh louder by (dB)` would make
 the feature honest.
 
-## R16. It is `Ramp`, not `Speed ramp`
+## R16. The feature is called `Ramp`, because it rides every target
 
 Star, 2026-08-31: *"It's not really speed anymore, is it."* Correct, and it has not been
 for a long time. The feature was born scaling a rate; it now rides **every** target on the
@@ -700,7 +700,7 @@ Renaming a slider is **free** (R-cost ladder, top row: REAPER restores by ID, ne
 name), so this is Phase 1 work and can ship ahead of any renumber. `Ramp to` needs R14's
 seeding and is Phase 2.
 
-## R17. There are no unitless sliders. "Depth in what?" must have an answer
+## R17. Every slider names its unit: "depth in what?" has an answer
 
 Star, 2026-08-31: *"we've always gone — depth in what? x in what? what's the unit?"*
 
@@ -742,7 +742,7 @@ the missing sigh, and now this — each is a good decision made in ONE plugin an
 carried to its siblings. The suite's real failure mode is not bad decisions, it is
 **unpropagated good ones**.
 
-## R18. New sliders go where they belong. Only enum OPTIONS append.
+## R18. A new slider goes where it belongs; a new enum OPTION goes at the end of its list
 
 Decided 2026-08-31 with Rozaya, correcting a rule I was about to apply past its purpose:
 *"the rule for appending to the end is if it's a new feature, not if it's an extension of
@@ -784,7 +784,7 @@ ramp targets at the end of theirs.
 | a new enum option (waveform, drift target, mode) | **the end of the list** |
 | an existing slider | wherever the authored layout puts it |
 
-## R19 — Pan modes need one canonical order (raised 2026-09-02)
+## R19 — Pan modes run in one canonical order: still, then stepped, then continuous (raised 2026-09-02)
 
 **Rozaya:** *"the types of panning are just kinda pell mell put in there, and
 that's confusing as shit. I'm not gonna ship something like that on any plugin
@@ -831,7 +831,7 @@ The grouping is the useful part: **still / stepped / continuous** is the
 distinction a listener actually hears, and it tells you immediately whether a
 mode can drift against the material (only group 3 can).
 
-## R20 — THE RATE BLOCK. This is settled. Do not redesign it. (2026-09-04)
+## R20 — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere (2026-09-04)
 
 **Supersedes R11 entirely and completes R13-revised.** Decided with Rozaya on
 2026-09-04 after five separate sessions had each reached for a different shape.
@@ -859,7 +859,7 @@ dead.
   self-contained. The pan gets its own rate value and its own rate mode. It does
   not borrow the main rate's mode, and nothing points across at it.
 
-**What is forbidden, and each of these has been built at least once:**
+**What this replaces — each of these has been built at least once, and each is retired for good:**
 
 - No `Sync to host` switch. Host x is a rate mode; a second switch is a second
   way to say the same thing.
@@ -908,7 +908,7 @@ slider list and completely different from inside.
 
 ---
 
-## R21 — the host modes name their DIRECTION, and there are two (2026-09-05)
+## R21 — The host modes name their DIRECTION, and there are two (2026-09-05)
 
 **Extends R20; does not overturn it.** One rate value, one rate mode, same
 adjacency. What changes is that the mode enum gains a fifth entry and the fourth
@@ -964,7 +964,7 @@ rather than a branch added.
 
 ---
 
-## R22 — THE PITCH BLOCK. Settled with Rozaya 2026-09-08. Not built.
+## R22 — THE PITCH BLOCK, settled with Rozaya 2026-09-08: a pitch value and a pitch mode, adjacent. Not built yet.
 
 > **ATTRIBUTION WARNING, added 2026-09-09.** Rozaya, on being told that parts of
 > this rule were "already settled": *"No, you settled that on your own. I had
