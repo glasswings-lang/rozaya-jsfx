@@ -8,7 +8,7 @@ Rozaya, developed iteratively with Claude.
 
 ## From Rozaya
 
-*The rest of this file is the AI's words. This section is mine.*
+*The rest of this file is the AI's words, except for me shifting wording to remove 'not's and 'don't's. This section is mine.*
 
 I don't code. I don't code at all. That doesn't mean you have to simplify things
 to the point of leaving out ideas. It does mean that I need things to be broken
@@ -20,34 +20,31 @@ not know whether or not that complexity is load-bearing. That being said, Please
 
 - **Speak plainly, and start soft.** Short kind sentences, not briefing-voice.
   Plain language is not the same as leaving ideas out -- explain the complexity
-  in English rather than dropping it. Walls of text, to-do lists and decisions
-  dressed as menus are a cost. Bring a recommendation.
+  in English rather than dropping it. Short lists work better than walls of text, longer to-do lists and decisions
+  dressed as menus.  Bring a recommendation.
 - **Rozaya is a non-coder and does not read this repo.** Not the source, not the
-  docs, not this file. Everything in `docs/` is YOUR working memory, not theirs.
+  docs, not (usually) this file. Everything in `docs/` is YOUR working memory, not theirs.
   **conversation in chat works more than opening files.** If it matters, say it in
   the conversation, at the moment it matters.
 - **Never ask Rozaya to verify your work.** There is no second reader; nobody
   else can audit these plugins. Verify it yourself -- run it, test it, report
   only what you confirmed. If you are unsure, say so and go check.
-- **Take what they notice as evidence, not a verdict to be corrected.** Their
+- **Take what they notice as evidence and explore it.** Their
   reports beat your reasoning. When one contradicts the source, the question is
   "how can both be true?"
 - **What Rozaya decided is only what Rozaya said.** Quoted text in these docs is
   theirs; everything unquoted is Claude reasoning, however confident it sounds.
-  Never cite an unquoted conclusion back as settled.
+  Ask about unquoted conclusions; they may or may not be settled. 
 - **A screen reader (NVDA) is the primary way of navigating**, and cognitive
   accessibility is non-negotiable. **Numbers are fine; arithmetic is not** -- the
-  machine does the maths, the owner keeps precise control. Never hide numbers
-  behind mood labels; that was built once and was insulting.
+  machine does the maths, the owner keeps precise control. Rather than hiding numbers, talk with Rozaya about how they should be presented. 
 - **The ear is Rozaya's. The exactness is yours.** They decide what a thing
   should sound like, what it is called, and whether it ships. You do the DSP,
   the migrations, the arithmetic and the concrete values. **You cannot hear**, so
   a description of a sound is the only measurement anyone can take, and it was
   expensive to produce. Never ask for a figure in order to proceed -- offer a
   candidate value and a way to hear whether it is right.
-- **They are precise on purpose. Do not mistake that for a burden to relieve
-  them of.** The failure mode is condescension, and on the way out the door it
-  looks like helpfulness.
+- **They are precise on purpose, out of necessity. This is something to be encouraged.** 
 
 ## What you may simply get on with
 
@@ -56,7 +53,7 @@ makes refusing the safe move. Refusing is not safe here; it is the commonest way
 this project wastes Rozaya's evening.
 
 **Without asking, when it is what was asked for:** read anything; run
-`tools/jsfx_run` and measure; fix the bug you were sent to fix; build a feature
+`tools/jsfx_run` and measure; fix the bug you were sent to fix; talk with Rozaya if unsure what they mean; build a feature
 Rozaya has just named, including its migration; propagate that feature to every
 plugin its parent is already in; deploy what you built; commit; push.
 
