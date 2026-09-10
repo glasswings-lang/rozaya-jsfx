@@ -183,7 +183,7 @@ slider63:0<0,1,1{Walk through,Freeze in place}>Rest mode
 // Speed Ramp + Drift configs on upgrade (both off-by-default; the tone sound
 // on sliders 1-63 is untouched). Re-add the instance for clean defaults, or
 // reconfigure. See the manual's migration note.
-slider64:0<0,10,1{Rate Value,V1 Rate/Cents,V2 Rate/Cents,V3 Rate/Cents,V4 Rate/Cents,V5 Rate/Cents,V6 Rate/Cents,V7 Rate/Cents,V8 Rate/Cents,Fade In %,Fade Out %}>Ramp target
+slider64:0<0,27,1{Rate Value,V1 Rate/Cents,V2 Rate/Cents,V3 Rate/Cents,V4 Rate/Cents,V5 Rate/Cents,V6 Rate/Cents,V7 Rate/Cents,V8 Rate/Cents,Fade In %,Fade Out %,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Pan,V2 Pan,V3 Pan,V4 Pan,V5 Pan,V6 Pan,V7 Pan,V8 Pan,Binaural beat}>Ramp target
 slider65:0<-1000,1000,0.001>Ramp by (units match target)
 // What the duration and start delay below are counted in -- one unit for both,
 // so they always mean the same thing as each other. DEFAULT IS 2, Minutes,
@@ -227,7 +227,7 @@ slider71:0<0,1000,0.1>Ramp start delay (in ramp time units)
 // Hz mode you'll use the low end (e.g. 0.1-0.5), in Seconds mode small period
 // offsets. (Drift IDs shifted +1 from the old 68-72 layout in the v2.14 reorg
 // above — same reset story.)
-slider72:0<0,10,1{Rate Value,V1 Rate/Cents,V2 Rate/Cents,V3 Rate/Cents,V4 Rate/Cents,V5 Rate/Cents,V6 Rate/Cents,V7 Rate/Cents,V8 Rate/Cents,Fade In %,Fade Out %}>Drift target
+slider72:0<0,27,1{Rate Value,V1 Rate/Cents,V2 Rate/Cents,V3 Rate/Cents,V4 Rate/Cents,V5 Rate/Cents,V6 Rate/Cents,V7 Rate/Cents,V8 Rate/Cents,Fade In %,Fade Out %,V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,V1 Pan,V2 Pan,V3 Pan,V4 Pan,V5 Pan,V6 Pan,V7 Pan,V8 Pan,Binaural beat}>Drift target
 slider73:0<0,1000,0.01>Drift up amount (units match target)
 slider74:0<0,1000,0.01>Drift down amount (units match target)
 slider75:8<0,1000,1>Drift period (0 = off)
@@ -325,6 +325,7 @@ osc_gain    = 384; // 384-511
 // Per-voice (8 slots each)
 v_active    = 512;
 v_gain_lin  = 520;
+v_gain_db   = 4096;  // dB before drift/ramp -- above every other bank
 v_dir       = 528;
 v_root      = 536; // root frequency in Hz
 v_note      = 544;
@@ -510,7 +511,13 @@ speed_scale_current      = 1.0;
 //   1..8   = V1..V8 Rate        (units: rate's current unit)
 //   9      = Fade In %          (units: %)
 //   10     = Fade Out %         (units: %)
-N_TARGETS = 11;
+// 2026-09-09: 11 -> 28. Per-voice Gain and Pan and the binaural beat were not
+// reachable by drift or ramp, while Melody and Polyrhythm could both drift their
+// per-voice gain -- the suite's own "unpropagated good decision" failure again.
+// Rozaya: "Drift is replacing automation, nobody's gonna automate everything but
+// options are better than their absence." APPENDED, so no stored target index
+// moves (R18: enum options always append).
+N_TARGETS = 28;
 target_drift_up     = 576;
 target_drift_down   = 592;
 target_drift_per    = 608;
@@ -679,7 +686,8 @@ loop(8,
   v_pan[i]      = slider(base + 1);
   v_dir[i]      = slider(base + 2);
   drifts[i]     = slider(base + 3);
-  v_gain_lin[i] = pow(10, slider(base + 4) / 20.0);
+  v_gain_db[i]  = slider(base + 4);
+  v_gain_lin[i] = pow(10, v_gain_db[i] / 20.0);
   v_active[i]   = slider(base + 5);
   v_root[i]     = note_to_hz(v_note[i] + root_note, 4, tuning_ref);
 
@@ -1153,7 +1161,10 @@ loop(8,
     freq_mul = pow(2, shep_rate[i] * combined_scale * v_rate_mult / srate);
 
     // Cosine-law pan: negative = left, positive = right
-    pan_pos = (v_pan[i] / 100.0 + 1.0) * 0.5; // 0=full left, 0.5=center, 1=full right
+    // Pan is drift/ramp target 19+i, added in its own unit and clamped to the
+    // control's own range so a big wander cannot push past hard left/right.
+    eff_pan = max(-100, min(100, v_pan[i] + (target_drift_offset[19 + i] + speed_ramp_ramp_t_mem[19 + i] * speed_ramp_by_mem[19 + i])));
+    pan_pos = (eff_pan / 100.0 + 1.0) * 0.5; // 0=full left, 0.5=center, 1=full right
     pan_l   = cos(pan_pos * $pi * 0.5);
     pan_r   = sin(pan_pos * $pi * 0.5);
 
@@ -1183,7 +1194,8 @@ loop(8,
       ) : (
         freq_l = osc_freq[oi];
       );
-      freq_r = freq_l + binaural_hz;
+      // The binaural beat is target 27, in Hz.
+      freq_r = freq_l + max(0, binaural_hz + (target_drift_offset[27] + speed_ramp_ramp_t_mem[27] * speed_ramp_by_mem[27]));
 
       // Target gain — bell window position, unless Play/Rest is
       // resting (Walk OR Freeze mode), in which case force 0 and
@@ -1192,7 +1204,9 @@ loop(8,
         target_gain = 0;
       ) : (
         lf = log(osc_freq[oi]);
-        target_gain = window_gain(lf, log_pitch_lo, log_pitch_range, eff_fade_in_frac, eff_fade_out_frac) * v_gain_lin[i];
+        // Gain is target 11+i, and it drifts in dB -- the unit the control is in.
+        eff_gain_lin = pow(10, (v_gain_db[i] + (target_drift_offset[11 + i] + speed_ramp_ramp_t_mem[11 + i] * speed_ramp_by_mem[11 + i])) / 20.0);
+        target_gain = window_gain(lf, log_pitch_lo, log_pitch_range, eff_fade_in_frac, eff_fade_out_frac) * eff_gain_lin;
       );
       osc_gain[oi] = osc_gain[oi] * smooth + target_gain * (1 - smooth);
 

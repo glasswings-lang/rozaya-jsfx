@@ -75,6 +75,12 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 **Not heard:**
 
+- **Shepard Tone and Scale reach everything now.** Per-voice/per-note **Gain**
+  and **Pan** and the **binaural beat** were unreachable by drift while Melody and
+  Polyrhythm could drift theirs. Tone 11 targets -> 28, Scale 4 -> 29, APPENDED so
+  no stored index moves; neither plugin is in any project. Defaults bit-identical,
+  each new target verified amount-vs-zero on a fixed target.
+
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
   Heartbeat, Womb. Owed: 11.** Rozaya: doing some and not others is *"shipping a
   pool ... and only having water that fills half the fucking pool"*. **Every
@@ -99,27 +105,21 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 
 
-- **The Breath Generator 40-slider build is PROMOTED, 2026-09-09.** It IS the
-  live plugin, four instances migrated, **bit-identical over 40 s on all three**
-  — envelope and timing only; the runner cannot see filter frequency. The
-  migrated PROJECTS have not been opened since. Backups:
-  `_pre-breathgen-promote-20260909/`; the reload bug it caught is in the session
-  log.
+- **The Breath Generator 40-slider build is PROMOTED.** Four instances migrated,
+  bit-identical over 40 s on all three; the migrated PROJECTS have not been
+  opened since. Backups: `_pre-breathgen-promote-20260909/`.
 
-- The Womb usability fix of 2026-09-06, and its 2026-09-09 drift stepping — six
-  of eleven targets step on their own turn. Eight of nine projects bit-identical;
-  **`to-sleep-within` changes**, and that instance is pre-existingly faulty — its
-  blob is a format the plugin cannot read (`docs/history/R22.md`).
+- The Womb usability fix of 2026-09-06 and its 2026-09-09 drift stepping. Eight
+  of nine projects bit-identical; `to-sleep-within` differs for pre-existing
+  reasons (`docs/history/R22.md`).
 - **R23 is SWEPT, 2026-09-09** — Heartbeat and Melody too; fourteen plugins are
   cleared and must not be "fixed" (`docs/backlog.md` has the table).
 - The 2026-09-06 drift/ramp sweep, the `N per beat` fix, Tremolo's Start delay
   fix, the range widenings.
-- **Every new capability on Polyrhythm v3.** A clean open proves the old work
-  survived and nothing more. Never played: per-voice On Duration / Depth /
-  Attack / Release, per-voice Waveform, `Solo this voice`, `Pan rate mode` in a
-  new mode, and all six drift/ramp controls. **`Voice = All` writing across eight
-  voices is the one to try first** — the most-used path, and the only one that
-  can change eight things at once.
+- **Every new capability on Polyrhythm v3.** Never played: per-voice On Duration /
+  Depth / Attack / Release, per-voice Waveform, `Solo this voice`, `Pan rate mode`
+  in a new mode, all six drift/ramp controls. **`Voice = All` first** — the
+  most-used path, and the only one that changes eight things at once.
 - The Morpher's two new units off their defaults: a drift period in Cycles or
   Beats, a ramp in anything but Minutes.
 

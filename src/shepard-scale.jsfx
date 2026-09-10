@@ -158,7 +158,7 @@ slider52:0<0,1,1{Walk through,Freeze in place}>Rest mode
 // Speed Ramp + Drift configs on upgrade (both off-by-default; the scale
 // sound on sliders 1-51 is untouched). Re-add the instance for clean
 // defaults, or reconfigure. See the manual's migration note.
-slider53:0<0,3,1{Rate value,Note Length %,Attack %,Release %}>Ramp target
+slider53:0<0,28,1{Rate value,Note Length %,Attack %,Release %,C Gain,C# Gain,D Gain,D# Gain,E Gain,F Gain,F# Gain,G Gain,G# Gain,A Gain,A# Gain,B Gain,C Pan,C# Pan,D Pan,D# Pan,E Pan,F Pan,F# Pan,G Pan,G# Pan,A Pan,A# Pan,B Pan,Binaural beat}>Ramp target
 slider54:0<-1000,1000,0.001>Ramp by (units match target)
 // What the duration and start delay below are counted in -- one unit for both,
 // so they always mean the same thing as each other. DEFAULT IS 2, Minutes,
@@ -185,7 +185,7 @@ slider60:0<0,1000,0.1>Ramp start delay (in ramp time units)
 // paced by the BPM clock). For slow wall-clock-feel drift, set a long period
 // (~960 beats ≈ 8 min at 120 BPM). (Drift IDs shifted +1 from the old 56-60
 // layout in the v2.14 reorg above — same reset story.)
-slider61:0<0,3,1{Rate value,Note Length %,Attack %,Release %}>Drift target
+slider61:0<0,28,1{Rate value,Note Length %,Attack %,Release %,C Gain,C# Gain,D Gain,D# Gain,E Gain,F Gain,F# Gain,G Gain,G# Gain,A Gain,A# Gain,B Gain,C Pan,C# Pan,D Pan,D# Pan,E Pan,F Pan,F# Pan,G Pan,G# Pan,A Pan,A# Pan,B Pan,Binaural beat}>Drift target
 slider62:0<0,1000,0.01>Drift up amount (units match target)
 slider63:0<0,1000,0.01>Drift down amount (units match target)
 slider64:8<0,1000,1>Drift period (0 = off)
@@ -260,6 +260,7 @@ osc_gain    = 432; // 432-575: smoothed gain per oscillator
 // Per-note (12 slots each)
 n_active    = 576; // 576-587
 n_gain_lin  = 588; // 588-599
+n_gain_db   = 4096; // dB before drift/ramp -- above every other bank
 n_pan       = 600; // 600-611
 n_root      = 612; // 612-623: root Hz for each note
 n_env       = 624; // 624-635: per-note envelope gain (smoothed)
@@ -464,7 +465,12 @@ pr_rest_duration_samples = 0;
 //   1 = Note Length %   (units: %, drift sums into slider7 before /100)
 //   2 = Attack %        (units: %, drift sums into slider5 before /100)
 //   3 = Release %       (units: %, drift sums into slider6 before /100)
-N_TARGETS = 4;
+// 2026-09-09: 4 -> 29. The twelve per-note Gains and Pans and the binaural beat
+// were unreachable by drift or ramp, while Melody and Polyrhythm could both
+// drift their per-voice gain. Rozaya: "Drift is replacing automation, nobody's
+// gonna automate everything but options are better than their absence."
+// APPENDED, so no stored target index moves (R18: enum options always append).
+N_TARGETS = 29;
 target_drift_up     = 640;
 target_drift_down   = 656;
 target_drift_per    = 672;
@@ -634,7 +640,8 @@ loop(12,
   // neighbour's Active, Gain and Pan.
   base = 13 + n * 3;
   n_active[n]   = slider(base);
-  n_gain_lin[n] = pow(10, slider(base + 1) / 20.0);
+  n_gain_db[n]  = slider(base + 1);
+  n_gain_lin[n] = pow(10, n_gain_db[n] / 20.0);
   n_pan[n]      = slider(base + 2);
   // Roots at octave 4 — bell centers on center_oct via center_freq
   n_root[n]     = note_to_hz(n, 4, tuning_ref);
@@ -975,6 +982,10 @@ loop(N_TARGETS,
 // 10 BPM. Drift offsets for note length / attack / release fold into
 // effective fractional values below.
 effective_bpm = max(bpm + target_drift_offset[0] + speed_ramp_offset_bpm, 10);
+// The binaural beat is drift/ramp target 28, in Hz. Computed here with the
+// other effective values, once per block rather than per oscillator.
+eff_binaural = max(0, binaural_hz + target_drift_offset[28]
+                      + speed_ramp_ramp_t_mem[28] * speed_ramp_by_mem[28]);
 effective_beat_hz = effective_bpm / 60.0;
 
 // Effective note shape parameters: baseline % + drift offset + Speed Ramp
@@ -1103,7 +1114,8 @@ loop(12,
   n_env[n] = n_env[n] * smooth_gain + env_target * (1 - smooth_gain);
 
   n_env[n] > 0.0001 ? (
-    pan_val   = n_pan[n] / 100.0;
+    // Pan is drift/ramp target 16+n, in its own unit, clamped to the control.
+    pan_val   = max(-100, min(100, n_pan[n] + (target_drift_offset[16 + n] + speed_ramp_ramp_t_mem[16 + n] * speed_ramp_by_mem[16 + n]))) / 100.0;
     pan_l_amt = cos((pan_val + 1) * 0.25 * $pi);
     pan_r_amt = sin((pan_val + 1) * 0.25 * $pi);
 
@@ -1112,16 +1124,18 @@ loop(12,
       oi = n * NUM_OSC + o;
 
       bg = bell_gain(osc_freq[oi], center_freq, half_width);
-      target_gain = bg * n_gain_lin[n] * n_env[n];
+      // Gain is target 4+n, and it drifts in dB -- the control's own unit.
+      eff_gain_lin = pow(10, (n_gain_db[n] + (target_drift_offset[4 + n] + speed_ramp_ramp_t_mem[4 + n] * speed_ramp_by_mem[4 + n])) / 20.0);
+      target_gain = bg * eff_gain_lin * n_env[n];
       osc_gain[oi] = osc_gain[oi] * smooth_gain + target_gain * (1 - smooth_gain);
 
       osc_phase_l[oi] += osc_freq[oi] / srate;
       osc_phase_l[oi] >= 1 ? osc_phase_l[oi] -= 1;
-      osc_phase_r[oi] += (osc_freq[oi] + binaural_hz) / srate;
+      osc_phase_r[oi] += (osc_freq[oi] + eff_binaural) / srate;
       osc_phase_r[oi] >= 1 ? osc_phase_r[oi] -= 1;
 
       out_l += wave_sample(osc_phase_l[oi], osc_freq[oi] / srate) * osc_gain[oi] * pan_l_amt;
-      out_r += wave_sample(osc_phase_r[oi], (osc_freq[oi] + binaural_hz) / srate) * osc_gain[oi] * pan_r_amt;
+      out_r += wave_sample(osc_phase_r[oi], (osc_freq[oi] + eff_binaural) / srate) * osc_gain[oi] * pan_r_amt;
 
       o += 1;
     );
