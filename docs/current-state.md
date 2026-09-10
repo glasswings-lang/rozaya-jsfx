@@ -77,7 +77,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 **Not heard:**
 
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
-  Heartbeat. Owed: 12.** Rozaya: doing some and not others is *"shipping a pool
+  Heartbeat. Owed: 12. WOMB WAS BUILT AND REVERTED — read `docs/history/R22.md`
+  before trying it again.** Rozaya: doing some and not others is *"shipping a pool
   ... and only having water that fills half the fucking pool"*. **Every instance
   migrated so far is bit-identical.** Three shapes so far: Dapple took Breath
   Gen's block unchanged; **Bubbler took the SHIFT form Rozaya designed**, where
