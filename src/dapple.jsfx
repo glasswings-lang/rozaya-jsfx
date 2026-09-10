@@ -33,13 +33,31 @@ desc: Dapple
 
 slider1:6<0.001,1000,0.001>Bubble rate (BPM / sec / Hz / beats per bubble / per beat)
 slider3:70<0,100,1>Timing randomness (%)
-slider4:150<40,1500,1>Pitch (Hz)
-slider5:50<0,100,1>Pitch spread (%)
-slider6:0.85<0,0.97,0.01>Resonance (noise voice)
-slider7:120<5,1000,1>Bubble length (ms)
-slider8:40<0,100,1>Rise (%)
-slider11:80<0,100,1>Stereo width (%)
-slider12:0<-24,12,0.01>Output (dB)
+// --- Pitch (R22) ----------------------------------------------------------
+// Breath Generator's shipped block, dropped on unchanged. Rozaya, 2026-09-09:
+// "use breath gen as an example. They did it perfectly there."
+//
+// MODE FIRST, deliberately -- it decides whether the number below means
+// anything. Defaults to Hz, which is what every saved project holds, so a
+// migrated instance reads exactly as it did.
+slider4:0<0,2,1{Hz,Semitones,Cents}>Pitch mode
+// A REAL control both ways: pick C4 or type 60, move either and the other
+// follows. Hidden outside Semitones, where it would be lying.
+slider5:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Note name
+// THE pitch. Hz is the frequency; Semitones is the MIDI note number (60 =
+// middle C); Cents is the same axis at x100. Range widened from 40..1500 per
+// R12 carve-out 1 -- a range may be raised, never lowered.
+slider6:150<0,20000,0.001>Pitch value (Hz / semitones / cents)
+// The ONE fine tune. There is exactly one.
+slider7:0<-1000,1000,0.001>Fine tune
+slider8:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
+slider9:440<20,2000,0.1>Tuning reference (Hz)
+slider10:50<0,100,1>Pitch spread (%)
+slider11:0.85<0,0.97,0.01>Resonance (noise voice)
+slider12:120<5,1000,1>Bubble length (ms)
+slider13:40<0,100,1>Rise (%)
+slider16:80<0,100,1>Stereo width (%)
+slider17:0<-24,12,0.01>Output (dB)
 
 // --- Transport -----------------------------------------------------------
 // Added 2026-09-05. Part 2 puts transport after the plugin's own controls and
@@ -49,12 +67,12 @@ slider12:0<-24,12,0.01>Output (dB)
 //
 // A "cycle" here is one MEAN bubble interval, i.e. whatever Bubble rate is set
 // to. Timing randomness still scatters the individual bubbles inside it.
-slider13:0<0,1000,0.001>Start delay (in rate mode units)
-slider14:0<0,1000,1>Play for (cycles)
-slider15:0<0,1000,1>Rest for (cycles)
+slider18:0<0,1000,0.001>Start delay (in rate mode units)
+slider19:0<0,1000,1>Play for (cycles)
+slider20:0<0,1000,1>Rest for (cycles)
 // There is no "LFO at rest" here, and deliberately: this plugin has no LFO to
 // freeze. Drift carries its own play/rest, which is the equivalent control.
-slider16:0<0,1,1{Pass-through,Silence}>Output at rest
+slider21:0<0,1,1{Pass-through,Silence}>Output at rest
 
 // --- Drift ---------------------------------------------------------------
 // Added 2026-09-05. Dapple was built after the 2026-06 drift sweep and never
@@ -64,14 +82,14 @@ slider16:0<0,1,1{Pass-through,Silence}>Output at rest
 // Bubble length and Pitch are read when a bubble is BORN, so drifting them
 // changes new bubbles rather than ones already sounding: the effect arrives over
 // about one bubble rather than instantly.
-slider17:0<0,10,1{Bubble rate,Timing randomness,Pitch,Pitch spread,Resonance,Bubble length,Rise,Tone vs noise,Excite from input,Stereo width,Output}>Drift target
+slider22:0<0,10,1{Bubble rate,Timing randomness,Pitch,Pitch spread,Resonance,Bubble length,Rise,Tone vs noise,Excite from input,Stereo width,Output}>Drift target
 // Amounts are per target, in the target's own unit -- except Bubble rate, which
 // is in BPM in every rate mode (the settled suite rule: the plugin converts,
 // you never do).
-slider18:0<0,1000,0.01>Drift up amount (units match target)
-slider19:0<0,1000,0.01>Drift down amount (units match target)
-slider20:20<0,1000,0.01>Drift period (0 = off)
-slider21:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider23:0<0,1000,0.01>Drift up amount (units match target)
+slider24:0<0,1000,0.01>Drift down amount (units match target)
+slider25:20<0,1000,0.01>Drift period (0 = off)
+slider26:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
@@ -83,22 +101,22 @@ slider21:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // advances it continuously, drawing the whole curve.
 //
 // DEFAULTS REPRODUCE WHAT drift_is_stepped() HARDCODED, so nothing saved moves.
-slider22:0<0,1,1{With the target,On a clock}>Drift movement
-slider23:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider24:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider25:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider27:0<0,1,1{With the target,On a clock}>Drift movement
+slider28:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider29:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider30:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp ----------------------------------------------------------------
-slider26:0<0,10,1{Bubble rate,Timing randomness,Pitch,Pitch spread,Resonance,Bubble length,Rise,Tone vs noise,Excite from input,Stereo width,Output}>Ramp target
-slider27:0<-1000,1000,0.001>Ramp by (units match target)
-slider28:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider29:0<0,1000,0.01>Ramp duration
-slider30:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider31:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider32:0<0,1,1{Off,On}>Ramp engage
-slider33:0<0,1000,0.01>Ramp start delay
-slider9:50<0,100,1>Tone vs noise (%, 0 = noise, 100 = tone plink)
-slider10:0<0,100,1>Excite from input (%, 0 = internal noise, 100 = input)
+slider31:0<0,10,1{Bubble rate,Timing randomness,Pitch,Pitch spread,Resonance,Bubble length,Rise,Tone vs noise,Excite from input,Stereo width,Output}>Ramp target
+slider32:0<-1000,1000,0.001>Ramp by (units match target)
+slider33:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+slider34:0<0,1000,0.01>Ramp duration
+slider35:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider36:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider37:0<0,1,1{Off,On}>Ramp engage
+slider38:0<0,1000,0.01>Ramp start delay
+slider14:50<0,100,1>Tone vs noise (%, 0 = noise, 100 = tone plink)
+slider15:0<0,100,1>Excite from input (%, 0 = internal noise, 100 = input)
 
 in_pin:left input
 in_pin:right input
@@ -185,6 +203,37 @@ drift_moves_mem              = db + 352;   // CONFIG -- 0 with the target, 1 clo
 // EVERY BIRTH COUNTS, on either channel -- see the note at the spawn site.
 function drift_is_stepped(idx) ( drift_moves_mem[idx] == 0; );
 
+// --- Pitch (R22) ----------------------------------------------------------
+// Resolve the pitch block to Hz. Lifted from Breath Generator's shipped
+// pitch_to_hz(), which is the version Rozaya heard and approved on 2026-09-09.
+//
+// The VALUE is the pitch -- nothing here is an offset from a note. That was the
+// shape she rejected, because making the value an offset turns it into a second
+// fine tune with the wrong half labelled coarse.
+//
+// `voff` is drift + ramp, added to the value and therefore in the VALUE's own
+// unit: semitones drift in semitones, Hz in Hz, cents in cents.
+function dp_pitch_hz(voff) local(m, v, f, fm, hz) (
+  m  = slider4;
+  v  = slider6 + voff;
+  hz = m == 1 ? tuning_ref * pow(2, (v - 69) / 12) :
+       m == 2 ? tuning_ref * pow(2, (v / 100 - 69) / 12) :
+                v;
+  fm = slider8;
+  f  = slider7;
+  hz = fm == 1 ? hz * pow(2, f / 12) :
+       fm == 2 ? hz * pow(2, f / 1200) :
+                 hz + f;
+  // Clamped to what the voice can honour, not to the audible band.
+  min(max(hz, 20), 20000);
+);
+// SEEDED: dp_pitch_hz() reads tuning_ref and @block can run before @slider ever
+// has. Unseeded that is 0, which puts every note at 0 Hz.
+tuning_ref  = 440;
+pitch_ui_inited = 0;
+last_note   = 60;
+last_pval   = 150;
+
 // Shared play/rest window counter. `tick` is how much of ONE window passes per
 // sample, which lets each caller keep its own units. Off unless BOTH > 0.
 function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
@@ -258,88 +307,108 @@ rate      = rate_mode == 4 ? max((max(tempo,0.001)/60)*max(slider1,0.001), 0.000
           : rate_mode == 1 ? max(1 / max(slider1, 0.001), 0.0001)
                            : max(slider1 / 60, 0.0001);
 jitter    = slider3 * 0.01;
-basePitch = slider4;
-spreadOct = slider5 * 0.01 * 3;      // up to 3 octaves of random pitch
-res       = min(slider6, 0.97);
-decayCoef = exp(-1 / (srate * max(slider7,1) * 0.001));
-rise      = slider8 * 0.01;
-width     = slider11 * 0.01;
-outlev    = 2 ^ (slider12 / 6);
-tone      = slider9 * 0.01;         // 0 = noise voice, 1 = tonal plink
+// The note name and the pitch value are ONE control seen two ways while the
+// mode is Semitones: move either and the other follows. Outside Semitones the
+// note name is hidden and inert, so nothing is written from it.
+tuning_ref = slider9;
+pitch_ui_inited ? (
+  slider4 == 1 ? (
+    slider5 != last_note ? (
+      slider6 = slider5;                 // picked a name -> that is the value
+      slider_automate(slider6);
+    ) : slider6 != last_pval ? (
+      slider5 = max(0, min(127, floor(slider6 + 0.5)));
+      slider_automate(slider5);
+    );
+  );
+) : ( pitch_ui_inited = 1; );
+last_note = slider5;
+last_pval = slider6;
+// The name is a lie in Hz or Cents, so it does not appear there.
+slider_show(slider5, slider4 == 1);
+
+basePitch = dp_pitch_hz(0);
+spreadOct = slider10 * 0.01 * 3;      // up to 3 octaves of random pitch
+res       = min(slider11, 0.97);
+decayCoef = exp(-1 / (srate * max(slider12,1) * 0.001));
+rise      = slider13 * 0.01;
+width     = slider16 * 0.01;
+outlev    = 2 ^ (slider17 / 6);
+tone      = slider14 * 0.01;         // 0 = noise voice, 1 = tonal plink
 // BASELINES ONLY from here down: @sample rebuilds each of these every sample as
 // eff_*, because Drift and Ramp can move all eleven. Left in place rather than
 // deleted -- provably inert, and deleting them buys nothing. `rate` is the
 // exception; eff_rate is built from it.
-inp       = slider10 * 0.01;         // 0 = internal noise, 1 = excite noise voice from input
+inp       = slider15 * 0.01;         // 0 = internal noise, 1 = excite noise voice from input
 
 // Start delay is expressed in RATE MODE UNITS, the same convention the Tremolo
 // and the Sweeping Filter use: seconds in Seconds mode, and CYCLES in BPM, Hz
 // and Host x -- so "4" waits four bubbles' worth whatever the rate means today.
-start_delay_units = slider13;
+start_delay_units = slider18;
 start_delay_sec   = slider2 == 1 ? start_delay_units
                                   : start_delay_units / max(rate, 0.0001);
-play_for_cycles = slider14;
-rest_for_cycles = slider15;
+play_for_cycles = slider19;
+rest_for_cycles = slider20;
 pr_enabled      = play_for_cycles > 0 && rest_for_cycles > 0;
 // Leaving the gate must not strand it in a rest. One-armed: an empty
 // else-branch is a silent compile failure in eel2 (CLAUDE.md).
 !pr_enabled && pr_resting ? ( pr_resting = 0; pr_cycle_progress = 0; );
-rest_silence = slider16;
+rest_silence = slider21;
 
 // --- Ramp target selector save/restore (nested-selector pattern) ----------
-sel_speed_target = slider26;
+sel_speed_target = slider31;
 last_speed_target != sel_speed_target ? (
-  speed_ramp_by_mem[last_speed_target]    = slider27;
-  speed_ramp_dur_mem[last_speed_target]   = slider29;
-  sr_play_mem[last_speed_target]          = slider30;
-  sr_rest_mem[last_speed_target]          = slider31;
-  speed_ramp_delay_mem[last_speed_target] = slider33;
-  slider27 = speed_ramp_by_mem[sel_speed_target];
-  slider29 = speed_ramp_dur_mem[sel_speed_target];
-  slider30 = sr_play_mem[sel_speed_target];
-  slider31 = sr_rest_mem[sel_speed_target];
-  slider33 = speed_ramp_delay_mem[sel_speed_target];
-  slider_automate(slider27); slider_automate(slider29);
-  slider_automate(slider30); slider_automate(slider31);
-  slider_automate(slider33);
+  speed_ramp_by_mem[last_speed_target]    = slider32;
+  speed_ramp_dur_mem[last_speed_target]   = slider34;
+  sr_play_mem[last_speed_target]          = slider35;
+  sr_rest_mem[last_speed_target]          = slider36;
+  speed_ramp_delay_mem[last_speed_target] = slider38;
+  slider32 = speed_ramp_by_mem[sel_speed_target];
+  slider34 = speed_ramp_dur_mem[sel_speed_target];
+  slider35 = sr_play_mem[sel_speed_target];
+  slider36 = sr_rest_mem[sel_speed_target];
+  slider38 = speed_ramp_delay_mem[sel_speed_target];
+  slider_automate(slider32); slider_automate(slider34);
+  slider_automate(slider35); slider_automate(slider36);
+  slider_automate(slider38);
   last_speed_target = sel_speed_target;
 ) : (
-  speed_ramp_by_mem[sel_speed_target]    = slider27;
-  speed_ramp_dur_mem[sel_speed_target]   = slider29;
-  sr_play_mem[sel_speed_target]          = slider30;
-  sr_rest_mem[sel_speed_target]          = slider31;
-  speed_ramp_delay_mem[sel_speed_target] = slider33;
+  speed_ramp_by_mem[sel_speed_target]    = slider32;
+  speed_ramp_dur_mem[sel_speed_target]   = slider34;
+  sr_play_mem[sel_speed_target]          = slider35;
+  sr_rest_mem[sel_speed_target]          = slider36;
+  speed_ramp_delay_mem[sel_speed_target] = slider38;
 );
 
 // --- Drift target selector save/restore ----------------------------------
-sel_target = slider17;
+sel_target = slider22;
 last_target_select != sel_target ? (
-  drift_up_mem[last_target_select]    = slider18;
-  drift_down_mem[last_target_select]  = slider19;
-  drift_per_mem[last_target_select]   = slider20;
-  drift_shape_mem[last_target_select] = slider23;
-  drift_moves_mem[last_target_select] = slider22;
-  drift_play_mem[last_target_select]  = slider24;
-  drift_rest_mem[last_target_select]  = slider25;
-  slider18 = drift_up_mem[sel_target];
-  slider19 = drift_down_mem[sel_target];
-  slider20 = drift_per_mem[sel_target];
-  slider23 = drift_shape_mem[sel_target];
-  slider22 = drift_moves_mem[sel_target];
-  slider24 = drift_play_mem[sel_target];
-  slider25 = drift_rest_mem[sel_target];
-  slider_automate(slider18); slider_automate(slider19);
-  slider_automate(slider20); slider_automate(slider23); slider_automate(slider22);
-  slider_automate(slider24); slider_automate(slider25);
+  drift_up_mem[last_target_select]    = slider23;
+  drift_down_mem[last_target_select]  = slider24;
+  drift_per_mem[last_target_select]   = slider25;
+  drift_shape_mem[last_target_select] = slider28;
+  drift_moves_mem[last_target_select] = slider27;
+  drift_play_mem[last_target_select]  = slider29;
+  drift_rest_mem[last_target_select]  = slider30;
+  slider23 = drift_up_mem[sel_target];
+  slider24 = drift_down_mem[sel_target];
+  slider25 = drift_per_mem[sel_target];
+  slider28 = drift_shape_mem[sel_target];
+  slider27 = drift_moves_mem[sel_target];
+  slider29 = drift_play_mem[sel_target];
+  slider30 = drift_rest_mem[sel_target];
+  slider_automate(slider23); slider_automate(slider24);
+  slider_automate(slider25); slider_automate(slider28); slider_automate(slider27);
+  slider_automate(slider29); slider_automate(slider30);
   last_target_select = sel_target;
 ) : (
-  drift_up_mem[sel_target]    = slider18;
-  drift_down_mem[sel_target]  = slider19;
-  drift_per_mem[sel_target]   = slider20;
-  drift_shape_mem[sel_target] = slider23;
-  drift_moves_mem[sel_target] = slider22;
-  drift_play_mem[sel_target]  = slider24;
-  drift_rest_mem[sel_target]  = slider25;
+  drift_up_mem[sel_target]    = slider23;
+  drift_down_mem[sel_target]  = slider24;
+  drift_per_mem[sel_target]   = slider25;
+  drift_shape_mem[sel_target] = slider28;
+  drift_moves_mem[sel_target] = slider27;
+  drift_play_mem[sel_target]  = slider29;
+  drift_rest_mem[sel_target]  = slider30;
 );
 meanIntv  = srate / rate;            // avg samples between bubbles
 
@@ -366,7 +435,7 @@ rate_mode >= 3 ? (
 );
 
 @sample
-// --- Ramp clocks, one per target. Engage (slider32) is a freeze/resume gate:
+// --- Ramp clocks, one per target. Engage (slider37) is a freeze/resume gate:
 //     while Off, progress HOLDS; only transport play (via @init) resets it.
 // Ramp time unit. One factor turns the Ramp block's time values into seconds.
 // Cycles counts THIS plugin's own cycles, referenced against the rate BEFORE
@@ -376,11 +445,11 @@ rate_mode >= 3 ? (
 // would rewrite live ramps (2026-09-05). A beat is 60/tempo s, recomputed per
 // sample so Beats follows a live tempo change rather than remembering one.
 ramp_time_scale =
-  slider28 == 3 ? 60 / max(host_bpm, 0.001) :
-  slider28 == 2 ? 60 :
-  slider28 == 1 ? 1 :
+  slider33 == 3 ? 60 / max(host_bpm, 0.001) :
+  slider33 == 2 ? 60 :
+  slider33 == 1 ? 1 :
                   1 / max(rate, 0.00001);
-slider32 ? (
+slider37 ? (
   di = 0;
   loop(N_TARGETS,
     speed_ramp_dur_mem[di] > 0 ? (
@@ -422,8 +491,8 @@ loop(N_TARGETS,
     // against the PRE-drift rate so drifting the rate cannot modulate its own
     // drift period. Seconds is wall clock. Beats follows the live tempo.
     period_samples =
-      slider21 == 2 ? max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
-      slider21 == 1 ? max(per * srate, 1) :
+      slider26 == 2 ? max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
+      slider26 == 1 ? max(per * srate, 1) :
                       max(per * srate / max(rate, 0.00001), 1);
     // While resting the phase does not advance, so the offset STAYS where it
     // stopped -- freeze in place, not a return to centre. The FRACTION of the
@@ -494,16 +563,16 @@ eff_meanIntv  = srate / eff_rate;
 eff_jitter    = max(0, min(100, slider3 + q1)) * 0.01;
 // Pitch and Bubble length are read at grain birth, so these change NEW bubbles
 // only -- the effect arrives over about one bubble rather than instantly.
-eff_pitch     = max(20, slider4 + q2);
-eff_spreadOct = max(0, min(100, slider5 + q3)) * 0.01 * 3;
-eff_res       = max(0, min(0.97, slider6 + q4));
-eff_len       = max(1, slider7 + q5);
+eff_pitch     = dp_pitch_hz(q2);
+eff_spreadOct = max(0, min(100, slider10 + q3)) * 0.01 * 3;
+eff_res       = max(0, min(0.97, slider11 + q4));
+eff_len       = max(1, slider12 + q5);
 eff_decay     = exp(-1 / (srate * eff_len * 0.001));
-eff_rise      = max(0, min(100, slider8 + q6)) * 0.01;
-eff_tone      = max(0, min(100, slider9 + q7)) * 0.01;
-eff_inp       = max(0, min(100, slider10 + q8)) * 0.01;
-eff_width     = max(0, min(100, slider11 + q9)) * 0.01;
-eff_out       = 2 ^ ((slider12 + q10) / 6);
+eff_rise      = max(0, min(100, slider13 + q6)) * 0.01;
+eff_tone      = max(0, min(100, slider14 + q7)) * 0.01;
+eff_inp       = max(0, min(100, slider15 + q8)) * 0.01;
+eff_width     = max(0, min(100, slider16 + q9)) * 0.01;
+eff_out       = 2 ^ ((slider17 + q10) / 6);
 
 // --- Transport: start delay, then the play/rest gate ----------------------
 // Start delay counts in whatever the rate mode means (seconds in Seconds mode,
@@ -678,18 +747,18 @@ file_var(0, dp_magic);
   // on WRITE it is < 0. @serialize is the ONE section that runs on both.
   // sliderchange(-1), NOT slider_automate -- this must not write automation.
   file_avail(0) >= 0 ? (
-    slider27 = speed_ramp_by_mem[last_speed_target];
-    slider29 = speed_ramp_dur_mem[last_speed_target];
-    slider30 = sr_play_mem[last_speed_target];
-    slider31 = sr_rest_mem[last_speed_target];
-    slider33 = speed_ramp_delay_mem[last_speed_target];
-    slider18 = drift_up_mem[last_target_select];
-    slider19 = drift_down_mem[last_target_select];
-    slider20 = drift_per_mem[last_target_select];
-    slider23 = drift_shape_mem[last_target_select];
-    slider22 = drift_moves_mem[last_target_select];
-    slider24 = drift_play_mem[last_target_select];
-    slider25 = drift_rest_mem[last_target_select];
+    slider32 = speed_ramp_by_mem[last_speed_target];
+    slider34 = speed_ramp_dur_mem[last_speed_target];
+    slider35 = sr_play_mem[last_speed_target];
+    slider36 = sr_rest_mem[last_speed_target];
+    slider38 = speed_ramp_delay_mem[last_speed_target];
+    slider23 = drift_up_mem[last_target_select];
+    slider24 = drift_down_mem[last_target_select];
+    slider25 = drift_per_mem[last_target_select];
+    slider28 = drift_shape_mem[last_target_select];
+    slider27 = drift_moves_mem[last_target_select];
+    slider29 = drift_play_mem[last_target_select];
+    slider30 = drift_rest_mem[last_target_select];
     sliderchange(-1);
   );
 );

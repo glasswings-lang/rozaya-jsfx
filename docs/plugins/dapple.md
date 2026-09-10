@@ -54,7 +54,23 @@ This used to be `Own rate / Host x`, where "Own rate" meant per second. It defau
 
 **Timing randomness %** `0–100, default 70` — spacing irregularity. 0 = metronomic; high = naturally scattered.
 
-**Pitch (Hz)** `40–1500, default 150` — base resonant pitch. Low = big slow bubbles; higher = small fizzy ones.
+**Pitch** *(the block, new 2026-09-09)* — the base resonant pitch. Low = big slow
+bubbles; higher = small fizzy ones. It is six controls rather than one, the same
+block Breath Generator carries:
+
+- **Pitch mode** `{Hz, Semitones, Cents}, default Hz` — decides what the value below
+  means. Hz is what every older project holds, so nothing you saved reads differently.
+- **Note name** `C-1 … G9` — a real control both ways: pick `C4` or type `60` into
+  the value and the other follows. Only visible in Semitones, where it is true.
+- **Pitch value (Hz / semitones / cents)** `0–20000, default 150` — **the pitch**.
+  In Semitones it is the MIDI note number, 60 = middle C. Range widened from the
+  old `40–1500`; a range may be raised, never lowered.
+- **Fine tune** and **Fine tune unit** `{Hz, Semitones, Cents}, default Cents` — the
+  one fine tune. There is exactly one.
+- **Tuning reference (Hz)** `default 440`.
+
+Drift and Ramp target `Pitch` in whatever unit the mode is set to — drift it in
+semitones and it drifts in semitones.
 
 **Pitch spread %** `0–100, default 50` — how far each event's pitch varies from the base (up to ±3 octaves). 0 = all one pitch; up = watery variety.
 

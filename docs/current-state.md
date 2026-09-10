@@ -26,9 +26,8 @@ sentence.
 
 - **The rate block (R20) and both host modes (R21): built everywhere.** True as
   of 2026-09-06 and not before.
-- **Drift/Ramp: 16 of 19 complete.** Passage is the only one owed it; Polyrhythm
-  v1 inherits when it crosses to v3. **Resonance Bank is not missing one** — its
-  drift period is a rate by design, whatever a name-matching sweep claims.
+- **Drift/Ramp: 16 of 19 complete.** Passage is owed it; Polyrhythm v1 inherits
+  at v3. **Resonance Bank is not missing one** — its period is a rate by design.
 - **Polyrhythm v1 is left alone.** Rozaya, 2026-09-06: *"The polyrhythm can
   just... be left. If we do v3 and then migrate it'll be fine."* No drift/ramp
   and no reorder; its **84 instances across 17 projects** cross to v3 once, then
@@ -40,8 +39,8 @@ sentence.
   largest reorder in the suite so far.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
-- **R22, the pitch block: built in Breath Generator ONLY, heard good
-  2026-09-09.** Rebuilt twice by Rozaya in the hearing, so the plan's written
+- **R22, the pitch block: built in Breath Generator and Dapple. Breath Gen heard
+  good 2026-09-09.** Rebuilt twice by Rozaya in the hearing, so the plan's written
   rule is BEHIND the built one — `docs/layouts/breath-gen.md` is what ships.
   **R22 opens with an attribution warning**: parts were mine, cited back as
   settled. Only *"Morpher and Passage are their own discussion"* is hers.
@@ -78,30 +77,32 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
 **Not heard:**
 
-- **`Drift movement` — the whole sweep, 2026-09-09.** Whether a target's drift
-  steps with its own thing or runs on a clock is now a per-target switch in all
-  six plugins that had stepping: Breath Gen (slider 30), Bubbler (20), Dapple
-  (22), Womb (60), Heartbeat (23), Melody (76). Rozaya: it *"should have been a
-  switch from the very beginning"*. INSERTED beside the period controls on their
-  call, never appended. **110 instances across 24 projects migrated; every
-  project renders bit-identical**, and the switch is measured changing the sound
-  in five of the six. Defaults are exactly what `drift_is_stepped()` hardcoded.
-  Backups: the three `_pre-driftmoves-*-20260909/` snapshots.
-  Bubbler's switch could NOT be demonstrated — drift on Bubbler ignores the
-  runner entirely, before this change as much as after; pre-existing, unchased.
-  Womb/Melody blobs were left alone: seven stored formats between them, all
-  still readable, so only slider lines moved. Owed: an open-and-play, and a
-  Breath Gen pitch target on `With the target` — a filter centre, so ears-only.
+- **Dapple has the R22 pitch block, 2026-09-09** — second plugin to get it, after
+  Breath Gen, per `docs/layouts/dapple.md`. 33 sliders -> 38. All 14 instances in
+  `bubbles` and `womb-bubbles-proto` migrated, **both bit-identical over 25 s** —
+  `bubbles` is eleven Dapples tuned 40-420 Hz. Blob untouched. Backups at
+  `_pre-dapple-pitch-20260909/`.
+
+- **`Drift movement` — the whole sweep, 2026-09-09.** Per-target switch in all
+  six plugins that had stepping: Breath Gen (30), Bubbler (20), Dapple (22),
+  Womb (60), Heartbeat (23), Melody (76). Rozaya: it *"should have been a switch
+  from the very beginning"*. Inserted beside the period controls, never appended.
+  **110 instances across 24 projects migrated; every project bit-identical**, and
+  the switch is measured changing the sound in five of six. Defaults are what
+  `drift_is_stepped()` hardcoded. Backups: `_pre-driftmoves-*-20260909/`.
+  Bubbler's could NOT be demonstrated — drift on Bubbler ignores the runner,
+  before this change as much as after; pre-existing. Womb/Melody blobs untouched:
+  seven stored formats between them, all readable. Owed: an open-and-play, and a
+  Breath Gen pitch target on `With the target`, which is ears-only.
 
 
 
 - **The Breath Generator 40-slider build is PROMOTED, 2026-09-09.** It IS the
-  live plugin, `_TEST40` deleted, four instances migrated. **The migrated
-  PROJECTS have not been opened since**, so an open-and-play of `breathscapes`,
-  `micle` and `organic-movement` is the ear test owed. Backups:
-  `_pre-breathgen-promote-20260909/`. **Bit-identical over 40 s on all three** —
-  envelope and timing only; the runner cannot see filter frequency. The reload
-  bug it caught is in `docs/session-log.md`.
+  live plugin, four instances migrated, **bit-identical over 40 s on all three**
+  — envelope and timing only; the runner cannot see filter frequency. The
+  migrated PROJECTS have not been opened since. Backups:
+  `_pre-breathgen-promote-20260909/`; the reload bug it caught is in the session
+  log.
 
 - The Womb usability fix of 2026-09-06 (no breath rate mode — a principled R20
   exception; `Set breath rate` a one-shot; Sigh depth additive), **and its
@@ -109,12 +110,11 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   Eight of nine live projects render bit-identical; **`to-sleep-within` changes**,
   being the only one with a stepped drift running (its drift is also misfiled
   onto Heart rate by an old blob — pre-existing).
-- **R23 is SWEPT, 2026-09-09** — Heartbeat and Melody too; Bubbler and Dapple
-  built then REVERTED at Rozaya's call, and fourteen plugins are cleared and must
-  not be "fixed" (`docs/backlog.md` has the table). Every live project renders
-  identical except `to-sleep-within`. Unheard, all of it.
-- The 2026-09-06 drift/ramp sweep (six plugins), the `N per beat` reciprocal fix
-  in all four plugins it touched, the Tremolo Start delay fix, the range widenings.
+- **R23 is SWEPT, 2026-09-09** — Heartbeat and Melody too; fourteen plugins are
+  cleared and must not be "fixed" (`docs/backlog.md` has the table). Every live
+  project renders identical except `to-sleep-within`.
+- The 2026-09-06 drift/ramp sweep, the `N per beat` reciprocal fix, the Tremolo
+  Start delay fix, the range widenings.
 - **Every new capability on Polyrhythm v3.** A clean open proves the old work
   survived and nothing more. Never played: per-voice On Duration / Depth /
   Attack / Release, per-voice Waveform, `Solo this voice`, `Pan rate mode` in a
