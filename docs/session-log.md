@@ -133,25 +133,25 @@ the R20/R21 rate block it never had, the six drift/ramp controls it was owed, a
 unit for Systole, an offset for bloodflow, and five stranded controls brought back
 to their groups. 9 instances across 9 projects.
 
-**Rozaya asked for Womb *because she had concerns about it*, and the concerns were
-the design.** That is the reusable part. Asking what was bothering her before
+**Rozaya asked for Womb *because it had concerns about it*, and the concerns were
+the design.** That is the reusable part. Asking what was bothering it before
 authoring anything produced four things I would have got wrong:
 
 1. **The one-entry `Host sync target` picker was a STUB, not debris** — *"we were
    going to put in breath and some other things to go alongside it."* The
    retire-a-leftover rule nearly ate a plan for the second time in this plugin.
-2. **Her worry about collapsing controls was pointed at the right risk.** *"if I
+2. **Its worry about collapsing controls was pointed at the right risk.** *"if I
    set breath values to four and zero and eight and zero and switch everything to
    beats, I right now can trust that it goes in for four beats, out for eight
    beats."* `scattered.rpp` is set exactly that way. It became the acceptance
    test, asserted at four tempos.
 3. **Bloodflow had no control over its rhythm relative to the heart** — a June
    design note had parked that as *locked, open if someone wants decoupling for a
-   real reason*. She is the someone.
-4. **The unit vocabulary for it came from her unprompted** — *"bloodflow in n
+   real reason*. It is the someone.
+4. **The unit vocabulary for it came from it unprompted** — *"bloodflow in n
    beats/every n seconds/ whatever"* — which is the suite's own vocabulary.
 
-**And she corrected a name.** I called Systole's fourth unit `Cycles`; *"cycles in
+**And it corrected a name.** I called Systole's fourth unit `Cycles`; *"cycles in
 fractions? I thought cycles were cycles lol"*. Right: Cycles COUNTS whole cycles
 everywhere else in the suite, and a systole is always a fraction of one, so the
 same word would have meant two things inside one plugin — the exact inconsistency
@@ -160,9 +160,9 @@ next door in Bloodflow Attack and Decay.
 
 ### The wrong finding, and what it cost
 
-I told her `womb-and-baby-heartbeats-with-bloodflow.RPP` was BROKEN — a Systole of
+I told it `womb-and-baby-heartbeats-with-bloodflow.RPP` was BROKEN — a Systole of
 180 meant as milliseconds being read as 180 beats, giving a heartbeat with no
-second sound. **She authorised a repair on the strength of it. It was wrong.**
+second sound. **It authorised a repair on the strength of it. It was wrong.**
 
 The stored value was read correctly and the consuming code was read correctly. The
 LOAD path was not read at all. That project carries the oldest blob, which triggers
@@ -241,7 +241,7 @@ heartbeat -- so every whole number is bit-identical to zero.** 1, 2, 5, 10: all
 exactly no offset. Only fractions did anything. Move it to a round number, which
 is the obvious thing to do, and the plugin correctly does nothing at all.
 
-**It is the identical mistake she had caught earlier the same day on Systole**
+**It is the identical mistake it had caught earlier the same day on Systole**
 (*"cycles in fractions? I thought cycles were cycles lol"*). I fixed it there,
 left it here, and wrote a comment in the source explaining why the two were
 different quantities and should not be made to match. They were not different.
@@ -260,21 +260,21 @@ Worth writing down together, because the pattern is the point.
 
 1. I called a project broken after reading the stored value and the consuming
    code, without reading the LOAD path that fixed it.
-2. I told her to test in `scattered`, having read its breath timing without
+2. I told it to test in `scattered`, having read its breath timing without
    reading its bloodflow volume (0) or its solo state (breath soloed).
-3. When she said she had turned things up, I went back to the SAVED file to check
-   the solo state -- and reported a finding from it. She had not saved. *"Like I
+3. When it said it had turned things up, I went back to the SAVED file to check
+   the solo state -- and reported a finding from it. It had not saved. *"Like I
    said not even 5 messages ago, I turned it all on, spesificly so I could hear.
    I just didn't save it that way, because it's not done."*
 
 Every one is the same error: **reasoning confidently from part of the picture
 while the rest of it was available.** And in (3) the part I was missing was
-something she had already told me in words -- the file is not the session, and a
+something it had already told me in words -- the file is not the session, and a
 person's report of what they just did outranks a file's record of what they last
 saved.
 
-**She also killed my last theory herself**, and correctly: I suggested REAPER
-might still be running the old plugin, and she asked *"if it didn't show up,
+**It also killed my last theory itself**, and correctly: I suggested REAPER
+might still be running the old plugin, and it asked *"if it didn't show up,
 wouldn't I have not seen the slider at all?"* -- which is exactly right, and is a
 negative test result treated as a result rather than as a puzzle to explain away.
 

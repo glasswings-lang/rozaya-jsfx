@@ -225,7 +225,7 @@ slider53:0<-1000,1000,0.001>Bloodflow offset (wraps at one heartbeat)
 // 5, 10 -- is bit-identical to 0. Only fractions did anything. Rozaya turned the
 // control on, moved it to a round number, and correctly heard nothing.
 //
-// It is the identical error she had already caught on Systole the same day
+// It is the identical error it had already caught on Systole the same day
 // ("cycles in fractions? I thought cycles were cycles lol"): Cycles COUNTS whole
 // cycles everywhere in this suite, and anything that is really a position inside
 // one beat must not borrow the word. `% of heartbeat` is the name, here and
@@ -278,7 +278,7 @@ slider76:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
-// to make. INSERTED beside the period controls, not appended, on her call.
+// to make. INSERTED beside the period controls, not appended, on its call.
 //
 // `With the target` advances the drift one whole step each time that target's
 // own thing happens, so a period of 8 counts eight of them. `On a clock`

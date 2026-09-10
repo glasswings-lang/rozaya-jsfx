@@ -212,10 +212,10 @@ because they apply every session, not on the day they were learned.
 - **Rozaya's reports have a track record, and it is better than mine.** Start
   from the assumption that what is described is really happening, where it is
   said to be happening.
-  **2026-09-08, and this one is the cleanest example yet: she said "sometimes I
-  turn drift period off quickly to disable it" and I told her it did not
+  **2026-09-08, and this one is the cleanest example yet: it said "sometimes I
+  turn drift period off quickly to disable it" and I told Rozaya it did not
   work** — on the strength of a declared minimum of 1, which I read as proof the
-  value was unreachable. She tested it; it stopped, as it always had. The
+  value was unreachable. Rozaya tested it; it stopped, as it always had. The
   mechanism I had missed was that two plugins reach "off" by arithmetic rather
   than by a gate. **A slider declaration is not evidence about behaviour, and a
   report from the only person who can hear outranks my reading of one.** The
@@ -359,10 +359,10 @@ because they apply every session, not on the day they were learned.
   problem.** It removes the unit and leaves the arithmetic.
 - **`Drift period` = 0 MEANS OFF, in all 19 plugins. Made EXPLICIT 2026-09-08.
   It already worked in 15 of them, and Rozaya said so and I did not believe
-  her.** She told me plainly: *"Sometimes I turn drift period off quickly to
+  it.** It told me plainly: *"Sometimes I turn drift period off quickly to
   disable it."* I read the declared minimum of 1, concluded 0 was unreachable,
-  and told her her own practice was impossible. **She then tested it and it
-  stopped, "the way it always has, with every build."** Her report was right and
+  and told it its own practice was impossible. **Rozaya then tested it and it
+  stopped, "the way it always has, with every build."** Its report was right and
   my reading of a slider declaration was not evidence against it.
   **How it already worked, which is worth knowing:** thirteen plugins gate on
   `per > 0` explicitly (since 2026-06-09/11). The Morpher and Passage got there
@@ -371,7 +371,7 @@ because they apply every session, not on the day they were learned.
   `sin(0)` is zero: the offset is permanently zero and the drift is silent.
   Simulated, not assumed. **Only Melody and the two Polyrhythms behaved badly**
   (`max(per,1)` → a full wander every rate cycle) — and those three have drift
-  configured in ZERO saved instances, which is why she never met it.
+  configured in ZERO saved instances, which is why Rozaya never met it.
   So the change made an accident into an intention in two plugins and fixed
   three nobody uses drift in. **It did not repair anything anyone was hearing.**
   The earlier claim in this file that "it never worked" was mine and it was
@@ -430,7 +430,7 @@ because they apply every session, not on the day they were learned.
   **This corrected me twice in one sitting and the second time I had already
   been told.** Sizing R22's note list, I wrote C1-C7 (covers the 88 stored pitch
   values plus headroom), was told to widen rather than reduce, wrote C0-C8 — and
-  that was still her projects setting a stranger's ceiling. The answer was the
+  that was still its projects setting a stranger's ceiling. The answer was the
   full MIDI range, because a standard is principled and a measurement is not.
   **The tell: if the justification contains "which covers everything we
   actually use", it is this mistake.** 20 Hz to 20 kHz is fine — that is the

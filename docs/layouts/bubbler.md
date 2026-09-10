@@ -16,7 +16,7 @@ audio. It has no frequency of its own.
 
 **A first attempt made the note name an interval measured from the tuning
 reference. Rozaya stopped it:** *"you're doing the thing prior claudes started to
-with pitch."* She was right — that is the shape she already rejected once, where
+with pitch."* It was right — that is the shape it already rejected once, where
 the note stops being a note and becomes an offset, which is what turned the pitch
 value into a second fine tune. It was reverted whole.
 

@@ -608,7 +608,7 @@ The original "random slot mode" idea turned out to be two different things, and 
 
 
 
-**2b. Scatter (per-grain random SLOT pick in the wash) — RULED OUT for Rozaya's material.** The idea was: each wash grain pulls from a random captured slot, blooming the bed into a cloud of all captures at once. **This does not work for her music and won't be built for it.** Why: (i) the wash is *not* pitchless — it retains each capture's pitch in the shape of the frozen magnitude spectrum (the peak spacing), which is exactly why cranking Texture to wash still yields a *voice*. (ii) Rozaya's captures are **chords at different pitches** (she works chordally, and the harmonic/voice engine is monophonic — single-f0 YIN detect — so the wash is the only engine that preserves a chord at all). So scattering random captures = stacking different chords at different pitches = dissonant mud, not density. (iii) The "pitch-lock the scattered grains" rescue **cannot apply to chords** — there is no single pitch to lock; re-pitching would transpose whole chords around. Scatter would only be safe for *same-pitch, monophonic* captures, which is not this user. Left here as a documented dead-end so it isn't re-proposed.
+**2b. Scatter (per-grain random SLOT pick in the wash) — RULED OUT for Rozaya's material.** The idea was: each wash grain pulls from a random captured slot, blooming the bed into a cloud of all captures at once. **This does not work for its music and won't be built for it.** Why: (i) the wash is *not* pitchless — it retains each capture's pitch in the shape of the frozen magnitude spectrum (the peak spacing), which is exactly why cranking Texture to wash still yields a *voice*. (ii) Rozaya's captures are **chords at different pitches** (it works chordally, and the harmonic/voice engine is monophonic — single-f0 YIN detect — so the wash is the only engine that preserves a chord at all). So scattering random captures = stacking different chords at different pitches = dissonant mud, not density. (iii) The "pitch-lock the scattered grains" rescue **cannot apply to chords** — there is no single pitch to lock; re-pitching would transpose whole chords around. Scatter would only be safe for *same-pitch, monophonic* captures, which is not this user. Left here as a documented dead-end so it isn't re-proposed.
 
 
 
@@ -788,7 +788,7 @@ So a dysregulated→resting descent can *darken* natively, not just slow down �
 
 - **Rhythm Track — DONE, ear-tested ✓ (2026-07-02, uncommitted).** Job A. Speed Ramp went single-target (Tempo BPM) → nested-selector reaching both Drift targets (Tempo BPM + Swing amount). Added per-target `speed_ramp_by_mem` bank + nested-selector save/restore; per-target offsets applied at the tempo and swing consumption sites; `@serialize` given a version-guard magic (`2000000 + N_TARGETS`) — it previously had none, so this also closes a pre-existing scramble gap. **Reorganized + renumbered per the selector-first convention above:** Speed Ramp is now sliders 17–21 (target / by / duration / engage / start-delay), Drift is 22–26 (target / up / down / period / shape). Both ramps confirmed working by ear (Tempo + Swing, parallel, selector-switch doesn't stop a running ramp). Manual updated (new slider numbers, migration note, and a swing-unit clarification — see next line). **Ships in v2.14.**
 
-  - *Swing-unit clarity fix (same pass):* Rozaya flagged that "Speed ramp by … units match target" was meaningless when the target is Swing (a bare ±300 range with no felt referent). Not a gap in her knowledge — a labeling gap on our side. The Swing target's `by`/up/down are in the same **swing fraction** as the base Swing slider (−1…+1; 0 = straight, ±1 = full triplet shuffle; grounded in REAPER's −100…+100% swing convention). Manual now spells this out for both the Speed Ramp and Drift Swing target. (Candidate for the dyscalculia sweep later: express Swing in felt/percentage terms rather than a bare −1…1 number.)
+  - *Swing-unit clarity fix (same pass):* Rozaya flagged that "Speed ramp by … units match target" was meaningless when the target is Swing (a bare ±300 range with no felt referent). Not a gap in its knowledge — a labeling gap on our side. The Swing target's `by`/up/down are in the same **swing fraction** as the base Swing slider (−1…+1; 0 = straight, ±1 = full triplet shuffle; grounded in REAPER's −100…+100% swing convention). Manual now spells this out for both the Speed Ramp and Drift Swing target. (Candidate for the dyscalculia sweep later: express Swing in felt/percentage terms rather than a bare −1…1 number.)
 
 
 
@@ -818,7 +818,7 @@ So a dysregulated→resting descent can *darken* natively, not just slow down �
 
 
 
-- **Per-target Speed Ramp TIMELINES — DONE on Shepard Scale + Shepard Tone, tested ✓ (2026-07-02).** Rozaya found the Speed Ramp `duration` (and start delay) was GLOBAL — one clock drove all targets, so you couldn't wind different targets down over different timelines. That defeats the automation-replacement goal (real automation lets each parameter move on its own schedule). **Fix (her spec: "both, and yes"):** `by`, `duration`, AND `start delay` are all now per-target (nested under the selector, saved/loaded like `by`); each target gets its own progress clock (`speed_ramp_ramp_t_mem`) and delay counter; **`engage` stays global** (one switch arms the whole wind-down, each target then rides its own duration after its own delay). Replaces the single global `speed_ramp_t` / `speed_ramp_delay_elapsed` with per-target banks. `@serialize` magic bumped `2000000` → `2100000 + N_TARGETS` (added duration + start-delay banks); duplicate-fix force block extended to duration + start delay. Validated on Shepard Scale (additive, clearest to hear — all 5 checks incl. independent timelines, selector-carries-all-three, duplicate-survives). Shepard Tone has identical machinery. **This is now part of the standard multi-target Speed Ramp pattern — every plugin in the rollout gets per-target timeline + the duplicate fix together.**
+- **Per-target Speed Ramp TIMELINES — DONE on Shepard Scale + Shepard Tone, tested ✓ (2026-07-02).** Rozaya found the Speed Ramp `duration` (and start delay) was GLOBAL — one clock drove all targets, so you couldn't wind different targets down over different timelines. That defeats the automation-replacement goal (real automation lets each parameter move on its own schedule). **Fix (its spec: "both, and yes"):** `by`, `duration`, AND `start delay` are all now per-target (nested under the selector, saved/loaded like `by`); each target gets its own progress clock (`speed_ramp_ramp_t_mem`) and delay counter; **`engage` stays global** (one switch arms the whole wind-down, each target then rides its own duration after its own delay). Replaces the single global `speed_ramp_t` / `speed_ramp_delay_elapsed` with per-target banks. `@serialize` magic bumped `2000000` → `2100000 + N_TARGETS` (added duration + start-delay banks); duplicate-fix force block extended to duration + start delay. Validated on Shepard Scale (additive, clearest to hear — all 5 checks incl. independent timelines, selector-carries-all-three, duplicate-survives). Shepard Tone has identical machinery. **This is now part of the standard multi-target Speed Ramp pattern — every plugin in the rollout gets per-target timeline + the duplicate fix together.**
 
 
 
@@ -2303,16 +2303,16 @@ HomePods.
 
 ## Womb got repurposed as a noise source ONCE, and that is still a signal (2026-09-06)
 
-Rozaya, on why she had `scattered.rpp` open at all: *"I was half-assed using
+Rozaya, on why it had `scattered.rpp` open at all: *"I was half-assed using
 scattered for crashes, womb was the only place I could get different frequencies
 of noise coming in like that."*
 
-**Scope it honestly: this is ONE project, not how she uses Womb.** Asked about
+**Scope it honestly: this is ONE project, not how it uses Womb.** Asked about
 the rest: *"At least with scatter. The rest... well. I try to use it like it was
 meant for lol."* So Womb is not secretly a noise instrument and must not be
 redesigned as one.
 
-**What makes it worth recording anyway** is that she reached for it — a use found
+**What makes it worth recording anyway** is that it reached for it — a use found
 rather than asked for is a real signal about what is MISSING elsewhere, even when
 it happened once. Womb has three independent
 filtered-noise layers with their own envelopes, frequencies and stereo:
@@ -2334,7 +2334,7 @@ point for how it is actually used.
 **Not a job yet, and deliberately not scoped here.** Recorded so the next session
 does not "simplify" Womb's three-layer noise engine toward the womb-sound brief in
 its name, and so that if a noise instrument ever gets built, this is the
-requirement it starts from. Ask Rozaya what she is reaching for before designing
+requirement it starts from. Ask Rozaya what it is reaching for before designing
 one — the useful question is what the crashes need to DO, not which filters to
 offer.
 

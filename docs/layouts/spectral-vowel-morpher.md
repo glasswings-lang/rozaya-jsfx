@@ -621,7 +621,7 @@ offsets, so the rule appears to say drift should state its two ends directly
 **Raised 2026-09-08, and parked by Rozaya:** *"It would be nice, but it would
 also break globals in a way that I don't have the anything to tackle."*
 
-**She is right, and this is the reason the rule does not transfer cleanly.** An
+**It is right, and this is the reason the rule does not transfer cleanly.** An
 offset RIDES the global. Move the rate and every drift range moves with it,
 keeping its relationship to whatever the rate now is — which is what makes a
 single global rate control a whole plugin. Absolute endpoints would pin the
@@ -637,7 +637,7 @@ have to answer that question at all.
 **NOT re-opened here: the rate's BPM rule.** CLAUDE.md records that as settled
 BY EAR, twice, and Rozaya explicitly granted it as *"an unusual exception"*. So
 a rate target's `Target default` goes on meaning BPM in every mode, exactly as
-today. **But her principle plainly points at it**, and this note says so rather
+today. **But its principle plainly points at it**, and this note says so rather
 than letting a future session find the tension and guess: under `Drift amount
 unit` the BPM rule stops being a lock and becomes a DEFAULT, which is what it
 should have been. Whether to say that out loud in R20 is its own conversation.

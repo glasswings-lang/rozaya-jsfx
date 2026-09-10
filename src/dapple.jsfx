@@ -93,7 +93,7 @@ slider26:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
-// to make. INSERTED here rather than appended, on her call, with the migration
+// to make. INSERTED here rather than appended, on its call, with the migration
 // accepted: "Don't apend when we can aford not to. we can afford not to."
 //
 // `With the target` advances the drift one whole step each time that target's
@@ -208,7 +208,7 @@ function drift_is_stepped(idx) ( drift_moves_mem[idx] == 0; );
 // pitch_to_hz(), which is the version Rozaya heard and approved on 2026-09-09.
 //
 // The VALUE is the pitch -- nothing here is an offset from a note. That was the
-// shape she rejected, because making the value an offset turns it into a second
+// shape it rejected, because making the value an offset turns it into a second
 // fine tune with the wrong half labelled coarse.
 //
 // `voff` is drift + ramp, added to the value and therefore in the VALUE's own

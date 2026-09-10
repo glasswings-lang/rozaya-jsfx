@@ -39,7 +39,7 @@ NOT touched by this job - it crosses later, once, and then retires.
 
 ## The brief, in Rozaya's words
 
-Asked what actually bothers her about the plugin: *"I haven't touched polyrhythm
+Asked what actually bothers it about the plugin: *"I haven't touched polyrhythm
 since every n beats and n per beat got introduced and then I stumbled on them...
 So in practice, the thing that bugs me most is that the orders are scattered as
 shit."*
@@ -62,7 +62,7 @@ trap from the plugin's future as a side effect.
 ### We built this once and archived it, and that does not bind us
 
 Rozaya remembered: *"Feels like we did, then ditched it. I don't remember why we
-did but it feels important."* She was right. **Melody Phase v2** collapsed forty
+did but it feels important."* It was right. **Melody Phase v2** collapsed forty
 flat per-voice sliders behind a Voice selector and is archived.
 
 **Two things killed it and only one is about the design:**
@@ -74,8 +74,8 @@ flat per-voice sliders behind a Voice selector and is archived.
   because I got overeager one day."*
 
 So the design judgement was made about a version nobody was ever able to run -
-including her. It is not evidence from use. What IS evidence from use is what she
-said this week about the plugin she does run.
+including it. It is not evidence from use. What IS evidence from use is what it
+said this week about the plugin it does run.
 
 **The difference here: no fork.** This is built into v3 in place, with a migration,
 which is the thing whose absence killed v2.

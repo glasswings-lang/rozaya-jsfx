@@ -26,14 +26,14 @@ Moved out of the plan 2026-09-08, verbatim. The R24 drift-target audit is in `do
 
 ## R23 — drift steps on the target's own turn (2026-09-09)
 
-**From a problem Rozaya found, and approved by her plugin by plugin. The wording
-below is Claude's; do not cite it back as hers.**
+**From a problem Rozaya found, and approved by it plugin by plugin. The wording
+below is Claude's; do not cite it back as its own.**
 
 > A drift target that is READ ONCE PER OCCURRENCE steps once per occurrence, and
 > its period counts those occurrences. A target read CONTINUOUSLY drifts
 > continuously, and its period is time.
 
-**In her words:** *"you don't get to say drift this thing every two cycles and
+**In its words:** *"you don't get to say drift this thing every two cycles and
 drift this thing every four. it's being fucked."*
 
 **THE SWEEP IS DONE, 2026-09-09.** Every plugin with drift was READ, not
@@ -105,7 +105,7 @@ sound-design tools and are deliberately left out.
    exactly the profile drift and ramp exist for. Targets below.
 4. ~~**Validation — the real hole.**~~ **CLOSED.** Reload and track-duplicate ARE
    testable — ask for one. And since 2026-09-09 `tools/jsfx_run` compiles and
-   RUNS a plugin outside REAPER, so behaviour can be measured before she ever
+   RUNS a plugin outside REAPER, so behaviour can be measured before it ever
    hears it. Read its README for what it cannot see; the list is real.
    Ear-testing happens over weeks of ordinary use, so the sweep does not block on
    a testing phase. What I owe in return is that everything checkable without

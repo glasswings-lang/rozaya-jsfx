@@ -6,7 +6,7 @@ target's drift steps with its own thing or runs on a clock stops being a rule
 the plugin holds and becomes a switch. Rozaya: it *"should have been a switch
 from the very beginning"*.
 
-INSERTED beside the period controls, not appended -- her call, migration
+INSERTED beside the period controls, not appended -- its call, migration
 accepted. Bubbler's sliders 20-30 move to 21-31; Dapple's 22-32 move to 23-33.
 
 The stored value written for the new slider is the DEFAULT FOR WHICHEVER TARGET

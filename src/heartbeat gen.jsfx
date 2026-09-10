@@ -128,7 +128,7 @@ slider27:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
-// to make. INSERTED beside the period controls, not appended, on her call.
+// to make. INSERTED beside the period controls, not appended, on its call.
 //
 // `With the target` advances the drift one whole step each time that target's
 // own thing happens, so a period of 8 counts eight of them. `On a clock`

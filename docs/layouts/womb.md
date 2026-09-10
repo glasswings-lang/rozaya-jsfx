@@ -25,7 +25,7 @@ to four and zero and eight and zero and switch everything to beats, I right now
 can trust that it goes in for four beats, out for eight beats."*
 
 That is not hypothetical. `scattered.rpp` is set exactly that way right now —
-host mode, inhale 4, exhale 8. **Any layout that costs her that is wrong**, and
+host mode, inhale 4, exhale 8. **Any layout that costs it that is wrong**, and
 this one does not: the four breath sliders survive untouched and gain a rate mode
 that is theirs alone.
 
@@ -105,16 +105,16 @@ formula while they are sitting in BEATS.
 
 **The resolution, agreed with Rozaya 2026-09-06.** `Breaths per minute` becomes
 the breath's actual rate, with its own mode beside it. The four sliders stop being
-rewritten and are what she already treats them as: **the shape of the breath**,
+rewritten and are what it already treats them as: **the shape of the breath**,
 whose proportions divide the cycle.
 
 - Breath rate **off (0)** — cycle length is the sum of the four, exactly as today.
 - Breath rate **set** — the cycle is that long and the four divide it in their
   stored proportions. Applied at DSP time, never written back.
 - Mode **`Every N beats` = 12**, segments 4/0/8/0 — four beats in, eight out.
-  **Her stated case, preserved to the number.**
+  **Its stated case, preserved to the number.**
 
-Nothing she has typed moves, and no control writes into another.
+Nothing it has typed moves, and no control writes into another.
 
 ## Systole, and a claim I got wrong
 
@@ -258,7 +258,7 @@ offset WRAPS into a single heartbeat, so in cycles every whole number — 1, 2, 
 10 — is bit-identical to 0, and only fractions do anything. Rozaya turned the
 control on, moved it to a round number and correctly heard nothing.
 
-It is the identical error she had already caught on Systole the same day, and the
+It is the identical error it had already caught on Systole the same day, and the
 rule is now stated once for both: **Cycles COUNTS whole cycles everywhere in this
 suite, so anything that is really a position inside one beat must not borrow the
 word.** Both controls say `% of heartbeat`, and every whole number a person can

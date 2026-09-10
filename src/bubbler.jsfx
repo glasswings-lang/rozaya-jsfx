@@ -95,7 +95,7 @@ slider25:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
-// to make. INSERTED here rather than appended, on her call, with the migration
+// to make. INSERTED here rather than appended, on its call, with the migration
 // accepted: "Don't apend when we can aford not to. we can afford not to."
 //
 // `With the target` advances the drift one whole step each time that target's

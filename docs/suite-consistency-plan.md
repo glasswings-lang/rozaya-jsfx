@@ -9,7 +9,7 @@ R1–R22 and nothing else. Look up the rule you need, obey it, and close the fil
 lines of three different things stacked together: the rules, a backlog of what
 each plugin is owed, and the history of how each decision was reached. Sessions
 opened it to check one rule and came back with a to-do list, then started work
-Rozaya had not asked for on plugins she had not yet heard. The rules are the
+Rozaya had not asked for on plugins it had not yet heard. The rules are the
 smallest part of what was here and they were the hardest to find — they are
 numbered R1 to R22 and they were scattered across five parent sections in
 non-numeric order, with R17 buried inside "Where to pick this up" and R18 inside
@@ -908,17 +908,17 @@ rather than a branch added.
 > this rule were "already settled": *"No, you settled that on your own. I had
 > nothing to do with those decisions. That's a problem."*
 >
-> **She is right, and this section is the worst offender in the repo.** Quoted
-> text below is hers. Everything unquoted is Claude reasoning written in the same
-> confident voice, and at least three pieces of it were then cited back to her as
+> **It is right, and this section is the worst offender in the repo.** Quoted
+> text below is its own. Everything unquoted is Claude reasoning written in the same
+> confident voice, and at least three pieces of it were then cited back to it as
 > settled decisions:
 >
-> - **The deferred list.** She said *"Morpher and Passage are their own
+> - **The deferred list.** It said *"Morpher and Passage are their own
 >   discussion there."* — two plugins. Sustain Looper and Bubbler are mine.
 > - **The build order** — Melody and Shepard Tone's voice selectors before the
->   migration — is my slider-count analysis, not her decision.
+>   migration — is my slider-count analysis, not its decision.
 > - **"`Note` is NOT one of the modes"** was a JSFX limitation promoted to a
->   principle, and she overturned it on 2026-09-09.
+>   principle, and it overturned it on 2026-09-09.
 >
 > **Before citing anything here as settled, check for quotation marks.** Without
 > them it is a proposal that sat still long enough to look like a decision.
@@ -1051,7 +1051,7 @@ library.
 **Three drafts of this line got smaller and smaller for the same bad reason, and
 the correction is a rule, not a preference.** I wrote C1–C7 first (sized to just
 cover the stored values), then C0–C8 after Rozaya said *"let's use that to widen
-ranges, not reduce them"*. Both were still derived from her projects. She named
+ranges, not reduce them"*. Both were still derived from its projects. It named
 what was actually wrong with that:
 
 > *"We've also established, through repeated trial and error, that no, in fact,
@@ -1105,7 +1105,7 @@ four it means. It is a percentage of its existing internal range, so it becomes
 ## How this sits with the rules that already exist
 
 **Checked 2026-09-08, after Rozaya said "you need to look at existing rules,
-please" — and she was right, two of these I was re-deriving from scratch.**
+please" — and it was right, two of these I was re-deriving from scratch.**
 
 - **R4 / R5 — names.** Sentence case, unit in parentheses at the end. This
   sweeps up a pile of existing violations in the pitch surface on the way past:
