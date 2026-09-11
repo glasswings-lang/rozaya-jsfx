@@ -67,11 +67,9 @@ Missing lists are from the audit reads, not individually re-checked.
 - **sustain_looper** — DONE 2026-09-10: 8 targets, including the new pitch block.
 - **bubbler** — 9 of 16. Missing: Fine tune, Tuning reference.
 - **dapple** — 11 of 16. Missing: Fine tune, Tuning reference.
-- **full-feature-sweeping-filter** — 6 of 16. Missing: On duration, Depth, Attack,
-  Release, R channel phase offset, Pan spread, Pan glide, Pan sweep every.
-- **sweep-dwell-filter** — 6 of 16. Missing: Low/High frequency, Low/High fine
-  tune, Tuning reference, Wet/dry, Stereo phase offset, Pan spread, Pan glide,
-  Filter speed multiplier.
+- **full-feature-sweeping-filter** — DONE 2026-09-10: 17 targets in control order.
+- **sweep-dwell-filter** — DONE 2026-09-10: 16 targets, behind Rozaya's Segment
+  selector (`docs/layouts/sweep-dwell.md`).
 - **stereo-phaser** — 6 of 16. Missing: none.
 - **Full_Feature_Tremolo** — 6 of 16. Missing: Stereo phase offset, Pan spread,
   Pan glide, Pan sweep every.
