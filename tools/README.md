@@ -666,6 +666,21 @@ became a Segment selector with a length mode and value per segment.
   the old Host x cycle, a live tempo change, and one segment in beats at 60 BPM.
   Needs the runner's `--transport` options; see `jsfx_run/README.md`.
 
+## bridge_ui_test.py — what only REAPER can show
+
+Drives the real plugins in REAPER through `kin_bridge.lua`, in
+`E:/reaper/finished/test-projects/claude-testing002-bridge.RPP` (18 plugins, one per
+track, volume at zero -- NOT muted, in case REAPER skips muted tracks). `drive`
+checks every Drift/Ramp target selector, every note-name mirror, and the per-item
+selectors (Polyrhythm Voice, the pitch targets, Resonance Bank Band, Morpher Layer,
+Passage Capture slot), leaving distinct values; after Rozaya saves and reopens,
+`verify` re-selects each and reads it back. Compares normalized positions against
+src's declared ranges, so display rounding cannot hide a wrong value.
+2026-09-11: 116 live checks and 86 after reopen, all pass. Traps met: the board is
+rewritten every 0.4 s and a read can land mid-write; a target list may hold only
+two entries (Rhythm Track), and index 2 then silently means 1. A path with a space
+must be quoted in an RPP (`<JS "glasswings/heartbeat gen.jsfx" ""`).
+
 ## Earlier 2026-09-10 migrations, indexed late
 
 - **`looper_migrate_pitchblock_20260910.py`** — Sustain Looper, 8 sliders to 30,
