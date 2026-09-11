@@ -681,6 +681,23 @@ rewritten every 0.4 s and a read can land mid-write; a target list may hold only
 two entries (Rhythm Track), and index 2 then silently means 1. A path with a space
 must be quoted in an RPP (`<JS "glasswings/heartbeat gen.jsfx" ""`).
 
+## lock_test.py — does a tempo-synced plugin lock to the SONG?
+
+A render starting a few beats into the song must line up with one starting at beat
+0, shifted by those beats; the same plugin at the same speed in a free mode is the
+control and must NOT line up. Effects compare samples (sine input, whole cycles
+over the shift); Rhythm Track and Shepard Scale compare loudness envelopes;
+Melody compares the PITCH in each 100 ms window with three voices on, because it
+restarts the landed note by design and one voice hides everything.
+2026-09-11: Sweeping Filter, Tremolo, Stereo Phaser, Rhythm Track and Shepard Scale
+lock. **Melody does not**: its placement runs in the first sample and is
+overwritten two blocks later when the settle hold releases the first note to
+voice 1. A scratch copy with the placement gated on the same hold locks exactly
+(0% wrong notes; control 100%). NOT fixed -- put to Rozaya 2026-09-11. This is a
+different symptom from `docs/open-bugs.md` entry 1 (instances scattering on project
+open with the transport stopped), which is CLOSED by Rozaya's decision; its burned
+theory 1 was rejected as a cause of THAT scatter, and nothing here reopens it.
+
 ## Earlier 2026-09-10 migrations, indexed late
 
 - **`looper_migrate_pitchblock_20260910.py`** — Sustain Looper, 8 sliders to 30,
