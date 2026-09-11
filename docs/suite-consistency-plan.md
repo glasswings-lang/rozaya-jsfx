@@ -1247,7 +1247,8 @@ absolutely be drift candidates."* Drift and Ramp exist to replace automation.
   tune, tuning reference, gain, output, pan spread and glide, binaural beat,
   glide time, pulse width, filter frequencies, resonance, mix.
 - **Not a target:** modes, unit selectors, shape pickers, on/off switches, and
-  structural counts such as sequence length.
+  structural counts such as sequence length -- **except Rhythm Track's Beats per
+  bar**, Rozaya 2026-09-11: *"Beats per bar belongs on there too."*
 - **Play for and Rest for ARE targets; Start delay is not.** Star, 2026-09-10:
   *"play for and rest for though I absolutely can. that's the featheriest timing
   trick I can think of"*.

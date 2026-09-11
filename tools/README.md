@@ -722,6 +722,19 @@ nothing written.
 - **Trap:** `jsfx_run` finds a `<JS_SER>` inside the `<JS>` block as readily as
   after it, so a misplaced blob passes every render check. Look at the file.
 
+## Rhythm Track's sixteen targets and Drift movement — 2026-09-11
+
+`docs/layouts/rhythm-track-r24-20260911.md`. Drift movement inserted at 36.
+
+- **`rhythm_r24_migrate_20260911.py`** — the bridge copy's line (36-39 to 37-40,
+  selectors 1 to 2), and Tensor's two first-release lines by name with a new 2500016
+  blob. Snapshot in, live out.
+- **`rhythm_r24_verify_20260911.py`** — the bridge old against new; synthetic saves in
+  four old formats; each new target; Drift movement; a bar edit waiting for the
+  downbeat, against the old build that did not; Tensor's two against e09eec7.
+- **Trap met:** a 1 s sine read on 0.5 s beats or 2 s bars sits on its zero
+  crossings, so "drift changes nothing" was the test. Use a period that is not whole.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in

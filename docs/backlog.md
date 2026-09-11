@@ -45,6 +45,7 @@ name-matched. The earlier table here named three plugins that never needed it.
 | `womb` | heart rate + S1-S2 gap per beat; segments + Breaths/min per breath |
 | `heartbeat gen` | heart rate + S1-S2 gap, per beat |
 | `melody_phase` | V1-V8 Note duration on that voice's note; Attack/Release on any note |
+| `rhythm-track` | none by default (since 2026-09-11); any target per beat, Beats per bar per bar |
 
 **BUBBLER AND DAPPLE: this entry was STALE, corrected 2026-09-09.** It said they
 were built, reverted, and must not be rebuilt. The revert did happen — the tell
@@ -57,7 +58,8 @@ target`, everything continuous to `On a clock`.
 
 **Checked and CLEARED — do not "fix" these.** Tremolo, Shepard Scale, Shepard
 Tone, Sweep Dwell, Sweeping Filter, Polyrhythm v3, Veil, Stereo Phaser, Morpher,
-Passage, Resonance Bank, Rhythm Track. Their
+Passage, Resonance Bank. (Rhythm Track left this list 2026-09-11: its clicks now
+read their targets as they fire, so it has the switch.) Their
 controls feed a shape or a threshold recomputed every sample, so the wander is
 expressed rather than sampled. The first three were on the old list
 wrongly; Polyrhythm v1 is out by the standing decision to leave it.

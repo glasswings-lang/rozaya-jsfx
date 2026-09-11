@@ -102,6 +102,8 @@ The tempo of the beat track in beats per minute. Range matches Shepard Scale's B
 **Beats per bar** `1-20, default 4`
 The number of beats in each bar. Beat index 0 is the strong (accented) beat; all others are weak beats. With a value of 1, every beat is a strong beat.
 
+**A new bar length waits for the next downbeat** (2026-09-11), whether it comes from Drift, Ramp or your own hand, so a bar always finishes the way it started. Drift and Ramp round it to whole beats. Rozaya: *"Beats per bar belongs on there too."*
+
 **Swing amount** `-1.0–+1.0, default 0`
 Applies a swing feel to the beat by offsetting the timing of alternating beats. Positive values push even-numbered beats later (forward swing — the common jazz feel). Negative values push them earlier (reverse swing). The offset is applied as a fraction of one third of the beat duration, consistent with triplet-based swing. At 0 the rhythm is straight.
 
@@ -160,7 +162,7 @@ How long the strong beat tick rings before fading to silence. Longer values prod
 **Weak beat decay (seconds)** `0.001-1.0 sec, default 0.02`
 How long the weak beat tick rings. Typically set shorter than the strong beat.
 
-> **Note:** Tick sounds are pre-rendered into buffers whenever any parameter changes, not recalculated per-sample. Changes take effect immediately on the next beat trigger.
+> **Note:** Each click is built at the moment it fires, from wherever Drift and Ramp have got to (2026-09-11). A click is whole: it cannot change halfway through, and the next one can be different. If nothing has changed since the last click of that kind, the stored one is played again. Until 2026-09-11 clicks were built whenever a slider moved, which is why Drift could not reach them.
 
 ---
 
@@ -232,9 +234,11 @@ The holds come **out of** the duration rather than extending it — the advancin
 steps are made proportionally faster — so Ramp duration goes on meaning "you
 arrive in about this long" however you set the staircase.
 
-In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches **both** targets — Tempo and Swing amount — matching Drift's target set. Both targets ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
+In-plugin one-time morph over time, without automation envelopes. Ramp is nested-selector (same shape as Drift) and reaches the same **sixteen** targets. All ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Ramp target (slider 17)** `Tempo / Swing amount, default Tempo`
+**Ramp target (slider 23)** `Tempo / Beats per bar / Swing amount / Strong pitch / Weak pitch / Strong fine tune / Weak fine tune / Tuning reference / Tone resonance / Strong volume / Weak volume / Strong decay / Weak decay / Pan spread / Play for / Rest for, default Tempo`
+
+Sixteen since 2026-09-11, in the order of the controls they reach; it was Tempo and Swing amount. A pitch moves in that beat's Pitch mode, a fine tune in its Fine tune unit, the reference in Hz, a decay in seconds, and Beats per bar, Play for and Rest for in beats. Volumes and Pan spread stay within 0-1, Tone resonance within 0.5-8. Pitch, tone, volume, decay and Pan spread are read when a click fires.
 Picks which target the `by` amount applies to. Switching the selector saves slider 18 into the old target's memory slot, then loads the new target's stored `by`. This selector sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
 **Ramp by (slider 18)** `-300 to +300, step 0.1, default 0` (units match the selected target)
@@ -285,15 +289,15 @@ than the last, so `1.75` cycles through four different park points before
 repeating and `1.2` through five. Setting only `Drift down` wastes half of them,
 because every park on the positive half lands at no change.
 
-Slow organic wander applied independently to Tempo or Swing amount. Each target can have its own drift configuration; both drift in parallel. The selector chooses which target's drift you're currently editing — the other keeps running with its last-saved configuration.
+Slow organic wander applied independently to any of the sixteen targets listed under Ramp target. Each target has its own drift configuration; all drift in parallel. The selector chooses which target's drift you're currently editing — the other keeps running with its last-saved configuration.
 
 Same pattern as Womb v3's drift and the matching block in Heartbeat / Breath Generator. Switching the **Drift target** selector saves the current sliders 23-26 into the old target's memory slot, then loads the new target's saved values. Both configurations persist across project save/load.
 
 For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (beats), and you express the timescale you want with the period value.
 
-Note: as of v2.14 both Drift and Ramp reach the same 2 targets (Tempo, Swing amount). Wandering (or ramping) Swing while the tempo stays put is a useful musical effect on its own — it loosens the groove cycle-to-cycle without changing the beat clock.
+Wandering (or ramping) Swing while the tempo stays put is a useful musical effect on its own — it loosens the groove cycle-to-cycle without changing the beat clock.
 
-**Drift target (slider 22)** `Tempo / Swing amount, default Tempo`
+**Drift target (slider 31)** — the same sixteen as Ramp target, default Tempo.
 Picks which target's drift configuration sliders 23-26 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount (slider 23)** `0.0–50.0, default 0` (units match target)
@@ -305,7 +309,9 @@ How far below the baseline the drift wanders at its trough. Independent from Up 
 **Drift period (slider 25, beats)** `0–1000, default 8, 0 = off`
 How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
-**Drift shape (slider 26)** `Sine / Triangle / Random, default Sine`
+**Drift movement (slider 36)** `With the target / On a clock, default On a clock`, per target. Added 2026-09-11, inserted beside the period, not appended; Rozaya: *"it should get the switch."* **On a clock** draws the whole wave continuously, and each click catches it wherever it is; it is what Tempo and Swing always did. **With the target** moves the drift one whole step per beat, heard or silent, so a period of 8 is eight beats; for Beats per bar it is one step per bar. In Seconds or Beats the wave runs in that unit.
+
+**Drift shape (slider 37)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Transport behavior (v2.9)
@@ -321,7 +327,7 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 ## Usage Notes
 
 - **Only one tick plays at a time.** If a beat fires before the previous tick finishes decaying, the previous tick is cut off immediately. At fast tempos with long decay settings, ticks will be truncated — reduce decay times accordingly.
-- **All tick parameters trigger a re-render.** Moving any slider recalculates the full tick buffer for both strong and weak beats. This is instantaneous but means the sound updates on the next beat rather than mid-tick.
+- **A click is rebuilt only when something about it has changed**, at the moment it fires. The sound updates on the next click of that kind, never mid-click.
 - **Swing is triplet-based.** The maximum swing offset is one third of a beat duration. At ±1.0 the affected beats are shifted by a full triplet subdivision.
 - **Pan positions are fixed per beat index within the bar.** Changing Beats per bar will recalculate all pan positions. Pan spread scales all positions uniformly.
 

@@ -49,9 +49,9 @@ Missing lists are from the audit reads, not individually re-checked.
   carried over from April (`docs/layouts/breath-gen-r24-20260911.md`).
 - **heartbeat gen** — DONE 2026-09-11: 18 targets in control order, Play/Rest
   included (`docs/layouts/heartbeat-r24-20260911.md`).
-- **rhythm-track** — 2 of 16. Missing 10: Strong/Weak pitch and fine tune, Tuning
-  reference, Tone resonance, Strong/Weak volume, Strong/Weak decay, Pan spread.
-  The tick is pre-rendered in `@slider`, so these need a re-render path.
+- **rhythm-track** — DONE 2026-09-11: 16 targets, Beats per bar and Play/Rest
+  included; clicks built as they fire; Drift movement added
+  (`docs/layouts/rhythm-track-r24-20260911.md`).
 - **veil** — DONE 2026-09-11: Output, 5 targets (`docs/layouts/r24-small-batch-20260911.md`).
 - **polyrhythm_phase_v3** — DONE 2026-09-10: 88 targets, each per-voice control
   with an "(all voices)" entry that copies into eight. Phase Offset is not one.

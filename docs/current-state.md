@@ -100,7 +100,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   migrated and took every step since April. `docs/layouts/sweeping-filter-r22-r24.md`.
 - **Sweep Dwell, 2026-09-10:** Rozaya's Segment selector, 45 controls, 16 targets; surges.RPP
   bit-identical. Tensor's two point at a missing path, skipped. `docs/layouts/sweep-dwell.md`.
-- **R24, 2026-09-11:** Veil, Bubbler, Dapple, Tremolo, Breath Gen, Heartbeat have every target in control order; Tensor's copies, a template, `scattered` carried over. `docs/layouts/*-20260911.md`.
+- **R24, 2026-09-11:** Veil, Bubbler, Dapple, Tremolo, Breath Gen, Heartbeat, Rhythm Track (+ Drift movement, Beats per bar, clicks built as they fire) have every target in control order; Tensor's copies, a template, `scattered` carried over. `docs/layouts/*-20260911.md`.
 - **Resonance Bank, 2026-09-11:** pitch set and width units per band, Tuning reference, 10 targets.
   `wind` bit-identical. `docs/layouts/resonance-bank-r22-r24.md`.
 - **Tuning reference measured working in all 14**; Heartbeat and Womb no longer blow up above ~5 kHz.
