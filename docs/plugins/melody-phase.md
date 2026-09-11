@@ -102,6 +102,20 @@ proportions are untouched; the melody just runs faster or slower.
 > the tempo-scaled rate — a delay of 8 stays 8 cycles when you move the tempo,
 > rather than drifting against the notes.
 
+**Starting partway into the song lands on the right note (fixed 2026-09-11).**
+When synced, pressing play at bar 40 — or jumping there while playing — starts on
+the voice that belongs at bar 40, not on voice 1. The note restarts from its
+attack rather than joining halfway. This was meant to work before, but the
+placement was undone two audio buffers after every play press. The transport
+stopped is unchanged: Melody sounds straight away, exactly as before.
+
+One thing the fix corrected along the way: with **Play for** / **Rest for** set, a
+synced sequence played from the top used to fit one note fewer into its first play
+period (Play for 8 gave 7). It now gives 8, the same as an unsynced sequence at the
+same speed. In the library this changes the first rest of instance 9 in
+`simple-sequence` and `simple-sequence-check`; everything else played from the top
+is bit-identical.
+
 
 **Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine / Square / Pulse`
 Same set as Polyrhythm Phase — see that plugin's Waveform section for descriptions, including the back-compat note on the Golden / Phi family. Note that Half-sine sounds an octave higher than the others at the same note + Center Octave setting (full-wave-rectified spectrum has no fundamental).

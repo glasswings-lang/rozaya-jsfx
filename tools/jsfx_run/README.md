@@ -130,6 +130,10 @@ identical and a comparison means something.
   locking.** Now: `--transport` advances the beat position every block;
   `--tempo BPM`, `--beat-start B` and `--tempo-at S=BPM` set and change it (each
   implies `--transport`). Without any of them runs reproduce byte-for-byte.
+  `--stopped` holds a stopped transport (play_state 0, position still) -- the
+  check that a fix does not take away hearing a plugin with the transport stopped.
+  `--seek-at S=B` jumps the position while playing. REAPER also re-runs `@init` on
+  a locate; the runner does not, so a seek here tests seek DETECTION only.
   `tools/sdf_transport_test.py` is the worked example: a render starting mid-cycle
   must line up with one starting at beat 0, and the unlocked control must not.
 - **REAPER's restore ORDER.** `ysfx_load_state` applies sliders and serialized

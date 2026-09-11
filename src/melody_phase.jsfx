@@ -1897,7 +1897,20 @@ seq_started == 0 && cfg_ready && slider_ran && cfg_stable >= CFG_HOLD_BLOCKS ? (
 // On a mid-play seek the landed note retriggers from the start of its envelope
 // rather than partway through. You land on the RIGHT note; it just begins
 // again. Documented rather than hidden.
-seq_place_pending ? (
+// WAIT FOR THE SAME SETTLE HOLD AS THE FIRST NOTE (2026-09-11). Placement used to
+// run on the very first sample, while the first-note branch above was still held
+// by cfg_stable for CFG_HOLD_BLOCKS blocks. Two blocks later that branch fired,
+// set the sequence back to voice 1 and, finding no placement pending any more,
+// triggered it -- so the song position was worked out and then thrown away, on
+// every play press. Measured with tools/lock_test.py: starting at beat 2 with
+// three voices played voice 1, not voice 3.
+//
+// This does NOT wait for the transport. The hold is the one Melody already has,
+// stopped or playing, and placement is only ever flagged while the transport
+// moves, so with the transport stopped nothing here changes and Melody sounds
+// immediately -- the reverted dcfeead fix held the SEQUENCER until play, which is
+// the shape Rozaya ruled out.
+seq_place_pending && cfg_ready && slider_ran && cfg_stable >= CFG_HOLD_BLOCKS ? (
   seq_place_pending = 0;
   // Every direction mode is placeable: the walk below handles bounce (period =
   // there and back) and Loop=Off (walk until it ends) directly, so neither is

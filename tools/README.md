@@ -692,11 +692,22 @@ restarts the landed note by design and one voice hides everything.
 2026-09-11: Sweeping Filter, Tremolo, Stereo Phaser, Rhythm Track and Shepard Scale
 lock. **Melody does not**: its placement runs in the first sample and is
 overwritten two blocks later when the settle hold releases the first note to
-voice 1. A scratch copy with the placement gated on the same hold locks exactly
-(0% wrong notes; control 100%). NOT fixed -- put to Rozaya 2026-09-11. This is a
-different symptom from `docs/open-bugs.md` entry 1 (instances scattering on project
-open with the transport stopped), which is CLOSED by Rozaya's decision; its burned
-theory 1 was rejected as a cause of THAT scatter, and nothing here reopens it.
+voice 1. **Fixed 2026-09-11 at Rozaya's request**, with the condition that it must
+not force playing the project to hear anything (the reverted `dcfeead` did): the
+placement now waits for the same settle hold, and never touches the stopped
+transport. This is a different symptom from `docs/open-bugs.md` entry 1 (instances
+scattering on project open with the transport stopped), which stays CLOSED by
+Rozaya's decision; nothing here reopens it.
+
+## melody_placement_test.py — the Melody placement fix, four checks
+
+Old build (8ad5da1) against new. 1: transport STOPPED, bit-identical and audible.
+2: all 27 saved beat-mode instances played from the top, 60 s -- 25 bit-identical,
+and the 2 that differ (instance 9 of `simple-sequence` and `-check`, Play for 8 /
+Rest for 8) must equal the same instance in a free-running mode, which never places:
+the old build fitted 7 notes into the first play period, the new fits 8. 3: song
+starting at beat 2 lands on voice 3. 4: a seek while playing lands right (the runner
+does not re-run `@init` on a locate, so 3 is the check for REAPER's play path).
 
 ## Earlier 2026-09-10 migrations, indexed late
 

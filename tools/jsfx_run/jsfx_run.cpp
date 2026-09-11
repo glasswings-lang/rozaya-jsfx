@@ -40,6 +40,10 @@ static void usage()
         "                      without --tempo / --beat-start / --tempo-at) ysfx's\n"
         "                      defaults apply: 120 BPM, play_state 1, beat position\n"
         "                      stuck at 0 forever -- which REAPER never does.\n"
+        "  --stopped           a STOPPED transport: play_state 0, position held still\n"
+        "                      (implies --transport)\n"
+        "  --seek-at S=B       while playing, jump the beat position to B at S seconds,\n"
+        "                      at the next block boundary; repeatable\n"
         "  --tempo BPM         project tempo, default 120 (implies --transport)\n"
         "  --beat-start B      beat position at the first sample (implies --transport)\n"
         "  --tempo-at S=BPM    change tempo at S seconds, at the next block boundary;\n"
@@ -233,6 +237,9 @@ int main(int argc, char **argv)
     bool transport = false;
     double tempo_bpm = 120.0, beat_start = 0.0;
     std::vector<std::pair<double, double>> tempo_changes;   // (seconds, bpm)
+    bool stopped = false;
+    std::vector<std::pair<double, double>> seeks;           // (seconds, beat)
+    size_t seek_i = 0;
 
     for (int i = 2; i < argc; ++i) {
         std::string a = argv[i];
@@ -267,6 +274,14 @@ int main(int argc, char **argv)
         }
         else if (a == "--stage") stages.push_back({});
         else if (a == "--transport") transport = true;
+        else if (a == "--stopped") { stopped = true; transport = true; }
+        else if (a == "--seek-at") {
+            const char *v = next();
+            const char *eq = std::strchr(v, '=');
+            if (!eq) { std::fprintf(stderr, "--seek-at wants S=BEAT\n"); return 2; }
+            seeks.push_back({ std::strtod(v, nullptr), std::strtod(eq + 1, nullptr) });
+            transport = true;
+        }
         else if (a == "--tempo") { tempo_bpm = std::strtod(next(), nullptr); transport = true; }
         else if (a == "--beat-start") { beat_start = std::strtod(next(), nullptr); transport = true; }
         else if (a == "--tempo-at") {
@@ -311,7 +326,7 @@ int main(int argc, char **argv)
     auto push_time = [&](double now_s) {
         ysfx_time_info_t ti{};
         ti.tempo = tempo_bpm;
-        ti.playback_state = ysfx_playback_playing;
+        ti.playback_state = stopped ? ysfx_playback_stopped : ysfx_playback_playing;
         ti.time_position = now_s;
         ti.beat_position = beat_pos;
         ti.time_signature[0] = 4;
@@ -430,13 +445,19 @@ int main(int argc, char **argv)
         if (transport) {
             for (const auto &tc : tempo_changes)
                 if (tc.first <= done / sr) tempo_bpm = tc.second;
+            // A seek is a jump in position at a block boundary, as REAPER does it.
+            // (REAPER also re-runs @init on a locate; this does not, so a plugin
+            // that relies on that re-run is tested on its seek detection alone.)
+            while (seek_i < seeks.size() && seeks[seek_i].first <= done / sr)
+                beat_pos = seeks[seek_i++].second;
             push_time(done / sr);
         }
 
         ysfx_process_float(fx, ins, outs, 2, 2, n);
 
         // The block played at the tempo it was told; advance the position by it.
-        if (transport) beat_pos += n * tempo_bpm / 60.0 / sr;
+        // Stopped, the position does not move -- which is exactly what REAPER does.
+        if (transport && !stopped) beat_pos += n * tempo_bpm / 60.0 / sr;
 
         // A hand-moved control lands after the engine is running, never during
         // the load. Each --stage group lands one block after the last, which
