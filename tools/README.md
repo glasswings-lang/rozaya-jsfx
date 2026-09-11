@@ -582,6 +582,24 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   Tensor's files share names with Rozaya's. 144 of 144 identical; the float32
   rounding itself measured at most 1.5e-08.
 
+## Solo in every plugin with voices or bands — 2026-09-10
+
+`docs/layouts/solo-propagation-20260910.md`. Three slider-line migrations, each
+applying that authored table to the files it is given:
+
+- **`melody_solo_migrate_20260910.py`** — 105 sliders to 113; a Vn Solo after each
+  Vn Active. 73 instances.
+- **`shepard_tone_solo_migrate_20260910.py`** — 89 to 97, the same shape. Reads
+  Tensor's hand-written lines (extra dashes, no marker) when the ids are
+  unambiguous. 10 instances.
+- **`resonance_bank_solo_migrate_20260910.py`** — 27 to 28; Band solo at 10. 1
+  instance; the plugin reads the old blob with nothing soloed.
+
+**None of the three is safe to re-run over a short line.** "Already done" means a
+value stored above the old count, and a line an older build saved at 64 values
+has none even after migrating. A second run shifted Tensor's `shepard.RPP` twice;
+it was restored from the snapshot and migrated once. To redo, restore first.
+
 ## doc_budget.py
 
 Checks the docs a session actually reads against a line budget, and exits 1 if

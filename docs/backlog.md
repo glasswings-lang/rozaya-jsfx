@@ -173,8 +173,8 @@ waveforms append to the end of the enum, so slots 0–11 keep their meaning and 
 changes. Note this also explains a stale-docs finding already in the plan — both
 Polyrhythm pages document 12 against a source with 14.
 
-**2. Solo exists in two plugins out of six that need it.** This is the biggest of the
-three.
+**2. Solo exists in two plugins out of six that need it.** **DONE 2026-09-10** in all
+six — `docs/layouts/solo-propagation-20260910.md`. Solo overrides Active everywhere.
 
 | plugin | things to audition | Solo |
 |---|---|---|

@@ -62,6 +62,28 @@ Newest entries are the most likely to still be accurate.
 
 ---
 
+## 2026-09-10 — Solo in every plugin with voices or bands
+
+Rozaya: *"The solow one worries me"*. The two plugins that had Solo disagreed about
+a switched-off voice — the Morpher played it, Polyrhythm gave silence — and the
+Morpher's reason won: *"Then I say we do it your suggested way, that's what I
+would have asked for anyway."* Melody raised the one real question, because a
+switched-off voice there is not part of the sequence at all. Rozaya, before being
+asked twice: *"Sollowing things that are switched off should bring them on anyway,
+that's the point of sollow."* So a soloed voice joins the pattern while soloed.
+
+**Two of my mistakes, both caught by checking rather than trusting.** A pitch test
+that counted zero crossings "failed" on two notes playing together; the plugin was
+right and the measure was wrong, so it became a spectrum check. And a migration
+run twice shifted Tensor's `shepard.RPP` twice, because "already done" was judged
+by a value above the old slider count, which a line saved at 64 values never has.
+Restored from the snapshot, migrated once, all 8 identical. The scripts now say
+plainly that they must not be re-run.
+
+**Silent matching silent is not evidence.** Tensor's two small Shepard files render
+silence in both builds (no voice switched on), so they were checked by reading every
+control back by name instead: 89 of 89 equal.
+
 ## 2026-09-10 — Seconds and Beats finally mean something on a stepped drift
 
 Rozaya remembered *"a list of stuff that looks fine, but that didn't have

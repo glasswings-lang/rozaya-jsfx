@@ -268,8 +268,13 @@ on again.
 
 **Soloing does not change the level of what is left.** The normaliser counts the
 voices that will actually sound, so soloing one of eight keeps it at the volume
-it had rather than dropping it by 18 dB. Soloing an inactive voice gives
-silence — Active still wins.
+it had rather than dropping it by 18 dB.
+
+**A soloed voice is heard even when its Active is off** *(changed 2026-09-10, and
+the control's name says so)*. You solo something in order to hear it. Until then
+Active won and soloing a switched-off voice gave silence; no saved project had a
+voice soloed, so nothing saved changed. The same rule holds in every plugin in
+the suite with a Solo.
 
 ---
 

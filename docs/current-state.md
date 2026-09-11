@@ -116,6 +116,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   (`docs/backlog.md` has the table).
 - Seconds/Beats on a `With the target` drift, 2026-09-10: Breath Gen, Womb,
   Heartbeat, Melody, Bubbler, Dapple. No saved instance uses it.
+- **Solo, 2026-09-10:** new in Melody, Shepard Tone, Resonance Bank; overrides
+  Active everywhere, Polyrhythm included. Migrated 84 instances, all identical.
 - The 2026-09-06 drift/ramp sweep, `N per beat`, Tremolo's Start delay, the ranges.
 - **Polyrhythm v3's new controls.** Per-voice Attack/Release MEASURED 2026-09-10;
   Rozaya: *"ear-tested by somebody in here and passing, per-voice"*, no written

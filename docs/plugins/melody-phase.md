@@ -257,6 +257,17 @@ Per-voice level.
 **Vn Active** `Off / On`
 Off = this voice is skipped in the sequence entirely (not just silent — the sequence pretends it doesn't exist). On = voice participates per the Sequence Length rule above.
 
+**Vn Solo (heard even when Active is off)** `Off / On, default Off` *(new 2026-09-10)*
+When any voice is soloed, only soloed voices make sound. The others **keep their
+turns in silence**, so the timing of the pattern does not move. Solo more than one
+to hear those together.
+
+A soloed voice is heard **even if its Active is off** — Rozaya: *"Sollowing things
+that are switched off should bring them on anyway, that's the point of sollow."*
+A switched-off voice is not part of the sequence, so soloing one **joins it to the
+pattern while it is soloed**: it takes its own turn, and the loop is that much
+longer until you turn Solo off again. A voice's level is untouched by soloing.
+
 ### Start Delay
 
 **Start Delay** `0–1000, default 0`

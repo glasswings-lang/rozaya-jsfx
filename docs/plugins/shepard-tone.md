@@ -138,7 +138,7 @@ in both Polyrhythms and was fixed the same day.
 
 ### Per-Voice Controls (Voices 1-8)
 
-Each voice has seven controls: Note, Fine tune, Direction, Rate, Gain, Pan, Active. Voice 1 is active by default; Voices 2-8 are inactive.
+Each voice has eight controls: Note, Fine tune, Direction, Rate, Gain, Pan, Active, Solo. Voice 1 is active by default; Voices 2-8 are inactive.
 
 **Vn Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B`
 The pitch class of this voice, relative to Root Note. Changing it while playing moves the voice straight to the new note.
@@ -160,6 +160,13 @@ Stereo position of this voice. Negative values place it left, positive values ri
 
 **Vn Active** `Off / On`
 Enables or disables the voice. Inactive voices contribute nothing to the output and are excluded from normalization.
+
+**Vn Solo (heard even when Active is off)** `Off / On, default Off` *(new 2026-09-10)*
+When any voice is soloed, only soloed voices sound; solo more than one to hear
+those together. A soloed voice is heard **even if its Active is off**, because you
+solo something in order to hear it, and its controls stay visible while it is
+soloed. The level count follows what actually sounds, so soloing one voice of
+several keeps it at the volume it had.
 
 ### Start Delay
 

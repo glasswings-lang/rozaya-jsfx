@@ -102,6 +102,13 @@ Stereo balance for this band. At 0 the input's stereo image passes through the b
 **Order (parallel mode only)** `1 / 2 / 4 / 8, default 1`
 Cascade depth controlling rolloff steepness. See Signal Architecture. Ignored in Serial peaking EQ mode (the biquad has its own fixed shape).
 
+**Band solo** `Off / Solo, default Off` *(new 2026-09-10)*
+Audition this band alone. When any band is soloed, bands that are not soloed are
+skipped exactly as if they were at -60 dB — in Parallel mode they add nothing, in
+Serial mode they leave the sound untouched. Solo more than one to hear those
+together; each band remembers its own solo. A soloed band **at -60 dB still makes
+nothing**, because -60 is a level, not a switch — the same rule as the Morpher.
+
 ### Per-band drift sliders (nested within band selector)
 
 The Drift target slider picks which of the band's parameters the drift up/down/period/mode/shape sliders are currently editing. Each band remembers its last selected drift target across band selector changes.

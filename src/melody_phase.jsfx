@@ -85,85 +85,93 @@ slider31:1<0.001,1000,0.001>V1 Next voice in (cycles)
 slider32:1<0,1000,0.001>V1 Note duration (cycles; 0 = silent)
 slider33:-6<-60,6,0.01>V1 Gain dB
 slider34:1<0,1,1{Off,On}>V1 Active
-slider35:62<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V2 Note
-slider36:62<0,20000,0.001>V2 Pitch (Hz / semitones / cents)
-slider37:0<-1000,1000,0.001>V2 Fine tune (in fine tune units)
-slider38:1<0.001,1000,0.001>V2 Next voice in (cycles)
-slider39:1<0,1000,0.001>V2 Note duration (cycles; 0 = silent)
-slider40:-6<-60,6,0.01>V2 Gain dB
-slider41:0<0,1,1{Off,On}>V2 Active
-slider42:64<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V3 Note
-slider43:64<0,20000,0.001>V3 Pitch (Hz / semitones / cents)
-slider44:0<-1000,1000,0.001>V3 Fine tune (in fine tune units)
-slider45:1<0.001,1000,0.001>V3 Next voice in (cycles)
-slider46:1<0,1000,0.001>V3 Note duration (cycles; 0 = silent)
-slider47:-6<-60,6,0.01>V3 Gain dB
-slider48:0<0,1,1{Off,On}>V3 Active
-slider49:65<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V4 Note
-slider50:65<0,20000,0.001>V4 Pitch (Hz / semitones / cents)
-slider51:0<-1000,1000,0.001>V4 Fine tune (in fine tune units)
-slider52:1<0.001,1000,0.001>V4 Next voice in (cycles)
-slider53:1<0,1000,0.001>V4 Note duration (cycles; 0 = silent)
-slider54:-6<-60,6,0.01>V4 Gain dB
-slider55:0<0,1,1{Off,On}>V4 Active
-slider56:67<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V5 Note
-slider57:67<0,20000,0.001>V5 Pitch (Hz / semitones / cents)
-slider58:0<-1000,1000,0.001>V5 Fine tune (in fine tune units)
-slider59:1<0.001,1000,0.001>V5 Next voice in (cycles)
-slider60:1<0,1000,0.001>V5 Note duration (cycles; 0 = silent)
-slider61:-6<-60,6,0.01>V5 Gain dB
-slider62:0<0,1,1{Off,On}>V5 Active
-slider63:69<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V6 Note
-slider64:69<0,20000,0.001>V6 Pitch (Hz / semitones / cents)
-slider65:0<-1000,1000,0.001>V6 Fine tune (in fine tune units)
-slider66:1<0.001,1000,0.001>V6 Next voice in (cycles)
-slider67:1<0,1000,0.001>V6 Note duration (cycles; 0 = silent)
-slider68:-6<-60,6,0.01>V6 Gain dB
-slider69:0<0,1,1{Off,On}>V6 Active
-slider70:71<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V7 Note
-slider71:71<0,20000,0.001>V7 Pitch (Hz / semitones / cents)
-slider72:0<-1000,1000,0.001>V7 Fine tune (in fine tune units)
-slider73:1<0.001,1000,0.001>V7 Next voice in (cycles)
-slider74:1<0,1000,0.001>V7 Note duration (cycles; 0 = silent)
-slider75:-6<-60,6,0.01>V7 Gain dB
-slider76:0<0,1,1{Off,On}>V7 Active
-slider77:72<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V8 Note
-slider78:72<0,20000,0.001>V8 Pitch (Hz / semitones / cents)
-slider79:0<-1000,1000,0.001>V8 Fine tune (in fine tune units)
-slider80:1<0.001,1000,0.001>V8 Next voice in (cycles)
-slider81:1<0,1000,0.001>V8 Note duration (cycles; 0 = silent)
-slider82:-6<-60,6,0.01>V8 Gain dB
-slider83:0<0,1,1{Off,On}>V8 Active
+slider35:0<0,1,1{Off,On}>V1 Solo (heard even when Active is off)
+slider36:62<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V2 Note
+slider37:62<0,20000,0.001>V2 Pitch (Hz / semitones / cents)
+slider38:0<-1000,1000,0.001>V2 Fine tune (in fine tune units)
+slider39:1<0.001,1000,0.001>V2 Next voice in (cycles)
+slider40:1<0,1000,0.001>V2 Note duration (cycles; 0 = silent)
+slider41:-6<-60,6,0.01>V2 Gain dB
+slider42:0<0,1,1{Off,On}>V2 Active
+slider43:0<0,1,1{Off,On}>V2 Solo (heard even when Active is off)
+slider44:64<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V3 Note
+slider45:64<0,20000,0.001>V3 Pitch (Hz / semitones / cents)
+slider46:0<-1000,1000,0.001>V3 Fine tune (in fine tune units)
+slider47:1<0.001,1000,0.001>V3 Next voice in (cycles)
+slider48:1<0,1000,0.001>V3 Note duration (cycles; 0 = silent)
+slider49:-6<-60,6,0.01>V3 Gain dB
+slider50:0<0,1,1{Off,On}>V3 Active
+slider51:0<0,1,1{Off,On}>V3 Solo (heard even when Active is off)
+slider52:65<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V4 Note
+slider53:65<0,20000,0.001>V4 Pitch (Hz / semitones / cents)
+slider54:0<-1000,1000,0.001>V4 Fine tune (in fine tune units)
+slider55:1<0.001,1000,0.001>V4 Next voice in (cycles)
+slider56:1<0,1000,0.001>V4 Note duration (cycles; 0 = silent)
+slider57:-6<-60,6,0.01>V4 Gain dB
+slider58:0<0,1,1{Off,On}>V4 Active
+slider59:0<0,1,1{Off,On}>V4 Solo (heard even when Active is off)
+slider60:67<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V5 Note
+slider61:67<0,20000,0.001>V5 Pitch (Hz / semitones / cents)
+slider62:0<-1000,1000,0.001>V5 Fine tune (in fine tune units)
+slider63:1<0.001,1000,0.001>V5 Next voice in (cycles)
+slider64:1<0,1000,0.001>V5 Note duration (cycles; 0 = silent)
+slider65:-6<-60,6,0.01>V5 Gain dB
+slider66:0<0,1,1{Off,On}>V5 Active
+slider67:0<0,1,1{Off,On}>V5 Solo (heard even when Active is off)
+slider68:69<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V6 Note
+slider69:69<0,20000,0.001>V6 Pitch (Hz / semitones / cents)
+slider70:0<-1000,1000,0.001>V6 Fine tune (in fine tune units)
+slider71:1<0.001,1000,0.001>V6 Next voice in (cycles)
+slider72:1<0,1000,0.001>V6 Note duration (cycles; 0 = silent)
+slider73:-6<-60,6,0.01>V6 Gain dB
+slider74:0<0,1,1{Off,On}>V6 Active
+slider75:0<0,1,1{Off,On}>V6 Solo (heard even when Active is off)
+slider76:71<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V7 Note
+slider77:71<0,20000,0.001>V7 Pitch (Hz / semitones / cents)
+slider78:0<-1000,1000,0.001>V7 Fine tune (in fine tune units)
+slider79:1<0.001,1000,0.001>V7 Next voice in (cycles)
+slider80:1<0,1000,0.001>V7 Note duration (cycles; 0 = silent)
+slider81:-6<-60,6,0.01>V7 Gain dB
+slider82:0<0,1,1{Off,On}>V7 Active
+slider83:0<0,1,1{Off,On}>V7 Solo (heard even when Active is off)
+slider84:72<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V8 Note
+slider85:72<0,20000,0.001>V8 Pitch (Hz / semitones / cents)
+slider86:0<-1000,1000,0.001>V8 Fine tune (in fine tune units)
+slider87:1<0.001,1000,0.001>V8 Next voice in (cycles)
+slider88:1<0,1000,0.001>V8 Note duration (cycles; 0 = silent)
+slider89:-6<-60,6,0.01>V8 Gain dB
+slider90:0<0,1,1{Off,On}>V8 Active
+slider91:0<0,1,1{Off,On}>V8 Solo (heard even when Active is off)
 
 // --- Output ---
-slider84:-6<-60,0,0.01>Master gain (dB)
+slider92:-6<-60,0,0.01>Master gain (dB)
 
 // --- Transport ---
-slider85:0<0,1000,0.001>Start delay (in rate mode units)
-slider86:0<0,1000,1>Play for (steps)
-slider87:0<0,1000,1>Rest for (steps)
-slider88:0<0,1,1{Walk through,Freeze in place}>Rest mode
+slider93:0<0,1000,0.001>Start delay (in rate mode units)
+slider94:0<0,1000,1>Play for (steps)
+slider95:0<0,1000,1>Rest for (steps)
+slider96:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // --- Drift: 55 targets in the order of the controls they reach ---
-slider89:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment,V1 Pitch,V1 Fine tune,V1 Next voice in,V1 Note duration,V1 Gain,V2 Pitch,V2 Fine tune,V2 Next voice in,V2 Note duration,V2 Gain,V3 Pitch,V3 Fine tune,V3 Next voice in,V3 Note duration,V3 Gain,V4 Pitch,V4 Fine tune,V4 Next voice in,V4 Note duration,V4 Gain,V5 Pitch,V5 Fine tune,V5 Next voice in,V5 Note duration,V5 Gain,V6 Pitch,V6 Fine tune,V6 Next voice in,V6 Note duration,V6 Gain,V7 Pitch,V7 Fine tune,V7 Next voice in,V7 Note duration,V7 Gain,V8 Pitch,V8 Fine tune,V8 Next voice in,V8 Note duration,V8 Gain,Master gain,Play for,Rest for}>Drift target
-slider90:0<0,1000,0.01>Drift up amount (units match target)
-slider91:0<0,1000,0.01>Drift down amount (units match target)
-slider92:8<0,1000,1>Drift period (0 = off)
-slider93:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
-slider94:0<0,1,1{With the target,On a clock}>Drift movement
-slider95:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider96:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider97:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider97:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment,V1 Pitch,V1 Fine tune,V1 Next voice in,V1 Note duration,V1 Gain,V2 Pitch,V2 Fine tune,V2 Next voice in,V2 Note duration,V2 Gain,V3 Pitch,V3 Fine tune,V3 Next voice in,V3 Note duration,V3 Gain,V4 Pitch,V4 Fine tune,V4 Next voice in,V4 Note duration,V4 Gain,V5 Pitch,V5 Fine tune,V5 Next voice in,V5 Note duration,V5 Gain,V6 Pitch,V6 Fine tune,V6 Next voice in,V6 Note duration,V6 Gain,V7 Pitch,V7 Fine tune,V7 Next voice in,V7 Note duration,V7 Gain,V8 Pitch,V8 Fine tune,V8 Next voice in,V8 Note duration,V8 Gain,Master gain,Play for,Rest for}>Drift target
+slider98:0<0,1000,0.01>Drift up amount (units match target)
+slider99:0<0,1000,0.01>Drift down amount (units match target)
+slider100:8<0,1000,1>Drift period (0 = off)
+slider101:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider102:0<0,1,1{With the target,On a clock}>Drift movement
+slider103:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider104:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider105:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp: the same 55 targets ---
-slider98:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment,V1 Pitch,V1 Fine tune,V1 Next voice in,V1 Note duration,V1 Gain,V2 Pitch,V2 Fine tune,V2 Next voice in,V2 Note duration,V2 Gain,V3 Pitch,V3 Fine tune,V3 Next voice in,V3 Note duration,V3 Gain,V4 Pitch,V4 Fine tune,V4 Next voice in,V4 Note duration,V4 Gain,V5 Pitch,V5 Fine tune,V5 Next voice in,V5 Note duration,V5 Gain,V6 Pitch,V6 Fine tune,V6 Next voice in,V6 Note duration,V6 Gain,V7 Pitch,V7 Fine tune,V7 Next voice in,V7 Note duration,V7 Gain,V8 Pitch,V8 Fine tune,V8 Next voice in,V8 Note duration,V8 Gain,Master gain,Play for,Rest for}>Ramp target
-slider99:0<-1000,1000,0.001>Ramp by (units match target)
-slider100:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider101:0<0,1000,0.1>Ramp duration (in ramp time units)
-slider102:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider103:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider104:0<0,1,1{Off,On}>Ramp engage
-slider105:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider106:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment,V1 Pitch,V1 Fine tune,V1 Next voice in,V1 Note duration,V1 Gain,V2 Pitch,V2 Fine tune,V2 Next voice in,V2 Note duration,V2 Gain,V3 Pitch,V3 Fine tune,V3 Next voice in,V3 Note duration,V3 Gain,V4 Pitch,V4 Fine tune,V4 Next voice in,V4 Note duration,V4 Gain,V5 Pitch,V5 Fine tune,V5 Next voice in,V5 Note duration,V5 Gain,V6 Pitch,V6 Fine tune,V6 Next voice in,V6 Note duration,V6 Gain,V7 Pitch,V7 Fine tune,V7 Next voice in,V7 Note duration,V7 Gain,V8 Pitch,V8 Fine tune,V8 Next voice in,V8 Note duration,V8 Gain,Master gain,Play for,Rest for}>Ramp target
+slider107:0<-1000,1000,0.001>Ramp by (units match target)
+slider108:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+slider109:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider110:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider111:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider112:0<0,1,1{Off,On}>Ramp engage
+slider113:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 @init
 // Rate drift and Ramp are in BPM in EVERY mode -- "BPM is BPM". This mattered
@@ -521,6 +529,8 @@ mel_lv               = 1328;  // pitch-value mirror, per voice
 o_up = 4096; o_down = 4128; o_per = 4160; o_shape = 4192;
 o_by = 4224; o_dur = 4256; o_delay = 4288;
 o_play = 4320; o_rest = 4352; o_srplay = 4384; o_srrest = 4416; o_moves = 4448;
+// Solo, 2026-09-10 (docs/layouts/solo-propagation-20260910.md): 1 = soloed, per voice.
+v_solo = 4480;
 target_drift_moves = 3456;   // CONFIG -- 0 with the target, 1 clock
 
 // WHICH TARGETS STEP, AND WHICH FLOW.
@@ -714,7 +724,7 @@ function count_active_voices() local(n, j) (
   n = 0;
   j = 0;
   loop(8,
-    v_active[j] ? n += 1;
+    (v_active[j] || (any_solo && v_solo[j])) ? n += 1;
     j += 1;
   );
   n
@@ -730,7 +740,7 @@ function next_active_voice(start, dir) local(j, tries) (
   loop(8,
     j >= seq_length_eff ? j = 0;
     j < 0 ? j = seq_length_eff - 1;
-    v_active[j] ? ( tries = 999; ); // sentinel to break out
+    (v_active[j] || (any_solo && v_solo[j])) ? ( tries = 999; ); // sentinel to break out
     tries == 999 ? 0 : ( j += dir; tries += 1; );
   );
   tries == 999 ? j : -1
@@ -745,7 +755,7 @@ function step_in_dir_no_wrap(cur_idx, dir) local(j, found) (
   j = cur_idx + dir;
   found = -1;
   loop(8,
-    found < 0 && j >= 0 && j < seq_length_eff && v_active[j] ? found = j;
+    found < 0 && j >= 0 && j < seq_length_eff && (v_active[j] || (any_solo && v_solo[j])) ? found = j;
     found < 0 ? j += dir;
   );
   found
@@ -1020,50 +1030,50 @@ mel_ui_init && slider5 == 1 ? (
 mel_ln[0] = slider28; mel_lv[0] = slider29;
 slider_show(slider28, slider5 == 1);
 mel_ui_init && slider5 == 1 ? (
-  slider35 != mel_ln[1] ? ( slider36 = slider35; slider_automate(slider36); ) :
-  slider36 != mel_lv[1] ? ( slider35 = max(0, min(127, floor(slider36 + 0.5))); slider_automate(slider35); );
+  slider36 != mel_ln[1] ? ( slider37 = slider36; slider_automate(slider37); ) :
+  slider37 != mel_lv[1] ? ( slider36 = max(0, min(127, floor(slider37 + 0.5))); slider_automate(slider36); );
 );
-mel_ln[1] = slider35; mel_lv[1] = slider36;
-slider_show(slider35, slider5 == 1);
+mel_ln[1] = slider36; mel_lv[1] = slider37;
+slider_show(slider36, slider5 == 1);
 mel_ui_init && slider5 == 1 ? (
-  slider42 != mel_ln[2] ? ( slider43 = slider42; slider_automate(slider43); ) :
-  slider43 != mel_lv[2] ? ( slider42 = max(0, min(127, floor(slider43 + 0.5))); slider_automate(slider42); );
+  slider44 != mel_ln[2] ? ( slider45 = slider44; slider_automate(slider45); ) :
+  slider45 != mel_lv[2] ? ( slider44 = max(0, min(127, floor(slider45 + 0.5))); slider_automate(slider44); );
 );
-mel_ln[2] = slider42; mel_lv[2] = slider43;
-slider_show(slider42, slider5 == 1);
+mel_ln[2] = slider44; mel_lv[2] = slider45;
+slider_show(slider44, slider5 == 1);
 mel_ui_init && slider5 == 1 ? (
-  slider49 != mel_ln[3] ? ( slider50 = slider49; slider_automate(slider50); ) :
-  slider50 != mel_lv[3] ? ( slider49 = max(0, min(127, floor(slider50 + 0.5))); slider_automate(slider49); );
+  slider52 != mel_ln[3] ? ( slider53 = slider52; slider_automate(slider53); ) :
+  slider53 != mel_lv[3] ? ( slider52 = max(0, min(127, floor(slider53 + 0.5))); slider_automate(slider52); );
 );
-mel_ln[3] = slider49; mel_lv[3] = slider50;
-slider_show(slider49, slider5 == 1);
+mel_ln[3] = slider52; mel_lv[3] = slider53;
+slider_show(slider52, slider5 == 1);
 mel_ui_init && slider5 == 1 ? (
-  slider56 != mel_ln[4] ? ( slider57 = slider56; slider_automate(slider57); ) :
-  slider57 != mel_lv[4] ? ( slider56 = max(0, min(127, floor(slider57 + 0.5))); slider_automate(slider56); );
+  slider60 != mel_ln[4] ? ( slider61 = slider60; slider_automate(slider61); ) :
+  slider61 != mel_lv[4] ? ( slider60 = max(0, min(127, floor(slider61 + 0.5))); slider_automate(slider60); );
 );
-mel_ln[4] = slider56; mel_lv[4] = slider57;
-slider_show(slider56, slider5 == 1);
+mel_ln[4] = slider60; mel_lv[4] = slider61;
+slider_show(slider60, slider5 == 1);
 mel_ui_init && slider5 == 1 ? (
-  slider63 != mel_ln[5] ? ( slider64 = slider63; slider_automate(slider64); ) :
-  slider64 != mel_lv[5] ? ( slider63 = max(0, min(127, floor(slider64 + 0.5))); slider_automate(slider63); );
+  slider68 != mel_ln[5] ? ( slider69 = slider68; slider_automate(slider69); ) :
+  slider69 != mel_lv[5] ? ( slider68 = max(0, min(127, floor(slider69 + 0.5))); slider_automate(slider68); );
 );
-mel_ln[5] = slider63; mel_lv[5] = slider64;
-slider_show(slider63, slider5 == 1);
+mel_ln[5] = slider68; mel_lv[5] = slider69;
+slider_show(slider68, slider5 == 1);
 mel_ui_init && slider5 == 1 ? (
-  slider70 != mel_ln[6] ? ( slider71 = slider70; slider_automate(slider71); ) :
-  slider71 != mel_lv[6] ? ( slider70 = max(0, min(127, floor(slider71 + 0.5))); slider_automate(slider70); );
+  slider76 != mel_ln[6] ? ( slider77 = slider76; slider_automate(slider77); ) :
+  slider77 != mel_lv[6] ? ( slider76 = max(0, min(127, floor(slider77 + 0.5))); slider_automate(slider76); );
 );
-mel_ln[6] = slider70; mel_lv[6] = slider71;
-slider_show(slider70, slider5 == 1);
+mel_ln[6] = slider76; mel_lv[6] = slider77;
+slider_show(slider76, slider5 == 1);
 mel_ui_init && slider5 == 1 ? (
-  slider77 != mel_ln[7] ? ( slider78 = slider77; slider_automate(slider78); ) :
-  slider78 != mel_lv[7] ? ( slider77 = max(0, min(127, floor(slider78 + 0.5))); slider_automate(slider77); );
+  slider84 != mel_ln[7] ? ( slider85 = slider84; slider_automate(slider85); ) :
+  slider85 != mel_lv[7] ? ( slider84 = max(0, min(127, floor(slider85 + 0.5))); slider_automate(slider84); );
 );
-mel_ln[7] = slider77; mel_lv[7] = slider78;
-slider_show(slider77, slider5 == 1);
+mel_ln[7] = slider84; mel_lv[7] = slider85;
+slider_show(slider84, slider5 == 1);
 
 loop_enabled  = slider27;
-master_gain   = db_to_lin(slider84);
+master_gain   = db_to_lin(slider92);
 binaural_hz   = slider10;
 attack_pct    = slider11 / 100;
 release_pct   = slider13 / 100;
@@ -1133,14 +1143,14 @@ i = 0;
 loop(8,
   // The voice's Pitch value, in the plugin's Pitch mode. Transpose and Octave
   // shift are applied in voice_hz, so the three compose.
-  i == 0 ? ( v_semitones[i] = slider29; v_fine[i] = slider30; v_step_cycles = slider31; v_note_cycles = slider32; v_gain_db = slider33; v_active[i] = slider34; );
-  i == 1 ? ( v_semitones[i] = slider36; v_fine[i] = slider37; v_step_cycles = slider38; v_note_cycles = slider39; v_gain_db = slider40; v_active[i] = slider41; );
-  i == 2 ? ( v_semitones[i] = slider43; v_fine[i] = slider44; v_step_cycles = slider45; v_note_cycles = slider46; v_gain_db = slider47; v_active[i] = slider48; );
-  i == 3 ? ( v_semitones[i] = slider50; v_fine[i] = slider51; v_step_cycles = slider52; v_note_cycles = slider53; v_gain_db = slider54; v_active[i] = slider55; );
-  i == 4 ? ( v_semitones[i] = slider57; v_fine[i] = slider58; v_step_cycles = slider59; v_note_cycles = slider60; v_gain_db = slider61; v_active[i] = slider62; );
-  i == 5 ? ( v_semitones[i] = slider64; v_fine[i] = slider65; v_step_cycles = slider66; v_note_cycles = slider67; v_gain_db = slider68; v_active[i] = slider69; );
-  i == 6 ? ( v_semitones[i] = slider71; v_fine[i] = slider72; v_step_cycles = slider73; v_note_cycles = slider74; v_gain_db = slider75; v_active[i] = slider76; );
-  i == 7 ? ( v_semitones[i] = slider78; v_fine[i] = slider79; v_step_cycles = slider80; v_note_cycles = slider81; v_gain_db = slider82; v_active[i] = slider83; );
+  i == 0 ? ( v_semitones[i] = slider29; v_fine[i] = slider30; v_step_cycles = slider31; v_note_cycles = slider32; v_gain_db = slider33; v_active[i] = slider34; v_solo[i] = slider35; );
+  i == 1 ? ( v_semitones[i] = slider37; v_fine[i] = slider38; v_step_cycles = slider39; v_note_cycles = slider40; v_gain_db = slider41; v_active[i] = slider42; v_solo[i] = slider43; );
+  i == 2 ? ( v_semitones[i] = slider45; v_fine[i] = slider46; v_step_cycles = slider47; v_note_cycles = slider48; v_gain_db = slider49; v_active[i] = slider50; v_solo[i] = slider51; );
+  i == 3 ? ( v_semitones[i] = slider53; v_fine[i] = slider54; v_step_cycles = slider55; v_note_cycles = slider56; v_gain_db = slider57; v_active[i] = slider58; v_solo[i] = slider59; );
+  i == 4 ? ( v_semitones[i] = slider61; v_fine[i] = slider62; v_step_cycles = slider63; v_note_cycles = slider64; v_gain_db = slider65; v_active[i] = slider66; v_solo[i] = slider67; );
+  i == 5 ? ( v_semitones[i] = slider69; v_fine[i] = slider70; v_step_cycles = slider71; v_note_cycles = slider72; v_gain_db = slider73; v_active[i] = slider74; v_solo[i] = slider75; );
+  i == 6 ? ( v_semitones[i] = slider77; v_fine[i] = slider78; v_step_cycles = slider79; v_note_cycles = slider80; v_gain_db = slider81; v_active[i] = slider82; v_solo[i] = slider83; );
+  i == 7 ? ( v_semitones[i] = slider85; v_fine[i] = slider86; v_step_cycles = slider87; v_note_cycles = slider88; v_gain_db = slider89; v_active[i] = slider90; v_solo[i] = slider91; );
 
   v_step_seconds[i] = max(v_step_cycles * cycle_seconds, 0.001);
   v_note_seconds[i] = max(v_note_cycles * cycle_seconds, 0);
@@ -1201,13 +1211,19 @@ loop(8,
   i += 1;
 );
 
+// Solo. A soloed voice joins the pattern even with Active off -- Rozaya: "Sollowing
+// things that are switched off should bring them on anyway, that's the point of
+// sollow" -- and a voice that is not soloed keeps its turn but makes no sound.
+any_solo = 0;
+i = 0; loop(8, v_solo[i] ? any_solo = 1; i += 1;);
+
 // Static pan positions for Spread / Spread Reversed modes.
 // Rank active voices and place evenly across the stereo field.
 // Mirrors Polyrhythm Phase's implementation exactly.
 total_active = 0;
 i = 0;
 loop(8,
-  v_active[i] ? total_active += 1;
+  (any_solo ? v_solo[i] : v_active[i]) ? total_active += 1;
   i += 1;
 );
 
@@ -1226,7 +1242,7 @@ pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : 
   rank = 0;
   i = 0;
   loop(8,
-    v_active[i] ? (
+    (any_solo ? v_solo[i] : v_active[i]) ? (
       total_active > 1 ? (
         pos = -1.0 + 2.0 * rank / (total_active - 1);
       ) : (
@@ -1260,7 +1276,7 @@ slider_show(slider24, pan_enabled && pan_mode == 1);
 // Start Delay — convert the user-facing value to seconds. BPM beats
 // and Hz cycles are interpreted against Rate Value (so 1 beat at
 // 60 BPM = 1 second). Seconds mode is literal seconds.
-start_delay_units = slider85;
+start_delay_units = slider93;
 // Every non-Seconds mode means "this many CYCLES", so the conversion is
 // just units x cycle_seconds. That's identical to the old per-mode
 // arithmetic (BPM: 60/value, Hz: 1/value)
@@ -1281,29 +1297,29 @@ direction_mode == 1 ? seq_dir = -1;
 
 // Play/Rest gate: integer step counts. Both must be > 0 for the
 // gate to engage; 0 in either slider disables.
-play_for_steps = slider86;
-rest_for_steps = slider87;
+play_for_steps = slider94;
+rest_for_steps = slider95;
 pr_enabled     = (play_for_steps > 0 && rest_for_steps > 0);
 pf_base = play_for_steps; rf_base = rest_for_steps; pr_enabled_base = pr_enabled;
-rest_mode      = slider88;
+rest_mode      = slider96;
 
 // Speed ramp engage-edge.
 // No engage-edge detection. Engage is a freeze/resume gate handled
 // in @sample. Only transport play resets ramp_t.
 
 // Drift target selector save/restore (nested-selector pattern).
-// Switching slider89 saves sliders 73-76 into the OLD target's slot,
+// Switching slider97 saves sliders 73-76 into the OLD target's slot,
 // then loads the NEW target's stored config into sliders 73-76.
 // Otherwise captures live edits to the current target's slot. All 28
 // targets drift in parallel from @sample regardless of selection.
-sel_target = slider89;
-sel_up     = slider90;
-sel_down   = slider91;
-sel_per    = slider92;
-sel_shape  = slider95;
-sel_moves  = slider94;
-sel_dplay  = slider96;
-sel_drest  = slider97;
+sel_target = slider97;
+sel_up     = slider98;
+sel_down   = slider99;
+sel_per    = slider100;
+sel_shape  = slider103;
+sel_moves  = slider102;
+sel_dplay  = slider104;
+sel_drest  = slider105;
 
 last_target_select != sel_target ? (
   target_drift_up[last_target_select]    = sel_up;
@@ -1314,19 +1330,19 @@ last_target_select != sel_target ? (
   drift_play_mem[last_target_select]     = sel_dplay;
   drift_rest_mem[last_target_select]     = sel_drest;
 
-  slider90 = target_drift_up[sel_target];
-  slider91 = target_drift_down[sel_target];
-  slider92 = target_drift_per[sel_target];
-  slider95 = target_drift_shape[sel_target];
-  slider94 = target_drift_moves[sel_target];
-  slider96 = drift_play_mem[sel_target];
-  slider97 = drift_rest_mem[sel_target];
-  slider_automate(slider90);
-  slider_automate(slider91);
-  slider_automate(slider92);
-  slider_automate(slider95);
-  slider_automate(slider96);
-  slider_automate(slider97);
+  slider98 = target_drift_up[sel_target];
+  slider99 = target_drift_down[sel_target];
+  slider100 = target_drift_per[sel_target];
+  slider103 = target_drift_shape[sel_target];
+  slider102 = target_drift_moves[sel_target];
+  slider104 = drift_play_mem[sel_target];
+  slider105 = drift_rest_mem[sel_target];
+  slider_automate(slider98);
+  slider_automate(slider99);
+  slider_automate(slider100);
+  slider_automate(slider103);
+  slider_automate(slider104);
+  slider_automate(slider105);
 
   last_target_select = sel_target;
 ) : (
@@ -1340,18 +1356,18 @@ last_target_select != sel_target ? (
 );
 
 // Speed Ramp target selector save/restore (nested-selector, mirrors the
-// drift block above). slider98 = target; slider99 = per-target `by`;
-// slider101 = per-target duration; slider105 = per-target start delay (all
-// three per-target). slider104 (engage) stays GLOBAL. Switching slider98
+// drift block above). slider106 = target; slider107 = per-target `by`;
+// slider109 = per-target duration; slider113 = per-target start delay (all
+// three per-target). slider112 (engage) stays GLOBAL. Switching slider106
 // saves the three per-target sliders into the OLD target's slots, then
 // loads the NEW target's stored values. Otherwise captures live edits. All
 // 28 targets ramp in parallel from @sample, each on its own duration/delay.
-sr_sel_target = slider98;
-sr_sel_by     = slider99;
-sr_sel_dur    = slider101;
-sr_sel_delay  = slider105;
-sr_sel_play   = slider102;
-sr_sel_rest   = slider103;
+sr_sel_target = slider106;
+sr_sel_by     = slider107;
+sr_sel_dur    = slider109;
+sr_sel_delay  = slider113;
+sr_sel_play   = slider110;
+sr_sel_rest   = slider111;
 
 last_sr_target != sr_sel_target ? (
   speed_ramp_by_mem[last_sr_target]    = sr_sel_by;
@@ -1360,16 +1376,16 @@ last_sr_target != sr_sel_target ? (
   sr_play_mem[last_sr_target]          = sr_sel_play;
   sr_rest_mem[last_sr_target]          = sr_sel_rest;
 
-  slider99 = speed_ramp_by_mem[sr_sel_target];
-  slider101 = speed_ramp_dur_mem[sr_sel_target];
-  slider105 = speed_ramp_delay_mem[sr_sel_target];
-  slider102 = sr_play_mem[sr_sel_target];
-  slider103 = sr_rest_mem[sr_sel_target];
-  slider_automate(slider99);
-  slider_automate(slider101);
-  slider_automate(slider105);
-  slider_automate(slider102);
-  slider_automate(slider103);
+  slider107 = speed_ramp_by_mem[sr_sel_target];
+  slider109 = speed_ramp_dur_mem[sr_sel_target];
+  slider113 = speed_ramp_delay_mem[sr_sel_target];
+  slider110 = sr_play_mem[sr_sel_target];
+  slider111 = sr_rest_mem[sr_sel_target];
+  slider_automate(slider107);
+  slider_automate(slider109);
+  slider_automate(slider113);
+  slider_automate(slider110);
+  slider_automate(slider111);
 
   last_sr_target = sr_sel_target;
 ) : (
@@ -1390,13 +1406,13 @@ samples_per_primary_cycle = max(cycle_seconds * srate, 1);
 // read as a user edit (Breath Generator, Womb).
 !mel_ui_init ? (
   mel_ln[0] = slider28; mel_lv[0] = slider29;
-  mel_ln[1] = slider35; mel_lv[1] = slider36;
-  mel_ln[2] = slider42; mel_lv[2] = slider43;
-  mel_ln[3] = slider49; mel_lv[3] = slider50;
-  mel_ln[4] = slider56; mel_lv[4] = slider57;
-  mel_ln[5] = slider63; mel_lv[5] = slider64;
-  mel_ln[6] = slider70; mel_lv[6] = slider71;
-  mel_ln[7] = slider77; mel_lv[7] = slider78;
+  mel_ln[1] = slider36; mel_lv[1] = slider37;
+  mel_ln[2] = slider44; mel_lv[2] = slider45;
+  mel_ln[3] = slider52; mel_lv[3] = slider53;
+  mel_ln[4] = slider60; mel_lv[4] = slider61;
+  mel_ln[5] = slider68; mel_lv[5] = slider69;
+  mel_ln[6] = slider76; mel_lv[6] = slider77;
+  mel_ln[7] = slider84; mel_lv[7] = slider85;
   mel_ui_init = 1;
 );
 // --- No restore-order guard here any more, and that is the point ------------
@@ -1513,13 +1529,13 @@ cfg_sig_now != cfg_sig ? ( cfg_sig = cfg_sig_now; cfg_stable = 0; )
 // here keeps Attack %, Release %, Note duration proportions
 // intact across speed changes).
 // Advance each target's own Speed Ramp clock (v2.14 per-target timeline).
-// Engage (slider104, GLOBAL) is the freeze/resume gate: while On, every
+// Engage (slider112, GLOBAL) is the freeze/resume gate: while On, every
 // target whose duration > 0 advances its own ramp_t 0->1 over its own
 // duration, after its own start delay; while Off, all clocks freeze and
 // resume from where they are. Only transport play (via @init) resets them,
 // so different targets can wind down over different timelines from one engage.
-slider104 ? (
-  // Ramp time unit (slider100). One factor turns the block's time values into
+slider112 ? (
+  // Ramp time unit (slider108). One factor turns the block's time values into
   // seconds, so Duration and Start delay always mean the same thing as each
   // other. Cycles counts THIS plugin's own sequencer cycles, referenced against
   // cycle_seconds -- the rate BEFORE drift and ramp touch it, so a ramp cannot
@@ -1528,9 +1544,9 @@ slider104 ? (
   // default would rewrite their live ramps. A beat is 60/tempo s, recomputed
   // per sample so Beats follows a live tempo change rather than remembering one.
   ramp_time_scale =
-    slider100 == 3 ? 60 / max(host_bpm, 0.001) :
-    slider100 == 2 ? 60 :
-    slider100 == 1 ? 1 :
+    slider108 == 3 ? 60 / max(host_bpm, 0.001) :
+    slider108 == 2 ? 60 :
+    slider108 == 1 ? 1 :
                     max(cycle_seconds, 0.00001);
   i = 0;
   loop(N_TARGETS,
@@ -1605,7 +1621,7 @@ loop(N_TARGETS,
   // 0 was unreachable, and in three plugins it was clamped UP to 1, which is the
   // FASTEST drift the control can make. Exactly backwards from what it reads as.
   (up > 0 || down > 0) && per > 0 ? (
-    // Drift period unit (slider93). Cycles is this plugin's native count -- a
+    // Drift period unit (slider101). Cycles is this plugin's native count -- a
     // period of 8 means eight sequencer cycles, and because the advance already
     // carries speed_scale_current and host_scale it follows the rate and the
     // project tempo for free. Seconds is wall clock, so neither factor applies.
@@ -1616,8 +1632,8 @@ loop(N_TARGETS,
     // off the PRE-drift rate, so drifting the rate cannot modulate its own
     // drift period.
     drift_per_tick =
-      slider93 == 2 ? 1.0 / max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
-      slider93 == 1 ? 1.0 / max(per * srate, 1) :
+      slider101 == 2 ? 1.0 / max(per * 60 / max(host_bpm, 0.001) * srate, 1) :
+      slider101 == 1 ? 1.0 / max(per * srate, 1) :
                       speed_scale_current * host_scale / (per * samples_per_primary_cycle);
 
     // Drift play/rest (sliders 77/78), per target, counted in PERIODS. While
@@ -1636,7 +1652,7 @@ loop(N_TARGETS,
     // A voice's own targets run while that voice holds the step; the shared ones
     // (Transpose, Attack, Release, Play for, Rest for) while any note does.
     drift_is_stepped(i) ? (
-      slider93 == 0 ? (
+      slider101 == 0 ? (
         drift_per_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
       ) : (
         d_run = seq_started && !seq_finished && !in_frozen_rest &&
@@ -1731,7 +1747,7 @@ mo8_was = mo8 != 0;
   pan_smooth_coeff_global = nt_pst <= 0 ? 0 : exp(-1 / (srate * nt_pst));
 );
 mo7_was = mo7 != 0; mo9_was = mo9 != 0;
-master_gain_eff = mo52 != 0 ? db_to_lin(slider84 + mo52) : master_gain;
+master_gain_eff = mo52 != 0 ? db_to_lin(slider92 + mo52) : master_gain;
 (mo53 != 0 || mo54 != 0 || mo53_was) ? (
   play_for_steps = max(0, floor(pf_base + mo53 + 0.5));
   rest_for_steps = max(0, floor(rf_base + mo54 + 0.5));
@@ -2267,7 +2283,7 @@ out_r = 0;
 
 i = 0;
 loop(8,
-  v_active[i] && (voice_state[i] != 0 || v_env_smoothed[i] > 0.0001) ? (
+  (v_active[i] || (any_solo && v_solo[i])) && (voice_state[i] != 0 || v_env_smoothed[i] > 0.0001) ? (
     // Advance the state machine ONLY when the voice is in a
     // non-silent state. A voice in state 0 with a non-zero
     // smoothed envelope is decaying its tail — the state machine
@@ -2523,6 +2539,8 @@ loop(8,
       gain_drift_db = target_drift_offset[16 + 5 * i] + speed_ramp_ramp_t_mem[16 + 5 * i] * speed_ramp_by_mem[16 + 5 * i];
       gain_drift_mul = gain_drift_db != 0 ? db_to_lin(gain_drift_db) : 1;
       amp = v_env_smoothed[i] * v_gain[i] * gain_drift_mul * master_gain_eff;
+      // Solo: a voice that is not soloed keeps its turn but makes no sound.
+      any_solo && !v_solo[i] ? amp = 0;
 
       // Pan — mirrors Polyrhythm Phase. When enabled, each voice's
       // L and R get separate amplitude multipliers based on the
@@ -2586,9 +2604,9 @@ spl1 = out_r;
 // every bank is moved to its target's new place. @init has already filled the
 // new targets with their defaults, and the old ones' stepping defaults map to
 // the same defaults, so only what the old save actually held is copied.
-ser_magic = 2500000 + N_TARGETS;
+ser_magic = 2600000 + N_TARGETS;   // 2026-09-10: Solo renumber witness; stream unchanged
 file_var(0, ser_magic);
-ser_magic == 2500000 + N_TARGETS ? (
+(ser_magic == 2600000 + N_TARGETS || ser_magic == 2500000 + N_TARGETS) ? (
   file_mem(0, target_drift_up,    N_TARGETS);
   file_mem(0, target_drift_down,  N_TARGETS);
   file_mem(0, target_drift_per,   N_TARGETS);
@@ -2642,17 +2660,17 @@ ser_magic == 2500000 + N_TARGETS ? (
 // TRACK-DUPLICATE FIX. On read, put the visible Drift and Ramp sliders back to
 // the restored banks for the restored selectors. Adds no data.
 mel_ser_ok && file_avail(0) >= 0 ? (
-  slider90 = target_drift_up[last_target_select];
-  slider91 = target_drift_down[last_target_select];
-  slider92 = target_drift_per[last_target_select];
-  slider95 = target_drift_shape[last_target_select];
-  slider94 = target_drift_moves[last_target_select];
-  slider96 = drift_play_mem[last_target_select];
-  slider97 = drift_rest_mem[last_target_select];
-  slider99 = speed_ramp_by_mem[last_sr_target];
-  slider101 = speed_ramp_dur_mem[last_sr_target];
-  slider105 = speed_ramp_delay_mem[last_sr_target];
-  slider102 = sr_play_mem[last_sr_target];
-  slider103 = sr_rest_mem[last_sr_target];
+  slider98 = target_drift_up[last_target_select];
+  slider99 = target_drift_down[last_target_select];
+  slider100 = target_drift_per[last_target_select];
+  slider103 = target_drift_shape[last_target_select];
+  slider102 = target_drift_moves[last_target_select];
+  slider104 = drift_play_mem[last_target_select];
+  slider105 = drift_rest_mem[last_target_select];
+  slider107 = speed_ramp_by_mem[last_sr_target];
+  slider109 = speed_ramp_dur_mem[last_sr_target];
+  slider113 = speed_ramp_delay_mem[last_sr_target];
+  slider110 = sr_play_mem[last_sr_target];
+  slider111 = sr_rest_mem[last_sr_target];
   sliderchange(-1);
 );

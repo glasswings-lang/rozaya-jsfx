@@ -136,7 +136,7 @@ slider29:1<0,1,1{Off,On}>Active (Off = no CPU cost)
 // what is left. Step the selector through the voices with this on and the one
 // that is wrong announces itself; until now the only way to hear one voice
 // alone was switching seven others off and back on again.
-slider30:0<0,1,1{Off,On}>Solo this voice
+slider30:0<0,1,1{Off,On}>Solo this voice (heard even when Active is off)
 
 // ===== PAN =====
 slider31:0<0,1,1{Off,On}>Pan Enabled
@@ -1436,7 +1436,7 @@ loop(n_voices,
 total_active = 0;
 i = 0;
 loop(n_voices,
-  v_active[i] && (!any_solo || v_solo[i & 7]) ? total_active += 1;
+  (any_solo ? v_solo[i & 7] : v_active[i]) ? total_active += 1;
   i += 1;
 );
 // How many positions the Distributed / Converging / Diverging walks step
@@ -1459,7 +1459,7 @@ pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : 
   rank = 0;
   i = 0;
   loop(n_voices,
-    v_active[i] && (!any_solo || v_solo[i & 7]) ? (
+    (any_solo ? v_solo[i & 7] : v_active[i]) ? (
       total_active > 1 ? (
         pos = -1.0 + 2.0 * rank / (total_active - 1);
       ) : (
@@ -1772,7 +1772,7 @@ loop(n_voices,
   // eight voices twice, so slot 8+k is voice k's reverse-layer copy and must
   // follow voice k's solo flag. Every per-voice drift target already reaches
   // the reverse layer the same way.
-  v_active[i] && (!any_solo || v_solo[i & 7]) ? (
+  (any_solo ? v_solo[i & 7] : v_active[i]) ? (
     // Effective per-voice tremolo Hz this sample. Two drift layers:
     //   - Per-voice Rate drift (targets 28-35): wanders THIS voice's own
     //     rate. Recomputed from the voice's natural base rate + its
