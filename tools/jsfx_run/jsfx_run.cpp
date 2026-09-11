@@ -35,6 +35,15 @@ static void usage()
         "                      An EFFECT renders nothing from silence, so every\n"
         "                      comparison passes -- including on code you broke.\n"
         "                      Both generators are deterministic.\n"
+        "  --transport         simulate a PLAYING transport: the beat position\n"
+        "                      advances every block at the tempo. Without this (and\n"
+        "                      without --tempo / --beat-start / --tempo-at) ysfx's\n"
+        "                      defaults apply: 120 BPM, play_state 1, beat position\n"
+        "                      stuck at 0 forever -- which REAPER never does.\n"
+        "  --tempo BPM         project tempo, default 120 (implies --transport)\n"
+        "  --beat-start B      beat position at the first sample (implies --transport)\n"
+        "  --tempo-at S=BPM    change tempo at S seconds, at the next block boundary;\n"
+        "                      repeatable (implies --transport)\n"
         "  --input-hz F        tone frequency for --input sine, default 220\n"
         "  --input-db D        input level in dBFS, default -12\n"
         "  --seconds S         how long to run, default 10\n"
@@ -216,6 +225,14 @@ int main(int argc, char **argv)
     int which = 1;
     std::vector<Assign> before;
     std::vector<std::vector<Assign>> stages(1);
+    // Transport simulation, added 2026-09-10. The runner used to set no time
+    // info at all, so every plugin saw ysfx's defaults: playing, 120 BPM, and a
+    // beat position that NEVER MOVED. A tempo-locked phase computed from it was
+    // frozen, and old-versus-new comparisons agreed only because both builds
+    // shared the frozen formula. Off unless asked for, so older runs reproduce.
+    bool transport = false;
+    double tempo_bpm = 120.0, beat_start = 0.0;
+    std::vector<std::pair<double, double>> tempo_changes;   // (seconds, bpm)
 
     for (int i = 2; i < argc; ++i) {
         std::string a = argv[i];
@@ -249,6 +266,16 @@ int main(int argc, char **argv)
             (a == "--slider" ? before : stages.back()).push_back(as);
         }
         else if (a == "--stage") stages.push_back({});
+        else if (a == "--transport") transport = true;
+        else if (a == "--tempo") { tempo_bpm = std::strtod(next(), nullptr); transport = true; }
+        else if (a == "--beat-start") { beat_start = std::strtod(next(), nullptr); transport = true; }
+        else if (a == "--tempo-at") {
+            const char *v = next();
+            const char *eq = std::strchr(v, '=');
+            if (!eq) { std::fprintf(stderr, "--tempo-at wants S=BPM\n"); return 2; }
+            tempo_changes.push_back({ std::strtod(v, nullptr), std::strtod(eq + 1, nullptr) });
+            transport = true;
+        }
         else { std::fprintf(stderr, "unknown option %s\n", a.c_str()); usage(); return 2; }
     }
 
@@ -279,6 +306,20 @@ int main(int argc, char **argv)
 
     ysfx_set_sample_rate(fx, sr);
     ysfx_set_block_size(fx, block);
+
+    double beat_pos = beat_start;
+    auto push_time = [&](double now_s) {
+        ysfx_time_info_t ti{};
+        ti.tempo = tempo_bpm;
+        ti.playback_state = ysfx_playback_playing;
+        ti.time_position = now_s;
+        ti.beat_position = beat_pos;
+        ti.time_signature[0] = 4;
+        ti.time_signature[1] = 4;
+        ysfx_set_time_info(fx, &ti);
+    };
+    // Before @init and the project load, so both see the real tempo.
+    if (transport) push_time(0.0);
 
     // A REAL project load: slider values AND the serialized blob, together,
     // through the same entry point a host uses. This is the path that a
@@ -386,7 +427,16 @@ int main(int argc, char **argv)
             }
         }
 
+        if (transport) {
+            for (const auto &tc : tempo_changes)
+                if (tc.first <= done / sr) tempo_bpm = tc.second;
+            push_time(done / sr);
+        }
+
         ysfx_process_float(fx, ins, outs, 2, 2, n);
+
+        // The block played at the tempo it was told; advance the position by it.
+        if (transport) beat_pos += n * tempo_bpm / 60.0 / sr;
 
         // A hand-moved control lands after the engine is running, never during
         // the load. Each --stage group lands one block after the last, which

@@ -661,6 +661,10 @@ became a Segment selector with a length mode and value per segment.
   Sweep and both host-sync cycle modes, which surges does not use.
 - **`sdf_target_test.py`** — each of the 16 targets changes the sound, stable.
   The cycle is shortened so the Low dwell is actually heard.
+- **`sdf_transport_test.py`** — beat modes under a MOVING transport: the bar lock
+  (a mid-cycle start lines up with a beat-0 start; Seconds must not), parity with
+  the old Host x cycle, a live tempo change, and one segment in beats at 60 BPM.
+  Needs the runner's `--transport` options; see `jsfx_run/README.md`.
 
 ## Earlier 2026-09-10 migrations, indexed late
 

@@ -121,6 +121,17 @@ identical and a comparison means something.
   Still check the "N sliders" line against what the project line holds.
   **Any measurement on a plugin over 64 sliders made before 2026-09-10 was made
   on a subset.**
+- **The transport, unless you pass `--transport`.** Until 2026-09-10 the runner set
+  no time info, so every plugin saw ysfx's defaults: playing, 120 BPM, and a beat
+  position that NEVER MOVED. Anything positioned from the project -- every
+  "lock the phase to the bar" path in the suite -- ran against a frozen position,
+  and old-versus-new comparisons agreed only because both builds shared the
+  formula. **Any lock or host-sync claim made before that date was not a test of
+  locking.** Now: `--transport` advances the beat position every block;
+  `--tempo BPM`, `--beat-start B` and `--tempo-at S=BPM` set and change it (each
+  implies `--transport`). Without any of them runs reproduce byte-for-byte.
+  `tools/sdf_transport_test.py` is the worked example: a render starting mid-cycle
+  must line up with one starting at beat 0, and the unlocked control must not.
 - **REAPER's restore ORDER.** `ysfx_load_state` applies sliders and serialized
   data in one defined order. REAPER makes no such guarantee, and the ordering
   gap between `@slider`, `@block` and `@serialize` is where several real bugs in
