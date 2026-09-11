@@ -600,6 +600,20 @@ value stored above the old count, and a line an older build saved at 64 values
 has none even after migrating. A second run shifted Tensor's `shepard.RPP` twice;
 it was restored from the snapshot and migrated once. To redo, restore first.
 
+## tuning_ref_check.py — does the Tuning reference really move the pitch?
+
+`python tools/tuning_ref_check.py [name ...]`. Twelve plugins, measured with
+jsfx_run. The test is an equivalence, not a pitch reading: reference 880 on a
+note must render **bit-identical** to reference 440 an octave up, from the start
+and when moved while playing, and in plain Hz the reference must change nothing.
+A spectrum reading could not see a two-semitone change in Dapple's noise; the
+equivalence can. The Shepards, with no note to raise, keep a spectrum reading.
+
+Proven able to fail: a Dapple copy reading `tuning_ref = 440` fails three of four.
+All twelve pass as of 2026-09-10. Heartbeat's case uses notes 57/69 because at
+note 45 the "All" target leaves S2's value at 120, a note near 8.4 kHz, and
+Heartbeat blows up above about 5 kHz in any mode — a separate bug.
+
 ## doc_budget.py
 
 Checks the docs a session actually reads against a line budget, and exits 1 if
