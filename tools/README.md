@@ -735,6 +735,22 @@ nothing written.
 - **Trap met:** a 1 s sine read on 0.5 s beats or 2 s bars sits on its zero
   crossings, so "drift changes nothing" was the test. Use a period that is not whole.
 
+## Womb's forty-nine targets — 2026-09-11
+
+`docs/layouts/womb-r24-20260911.md`. No slider moves; the plugin remaps old blobs.
+
+- **`womb_r24_migrate_20260911.py`** — every line's two selectors remapped (two copies
+  have unversioned blobs the plugin cannot remap from); `scattered`, never carried
+  over, taken 70 -> 88 by the two 2026-09-09 scripts' own imported rules; `womb-and-
+  baby`'s Breath rate drift converted only with `--convert-womb-and-baby`.
+- **`womb_r24_verify_20260911.py`** — works on temp copies, so it runs before anything
+  is written; `applied` then compares the live files. Old against new for all ten
+  (scattered against 92effbe), four old save formats, the names, all 38 new targets,
+  Breath rate against segments typed by hand, Drift movement.
+- **Traps met:** a 1.3 s wave read by a three-beat gate at 70 BPM (2.57 s) aliased,
+  so three gates "changed nothing"; and a breath-hump counter that could not count a
+  one-second breath. Measure the period instead.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in

@@ -42,7 +42,7 @@ name-matched. The earlier table here named three plugins that never needed it.
 | plugin | targets that step, and on what |
 |---|---|
 | `breath_gen` | breath rate + four segments, on their own segment |
-| `womb` | heart rate + S1-S2 gap per beat; segments + Breaths/min per breath |
+| `womb` | Heart rate + Systole per beat; segments + Breath rate per breath (names since 2026-09-11) |
 | `heartbeat gen` | heart rate + S1-S2 gap, per beat |
 | `melody_phase` | V1-V8 Note duration on that voice's note; Attack/Release on any note |
 | `rhythm-track` | none by default (since 2026-09-11); any target per beat, Beats per bar per bar |

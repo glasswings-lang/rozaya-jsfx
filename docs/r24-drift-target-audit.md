@@ -39,12 +39,9 @@ one variable, because eel2 folds case.
 Missing lists are from the audit reads, not individually re-checked.
 
 - **melody_phase** — DONE 2026-09-10: 55 targets, including Play for and Rest for.
-- **womb** — 11 of 16. Missing 31: S1/S2 pitch, fine tune, decay, volume;
-  Brightness; HB stereo width; HB master volume; Inhale/Exhale fine tune; four
-  fades; Breath high-pass, post-filter Hz, post-filter Q; Sigh extra length;
-  Breath stereo width, volume; Bloodflow attack, decay, dicrotic level, filter Hz,
-  resonance, stereo width, volume; Tuning reference. Several target names do not
-  match their sliders (RSA depth, S1-S2 gap, Inhale/Exhale Freq, Breaths/min).
+- **womb** — DONE 2026-09-11: 49 targets in control order, named for their
+  controls, Sigh interval and the six Play/Rest included; Breath rate counts like
+  Set breath rate; `scattered` carried over (`docs/layouts/womb-r24-20260911.md`).
 - **breath_gen** — DONE 2026-09-11: 18 targets, Play/Rest included; Tensor's seven
   carried over from April (`docs/layouts/breath-gen-r24-20260911.md`).
 - **heartbeat gen** — DONE 2026-09-11: 18 targets in control order, Play/Rest

@@ -265,9 +265,10 @@ slider71:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // Pick a target, then the controls below hold THAT target's drift config.
 // Switching the selector saves the current values to the old target's memory
 // slot and loads the new target's values in. All targets drift in parallel.
-// APPEND to the target list, never insert -- these indices are stored in
-// projects AND are the bank position.
-slider72:0<0,10,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq,Bloodflow offset}>Drift target
+// FORTY-NINE since 2026-09-11 (R24), in the order of the controls they reach, each
+// named for its control -- Rozaya: "Yes, and yes." The plugin remaps an old save;
+// a project line's two selectors are remapped by tools/womb_r24_migrate_20260911.py.
+slider72:0<0,48,1{Heart rate,Heart with breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter Hz,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter Hz,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Drift target
 slider73:0<0,2000,0.01>Drift up amount (units match target)
 slider74:0<0,2000,0.01>Drift down amount (units match target)
 slider75:8<0,1000,1>Drift period (in drift period units, 0 = off)
@@ -295,7 +296,7 @@ slider80:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 // `by` is a signed DELTA in the target's own units, not a destination -- 0
 // means no ramp, negative means decrease (slower heart, shorter inhale).
 // Each target is additive and independent.
-slider81:0<0,10,1{Heart rate,S1-S2 gap,Inhale,Top pause,Exhale,Bottom pause,RSA depth,Breaths/min,Inhale Freq,Exhale Freq,Bloodflow offset}>Ramp target
+slider81:0<0,48,1{Heart rate,Heart with breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter Hz,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter Hz,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Ramp target
 slider82:0<-2000,2000,0.001>Ramp by
 // Declared MINUTES, which is both the suite default and what the duration and
 // start delay already meant, so no saved instance changes meaning.
@@ -504,16 +505,19 @@ bpm_smoothed             = slider1;
 // the drift 16-slot-aligned blocks ending at 8319). CONFIG — contents
 // initialized in the drift_cfg_inited guard below so they survive the
 // @init re-run on transport play (Path A).
-speed_ramp_target_value_mem = 8320;
+// 2026-09-11: forty-nine targets outgrew the 16-slot stride, so EVERY per-target
+// bank moved to 64-slot spacing from 8192 (addresses only; the blob is a sequence).
+// The last table (wb_per_mem) ends at 9968 -- re-derive rather than trusting this.
+speed_ramp_target_value_mem = 8704;
 
 // Speed ramp per-target timeline banks (v2.14). duration + start-delay are
 // CONFIG (survive transport, restored by @serialize); ramp_t + delay_elapsed
 // are RUNTIME (reset every @init / transport play). 16-slot-aligned above the
 // `by` bank.
-speed_ramp_dur_mem           = 8336;  // duration minutes per target (CONFIG)
-speed_ramp_delay_mem         = 8352;  // start-delay minutes per target (CONFIG)
-speed_ramp_ramp_t_mem        = 8368;  // ramp progress 0..1 per target (RUNTIME)
-speed_ramp_delay_elapsed_mem = 8384;  // delay sample counter per target (RUNTIME)
+speed_ramp_dur_mem           = 8768;  // duration minutes per target (CONFIG)
+speed_ramp_delay_mem         = 8832;  // start-delay minutes per target (CONFIG)
+speed_ramp_ramp_t_mem        = 8896;  // ramp progress 0..1 per target (RUNTIME)
+speed_ramp_delay_elapsed_mem = 8960;  // delay sample counter per target (RUNTIME)
 
 // --- Host-sync per-target beats (2026-08-30) ---
 // One cycle of each sync target takes this many project beats. CONFIG:
@@ -531,26 +535,30 @@ speed_ramp_delay_elapsed_mem = 8384;  // delay sample counter per target (RUNTIM
 // blob still holds a bank that wide and the stream must consume it to stay
 // aligned for whatever follows. Nothing reads the values.
 HS_BANK_SLOTS = 2;      // serialised width, frozen so the blob format holds
-host_beats_mem = 8400;   // 2 slots. RETIRED as a control (see the slider block)
+host_beats_mem = 9024;   // 2 slots. RETIRED as a control (see the slider block)
                          // but still READ from old blobs, because that is where
                          // an un-migrated instance's beats-per-heartbeat lives.
 
 // --- Drift and Ramp play/rest banks (2026-09-06) ---------------------------
 // CONFIG (saved) and RUNTIME (not) for the staircase gating, per target, laid
 // out on the same 16-slot alignment as everything above. Next free slot: 8544.
-drift_play_mem   = 8416;   // CONFIG: play window, in drift PERIODS
-drift_rest_mem   = 8432;   // CONFIG: rest window, in drift periods
-drift_pr_accum   = 8448;   // RUNTIME
-drift_pr_resting = 8464;   // RUNTIME
-ramp_play_mem    = 8480;   // CONFIG: play window, in ramp time units
-ramp_rest_mem    = 8496;   // CONFIG: rest window
-ramp_pr_accum    = 8512;   // RUNTIME
-ramp_pr_resting  = 8528;   // RUNTIME
+drift_play_mem   = 9088;   // CONFIG: play window, in drift PERIODS
+drift_rest_mem   = 9152;   // CONFIG: rest window, in drift periods
+drift_pr_accum   = 9216;   // RUNTIME
+drift_pr_resting = 9280;   // RUNTIME
+ramp_play_mem    = 9344;   // CONFIG: play window, in ramp time units
+ramp_rest_mem    = 9408;   // CONFIG: rest window
+ramp_pr_accum    = 9472;   // RUNTIME
+ramp_pr_resting  = 9536;   // RUNTIME
 
 // --- "your turn came round" flags, per target (2026-09-09) ------------------
 // Next free slot after this one: 8560.
-drift_step_mem   = 8544;   // RUNTIME
-target_drift_moves = 8560;   // CONFIG -- 0 with the target, 1 clock
+drift_step_mem   = 9600;   // RUNTIME
+target_drift_moves = 9664;   // CONFIG -- 0 with the target, 1 clock
+wb_scratch       = 9728;   // an old save's eleven, while remapping
+wb_order         = 9792;   // the drift loop's order: the old eleven first (constant)
+wb_turn_mem      = 9856;   // whose turn steps a target: 0 heartbeat, 1 breath, 2 its segment
+wb_per_mem       = 9920;   // what Cycles counts: 0 heartbeats, 1 breath cycles (constant)
 
 // WHICH TARGETS STEP, AND WHICH FLOW.
 //
@@ -580,7 +588,19 @@ target_drift_moves = 8560;   // CONFIG -- 0 with the target, 1 clock
 //   8,9 breath freqs continuous -- filter centres, applied every sample, so
 //                   they render the whole curve and can move WITHIN a breath.
 //   10 Bloodflow offset  continuous -- read every sample as a phase shift.
+// (The indices above are the OLD ones. Since 2026-09-11: 0 Heart rate, 2 Systole,
+// 15-18 the segments and 14 Breath rate step by default; every other target
+// defaults to On a clock and, set to With the target, steps on its layer's turn --
+// a heartbeat for the heart and bloodflow, a breath for the breath.)
 function drift_is_stepped(idx) ( target_drift_moves[idx] == 0; );
+function wb_moves_default(i) ( (i == 0 || i == 2 || (i >= 14 && i <= 18)) ? 0 : 1; );
+// Old eleven-target index -> new.
+function wb_o2n(o) (
+  o == 1 ? 2 : o == 2 ? 15 : o == 3 ? 16 : o == 4 ? 17 : o == 5 ? 18 :
+  o == 6 ? 1 : o == 7 ? 14 : o == 8 ? 19 : o == 9 ? 21 : o == 10 ? 34 : 0;
+);
+// Drift + ramp on one target, in its own unit.
+function wq(k) ( target_drift_offset[k] + speed_ramp_ramp_t_mem[k] * speed_ramp_target_value_mem[k]; );
 
 // --- Pitch (R22) ----------------------------------------------------------
 // Four blocks, replicated in place, one shared tuning reference. Takes VALUES
@@ -641,20 +661,22 @@ function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
 //
 // APPEND ONLY. The index is stored in every project (Drift target, Ramp target)
 // AND is the bank position, so inserting one silently repoints both.
-N_TARGETS = 11;
+// 49 since 2026-09-11, in control order; see the slider block. Serialised as 2600049.
+N_TARGETS = 49;
+OLD11 = 11;   // the width of a 2500011 or 2400011 save
 // The width every bank had before Bloodflow offset was appended. A blob written
 // at an older magic carries banks THIS wide, and reading it at N_TARGETS would
 // consume one value too many from each and turn everything after the first bank
 // into garbage. Six of the nine instances in the library are on such a blob.
 OLD_N_TARGETS = 10;
-target_drift_up     = 8192;   // [0..6]  configured amount, units match target
-target_drift_down   = 8208;   // [0..6]
-target_drift_per    = 8224;   // [0..6]  in heartbeats (targets 0,1) or breath cycles (2-6)
-target_drift_shape  = 8240;   // [0..6]
-target_drift_phase  = 8256;   // [0..6]  runtime: [0, 1) advancing per sample
-target_drift_prev   = 8272;   // [0..6]  runtime: Random shape previous random target
-target_drift_curr   = 8288;   // [0..6]  runtime: Random shape current random target
-target_drift_offset = 8304;   // [0..6]  computed each sample, consumed by audio path
+target_drift_up     = 8192;   // configured amount, units match target
+target_drift_down   = 8256;
+target_drift_per    = 8320;   // what Cycles counts is per target: wb_per_mem
+target_drift_shape  = 8384;
+target_drift_phase  = 8448;   // runtime: [0, 1) advancing per sample
+target_drift_prev   = 8512;   // runtime: Random shape previous random target
+target_drift_curr   = 8576;   // runtime: Random shape current random target
+target_drift_offset = 8640;   // computed each sample, consumed by audio path
 
 // Initialize all per-target state to zero (no drift, sine shape, fresh phase).
 // Note: ext_noinit prevents zeroing on transport play, but @init still runs
@@ -680,7 +702,7 @@ drift_cfg_inited != 1 ? (
     target_drift_down[i]  = 0;
     target_drift_per[i]   = 8;   // heartbeats (targets 0,1) / breath cycles (2-6)
     target_drift_shape[i] = 0;
-    target_drift_moves[i] = (i < 6 || i == 7) ? 0 : 1;
+    target_drift_moves[i] = wb_moves_default(i);
     drift_play_mem[i]     = 0;   // 0 = no staircase, wander evenly
     drift_rest_mem[i]     = 0;
     ramp_play_mem[i]      = 0;   // 0 = smooth ride
@@ -714,6 +736,25 @@ loop(N_TARGETS,
   target_drift_curr[i]   = 0;
   target_drift_offset[i] = 0;
   drift_step_mem[i]      = 0;
+  i += 1;
+);
+// Constant tables (2026-09-11), rewritten every @init. THE DRIFT LOOP RUNS THE OLD
+// ELEVEN FIRST, IN THEIR OLD ORDER: Random drift draws rand(), one stream shared by
+// every target, so two targets wrapping on the same sample must draw in the order
+// they always did or a saved project stops rendering the same.
+i = 0; loop(11, wb_order[i] = wb_o2n(i); i += 1;);
+wb_k = 11; i = 0;
+loop(N_TARGETS,
+  (i != 0 && i != 2 && i != 15 && i != 16 && i != 17 && i != 18 && i != 1 &&
+   i != 14 && i != 19 && i != 21 && i != 34) ? ( wb_order[wb_k] = i; wb_k += 1; );
+  // Whose turn: the breath layer (1, 14, 19-33, 45, 46) steps per breath and the
+  // segments (15-18) on their own; everything else per heartbeat.
+  wb_turn_mem[i] = (i >= 15 && i <= 18) ? 2 :
+                   (i == 1 || i == 14 || (i >= 19 && i <= 33) || i == 45 || i == 46) ? 1 : 0;
+  // What Cycles counts. Unchanged for the old eleven: Heart rate and Systole count
+  // heartbeats, the rest breath cycles -- Bloodflow offset included, as it always
+  // did. New bloodflow targets count heartbeats, their own layer's cycle.
+  wb_per_mem[i] = (i == 1 || (i >= 14 && i <= 34) || i == 45 || i == 46) ? 1 : 0;
   i += 1;
 );
 
@@ -1102,10 +1143,16 @@ breath_set_ready = 1;
 // breath-frequency drift would simply not move until a control was touched.
 // @block runs every block regardless of what happened when. (Same bug found
 // in the Morpher on 2026-08-19 and swept across the suite.)
-breath_freq_active = (target_drift_up[8] > 0 || target_drift_down[8] > 0 ||
-                      target_drift_up[9] > 0 || target_drift_down[9] > 0 ||
-                      speed_ramp_target_value_mem[8] != 0 ||
-                      speed_ramp_target_value_mem[9] != 0);
+// Inhale/Exhale pitch and fine tune (19-22) and Breath stereo width (32).
+breath_freq_active = 0;
+wb_f = 19;
+loop(14,
+  (wb_f <= 22 || wb_f == 32) ? (
+    (target_drift_up[wb_f] > 0 || target_drift_down[wb_f] > 0 ||
+     speed_ramp_target_value_mem[wb_f] != 0) ? breath_freq_active = 1;
+  );
+  wb_f += 1;
+);
 
 // --- The two rate chains, and every unit factor ----------------------------
 // ALL of this is derived here, per block, and none of it in @slider: both host
@@ -1175,6 +1222,54 @@ bf_unit_to_cycles =
 // Start delay counts HEARTBEATS, as its name says, in every mode.
 start_delay_sec = slider65 * 60 / max(bpm_target, 0.001);
 
+// --- The sound-shaping targets added 2026-09-11 (R24), rebuilt per block from the
+//     same formulas @slider uses, with drift and ramp folded in. With none, every
+//     value here is exactly @slider's. The offsets are the previous block's --
+//     about 11 ms behind, on slow modulators. Pitches derive from the pitch
+//     sliders but belong here anyway beside the drifted ones.
+tuning_ref = max(20, min(2000, slider63 + wq(42)));
+s1_freq = womb_pitch_hz(slider6, slider8 + wq(3), slider9 + wq(4), slider10);
+s2_freq = womb_pitch_hz(slider13, slider15 + wq(7), slider16 + wq(8), slider17);
+s1_center_near = s1_freq * 1.1; s2_center_near = s2_freq * 1.15;
+s1_center_far  = s1_freq * 1.28; s2_center_far = s2_freq * 1.25;
+wb_bright = max(0, min(1, slider20 + wq(11)));
+lp_cutoff_near = 200.0 + wb_bright * 250.0;
+lp_cutoff_far  = 175.0 + wb_bright * 220.0;
+s1_res_f_near = min(2.0 * sin(min($pi * s1_center_near * srate_inv, $pi / 2)), s1_f_max_near);
+s2_res_f_near = min(2.0 * sin(min($pi * s2_center_near * srate_inv, $pi / 2)), s2_f_max_near);
+lp_f_near = min(2.0 * sin($pi * lp_cutoff_near * srate_inv), 0.98);
+s1_res_f_far = min(2.0 * sin(min($pi * s1_center_far * srate_inv, $pi / 2)), s1_f_max_far);
+s2_res_f_far = min(2.0 * sin(min($pi * s2_center_far * srate_inv, $pi / 2)), s2_f_max_far);
+lp_f_far = min(2.0 * sin($pi * lp_cutoff_far * srate_inv), 0.98);
+s1_decay = exp(-srate_inv / (max(slider11 + wq(5), 1) * 0.001));
+s2_decay = exp(-srate_inv / (max(slider18 + wq(9), 1) * 0.001));
+// HB stereo width in ms. A drift never carries it across zero: the sign picks the
+// side, and crossing it clears the filters and the delay line (@slider) -- a click.
+wb_w = slider21 + wq(12);
+wb_w = slider21 >= 0 ? max(wb_w, 0) : min(wb_w, 0);
+hb_delay_samples = min(floor(srate * abs(wb_w) * 0.001), hb_delay_buf_size - 1);
+// The breath filters. @sample redoes the first four per sample while 19-22 or 32 move.
+wb_bw    = max(0, min(1, slider50 + wq(32)));
+wb_in_hz = womb_pitch_hz(slider30, slider32 + wq(19), slider33 + wq(20), slider34);
+wb_ex_hz = womb_pitch_hz(slider35, slider37 + wq(21), slider38 + wq(22), slider39);
+in_f_l = min(2.0 * sin($pi * (wb_in_hz * (1.0 + wb_bw * 0.15)) * srate_inv), 0.98);
+in_f_r = min(2.0 * sin($pi * (wb_in_hz * (1.0 - wb_bw * 0.15)) * srate_inv), 0.98);
+ex_f_l = min(2.0 * sin($pi * (wb_ex_hz * (1.0 + wb_bw * 0.12)) * srate_inv), 0.98);
+ex_f_r = min(2.0 * sin($pi * (wb_ex_hz * (1.0 - wb_bw * 0.12)) * srate_inv), 0.98);
+hp_f   = min(2.0 * sin($pi * max(20, slider45 + wq(27)) * srate_inv), 0.98);
+bpf_f  = min(2.0 * sin($pi * max(50, slider46 + wq(28)) * srate_inv), 0.98);
+bpf_q  = 1.0 / max(0.5, min(8, slider47 + wq(29)));
+// Bloodflow's shape and filter, each held inside its control's range.
+bf_filter_hz      = max(20, min(2000, slider58 + wq(38)));
+bf_dicrotic_level = max(0, min(1, slider57 + wq(37)));
+bf_res            = max(0, min(0.95, slider59 + wq(39)));
+bf_stereo_width   = max(0, min(1, slider60 + wq(40)));
+wb_a = max(slider55 + wq(35), 0.001);
+wb_d = max(slider56 + wq(36), 0.001);
+bf_attack = wb_a;
+bf_decay  = wb_d;
+wb_a + wb_d > 1.0 ? ( bf_attack = wb_a / (wb_a + wb_d); bf_decay = wb_d / (wb_a + wb_d); );
+
 @sample
 
 // Smooth BPM toward bpm_target.
@@ -1228,16 +1323,16 @@ slider87 ? (
 // breath cycle stays at its base rate unless the operator also configures
 // Speed Ramp on a breath segment.
 speed_ramp_heart_offset   = speed_ramp_ramp_t_mem[0] * speed_ramp_target_value_mem[0];
-speed_ramp_systole_offset = speed_ramp_ramp_t_mem[1] * speed_ramp_target_value_mem[1];
-speed_ramp_inhale_offset  = speed_ramp_ramp_t_mem[2] * speed_ramp_target_value_mem[2];
-speed_ramp_top_offset     = speed_ramp_ramp_t_mem[3] * speed_ramp_target_value_mem[3];
-speed_ramp_exhale_offset  = speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_mem[4];
-speed_ramp_bot_offset     = speed_ramp_ramp_t_mem[5] * speed_ramp_target_value_mem[5];
-speed_ramp_rsa_offset     = speed_ramp_ramp_t_mem[6] * speed_ramp_target_value_mem[6];
-speed_ramp_bpm_offset     = speed_ramp_ramp_t_mem[7] * speed_ramp_target_value_mem[7];
-speed_ramp_in_freq_offset = speed_ramp_ramp_t_mem[8] * speed_ramp_target_value_mem[8];
-speed_ramp_ex_freq_offset = speed_ramp_ramp_t_mem[9] * speed_ramp_target_value_mem[9];
-speed_ramp_bf_off_offset  = speed_ramp_ramp_t_mem[10] * speed_ramp_target_value_mem[10];
+speed_ramp_systole_offset = speed_ramp_ramp_t_mem[2] * speed_ramp_target_value_mem[2];
+speed_ramp_inhale_offset  = speed_ramp_ramp_t_mem[15] * speed_ramp_target_value_mem[15];
+speed_ramp_top_offset     = speed_ramp_ramp_t_mem[16] * speed_ramp_target_value_mem[16];
+speed_ramp_exhale_offset  = speed_ramp_ramp_t_mem[17] * speed_ramp_target_value_mem[17];
+speed_ramp_bot_offset     = speed_ramp_ramp_t_mem[18] * speed_ramp_target_value_mem[18];
+speed_ramp_rsa_offset     = speed_ramp_ramp_t_mem[1] * speed_ramp_target_value_mem[1];
+speed_ramp_bpm_offset     = speed_ramp_ramp_t_mem[14] * speed_ramp_target_value_mem[14];
+speed_ramp_in_freq_offset = speed_ramp_ramp_t_mem[19] * speed_ramp_target_value_mem[19];
+speed_ramp_ex_freq_offset = speed_ramp_ramp_t_mem[21] * speed_ramp_target_value_mem[21];
+speed_ramp_bf_off_offset  = speed_ramp_ramp_t_mem[34] * speed_ramp_target_value_mem[34];
 
 // --- v3 Per-target Drift wave computation ---
 //
@@ -1249,8 +1344,9 @@ speed_ramp_bf_off_offset  = speed_ramp_ramp_t_mem[10] * speed_ramp_target_value_
 // The resulting offset is stored back into target_drift_offset[t] and
 // consumed later in @sample where each target is applied to its audio
 // path parameter (BPM, systole_samples, segment lengths, RSA depth).
-i = 0;
+wb_k = 0;
 loop(N_TARGETS,
+  i = wb_order[wb_k];   // the old eleven first, in their old order -- see @init
   up    = target_drift_up[i];
   down  = target_drift_down[i];
   per   = target_drift_per[i];
@@ -1272,7 +1368,7 @@ loop(N_TARGETS,
     // are the same for every target because they are not cycles of anything.
     period_base = slider76 == 1 ? srate :
                   slider76 == 2 ? srate * beat_sec :
-                  i < 2 ? max(cycle_len_base, 1)
+                  wb_per_mem[i] == 0 ? max(cycle_len_base, 1)
                         : max(total_breath_samples / max(breath_host_scale, 0.0001), 1);
     period_samples = max(per * period_base, 1);
 
@@ -1293,7 +1389,8 @@ loop(N_TARGETS,
         d_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
       ) : (
         d_run = start_delay_elapsed >= start_delay_sec &&
-                (i < 2 || (!pr_br_resting && (i == 7 || breath_state == i - 2)));
+                (wb_turn_mem[i] == 0 ||
+                 (!pr_br_resting && (wb_turn_mem[i] == 1 || breath_state == i - 15)));
         d_tick = d_run ? 1.0 / period_samples : 0;
       );
       drift_step_mem[i] = 0;
@@ -1334,14 +1431,14 @@ loop(N_TARGETS,
     drift_offset_local = shape_val > 0 ? shape_val * up : shape_val * down;
   );
   target_drift_offset[i] = drift_offset_local;
-  i += 1;
+  wb_k += 1;
 );
 
 // Heart-with-breath (RSA) modulation — coupled to breath state, not
 // to its own phase. Drift target 6 wanders the baseline depth (slider3);
 // Speed Ramp target 6 (RSA depth) ramps it toward the configured target
 // over the duration. Both add as offsets.
-rsa_baseline_bpm = max(slider3 + target_drift_offset[6] + speed_ramp_rsa_offset, 0);
+rsa_baseline_bpm = max(slider3 + target_drift_offset[1] + speed_ramp_rsa_offset, 0);
 heart_with_breath_offset = 0;
 rsa_baseline_bpm > 0 ? (
   rsa_half = rsa_baseline_bpm * 0.5;
@@ -1370,7 +1467,7 @@ cycle_len_base = floor(srate * 60.0 / effective_bpm);
 // Drift and Speed Ramp offsets are in the slider's own unit, so they ride the
 // conversion with it. The floor is 0.001 of a unit rather than 1: in Host x a
 // floor of 1 would be a whole beat.
-effective_systole = max(slider4 + target_drift_offset[1] + speed_ramp_systole_offset, 0.001);
+effective_systole = max(slider4 + target_drift_offset[2] + speed_ramp_systole_offset, 0.001);
 // `% of heartbeat` is a PROPORTION of one cycle, so it divides by 100 first;
 // sys_unit_sec for that mode is the whole cycle in seconds.
 systole_samples = floor(srate * effective_systole *
@@ -1389,24 +1486,33 @@ systole_samples = max(1, min(systole_samples, max(cycle_len_base, 2) - 1));
 // effective duration is then divided by the scale (faster rate = shorter
 // segments). Composes with the per-segment drift + ramp offsets below.
 // In seconds, whatever the breath unit, so this really is breaths per minute.
-base_breath_total = max((slider26 + slider27 + slider28 + slider29) * (breath_unit == 1 ? beat_sec : 1), 0.001);
-base_breath_rate  = 60 / base_breath_total;
-breath_rate_delta = target_drift_offset[7] + speed_ramp_bpm_offset;
-breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_breath_rate;
+// SINCE 2026-09-11 IT COUNTS THE WAY Set breath rate DOES. Rozaya heard that control
+// make a 12-beat breath in Beats, checked against the metronome: "if that's working,
+// drift should tie onto that." So in Seconds the amount is breaths per minute, as
+// before; in Beats it is BEATS PER BREATH, and a positive amount is a longer breath.
+breath_rate_delta = target_drift_offset[14] + speed_ramp_bpm_offset;
+breath_unit == 1 ? (
+  base_breath_beats = max(slider26 + slider27 + slider28 + slider29, 0.001);
+  breath_rate_scale = base_breath_beats / max(base_breath_beats + breath_rate_delta, 0.001);
+) : (
+  base_breath_total = max((slider26 + slider27 + slider28 + slider29) * 1, 0.001);
+  base_breath_rate  = 60 / base_breath_total;
+  breath_rate_scale = max(base_breath_rate + breath_rate_delta, 0.001) / base_breath_rate;
+);
 
 // Apply breath segment drifts (targets 2-5) + Speed Ramp offsets, then the
 // Breaths/min aggregate scale. Drift wanders each segment cycle-to-cycle;
 // Speed Ramp adds a one-way movement over the configured duration; the
 // aggregate scales the whole breath rate.
-effective_inhale_sec = max((slider26 + target_drift_offset[2] + speed_ramp_inhale_offset) / breath_rate_scale, 0.01);
-effective_top_sec    = max((slider27 + target_drift_offset[3] + speed_ramp_top_offset)    / breath_rate_scale, 0);
-effective_exhale_sec = max((slider28 + target_drift_offset[4] + speed_ramp_exhale_offset) / breath_rate_scale, 0.01);
-effective_bot_sec    = max((slider29 + target_drift_offset[5] + speed_ramp_bot_offset)    / breath_rate_scale, 0);
+effective_inhale_sec = max((slider26 + target_drift_offset[15] + speed_ramp_inhale_offset) / breath_rate_scale, 0.01);
+effective_top_sec    = max((slider27 + target_drift_offset[16] + speed_ramp_top_offset)    / breath_rate_scale, 0);
+effective_exhale_sec = max((slider28 + target_drift_offset[17] + speed_ramp_exhale_offset) / breath_rate_scale, 0.01);
+effective_bot_sec    = max((slider29 + target_drift_offset[18] + speed_ramp_bot_offset)    / breath_rate_scale, 0);
 // Sigh extra length -> the scale the four segments ride during a sigh. The
 // control says how much LONGER the sigh breath is, in breath units; spreading it
 // in proportion keeps the breath's shape and simply stretches it. Derived from
 // the EFFECTIVE lengths, so a sigh during drift stretches the drifted breath.
-sigh_extra_total = max(slider49, 0);
+sigh_extra_total = max(slider49 + wq(31), 0);
 sigh_base_total  = max(effective_inhale_sec + effective_top_sec +
                        effective_exhale_sec + effective_bot_sec, 0.001);
 sigh_scale       = (sigh_base_total + sigh_extra_total) / sigh_base_total;
@@ -1423,14 +1529,15 @@ bot_len    = max(floor(srate * effective_bot_sec), 1);
 // value. Gated by breath_freq_active so unused instances keep the cached coeffs
 // and pay nothing. Clamped to 20 Hz so a big negative offset can't invert sin().
 breath_freq_active ? (
-  eff_in_freq = womb_pitch_hz(slider30, slider32 + target_drift_offset[8] + speed_ramp_in_freq_offset,
-                            slider33, slider34);
-  eff_ex_freq = womb_pitch_hz(slider35, slider37 + target_drift_offset[9] + speed_ramp_ex_freq_offset,
-                            slider38, slider39);
-  in_f_l = min(2.0 * sin($pi * (eff_in_freq * (1.0 + slider50 * 0.15)) * srate_inv), 0.98);
-  in_f_r = min(2.0 * sin($pi * (eff_in_freq * (1.0 - slider50 * 0.15)) * srate_inv), 0.98);
-  ex_f_l = min(2.0 * sin($pi * (eff_ex_freq * (1.0 + slider50 * 0.12)) * srate_inv), 0.98);
-  ex_f_r = min(2.0 * sin($pi * (eff_ex_freq * (1.0 - slider50 * 0.12)) * srate_inv), 0.98);
+  wb_bw = max(0, min(1, slider50 + wq(32)));
+  eff_in_freq = womb_pitch_hz(slider30, slider32 + target_drift_offset[19] + speed_ramp_in_freq_offset,
+                            slider33 + wq(20), slider34);
+  eff_ex_freq = womb_pitch_hz(slider35, slider37 + target_drift_offset[21] + speed_ramp_ex_freq_offset,
+                            slider38 + wq(22), slider39);
+  in_f_l = min(2.0 * sin($pi * (eff_in_freq * (1.0 + wb_bw * 0.15)) * srate_inv), 0.98);
+  in_f_r = min(2.0 * sin($pi * (eff_in_freq * (1.0 - wb_bw * 0.15)) * srate_inv), 0.98);
+  ex_f_l = min(2.0 * sin($pi * (eff_ex_freq * (1.0 + wb_bw * 0.12)) * srate_inv), 0.98);
+  ex_f_r = min(2.0 * sin($pi * (eff_ex_freq * (1.0 - wb_bw * 0.12)) * srate_inv), 0.98);
 );
 
 // Note: the sigh stretch (sigh_scale) is NOT applied here. It's
@@ -1472,6 +1579,26 @@ slider48 > 0 ? (
 // CONFIG banks are preserved across those re-runs by the drift_cfg_inited
 // guard in @init. See docs/v2.9-render-state-bug.md.)
 
+// --- Per-sample values for the 2026-09-11 targets. Each is exactly its slider
+//     while drift and ramp leave it alone, held inside its control's range. Sigh
+//     interval and the gates still switch on only when their SLIDERS are above 0.
+s1_vol      = max(0, min(1, slider12 + wq(6)));
+s2_vol      = max(0, min(1, slider19 + wq(10)));
+hb_mvol     = max(0, min(1, slider22 + wq(13)));
+br_fi_in    = max(0, min(1, slider40 + wq(23)));
+br_fo_in    = max(0, min(1, slider41 + wq(24)));
+br_fi_ex    = max(0, min(1, slider42 + wq(25)));
+br_fo_ex    = max(0, min(1, slider43 + wq(26)));
+sigh_iv     = max(0, slider48 + wq(30));
+br_vol      = max(0, min(1, slider51 + wq(33)));
+bf_vol      = max(0, min(1, slider61 + wq(41)));
+play_for_hb = max(0, slider66 + wq(43));
+rest_for_hb = max(0, slider67 + wq(44));
+play_for_br = max(0, slider68 + wq(45));
+rest_for_br = max(0, slider69 + wq(46));
+play_for_bf = max(0, slider70 + wq(47));
+rest_for_bf = max(0, slider71 + wq(48));
+
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
   spl0 = 0;
@@ -1504,8 +1631,9 @@ hb_phase >= cycle_len ? (
   // A new heartbeat begins: the heart rate's turn and the S1-S2 gap's turn.
   // Raised on the CYCLE, not on the audible beat -- the play/rest gate silences
   // beats without stopping the cycle, and drift should follow the cycle.
-  drift_step_mem[0] = 1;
-  drift_step_mem[1] = 1;
+  // ...and every target whose turn is the heartbeat (Heart rate, Systole, the heart
+  // sounds, bloodflow, Tuning reference, the two gates), wb_turn_mem == 0.
+  wb_f = 0; loop(N_TARGETS, wb_turn_mem[wb_f] == 0 ? drift_step_mem[wb_f] = 1; wb_f += 1;);
   pr_hb_enabled ? (
     pr_hb_beat >= (pr_hb_resting ? rest_for_hb : play_for_hb) ? (
       pr_hb_resting = 1 - pr_hb_resting;
@@ -1613,7 +1741,7 @@ hb_delay_sign == 1 ? (
 ) : (
   hb_l = heart_far; hb_r = heart_near;
 );
-hb_l *= slider22; hb_r *= slider22;
+hb_l *= hb_mvol; hb_r *= hb_mvol;
 
 // --- BREATH ---
 breath_state_pos += breath_state_advance;
@@ -1634,15 +1762,16 @@ breath_state_pos >= breath_state_len ? (
       // sigh first (it covered all 4 states of the breath we just finished),
       // then check the timer — if it's time, this NEW breath is the sigh.
       sigh_active = 0;
-      slider48 > 0 && sigh_time_since_last >= slider48 * 60 ? (
+      slider48 > 0 && sigh_time_since_last >= sigh_iv * 60 ? (
         sigh_active = 1;
         sigh_time_since_last = 0;
       );
       breath_state     = 0;
       // A new breath begins: the inhale's turn, and the whole breath's turn --
       // Breaths/min scales all four segments together, so a breath is its unit.
-      drift_step_mem[2] = 1;
-      drift_step_mem[7] = 1;
+      // Every target whose turn is the breath comes round too (wb_turn_mem == 1).
+      drift_step_mem[15] = 1;
+      wb_f = 0; loop(N_TARGETS, wb_turn_mem[wb_f] == 1 ? drift_step_mem[wb_f] = 1; wb_f += 1;);
       // Multiply by sigh_scale if sigh_active; otherwise use the
       // currently-drifted inhale_len as-is. Same pattern applies at every
       // state transition below — drift wanders the underlying segment
@@ -1657,15 +1786,15 @@ breath_state_pos >= breath_state_len ? (
     // next 3->0 transition above.
     breath_state == 1 ? (
       breath_state_len = sigh_active ? max(floor(top_len    * sigh_scale), 1) : top_len;
-      drift_step_mem[3] = 1;
+      drift_step_mem[16] = 1;
     );
     breath_state == 2 ? (
       breath_state_len = sigh_active ? max(floor(exhale_len * sigh_scale), 1) : exhale_len;
-      drift_step_mem[4] = 1;
+      drift_step_mem[17] = 1;
     );
     breath_state == 3 ? (
       breath_state_len = sigh_active ? max(floor(bot_len    * sigh_scale), 1) : bot_len;
-      drift_step_mem[5] = 1;
+      drift_step_mem[18] = 1;
     );
   );
 );
@@ -1680,7 +1809,7 @@ pr_br_resting ? (
     // transition for sigh purposes too. Same sigh-fire logic as the
     // normal 3->0 path above.
     sigh_active = 0;
-    slider48 > 0 && sigh_time_since_last >= slider48 * 60 ? (
+    slider48 > 0 && sigh_time_since_last >= sigh_iv * 60 ? (
       sigh_active = 1;
       sigh_time_since_last = 0;
     );
@@ -1688,8 +1817,8 @@ pr_br_resting ? (
     // Rest-exit starts a real new breath, so it owes the same two turns as the
     // 3->0 path above. Missing this would skip a step every time the Breath
     // play/rest gate let go.
-    drift_step_mem[2] = 1;
-    drift_step_mem[7] = 1;
+    drift_step_mem[15] = 1;
+    wb_f = 0; loop(N_TARGETS, wb_turn_mem[wb_f] == 1 ? drift_step_mem[wb_f] = 1; wb_f += 1;);
     breath_state_len = sigh_active ? max(floor(inhale_len * sigh_scale), 1) : inhale_len;
     breath_state_pos = 0;
   );
@@ -1715,7 +1844,7 @@ ex_hp2_r = br_hp_r - ex_lp_r - breath_lp_q * ex_bp_r;
 ex_bp_r += ex_f_r * ex_hp2_r;
 
 (breath_state == 0) ? (
-  br_env_raw = apply_fade(breath_phase_pos, slider40, slider41, slider44);
+  br_env_raw = apply_fade(breath_phase_pos, br_fi_in, br_fo_in, slider44);
   br_env     = br_floor + (1.0 - br_floor) * br_env_raw;
   br_l = in_lp_l * br_env * 1.5;
   br_r = in_lp_r * br_env * 1.5;
@@ -1723,7 +1852,7 @@ ex_bp_r += ex_f_r * ex_hp2_r;
   br_l = in_lp_l * br_floor * 1.5;
   br_r = in_lp_r * br_floor * 1.5;
 ) : (breath_state == 2) ? (
-  br_env_raw = apply_fade(breath_phase_pos, slider42, slider43, slider44);
+  br_env_raw = apply_fade(breath_phase_pos, br_fi_ex, br_fo_ex, slider44);
   br_env     = br_floor + (1.0 - br_floor) * br_env_raw;
   br_l = ex_lp_l * br_env * 1.5;
   br_r = ex_lp_r * br_env * 1.5;
@@ -1731,7 +1860,7 @@ ex_bp_r += ex_f_r * ex_hp2_r;
   br_l = ex_lp_l * br_floor * 1.5;
   br_r = ex_lp_r * br_floor * 1.5;
 );
-br_l *= slider51; br_r *= slider51;
+br_l *= br_vol; br_r *= br_vol;
 
 bpf_low_l += bpf_f * bpf_band_l;
 bpf_high_l = br_l - bpf_low_l - bpf_q * bpf_band_l;
@@ -1752,7 +1881,7 @@ br_r = bpf_low_r;
 // Drift target 10 and Ramp target 10 wander the offset in the control's own
 // units, exactly as every other target does, so they are added before the unit
 // factor is applied rather than after.
-bf_offset_cycles = (slider53 + target_drift_offset[10] + speed_ramp_bf_off_offset)
+bf_offset_cycles = (slider53 + target_drift_offset[34] + speed_ramp_bf_off_offset)
                    * bf_unit_to_cycles;
 bf_cycle_pos = hb_phase / max(cycle_len, 1) - bf_offset_cycles;
 bf_cycle_pos -= floor(bf_cycle_pos);
@@ -1792,8 +1921,8 @@ bf_fb_r = bf_res + bf_res / (1.0 - bf_cut_r);
 bf_n3_r = bf_n3_r + bf_cut_r * (n6 - bf_n3_r + bf_fb_r * (bf_n3_r - bf_n4_r));
 bf_n4_r = bf_n4_r + bf_cut_r * (bf_n3_r - bf_n4_r);
 
-bf_l = bf_n4_l * bf_env * slider61 * 12.0;
-bf_r = bf_n4_r * bf_env * slider61 * 12.0;
+bf_l = bf_n4_l * bf_env * bf_vol * 12.0;
+bf_r = bf_n4_r * bf_env * bf_vol * 12.0;
 
 target_bf_mix = pr_bf_enabled && pr_bf_resting ? 0 : 1;
 bf_output_mix = bf_output_mix * pr_smooth + target_bf_mix * (1 - pr_smooth);
@@ -1853,12 +1982,23 @@ slider64 == 0 ? (
 //
 // The heart-rate seeding flags are gone with the block that used them; the
 // 2026-09-06 layout migration does that conversion once, in the project file.
-sr_magic = 2500000 + N_TARGETS;
+// 2600049 (2026-09-11): forty-nine targets in control order. 2500011 and 2400011
+// are read at eleven, 2300010-2100010 at ten, each field only where that format
+// held it, then remapped through wb_o2n with both remembered selectors. Only what
+// the blob HELD is remapped; the rest keeps @init's defaults.
+function wb_remap(bank, dflt, width) local(k) (
+  k = 0; loop(width, wb_scratch[k] = bank[k]; k += 1;);
+  k = 0; loop(N_TARGETS, bank[k] = dflt; k += 1;);
+  k = 0; loop(width, bank[wb_o2n(k)] = wb_scratch[k]; k += 1;);
+);
+sr_magic = 2600000 + N_TARGETS;
 file_var(0, sr_magic);
-(sr_magic == 2500000 + N_TARGETS ||
- sr_magic == 2400000 + N_TARGETS      || sr_magic == 2300000 + OLD_N_TARGETS ||
- sr_magic == 2200000 + OLD_N_TARGETS  || sr_magic == 2100000 + OLD_N_TARGETS) ? (
-  n_ser = sr_magic >= 2400000 ? N_TARGETS : OLD_N_TARGETS;
+wb_is_new = sr_magic == 2600000 + N_TARGETS;
+wb_is_old = sr_magic == 2500000 + OLD11 || sr_magic == 2400000 + OLD11 ||
+            sr_magic == 2300000 + OLD_N_TARGETS || sr_magic == 2200000 + OLD_N_TARGETS ||
+            sr_magic == 2100000 + OLD_N_TARGETS;
+(wb_is_new || wb_is_old) ? (
+  n_ser = wb_is_new ? N_TARGETS : sr_magic >= 2400000 ? OLD11 : OLD_N_TARGETS;
   file_mem(0, target_drift_up,    n_ser);
   file_mem(0, target_drift_down,  n_ser);
   file_mem(0, target_drift_per,   n_ser);
@@ -1890,7 +2030,26 @@ file_var(0, sr_magic);
   // Drift movement, per target -- LAST in the stream, so appending it to an
   // existing blob is a pure append. An older blob has no such field and keeps
   // @init's defaults, which are exactly the behaviour it was written under.
-  sr_magic >= 2500000 ? ( file_mem(0, target_drift_moves, N_TARGETS); );
+  sr_magic >= 2500000 ? ( file_mem(0, target_drift_moves, n_ser); );
+
+  wb_is_old ? (
+    wb_remap(target_drift_up, 0, n_ser);   wb_remap(target_drift_down, 0, n_ser);
+    wb_remap(target_drift_per, 8, n_ser);  wb_remap(target_drift_shape, 0, n_ser);
+    wb_remap(speed_ramp_target_value_mem, 0, n_ser);
+    wb_remap(speed_ramp_dur_mem, 0, n_ser); wb_remap(speed_ramp_delay_mem, 0, n_ser);
+    sr_magic >= 2400000 ? (
+      wb_remap(drift_play_mem, 0, n_ser); wb_remap(drift_rest_mem, 0, n_ser);
+      wb_remap(ramp_play_mem, 0, n_ser);  wb_remap(ramp_rest_mem, 0, n_ser);
+    );
+    // Drift movement's defaults differ per target, so it is remapped by hand.
+    sr_magic >= 2500000 ? (
+      wb_f = 0; loop(n_ser, wb_scratch[wb_f] = target_drift_moves[wb_f]; wb_f += 1;);
+      wb_f = 0; loop(N_TARGETS, target_drift_moves[wb_f] = wb_moves_default(wb_f); wb_f += 1;);
+      wb_f = 0; loop(n_ser, target_drift_moves[wb_o2n(wb_f)] = wb_scratch[wb_f]; wb_f += 1;);
+    );
+    last_target_select = wb_o2n(max(0, min(10, last_target_select | 0)));
+    last_speed_target  = wb_o2n(max(0, min(10, last_speed_target | 0)));
+  );
 
   // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
   // on WRITE it is < 0. @serialize is the only section guaranteed to run on
@@ -1912,6 +2071,9 @@ file_var(0, sr_magic);
     slider77 = target_drift_moves[last_target_select];
     slider79 = drift_play_mem[last_target_select];             // Drift play for
     slider80 = drift_rest_mem[last_target_select];             // Drift rest for
+    // The selectors themselves, so a remapped old save shows the target it had.
+    slider72 = last_target_select;
+    slider81 = last_speed_target;
     // sliderchange, NOT slider_automate: this is a restore, and automating it
     // would write automation the user never asked for.
     sliderchange(-1);

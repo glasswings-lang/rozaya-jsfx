@@ -44,20 +44,41 @@ Identical to v2 for the three audio layers (see [Womb Sound Generator v2 → Sig
 Each drift target has its own phase counter. **Six of them step on their own
 turn** and the rest advance per sample -- see "Whose turn it is" below. The phase advance scales with Ramp so all drifts slow together when Ramp engages. Per-target up amount, down amount, period, and shape are stored in a per-instance memory bank — the slider 56-58 values you see at any moment reflect whichever target is currently selected.
 
-Target indices and units:
+### The forty-nine targets (2026-09-11)
 
-| Target | Index | Up/Down units | Period units |
-|---|---|---|---|
-| Heart rate | 0 | BPM | heartbeats |
-| S1-S2 gap | 1 | ms | heartbeats |
-| Inhale | 2 | seconds | breath cycles |
-| Top pause | 3 | seconds | breath cycles |
-| Exhale | 4 | seconds | breath cycles |
-| Bottom pause | 5 | seconds | breath cycles |
-| RSA depth | 6 | BPM peak-to-peak | breath cycles |
-| Breaths/min | 7 | breaths/min (scales all 4 segments in lockstep, I:E preserved) | breath cycles |
-| Inhale Freq | 8 | Hz (inhale breath-noise filter cutoff — brightness) | breath cycles |
-| Exhale Freq | 9 | Hz (exhale breath-noise filter cutoff — brightness) | breath cycles |
+**Every control that shapes the sound is a Drift and Ramp target, in the order of
+the controls, each named for its control.** It was eleven. Four were renamed to
+match their controls -- S1-S2 gap is now **Systole**, RSA depth **Heart with
+breath**, Inhale Freq and Exhale Freq **Inhale pitch** and **Exhale pitch** -- and
+Sigh interval joined. Rozaya: *"Yes, and yes."*
+
+Heart: Heart rate, Heart with breath, Systole, S1 pitch, S1 fine tune, S1 decay,
+S1 volume, S2 pitch, S2 fine tune, S2 decay, S2 volume, Brightness, HB stereo width,
+HB master volume. Breath: Breath rate, Inhale, Top pause, Exhale, Bottom pause,
+Inhale pitch, Inhale fine tune, Exhale pitch, Exhale fine tune, the four fades,
+Breath high-pass, Breath post-filter Hz and Q, Sigh interval, Sigh extra length,
+Breath stereo width, Breath volume. Bloodflow: offset, attack, decay, dicrotic
+level, filter Hz, resonance, stereo width, volume. Then Tuning reference, and the
+six Play for / Rest for.
+
+Each amount is in its control's own unit and stays inside that control's range. HB
+stereo width never crosses to the other side. A drifted Sigh interval or gate only
+runs while its own slider is above 0.
+
+**Breath rate counts the way Set breath rate does.** Breathing in Seconds, it is
+breaths per minute. In Beats it is **beats per breath**, so a positive amount makes
+the breath longer. Rozaya heard Set breath rate make a 12-beat breath against the
+metronome: *"if that's working, drift should tie onto that."* Until 2026-09-11 it
+was always breaths per minute. `womb-and-baby` was the one project using it in
+Beats, and its drift was converted to reach the same quickest and slowest breaths.
+
+**On `With the target`** a heart or bloodflow target (and Tuning reference) steps
+once per heartbeat, a breath target once per breath, and each segment on its own
+turn. Heart rate, Systole, the segments and Breath rate default to it; everything
+else to `On a clock`. In Cycles, Heart with breath, the breath targets and Bloodflow
+offset count breath cycles, as they always did; the rest count heartbeats.
+
+*(The sections below still name the eleven targets as they were.)*
 
 Each drift offset is added to the target's baseline slider value per sample. For example: with Heart rate target's up/down at 5/5 and a period of 8 heartbeats with Sine shape, the effective BPM wanders within ±5 of the baseline slider 1 value, completing one full sine over 8 beats -- in eight steps, one per beat, since Heart rate is a stepped target.
 
