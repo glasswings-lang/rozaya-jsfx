@@ -57,9 +57,10 @@ CASES = [
          a=[(7, -12)], b=[(7, 0)], hz_pre=[(15, 0)], hz=[(16, 0)]),
     dict(name="rhythm_track", file="rhythm-track.jsfx", ref=11,
          a=notes((6, 7, 8, 69)), b=notes((6, 7, 8, 69), up=12), hz=[]),
-    dict(name="sweep_dwell", file="sweep-dwell-filter.jsfx", ref=11, input="noise",
-         a=notes((1, 2, 3, 57), (6, 7, 8, 81)),
-         b=notes((1, 2, 3, 57), (6, 7, 8, 81), up=12), hz=[]),
+    # Segments since 2026-09-10: parked on All segments, one pitch block sets both
+    # dwells, so both ends share the note and the equivalence still holds.
+    dict(name="sweep_dwell", file="sweep-dwell-filter.jsfx", ref=10, input="noise", pre=[(1, 0)],
+         a=notes((5, 6, 7, 57)), b=notes((5, 6, 7, 57), up=12), hz=[]),
     dict(name="sweeping_filter", file="full-feature-sweeping-filter.jsfx", ref=11, input="noise",
          a=notes((1, 2, 3, 57), (6, 7, 8, 81)),
          b=notes((1, 2, 3, 57), (6, 7, 8, 81), up=12), hz=[]),

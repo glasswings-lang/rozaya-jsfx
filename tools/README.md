@@ -645,6 +645,23 @@ AND edited can only be verified against real projects.
   stay stable. Runs the sweep at 120 BPM: at the default 2 BPM an 8-second render
   sits at the top of its sweep, and the Low targets looked broken.
 
+## Sweep Dwell's segments — 2026-09-10
+
+`docs/layouts/sweep-dwell.md`. Four times, three cycle controls and a picker
+became a Segment selector with a length mode and value per segment.
+
+- **`sdf_migrate_segments_20260910.py`** — the installed 46-control line to 45,
+  and a NEW blob (2500016) carrying the segment banks, since those are no longer
+  sliders. Tensor's two instances are skipped: they point at
+  `filters/sweep-dwell-filter.jsfx`, which does not exist, so they never loaded.
+- **`sdf_segment_test.py`** — the selector checked against the OLD plugin as the
+  oracle: each segment edit, All segments, and every length mode must render
+  bit-identically to the same thing typed into the old controls.
+- **`sdf_migrate_test.py`** — synthetic old projects with drift, ramp, Linked
+  Sweep and both host-sync cycle modes, which surges does not use.
+- **`sdf_target_test.py`** — each of the 16 targets changes the sound, stable.
+  The cycle is shortened so the Low dwell is actually heard.
+
 ## Earlier 2026-09-10 migrations, indexed late
 
 - **`looper_migrate_pitchblock_20260910.py`** — Sustain Looper, 8 sliders to 30,

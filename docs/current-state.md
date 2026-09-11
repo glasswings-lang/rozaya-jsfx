@@ -30,7 +30,7 @@ sentence.
   its period is a rate by design.
 - **Polyrhythm v1 CROSSED AND ARCHIVED 2026-09-10.** 144 instances in 31 files
   (E:/reaper, TrackTemplates, Tensor's folder), all bit-identical by render.
-- **Reorders owed:** Passage (blocked on what it is FOR), Sweep Dwell (blocked on its `Cycle mode` question).
+- **Reorders owed:** Passage (blocked on what it is FOR).
 - **Polyrhythm v3** — voices behind a `Voice` selector 2026-09-07; per-voice pitch
   block and 88 Drift/Ramp targets with all-voices entries 2026-09-10, 59 sliders.
   8 instances bit-identical both times. `docs/layouts/polyrhythm-phase-v3-r22-r24.md`.
@@ -101,9 +101,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - **Sweeping Filter, 2026-09-10:** two pitch blocks, Tuning reference at 11, 17
   targets. 25 instances: E:/reaper's 20 bit-identical; Tensor's 5 had NEVER been
   migrated and took every step since April. `docs/layouts/sweeping-filter-r22-r24.md`.
-  Sweep Dwell's reference also moved to 11, in src only.
-- **Tuning reference works in all 13** (`tools/tuning_ref_check.py`), and Heartbeat
-  and Womb no longer blow up above ~5 kHz — both projects-identical, installed.
+- **Sweep Dwell, 2026-09-10:** Rozaya's Segment selector, 45 controls, 16 targets; surges.RPP
+  bit-identical. Tensor's two point at a missing path, skipped. `docs/layouts/sweep-dwell.md`.
+- **Tuning reference measured working in all 13**; Heartbeat and Womb no longer blow up above ~5 kHz.
 - **Sustain Looper, 2026-09-10:** Bubbler's pitch block, Drift and Ramp on eight
   targets, and loop moves crossfade instead of cutting. 4 instances migrated,
   bit-identical with the sample loaded. `docs/layouts/sustain-looper.md`.

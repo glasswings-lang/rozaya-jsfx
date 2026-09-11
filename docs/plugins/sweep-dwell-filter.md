@@ -6,7 +6,7 @@
 
 ## Overview
 
-Sweep Dwell Filter is a resonant lowpass filter driven by an LFO with four time-based phases: hold at high frequency, sweep down to low, hold at low frequency, and sweep back up. Unlike a rate-based LFO, the cycle duration is determined entirely by the four phase times — each phase has its own duration in seconds, and the total cycle length is their sum. The fade transitions have independently selectable curve shapes. A wet/dry mix and an optional pan modulation system complete the feature set.
+Sweep Dwell Filter is a resonant lowpass filter driven by a cycle of four **segments**: hold at the High dwell's frequency, fade down, hold at the Low dwell's frequency, and fade back up. Unlike a rate-based LFO, the cycle lasts as long as its segments add up to — each segment says its own length, in any of the five rate modes. The fade transitions have independently selectable curve shapes. A wet/dry mix and an optional pan modulation system complete the feature set.
 
 The plugin processes incoming stereo audio.
 
@@ -59,22 +59,44 @@ Two things hold at every slope, which is not automatic:
 > droopier passband and a softer knee — so expect a character shift near the
 > corner, not a tuning shift.
 
-> **In `src/`, not yet installed (2026-09-10).** The source has the layout below;
-> the installed plugin and saved projects still have the older single Frequency
-> controls, and wait on the Cycle mode question before they are migrated.
+### Segments (sliders 1–9, 2026-09-10)
 
-**Low and High — two full pitch blocks (sliders 1–10)**
-Each end of the sweep is set with **pitch mode** `Hz / Semitones / Cents`, **note
-name** (shown in Semitones mode, the same number as the value), **frequency (Hz /
-semitones / cents)** `0–20000`, **fine tune** and **fine tune unit** — the same
-five controls, in the same words, as the Full Feature Sweeping Filter. Low is the
-resting state of the filter, default 500 Hz; High is the open state, default
-5000 Hz. If Low ends up above High, the two are swapped.
+Rozaya's design: a selector, then the mode, then the value. **Segment** picks
+which part of the cycle the controls under it belong to:
 
-**Tuning reference (Hz)** `20–2000, default 440` (slider 11)
-The pitch of A4 for both ends in Semitones and Cents modes; nothing in Hz mode.
-Moved here from slider 55 on 2026-09-10, beside the pitch blocks, before any
-project had been saved with it. Measured by `tools/tuning_ref_check.py`.
+- **All segments** — a control you move goes into every segment it applies to: a
+  length into all four, a fade shape into both fades, a pitch into both dwells.
+- **High dwell**, **Fade down**, **Low dwell**, **Fade up** — just that one.
+
+Under it, for whichever segment is picked:
+
+- **Length mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`
+  and **Length** — how long the segment lasts. Seconds is that many seconds. Every
+  N beats is that many beats. N per beat fits that many into one beat, so 2 is half
+  a beat. BPM is as long as one beat at that tempo; Hz as long as one cycle at that
+  speed. The beat modes follow the project tempo live.
+- **Fade shape** `Linear / Cosine / Logarithmic / Exponential` — the two fades only.
+  Linear is a constant rate; Cosine an S-curve; Logarithmic drops fast then
+  lingers; Exponential holds then closes sharply.
+- **Pitch mode**, **Note name**, **Frequency (Hz / semitones / cents)**, **Fine
+  tune**, **Fine tune unit** — the two dwells only, the same five controls as the
+  Sweeping Filter. Note name shows in Semitones and is the same number as the
+  frequency. If Low ends up above High, the two are swapped.
+
+The cycle is the four lengths added up. Defaults: High dwell 4 s at 5000 Hz, Fade
+down 1 s, Low dwell 6 s at 500 Hz, Fade up 1 s, both fades Cosine. Adding a
+segment later is one more entry in this list.
+
+**Tuning reference (Hz)** `20–2000, default 440` (slider 10)
+The pitch of A4 for both dwells in Semitones and Cents; nothing in Hz mode.
+Measured by `tools/tuning_ref_check.py`.
+
+**Slope (dB/oct)** is slider 12, straight after Resonance.
+
+> **What changed on 2026-09-10.** The four "sec" sliders, Cycle mode, Cycle length
+> (beats) and Cycle length mode are gone: every segment now says its own unit, so a
+> host-synced cycle is simply four lengths in Every N beats. surges.RPP opened in
+> Seconds and renders bit-identically over 60 s.
 
 **Resonance** `0.0-1.0, default 0.7`
 Resonance of the lowpass filter. Higher values add a pronounced peak at the cutoff frequency, accentuating the frequencies at each point in the sweep. Values approaching 1.0 can produce self-oscillation.
@@ -84,71 +106,23 @@ Blend between the filtered signal and the unprocessed input. At 1.0 the output i
 
 ---
 
-### Dwell and Transition Times
+### Syncing to the project
 
-The LFO cycle consists of four phases in sequence: hold high → sweep down → hold low → sweep up → repeat. The total cycle length is the sum of all four phase durations.
-
-**High Dwell sec** `0.001-60 sec, default 4`
-Duration of the segment where the filter holds at the high cutoff frequency.
-
-**Low Dwell sec** `0.001-60 sec, default 6`
-Duration of the segment where the filter holds at the low cutoff frequency.
-
-**Fade Down sec** `0.001-30 sec, default 1`
-Duration of the transition from the high cutoff frequency to the low cutoff frequency.
-
-**Fade Down Shape** `Linear / Cosine / Logarithmic / Exponential`
-Curve shape applied to the fade-down transition.
-- **Linear** — constant rate of frequency change.
-- **Cosine** — S-curve, slow at both ends, faster in the middle.
-- **Logarithmic** — fast initial drop, slow finish. The filter closes quickly then lingers near the low frequency.
-- **Exponential** — slow initial drop, fast finish. The filter holds near the high frequency before closing sharply.
-
-**Fade Up sec** `0.001-30 sec, default 1`
-Duration of the transition from the low cutoff frequency back to the high cutoff frequency.
-
-**Fade Up Shape** `Linear / Cosine / Logarithmic / Exponential`
-Curve shape applied to the fade-up transition. Same options as Fade Down Shape. Asymmetric shapes between fade down and fade up create distinct opening and closing characters.
-
----
-
-### Host tempo sync
-
-**Cycle mode** `Own durations / Host x, default Own durations`
-- **Own durations** — the four dwell sliders are literal seconds and the cycle is however long they add up to. This is the original behaviour and the default, so existing projects are unchanged.
-- **Host x** — the four sliders keep their *proportions* but the whole cycle is stretched or squeezed to fit **Cycle length (beats)** at the project tempo. The shape you tuned by ear survives; only the speed changes.
-
-**Cycle length mode** `Fit to durations / Set in beats, default Fit to durations` *(hidden unless Cycle mode is Host x)*
-
-- **Fit to durations** — the cycle is however long your four dwell sliders add up to, in beats. Which means **each of the four is simply a beat count**: type `2` into Fade Down and the fade is two beats. Nothing to add up, nothing to convert, and the sum is worked out for you.
-- **Set in beats** — the cycle is pinned to **Cycle length (beats)** below, and the four durations act as proportions filling it. Use this when you want a shape you've tuned by ear squeezed into a fixed number of beats.
-
-Fit is the plugin's own way of thinking, just expressed in beats instead of seconds — Sweep Dwell has never had a rate slider; it has four times whose sum *is* the cycle. That's how envelopes work too (attack, decay, release — nobody sets a total). Set in beats is the LFO family's convention, borrowed in for when it's the more useful one.
-
-Either way, Fit uses your four **slider** values, never the drifted ones. Drift and Ramp still only move the shape and can't make the cycle wander in length.
-
-**Cycle length (beats)** `0.25–128, default 12` *(hidden unless Cycle length mode is Set in beats)*
-How many beats one full dwell pattern takes. The default 12 matches the default durations (4 + 1 + 6 + 1) so the two modes agree out of the box.
-
-Two more things worth knowing before you reach for Host x:
-
-- **In Set in beats, the dwell sliders become shape controls, not length controls.** Doubling High Dwell doesn't make the cycle longer — it makes the high hold take a bigger share of the same cycle, and everything else shrinks to fit. Same for Drift and Ramp aimed at any of the four. (In Fit to durations they stay length controls, which is the point of it.)
-- **Start Delay stays in literal seconds.** It's a "wait before the effect arrives" control rather than musical pacing, so it doesn't follow the tempo. If you're staggering two instances against each other, that's the one to watch.
-
-Switching Cycle mode changes what the dwell numbers *mean*, and nothing rescales them for you. Nothing is lost — flip back and the seconds are still there — but the sound will jump.
+Put every segment's Length mode on **Every N beats** or **N per beat** (All
+segments does it in one move) and the cycle is a fixed number of beats.
 
 #### The cycle is positioned from the project, not from when you pressed play
 
-In Host x, with the transport rolling, the plugin asks REAPER where it is in the song and puts the cycle there. Drop the playhead into the middle of bar 40 and the sweep is already exactly where it would have been if you'd played from the top. The start of the high dwell lands on a bar line, every time.
+When every segment counts in beats, nothing is moving a length, and the transport is rolling, the plugin asks REAPER where it is in the song and puts the cycle there. Drop the playhead into the middle of bar 40 and the sweep is already exactly where it would have been if you'd played from the top. The start of the high dwell lands on a bar line, every time.
 
 That's the behaviour tempo-synced effects are expected to have, and it's the reason to sync at all — a cycle that's the right *length* but starts wherever you happened to press play still lands off the grid. It also can't slowly drift out over a long session, and it follows seeking and looping for free.
 
 Two exceptions, both deliberate:
 
 - **Stopped or paused**, the project position doesn't move, so the cycle free-runs instead. Otherwise it would sit frozen for anyone monitoring live.
-- **Pan Sweep** (modes 10 and 11) always free-runs, even on the Host x unit, because Drift and Ramp can move its rate — and positioning from the project assumes a rate that isn't being modulated underneath. **Linked Sweep** does lock, since its multiplier is fixed. The rule across the plugin is: lock what's constant, accumulate what's modulated.
+- **Pan Sweep** (modes 10 and 11) always free-runs, even on the Host x unit, because Drift and Ramp can move its rate — and positioning from the project assumes a rate that isn't being modulated underneath. **Linked Sweep** does lock with the cycle. A Drift or Ramp on any segment length also releases the lock, for the same reason. The rule across the plugin is: lock what's constant, accumulate what's modulated.
 
-Every other rate mode is unchanged and still starts from zero on play.
+Any segment in BPM, Seconds or Hz, and the cycle starts from zero on play.
 
 ---
 
@@ -237,12 +211,15 @@ It used to be a multiplier of the tempo, which is a number you cannot hear witho
 
 Note that a Drift or Ramp amount aimed at Pan Sweep Rate rides in whatever unit is showing, so in Host x and Seconds a positive amount makes the pan *slower*, while in Hz and BPM it makes it faster. That follows the units honestly, but it differs from the oscillator plugins, where rate amounts are always in real BPM whatever the mode. Flagged as an inconsistency for the suite sweep to settle rather than decided here.
 
-**Filter Speed Multiplier (Linked Sweep)** `0.125-8×, default 1×`
-Pan sweep speed relative to filter cycle, for Linked Sweep only.
+**Pan sweep every (cycles)** `0.001–1000, default 1` (slider 22)
+Linked Sweep only: how many dwell cycles one pan pass takes. Bigger is slower. It
+replaced a speed MULTIPLIER and the picker that wrote into it on 2026-09-10, the
+same change the Sweeping Filter had; a saved multiplier was inverted, so the pan
+runs at the same speed.
 
 #### What host sync does to pan
 
-Most of the pan modes follow the tempo for free once **Cycle mode** is Host x, because they were never on their own clock:
+Most of the pan modes follow the tempo for free once every segment counts in beats, because they were never on their own clock:
 
 - **Mono** — no motion, nothing to sync.
 - **Alternating, Distributed, Converging, Diverging** and their Flipped / Ping-pong variants (the per-cycle modes) step one position per dwell cycle. Sync the cycle and they step in time automatically.
@@ -251,9 +228,9 @@ Most of the pan modes follow the tempo for free once **Cycle mode** is Host x, b
 
 ### Start Delay
 
-**Start delay (seconds)** `0–1000, default 0`
+**Start delay mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds` and **Start delay** `0–1000, default 0` (sliders 24–25)
 
-Pass-through for N seconds after playback starts, then applies the sweep-dwell filter + pan effect normally. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Sweep state and filter buffers stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
+It was locked to seconds until 2026-09-10; it now takes the same five modes as a segment length, and 0 is off in every mode. Pass-through for that long after playback starts, then applies the sweep-dwell filter + pan effect normally. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Sweep state and filter buffers stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
 ### Play / Rest Gating (v2.1)
 
@@ -308,7 +285,15 @@ ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
 ramp, which is the default. The holds come **out of** the duration rather than
 extending it, so Ramp duration goes on meaning "you arrive in about this long".
 
-Nested-selector pattern matching Womb v3 / breath_gen. Pick a target and set a signed `by` amount. As of v2.14 Ramp reaches the **same 6 targets as Drift** — the four dwell phases (High dwell / Fade down / Low dwell / Fade up) plus **Pan Sweep Rate** and **Resonance** (previously Ramp had only the four dwells). All 6 ramp in parallel; the selector just changes which one you're editing.
+> **Since 2026-09-10 Drift and Ramp reach 16 targets**, in control order: High
+> dwell length, Fade down length, Low dwell length, Fade up length, High dwell
+> frequency, High dwell fine tune, Low dwell frequency, Low dwell fine tune, Tuning
+> reference, Resonance, Stereo phase offset, Pan spread, Pan glide, Pan sweep rate,
+> Pan sweep every, Wet/dry. A length amount is in that segment's own length unit; a
+> frequency or fine tune in its own unit. Drift is now sliders 30–37 and Ramp
+> 38–45. The six-target text and slider numbers below are history.
+
+Nested-selector pattern matching Womb v3 / breath_gen. Pick a target and set a signed `by` amount. All targets ramp in parallel; the selector just changes which one you're editing.
 
 **Ramp target (slider 26)** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
 The 6-option selector (matches Drift). Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 6 targets ramp regardless of which one is selected. The `by` (slider 29) is in seconds for the dwell targets, the Pan Sweep Rate's own unit for that target, and a 0–1 fraction for Resonance.
@@ -391,7 +376,7 @@ The old flat-drift block (musical_up/down/period, slow_up/down/period, drift_sha
 
 ## Usage Notes
 
-- **Cycle length is the sum of all four phase durations.** Unlike rate-based LFOs there is no single BPM or Hz value — the tempo of the sweep is a consequence of the four phase times combined.
+- **Cycle length is the sum of all four segment lengths.** Unlike rate-based LFOs there is no single rate value — the tempo of the sweep is a consequence of the four lengths combined, each in its own mode.
 - **Adjusting any phase duration takes effect immediately.** The LFO phase is a running 0-1 counter; changing phase durations changes how that counter maps to filter positions without resetting it. This means a duration change mid-cycle may cause a jump to a different point in the sweep.
 - **The frequency mapping is linear.** Displayed Hz values correspond directly to filter behavior — the same linear mapping used in the other filter plugins in this suite.
 - **Phase Offset only takes effect in Offset from L mode.** In Independent L+R mode the offset slider has no audible effect.

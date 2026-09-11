@@ -4,250 +4,85 @@ desc: Sweep Dwell Filter
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-// --- Low end of the sweep, as an R22 block (2026-09-09) ---------------
-// Replicated in place, the way Womb's four are, so the two ends stay next
-// to each other and the migration stays line-only.
-slider1:0<0,2,1{Hz,Semitones,Cents}>Low pitch mode
-slider2:71<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Low note name
-slider3:500<0,20000,0.001>Low frequency (Hz / semitones / cents)
-slider4:0<-1000,1000,0.001>Low fine tune
-slider5:2<0,2,1{Hz,Semitones,Cents}>Low fine tune unit
-// --- High end of the sweep, as an R22 block (2026-09-09) ---------------
-// Replicated in place, the way Womb's four are, so the two ends stay next
-// to each other and the migration stays line-only.
-slider6:0<0,2,1{Hz,Semitones,Cents}>High pitch mode
-slider7:111<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>High note name
-slider8:5000<0,20000,0.001>High frequency (Hz / semitones / cents)
-slider9:0<-1000,1000,0.001>High fine tune
-slider10:2<0,2,1{Hz,Semitones,Cents}>High fine tune unit
-// ONE tuning reference for the plugin, per R22, straight after both pitch blocks
-// where you would look for it. It was appended at 55 on 2026-09-09; Rozaya moved
-// it here on 2026-09-10 ("fix all of that"), before any project had been saved
-// with it, so no saved value moves. The Sweeping Filter has it in the same place.
-slider11:440<20,2000,0.1>Tuning reference (Hz)
-slider12:4<0.001,1000,0.001>High Dwell sec
-slider13:6<0.001,1000,0.001>Low Dwell sec
-slider14:1<0.001,1000,0.001>Fade Down sec
-slider15:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade Down Shape
-slider16:1<0.001,1000,0.001>Fade Up sec
-slider17:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade Up Shape
-slider18:0.7<0,1,0.01>Resonance
-slider19:1<0,1,0.01>Wet/Dry Mix
-slider20:0<-180,180,0.1>Stereo Phase Offset degrees
-slider21:0<0,1,1{Independent L+R,Offset from L}>Phase Mode
+// === SEGMENTS, 2026-09-10 ====================================================
+// The cycle is a row of SEGMENTS played in order -- High dwell, Fade down, Low
+// dwell, Fade up -- and it lasts as long as they add up to. Rozaya's design:
+// "a selecter and then the modes, then the value. stick the frequencies in there
+// too ... If we ever do decide to add other segments later, that's the
+// extensable option and doesn't mean rewriting the entire plugin".
+// docs/layouts/sweep-dwell.md is the authored layout.
+//
+// Pick a segment, and the controls under the selector are THAT segment's. All
+// segments writes a moved control into every segment it applies to: a length
+// into all four, a fade shape into both fades, a pitch into both dwells.
+// Adding a segment later is one more selector entry and one more bank slot.
+slider1:1<0,4,1{All segments,High dwell,Fade down,Low dwell,Fade up}>Segment
+// A LENGTH in each of the five rate modes, converted by the plugin: Seconds is
+// that many seconds; Every N beats that many beats; N per beat that many fit in
+// one beat; BPM as long as one beat at that tempo; Hz as long as one cycle at
+// that speed. The two beat modes follow the live project tempo.
+slider2:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Length mode
+slider3:4<0.001,1000,0.001>Length (BPM / sec / Hz / beats / per beat)
+slider4:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade shape
+// The dwells' pitch (R22), word for word the block the Sweeping Filter has.
+slider5:0<0,2,1{Hz,Semitones,Cents}>Pitch mode
+slider6:111<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Note name
+slider7:5000<0,20000,0.001>Frequency (Hz / semitones / cents)
+slider8:0<-1000,1000,0.001>Fine tune
+slider9:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
+// ONE tuning reference, straight after the pitch, as in the Sweeping Filter.
+slider10:440<20,2000,0.1>Tuning reference (Hz)
+slider11:0.7<0,1,0.01>Resonance
+// Butterworth cascade, 1 to 6 two-pole sections; the cutoff number is the real
+// -3 dB corner at every slope. (The retired Kellett core's "Hz" was never Hz;
+// projects were migrated by sweepfilter_migrate_hz.py, bf81d1d.)
+slider12:0<0,5,1{-12,-24,-36,-48,-60,-72}>Slope (dB/oct)
+slider13:0<-180,180,0.1>Stereo phase offset (degrees)
+slider14:0<0,1,1{Independent L+R,Offset from L}>Phase mode
 // ===== PAN BLOCK SLIDERS START =====
-slider22:0<0,1,1{Off,On}>Pan Enabled
-slider23:0<0,15,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan Mode
-slider24:1<0,1,0.01>Pan Spread (0=mono, 1=full)
-slider25:5<0,1000,0.1>Pan Glide ms (0=instant)
-slider26:8<2,1000,1>Cycle Steps (per-cycle modes)
-slider27:2<0.001,1000,0.001>Pan sweep rate (BPM / sec / Hz / beats per cycle)
-// NOTE: this enum is {Hz,Seconds,BPM} — Seconds is index 1 here, but other
-// plugins in the suite order it {BPM,Seconds,Hz} and resonance_bank uses
-// {BPM,Hz,Seconds}. Key these branches by NAME, never by index; keying by
-// index is what put Start Delay 60x out in Tremolo and the sweeping filter.
-// Host x appended at the END (index 3) so saved values 0-2 are untouched.
-// Host x means BEATS PER CYCLE here, as everywhere else in the suite since
-// R13-revised (2026-09-02): 4 is one pan sweep every four beats. It used to be
-// a MULTIPLIER of the tempo. This plugin's MAIN cycle was already converted --
-// Cycle length (beats) below -- and the pan was left behind, which is the
-// suite's usual failure mode: a good decision made in one place and not
-// carried across.
-slider28:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan sweep rate mode
-slider29:1<0.001,1000,0.001>Filter Speed Multiplier (Linked Sweep)
-
-// Named picker for the Linked Sweep multiplier, same idea as Host ratio: the
-// raw control is a MULTIPLIER with 0.125 steps, so asking for half speed means
-// typing 0.5 and a quarter means 0.25 -- exposed decimals for something you
-// could just name. Entries are labelled by what you HEAR, never as note values.
-// Only ratios that land on the 0.125 grid are offered (no "every 3 cycles",
-// since a third isn't representable there).
-// Writes the multiplier on change then gets out of the way; "Custom" (default)
-// never writes, and is what a project saved before this slider existed lands
-// on, so nothing already tuned by hand is touched.
-slider54:0<0,8,1{Custom,every 8 cycles,every 4 cycles,every 2 cycles,same as filter,2 per cycle,3 per cycle,4 per cycle,8 per cycle}>Pan speed (Linked Sweep)
+slider15:0<0,1,1{Off,On}>Pan enabled
+slider16:0<0,15,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
+slider17:1<0,1,0.01>Pan spread (0 = mono, 1 = full)
+slider18:5<0,1000,0.1>Pan glide (ms, 0 = instant)
+slider19:8<2,1000,1>Cycle steps (per-cycle modes)
+slider20:2<0.001,1000,0.001>Pan sweep rate (BPM / sec / Hz / beats per cycle)
+slider21:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan sweep rate mode
+// Linked Sweep: how many dwell cycles one pan pass takes. It was a MULTIPLIER
+// with a picker that wrote into it; both retired 2026-09-10, as the Sweeping
+// Filter's were on 2026-09-05. Bigger is slower.
+slider22:1<0.001,1000,0.001>Pan sweep every (cycles)
 // ===== PAN BLOCK SLIDERS END =====
+slider23:1<0,1,0.01>Wet/dry mix
+// Pass-through before the effect arrives. It was locked to seconds; it now has
+// the five modes, default Seconds, and 0 is off in every mode.
+slider24:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Start delay mode
+slider25:0<0,1000,0.001>Start delay (BPM / sec / Hz / beats / per beat)
+// Per-cycle Play/Rest gate: play N whole cycles, rest M, repeat. 0 in either is off.
+slider26:0<0,1000,1>Play for (cycles)
+slider27:0<0,1000,1>Rest for (cycles)
+slider28:0<0,1,1{Walk through,Freeze in place}>LFO at rest
+slider29:0<0,1,1{Pass-through,Silence}>Output at rest
 
-// Pass-through for N seconds after playback starts, then apply the
-// sweep-dwell filter + pan effect normally. As an EFFECT plugin the
-// dry signal passes through during the delay. Re-arms on every
-// transport stop/start. 0 disables the delay.
-slider30:0<0,1000,0.001>Start delay (seconds)
-
-// Per-cycle Play/Rest gate. Effect is applied normally for N
-// cycles, then enters its rest period for M cycles, then resumes
-// — repeats forever. One "cycle" is one full dwell pattern (High
-// Dwell + Fade Down + Low Dwell + Fade Up). So with the default
-// settings (4 + 1 + 6 + 1 = 12 sec/cycle), "Play for = 4" plays
-// 48 seconds of the sweep before entering rest. The LFO at rest /
-// Output at rest sliders below pick what happens during rest.
-// 0 in either slider disables the gate. Resets on every transport
-// stop/start.
-slider31:0<0,1000,1>Play for (cycles)
-slider32:0<0,1000,1>Rest for (cycles)
-
-// What the LFOs do during the rest period.
-//   Walk through (default) — filter dwell LFO and pan LFOs keep
-//     cycling during rest. When the effect resumes, the LFOs are
-//     at new positions reflecting wall-clock time passed.
-//   Freeze in place — LFO phases pause, frozen at their values at
-//     rest entry. When the effect resumes, the cutoff picks up
-//     from the same position. The dwell pattern pauses and
-//     resumes in lockstep with the gate.
-slider33:0<0,1,1{Walk through,Freeze in place}>LFO at rest
-
-// What the output does during the rest period.
-//   Pass-through (default) — dry signal passes through unchanged
-//     (matches Start Delay's behavior).
-//   Silence — wet+dry mix smooths to 0; audio fades into silence
-//     instead of passing dry. Useful when you want the gate to
-//     act like a hard mute rather than a filter bypass.
-slider34:0<0,1,1{Pass-through,Silence}>Output at rest
-
-// Speed ramp: nested-selector pattern matching Womb v3 / breath_gen.
-// Pick a target (one of the 4 dwell sliders), set a signed `by`
-// amount in seconds; that dwell phase's length ramps from its
-// baseline toward `baseline + by` over the duration. All 4 targets
-// ramp in parallel; the selector just changes which one's amount
-// you're editing. Engage is a freeze/resume gate (NOT a restart
-// edge); only transport play resets ramp_t.
-//
-// Migration from v2.7: slider 26 changed from multiplier (0.1-4.0)
-// to a 4-option target selector. Old projects' multiplier value
-// rounds down to a selector index, and slider 29 (the new `by`)
-// defaults to 0 — so Speed Ramp produces no effect on reload until
-// reconfigured.
-slider35:0<0,5,1{High dwell,Fade down,Low dwell,Fade up,Pan Sweep Rate,Resonance}>Ramp target
-slider36:0<-1000,1000,0.001>Ramp by (units match target)
-// What the duration and start delay are counted in -- one unit for both, so they
-// always mean the same thing as each other. DEFAULT IS 2, Minutes, which is what
-// this block always did; index 0 would silently reinterpret every saved ramp.
-// Cycles counts this filter's own sweep cycles, referenced against the cycle
-// length BEFORE drift and ramp touch it, so a ramp cannot alter its own clock.
-slider37:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider38:0<0,1000,0.1>Ramp duration (in ramp time units)
-// Ramp play/rest, per target, in ramp time units: the ramp advances for `play`,
-// holds for `rest`, and repeats -- a staircase instead of a smooth glide. The
-// holds come OUT of the duration rather than extending it, so Ramp duration goes
-// on meaning "you arrive in about this long". Both zero is the smooth ramp.
-slider39:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider40:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider41:0<0,1,1{Off,On}>Ramp engage
-slider42:0<0,1000,0.1>Ramp start delay (in ramp time units)
-
-// Per-target drift: nested-selector pattern matching Womb v3 / the
-// rest of the v2.9 sweep. Pick a target (slider43), then sliders 31-34
-// hold THAT target's drift config. Switching the selector saves
-// current values to the old target's memory slot and loads the new
-// target's values into the sliders. All 6 targets drift in parallel;
-// the selector just chooses which one you're currently editing.
-//
-// Targets:
-//   High dwell      — wanders the high-dwell phase length (seconds).
-//   Fade down       — wanders the fade-down phase length (seconds).
-//   Low dwell       — wanders the low-dwell phase length (seconds).
-//   Fade up         — wanders the fade-up phase length (seconds).
-//   Pan Sweep Rate  — wanders the Pan Sweep Rate (pan modes 10/11 only).
-//   Resonance       — wanders the filter resonance (0-1).
-//
-// The four dwell targets match the Speed Ramp targets above and use
-// the same selector indices — handy for configuring a coordinated
-// drift + ramp on the same dwell phase. Drift on the dwell phases is
-// ADDITIVE in seconds (like the Speed Ramp `by`), composing at the
-// same consumption site.
-//
-// Period unit is dwell patterns (one full High + Fade Down + Low +
-// Fade Up cycle) for ALL targets, scaled by Speed Ramp. For slow
-// wall-clock-feel drift, set a long period.
-//
-// Up/Down amount is in the target's natural unit: seconds for the four
-// dwell phases, the Pan Sweep Rate's unit for Pan Sweep Rate, a 0-1
-// fraction for Resonance. The 0-100 range covers all; Resonance uses
-// the low end (e.g. 0.3).
-//
-// Migration from v2.8: the old flat drift block (musical_up/down/
-// period, slow_up/down/period, drift_shape on sliders 30-36) was 7
-// sliders covering the whole dwell period. v2.9 is 5 sliders covering
-// 6 independent targets, reusing slider IDs 30-34; sliders 35 and 36
-// are no longer declared. Old projects' slider values get reinterpreted
-// (selector defaults to High dwell; non-zero amounts on 31-32 produce
-// drift on the High dwell phase). Reset drift sliders to defaults after
-// upgrade and reconfigure.
-slider43:0<0,5,1{High dwell,Fade down,Low dwell,Fade up,Pan Sweep Rate,Resonance}>Drift target
-slider44:0<0,1000,0.01>Drift up amount (units match target)
-slider45:0<0,1000,0.01>Drift down amount (units match target)
-slider46:8<0,1000,1>Drift period (0 = off)
-// What the period is COUNTED IN. Cycles is this plugin's native count -- one
-// full high/fade/low/fade sweep -- and the default, which is exactly what this
-// control did before the unit existed. Seconds is wall clock. Beats counts the
-// PROJECT tempo, so the wander follows the host rather than the sweep.
-slider47:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
-slider48:0<0,2,1{Sine,Triangle,Random}>Drift shape
-// Drift play/rest, per target, counted in PERIODS. Both must be above zero or
-// the gate is off, which is what 0 means. While resting the phase does not
-// advance, so the offset FREEZES where it stopped rather than returning to
-// centre -- and the FRACTION of the play value chooses where it parks: x.25
-// crest, x.75 trough, x.0 and x.5 neutral. A whole number parks at no-change
-// every time and is nearly inaudible; an awkward fraction is the useful one.
-slider49:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider50:0<0,1000,0.01>Drift rest for (periods, 0 = always)
-
-// Speed ramp start delay (lives here because slider 29 took the
-// post-engage slot for the new `by` amount).
-
-// Host tempo sync for the dwell cycle.
-//   Own durations (default) — the four dwell sliders are literal seconds,
-//     exactly as before. Existing projects are untouched.
-//   Host x — the four dwell sliders keep their PROPORTIONS but the whole
-//     cycle is stretched to Cycle length (beats) at the project tempo.
-//     Defaults 4+1+6+1 at 12 beats = the same shape, now beat-locked.
-// Consequences worth knowing, both documented on the plugin page:
-//   - Drift period (slider46) is counted in cycles, so it follows too.
-//   - Drift / Speed Ramp on the four dwell phases become SHAPE controls in
-//     Host x: they still shift the balance between high, fade and low, but
-//     the total cycle length stays pinned to the tempo.
-//   - Start Delay (slider30) stays literal seconds. It is labelled seconds
-//     and is a "wait before the effect arrives" control, not musical pacing.
-slider51:0<0,1,1{Own durations,Host x}>Cycle mode
-slider52:12<0.001,1000,0.001>Cycle length (beats)
-
-// How the cycle length is arrived at, in Host x.
-//   Fit to durations (default) — the cycle is however long the four dwell
-//     sliders ADD UP TO, in beats. So each of the four IS a beat count: type
-//     2 into Fade Down and the fade is two beats. Nothing to add up, nothing
-//     to convert. This is the plugin's native model (it was born with no rate
-//     slider at all — four times whose sum is the cycle) simply expressed in
-//     beats instead of seconds, and it's the envelope family's convention.
-//   Set in beats — the cycle is pinned to Cycle length (beats) and the four
-//     durations act as PROPORTIONS filling it. The LFO family's convention:
-//     a fixed shape squeezed into a fixed number of beats.
-// Fit uses the four SLIDER values, never the drifted ones, so Drift and Speed
-// Ramp still only move the shape and can't make the cycle wander in length.
-slider53:0<0,1,1{Fit to durations,Set in beats}>Cycle length mode
-
-// --- Slope, and an honest frequency axis -------------------------------------
-// This plugin used to be a fixed two-pole Kellett cascade -- two one-pole
-// sections with a resonance feedback path -- whose cutoff coefficient was
-// `cut = 2*fc/srate`. That is the standard musicdsp idiom for it and it is
-// approximately right at low frequencies, but measured, the real -3 dB corner
-// landed at 0.21x to 0.77x the number on the slider, DEPENDING ON RESONANCE:
-// at "500 Hz" the corner sat at 103 Hz with Resonance down and 382 Hz with it
-// up. So Frequency Hz was never Hz, and Resonance was secretly a second
-// frequency control -- sweeping it 0 to 1 moved the corner nearly two octaves.
-//
-// Replaced with a Butterworth cascade of TPT (zero-delay-feedback) state
-// variable sections, 1 to 6 of them, which fixes both and adds the slope
-// control this plugin never had. Each section gets its OWN Q from the pole
-// angle formula, which is what puts -3 dB exactly on the number at every slope;
-// cascading identical sections instead would slide the corner down by
-// sqrt(2^(1/N)-1) and the label would drift further from the truth the steeper
-// you went. Resonance is spread across the sections rather than applied to
-// each, because peaks add in dB -- six mild ones would stack into a wall.
-//
-// Existing projects are migrated by tools/sweepfilter_migrate_hz.py, which
-// rewrites each instance's Frequency Low/High so the real corner lands where it
-// used to. The numbers change a lot; the sound does not.
-slider55:0<0,5,1{-12,-24,-36,-48,-60,-72}>Slope (dB/oct)
+// Drift, then Ramp -- the Sweeping Filter's order. 16 targets in control order;
+// a length amount is in that segment's own length unit, a pitch in its own unit.
+slider30:0<0,15,1{High dwell length,Fade down length,Low dwell length,Fade up length,High dwell frequency,High dwell fine tune,Low dwell frequency,Low dwell fine tune,Tuning reference,Resonance,Stereo phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Wet/dry}>Drift target
+slider31:0<0,1000,0.01>Drift up amount (units match target)
+slider32:0<0,1000,0.01>Drift down amount (units match target)
+slider33:8<0,1000,1>Drift period (0 = off)
+slider34:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider35:0<0,2,1{Sine,Triangle,Random}>Drift shape
+// Drift play/rest in PERIODS; while resting the offset freezes where it stands.
+slider36:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider37:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider38:0<0,15,1{High dwell length,Fade down length,Low dwell length,Fade up length,High dwell frequency,High dwell fine tune,Low dwell frequency,Low dwell fine tune,Tuning reference,Resonance,Stereo phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Wet/dry}>Ramp target
+slider39:0<-1000,1000,0.001>Ramp by (units match target)
+// Default Minutes, which is what this block always counted in.
+slider40:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+slider41:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider42:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider43:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider44:0<0,1,1{Off,On}>Ramp engage
+slider45:0<0,1000,0.1>Ramp start delay (in ramp time units)
 
 in_pin:left input
 in_pin:right input
@@ -255,11 +90,10 @@ out_pin:left output
 out_pin:right output
 
 @init
+// NO ext_noinit: REAPER re-runs @init on every transport play / render start,
+// resetting all runtime. Only the CONFIG banks survive, behind cfg_inited.
 
-// --- Pitch (R22) ----------------------------------------------------------
-// Resolve one end of the sweep to Hz. The value IS the pitch; the fine tune sits
-// on top in its own unit. Same shape as Womb's, taking values rather than slider
-// numbers because eel2 cannot index sliders dynamically.
+// --- Pitch (R22). The value IS the pitch; the fine tune sits on top.
 function sdf_hz(m, v, f, fm) local(hz) (
   hz = m == 1 ? tuning_ref * pow(2, (v - 69) / 12) :
        m == 2 ? tuning_ref * pow(2, (v / 100 - 69) / 12) :
@@ -269,37 +103,26 @@ function sdf_hz(m, v, f, fm) local(hz) (
                  hz + f;
   min(max(hz, 20), 20000);
 );
-tuning_ref = slider11 >= 20 ? slider11 : 440;
-sdf_ui_init = 0;
-// v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
-// NO ext_noinit: REAPER re-runs @init on every transport play / render
-// start, resetting all runtime for free (dwell LFO phases, filter state +
-// cutoff smoothers, pan state, drift runtime, Speed Ramp, Start Delay,
-// Play/Rest + effect mix). Only the drift + Speed Ramp CONFIG banks must
-// survive the re-run; they're guarded by drift_cfg_inited below.
 
-phase_l = 0;
-phase_r = 0;
-// (n3/n4/rn3/rn4 were the old Kellett core's state; the cascade keeps its
-//  own in svf_l/svf_r, cleared with the memset above.)
+// --- A LENGTH in seconds, from a mode and a value. Seconds passes the value
+// through untouched, which is what keeps a migrated project bit-identical.
+function len_secs(m, v) (
+  m == 1 ? v :
+  m == 0 ? 60 / max(v, 0.001) :
+  m == 2 ? 1 / max(v, 0.001) :
+  m == 3 ? v * 60 / max(host_bpm, 0.001) :
+           60 / max(host_bpm, 0.001) / max(v, 0.001)
+);
+// The same length in BEATS, for the position lock (beat modes only).
+function len_beats(m, v) ( m == 3 ? v : 1 / max(v, 0.001); );
 
-// Host tempo, refreshed every block. Seeded here so the first @sample after
-// a transport start has a sane value even before @block has run once.
-// ABSOLUTE, never a ratio against a remembered reference tempo — @init
-// re-runs on every transport play and would wipe the reference.
+tuning_ref = slider10 >= 20 ? slider10 : 440;
 host_bpm = max(tempo, 0.001);
-
-// Transport-position seeds, so the first @sample after a play has defined
-// values even before @block has run once. Nothing is remembered across
-// transport — all three are rewritten every block.
 host_beat_pos   = beat_position;
 host_pos_locked = 0;
 blk_sample      = 0;
-
-// Seeded in HZ now, not as a coefficient -- a 0.1 here used to mean a
-// harmless 0.1 coefficient and would now mean 0.1 Hz, i.e. an audible
-// ramp up from silence on every load.
-cut_smooth_l = cut_smooth_r = sdf_hz(slider1, slider3, slider4, slider5);
+phase_l = 0;
+phase_r = 0;
 
 // ===== PAN BLOCK INIT START =====
 pan_l           = 0;
@@ -309,7 +132,6 @@ pan_cycle_dir   = 1;
 last_phase_l    = 0;
 pan_phase       = 0;
 // ===== PAN BLOCK INIT END =====
-
 
 function apply_curve(t, shape) (
   shape == 0 ? t :
@@ -403,8 +225,6 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
       pos = max(-1.0, min(1.0, pos));
     );
   ) : (pan_mode == 13 || pan_mode == 14 || pan_mode == 15) ? (
-    // Alternating every N. The same flip, held for N cycles a side, so
-    // bilateral stays usable when the cycles themselves are fast.
     step = pan_mode == 13 ? 2 : pan_mode == 14 ? 4 : 8;
     pos  = (floor(idx / step) % 2 == 0) ? -1 : 1;
   ) : (
@@ -415,15 +235,10 @@ function percycle_pan(idx, n_steps) local(steps, step, pos) (
 );
 // ===== PAN BLOCK FUNCTIONS END =====
 
-// Start Delay state.
 last_play_state     = 0;
 start_delay_elapsed = 0;
 start_delay_sec     = 0;
 
-// Play/Rest gate state. Same per-cycle counter + effect_mix design
-// used in the other effect plugins. effect_mix smoothly transitions
-// between 1 (effect on) and 0 (rest target — either dry pass-through
-// or silence, picked by Output at rest).
 pr_resting        = 0;
 pr_cycle_progress = 0;
 play_for_cycles   = 0;
@@ -433,66 +248,52 @@ rest_lfo_mode     = 0;
 rest_output_mode  = 0;
 effect_mix        = 1;
 
-// Speed ramp state.
-// Speed Ramp state. Engage (global) is a freeze/resume gate; only transport
-// play resets the per-target ramp clocks. As of v2.14 the ramp is PER-TARGET:
-// each target has its own `by`, duration, start delay, and progress clock.
-N_SPEED_TARGETS              = 6;   // v2.14: extended 4 -> 6 to match drift (added Pan Sweep Rate, Resonance)
-speed_ramp_target_value_mem  = 4096;  // signed `by` per target (CONFIG)
+// --- Drift and Ramp banks. 16 targets, 32 slots apart so segments can be added.
+//    0 High dwell length   1 Fade down length   2 Low dwell length   3 Fade up length
+//    4 High dwell frequency 5 High dwell fine tune 6 Low dwell frequency
+//    7 Low dwell fine tune 8 Tuning reference   9 Resonance  10 Stereo phase offset
+//   11 Pan spread         12 Pan glide         13 Pan sweep rate  14 Pan sweep every
+//   15 Wet/dry
+N_TARGETS = 16;
+SDB = 32;
+target_drift_up              = 8192;
+target_drift_down            = 8192 +  1*SDB;
+target_drift_per             = 8192 +  2*SDB;
+target_drift_shape           = 8192 +  3*SDB;
+target_drift_phase           = 8192 +  4*SDB;
+target_drift_prev            = 8192 +  5*SDB;
+target_drift_curr            = 8192 +  6*SDB;
+target_drift_offset          = 8192 +  7*SDB;
+speed_ramp_by_mem            = 8192 +  8*SDB;
+speed_ramp_dur_mem           = 8192 +  9*SDB;
+speed_ramp_delay_mem         = 8192 + 10*SDB;
+speed_ramp_ramp_t_mem        = 8192 + 11*SDB;
+speed_ramp_delay_elapsed_mem = 8192 + 12*SDB;
+drift_play_mem               = 8192 + 13*SDB;
+drift_rest_mem               = 8192 + 14*SDB;
+sr_play_mem                  = 8192 + 15*SDB;
+sr_rest_mem                  = 8192 + 16*SDB;
+drift_pr_accum_mem           = 8192 + 17*SDB;
+drift_pr_resting_mem         = 8192 + 18*SDB;
+sr_pr_accum_mem              = 8192 + 19*SDB;
+sr_pr_resting_mem            = 8192 + 20*SDB;   // ends 8864
 
-// --- v2.9 Drift target memory banks ---
-//
-// 6 targets × 8 fields. Each array is 16-slot-spaced so targets can
-// grow to 16 later. Speed ramp bank uses 4 slots at 4096; drift banks
-// start at 4112 to keep the 16-slot alignment.
-//
-// Targets:
-//   0 = High dwell      (units: seconds)
-//   1 = Fade down       (units: seconds)
-//   2 = Low dwell       (units: seconds)
-//   3 = Fade up         (units: seconds)
-//   4 = Pan Sweep Rate  (units: Pan Sweep Rate's unit; modes 10/11 only)
-//   5 = Resonance       (units: 0-1 fraction)
-N_TARGETS = 6;
-target_drift_up     = 4112;
-target_drift_down   = 4128;
-target_drift_per    = 4144;
-target_drift_shape  = 4160;
-target_drift_phase  = 4176;
-target_drift_prev   = 4192;
-target_drift_curr   = 4208;
-target_drift_offset = 4224;
+// --- Segment banks: one slot per segment, 16 apart (room for 16 segments).
+//     0 High dwell, 1 Fade down, 2 Low dwell, 3 Fade up.
+N_SEG = 4;
+seg_lmode = 9024;          // length mode
+seg_len   = 9040;          // length value
+seg_shape = 9056;          // fade shape (fades)
+seg_pmode = 9072;          // pitch mode (dwells)
+seg_note  = 9088;
+seg_pval  = 9104;
+seg_fine  = 9120;
+seg_funit = 9136;
+sui_last  = 9152;          // selector mirror, indexed by slider number 2..9
+// Which segments each control belongs to, as bits: 1 High, 2 Fade down,
+// 4 Low, 8 Fade up.
+SEG_ALL = 15; SEG_FADES = 10; SEG_DWELLS = 5;
 
-// Speed ramp per-target timeline banks (v2.14). duration + start-delay are
-// CONFIG (survive transport, restored by @serialize); ramp_t + delay_elapsed
-// are RUNTIME (reset every @init / transport play).
-speed_ramp_dur_mem           = 4240;  // duration minutes per target (CONFIG)
-speed_ramp_delay_mem         = 4256;  // start-delay minutes per target (CONFIG)
-speed_ramp_ramp_t_mem        = 4272;  // ramp progress 0..1 per target (RUNTIME)
-speed_ramp_delay_elapsed_mem = 4288;  // delay sample counter per target (RUNTIME)
-
-// Drift and Ramp play/rest, per target (2026-09-06). 16-slot-spaced like the
-// banks above. play/rest are CONFIG (survive a transport re-init, restored by
-// @serialize); accumulator and resting flag are RUNTIME. FIRST FREE SLOT AFTER
-// THIS BLOCK IS 4432 -- re-derive rather than trusting this comment.
-drift_play_mem       = 4304;
-drift_rest_mem       = 4320;
-sr_play_mem          = 4336;
-sr_rest_mem          = 4352;
-drift_pr_accum_mem   = 4368;
-drift_pr_resting_mem = 4384;
-sr_pr_accum_mem      = 4400;
-sr_pr_resting_mem    = 4416;
-
-// Seeded so the FIRST sample has a sane cycle length. The ramp block below reads
-// it, and it is not computed until later in @sample, so on sample one it would
-// otherwise be 0 -- one sample at a nonsense rate. Costs nothing to seed.
-drift_ref_period = 1;
-
-// Shared play/rest gate, byte-identical to the one in Melody, the Sweeping
-// Filter, Tremolo, Phaser, Bubbler, Dapple, Resonance Bank and the Morpher.
-// `tick` is how much of one play/rest unit passes per sample, so the caller owns
-// the unit and this stays unitless. Returns 1 while the target is resting.
 function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
   play > 0 && rest > 0 ? (
     accum_bank[idx] += tick;
@@ -504,404 +305,268 @@ function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
   ) : ( 0; );
 );
 
-// CONFIG banks (drift up/down/period/shape + the Speed Ramp by/duration/
-// start-delay banks + selector trackers) — guarded by drift_cfg_inited so the
-// @init re-run on every transport play (Path A render fix, no ext_noinit) does
-// NOT wipe the user's setup. @serialize restores saved configs on reload.
-drift_cfg_inited != 1 ? (
-  i = 0;
-  loop(N_SPEED_TARGETS,
-    speed_ramp_target_value_mem[i] = 0;
-    drift_play_mem[i] = 0; drift_rest_mem[i] = 0;
-    sr_play_mem[i]    = 0; sr_rest_mem[i]    = 0;
-    speed_ramp_dur_mem[i]          = 0;
-    speed_ramp_delay_mem[i]        = 0;
-    i += 1;
+// --- The Segment selector's operations (Polyrhythm's Voice selector, with a
+//     mask saying which segments a control belongs to).
+// Reading on All shows the first segment the control belongs to.
+function seg_read_slot(ssel, smask) (
+  ssel > 0 ? ssel - 1 : (smask & 1) ? 0 : (smask & 2) ? 1 : (smask & 4) ? 2 : 3;
+);
+function seg_write(ssel, sbank, sval, smask) local(sw_i) (
+  ssel > 0 ? (
+    (smask & (2 ^ (ssel - 1))) ? sbank[ssel - 1] = sval;
+  ) : (
+    sw_i = 0;
+    loop(N_SEG, (smask & (2 ^ sw_i)) ? sbank[sw_i] = sval; sw_i += 1;);
   );
-  last_speed_target = 0;
+);
+// Write only if the control MOVED since the last pass: parking on All is then
+// safe, and a stray @slider pass during a load writes nothing.
+function seg_capture(ssel, sbank, sval, sslot, smask) (
+  sval != sui_last[sslot] ? (
+    seg_write(ssel, sbank, sval, smask);
+    sui_last[sslot] = sval;
+  );
+);
+function seg_show_view(ssel) (
+  slider2 = seg_lmode[seg_read_slot(ssel, SEG_ALL)];
+  slider3 = seg_len[seg_read_slot(ssel, SEG_ALL)];
+  slider4 = seg_shape[seg_read_slot(ssel, SEG_FADES)];
+  slider5 = seg_pmode[seg_read_slot(ssel, SEG_DWELLS)];
+  slider6 = seg_note[seg_read_slot(ssel, SEG_DWELLS)];
+  slider7 = seg_pval[seg_read_slot(ssel, SEG_DWELLS)];
+  slider8 = seg_fine[seg_read_slot(ssel, SEG_DWELLS)];
+  slider9 = seg_funit[seg_read_slot(ssel, SEG_DWELLS)];
+  sui_last[2] = slider2; sui_last[3] = slider3; sui_last[4] = slider4;
+  sui_last[5] = slider5; sui_last[6] = slider6; sui_last[7] = slider7;
+  sui_last[8] = slider8; sui_last[9] = slider9;
+);
+
+// CONFIG defaults, once. A fresh instance is the plugin's long-standing default:
+// 4 s high, 1 s fade, 6 s low, 1 s fade, both fades Cosine, 5000 Hz and 500 Hz.
+cfg_inited != 1 ? (
   i = 0;
   loop(N_TARGETS,
-    target_drift_up[i]    = 0;
-    target_drift_down[i]  = 0;
-    target_drift_per[i]   = 8;
-    target_drift_shape[i] = 0;
+    target_drift_up[i] = 0; target_drift_down[i] = 0;
+    target_drift_per[i] = 8; target_drift_shape[i] = 0;
+    speed_ramp_by_mem[i] = 0; speed_ramp_dur_mem[i] = 0; speed_ramp_delay_mem[i] = 0;
+    drift_play_mem[i] = 0; drift_rest_mem[i] = 0;
+    sr_play_mem[i] = 0; sr_rest_mem[i] = 0;
     i += 1;
   );
+  i = 0;
+  loop(N_SEG,
+    seg_lmode[i] = 1; seg_shape[i] = 1;
+    seg_pmode[i] = 0; seg_fine[i] = 0; seg_funit[i] = 2;
+    i += 1;
+  );
+  seg_len[0] = 4; seg_len[1] = 1; seg_len[2] = 6; seg_len[3] = 1;
+  seg_note[0] = 111; seg_pval[0] = 5000;  seg_note[1] = 111; seg_pval[1] = 5000;
+  seg_note[2] = 71;  seg_pval[2] = 500;   seg_note[3] = 71;  seg_pval[3] = 500;
   last_target_select = 0;
-  drift_cfg_inited = 1;
+  last_speed_target  = 0;
+  last_seg_sel       = 1;
+  cfg_inited = 1;
 );
 
-// Drift + speed-ramp RUNTIME resets on EVERY @init (every transport play).
-i = 0;
-loop(N_SPEED_TARGETS,
-  speed_ramp_ramp_t_mem[i]        = 0;
-  speed_ramp_delay_elapsed_mem[i] = 0;
-  drift_pr_accum_mem[i] = 0; drift_pr_resting_mem[i] = 0;
-  sr_pr_accum_mem[i]    = 0; sr_pr_resting_mem[i]    = 0;
-  i += 1;
-);
+// RUNTIME, every @init.
 i = 0;
 loop(N_TARGETS,
-  target_drift_phase[i]  = 0;
-  target_drift_prev[i]   = 0;
-  target_drift_curr[i]   = 0;
-  target_drift_offset[i] = 0;
+  target_drift_phase[i] = 0; target_drift_prev[i] = 0;
+  target_drift_curr[i] = 0;  target_drift_offset[i] = 0;
+  speed_ramp_ramp_t_mem[i] = 0; speed_ramp_delay_elapsed_mem[i] = 0;
+  drift_pr_accum_mem[i] = 0; drift_pr_resting_mem[i] = 0;
+  sr_pr_accum_mem[i] = 0;    sr_pr_resting_mem[i] = 0;
   i += 1;
 );
+drift_ref_period = 1;
 
+// Seeded in Hz, from the Low dwell -- where the filter rests.
+cut_smooth_l = cut_smooth_r = sdf_hz(seg_pmode[2], seg_pval[2], seg_fine[2], seg_funit[2]);
 
-// --- Butterworth cascade state. Two words per section, per channel, plus the
-//     per-section damping table (1/Q). ---
+// --- Butterworth cascade state.
 FILT_MAXSTAGES = 6;
-filt_stages = 1; filt_res_k = 0;   // floor: never let the cascade be a wire                       // 6 x 2 poles = 72 dB/oct
-FILT_RES_DB_MAX = 34;                     // total emphasis Resonance = 1 asks for
-                                          // (34, not 24: the retired core hit ~+29 dB
-                                          //  at Resonance 0.98 and migrated projects
-                                          //  need to be representable)
-// 4432, the first slot after the play/rest banks. It was 4400, which is
-// sr_pr_accum_mem and sr_pr_resting_mem.
+filt_stages = 1; filt_res_k = 0;   // floor: never let the cascade be a wire
+FILT_RES_DB_MAX = 34;
 svf_l  = 4432;
 svf_r  = 4432 + 2*FILT_MAXSTAGES;
 svf_qb = 4432 + 4*FILT_MAXSTAGES;     // 1/Q per section
 memset(4432, 0, 5*FILT_MAXSTAGES);
 
 @slider
+tuning_ref = slider10;
 
-tuning_ref = slider11;
-// Note name and value are one control two ways, as in Womb. Mirrors are
-// adopted in @block so a restore cannot read as a user edit.
-sdf_ui_init ? (
-  slider1 == 1 ? (
-    slider2 != sdf_ln0 ? ( slider3 = slider2; slider_automate(slider3); ) :
-    slider3 != sdf_lv0 ? ( slider2 = max(0, min(127, floor(slider3 + 0.5))); slider_automate(slider2); );
-  );
-  slider6 == 1 ? (
-    slider7 != sdf_ln1 ? ( slider8 = slider7; slider_automate(slider8); ) :
-    slider8 != sdf_lv1 ? ( slider7 = max(0, min(127, floor(slider8 + 0.5))); slider_automate(slider7); );
+// --- The Segment selector. While seg_ui_inited is 0 (adopted in @block) this
+//     writes NOTHING, so a load can never read as edits.
+sel_seg = slider1;
+seg_ui_inited ? (
+  last_seg_sel != sel_seg ? (
+    seg_show_view(sel_seg);
+    sliderchange(-1);
+    last_seg_sel = sel_seg;
+  ) : (
+    // Note name and frequency first, then capture (Breath Generator's order).
+    slider5 == 1 ? (
+      slider6 != sui_last[6] ? (
+        slider7 = slider6; sliderchange(-1);
+      ) : (
+        pn_note = min(127, max(0, floor(slider7 + 0.5)));
+        pn_note != slider6 ? ( slider6 = pn_note; sliderchange(-1); );
+      );
+    );
+    seg_capture(sel_seg, seg_lmode, slider2, 2, SEG_ALL);
+    seg_capture(sel_seg, seg_len,   slider3, 3, SEG_ALL);
+    seg_capture(sel_seg, seg_shape, slider4, 4, SEG_FADES);
+    seg_capture(sel_seg, seg_pmode, slider5, 5, SEG_DWELLS);
+    seg_capture(sel_seg, seg_note,  slider6, 6, SEG_DWELLS);
+    seg_capture(sel_seg, seg_pval,  slider7, 7, SEG_DWELLS);
+    seg_capture(sel_seg, seg_fine,  slider8, 8, SEG_DWELLS);
+    seg_capture(sel_seg, seg_funit, slider9, 9, SEG_DWELLS);
   );
 );
-sdf_ln0 = slider2; sdf_lv0 = slider3;
-sdf_ln1 = slider7; sdf_lv1 = slider8;
-slider_show(slider2, slider1 == 1);
-slider_show(slider7, slider6 == 1);
-
-sdf_low  = sdf_hz(slider1, slider3, slider4, slider5);
-sdf_high = sdf_hz(slider6, slider8, slider9, slider10);
-freq_lo         = min(sdf_low, sdf_high);
-freq_hi         = max(sdf_low, sdf_high);
-high_secs       = slider12;
-low_secs        = slider13;
-fade_down_secs  = slider14;
-fade_down_shape = slider15;
-fade_up_secs    = slider16;
-fade_up_shape   = slider17;
-resonance       = slider18;
-wet             = slider19;
-dry             = 1 - wet;
-phase_offset    = slider20 / 360;
-
-cycle_mode      = slider51;
-cycle_len_mode  = slider53;
-// Fit mode: the cycle is the sum of the four dwell sliders, so each of them
-// is a beat count directly. Raw slider values on purpose — see slider53.
-cycle_beats     = cycle_len_mode == 0
-                    ? max(slider12 + slider14 + slider13 + slider16, 0.001)
-                    : max(slider52, 0.001);
-slider_show(slider52, cycle_mode == 1 && cycle_len_mode == 1);
-slider_show(slider53, cycle_mode == 1);
+// Fade shape on the fades and All; pitch on the dwells and All.
+slider_show(slider4, sel_seg == 0 || sel_seg == 2 || sel_seg == 4);
+seg_has_pitch = sel_seg == 0 || sel_seg == 1 || sel_seg == 3;
+slider_show(slider5, seg_has_pitch);
+slider_show(slider6, seg_has_pitch && slider5 == 1);
+slider_show(slider7, seg_has_pitch);
+slider_show(slider8, seg_has_pitch);
+slider_show(slider9, seg_has_pitch);
 
 // ===== PAN BLOCK SLIDER READ START =====
-pan_enabled     = slider22;
-pan_mode        = slider23;
-pan_spread      = slider24;
-pan_glide_ms    = slider25;
-pan_cycle_steps = slider26;
-// The every-N alternations count in their own pattern length (2N). Cycle Steps
-// says how many positions the Distributed / Converging / Diverging walks use
-// and has nothing to say about a two-sided flip.
-pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : pan_cycle_steps;
-pan_sweep_val   = slider27;
-pan_sweep_mode  = slider28;
-pan_sweep_ratio = slider29;
-
-slider_show(slider23, pan_enabled);
-slider_show(slider24, pan_enabled);
-slider_show(slider25, pan_enabled);
-slider_show(slider26, pan_enabled && pan_mode >= 1 && pan_mode <= 9);
-slider_show(slider27, pan_enabled && (pan_mode == 10 || pan_mode == 11));
-slider_show(slider28, pan_enabled && (pan_mode == 10 || pan_mode == 11));
-// Linked Sweep pan-speed picker. Adopt-on-load so opening a project never
-// overwrites a hand-set multiplier; writes only on a real change.
-pan_speed_inited && slider22 && slider23 == 12 && pan_speed_sel != slider54 ? (
-  pan_speed_sel = slider54;
-  pan_speed_sel > 0 ? (
-    slider29 =
-      pan_speed_sel == 1 ? 0.125 : pan_speed_sel == 2 ? 0.25 :
-      pan_speed_sel == 3 ? 0.5   : pan_speed_sel == 4 ? 1    :
-      pan_speed_sel == 5 ? 2     : pan_speed_sel == 6 ? 3    :
-      pan_speed_sel == 7 ? 4     : 8;
-    slider_automate(slider29);
-  );
-);
-slider_show(slider54, pan_enabled && pan_mode == 12);
-// Hide the raw multiplier unless Custom -- the named list is the way in, and
-// the number only appears when you deliberately want one the list lacks.
-slider_show(slider29, pan_enabled && pan_mode == 12 && slider54 == 0);
+pan_enabled = slider15;
+pan_mode    = slider16;
+slider_show(slider16, pan_enabled);
+slider_show(slider17, pan_enabled);
+slider_show(slider18, pan_enabled);
+slider_show(slider19, pan_enabled && pan_mode >= 1 && pan_mode <= 9);
+slider_show(slider20, pan_enabled && (pan_mode == 10 || pan_mode == 11));
+slider_show(slider21, pan_enabled && (pan_mode == 10 || pan_mode == 11));
+slider_show(slider22, pan_enabled && pan_mode == 12);
 // ===== PAN BLOCK SLIDER READ END =====
 
-start_delay_sec = slider30;
-
-// Play/Rest gate: integer cycle counts. Both must be > 0 for the
-// gate to engage; 0 in either slider disables.
-play_for_cycles = slider31;
-rest_for_cycles = slider32;
+play_for_cycles = slider26;
+rest_for_cycles = slider27;
 new_pr_enabled  = (play_for_cycles > 0 && rest_for_cycles > 0);
-// Defensive reset: if user disables the gate mid-rest, snap pr_resting
-// back to 0 and zero the progress counter. effect_mix will smoothly
-// ramp back to 1 via the @sample smoother.
 !new_pr_enabled && pr_resting ? (
   pr_resting = 0;
   pr_cycle_progress = 0;
 );
 pr_enabled       = new_pr_enabled;
-rest_lfo_mode    = slider33;
-rest_output_mode = slider34;
+rest_lfo_mode    = slider28;
+rest_output_mode = slider29;
 
-// Speed Ramp target selector save/restore. slider35 = target; slider36 =
-// per-target `by`; slider38 = per-target duration; slider42 = per-target start
-// delay (all three per-target as of v2.14). slider41 (engage) stays GLOBAL.
-// When the selector changes, save the three per-target sliders to the OLD
-// slot, then load the NEW slot's stored values. Otherwise capture live edits.
-sel_speed_target = slider35;
+// Ramp target selector save/restore (nested-selector pattern).
+sel_speed_target = slider38;
 last_speed_target != sel_speed_target ? (
-  speed_ramp_target_value_mem[last_speed_target] = slider36;
-  speed_ramp_dur_mem[last_speed_target]          = slider38;
-  speed_ramp_delay_mem[last_speed_target]        = slider42;
-  sr_play_mem[last_speed_target]                 = slider39;
-  sr_rest_mem[last_speed_target]                 = slider40;
-  slider36 = speed_ramp_target_value_mem[sel_speed_target];
-  slider38 = speed_ramp_dur_mem[sel_speed_target];
-  slider42 = speed_ramp_delay_mem[sel_speed_target];
-  slider_automate(slider36);
-  slider_automate(slider38);
-  slider39 = sr_play_mem[sel_speed_target];
-  slider40 = sr_rest_mem[sel_speed_target];
-  slider_automate(slider42);
-  slider_automate(slider39);
-  slider_automate(slider40);
+  speed_ramp_by_mem[last_speed_target]    = slider39;
+  speed_ramp_dur_mem[last_speed_target]   = slider41;
+  speed_ramp_delay_mem[last_speed_target] = slider45;
+  sr_play_mem[last_speed_target]          = slider42;
+  sr_rest_mem[last_speed_target]          = slider43;
+  slider39 = speed_ramp_by_mem[sel_speed_target];
+  slider41 = speed_ramp_dur_mem[sel_speed_target];
+  slider45 = speed_ramp_delay_mem[sel_speed_target];
+  slider42 = sr_play_mem[sel_speed_target];
+  slider43 = sr_rest_mem[sel_speed_target];
+  slider_automate(slider39); slider_automate(slider41); slider_automate(slider45);
+  slider_automate(slider42); slider_automate(slider43);
   last_speed_target = sel_speed_target;
 ) : (
-  speed_ramp_target_value_mem[sel_speed_target] = slider36;
-  speed_ramp_dur_mem[sel_speed_target]          = slider38;
-  speed_ramp_delay_mem[sel_speed_target]        = slider42;
-  sr_play_mem[sel_speed_target]                 = slider39;
-  sr_rest_mem[sel_speed_target]                 = slider40;
+  speed_ramp_by_mem[sel_speed_target]    = slider39;
+  speed_ramp_dur_mem[sel_speed_target]   = slider41;
+  speed_ramp_delay_mem[sel_speed_target] = slider45;
+  sr_play_mem[sel_speed_target]          = slider42;
+  sr_rest_mem[sel_speed_target]          = slider43;
 );
-// No engage-edge detection. Engage is a freeze/resume gate handled
-// in @sample. Only transport play resets ramp_t.
 
-// Drift target selector save/restore (nested-selector pattern).
-// Switching slider43 saves sliders 31-34 into the OLD target's slot,
-// then loads the NEW target's stored config into sliders 31-34.
-// Otherwise captures live edits to the current target's slot. All 6
-// targets drift in parallel from @sample regardless of selection.
-sel_target = slider43;
-sel_up     = slider44;
-sel_down   = slider45;
-sel_per    = slider46;
-sel_shape  = slider48;
-sel_dplay  = slider49;
-sel_drest  = slider50;
-
+// Drift target selector save/restore.
+sel_target = slider30;
 last_target_select != sel_target ? (
-  target_drift_up[last_target_select]    = sel_up;
-  target_drift_down[last_target_select]  = sel_down;
-  target_drift_per[last_target_select]   = sel_per;
-  target_drift_shape[last_target_select] = sel_shape;
-  drift_play_mem[last_target_select]     = sel_dplay;
-  drift_rest_mem[last_target_select]     = sel_drest;
-
-  slider44 = target_drift_up[sel_target];
-  slider45 = target_drift_down[sel_target];
-  slider46 = target_drift_per[sel_target];
-  slider48 = target_drift_shape[sel_target];
-  slider_automate(slider44);
-  slider_automate(slider45);
-  slider_automate(slider46);
-  slider49 = drift_play_mem[sel_target];
-  slider50 = drift_rest_mem[sel_target];
-  slider_automate(slider48);
-  slider_automate(slider49);
-  slider_automate(slider50);
-
+  target_drift_up[last_target_select]    = slider31;
+  target_drift_down[last_target_select]  = slider32;
+  target_drift_per[last_target_select]   = slider33;
+  target_drift_shape[last_target_select] = slider35;
+  drift_play_mem[last_target_select]     = slider36;
+  drift_rest_mem[last_target_select]     = slider37;
+  slider31 = target_drift_up[sel_target];
+  slider32 = target_drift_down[sel_target];
+  slider33 = target_drift_per[sel_target];
+  slider35 = target_drift_shape[sel_target];
+  slider36 = drift_play_mem[sel_target];
+  slider37 = drift_rest_mem[sel_target];
+  slider_automate(slider31); slider_automate(slider32); slider_automate(slider33);
+  slider_automate(slider35); slider_automate(slider36); slider_automate(slider37);
   last_target_select = sel_target;
 ) : (
-  target_drift_up[sel_target]    = sel_up;
-  target_drift_down[sel_target]  = sel_down;
-  target_drift_per[sel_target]   = sel_per;
-  target_drift_shape[sel_target] = sel_shape;
-  drift_play_mem[sel_target]     = sel_dplay;
-  drift_rest_mem[sel_target]     = sel_drest;
+  target_drift_up[sel_target]    = slider31;
+  target_drift_down[sel_target]  = slider32;
+  target_drift_per[sel_target]   = slider33;
+  target_drift_shape[sel_target] = slider35;
+  drift_play_mem[sel_target]     = slider36;
+  drift_rest_mem[sel_target]     = slider37;
 );
-
-
-
 
 @block
-!sdf_ui_init ? (
-  sdf_ln0 = slider2; sdf_lv0 = slider3;
-  sdf_ln1 = slider7; sdf_lv1 = slider8;
-  sdf_ui_init = 1;
+// Adopt the selector mirror HERE, not in @slider: an early @slider pass would
+// adopt defaults and then read the real values arriving as edits.
+!seg_ui_inited ? (
+  sui_last[2] = slider2; sui_last[3] = slider3; sui_last[4] = slider4;
+  sui_last[5] = slider5; sui_last[6] = slider6; sui_last[7] = slider7;
+  sui_last[8] = slider8; sui_last[9] = slider9;
+  last_seg_sel  = slider1;
+  seg_ui_inited = 1;
 );
-// --- Restore-order guard for the change-detecting controls below -----------
-//     These trackers answer "did the user just move this control?". Adopted
-//     HERE, not in @slider: on a fresh or duplicated instance @slider runs
-//     while REAPER is still handing over the saved values, so a tracker
-//     adopted there takes a DEFAULT, and the real value arriving a moment
-//     later reads as a user edit -- the picker then fires and slider_automate()s
-//     its ratio over a rate that was set by hand. @block cannot run before the
-//     instance is configured, so adopting here is right whatever order the
-//     restore paths ran in. (Proved 2026-08-23: a Sweeping Filter in BPM mode
-//     with Host ratio "every 2 beats" had Rate Value stamped to 0.5 on every
-//     load and every track duplicate.)
-!pan_speed_inited ? ( pan_speed_sel = slider54; pan_speed_inited = 1; );
-// --- Per-section Butterworth Q for the selected slope. In @block, NOT in
-//     @slider: the audio path reads filt_stages as a loop count, and a loop
-//     count of 0 is not a quiet filter, it is a STRAIGHT WIRE. On a pasted
-//     or duplicated instance @slider has not necessarily run before the
-//     first block, so the cascade ran zero sections and passed the input
-//     through untouched -- which sounds exactly like 'the LFO does nothing',
-//     because the LFO was fine and had nothing to drive. @block runs every
-//     block regardless, so by the first sample this is always set.
-//     (The Resonance multiplier varies per sample and is applied in @sample.)
-filt_stages = min(FILT_MAXSTAGES, slider55 + 1);
+filt_stages = min(FILT_MAXSTAGES, slider12 + 1);
 filt_order  = 2 * filt_stages;
 filt_i = 0;
 loop(filt_stages,
-  // 1/Q directly, from the pole angle. Butterworth, 1930 -- textbook, no table.
   svf_qb[filt_i] = 2 * cos($pi * (2*filt_i + 1) / (2*filt_order));
   filt_i += 1;
 );
-// Resonance spread across the sections: the peak is the SUM of their dB.
 filt_res_k = FILT_RES_DB_MAX / filt_stages * (log(10) / 20);
 
-// Project tempo, read once per block (it never changes mid-block, so polling
-// it per sample would be wasted work). Absolute — see the note in @init.
 host_bpm = max(tempo, 0.001);
-
-// Transport POSITION, for phase-locking the cycle in Host x. Tempo sync sets
-// the cycle's speed; this sets where in the cycle we are. Without it the
-// pattern is the right length but starts wherever you pressed play, so the
-// turnarounds land off the bar — which is what a tempo-synced effect is
-// expected NOT to do. Deriving phase from the project position instead of
-// accumulating also means it can't drift over a long session, and it survives
-// seeking and looping for free.
-//
-// Only while the transport is actually moving (1 = playing, 5 = recording).
-// Stopped or paused, beat_position doesn't advance, so locking to it would
-// freeze the LFO for anyone monitoring live — those cases fall back to the
-// free-running accumulator below.
-host_beat_pos    = beat_position;
-host_pos_locked  = (play_state == 1 || play_state == 5);
-blk_sample       = 0;
-
+host_beat_pos   = beat_position;
+host_pos_locked = (play_state == 1 || play_state == 5);
+blk_sample      = 0;
+// Start delay: 0 is off in every mode; otherwise a length like any other.
+start_delay_sec = slider25 > 0 ? len_secs(slider24, slider25) : 0;
 
 @sample
-
-// (No transport-edge reset here — Path A. REAPER re-runs @init on every
-// transport play / render start, which resets all runtime state — dwell
-// LFO phases, filter state + cutoff smoothers, pan state, drift runtime,
-// Speed Ramp, Start Delay, Play/Rest + effect mix; the CONFIG banks are
-// preserved across those re-runs by the drift_cfg_inited guard in @init.
-// See docs/v2.9-render-state-bug.md.)
-
-// Where this sample sits in the project, in beats. @block gives the position
-// at the START of the block, so step forward by however many samples in we
-// are. Counted unconditionally (including through the Start Delay) so the
-// position is always right the instant the delay ends.
 sample_beat_pos = host_beat_pos + blk_sample * host_bpm / (60 * srate);
 blk_sample += 1;
 
 start_delay_elapsed < start_delay_sec ? (
   start_delay_elapsed += 1 / srate;
-  // No-op — spl0 and spl1 pass through unchanged.
 ) : (
 
-sdf_low  = sdf_hz(slider1, slider3, slider4, slider5);
-sdf_high = sdf_hz(slider6, slider8, slider9, slider10);
-freq_lo         = min(sdf_low, sdf_high);
-freq_hi         = max(sdf_low, sdf_high);
-high_secs       = slider12;
-low_secs        = slider13;
-fade_down_secs  = slider14;
-fade_down_shape = slider15;
-fade_up_secs    = slider16;
-fade_up_shape   = slider17;
-cycle_mode      = slider51;
-cycle_len_mode  = slider53;
-// Fit mode: cycle length is the sum of the four dwell sliders (so each one is
-// a beat count). Set-in-beats mode: pinned to slider52, the four acting as
-// proportions. Raw slider values either way, so drift moves shape not length.
-cycle_beats     = cycle_len_mode == 0
-                    ? max(slider12 + slider14 + slider13 + slider16, 0.001)
-                    : max(slider52, 0.001);
-// In Host x the cycle length comes from the tempo, not from the sum of the
-// four durations. Computed once here so the drift reference period and the
-// dwell LFO frequency below both use exactly the same number.
-host_cycle_secs = cycle_beats * 60 / host_bpm;
-resonance       = slider18;
-wet             = slider19;
-dry             = 1 - wet;
-phase_offset    = slider20 / 360;
-
-// ===== PAN BLOCK SAMPLE READ START =====
-pan_enabled     = slider22;
-pan_mode        = slider23;
-pan_spread      = slider24;
-pan_glide_ms    = slider25;
-pan_cycle_steps = slider26;
-// The every-N alternations count in their own pattern length (2N). Cycle Steps
-// says how many positions the Distributed / Converging / Diverging walks use
-// and has nothing to say about a two-sided flip.
+resonance    = slider11;
+pan_enabled     = slider15;
+pan_mode        = slider16;
+pan_cycle_steps = slider19;
 pan_cycle_mod = pan_mode == 13 ? 4 : pan_mode == 14 ? 8 : pan_mode == 15 ? 16 : pan_cycle_steps;
-pan_sweep_val   = slider27;
-pan_sweep_mode  = slider28;
-pan_sweep_ratio = slider29;
-// ===== PAN BLOCK SAMPLE READ END =====
+pan_sweep_val   = slider20;
+pan_sweep_mode  = slider21;
 
-// Advance each target's own ramp clock (v2.14 per-target timeline). Engage
-// (slider41, GLOBAL) is the freeze/resume gate: while On, each target whose
-// duration > 0 advances its own ramp_t 0->1 over its own duration, after its
-// own start delay; while Off, all clocks freeze and resume. Only transport
-// play (via @init) resets them.
-slider41 ? (
-  i = 0;
-  // Ramp time unit (slider37). One factor turns the block's time values into
-  // seconds, so Duration and Start delay always mean the same as each other.
-  // Cycles is one full sweep. Beats is 60/project tempo, recomputed per sample
-  // so it follows a live tempo change rather than remembering one.
+// Advance each target's ramp clock. Engage is a freeze/resume gate.
+slider44 ? (
   ramp_time_scale =
-    slider37 == 3 ? 60 / max(tempo, 0.001) :
-    slider37 == 2 ? 60 :
-    slider37 == 1 ? 1 :
+    slider40 == 3 ? 60 / max(tempo, 0.001) :
+    slider40 == 2 ? 60 :
+    slider40 == 1 ? 1 :
                     max(drift_ref_period, 0.001);
-  loop(N_SPEED_TARGETS,
+  i = 0;
+  loop(N_TARGETS,
     speed_ramp_dur_mem[i] > 0 ? (
       sr_delay_samples = speed_ramp_delay_mem[i] * ramp_time_scale * srate;
       speed_ramp_delay_elapsed_mem[i] < sr_delay_samples ? (
         speed_ramp_delay_elapsed_mem[i] += 1;
       ) : (
-        // Staircase: advance for `play`, hold for `rest`, repeat. The holds come
-        // OUT of the duration rather than extending it -- the advancing step is
-        // scaled by (play+rest)/play -- so Ramp duration goes on meaning "you
-        // arrive in about this long".
         sr_pl = sr_play_mem[i];
         sr_rs = sr_rest_mem[i];
         sr_pr_on = sr_pl > 0 && sr_rs > 0;
         sr_hold = pr_frozen(sr_pr_accum_mem, sr_pr_resting_mem, i,
                             1.0 / (ramp_time_scale * srate), sr_pl, sr_rs);
-        // One-armed on purpose -- an empty else-branch is a silent compile
-        // failure in eel2 (CLAUDE.md).
         !sr_hold ? (
           sr_step = 1.0 / (srate * speed_ramp_dur_mem[i] * ramp_time_scale);
           sr_pr_on ? sr_step *= (sr_pl + sr_rs) / sr_pl;
@@ -914,55 +579,35 @@ slider41 ? (
   );
 );
 
-// Per-target Speed Ramp offsets (parallel — all 4 dwells ramp regardless of
-// which target the selector shows). Each offset is its own ramp_t *
-// stored_amount in seconds, applied additively to the dwell sliders below.
-speed_ramp_high_offset      = speed_ramp_ramp_t_mem[0] * speed_ramp_target_value_mem[0];
-speed_ramp_fade_down_offset = speed_ramp_ramp_t_mem[1] * speed_ramp_target_value_mem[1];
-speed_ramp_low_offset       = speed_ramp_ramp_t_mem[2] * speed_ramp_target_value_mem[2];
-speed_ramp_fade_up_offset   = speed_ramp_ramp_t_mem[3] * speed_ramp_target_value_mem[3];
+// Ramp offsets for the four lengths, in each segment's own unit.
+sr_len0 = speed_ramp_ramp_t_mem[0] * speed_ramp_by_mem[0];
+sr_len1 = speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1];
+sr_len2 = speed_ramp_ramp_t_mem[2] * speed_ramp_by_mem[2];
+sr_len3 = speed_ramp_ramp_t_mem[3] * speed_ramp_by_mem[3];
 
-// Speed-ramp-adjusted dwell phases (drift NOT yet applied). Their sum
-// is the stable period reference for the drift wave, so dwell drift
-// doesn't self-modulate the drift rate.
-ref_high = max(slider12 + speed_ramp_high_offset,      0.001);
-ref_fd   = max(slider14 + speed_ramp_fade_down_offset, 0.001);
-ref_low  = max(slider13 + speed_ramp_low_offset,       0.001);
-ref_fu   = max(slider16 + speed_ramp_fade_up_offset,   0.001);
+// Ramp-adjusted lengths without drift: their sum is the drift wave's reference
+// period, so length drift cannot modulate its own clock.
+ref_high = max(len_secs(seg_lmode[0], seg_len[0] + sr_len0), 0.001);
+ref_fd   = max(len_secs(seg_lmode[1], seg_len[1] + sr_len1), 0.001);
+ref_low  = max(len_secs(seg_lmode[2], seg_len[2] + sr_len2), 0.001);
+ref_fu   = max(len_secs(seg_lmode[3], seg_len[3] + sr_len3), 0.001);
 drift_ref_period = max(ref_high + ref_fd + ref_low + ref_fu, 0.001);
 
-// Host x: one cycle is a fixed number of beats, so the drift period — which
-// is counted in cycles — follows the tempo with it.
-cycle_mode == 1 ? drift_ref_period = max(host_cycle_secs, 0.001);
-
-// Per-target drift wave computation. 6 targets (0-3 = the four dwell
-// phases, 4 = Pan Sweep Rate, 5 = Resonance). Each gets a phase counter
-// advancing per sample. Period unit is dwell patterns: one drift cycle
-// spans `per` patterns of drift_ref_period seconds each.
 i = 0;
 loop(N_TARGETS,
   up    = target_drift_up[i];
   down  = target_drift_down[i];
   per   = target_drift_per[i];
   shape = target_drift_shape[i];
-
   drift_offset_local = 0;
   (up > 0 || down > 0) && per > 0 ? (
-    // Drift period unit (slider47). Cycles is one full sweep at the reference
-    // length -- what this control always counted. Seconds is wall clock. Beats
-    // counts the PROJECT tempo.
     period_samples =
-      slider47 == 2 ? max(per * 60 / max(tempo, 0.001) * srate, 1) :
-      slider47 == 1 ? max(per * srate, 1) :
+      slider34 == 2 ? max(per * 60 / max(tempo, 0.001) * srate, 1) :
+      slider34 == 1 ? max(per * srate, 1) :
                       max(per * srate * drift_ref_period, 1);
-
-    // Drift play/rest, per target, counted in PERIODS. While resting the phase
-    // does not advance at all, so the offset FREEZES where it stopped rather
-    // than returning to centre.
     d_frozen = pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,
                          1.0 / period_samples,
                          drift_play_mem[i], drift_rest_mem[i]);
-    // One-armed pairs: an empty else-branch is a silent compile failure in eel2.
     d_frozen ? ( new_phase = target_drift_phase[i]; );
     !d_frozen ? (
       new_phase = target_drift_phase[i] + 1.0 / period_samples;
@@ -975,7 +620,6 @@ loop(N_TARGETS,
       );
     );
     target_drift_phase[i] = new_phase;
-
     shape == 0 ? (
       shape_val = sin(2 * $pi * new_phase);
     ) : shape == 1 ? (
@@ -992,39 +636,53 @@ loop(N_TARGETS,
   i += 1;
 );
 
-// Effective dwell phases: slider + Speed Ramp offset + drift offset
-// (targets 0-3, all additive in seconds). Clamp each to a 1 ms floor.
-high_secs      = max(slider12 + speed_ramp_high_offset      + target_drift_offset[0], 0.001);
-fade_down_secs = max(slider14 + speed_ramp_fade_down_offset + target_drift_offset[1], 0.001);
-low_secs       = max(slider13 + speed_ramp_low_offset       + target_drift_offset[2], 0.001);
-fade_up_secs   = max(slider16 + speed_ramp_fade_up_offset   + target_drift_offset[3], 0.001);
+// Effective lengths: value + ramp + drift, in the segment's own unit, then
+// converted. The order of the sum is the old one, so Seconds stays identical.
+high_secs      = max(len_secs(seg_lmode[0], seg_len[0] + sr_len0 + target_drift_offset[0]), 0.001);
+fade_down_secs = max(len_secs(seg_lmode[1], seg_len[1] + sr_len1 + target_drift_offset[1]), 0.001);
+low_secs       = max(len_secs(seg_lmode[2], seg_len[2] + sr_len2 + target_drift_offset[2]), 0.001);
+fade_up_secs   = max(len_secs(seg_lmode[3], seg_len[3] + sr_len3 + target_drift_offset[3]), 0.001);
+fade_down_shape = seg_shape[1];
+fade_up_shape   = seg_shape[3];
 
 period = high_secs + fade_down_secs + low_secs + fade_up_secs;
-
-// Host x: pin the cycle to the tempo. The four durations above still set the
-// SHAPE — calc_lfo() divides each by `period` to get its fraction of the
-// cycle, so their ratios are all that survives — but the total length now
-// comes from Cycle length (beats). Drift and Speed Ramp on the dwell phases
-// therefore rebalance the cycle rather than lengthening it.
-cycle_mode == 1 ? period = max(host_cycle_secs, 0.00001);
-
 freq   = 1 / max(period, 0.00001);
 
-// Resonance drift + Speed Ramp (target 5): clamp to [0, 1] (slider range).
-eff_resonance = max(0, min(1, resonance + target_drift_offset[5] + speed_ramp_ramp_t_mem[5] * speed_ramp_target_value_mem[5]));
+// Position lock: when EVERY segment counts in beats and nothing moves a length,
+// the cycle is a fixed number of beats, so its phase comes from the project.
+// Lock what is constant, accumulate what is modulated.
+cycle_locked = host_pos_locked &&
+               seg_lmode[0] >= 3 && seg_lmode[1] >= 3 && seg_lmode[2] >= 3 && seg_lmode[3] >= 3 &&
+               sr_len0 + target_drift_offset[0] == 0 && sr_len1 + target_drift_offset[1] == 0 &&
+               sr_len2 + target_drift_offset[2] == 0 && sr_len3 + target_drift_offset[3] == 0;
+cycle_locked ? (
+  cycle_beats = max(len_beats(seg_lmode[0], seg_len[0]) + len_beats(seg_lmode[1], seg_len[1]) +
+                    len_beats(seg_lmode[2], seg_len[2]) + len_beats(seg_lmode[3], seg_len[3]), 0.001);
+);
 
-// Pan Sweep Rate drift + Speed Ramp (target 4): fold into the pan sweep value
-// used by pan modes 10/11 below (in the Pan Sweep Rate's own unit).
-eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[4] + speed_ramp_ramp_t_mem[4] * speed_ramp_target_value_mem[4]);
+// Pitch (targets 4-8): amount on the VALUE, in its own unit, before conversion.
+tuning_ref = max(20, min(2000, slider10 + target_drift_offset[8] + speed_ramp_ramp_t_mem[8] * speed_ramp_by_mem[8]));
+sdf_high = sdf_hz(seg_pmode[0], seg_pval[0] + speed_ramp_ramp_t_mem[4] * speed_ramp_by_mem[4] + target_drift_offset[4],
+                  seg_fine[0] + speed_ramp_ramp_t_mem[5] * speed_ramp_by_mem[5] + target_drift_offset[5], seg_funit[0]);
+sdf_low  = sdf_hz(seg_pmode[2], seg_pval[2] + speed_ramp_ramp_t_mem[6] * speed_ramp_by_mem[6] + target_drift_offset[6],
+                  seg_fine[2] + speed_ramp_ramp_t_mem[7] * speed_ramp_by_mem[7] + target_drift_offset[7], seg_funit[2]);
+freq_lo = min(sdf_low, sdf_high);
+freq_hi = max(sdf_low, sdf_high);
 
-// Smoother coefficient — used for cut_smooth below and effect_mix
-// just below that. Moved up so both can share the same value.
+// Resonance (9) and Pan sweep rate (13): drift then ramp, the old order.
+eff_resonance = max(0, min(1, resonance + target_drift_offset[9] + speed_ramp_ramp_t_mem[9] * speed_ramp_by_mem[9]));
+eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[13] + speed_ramp_ramp_t_mem[13] * speed_ramp_by_mem[13]);
+// Stereo phase offset (10), Pan spread (11), Pan glide (12), Pan sweep every (14),
+// Wet/dry (15). With nothing aimed at them each is its slider's own value.
+phase_offset    = (slider13 + target_drift_offset[10] + speed_ramp_ramp_t_mem[10] * speed_ramp_by_mem[10]) / 360;
+pan_spread      = max(0, min(1, slider17 + target_drift_offset[11] + speed_ramp_ramp_t_mem[11] * speed_ramp_by_mem[11]));
+pan_glide_ms    = max(0, min(1000, slider18 + target_drift_offset[12] + speed_ramp_ramp_t_mem[12] * speed_ramp_by_mem[12]));
+pan_sweep_ratio = 1 / max(slider22 + target_drift_offset[14] + speed_ramp_ramp_t_mem[14] * speed_ramp_by_mem[14], 0.001);
+wet             = max(0, min(1, slider23 + target_drift_offset[15] + speed_ramp_ramp_t_mem[15] * speed_ramp_by_mem[15]));
+dry             = 1 - wet;
+
 smooth = exp(-1 / (srate * 0.003));
 
-// Play/Rest gate state machine. pr_cycle_progress accumulates
-// fractional cycles at the dwell-pattern frequency (1 / total
-// period); when it crosses the threshold for the current state,
-// pr_resting flips and the counter resets.
 pr_enabled ? (
   pr_cycle_progress += freq / srate;
   !pr_resting ? (
@@ -1040,35 +698,13 @@ pr_enabled ? (
   );
 );
 
-// LFO at rest = Freeze → in_frozen_rest gates phase_l/r and
-// pan_phase advancement during rest.
 in_frozen_rest = pr_enabled && pr_resting && rest_lfo_mode == 1;
-
-// effect_mix smoothly transitions between 1 (effect fully on) and
-// 0 (rest target) at rest boundaries. The rest target depends on
-// Output at rest: dry_l/r (pass-through) for Pass-through, 0
-// (silence) for Silence. Below, the play-mode wet/dry mix and the
-// rest target are interpolated by effect_mix to produce the final
-// spl0/spl1 — soft fade between effect-on and whichever rest
-// state was chosen.
 target_effect_mix = pr_enabled && pr_resting ? 0 : 1;
 effect_mix        = effect_mix * smooth + target_effect_mix * (1 - smooth);
 silence_mode      = (rest_output_mode == 1);
 
-// Advance dwell-pattern LFO phases unless Freeze rest is pinning them.
-//
-// In Host x with the transport rolling, phase is POSITIONED from the project
-// rather than accumulated: one cycle spans cycle_beats beats, so the phase is
-// just how far through those beats we are. Cycle length is a fixed slider
-// here (dwell drift only changes the SHAPE in this mode, never the length),
-// so the position formula is exact — nothing is being modulated underneath it.
-// Every other case keeps the original accumulator.
-//
-// Freeze rest still wins: it pins the phase where it was, and on resume the
-// lock re-asserts, so the cutoff steps to wherever the project now is. The
-// 3 ms cutoff smoother rounds that off.
 !in_frozen_rest ? (
-  (cycle_mode == 1 && host_pos_locked) ? (
+  cycle_locked ? (
     phase_l = sample_beat_pos / cycle_beats;
     phase_l -= floor(phase_l);
   ) : (
@@ -1076,10 +712,8 @@ silence_mode      = (rest_output_mode == 1);
     phase_l >= 1 ? phase_l -= 1;
   );
 
-  slider21 == 0 ? (
-    // Independent L+R: both run at the same rate from the same start, so the
-    // locked case is simply the same position.
-    (cycle_mode == 1 && host_pos_locked) ? (
+  slider14 == 0 ? (
+    cycle_locked ? (
       phase_r = phase_l;
     ) : (
       phase_r += freq / srate;
@@ -1089,6 +723,8 @@ silence_mode      = (rest_output_mode == 1);
     phase_r = phase_l + phase_offset;
     phase_r >= 1 ? phase_r -= 1;
     phase_r < 0  ? phase_r += 1;
+    // A drifting offset can carry it more than one turn; a slider alone cannot.
+    (phase_r < 0 || phase_r >= 1) ? phase_r -= floor(phase_r);
   );
 );
 
@@ -1098,11 +734,8 @@ lfo_r = calc_lfo(phase_r, high_secs, low_secs, fade_down_secs, fade_up_secs, fad
 target_freq_l = freq_lo + lfo_l * (freq_hi - freq_lo);
 target_freq_r = freq_lo + lfo_r * (freq_hi - freq_lo);
 
-// Smooth the CUTOFF IN HZ now, not a raw coefficient. The old code smoothed
-// `freq * 2/srate`, which is what made "Hz" a coefficient wearing a Hz label.
 cut_target_l = target_freq_l;
 cut_target_r = target_freq_r;
-
 cut_smooth_l = cut_smooth_l * smooth + cut_target_l * (1 - smooth);
 cut_smooth_r = cut_smooth_r * smooth + cut_target_r * (1 - smooth);
 
@@ -1124,7 +757,7 @@ loop(filt_stages,
   filt_v2 = svf_l[filt_x + 1] + filt_a2*svf_l[filt_x] + filt_a3*filt_v3;
   svf_l[filt_x]     = 2*filt_v1 - svf_l[filt_x];
   svf_l[filt_x + 1] = 2*filt_v2 - svf_l[filt_x + 1];
-  filt_in = filt_v2;                  // v2 is the lowpass output
+  filt_in = filt_v2;
   filt_i += 1;
 );
 out_l = filt_in;
@@ -1143,16 +776,11 @@ loop(filt_stages,
   filt_v2 = svf_r[filt_x + 1] + filt_a2*svf_r[filt_x] + filt_a3*filt_v3;
   svf_r[filt_x]     = 2*filt_v1 - svf_r[filt_x];
   svf_r[filt_x + 1] = 2*filt_v2 - svf_r[filt_x + 1];
-  filt_in = filt_v2;                  // v2 is the lowpass output
+  filt_in = filt_v2;
   filt_i += 1;
 );
 out_r = filt_in;
 
-// Compute play-mode output (normal wet/dry mix), then blend with
-// the rest target via effect_mix. Rest target: dry_l/r for
-// Pass-through, 0 for Silence. Filter state (the cascade) and
-// cut_smooth keep running through rest so the filter is "warm"
-// and re-engages cleanly on rest exit.
 play_spl0 = dry * dry_l + wet * out_l;
 play_spl1 = dry * dry_r + wet * out_r;
 rest_spl0 = silence_mode ? 0 : dry_l;
@@ -1162,16 +790,9 @@ spl1 = effect_mix * play_spl1 + (1 - effect_mix) * rest_spl1;
 
 // ===== PAN BLOCK SAMPLE LOGIC START =====
 pan_enabled ? (
-  // Per-cycle pan modes (0-9) advance pan_cycle_index on dwell LFO
-  // phase wraps. Since the dwell phase_l advancement above is
-  // gated by !in_frozen_rest, cycle_fired never triggers during
-  // Freeze rest — pan_cycle_index naturally pauses too.
   cycle_fired  = (phase_l < last_phase_l);
   last_phase_l = phase_l;
 
-  // 13-15 are the every-N alternations, appended after the sweeps because enum
-  // options can only ever be added at the end. They are per-cycle modes, so
-  // they belong in this branch despite sitting above the sweep indices.
   (pan_mode <= 9 || pan_mode >= 13) ? (
     cycle_fired ? (
       pan_mode == 5 || pan_mode == 7 || pan_mode == 9 ? (
@@ -1185,74 +806,27 @@ pan_enabled ? (
     cur_pan = percycle_pan(pan_cycle_index, pan_cycle_steps);
     pan_l = cur_pan;
 
-  ) : pan_mode == 10 ? (
-    // Pan Sweep — gate phase advance for Freeze mode. eff_pan_sweep_val
-    // carries the Pan Sweep Rate drift offset (target 4). Branches keyed by
-    // the enum's NAMES: 0 Hz, 1 Seconds, 2 BPM, 3 Host x = beats per cycle.
-    //
-    // NOTE the direction, and it is deliberate: in Hz and BPM a bigger number
-    // is FASTER, while in Seconds and Host x a bigger number is SLOWER. That
-    // is what the units mean, and the drift/ramp amount for this target rides
-    // in whatever unit is showing ("units match target"), so a positive drift
-    // speeds the pan up in two modes and slows it in the other two. Seconds
-    // has always behaved that way here; Host x now matches it.
-    //
-    // This differs from the Polyrhythms and the Shepards, where drift and ramp
-    // amounts are in real BPM in EVERY mode and the plugin converts. Neither is
-    // wrong on its own; having both in one suite is. Recorded as an open
-    // question rather than settled unilaterally at 2am.
+  ) : (pan_mode == 10 || pan_mode == 11) ? (
+    // {BPM, Seconds, Hz, Every N beats, N per beat}, keyed by name. The amount
+    // for this target rides in whatever unit is showing.
     pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val / 60) :
     pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
-    // R21: mode 3 is Every N beats (divide), mode 4 is N per beat (multiply).
     pan_sweep_mode == 4 ? (pan_freq = max(host_bpm, 0.001) / 60 * max(eff_pan_sweep_val, 0.001)) :
     pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val) :
-    // Host x: BEATS PER CYCLE. host_bpm/60 is beats per second, so N beats per
-    // cycle is (host_bpm/60)/N cycles per second. Guarded on the NUMERATOR --
-    // 1/max(v,0.001) would clamp the denominator and turn a stopped pan into a
-    // 1000 Hz one, which is the opposite of what 0 has always meant.
                           (pan_freq = eff_pan_sweep_val > 0.001 ?
                                         host_bpm / 60 / eff_pan_sweep_val : 0.001);
     !in_frozen_rest ? (
       pan_phase += pan_freq / srate;
       pan_phase >= 1 ? pan_phase -= 1;
     );
-    cur_pan = (pan_phase * 2.0 - 1.0) * pan_spread;
-    pan_l = cur_pan;
-
-  ) : pan_mode == 11 ? (
-    // Pan Sweep Flipped — gate phase advance for Freeze mode. Same
-    // name-keyed branches as mode 10 above, Host x included.
-    pan_sweep_mode == 0 ? (pan_freq = eff_pan_sweep_val / 60) :
-    pan_sweep_mode == 1 ? (pan_freq = 1 / max(eff_pan_sweep_val, 0.001)) :
-    // R21: mode 3 is Every N beats (divide), mode 4 is N per beat (multiply).
-    pan_sweep_mode == 4 ? (pan_freq = max(host_bpm, 0.001) / 60 * max(eff_pan_sweep_val, 0.001)) :
-    pan_sweep_mode == 2 ? (pan_freq = eff_pan_sweep_val) :
-    // Host x: BEATS PER CYCLE. host_bpm/60 is beats per second, so N beats per
-    // cycle is (host_bpm/60)/N cycles per second. Guarded on the NUMERATOR --
-    // 1/max(v,0.001) would clamp the denominator and turn a stopped pan into a
-    // 1000 Hz one, which is the opposite of what 0 has always meant.
-                          (pan_freq = eff_pan_sweep_val > 0.001 ?
-                                        host_bpm / 60 / eff_pan_sweep_val : 0.001);
-    !in_frozen_rest ? (
-      pan_phase += pan_freq / srate;
-      pan_phase >= 1 ? pan_phase -= 1;
-    );
-    cur_pan = (1.0 - pan_phase * 2.0) * pan_spread;
+    cur_pan = pan_mode == 10 ? (pan_phase * 2.0 - 1.0) * pan_spread
+                             : (1.0 - pan_phase * 2.0) * pan_spread;
     pan_l = cur_pan;
 
   ) : (
-    // Linked Sweep — gate phase advance for Freeze mode. This mode rides the
-    // dwell cycle times a fixed multiplier, so when the cycle is position-
-    // locked this one can be too, and it stays exactly in step instead of
-    // slowly separating from it over a long session.
-    //
-    // Pan Sweep (modes 10/11) deliberately does NOT lock, even on the Host x
-    // unit: its rate can be moved by Drift and Speed Ramp, and positioning
-    // from the project assumes a rate that isn't being modulated underneath.
-    // The rule across the plugin is lock what's constant, accumulate what's
-    // modulated.
+    // Linked Sweep rides the dwell cycle, so it locks when the cycle does.
     !in_frozen_rest ? (
-      (cycle_mode == 1 && host_pos_locked) ? (
+      cycle_locked ? (
         pan_phase = sample_beat_pos * pan_sweep_ratio / cycle_beats;
         pan_phase -= floor(pan_phase);
       ) : (
@@ -1267,11 +841,6 @@ pan_enabled ? (
   pan_glide_coeff = pan_glide_ms > 0 ? exp(-1 / (srate * pan_glide_ms * 0.001)) : 0;
   pan_l_smooth = pan_l_smooth * pan_glide_coeff + pan_l * (1 - pan_glide_coeff);
 
-  // Apply the pan, then blend with the un-panned signal via
-  // effect_mix. During rest, effect_mix → 0 means the output is
-  // whatever spl0 was BEFORE the pan block ran — which already
-  // reflects the rest target (dry pass-through OR silence)
-  // because the wet/dry blend above used effect_mix.
   pan_pos = (pan_l_smooth + 1.0) * 0.5;
   mono = (spl0 + spl1) * 0.5;
   spl0_panned = mono * cos(pan_pos * $pi * 0.5);
@@ -1284,60 +853,59 @@ pan_enabled ? (
 );  // close start-delay else branch
 
 @serialize
-// Persist per-target Speed Ramp (by / duration / start-delay) + drift configs
-// so reload restores all targets, not just whichever was selected at save.
-//
-// VERSION-GUARDED (CLAUDE.md @serialize gotcha; NEW in v2.14). Magic base
-// bumped to 2200000 when the Speed Ramp target count grew 4 -> 6 (added Pan
-// Sweep Rate + Resonance), which changed the serialized SR-bank size. Older
-// blobs (unversioned, or the 2100000 per-target-timeline build) won't match
-// and fall through to @init defaults — drift + ramp reset (accepted;
-// pre-release). Marker is float32-exact.
-// 2026-09-06: four per-target banks added (Drift play/rest, Ramp play/rest), so
-// the magic bumps and the READ accepts BOTH. A bump rather than a bare append,
-// because appending would let an older blob's trailing bytes land in the new
-// banks -- "migrate what was RESTORED, never what was DEFAULTED". Gated on
-// "this blob HAS the field", so an older blob keeps its Drift and Ramp config
-// and leaves the new banks at @init's zeros, which is off.
-sr_magic = 2300000 + N_TARGETS;
-file_var(0, sr_magic);
-(sr_magic == 2300000 + N_TARGETS || sr_magic == 2200000 + N_TARGETS) ? (
-  file_mem(0, speed_ramp_target_value_mem, N_SPEED_TARGETS);
-  file_mem(0, speed_ramp_dur_mem,          N_SPEED_TARGETS);
-  file_mem(0, speed_ramp_delay_mem,        N_SPEED_TARGETS);
-  file_var(0, last_speed_target);
-  sr_magic == 2300000 + N_TARGETS ? (
-    file_mem(0, drift_play_mem, N_TARGETS);
-    file_mem(0, drift_rest_mem, N_TARGETS);
-    file_mem(0, sr_play_mem,    N_TARGETS);
-    file_mem(0, sr_rest_mem,    N_TARGETS);
-  );
+// 2500016 (2026-09-10): 16 targets and the segment banks. Older blobs are NOT
+// read -- the slider layout changed underneath them, so their numbers no longer
+// line up with anything. tools/sdf_migrate_segments_20260910.py writes this
+// format for every saved instance, so nothing reaches here in an old format.
+sdf_magic = 2500000 + N_TARGETS;
+file_var(0, sdf_magic);
+sdf_magic == 2500000 + N_TARGETS ? (
   file_mem(0, target_drift_up,    N_TARGETS);
   file_mem(0, target_drift_down,  N_TARGETS);
   file_mem(0, target_drift_per,   N_TARGETS);
   file_mem(0, target_drift_shape, N_TARGETS);
   file_var(0, last_target_select);
+  file_mem(0, speed_ramp_by_mem,    N_TARGETS);
+  file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
+  file_mem(0, speed_ramp_delay_mem, N_TARGETS);
+  file_var(0, last_speed_target);
+  file_mem(0, drift_play_mem, N_TARGETS);
+  file_mem(0, drift_rest_mem, N_TARGETS);
+  file_mem(0, sr_play_mem,    N_TARGETS);
+  file_mem(0, sr_rest_mem,    N_TARGETS);
+  file_mem(0, seg_lmode, N_SEG);
+  file_mem(0, seg_len,   N_SEG);
+  file_mem(0, seg_shape, N_SEG);
+  file_mem(0, seg_pmode, N_SEG);
+  file_mem(0, seg_note,  N_SEG);
+  file_mem(0, seg_pval,  N_SEG);
+  file_mem(0, seg_fine,  N_SEG);
+  file_mem(0, seg_funit, N_SEG);
+  file_var(0, last_seg_sel);
 
-  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
-  // on WRITE it is < 0. @serialize is the only section guaranteed to run on
-  // both load AND duplicate, so it re-establishes the bank<->slider invariant:
-  // force the visible config sliders to match the restored banks for the
-  // restored selectors, correcting any transient @slider clobber.
+  // On READ, put every nested selector's visible controls back to the restored
+  // banks and refresh the mirrors, so the next @slider pass sees no edits.
   file_avail(0) >= 0 ? (
-    slider36 = speed_ramp_target_value_mem[last_speed_target]; // Speed ramp `by`
-    slider38 = speed_ramp_dur_mem[last_speed_target];          // Speed ramp duration
-    slider42 = speed_ramp_delay_mem[last_speed_target];        // Speed ramp start delay
-    slider44 = target_drift_up[last_target_select];            // Drift up
-    slider45 = target_drift_down[last_target_select];          // Drift down
-    slider46 = target_drift_per[last_target_select];           // Drift period
-    slider48 = target_drift_shape[last_target_select];         // Drift shape
-    // The four new per-target sliders need this exactly as much as the ones
-    // above -- they are backed by live sliders, so they are what a transient
-    // @slider can clobber to zero on a track duplicate.
-    slider39 = sr_play_mem[last_speed_target];                 // Ramp play for
-    slider40 = sr_rest_mem[last_speed_target];                 // Ramp rest for
-    slider49 = drift_play_mem[last_target_select];             // Drift play for
-    slider50 = drift_rest_mem[last_target_select];             // Drift rest for
+    slider39 = speed_ramp_by_mem[last_speed_target];
+    slider41 = speed_ramp_dur_mem[last_speed_target];
+    slider45 = speed_ramp_delay_mem[last_speed_target];
+    slider42 = sr_play_mem[last_speed_target];
+    slider43 = sr_rest_mem[last_speed_target];
+    slider31 = target_drift_up[last_target_select];
+    slider32 = target_drift_down[last_target_select];
+    slider33 = target_drift_per[last_target_select];
+    slider35 = target_drift_shape[last_target_select];
+    slider36 = drift_play_mem[last_target_select];
+    slider37 = drift_rest_mem[last_target_select];
+    slider1 = last_seg_sel;
+    seg_show_view(last_seg_sel);
     sliderchange(-1);
+    // Re-seed the cutoff smoother from the RESTORED Low dwell. @init seeded it
+    // before the banks arrived, i.e. from the default 500 Hz, and on a project
+    // load the cutoff then glided down to the real value over the first 70 ms --
+    // measured on surges.RPP, the only difference from the old build in 60 s.
+    // The old build seeded from a slider, which REAPER restores before this runs.
+    tuning_ref = slider10 >= 20 ? slider10 : 440;
+    cut_smooth_l = cut_smooth_r = sdf_hz(seg_pmode[2], seg_pval[2], seg_fine[2], seg_funit[2]);
   );
 );

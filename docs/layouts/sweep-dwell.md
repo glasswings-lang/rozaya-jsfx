@@ -1,6 +1,9 @@
 # Sweep Dwell — segments behind a selector
 
-Authored 2026-09-10, before building. **Status: PROPOSED, not built.** One
+Authored 2026-09-10, before building. **Status: BUILT and MIGRATED 2026-09-10;
+Rozaya approved the three marked calls ("Yes"). Not heard.** Snapshot
+`_pre-sdf-segments-20260910/`. **Tensor's two were NOT migrated after all**: they
+point at `filters/sweep-dwell-filter.jsfx`, which does not exist. One
 migration for everything here, including the pitch blocks and Tuning reference
 already in `src/` (which were never installed).
 
