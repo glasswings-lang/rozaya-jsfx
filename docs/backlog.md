@@ -62,12 +62,11 @@ controls feed a shape or a threshold recomputed every sample, so the wander is
 expressed rather than sampled. The first three were on the old list
 wrongly; Polyrhythm v1 is out by the standing decision to leave it.
 
-**One thing to settle before propagating further.** A stepped target advances
-`1 / period` on its turn and ignores `Drift period unit` entirely, so choosing
-`Seconds` or `Beats` on a stepped target silently behaves as `Cycles`. That is a
-control meaning something other than what it says, which is the rule this suite
-takes most seriously. It is shipped that way in Breath Generator and Womb.
-Raised 2026-09-09, undecided.
+**Seconds and Beats on a stepped target — DECIDED AND BUILT 2026-09-10**, all six
+plugins. They were silently behaving as the first unit. Rozaya: *"stop mid-cycle,
+freeze the clock mid-whatever unit, then pick up on the next cycle from wherever
+the clock was last."* The clock runs in that unit only while the target's own
+thing happens; a bubble is an instant, so each birth adds its Bubble length.
 
 ---
 

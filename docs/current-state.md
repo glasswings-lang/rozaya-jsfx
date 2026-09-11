@@ -114,6 +114,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   reasons (`docs/history/R22.md`).
 - **R23 is SWEPT** — fourteen plugins cleared and not to be "fixed"
   (`docs/backlog.md` has the table).
+- Seconds/Beats on a `With the target` drift, 2026-09-10: Breath Gen, Womb,
+  Heartbeat, Melody, Bubbler, Dapple. No saved instance uses it.
 - The 2026-09-06 drift/ramp sweep, `N per beat`, Tremolo's Start delay, the ranges.
 - **Polyrhythm v3's new controls.** Per-voice Attack/Release MEASURED 2026-09-10;
   Rozaya: *"ear-tested by somebody in here and passing, per-voice"*, no written

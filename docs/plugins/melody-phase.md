@@ -427,6 +427,8 @@ before this unit existed. **Seconds** is wall clock, independent of the rate.
 **Beats** counts the project tempo, so the wander follows the host rather than
 the melody, and it follows a live tempo change.
 
+**`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — a voice's own targets while that voice holds the step, the shared ones while any note does — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target.
+
 The period is measured against the rate **before** drift and ramp touch it, so
 drifting the rate cannot modulate its own drift period.
 

@@ -62,6 +62,28 @@ Newest entries are the most likely to still be accurate.
 
 ---
 
+## 2026-09-10 — Seconds and Beats finally mean something on a stepped drift
+
+Rozaya remembered *"a list of stuff that looks fine, but that didn't have
+propagation of something"*. It was R23's parked question: a `With the target`
+drift ignored `Drift period unit`, so Seconds and Beats silently counted turns.
+Rozaya's answer, unprompted: *"stop mid-cycle, freeze the clock mid-whatever
+unit, then pick up on the next cycle from wherever the clock was last."* Bubbles
+are instants, so each birth adds its length — *"those are in ms, so not super
+bad"*.
+
+**Checked before building:** the code in all six plugins ignored the unit exactly
+as the note said, and no saved instance anywhere (122 readable, plus Tensor's five
+hand-written lines) had a stepped drift on Seconds or Beats — so nothing saved
+changes sound.
+
+**Measured with a probe build,** a scratch copy that plays the hidden drift clock
+as audio: the clock must never move outside its target's own thing, and must move
+at one second per second inside it. The first run's rate came out 0.1% slow; the
+missing stretch was the same thousand samples for every target, which is start-up
+before the engine arms, not a slow clock. The check now leaves out the first tenth
+of a second and reports that stretch.
+
 ## 2026-09-10 — The older Polyrhythm crosses to v3, and is archived
 
 Rozaya: *"We should try with the 84, then I can finally put that old version

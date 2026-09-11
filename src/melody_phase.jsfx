@@ -1627,8 +1627,22 @@ loop(N_TARGETS,
     // A STEPPED target gets a whole 1/period, but only on the sample its own
     // turn comes; a continuous one gets the usual per-sample slice. Play/rest
     // ticks on the same quantity, so "rest for N periods" keeps its meaning.
+    // STEPPED targets, 2026-09-10. In the first unit, a whole 1/period on the
+    // sample the target's turn comes. In Seconds or Beats the clock runs in that
+    // unit ONLY while the target's own thing is happening, and freezes between
+    // turns -- Rozaya: "stop mid-cycle, freeze the clock mid-whatever unit, then
+    // pick up on the next cycle from wherever the clock was last." So the unit
+    // means what it says, and each target still keeps its own time.
+    // A voice's own targets run while that voice holds the step; the shared ones
+    // (Transpose, Attack, Release, Play for, Rest for) while any note does.
     drift_is_stepped(i) ? (
-      drift_per_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
+      slider93 == 0 ? (
+        drift_per_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
+      ) : (
+        d_run = seq_started && !seq_finished && !in_frozen_rest &&
+                (i < 12 || i >= 52 || seq_index == floor((i - 12) / 5));
+        !d_run ? drift_per_tick = 0;
+      );
       drift_step_mem[i] = 0;
     );
 

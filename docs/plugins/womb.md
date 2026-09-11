@@ -111,6 +111,7 @@ it *"should have been a switch from the very beginning"* -- both are ordinary
 artistic choices and neither is the plugin's to make. The defaults below are
 what the plugin used to decide on its own, so nothing saved changed.
 
+**`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — a segment during itself, Breaths/min through the whole breath, the heart's two through the heartbeat — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target.
 
 Six targets are read by the engine **once per event** rather than continuously:
 Heart rate and the S1-S2 gap once per heartbeat, the four breath segments when

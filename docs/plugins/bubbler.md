@@ -161,6 +161,8 @@ artistic choices and neither is the plugin's to make.
 **Pitch spread**. All three are read at the moment a bubble is born and then
 belong to that bubble, so they step once per bubble.
 
+**`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — and a bubble is an instant, so each birth adds that bubble's own **Bubble length** — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target.
+
 **Every birth counts, on either channel.** An earlier build counted the left
 stream only; that tie-break is gone, and needing it at all was the sign the
 first attempt was wrong.

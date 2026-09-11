@@ -250,11 +250,13 @@ target; both zero is off.
 One full wave, counted in the unit below.
 
 **Drift period unit** `{Breaths, Seconds, Beats}, default Breaths`
-For a target set to `With the target` this counts **turns of that target** — eight
-inhales, not eight of anything else. It is called `Breaths` rather than the suite's
-usual `Cycles` because here the thing that repeats is a whole breath, and the plugin
-already counts in breaths on `Play for` and `Rest for`. **Seconds** is wall clock
-and **Beats** follows the project tempo.
+For a target set to `With the target`, `Breaths` counts **turns of that target** —
+eight inhales, not eight of anything else. It is called `Breaths` rather than the
+suite's usual `Cycles` because here the thing that repeats is a whole breath, and the
+plugin already counts in breaths on `Play for` and `Rest for`. **Seconds** is wall
+clock and **Beats** follows the project tempo.
+
+**`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — an inhale during inhales, a pause during that pause, the breath rate through the whole breath — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target. So eight Seconds on an inhale is eight seconds of actual inhaling.
 
 **Drift movement** `{With the target, On a clock}` *(new 2026-09-09)*
 Whether this target's drift moves in step with its own thing, or runs continuously

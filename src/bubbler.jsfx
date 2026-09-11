@@ -520,8 +520,16 @@ loop(N_TARGETS,
     // A STEPPED target gets a whole 1/period, but only on the sample a bubble
     // was born; a continuous one gets the usual per-sample slice. Play/rest
     // ticks on the same quantity, so "rest for N periods" keeps its meaning.
+    // STEPPED targets, 2026-09-10. In the first unit, a whole 1/period on the
+    // sample the target's turn comes. In Seconds or Beats the clock runs in that
+    // unit ONLY while the target's own thing is happening -- here a bubble is an instant, so each birth adds
+    // that bubble's own LENGTH (Rozaya: "those are in ms") -- and freezes between
+    // turns -- Rozaya: "stop mid-cycle, freeze the clock mid-whatever unit, then
+    // pick up on the next cycle from wherever the clock was last." So the unit
+    // means what it says, and each target still keeps its own time.
     drift_is_stepped(di) ? (
-      d_tick = drift_step_mem[di] ? 1.0 / max(per, 0.001) : 0;
+      d_tick = drift_step_mem[di] ? (slider25 == 0 ? 1.0 / max(per, 0.001)
+                                    : eff_len * 0.001 * srate / period_samples) : 0;
       drift_step_mem[di] = 0;
     ) : (
       d_tick = 1.0 / period_samples;

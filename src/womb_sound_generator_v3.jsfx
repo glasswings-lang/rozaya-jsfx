@@ -1266,8 +1266,22 @@ loop(N_TARGETS,
     // 1/period, but only on the sample its own thing begins; a continuous one
     // gets the usual per-sample slice. Play/rest ticks on the same quantity, so
     // "rest for N periods" keeps meaning the same thing either way.
+    // STEPPED targets, 2026-09-10. In the first unit, a whole 1/period on the
+    // sample the target's turn comes. In Seconds or Beats the clock runs in that
+    // unit ONLY while the target's own thing is happening, and freezes between
+    // turns -- Rozaya: "stop mid-cycle, freeze the clock mid-whatever unit, then
+    // pick up on the next cycle from wherever the clock was last." So the unit
+    // means what it says, and each target still keeps its own time.
+    // The heart's two run with the heartbeat cycle (which keeps going through a
+    // heart rest); a segment runs during itself; Breaths/min during any breath.
     drift_is_stepped(i) ? (
-      d_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
+      slider76 == 0 ? (
+        d_tick = drift_step_mem[i] ? 1.0 / max(per, 0.001) : 0;
+      ) : (
+        d_run = start_delay_elapsed >= start_delay_sec &&
+                (i < 2 || (!pr_br_resting && (i == 7 || breath_state == i - 2)));
+        d_tick = d_run ? 1.0 / period_samples : 0;
+      );
       drift_step_mem[i] = 0;
     ) : (
       d_tick = 1.0 / period_samples;

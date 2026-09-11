@@ -187,6 +187,8 @@ wander follows the host rather than the plugin, and it follows a live tempo
 change. The period is measured against the rate *before* drift touches it, so
 drifting a rate cannot modulate its own drift period.
 
+**`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — for Heart rate and the S1-S2 gap, the heartbeat itself, once the start delay is over — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target.
+
 **Drift play for** `0–64 periods, default 0` · **Drift rest for** `0–64 periods, default 0`
 Makes the drift come and go instead of wandering forever. It drifts for `play`
 periods, then **freezes exactly where it stopped** for `rest` periods, then
