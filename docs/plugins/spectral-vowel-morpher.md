@@ -329,7 +329,11 @@ be built from whatever was in the buffer when the rest began.
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** `Texture / Spread / Pitch / Stereo width / Low cut / Output level / Overtone harmonic / High cut / the sixteen layer levels in ladder order, default Texture`
+**Drift target** — fifty-five, in the order of the controls they reach (2026-09-11; it was twenty-four): `Morph / Auto-morph time / Texture / Wash grain / Spread / Pitch / Stereo width / Denoise / Low cut / High cut / Overtone harmonic / Overtone lift / Overtone width / Layer level (all layers) / the sixteen layer levels / Layer pitch (all Custom layers) / Custom 1-3 pitch / Layer overtone harmonic (all layers) / the sixteen layer overtone harmonics / Input level / Output level / Play for / Rest for`, default Morph. A saved project keeps what it had selected.
+
+The three **"all"** entries work like Polyrhythm's "all voices": choosing one shows the first layer's settings, and editing it writes the same setting into every layer it names. **Morph** moves the Morph slider's own position, so it acts while Auto-morph is Off. A **layer overtone harmonic** drift moves only a layer that has its own harmonic; a layer following the global one keeps following.
+
+**Three controls are deliberately not targets**, and Rozaya asked that the reason be written here. **Layer harmonics** is a cap on processing cost, not a tone control, so a drift on it would make the CPU load rise and fall with the wave. **Capture point** and **Capture average** re-analyse the captured sound every time they move — a full spectrum and pitch analysis per slot — which is heavy and lands as a click; a drift would do that over and over.
 Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
 
 **Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
@@ -385,7 +389,7 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** `Texture / Spread / Pitch / Stereo width / Low cut / Output level / Overtone harmonic / High cut / the sixteen layer levels in ladder order, default Texture`
+**Ramp target** — the same fifty-five as Drift target, default Morph (see there, including why Layer harmonics, Capture point and Capture average are not on the list).
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
 **Ramp by** `-300 to +300, units match the target, default 0`

@@ -55,9 +55,9 @@ Missing lists are from the audit reads, not individually re-checked.
 - **shepard-tone** — DONE 2026-09-10: 40 targets.
 - **shepard-scale** — DONE 2026-09-10: 45 targets.
 - **harmonic_sculptor** — ARCHIVED 2026-09-10, not owed anything.
-- **spectral_vowel_morpher** — 24 of 32. Missing 26: Morph, Auto-morph time, Wash
-  grain, Denoise, Overtone lift, Overtone width, Input level, three Custom layer
-  pitches, sixteen layer overtone harmonics. Save format keyed to `N_TARGETS`.
+- **spectral_vowel_morpher** — DONE 2026-09-11: 55 targets in control order, with
+  "all layers" entries; Layer harmonics, Capture point and Capture average left off
+  on purpose, reasons on the controls (`docs/layouts/spectral-vowel-morpher-r24-20260911.md`).
 - **spectral_vowel_passage** — 14 of 16 per slot. Missing: Wash grain, Overtone
   lift, Overtone width (17 total, one over).
 - **sustain_looper** — DONE 2026-09-10: 8 targets, including the new pitch block.

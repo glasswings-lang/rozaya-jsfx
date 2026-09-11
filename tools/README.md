@@ -751,6 +751,18 @@ nothing written.
   so three gates "changed nothing"; and a breath-hump counter that could not count a
   one-second breath. Measure the period instead.
 
+## The Morpher's fifty-five targets — 2026-09-11
+
+`docs/layouts/spectral-vowel-morpher-r24-20260911.md`. No slider moves.
+
+- **`morpher_r24_migrate_20260911.py`** — the two selectors (35, 44) of all 123 lines,
+  from the 24-target list to the 55. Snapshot in, live out.
+- **`morpher_r24_verify_20260911.py`** — **pins the plugin's per-load `time_precise()`
+  rand scramble in test copies of both builds**; without it two renders of one build
+  never match. All 123 old against new; real 24- and 7-target blobs with drift and
+  ramp on every old target; the 31 new targets; an "all layers" entry reaching past its
+  first member; names. `--jobs N` runs in parallel; Morpher renders are slow.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in
