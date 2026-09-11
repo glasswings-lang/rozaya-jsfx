@@ -44,6 +44,24 @@ ITEM_VALUES = {   # (item a, item b, All)
     "resonance_bank":      (700, 900, 0),
 }
 
+# The Drift and Ramp lists' "all" entries: (entry, how many members follow it).
+# Each holds nothing of its own -- it shows its first member, and writing it reaches
+# every member (tgt_write in Polyrhythm v3, mo_write in the Morpher). The Morpher's
+# 30 is tested beside 13 because it takes the three-member branch.
+ALL_ENTRIES = {
+    "polyrhythm_phase_v3":    ((9, 8),),
+    "spectral_vowel_morpher": ((13, 16), (30, 3)),
+}
+
+def enum_labels(plugin):
+    out = {}
+    for line in open(os.path.join(ROOT, "src", plugin + ".jsfx"), encoding="utf-8"):
+        d = DECL.match(line.rstrip("\r\n"))
+        e = d and re.search(r"\{(.*)\}", d.group(3))
+        if e:
+            out[int(d.group(1)) - 1] = [x.strip() for x in e.group(1).split(",")]
+    return out
+
 def ranges(plugin):
     out = {}
     for line in open(os.path.join(ROOT, "src", plugin + ".jsfx"), encoding="utf-8"):
@@ -88,24 +106,28 @@ class Run:
         self.fails, self.lines, self.expect = 0, [], []
 
     def check(self, t, rng, label, p, v, remember=None):
-        # The bridge REWRITES the board every 0.4 s, so a read can land mid-write and
-        # see half a file -- which crashed the first live run on track 3. Re-read
-        # until this track and this control are both there.
-        for _ in range(60):
-            bd = board()
-            if t in bd and p in bd[t]["params"]:
-                break
-            time.sleep(0.05)
-        b = bd[t]["params"]
-        got = b[p][1]
+        name, got, text = read(t, p)
         want = norm_of(rng[p], v)
-        ok = abs(got - want) < 0.002
+        # The board prints five decimals. 0.002 was the tolerance until 2026-09-11, and
+        # on a 0..20000 pitch value that is 40 either way: 62 and 72 passed as 61.
+        ok = abs(got - want) < 0.00002
         self.fails += not ok
         self.lines.append(f"{'ok  ' if ok else 'FAIL'} {board_name(t)}: {label} "
-                          f"({b[p][0]} reads '{b[p][2]}')")
+                          f"({name} reads '{text}')")
         if remember is not None:
             self.expect.append({"t": t, "select": remember, "p": p, "v": v, "label": label})
         return ok
+
+def read(t, p):
+    # The bridge REWRITES the board every 0.4 s, so a read can land mid-write and
+    # see half a file -- which crashed the first live run on track 3. Re-read
+    # until this track and this control are both there.
+    for _ in range(60):
+        bd = board()
+        if t in bd and p in bd[t]["params"]:
+            break
+        time.sleep(0.05)
+    return bd[t]["params"][p]
 
 _names = {}
 def board_name(t):
@@ -146,29 +168,81 @@ def drive(state_path):
         for p, n in names.items():
             if n.lower().endswith("note name") and "pitch mode" in names.get(p - 1, "").lower():
                 send(t, p - 1, 1)
-                send(t, p, 69)
-                run.check(t, rng, f"{n}: A4 in Semitones sets the value to 69", p + 1, 69)
+                # Picking the note already shown is no change and writes nothing --
+                # Resonance Bank's band 2 showed A4 on 2026-09-11 and "failed". So
+                # pick A4 unless it is showing, then G4.
+                pick, pname = (67, "G4") if round(read(t, p)[1] * 127) == 69 else (69, "A4")
+                send(t, p, pick)
+                run.check(t, rng, f"{n}: {pname} in Semitones sets the value to {pick}", p + 1, pick)
                 send(t, p + 1, 72)
                 run.check(t, rng, f"{n}: value 72 moves the note to C5", p, 72)
         # drift and ramp selectors
+        labels = enum_labels(plugin)
+        mp = next((p for p, n in names.items() if n == "Drift movement"), None)
         for sel_name, amount_frac in (("Drift target", (0.3, 0.6)), ("Ramp target", (0.65, 0.8))):
             sp = next((p for p, n in names.items() if n == sel_name), None)
             if sp is None:
                 continue
             ap = sp + 1
+            entries = labels[sp]
+            # Every entry REAPER shows is the one src/ names, in order -- so a renamed
+            # list is checked, and a plugin still running an older build (REAPER
+            # re-reads only in a new project or on a new track) fails here first. The
+            # Ramp list is the same declaration, so its two ends are enough.
+            idxs = range(len(entries)) if sel_name == "Drift target" else (0, len(entries) - 1)
+            wrong = []
+            for i in idxs:
+                send(t, sp, i)
+                shown = read(t, sp)[2].strip()
+                if shown != entries[i]:
+                    wrong.append(f"{i} shows '{shown}', src/ says '{entries[i]}'")
+            run.fails += bool(wrong)
+            run.lines.append(f"{'FAIL' if wrong else 'ok  '} {board_name(t)}: {sel_name}: "
+                             f"{len(idxs)} of {len(entries)} entries read as src/ names them"
+                             + "".join("\n       " + w for w in wrong))
             a, c = frac_value(rng[ap], amount_frac[0]), frac_value(rng[ap], amount_frac[1])
-            # Two targets that EXIST. Rhythm Track's lists hold only two entries, and
-            # asking for index 2 there silently lands on 1 -- the first live run
-            # reported that as a plugin failure when it was the test's.
-            n_entries = rng[sp][3] or int(rng[sp][1] - rng[sp][0] + 1)
-            t1 = 1 if n_entries >= 3 else 0
+            # Two targets that exist: entries 1 and 2, or 0 and 1 in a list of two.
+            t1 = 1 if len(entries) >= 3 else 0
             t2 = t1 + 1
+            # Drift movement is per target too. The two targets get OPPOSITE settings,
+            # t1 flipped from what it had, so a shared or unwritten switch cannot pass.
+            moves = mp if sel_name == "Drift target" else None
             send(t, sp, t1); send(t, ap, a)
+            if moves is not None:
+                m1 = 1 - round(read(t, moves)[1]); send(t, moves, m1)
             send(t, sp, t2); send(t, ap, c)
+            if moves is not None:
+                send(t, moves, 1 - m1)
             send(t, sp, t1)
             run.check(t, rng, f"{sel_name}: target {t1} kept its {names[ap]}", ap, a, [[sp, t1]])
+            if moves is not None:
+                run.check(t, rng, f"Drift movement: target {t1} kept its own", moves, m1, [[sp, t1]])
             send(t, sp, t2)
             run.check(t, rng, f"{sel_name}: target {t2} kept its {names[ap]}", ap, c, [[sp, t2]])
+            if moves is not None:
+                run.check(t, rng, f"Drift movement: target {t2} kept its own", moves, 1 - m1, [[sp, t2]])
+            # The "all" entries: writing one reaches its first and last members;
+            # afterwards it SHOWS its first member; and parking on it does not
+            # flatten the rest (the change detection in tgt_capture / mo_capture).
+            for ai, members in ALL_ENTRIES.get(plugin, ()):
+                first, last = ai + 1, ai + members
+                if "(all" not in entries[ai]:
+                    run.fails += 1
+                    run.lines.append(f"FAIL test table: {plugin} entry {ai} is '{entries[ai]}'")
+                    continue
+                va, vb = frac_value(rng[ap], 0.42), frac_value(rng[ap], 0.51)
+                send(t, sp, ai); send(t, ap, va)
+                send(t, sp, first)
+                run.check(t, rng, f"'{entries[ai]}' wrote '{entries[first]}'", ap, va)
+                send(t, sp, last)
+                run.check(t, rng, f"'{entries[ai]}' wrote '{entries[last]}'", ap, va)
+                send(t, sp, first); send(t, ap, vb)
+                send(t, sp, ai)
+                run.check(t, rng, f"'{entries[ai]}' shows its first member's {names[ap]}",
+                          ap, vb, [[sp, ai]])
+                send(t, sp, last)
+                run.check(t, rng, f"'{entries[last]}' kept its own after '{entries[ai]}' "
+                          f"was selected", ap, va, [[sp, last]])
         # item selectors
         if plugin in ITEM_SELECTORS:
             sp, ip, ia, ib, allix = ITEM_SELECTORS[plugin]
@@ -179,7 +253,15 @@ def drive(state_path):
                                                     frac_value(rng[ip], 0.37),
                                                     frac_value(rng[ip], 0.34)))
             if allix is not None:
-                send(t, sp, allix); send(t, ip, vall)
+                send(t, sp, allix)
+                # All shows item 1, and typing what it shows writes nothing. A repeat
+                # run on the same project finds item 1 still holding last run's All
+                # value -- so step away from whatever All shows now.
+                lo, hi, step, n = rng[ip]
+                shown = read(t, ip)[1] * (hi - lo) + lo
+                if abs(shown - vall) < max(step, 0.01):
+                    vall = vall + 5
+                send(t, ip, vall)
                 send(t, sp, ia)
                 run.check(t, rng, f"{names[sp]} All wrote item {ia}", ip, vall)
                 send(t, sp, ib)
