@@ -61,11 +61,28 @@ Two things hold at every slope, which is not automatic:
 > droopier passband and a softer knee — so expect a character shift near the
 > corner, not a tuning shift.
 
-**Frequency Low Hz** `20-20000 Hz, default 500`
-The cutoff frequency at the bottom of the sweep — where the filter sits when the LFO is at its minimum. If set higher than Frequency High, the two values are automatically swapped.
+**Low and High — two full pitch blocks (sliders 1–10, 2026-09-10)**
+The bottom and top of the sweep are each set with five controls, the same five
+Sweep Dwell has, in the same words:
 
-**Frequency High Hz** `20-20000 Hz, default 5000`
-The cutoff frequency at the top of the sweep — where the filter sits when the LFO is at its peak.
+- **Low pitch mode** `Hz / Semitones / Cents, default Hz` — what the value means.
+- **Low note name** `C-1 to G9` — shown only in Semitones mode, and the same
+  number as the value, so picking a note sets it.
+- **Low frequency (Hz / semitones / cents)** `0–20000, default 500` — the pitch
+  itself. In Semitones it is a MIDI note number (69 = A4); in Cents, a hundred
+  per note. Always kept between 20 Hz and 20 kHz once converted.
+- **Low fine tune** `−1000 to 1000, default 0` and **Low fine tune unit**
+  `Hz / Semitones / Cents, default Cents` — a finer nudge on top, in its own unit.
+- **High pitch mode / note name / frequency / fine tune / fine tune unit** — the
+  same, for the top of the sweep, default 5000 Hz.
+
+If Low ends up above High, the two are swapped. Every project made before this
+kept its Hz values and opens in Hz mode, sounding exactly as it did.
+
+**Tuning reference (Hz)** `20–2000, default 440` (slider 11)
+The pitch of A4 for both ends, in Semitones and Cents modes. It does nothing in Hz
+mode. Measured by `tools/tuning_ref_check.py`: 880 on a note renders identically
+to 440 an octave up.
 
 **Resonance** `0.0-1.0, default 0.7`
 Resonance of the lowpass filter. Higher values add a pronounced peak at the cutoff frequency, making the sweep more tonally distinctive. Values above 0.9 can produce self-oscillation on some material.
@@ -323,9 +340,12 @@ The two sliders are orthogonal — all four combinations work. Walk + Silence ke
 
 ### Ramp (v2.14 nested-selector)
 
-In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same six targets as Drift** — Sweep Rate, Frequency Low, Frequency High, Pan Sweep Rate, Resonance, Wet/Dry. All six ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
+In-plugin one-time morph over time, without automation envelopes. Ramp is nested-selector (same shape as Drift) and reaches the **same seventeen targets as Drift** (see Drift below for the list and units). All ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Ramp target (slider 29)** `Sweep Rate / Frequency Low / Frequency High / Pan Sweep Rate / Resonance / Wet/Dry, default Sweep Rate`
+> **Slider numbers in this section are from an older layout.** Since 2026-09-10 the
+> Ramp block is sliders 47–54 and Drift is 39–46.
+
+**Ramp target (slider 47)** `the seventeen targets, default Low frequency`
 Picks which target the `by` amount applies to. Switching the selector saves slider 30 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
 **Ramp by (slider 30)** `-5000 to +5000, step 0.01, default 0` (units match the selected target)
@@ -349,8 +369,20 @@ Same pattern as Womb v3's drift and the rest of the sweep (target list now share
 
 The two Frequency targets are what make this the most evolving of the filter effects: drift Frequency Low on one period and Frequency High on another, and the sweep band itself wanders and breathes — its edges moving independently, the center and width shifting over time. Layer a slow Resonance drift on top and the filter's character moves too.
 
-**Drift target (slider 34)** `Sweep Rate / Frequency Low / Frequency High / Pan Sweep Rate / Resonance / Wet/Dry, default Sweep Rate`
-Picks which target's drift configuration sliders 35-38 reflect. Switching the selector saves and loads automatically — no live edits are lost.
+**Drift target (slider 39)** — seventeen targets since 2026-09-10, in the order the controls sit:
+Low frequency, Low fine tune, High frequency, High fine tune, Tuning reference,
+Resonance, Rate value, On duration, Depth, Attack, Release, R channel phase
+offset, Pan spread, Pan glide, Pan sweep rate, Pan sweep every, Wet/dry.
+Picks which target's drift configuration the sliders below reflect. Switching the selector saves and loads automatically — no live edits are lost.
+
+**Units, for the targets added 2026-09-10.** A frequency or fine tune amount is in
+that value's own unit, so it follows its pitch mode: Hz in Hz mode, semitones in
+Semitones, cents in Cents. Each end now wanders on its own. Tuning reference is
+in Hz. On duration, Depth, Attack and Release are percent, kept 0–100. The phase
+offset is degrees and wraps round the circle. Pan spread is 0–1, Pan glide is
+milliseconds, Pan sweep every is cycles. Projects saved with the old six-target
+list open with their drift and ramp on the same controls as before — measured
+bit-identical, including the three old targets no project used.
 
 **Drift up amount (slider 35)** `0.0–5000.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for Sweep Rate, Hz for the two Frequency targets, the Pan Sweep Rate's own unit for Pan Sweep Rate, a 0-1 fraction for Resonance and Wet/Dry. The 0-5000 range spans the frequencies (up to ±5 kHz wander); Resonance and Wet/Dry use the low end (e.g. 0.3), Hz-mode rates use small values. 0 = drift off on the up side.

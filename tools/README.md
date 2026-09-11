@@ -614,6 +614,47 @@ All twelve pass as of 2026-09-10. Heartbeat's case uses notes 57/69 because at
 note 45 the "All" target leaves S2's value at 120, a note near 8.4 kHz, and
 Heartbeat blows up above about 5 kHz in any mode — a separate bug.
 
+## jsfx_renumber.py — renumber sliders from an authored map
+
+`apply FILE "55:11, 11-54:+1"` rewrites every `sliderN` token in one pass.
+`verify OLD NEW MAP` checks three ways: the text is the mapped old file (lines in
+any order), declarations match through the map, and two render passes with every
+slider nudged are bit-identical. **The text check is the one that matters for a
+pure renumber**: a single code line pointed at the wrong slider passed both
+render passes on 2026-09-10 and failed the text check. A file that is renumbered
+AND edited can only be verified against real projects.
+
+## The Sweeping Filter pitch blocks — 2026-09-10
+
+`docs/layouts/sweeping-filter-r22-r24.md`. 45 sliders to 54; 17 targets.
+
+- **`swf_migrate_r22_20260910.py`** — reads the snapshot
+  `_pre-swf-r22-20260910/`, writes the live projects. Which layout each file holds
+  is an authored per-file list: Rozaya's 45-control lines, and Tensor's never-
+  migrated April lines (23 and 22 values), which take every step since. The
+  honest-Hz step is loaded from git (`bf81d1d`, the FINAL version, which also
+  rewrites Resonance), not retyped.
+- **`swf_verify_r22_20260910.py`** — old build on snapshot against new build on
+  migrated project, bit-identical; every instance decoded by control NAME from
+  each era's own declarations; Tensor's organic-movement against Rozaya's copy.
+- **`swf_blob_remap_test.py`** — synthetic old saves using the three old targets
+  no real project used (Pan Sweep Rate, Resonance, Wet/Dry), both old magics,
+  drift and ramp. Each must load bit-identically after migration AND differ from
+  the same project with no drift, or the comparison proves nothing.
+- **`swf_target_test.py`** — each of the 17 targets must change the sound and
+  stay stable. Runs the sweep at 120 BPM: at the default 2 BPM an 8-second render
+  sits at the top of its sweep, and the Low targets looked broken.
+
+## Earlier 2026-09-10 migrations, indexed late
+
+- **`looper_migrate_pitchblock_20260910.py`** — Sustain Looper, 8 sliders to 30,
+  per `docs/layouts/sustain-looper.md`. Idempotent: skips a line storing slider 14.
+- **`melody_migrate_r22r24_20260910.py`** — Melody Phase, 96 to 105, per
+  `docs/layouts/melody-phase-r22-r24.md`. Line only; the plugin remaps its own
+  blob from 28 targets to 55. Idempotent: skips a line storing anything above 96.
+- **The ysfx fork** that `jsfx_run` builds against (Joep Vanlier's, 256 sliders)
+  is documented in `tools/jsfx_run/README.md`, with the build commands.
+
 ## doc_budget.py
 
 Checks the docs a session actually reads against a line budget, and exits 1 if

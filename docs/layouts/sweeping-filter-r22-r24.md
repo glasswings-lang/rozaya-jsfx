@@ -1,6 +1,14 @@
 # Sweeping Filter — the pitch blocks, Tuning reference and 17 targets
 
 Authored 2026-09-10, before building. One migration for everything here.
+**Status: BUILT, MIGRATED (25 instances), INSTALLED 2026-09-10. Not heard.**
+Snapshot `_pre-swf-r22-20260910/`; previous build in
+`jsfx-backups/effects-folder-baks/pre-swf-r22-20260910/`.
+
+**Found while doing it:** the honest-Hz migration (`bf81d1d`, the FINAL version)
+rewrites Resonance as well as both frequencies; its first version did not. Tensor's
+files take the final one, and match Rozaya's migrated copy of organic-movement on
+all 32 controls.
 
 ## What Rozaya decided (quoted), and what is mine
 

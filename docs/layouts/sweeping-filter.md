@@ -1,5 +1,9 @@
 # Full Feature Sweeping Filter — authored layout
 
+> **SUPERSEDED 2026-09-10 by `sweeping-filter-r22-r24.md`** (54 controls). This
+> 45-control order was built and migrated on 2026-09-05; the status below is
+> from before that and is history.
+
 Written by hand 2026-09-04. **Status: READING ORDER APPROVED BY ROZAYA
 2026-09-05. BUILD IN PROGRESS -- renumber and retirements DONE in `src/`,
 NOT installed, NO project migrated.**

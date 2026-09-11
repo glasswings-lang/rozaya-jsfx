@@ -59,11 +59,22 @@ Two things hold at every slope, which is not automatic:
 > droopier passband and a softer knee — so expect a character shift near the
 > corner, not a tuning shift.
 
-**Frequency Low Hz** `20-20000 Hz, default 500`
-The cutoff frequency during the low-dwell segment — the resting state of the filter. If set higher than Frequency High, the two values are automatically swapped.
+> **In `src/`, not yet installed (2026-09-10).** The source has the layout below;
+> the installed plugin and saved projects still have the older single Frequency
+> controls, and wait on the Cycle mode question before they are migrated.
 
-**Frequency High Hz** `20-20000 Hz, default 5000`
-The cutoff frequency during the high-dwell segment — the open state of the filter.
+**Low and High — two full pitch blocks (sliders 1–10)**
+Each end of the sweep is set with **pitch mode** `Hz / Semitones / Cents`, **note
+name** (shown in Semitones mode, the same number as the value), **frequency (Hz /
+semitones / cents)** `0–20000`, **fine tune** and **fine tune unit** — the same
+five controls, in the same words, as the Full Feature Sweeping Filter. Low is the
+resting state of the filter, default 500 Hz; High is the open state, default
+5000 Hz. If Low ends up above High, the two are swapped.
+
+**Tuning reference (Hz)** `20–2000, default 440` (slider 11)
+The pitch of A4 for both ends in Semitones and Cents modes; nothing in Hz mode.
+Moved here from slider 55 on 2026-09-10, beside the pitch blocks, before any
+project had been saved with it. Measured by `tools/tuning_ref_check.py`.
 
 **Resonance** `0.0-1.0, default 0.7`
 Resonance of the lowpass filter. Higher values add a pronounced peak at the cutoff frequency, accentuating the frequencies at each point in the sweep. Values approaching 1.0 can produce self-oscillation.

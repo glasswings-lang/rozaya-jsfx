@@ -77,8 +77,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   targets in control order. `docs/layouts/shepards-r22-r24.md`. Ears owed.
 
 - **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
-  Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell, Shepard Scale, Polyrhythm v3.
-  Owed: the two sweeping filters, Resonance Bank.** Rozaya: doing some and not
+  Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell, Shepard Scale, Polyrhythm v3,
+  the Sweeping Filter. Owed: Resonance Bank.** Rozaya: doing some and not
   others is *"shipping a pool ... and only having water that fills half the
   fucking pool"*. Four shapes: Dapple took Breath Gen's block unchanged;
   **Bubbler took the SHIFT form Rozaya designed** — `Source note` says where zero
@@ -98,6 +98,12 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   after; pre-existing. Owed: an open-and-play, and a Breath Gen pitch target on
   `With the target`, which is ears-only.
 
+- **Sweeping Filter, 2026-09-10:** two pitch blocks, Tuning reference at 11, 17
+  targets. 25 instances: E:/reaper's 20 bit-identical; Tensor's 5 had NEVER been
+  migrated and took every step since April. `docs/layouts/sweeping-filter-r22-r24.md`.
+  Sweep Dwell's reference also moved to 11, in src only.
+- **Tuning reference works in all 13** (`tools/tuning_ref_check.py`), and Heartbeat
+  and Womb no longer blow up above ~5 kHz — both projects-identical, installed.
 - **Sustain Looper, 2026-09-10:** Bubbler's pitch block, Drift and Ramp on eight
   targets, and loop moves crossfade instead of cutting. 4 instances migrated,
   bit-identical with the sample loaded. `docs/layouts/sustain-looper.md`.
