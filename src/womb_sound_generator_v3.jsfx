@@ -368,6 +368,18 @@ lp_f_far = min(2.0 * sin($pi * 175.0 * srate_inv), 0.98);
 lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
 lp_q = 0.5;
 
+// STABILITY CEILING for the heart resonators (2026-09-10), the same fix as the
+// Heartbeat Generator this block came from. A Chamberlin SVF is stable only while
+// f*f + 2*q*f < 4, so f must stay under 4/(sqrt(q*q+4)+q). With S1's q of 2.8
+// that is a centre near 4.6 kHz, and a heart pitch above roughly 5 kHz sent the
+// whole plugin's output to infinity. 0.9 of the limit keeps off the ringing edge.
+// Below the ceiling nothing changes.
+function svf_f_max(q) ( 0.9 * 4 / (sqrt(q * q + 4) + q); );
+s1_f_max_near = svf_f_max(s1_res_q_near);
+s2_f_max_near = svf_f_max(s2_res_q_near);
+s1_f_max_far  = svf_f_max(s1_res_q_far);
+s2_f_max_far  = svf_f_max(s2_res_q_far);
+
 // --- BREATH INIT ---
 breath_state = 0;
 breath_state_pos = 0;
@@ -839,11 +851,13 @@ s1_center_far  = s1_freq * 1.28; s2_center_far = s2_freq * 1.25;
 lp_cutoff_near = 200.0 + slider20 * 250.0;
 lp_cutoff_far  = 175.0 + slider20 * 220.0;
 
-s1_res_f_near = min(2.0 * sin($pi * s1_center_near * srate_inv), 0.98);
-s2_res_f_near = min(2.0 * sin($pi * s2_center_near * srate_inv), 0.98);
+// Capped at the stability ceiling (svf_f_max in @init); sin() clamped at pi/2 so
+// a pitch past a quarter of the sample rate cannot fold back down.
+s1_res_f_near = min(2.0 * sin(min($pi * s1_center_near * srate_inv, $pi / 2)), s1_f_max_near);
+s2_res_f_near = min(2.0 * sin(min($pi * s2_center_near * srate_inv, $pi / 2)), s2_f_max_near);
 lp_f_near = min(2.0 * sin($pi * lp_cutoff_near * srate_inv), 0.98);
-s1_res_f_far = min(2.0 * sin($pi * s1_center_far * srate_inv), 0.98);
-s2_res_f_far = min(2.0 * sin($pi * s2_center_far * srate_inv), 0.98);
+s1_res_f_far = min(2.0 * sin(min($pi * s1_center_far * srate_inv, $pi / 2)), s1_f_max_far);
+s2_res_f_far = min(2.0 * sin(min($pi * s2_center_far * srate_inv, $pi / 2)), s2_f_max_far);
 lp_f_far = min(2.0 * sin($pi * lp_cutoff_far * srate_inv), 0.98);
 
 s1_decay = exp(-srate_inv / (slider11 * 0.001));

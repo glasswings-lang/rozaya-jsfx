@@ -240,6 +240,21 @@ lp_low_far = 0; lp_band_far = 0; lp_low2_far = 0; lp_band2_far = 0;
 
 lp_q = 0.5;
 
+// STABILITY CEILING for the resonators above (2026-09-10). This is a Chamberlin
+// state variable filter, and it has a speed limit that falls as damping rises:
+// it is stable only while f*f + 2*q*f < 4, so f must stay under 4/(sqrt(q*q+4)+q).
+// With S1's q of 2.8 that is a centre of about 4.6 kHz, and a thump pitch above
+// roughly 5 kHz sent the output to infinity within a hundredth of a second, in
+// any pitch mode. The min(..., 0.98) below never protected it. 0.9 of the limit
+// keeps clear of the edge, where the filter rings before it fails. Below the
+// ceiling nothing changes; above it the resonant body stops rising while the
+// thump's own oscillator keeps the pitch that was set.
+function svf_f_max(q) ( 0.9 * 4 / (sqrt(q * q + 4) + q); );
+s1_f_max_near = svf_f_max(s1_res_q_near);
+s2_f_max_near = svf_f_max(s2_res_q_near);
+s1_f_max_far  = svf_f_max(s1_res_q_far);
+s2_f_max_far  = svf_f_max(s2_res_q_far);
+
 noise_seed = 12345;
 noise_seed2 = 67890;
 
@@ -652,11 +667,14 @@ s2_center_far = s2_freq * 1.25;
 lp_cutoff_near = 200.0 + slider6 * 250.0;
 lp_cutoff_far = 175.0 + slider6 * 220.0;
 
-s1_res_f_near = min(2.0 * sin($pi * s1_center_near * srate_inv), 0.98);
-s2_res_f_near = min(2.0 * sin($pi * s2_center_near * srate_inv), 0.98);
+// Each resonator capped at its stability ceiling (see svf_f_max in @init).
+// sin() is also clamped at pi/2: past a quarter of the sample rate it would
+// fold back DOWN, so a very high pitch would have sounded low instead.
+s1_res_f_near = min(2.0 * sin(min($pi * s1_center_near * srate_inv, $pi / 2)), s1_f_max_near);
+s2_res_f_near = min(2.0 * sin(min($pi * s2_center_near * srate_inv, $pi / 2)), s2_f_max_near);
 lp_f_near = min(2.0 * sin($pi * lp_cutoff_near * srate_inv), 0.98);
-s1_res_f_far = min(2.0 * sin($pi * s1_center_far * srate_inv), 0.98);
-s2_res_f_far = min(2.0 * sin($pi * s2_center_far * srate_inv), 0.98);
+s1_res_f_far = min(2.0 * sin(min($pi * s1_center_far * srate_inv, $pi / 2)), s1_f_max_far);
+s2_res_f_far = min(2.0 * sin(min($pi * s2_center_far * srate_inv, $pi / 2)), s2_f_max_far);
 lp_f_far = min(2.0 * sin($pi * lp_cutoff_far * srate_inv), 0.98);
 
 s1_decay = exp(-srate_inv / (slider7 * 0.001));

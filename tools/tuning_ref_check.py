@@ -57,7 +57,7 @@ CASES = [
          a=[(7, -12)], b=[(7, 0)], hz_pre=[(15, 0)], hz=[(16, 0)]),
     dict(name="rhythm_track", file="rhythm-track.jsfx", ref=11,
          a=notes((6, 7, 8, 69)), b=notes((6, 7, 8, 69), up=12), hz=[]),
-    dict(name="sweep_dwell", file="sweep-dwell-filter.jsfx", ref=55, input="noise",
+    dict(name="sweep_dwell", file="sweep-dwell-filter.jsfx", ref=11, input="noise",
          a=notes((1, 2, 3, 57), (6, 7, 8, 81)),
          b=notes((1, 2, 3, 57), (6, 7, 8, 81), up=12), hz=[]),
     dict(name="womb", file="womb_sound_generator_v3.jsfx", ref=63,
