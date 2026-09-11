@@ -111,9 +111,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - **Melody Phase:** pitch per voice and 55 drift targets (09-10); song placement
   FIXED 09-11 -- lands on the right note, stopped transport unchanged. Not heard.
 
-- **The Breath Generator 40-slider build is PROMOTED.** Four instances migrated,
-  bit-identical over 40 s on all three; the migrated PROJECTS have not been
-  opened since. Backups: `_pre-breathgen-promote-20260909/`.
+- **Breath Generator:** 40-slider build promoted 09-09 (projects not opened since);
+  18 Drift/Ramp targets 09-11, Tensor's seven carried over from April.
+  `docs/layouts/breath-gen-r24-20260911.md`.
 
 - The Womb usability fix of 2026-09-06 and its 2026-09-09 drift stepping. Eight
   of nine projects bit-identical; `to-sleep-within` differs for pre-existing

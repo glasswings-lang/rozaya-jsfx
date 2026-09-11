@@ -695,6 +695,19 @@ their targets in control order; each plugin remaps its own old saves.
   moves the sound; the broken copies against the last build that read their layout
   (705ee29, 272a438), by name, and Tensor's playing-around against Rozaya's copy.
 
+## Breath Generator's eighteen targets — 2026-09-11
+
+`docs/layouts/breath-gen-r24-20260911.md`. No index moves, so current copies need
+nothing written.
+
+- **`breathgen_tensor_migrate_20260911.py`** — Tensor's seven first-release lines
+  (13 values, no blob) to the 41-control line and a 2500007 blob, by the same rule
+  Rozaya's copies of those lines got on 2026-09-09. Snapshot in, live out.
+- **`breathgen_r24_verify_20260911.py`** — current copies old against new; synthetic
+  saves in three old formats; the eleven new targets; Tensor's seven against the
+  last build that read their line (0ae0c75), by name, and against Rozaya's copies
+  value for value, blob for blob and in sound.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in

@@ -200,7 +200,7 @@ which a segment length can never do.
 A one-way journey: the target travels from where it is to `by` further on, over
 the duration, once.
 
-**Ramp target** `seven targets, default Breath rate`
+**Ramp target** `eighteen targets, default Breath rate` — the same list as Drift target, below.
 
 **Ramp by** `-1000 to 1000, default 0`
 Signed, in the target's own unit. Negative shortens a segment or slows the breath
@@ -236,7 +236,17 @@ coefficients — a longer inhale sounds like a normal inhale, stretched.
 
 An endless gentle wander, rather than a journey with a destination.
 
-**Drift target** `seven targets, default Breath rate`
+**Drift target** `eighteen targets, default Breath rate`
+
+In the order of the controls: Breath rate, Inhale, Top pause, Exhale, Bottom
+pause, Inhale pitch, Exhale pitch, Inhale fine tune, Exhale fine tune, Tuning
+reference, the four fades, Stereo width, Output, Play for and Rest for. *(The last
+eleven joined 2026-09-11. They come after the older seven, so nothing you had set
+moved.)* Amounts are in each target's own unit: a fine tune in that breath's Fine
+tune unit, the reference in Hz, fades and width from 0 to 1, Output in dB, Play for
+and Rest for in breaths. The new ones arrive `On a clock`; set to `With the target`,
+anything past the four segments takes one step per whole breath. Play for and Rest
+for move how long each lasts; the gate still needs both controls above zero.
 
 **Drift up amount (units match target)** `0-1000, default 0`
 How far above baseline the wander reaches at its peak.
