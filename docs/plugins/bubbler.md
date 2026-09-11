@@ -131,7 +131,7 @@ has no LFO to freeze. Drift carries its own play/rest, which is the equivalent.
 **Added 2026-09-05.** Bubbler was built after the suite's 2026-06 drift sweep and never joined it, so until now it could not do a thing most of the suite can. The block is copied from **Veil**, which is the
 built-and-heard reference for the complete set.
 
-**Targets, on both Drift and Ramp:** Bubble rate, Timing randomness, Transpose, Pitch spread, Rise, Bubble length, Stereo width, Dry/wet, and Output — everything continuous the plugin has.
+**Targets, on both Drift and Ramp, in the order of the controls:** Bubble rate, Timing randomness, Transpose, Fine tune, Tuning reference, Pitch spread, Rise, Bubble length, Stereo width, Dry/wet, Output, Play for, and Rest for — everything continuous the plugin has. *(Fine tune, Tuning reference, Play for and Rest for joined 2026-09-11. Saved setups were carried across by the plugin itself.)* Tuning reference only matters to a Transpose said in Hz. Play for and Rest for move how long each lasts; the gate still needs both controls above zero.
 
 Each target remembers its own settings — pick one, set its amounts, pick another,
 and the first keeps running. Switching the selector edits one without stopping

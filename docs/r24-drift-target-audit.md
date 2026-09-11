@@ -53,7 +53,7 @@ Missing lists are from the audit reads, not individually re-checked.
 - **rhythm-track** — 2 of 16. Missing 10: Strong/Weak pitch and fine tune, Tuning
   reference, Tone resonance, Strong/Weak volume, Strong/Weak decay, Pan spread.
   The tick is pre-rendered in `@slider`, so these need a re-render path.
-- **veil** — 4 of 16. Missing: Output.
+- **veil** — DONE 2026-09-11: Output, 5 targets (`docs/layouts/r24-small-batch-20260911.md`).
 - **polyrhythm_phase_v3** — DONE 2026-09-10: 88 targets, each per-voice control
   with an "(all voices)" entry that copies into eight. Phase Offset is not one.
 - **shepard-tone** — DONE 2026-09-10: 40 targets.
@@ -65,14 +65,14 @@ Missing lists are from the audit reads, not individually re-checked.
 - **spectral_vowel_passage** — 14 of 16 per slot. Missing: Wash grain, Overtone
   lift, Overtone width (17 total, one over).
 - **sustain_looper** — DONE 2026-09-10: 8 targets, including the new pitch block.
-- **bubbler** — 9 of 16. Missing: Fine tune, Tuning reference.
-- **dapple** — 11 of 16. Missing: Fine tune, Tuning reference.
+- **bubbler** — DONE 2026-09-11: 13 targets in control order, Play/Rest included.
+- **dapple** — DONE 2026-09-11: 15 targets in control order, Play/Rest included.
 - **full-feature-sweeping-filter** — DONE 2026-09-10: 17 targets in control order.
 - **sweep-dwell-filter** — DONE 2026-09-10: 16 targets, behind Rozaya's Segment
   selector (`docs/layouts/sweep-dwell.md`).
 - **stereo-phaser** — 6 of 16. Missing: none.
-- **Full_Feature_Tremolo** — 6 of 16. Missing: Stereo phase offset, Pan spread,
-  Pan glide, Pan sweep every.
+- **Full_Feature_Tremolo** — DONE 2026-09-11: 12 targets in control order, Play/Rest
+  included; Tensor's six and the track template carried over from April.
 - **resonance_bank** — DONE 2026-09-11: 10 targets, the four whole-plugin ones
   held in band 0's row (`docs/layouts/resonance-bank-r22-r24.md`).
 

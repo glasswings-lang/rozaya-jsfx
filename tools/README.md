@@ -680,6 +680,21 @@ became a Segment selector with a length mode and value per segment.
   A4 and the width units by equivalence. **It caught a real fault**: extra
   `rand()` draws in `@init` shift every later Random drift.
 
+## The small R24 batch — 2026-09-11
+
+`docs/layouts/r24-small-batch-20260911.md`. Veil, Bubbler, Dapple and Tremolo put
+their targets in control order; each plugin remaps its own old saves.
+
+- **`r24_batch_migrate_20260911.py`** — reads the snapshot, writes the live file,
+  refuses a file changed since. Carries Tensor's first-release Tremolos, the
+  `custom-polyrhythm` template and `scattered`'s 32-control Dapples through every
+  step they missed; rewrites `knocking`'s Tremolo blob. `--bridge` for the test
+  project once it is closed in REAPER.
+- **`r24_batch_verify_20260911.py`** — every current copy old against new (and new
+  on the unchanged snapshot); synthetic saves in every old format; each new target
+  moves the sound; the broken copies against the last build that read their layout
+  (705ee29, 272a438), by name, and Tensor's playing-around against Rozaya's copy.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in

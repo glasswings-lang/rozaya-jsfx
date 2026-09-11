@@ -267,9 +267,9 @@ The two sliders are orthogonal — all four combinations work and produce distin
 
 ### Ramp (v2.14 nested-selector)
 
-In-plugin one-time morph over time. As of v2.14 Ramp is nested-selector (same shape as Drift) and reaches the **same six targets as Drift** — Rate Value, Tremolo amount (dB), Pan Sweep Rate, On Duration %, Attack %, Release %. All six ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
+In-plugin one-time morph over time. Ramp is nested-selector (same shape as Drift) and reaches the **same twelve targets as Drift**. All of them ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Ramp target (slider 24)** `Rate Value / Tremolo amount (dB) / Pan Sweep Rate / On Duration % / Attack % / Release %, default Rate Value`
+**Ramp target** `Rate value / On duration / Tremolo amount / Attack / Release / Stereo phase offset / Pan spread / Pan glide / Pan sweep rate / Pan sweep every / Play for / Rest for, default Rate value`
 Picks which target the `by` amount applies to. Switching the selector saves slider 25 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
 **Ramp by (slider 25)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
@@ -287,13 +287,15 @@ A ~100 ms smoother sits between the Rate slider and the effective frequency, so 
 
 ### Drift (v2.9 nested-selector)
 
-Slow organic wander applied independently to any of six targets: Rate Value, Tremolo amount (dB), Pan Sweep Rate, On Duration %, Attack %, or Release %. Each target can have its own drift configuration; all six drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
+Slow organic wander applied independently to any of twelve targets, listed in the order of the controls they reach. Each target can have its own drift configuration; all of them drift in parallel.
+
+**The twelve since 2026-09-11:** Stereo phase offset, Pan spread, Pan glide, Pan sweep every, Play for and Rest for joined, and the six older targets moved into control order. Saved setups were carried across by the plugin itself, so a drift on Tremolo amount is still on Tremolo amount. Amounts are in each target's own unit: degrees for Stereo phase offset (it wraps round the circle, and is heard in Offset from L), 0 to 1 for Pan spread, milliseconds for Pan glide, cycles for Pan sweep every and for Play for and Rest for. Play for and Rest for move how long each lasts; the gate still needs both controls above zero. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
 Same pattern as Womb v3's drift and the rest of the sweep (target list now shared with Ramp as of v2.14). Switching the **Drift target** selector saves the current sliders 30-33 into the old target's memory slot, then loads the new target's saved values. All six configurations persist across project save/load.
 
 Drift on Tremolo amount makes the tremolo breathe stronger and gentler over time; drift on On Duration / Attack / Release wanders the *shape* of each pulse rather than its rate. Combine a slow Rate Value drift with a faster Depth drift for a modulation that wanders in both speed and intensity on independent schedules.
 
-**Drift target (slider 29)** `Rate Value / Tremolo amount (dB) / Pan Sweep Rate / On Duration % / Attack % / Release %, default Rate Value`
+**Drift target** `Rate value / On duration / Tremolo amount / Attack / Release / Stereo phase offset / Pan spread / Pan glide / Pan sweep rate / Pan sweep every / Play for / Rest for, default Rate value`
 Picks which target's drift configuration sliders 30-33 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount (slider 30)** `0.0–100.0, default 0` (units match target)

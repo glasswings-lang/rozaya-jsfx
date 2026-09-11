@@ -148,7 +148,7 @@ slider23:0<0,1,1{Pass-through,Silence}>Output at rest
 // Ramp + Drift configs on upgrade (both off-by-default; the tremolo sound on
 // sliders 1-23 is untouched). Re-add the instance for clean defaults, or
 // reconfigure. See the manual's migration note.
-slider32:0<0,5,1{Rate Value,Tremolo amount (dB),Pan Sweep Rate,On Duration %,Attack %,Release %}>Ramp target
+slider32:0<0,11,1{Rate value,On duration,Tremolo amount,Attack,Release,Stereo phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Play for,Rest for}>Ramp target
 slider33:0<-1000,1000,0.001>Ramp by (units match target)
 slider35:0<0,1000,0.1>Ramp duration (in ramp time units)
 slider38:0<0,1,1{Off,On}>Ramp engage
@@ -179,7 +179,11 @@ slider39:0<0,1000,0.1>Ramp start delay (in ramp time units)
 // covers all of them; rate/pan-rate targets in Hz mode use the low end.
 // (Drift IDs shifted +1 from the old 28-32 layout in the v2.14 reorg above —
 // same reset story.)
-slider24:0<0,5,1{Rate Value,Tremolo amount (dB),Pan Sweep Rate,On Duration %,Attack %,Release %}>Drift target
+// TWELVE since 2026-09-11 (R24), in the order of the controls they reach:
+// Stereo phase offset, Pan spread, Pan glide, Pan sweep every, Play for and Rest
+// for joined, and the six old ones moved into control order. The plugin remaps a
+// saved six-target setup itself (@serialize).
+slider24:0<0,11,1{Rate value,On duration,Tremolo amount,Attack,Release,Stereo phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Play for,Rest for}>Drift target
 slider25:0<0,1000,0.01>Drift up amount (units match target)
 slider26:0<0,1000,0.01>Drift down amount (units match target)
 slider27:8<0,1000,1>Drift period (0 = off)
@@ -435,14 +439,23 @@ speed_scale_current      = 1.0;
 // grow to 16 later. This plugin uses no other memory arrays (all
 // scalar state), so the bank lives at 1024 with plenty of headroom.
 //
-// Targets:
-//   0 = Rate Value      (units: rate's current unit)
-//   1 = Tremolo amount  (units: dB)
-//   2 = Pan Sweep Rate  (units: Pan Sweep Rate's unit; modes 9/10 only)
-//   3 = On Duration %   (units: %)
-//   4 = Attack %        (units: %)
-//   5 = Release %       (units: %)
-N_TARGETS = 6;
+// Targets, in control order since 2026-09-11:
+//   0 = Rate value           (units: rate's current unit)
+//   1 = On duration          (units: %)
+//   2 = Tremolo amount       (units: dB)
+//   3 = Attack               (units: %)
+//   4 = Release              (units: %)
+//   5 = Stereo phase offset  (units: degrees, wraps round the circle)
+//   6 = Pan spread           (units: 0-1)
+//   7 = Pan glide            (units: ms)
+//   8 = Pan sweep rate       (units: its own rate mode; modes 9/10 only)
+//   9 = Pan sweep every      (units: cycles; Linked Sweep only)
+//  10 = Play for, 11 = Rest for (units: cycles)
+N_TARGETS = 12;
+tr_scratch = 1360;   // an old save's six, while remapping (after sr_pr_accum_mem)
+// Old six-target index -> new: Rate Value, Tremolo amount, Pan Sweep Rate,
+// On Duration, Attack, Release.
+function tr_o2n(o) ( o == 1 ? 2 : o == 2 ? 8 : o == 3 ? 1 : o == 4 ? 3 : o == 5 ? 4 : 0; );
 target_drift_up     = 1024;
 target_drift_down   = 1040;
 target_drift_per    = 1056;
@@ -1032,22 +1045,39 @@ rate_drift_user != 0 ? (
 freq = max(freq + rate_drift_hz, 0.001);
 // ===== DRIFT BLOCK END =====
 
-// Tremolo amount drift + Speed Ramp (target 1): fold into depth, then compute
+// Tremolo amount drift + Speed Ramp (target 2): fold into depth, then compute
 // amount/sc. Clamp to the slider's range (-60..0 dB).
-eff_depth = max(-60, min(0, depth + target_drift_offset[1] + speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1]));
+eff_depth = max(-60, min(0, depth + target_drift_offset[2] + speed_ramp_ramp_t_mem[2] * speed_ramp_by_mem[2]));
 amount = 2 ^ (eff_depth / 6);
 sc     = 0.5 * amount;
 amount = 1 - amount;
 
-// On Duration / Attack / Release drift + Speed Ramp (targets 3, 4, 5): fold
+// On Duration / Attack / Release drift + Speed Ramp (targets 1, 3, 4): fold
 // into the per-cycle fractions, clamped to [0, 100] %.
-eff_dur_pct = max(0, min(100, dur_pct + target_drift_offset[3] + speed_ramp_ramp_t_mem[3] * speed_ramp_by_mem[3]));
-eff_att_pct = max(0, min(100, att_pct + target_drift_offset[4] + speed_ramp_ramp_t_mem[4] * speed_ramp_by_mem[4]));
-eff_rel_pct = max(0, min(100, rel_pct + target_drift_offset[5] + speed_ramp_ramp_t_mem[5] * speed_ramp_by_mem[5]));
+eff_dur_pct = max(0, min(100, dur_pct + target_drift_offset[1] + speed_ramp_ramp_t_mem[1] * speed_ramp_by_mem[1]));
+eff_att_pct = max(0, min(100, att_pct + target_drift_offset[3] + speed_ramp_ramp_t_mem[3] * speed_ramp_by_mem[3]));
+eff_rel_pct = max(0, min(100, rel_pct + target_drift_offset[4] + speed_ramp_ramp_t_mem[4] * speed_ramp_by_mem[4]));
 
-// Pan Sweep Rate drift + Speed Ramp (target 2): fold into the pan sweep
+// Pan Sweep Rate drift + Speed Ramp (target 8): fold into the pan sweep
 // value used by pan modes 9/10 below (in the Pan Sweep Rate's own unit).
-eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[2] + speed_ramp_ramp_t_mem[2] * speed_ramp_by_mem[2]);
+eff_pan_sweep_val = max(0.001, pan_sweep_val + target_drift_offset[8] + speed_ramp_ramp_t_mem[8] * speed_ramp_by_mem[8]);
+
+// --- The targets added 2026-09-11 (R24). Each is exactly its slider while drift
+//     and ramp leave it alone, so a saved project renders as before.
+// Stereo phase offset (5), in degrees, wrapping round the circle. Only rebuilt
+// when something moves it: the wrap is a different sum from the one below.
+tr_q5 = target_drift_offset[5] + speed_ramp_ramp_t_mem[5] * speed_ramp_by_mem[5];
+tr_q5 != 0 ? ( phase_offset = (slider9 + tr_q5) / 360; phase_offset -= floor(phase_offset); );
+// Pan spread (6) 0-1, Pan glide (7) ms.
+pan_spread   = max(0, min(1, slider13 + target_drift_offset[6] + speed_ramp_ramp_t_mem[6] * speed_ramp_by_mem[6]));
+pan_glide_ms = max(0, slider14 + target_drift_offset[7] + speed_ramp_ramp_t_mem[7] * speed_ramp_by_mem[7]);
+// Pan sweep every (9), in cycles, for Linked Sweep.
+tr_q9 = target_drift_offset[9] + speed_ramp_ramp_t_mem[9] * speed_ramp_by_mem[9];
+tr_q9 != 0 ? pan_sweep_ratio = 1 / max(slider18 + tr_q9, 0.001);
+// Play for (10) and Rest for (11), in cycles. The gate still switches on only
+// when both SLIDERS are above zero; drift and ramp move how long each lasts.
+play_for_cycles = max(0, slider20 + target_drift_offset[10] + speed_ramp_ramp_t_mem[10] * speed_ramp_by_mem[10]);
+rest_for_cycles = max(0, slider21 + target_drift_offset[11] + speed_ramp_ramp_t_mem[11] * speed_ramp_by_mem[11]);
 
 period   = 1 / max(freq, 0.00001);
 on_secs  = (eff_dur_pct / 100.0) * period;
@@ -1287,27 +1317,50 @@ pan_enabled ? (
 // defaults (0 = gate off), which is exactly what those projects already do.
 // This is the CLAUDE.md rule in its literal form: migrate what was RESTORED,
 // never what was DEFAULTED.
-sr_magic = 2200000 + N_TARGETS;
+// Magic 2300012 since 2026-09-11: twelve targets in control order. 2200006 and
+// 2100006 saves are read at their own width of six, then remapped through
+// tr_o2n, both remembered selectors with them. Only what the blob HELD is
+// remapped: 2100006 never stored play/rest, so those keep their defaults.
+function tr_remap(bank, dflt) local(k) (
+  k = 0; loop(6, tr_scratch[k] = bank[k]; k += 1;);
+  k = 0; loop(N_TARGETS, bank[k] = dflt; k += 1;);
+  k = 0; loop(6, bank[tr_o2n(k)] = tr_scratch[k]; k += 1;);
+);
+sr_magic = 2300000 + N_TARGETS;
 file_var(0, sr_magic);
-sr_new = sr_magic == 2200000 + N_TARGETS;
-sr_old = sr_magic == 2100000 + N_TARGETS;
-sr_new || sr_old ? (
-  file_mem(0, target_drift_up,     N_TARGETS);
-  file_mem(0, target_drift_down,   N_TARGETS);
-  file_mem(0, target_drift_per,    N_TARGETS);
-  file_mem(0, target_drift_shape,  N_TARGETS);
+sr_cur = sr_magic == 2300000 + N_TARGETS;
+sr_new = sr_magic == 2200006;
+sr_old = sr_magic == 2100006;
+tr_n = sr_cur ? N_TARGETS : 6;
+sr_cur || sr_new || sr_old ? (
+  file_mem(0, target_drift_up,     tr_n);
+  file_mem(0, target_drift_down,   tr_n);
+  file_mem(0, target_drift_per,    tr_n);
+  file_mem(0, target_drift_shape,  tr_n);
   file_var(0, last_target_select);
-  file_mem(0, speed_ramp_by_mem,    N_TARGETS);
-  file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
-  file_mem(0, speed_ramp_delay_mem, N_TARGETS);
+  file_mem(0, speed_ramp_by_mem,    tr_n);
+  file_mem(0, speed_ramp_dur_mem,   tr_n);
+  file_mem(0, speed_ramp_delay_mem, tr_n);
   file_var(0, last_sr_target);
-  // Only the new format carries these. On an old blob they stay at their
+  // Only the newer formats carry these. On a 2100006 blob they stay at their
   // @init defaults, so the plugin behaves exactly as that project expects.
-  sr_new ? (
-    file_mem(0, drift_play_mem, N_TARGETS);
-    file_mem(0, drift_rest_mem, N_TARGETS);
-    file_mem(0, sr_play_mem,    N_TARGETS);
-    file_mem(0, sr_rest_mem,    N_TARGETS);
+  sr_cur || sr_new ? (
+    file_mem(0, drift_play_mem, tr_n);
+    file_mem(0, drift_rest_mem, tr_n);
+    file_mem(0, sr_play_mem,    tr_n);
+    file_mem(0, sr_rest_mem,    tr_n);
+  );
+  (sr_new || sr_old) ? (
+    tr_remap(target_drift_up, 0);     tr_remap(target_drift_down, 0);
+    tr_remap(target_drift_per, 8);    tr_remap(target_drift_shape, 0);
+    tr_remap(speed_ramp_by_mem, 0);   tr_remap(speed_ramp_dur_mem, 0);
+    tr_remap(speed_ramp_delay_mem, 0);
+    sr_new ? (
+      tr_remap(drift_play_mem, 0);    tr_remap(drift_rest_mem, 0);
+      tr_remap(sr_play_mem, 0);       tr_remap(sr_rest_mem, 0);
+    );
+    last_target_select = tr_o2n(max(0, min(5, last_target_select | 0)));
+    last_sr_target     = tr_o2n(max(0, min(5, last_sr_target | 0)));
   );
 
   // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
@@ -1328,6 +1381,9 @@ sr_new || sr_old ? (
     slider31 = drift_rest_mem[last_target_select];       // Drift rest for
     slider36 = sr_play_mem[last_sr_target];              // Ramp play for
     slider37 = sr_rest_mem[last_sr_target];              // Ramp rest for
+    // The selectors themselves, so a remapped old save shows the target it had.
+    slider24 = last_target_select;
+    slider32 = last_sr_target;
     sliderchange(-1);
   );
 );

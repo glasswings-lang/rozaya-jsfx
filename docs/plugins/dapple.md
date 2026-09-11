@@ -145,7 +145,7 @@ has no LFO to freeze. Drift carries its own play/rest, which is the equivalent.
 **Added 2026-09-05.** Dapple was built after the suite's 2026-06 drift sweep and never joined it. The block is copied from **Veil**, which is the
 built-and-heard reference for the complete set.
 
-**Targets, on both Drift and Ramp:** Bubble rate, Timing randomness, Pitch, Pitch spread, Resonance, Bubble length, Rise, Tone vs noise, Excite from input, Stereo width, and Output.
+**Targets, on both Drift and Ramp, in the order of the controls:** Bubble rate, Timing randomness, Pitch, Fine tune, Tuning reference, Pitch spread, Resonance, Bubble length, Rise, Tone vs noise, Excite from input, Stereo width, Output, Play for, and Rest for. *(Fine tune, Tuning reference, Play for and Rest for joined 2026-09-11. Saved setups were carried across by the plugin itself.)* Tuning reference only matters when Pitch mode is Semitones or Cents. Play for and Rest for move how long each lasts; the gate still needs both controls above zero.
 
 Each target remembers its own settings — pick one, set its amounts, pick another,
 and the first keeps running. Switching the selector edits one without stopping

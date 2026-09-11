@@ -87,8 +87,8 @@ Veil feel *alive* rather than a static EQ. Pick a target, set how far it wanders
 and it wanders forever. **All targets drift in parallel**; the selector just picks
 which one the amount/period/shape sliders are editing right now.
 
-**Drift target** `Left cutoff / Right cutoff / Left resonance / Right resonance` —
-which parameter you're configuring.
+**Drift target** `Left cutoff / Right cutoff / Left resonance / Right resonance / Output` —
+which parameter you're configuring. *(Output joined 2026-09-11; its amount is in dB.)*
 
 **Drift up amount / Drift down amount** `units match target` — how far it wanders
 above / below the base value. Separate up and down let the wander sit off-centre.
@@ -124,7 +124,7 @@ A **one-time** signed ride on a parameter over N minutes — for a slow, hands-o
 change while you settle. Unlike Drift (which repeats forever), the Ramp moves once
 and holds. All targets ramp in parallel on their own clocks.
 
-**Ramp target** `Left / Right cutoff / resonance` — which parameter rides.
+**Ramp target** `Left / Right cutoff / resonance, Output` — which parameter rides.
 
 **Ramp by** `units match target` — the signed amount to move by. **Positive
 on both cutoffs = the voice slowly CLEARING** (the muffle opening, as if the baby

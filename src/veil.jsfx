@@ -57,7 +57,7 @@ slider5:0<0,5,1{-12,-24,-36,-48,-60,-72}>Slope (dB/oct)
 slider6:0<-24,12,0.01>Output (dB)
 
 // --- Drift (nested selector) ---
-slider7:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Drift target
+slider7:0<0,4,1{Left cutoff,Right cutoff,Left resonance,Right resonance,Output}>Drift target
 slider8:0<0,1000,0.01>Drift up amount (units match target)
 slider9:0<0,1000,0.01>Drift down amount (units match target)
 // Unit is set by slider11 (Drift period unit) — seconds by default, beats in
@@ -87,7 +87,7 @@ slider13:0<0,1000,0.01>Drift play for (periods, 0 = always)
 slider14:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // --- Ramp (nested selector; signed delta) ---
-slider15:0<0,3,1{Left cutoff,Right cutoff,Left resonance,Right resonance}>Ramp target
+slider15:0<0,4,1{Left cutoff,Right cutoff,Left resonance,Right resonance,Output}>Ramp target
 slider16:0<-1000,1000,0.001>Ramp by (units match target)
 // Ramp time unit. REAPER is a DAW and counts in beats, and this suite has
 // three rate modes -- yet the Ramp ignored all of them and was hardwired to
@@ -133,7 +133,9 @@ slider22:0<0,1000,0.01>Ramp start delay (in ramp time units)
 // re-runs do NOT wipe the user's drift/ramp setup (Path A render fix).
 // @serialize restores CONFIG across project save/load.
 
-N_TARGETS = 4;   // Left cutoff, Right cutoff, Left resonance, Right resonance
+// Output joined 2026-09-11 (R24). It is last among the controls as well, so it
+// appends in control order and no saved target index moves.
+N_TARGETS = 5;   // Left cutoff, Right cutoff, Left resonance, Right resonance, Output
 
 // Chamberlin SVF state: up to 4 cascaded stages per channel, 2 vars
 // (low, band) each. L uses slots 0-7, R uses slots 8-15. Reset every
@@ -227,11 +229,17 @@ drift_cfg_inited != 1 ? (
 
 // RUNTIME reset on EVERY @init (i.e. every transport play). Phases seeded
 // with rand so the two drifts don't crest together.
+// rand() is ONE stream shared with the Random drift shape in @sample, so only
+// the four original targets draw from it here; drawing a fifth would shift every
+// later Random drift in a saved project. Output is scattered from Left cutoff.
 i = 0;
 loop(N_TARGETS,
   speed_ramp_ramp_t_mem[i]        = 0;
   speed_ramp_delay_elapsed_mem[i] = 0;
-  drift_phase_mem[i]  = rand(1);
+  i < 4 ? drift_phase_mem[i] = rand(1) : (
+    drift_phase_mem[i] = drift_phase_mem[0] + 0.618034;
+    drift_phase_mem[i] -= floor(drift_phase_mem[i]);
+  );
   drift_prev_mem[i]   = 0;
   drift_curr_mem[i]   = 0;
   drift_offset_mem[i] = 0;
@@ -540,29 +548,38 @@ loop(n_stages,
   s += 1;
 );
 
-spl0 = in_L * out_gain;
-spl1 = in_R * out_gain;
+// Output (target 4), in dB, clamped to the slider's own range. Untouched by
+// drift and ramp it is exactly the @slider value, as it always was.
+out_move = drift_offset_mem[4] + speed_ramp_ramp_t_mem[4] * speed_ramp_by_mem[4];
+out_gain_eff = out_move != 0 ? 10 ^ (max(-24, min(12, slider6 + out_move)) / 20) : out_gain;
+
+spl0 = in_L * out_gain_eff;
+spl1 = in_R * out_gain_eff;
 
 @serialize
 // Persist per-target Speed Ramp (by / duration / start-delay) + drift
 // configs so reload restores BOTH targets, not just whichever was selected
 // at save. Version-guarded (CLAUDE.md @serialize gotcha): magic encodes the
 // target count so a format change degrades to @init defaults, not garbage.
-wv_magic = 3200000 + N_TARGETS;
+// 3300005 since 2026-09-11 (Output joined). A 3200004 save is read at its own
+// width of four; Output then keeps its @init defaults, which is drift and ramp
+// off -- exactly what that project had.
+wv_magic = 3300000 + N_TARGETS;
 file_var(0, wv_magic);
-wv_magic == 3200000 + N_TARGETS ? (
-  file_mem(0, speed_ramp_by_mem,    N_TARGETS);
-  file_mem(0, speed_ramp_dur_mem,   N_TARGETS);
-  file_mem(0, speed_ramp_delay_mem, N_TARGETS);
-  file_mem(0, sr_play_mem,          N_TARGETS);
-  file_mem(0, sr_rest_mem,          N_TARGETS);
+wv_n = wv_magic == 3300000 + N_TARGETS ? N_TARGETS : wv_magic == 3200004 ? 4 : 0;
+wv_n > 0 ? (
+  file_mem(0, speed_ramp_by_mem,    wv_n);
+  file_mem(0, speed_ramp_dur_mem,   wv_n);
+  file_mem(0, speed_ramp_delay_mem, wv_n);
+  file_mem(0, sr_play_mem,          wv_n);
+  file_mem(0, sr_rest_mem,          wv_n);
   file_var(0, last_speed_target);
-  file_mem(0, drift_up_mem,    N_TARGETS);
-  file_mem(0, drift_down_mem,  N_TARGETS);
-  file_mem(0, drift_per_mem,   N_TARGETS);
-  file_mem(0, drift_shape_mem, N_TARGETS);
-  file_mem(0, drift_play_mem,  N_TARGETS);
-  file_mem(0, drift_rest_mem,  N_TARGETS);
+  file_mem(0, drift_up_mem,    wv_n);
+  file_mem(0, drift_down_mem,  wv_n);
+  file_mem(0, drift_per_mem,   wv_n);
+  file_mem(0, drift_shape_mem, wv_n);
+  file_mem(0, drift_play_mem,  wv_n);
+  file_mem(0, drift_rest_mem,  wv_n);
   file_var(0, last_target_select);
 
   // TRACK-DUPLICATE FIX. On READ (load/duplicate) file_avail(0) >= 0; on
