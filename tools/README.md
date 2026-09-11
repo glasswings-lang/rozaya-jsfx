@@ -708,6 +708,20 @@ nothing written.
   last build that read their line (0ae0c75), by name, and against Rozaya's copies
   value for value, blob for blob and in sound.
 
+## Heartbeat's eighteen targets — 2026-09-11
+
+`docs/layouts/heartbeat-r24-20260911.md`. The plugin remaps an old four-target save.
+
+- **`heartbeat_r24_migrate_20260911.py`** — moves `transformation.RPP`'s `<JS_SER>`
+  out of its `<JS>` block to where REAPER writes it (content unchanged), and
+  carries Tensor's first-release `transformation` over by the rule Rozaya's copy
+  got. Snapshot in, live out.
+- **`heartbeat_r24_verify_20260911.py`** — current copies old against new; synthetic
+  saves in four old formats; the fourteen new targets; Tensor's copy against
+  9d33c5b by name and against Rozaya's copy value for value, blob and sound.
+- **Trap:** `jsfx_run` finds a `<JS_SER>` inside the `<JS>` block as readily as
+  after it, so a misplaced blob passes every render check. Look at the file.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in

@@ -76,7 +76,7 @@ slider22:0<0,1000,1>Rest for (beats)
 // start-delay was stranded at slider34. Old IDs 17-20 + 28 are now unused;
 // Speed Ramp configs reset on this upgrade (magic already bumped). Declared
 // here for context; REAPER orders by ID so they appear grouped at 29-33.
-slider32:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Ramp target
+slider32:0<0,17,1{Heart rate,S1-S2 gap,S1 volume,S2 volume,Brightness,S1 decay,S2 decay,S1 pitch,S2 pitch,S1 fine tune,S2 fine tune,Tuning reference,Stereo width,Breath cycle,Breath HRV depth,Random HRV depth,Play for,Rest for}>Ramp target
 slider33:0<-1000,1000,0.001>Ramp by
 // What the duration and start delay are counted in -- one unit for both, so they
 // always mean the same thing as each other. DEFAULT IS 2, Minutes, which is what
@@ -116,7 +116,9 @@ slider38:0<0,1,1{Off,On}>Ramp engage
 // to Heart BPM, slider24-23 become up/down amounts in BPM). Reset
 // drift sliders to defaults after upgrade and reconfigure if you'd
 // used the old block.
-slider23:0<0,3,1{Heart rate,S1-S2 gap,Breath HRV depth,Random HRV depth}>Drift target
+// EIGHTEEN since 2026-09-11 (R24), in the order of the controls they reach. The
+// two HRV depths moved from 2 and 3 to 14 and 15; the plugin remaps an old save.
+slider23:0<0,17,1{Heart rate,S1-S2 gap,S1 volume,S2 volume,Brightness,S1 decay,S2 decay,S1 pitch,S2 pitch,S1 fine tune,S2 fine tune,Tuning reference,Stereo width,Breath cycle,Breath HRV depth,Random HRV depth,Play for,Rest for}>Drift target
 slider24:0<0,1000,0.01>Drift up amount (units match target)
 slider25:0<0,1000,0.01>Drift down amount (units match target)
 slider26:8<0,1000,1>Drift period (0 = off)
@@ -297,8 +299,10 @@ bpm_smoothed             = slider1;
 // Engage (global) is a freeze/resume gate; only transport play resets the
 // per-target ramp clocks. As of v2.14 the ramp is PER-TARGET: each target has
 // its own `by`, duration, start delay, and progress clock (banks below).
-N_SPEED_TARGETS              = 4;
-speed_ramp_target_value_mem  = 4096;  // signed `by` per target (CONFIG)
+// 18 since 2026-09-11, which outgrew the 16-slot stride: every per-target bank
+// moved to 32-slot spacing from 8192. The pitch banks at 4464-4559 stay put.
+N_SPEED_TARGETS              = 18;
+speed_ramp_target_value_mem  = 8192;  // signed `by` per target (CONFIG)
 
 // --- v2.9 Drift target memory banks ---
 //
@@ -306,46 +310,53 @@ speed_ramp_target_value_mem  = 4096;  // signed `by` per target (CONFIG)
 // targets can grow up to 16 later without re-laying-out. Speed ramp
 // bank uses 4 slots at 4096; drift banks start at 4112.
 //
-// Targets (align with Speed Ramp selector indices):
-//   0 = Heart BPM         (units: BPM)
-//   1 = S1-S2 gap         (units: ms)
-//   2 = Breath HRV depth  (units: fractional depth, 0.0-0.25)
-//   3 = Random HRV depth  (units: fractional depth, 0.0-0.08)
-N_TARGETS = 4;
-target_drift_up     = 4112;
-target_drift_down   = 4128;
-target_drift_per    = 4144;
-target_drift_shape  = 4160;
-target_drift_phase  = 4176;
-target_drift_prev   = 4192;
-target_drift_curr   = 4208;
-target_drift_offset = 4224;
+// Targets, in control order since 2026-09-11 (units in brackets):
+//   0 Heart rate (BPM)   1 S1-S2 gap (ms)   2 S1 volume, 3 S2 volume (0-1)
+//   4 Brightness (0-1)   5 S1 decay, 6 S2 decay (ms)
+//   7 S1 pitch, 8 S2 pitch (that thump's pitch mode)
+//   9 S1 fine tune, 10 S2 fine tune (that thump's fine tune unit)
+//  11 Tuning reference (Hz)   12 Stereo width (ms, never crossing to the other side)
+//  13 Breath cycle (s)   14 Breath HRV depth, 15 Random HRV depth (fraction)
+//  16 Play for, 17 Rest for (beats)
+N_TARGETS = 18;
+target_drift_up     = 8224;
+target_drift_down   = 8256;
+target_drift_per    = 8288;
+target_drift_shape  = 8320;
+target_drift_phase  = 8352;
+target_drift_prev   = 8384;
+target_drift_curr   = 8416;
+target_drift_offset = 8448;
+hb_scratch          = 8928;   // an old save's four, while remapping
+// Old four-target index -> new: Heart rate, S1-S2 gap stay; the HRV depths move.
+function hb_o2n(o) ( o <= 1 ? o : o + 12; );
+// Drift + ramp on one target, in its own unit.
+function hb_q(k) ( target_drift_offset[k] + speed_ramp_ramp_t_mem[k] * speed_ramp_target_value_mem[k]; );
 
 // Speed ramp per-target timeline banks (v2.14). duration + start-delay are
 // CONFIG (survive transport, restored by @serialize); ramp_t + delay_elapsed
 // are RUNTIME (reset every @init / transport play).
-speed_ramp_dur_mem           = 4240;  // duration minutes per target (CONFIG)
-speed_ramp_delay_mem         = 4256;  // start-delay minutes per target (CONFIG)
-speed_ramp_ramp_t_mem        = 4272;  // ramp progress 0..1 per target (RUNTIME)
-speed_ramp_delay_elapsed_mem = 4288;  // delay sample counter per target (RUNTIME)
+speed_ramp_dur_mem           = 8480;  // duration minutes per target (CONFIG)
+speed_ramp_delay_mem         = 8512;  // start-delay minutes per target (CONFIG)
+speed_ramp_ramp_t_mem        = 8544;  // ramp progress 0..1 per target (RUNTIME)
+speed_ramp_delay_elapsed_mem = 8576;  // delay sample counter per target (RUNTIME)
 
 // Drift and Ramp play/rest, per target (2026-09-06). 16-slot-spaced like the
 // banks above. play/rest are CONFIG (survive a transport re-init, restored by
-// @serialize); accumulator and resting flag are RUNTIME. FIRST FREE SLOT AFTER
-// THIS BLOCK IS 4432 -- re-derive rather than trusting this comment.
-drift_play_mem       = 4304;
-drift_rest_mem       = 4320;
-sr_play_mem          = 4336;
-sr_rest_mem          = 4352;
-drift_pr_accum_mem   = 4368;
-drift_pr_resting_mem = 4384;
-sr_pr_accum_mem      = 4400;
-sr_pr_resting_mem    = 4416;
+// @serialize); accumulator and resting flag are RUNTIME. The per-target banks
+// end at 8943 with hb_scratch -- re-derive rather than trusting this comment.
+drift_play_mem       = 8608;
+drift_rest_mem       = 8640;
+sr_play_mem          = 8672;
+sr_rest_mem          = 8704;
+drift_pr_accum_mem   = 8736;
+drift_pr_resting_mem = 8768;
+sr_pr_accum_mem      = 8800;
+sr_pr_resting_mem    = 8832;
 
 // --- "your turn came round" flags, per target (2026-09-09) ------------------
-// Next free slot after this one: 4448.
-drift_step_mem       = 4432;   // RUNTIME
-target_drift_moves = 4448;   // CONFIG -- 0 with the target, 1 clock
+drift_step_mem       = 8864;   // RUNTIME
+target_drift_moves = 8896;   // CONFIG -- 0 with the target, 1 clock
 
 // --- Pitch banks (R22, 2026-09-09) ----------------------------------------
 // Targets: 0 = All (writes across), 1 = S1, 2 = S2. Only 1 and 2 hold data;
@@ -368,14 +379,16 @@ function pitch_capture(psel, pbank, pval, pslot) (
   pval != pui_last[pslot] ? ( pitch_write(psel, pbank, pval); pui_last[pslot] = pval; );
 );
 // The VALUE is the pitch. Nothing here is an offset from a note.
-function pitch_to_hz(idx) local(m, v, f, fm, hz) (
+// voff and foff are drift + ramp on the pitch and on its fine tune, each in its
+// own unit (2026-09-11).
+function pitch_to_hz(idx, voff, foff) local(m, v, f, fm, hz) (
   m  = pitch_mode_mem[idx];
-  v  = pitch_val_mem[idx];
+  v  = pitch_val_mem[idx] + voff;
   hz = m == 1 ? tuning_ref * pow(2, (v - 69) / 12) :
        m == 2 ? tuning_ref * pow(2, (v / 100 - 69) / 12) :
                 v;
   fm = pitch_fmod_mem[idx];
-  f  = pitch_fine_mem[idx];
+  f  = pitch_fine_mem[idx] + foff;
   hz = fm == 1 ? hz * pow(2, f / 12) :
        fm == 2 ? hz * pow(2, f / 1200) :
                  hz + f;
@@ -393,8 +406,10 @@ last_pitch_target = 0;
 //                     measuring itself with a ruler it was stretching. A real
 //                     heart settles a beat's length when the beat starts.
 //   1 S1-S2 gap       STEPPED. Read once per beat, at the S2 trigger.
-//   2 Breath HRV depth   continuous -- applied to the cycle length every sample.
-//   3 Random HRV depth   continuous -- likewise.
+//  14 Breath HRV depth   continuous -- applied to the cycle length every sample.
+//  15 Random HRV depth   continuous -- likewise.
+//   Everything added 2026-09-11 is continuous too, and defaults to `On a clock`;
+//   set to `With the target`, any of them steps once per heartbeat.
 function drift_is_stepped(idx) ( target_drift_moves[idx] == 0; );
 
 // Shared play/rest gate, byte-identical to the one in Melody, the Sweeping
@@ -653,8 +668,8 @@ pitch_ui_inited ? (
 // The note name is a lie outside Semitones, so it does not appear there.
 slider_show(slider11, slider10 == 1);
 
-s1_freq = pitch_to_hz(1);
-s2_freq = pitch_to_hz(2);
+s1_freq = pitch_to_hz(1, 0, 0);
+s2_freq = pitch_to_hz(2, 0, 0);
 
 breath_rate = two_pi / (slider17 * srate);
 breath_depth = slider18;
@@ -736,6 +751,38 @@ rate_mode >= 3 ? (
   start_delay_sec = slider20 * 60 / max(bpm_target, 0.001);
 );
 
+// --- The sound-shaping targets added 2026-09-11 (R24), rebuilt per block from
+//     the same formulas @slider uses, with drift and ramp folded in. With both
+//     at zero every value here is exactly @slider's. The offsets are from the
+//     previous block's samples -- about 11 ms behind, on slow modulators.
+//     Also where the thump pitches belong anyway: they derive from the pitch
+//     BANKS, which @serialize restores by a path with no order against @slider.
+tuning_ref = max(20, min(2000, slider15 + hb_q(11)));
+s1_freq = pitch_to_hz(1, hb_q(7), hb_q(9));
+s2_freq = pitch_to_hz(2, hb_q(8), hb_q(10));
+s1_center_near = s1_freq * 1.1;
+s2_center_near = s2_freq * 1.15;
+s1_center_far = s1_freq * 1.28;
+s2_center_far = s2_freq * 1.25;
+hb_bright = max(0, min(1, slider6 + hb_q(4)));
+lp_cutoff_near = 200.0 + hb_bright * 250.0;
+lp_cutoff_far = 175.0 + hb_bright * 220.0;
+s1_res_f_near = min(2.0 * sin(min($pi * s1_center_near * srate_inv, $pi / 2)), s1_f_max_near);
+s2_res_f_near = min(2.0 * sin(min($pi * s2_center_near * srate_inv, $pi / 2)), s2_f_max_near);
+lp_f_near = min(2.0 * sin($pi * lp_cutoff_near * srate_inv), 0.98);
+s1_res_f_far = min(2.0 * sin(min($pi * s1_center_far * srate_inv, $pi / 2)), s1_f_max_far);
+s2_res_f_far = min(2.0 * sin(min($pi * s2_center_far * srate_inv, $pi / 2)), s2_f_max_far);
+lp_f_far = min(2.0 * sin($pi * lp_cutoff_far * srate_inv), 0.98);
+s1_decay = exp(-srate_inv / (max(slider7 + hb_q(5), 1) * 0.001));
+s2_decay = exp(-srate_inv / (max(slider8 + hb_q(6), 1) * 0.001));
+breath_rate = two_pi / (max(slider17 + hb_q(13), 0.001) * srate);
+// Stereo width in ms. A drift never carries it across zero: the sign picks
+// which side the heart sits on, and crossing it clears the filters and the delay
+// line (@slider), which would click on every pass.
+hb_w = slider16 + hb_q(12);
+hb_w = slider16 >= 0 ? max(hb_w, 0) : min(hb_w, 0);
+delay_samples = min(floor(srate * abs(hb_w) * 0.001), delay_buf_size - 1);
+
 @sample
 
 // Smooth BPM toward slider1's target.
@@ -791,8 +838,8 @@ slider38 ? (
 // ramp_t * stored_amount in its native unit.
 speed_ramp_heart_offset    = speed_ramp_ramp_t_mem[0] * speed_ramp_target_value_mem[0]; // BPM
 speed_ramp_systole_offset  = speed_ramp_ramp_t_mem[1] * speed_ramp_target_value_mem[1]; // ms
-speed_ramp_breath_offset   = speed_ramp_ramp_t_mem[2] * speed_ramp_target_value_mem[2]; // HRV depth
-speed_ramp_rand_hrv_offset = speed_ramp_ramp_t_mem[3] * speed_ramp_target_value_mem[3]; // HRV depth
+speed_ramp_breath_offset   = speed_ramp_ramp_t_mem[14] * speed_ramp_target_value_mem[14]; // HRV depth
+speed_ramp_rand_hrv_offset = speed_ramp_ramp_t_mem[15] * speed_ramp_target_value_mem[15]; // HRV depth
 
 // Per-target drift wave computation. Each of 4 targets gets a phase
 // counter advancing per sample at rate 1 / (period_heartbeats *
@@ -884,8 +931,15 @@ loop(N_TARGETS,
 // for the per-sample consumption sites.
 effective_systole_ms = max(slider3  + speed_ramp_systole_offset  + target_drift_offset[1], 1);
 systole_samples      = floor(srate * effective_systole_ms * 0.001);
-breath_depth         = max(slider18 + speed_ramp_breath_offset   + target_drift_offset[2], 0);
-rand_hrv_depth       = max(slider19 + speed_ramp_rand_hrv_offset + target_drift_offset[3], 0);
+breath_depth         = max(slider18 + speed_ramp_breath_offset   + target_drift_offset[14], 0);
+rand_hrv_depth       = max(slider19 + speed_ramp_rand_hrv_offset + target_drift_offset[15], 0);
+// S1 and S2 volume (2, 3), 0-1; Play for and Rest for (16, 17), in beats. Each
+// is exactly its slider while drift and ramp leave it alone. The gate still
+// switches on only when both SLIDERS are above zero.
+s1_vol         = max(0, min(1, slider4 + hb_q(2)));
+s2_vol         = max(0, min(1, slider5 + hb_q(3)));
+play_for_beats = max(0, slider21 + hb_q(16));
+rest_for_beats = max(0, slider22 + hb_q(17));
 
 // Clamp effective BPM at 10 so an over-aggressive Down amount or
 // Speed Ramp delta can't drag the heartbeat to a stop or invert it.
@@ -939,6 +993,8 @@ phase >= cycle_len ? (
   // beats without stopping the cycle, and drift should follow the cycle.
   drift_step_mem[0] = 1;
   drift_step_mem[1] = 1;
+  // ...and every later target's, for any set to step with the heartbeat.
+  hb_k = 2; loop(N_TARGETS - 2, drift_step_mem[hb_k] = 1; hb_k += 1;);
   // Per-beat Play/Rest gate. On each new heartbeat, advance the
   // period counter; if it reaches the threshold for the current
   // state, flip play↔rest and reset the counter. Then suppress the
@@ -1086,30 +1142,55 @@ delay_sign == 1 ? (
 // banks -- "migrate what was RESTORED, never what was DEFAULTED". Gated on
 // "this blob HAS the field", so an older blob keeps its Drift and Ramp config
 // and leaves the new banks at @init's zeros, which is off.
-sr_magic = 2400000 + N_TARGETS;
+// 2500018 since 2026-09-11: eighteen targets in control order. A four-target save
+// (2400004 back to 2100004) is read at its own width, then remapped through
+// hb_o2n, both remembered selectors with it. Only what the blob HELD is remapped:
+// play/rest and Drift movement stay at @init's defaults where it never stored them.
+function hb_remap(bank, dflt) local(k) (
+  k = 0; loop(4, hb_scratch[k] = bank[k]; k += 1;);
+  k = 0; loop(N_TARGETS, bank[k] = dflt; k += 1;);
+  k = 0; loop(4, bank[hb_o2n(k)] = hb_scratch[k]; k += 1;);
+);
+sr_magic = 2500000 + N_TARGETS;
 file_var(0, sr_magic);
-(sr_magic == 2400000 + N_TARGETS || sr_magic == 2300000 + N_TARGETS ||
- sr_magic == 2200000 + N_TARGETS || sr_magic == 2100000 + N_TARGETS) ? (
-  file_mem(0, speed_ramp_target_value_mem, N_SPEED_TARGETS);
-  file_mem(0, speed_ramp_dur_mem,          N_SPEED_TARGETS);
-  file_mem(0, speed_ramp_delay_mem,        N_SPEED_TARGETS);
+hb_is_new = sr_magic == 2500000 + N_TARGETS;
+hb_is_old = sr_magic == 2400004 || sr_magic == 2300004 || sr_magic == 2200004 || sr_magic == 2100004;
+hb_n = hb_is_new ? N_TARGETS : 4;
+(hb_is_new || hb_is_old) ? (
+  file_mem(0, speed_ramp_target_value_mem, hb_n);
+  file_mem(0, speed_ramp_dur_mem,          hb_n);
+  file_mem(0, speed_ramp_delay_mem,        hb_n);
   file_var(0, last_speed_target);
-  file_mem(0, target_drift_up,    N_TARGETS);
-  file_mem(0, target_drift_down,  N_TARGETS);
-  file_mem(0, target_drift_per,   N_TARGETS);
-  file_mem(0, target_drift_shape, N_TARGETS);
+  file_mem(0, target_drift_up,    hb_n);
+  file_mem(0, target_drift_down,  hb_n);
+  file_mem(0, target_drift_per,   hb_n);
+  file_mem(0, target_drift_shape, hb_n);
   file_var(0, last_target_select);
   sr_magic >= 2200000 ? (
-    file_mem(0, drift_play_mem, N_TARGETS);
-    file_mem(0, drift_rest_mem, N_TARGETS);
-    file_mem(0, sr_play_mem,    N_SPEED_TARGETS);
-    file_mem(0, sr_rest_mem,    N_SPEED_TARGETS);
+    file_mem(0, drift_play_mem, hb_n);
+    file_mem(0, drift_rest_mem, hb_n);
+    file_mem(0, sr_play_mem,    hb_n);
+    file_mem(0, sr_rest_mem,    hb_n);
   );
 
   // Drift movement, per target -- LAST in the stream, so appending it to an
   // existing blob is a pure append. An older blob has no such field and keeps
   // @init's defaults, which are exactly the behaviour it was written under.
-  sr_magic >= 2300000 ? ( file_mem(0, target_drift_moves, N_TARGETS); );
+  sr_magic >= 2300000 ? ( file_mem(0, target_drift_moves, hb_n); );
+
+  hb_is_old ? (
+    hb_remap(speed_ramp_target_value_mem, 0); hb_remap(speed_ramp_dur_mem, 0);
+    hb_remap(speed_ramp_delay_mem, 0);
+    hb_remap(target_drift_up, 0);   hb_remap(target_drift_down, 0);
+    hb_remap(target_drift_per, 8);  hb_remap(target_drift_shape, 0);
+    sr_magic >= 2200000 ? (
+      hb_remap(drift_play_mem, 0);  hb_remap(drift_rest_mem, 0);
+      hb_remap(sr_play_mem, 0);     hb_remap(sr_rest_mem, 0);
+    );
+    sr_magic >= 2300000 ? hb_remap(target_drift_moves, 1);
+    last_speed_target  = hb_o2n(max(0, min(3, last_speed_target | 0)));
+    last_target_select = hb_o2n(max(0, min(3, last_target_select | 0)));
+  );
 
   // The pitch banks, LAST in the stream so adding them is a pure append. An
   // older blob has none and keeps @init's 45 Hz and 120 Hz, which is exactly
@@ -1151,6 +1232,9 @@ file_var(0, sr_magic);
     slider13 = pitch_fine_mem[prs];
     slider14 = pitch_fmod_mem[prs];
     slider28 = target_drift_moves[last_target_select];
+    // The selectors themselves, so a remapped old save shows the target it had.
+    slider23 = last_target_select;
+    slider32 = last_speed_target;
     sliderchange(-1);
   );
 );

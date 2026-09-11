@@ -143,12 +143,12 @@ ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
 ramp, which is the default. The holds come **out of** the duration rather than
 extending it, so Ramp duration goes on meaning "you arrive in about this long".
 
-Nested-selector pattern matching Womb v3. Pick one of 4 targets (Heart rate, S1-S2 gap, Breath HRV depth, Random HRV depth) on slider 29, then set a signed `by` amount on slider 30. All 4 targets ramp in parallel; the selector just changes which one you're editing.
+Nested-selector pattern matching Womb v3. Pick one of 18 targets — the same list as Drift, below — then set a signed `by` amount. All of them ramp in parallel; the selector just changes which one you're editing.
 
 *(v2.14 reorg: the Ramp block is now a contiguous selector-first group at sliders **29–33** — target 29, by 30, duration 31, engage 32, start-delay 33 — so it tabs together. Old IDs 17–20 + 28 are retired; Ramp configs reset on upgrade.)*
 
-**Ramp target (slider 29)** `Heart rate / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart rate`
-The 4-option selector. Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 4 targets ramp regardless of which one is selected.
+**Ramp target** `eighteen targets, default Heart rate`
+Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. Every target ramps regardless of which one is selected.
 
 **Ramp duration (slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
@@ -204,9 +204,11 @@ wave than the last, so `1.75` cycles through four park points before repeating
 and `1.2` through five. Setting only `Drift down` wastes half of them, because
 every park on the positive half lands at no change.
 
-Slow organic wander applied independently to any of four targets: Heart rate, S1-S2 gap, Breath HRV depth, or Random HRV depth. Each target can have its own drift configuration; all four drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
+Slow organic wander applied independently to any of eighteen targets, in the order of the controls they reach: Heart rate, S1-S2 gap, S1 volume, S2 volume, Brightness, S1 decay, S2 decay, S1 pitch, S2 pitch, S1 fine tune, S2 fine tune, Tuning reference, Stereo width, Breath cycle, Breath HRV depth, Random HRV depth, Play for and Rest for. Each target can have its own drift configuration; all of them drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
-Same pattern as Womb v3's drift and the Ramp block above. The 4 drift targets are intentionally the same set as the 4 Ramp targets and use the same selector indices, so once you've decided "I want to wind down the heart over 30 min and wander the systole gap a bit" you can configure both blocks on the same target indices.
+**Fourteen of those joined 2026-09-11**, and the two HRV depths moved down the list to sit in control order. Saved setups were carried across by the plugin itself, so a drift on Breath HRV depth is still on Breath HRV depth. Amounts are in each target's own unit: 0 to 1 for the volumes and Brightness, ms for the decays and Stereo width, that thump's own pitch mode and fine tune unit for S1/S2 pitch and fine tune, Hz for Tuning reference, seconds for Breath cycle, beats for Play for and Rest for. **Stereo width never drifts across zero**: the sign chooses which side the heart sits on, and crossing it would clear the delay with a click. The new targets arrive `On a clock`; on `With the target` they step once per heartbeat. Play for and Rest for move how long each lasts; the gate still needs both controls above zero.
+
+Same pattern as Womb v3's drift and the Ramp block above. Drift and Ramp share one target list with the same indices, so "wind down the heart over 30 min and wander the systole gap a bit" is the same two targets in both blocks.
 
 Switching the **Drift target** selector saves the current sliders 22-25 into the old target's memory slot, then loads the new target's saved values. All four configurations persist across project save/load.
 

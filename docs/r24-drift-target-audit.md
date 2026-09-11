@@ -47,9 +47,8 @@ Missing lists are from the audit reads, not individually re-checked.
   match their sliders (RSA depth, S1-S2 gap, Inhale/Exhale Freq, Breaths/min).
 - **breath_gen** — DONE 2026-09-11: 18 targets, Play/Rest included; Tensor's seven
   carried over from April (`docs/layouts/breath-gen-r24-20260911.md`).
-- **heartbeat gen** — 4 of 16. Missing 12: S1/S2 volume, Brightness, S1/S2 decay,
-  S1/S2 pitch, S1/S2 fine tune, Tuning reference, Stereo width, Breath cycle
-  seconds.
+- **heartbeat gen** — DONE 2026-09-11: 18 targets in control order, Play/Rest
+  included (`docs/layouts/heartbeat-r24-20260911.md`).
 - **rhythm-track** — 2 of 16. Missing 10: Strong/Weak pitch and fine tune, Tuning
   reference, Tone resonance, Strong/Weak volume, Strong/Weak decay, Pan spread.
   The tick is pre-rendered in `@slider`, so these need a re-render path.
