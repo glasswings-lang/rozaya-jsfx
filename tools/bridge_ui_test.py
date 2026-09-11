@@ -31,7 +31,7 @@ ITEM_SELECTORS = {
     "heartbeat gen":       (8, 11, 1, 2, 0),
     "breath_gen":          (6, 9, 1, 2, 0),
     "rhythm-track":        (4, 7, 1, 2, 0),
-    "resonance_bank":      (2, 3, 1, 2, None),
+    "resonance_bank":      (3, 6, 1, 2, None),
     "spectral_vowel_morpher": (20, 22, 7, 8, None),
     "spectral_vowel_passage": (0, 4, 1, 2, None),
 }

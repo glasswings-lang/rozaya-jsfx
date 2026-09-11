@@ -73,8 +73,8 @@ Missing lists are from the audit reads, not individually re-checked.
 - **stereo-phaser** — 6 of 16. Missing: none.
 - **Full_Feature_Tremolo** — 6 of 16. Missing: Stereo phase offset, Pan spread,
   Pan glide, Pan sweep every.
-- **resonance_bank** — 5 per band, banks exactly full. Missing: Input gain,
-  Wet/dry, Output. These are global, and the layout has no global slot.
+- **resonance_bank** — DONE 2026-09-11: 10 targets, the four whole-plugin ones
+  held in band 0's row (`docs/layouts/resonance-bank-r22-r24.md`).
 
 ## Borderline, for Rozaya to decide
 

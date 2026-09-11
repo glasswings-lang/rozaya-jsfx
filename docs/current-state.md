@@ -3,8 +3,6 @@
 **Budget: 150 lines. Over it? This file describes NOW — delete what stopped
 being now.** Narrative belongs in `docs/session-log.md`, not here.
 
-*Checked against the tree 2026-09-09.*
-
 ## The branch
 
 - On `feature/melody-reorder`, pushed, unmerged. **Re-run
@@ -26,8 +24,7 @@ sentence.
 
 - **The rate block (R20) and both host modes (R21): built everywhere.** True as
   of 2026-09-06 and not before.
-- **Drift/Ramp: complete except Passage.** **Resonance Bank is not missing one** —
-  its period is a rate by design.
+- **Drift/Ramp: complete except Passage.**
 - **Polyrhythm v1 CROSSED AND ARCHIVED 2026-09-10.** 144 instances in 31 files
   (E:/reaper, TrackTemplates, Tensor's folder), all bit-identical by render.
 - **Reorders owed:** Passage (blocked on what it is FOR).
@@ -76,9 +73,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   Fine tune; Scale's fine tunes sit with their notes; pitch acts live; 40 and 45
   targets in control order. `docs/layouts/shepards-r22-r24.md`. Ears owed.
 
-- **THE R22 ROLLOUT — running. Done: Breath Gen (heard), Dapple, Bubbler,
-  Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell, Shepard Scale, Polyrhythm v3,
-  the Sweeping Filter. Owed: Resonance Bank.** Rozaya: doing some and not
+- **THE R22 ROLLOUT — DONE 2026-09-11 in every plugin with a pitch.** Breath Gen
+  heard; Dapple, Bubbler, Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell,
+  Shepard Scale, Polyrhythm v3, the Sweeping Filter and Resonance Bank not. Rozaya: doing some and not
   others is *"shipping a pool ... and only having water that fills half the
   fucking pool"*. Four shapes: Dapple took Breath Gen's block unchanged;
   **Bubbler took the SHIFT form Rozaya designed** — `Source note` says where zero
@@ -103,7 +100,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   migrated and took every step since April. `docs/layouts/sweeping-filter-r22-r24.md`.
 - **Sweep Dwell, 2026-09-10:** Rozaya's Segment selector, 45 controls, 16 targets; surges.RPP
   bit-identical. Tensor's two point at a missing path, skipped. `docs/layouts/sweep-dwell.md`.
-- **Tuning reference measured working in all 13**; Heartbeat and Womb no longer blow up above ~5 kHz.
+- **Resonance Bank, 2026-09-11:** pitch set and width units per band, Tuning reference, 10 targets.
+  `wind` bit-identical. `docs/layouts/resonance-bank-r22-r24.md`.
+- **Tuning reference measured working in all 14**; Heartbeat and Womb no longer blow up above ~5 kHz.
 - **Sustain Looper, 2026-09-10:** Bubbler's pitch block, Drift and Ramp on eight
   targets, and loop moves crossfade instead of cutting. 4 instances migrated,
   bit-identical with the sample loaded. `docs/layouts/sustain-looper.md`.

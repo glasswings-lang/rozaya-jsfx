@@ -64,7 +64,12 @@ CASES = [
     dict(name="sweeping_filter", file="full-feature-sweeping-filter.jsfx", ref=11, input="noise",
          a=notes((1, 2, 3, 57), (6, 7, 8, 81)),
          b=notes((1, 2, 3, 57), (6, 7, 8, 81), up=12), hz=[]),
-    dict(name="womb", file="womb_sound_generator_v3.jsfx", ref=63,
+    # One band on, Order 4, pitch per band since 2026-09-11.
+    dict(name="resonance_bank", file="resonance_bank.jsfx", ref=3, input="noise",
+         a=[(14, 0), (16, 2)] + notes((5, 6, 7, 57)),
+         b=[(14, 0), (16, 2)] + notes((5, 6, 7, 57), up=12),
+         hz=[(14, 0), (16, 2), (7, 1000)]),
+    dict(name="womb",file="womb_sound_generator_v3.jsfx", ref=63,
          a=notes((6, 7, 8, 33), (13, 14, 15, 45), (30, 31, 32, 57), (35, 36, 37, 52)),
          b=notes((6, 7, 8, 33), (13, 14, 15, 45), (30, 31, 32, 57), (35, 36, 37, 52), up=12),
          hz=[]),

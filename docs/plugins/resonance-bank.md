@@ -69,6 +69,10 @@ Blend between the original input and the band-processed signal. At 0 the input p
 **Output Volume** `0 to 1, default 0.5`
 Final output level.
 
+**Tuning reference (Hz)** `20 to 2000, default 440` *(new 2026-09-11)*
+The pitch of A4 for every band whose Pitch mode is Semitones or Cents. Bands in Hz
+ignore it.
+
 ### Band selector
 
 **Band selector** `0 to 15`
@@ -78,14 +82,29 @@ Picks which band the per-band sliders are currently editing. Moving the selector
 
 The following sliders show the SELECTED band's values. Changes are stored to that band's slot when no selector has just moved.
 
-**Frequency (Hz)** `0 to 20000, default 500`
-Center frequency of the band. At very low Frequency the SVF coefficient becomes tiny and the band naturally fades to silence — sub-audible frequency sweeps that cross 0 work gracefully. Internally clamped to 1 Hz minimum and srate × 0.45 maximum for filter stability.
+**Pitch mode** `Hz / Semitones / Cents, default Hz` *(new 2026-09-11)*
+What the Frequency number means, for this band. Switching it does not convert the
+number.
 
-**Width up (Hz above center)** `1 to 5000, default 250`
-How far above the center frequency the band extends.
+**Note name** `C-1 to G9` *(shown in Semitones only)*
+Pick a note and Frequency follows; type a Frequency and the note follows.
 
-**Width down (Hz below center)** `1 to 5000, default 250`
-How far below the center frequency the band extends.
+**Frequency (Hz / semitones / cents)** `0 to 20000, default 500`
+The band's centre. In Hz it is the frequency; in Semitones it is the MIDI note
+number (69 is A4); in Cents it is the same axis times 100. At very low Frequency the SVF coefficient becomes tiny and the band naturally fades to silence — sub-audible frequency sweeps that cross 0 work gracefully. Internally clamped to 1 Hz minimum and srate × 0.45 maximum for filter stability.
+
+**Fine tune** `-1000 to 1000, default 0`, and **Fine tune unit** `Hz / Semitones / Cents, default Cents` *(new 2026-09-11)*
+A finer offset on top of Frequency, in its own unit, so a band can sit between
+the notes.
+
+**Width up (Hz / semitones / cents)** `0 to 20000, default 250`, and **Width up unit** `Hz / Semitones / Cents, default Hz`
+How far above the center frequency the band extends. In Semitones or Cents it is
+an interval above the band's frequency as it is at that moment, fine tune and
+drift included, so a band two semitones wide stays two semitones wide as it moves.
+Never narrower than 1 Hz.
+
+**Width down (Hz / semitones / cents)**, and **Width down unit**
+How far below the center frequency the band extends, the same way.
 
 Symmetric widths keep the user's Frequency value as the actual filter center. Asymmetric widths shift the filter center toward the wider side while keeping Frequency as the reference. Narrow widths produce peaky resonant character; wide widths produce broad emphasis. Resonance is implicit in narrowness — there is no separate sharpness or Q knob.
 
@@ -115,11 +134,11 @@ The Drift target slider picks which of the band's parameters the drift up/down/p
 
 When the drift target changes within a band, the previous target's drift continues to run with its stored settings; the drift sliders now show the new target's stored settings (or zero defaults if that target has not yet been configured for this band).
 
-**Drift target** `Frequency / Width up / Width down / Gain / Pan, default Frequency`
-Which parameter the drift modulates for the currently selected band.
+**Drift target** `Input gain / Tuning reference / Frequency / Fine tune / Width up / Width down / Gain / Pan / Wet/dry mix / Output volume, default Frequency`
+Which control the drift moves. *(Ten since 2026-09-11, in the order of the controls.)* Frequency, Fine tune, both widths, Gain and Pan belong to the selected band. **Input gain, Tuning reference, Wet/dry mix and Output volume belong to the whole plugin**: they hold one setting, and every band shows the same one.
 
 **Drift up amount** `0 to 1000, default 0`
-Maximum upward excursion of the drift, in the target parameter's natural units (Hz for Frequency, Width up, Width down; dB for Gain; -1 to +1 scale for Pan). Typical values: 50–500 for frequency / width drift, 3–12 for gain drift, 0.2–1.0 for pan drift.
+Maximum upward excursion of the drift, in the target's own unit: Frequency, Fine tune and the widths in that band's chosen unit; dB for Gain and Input gain; Hz for Tuning reference; -1 to +1 for Pan; 0 to 1 for Wet/dry and Output volume.
 
 **Drift down amount** `0 to 1000, default 0`
 Maximum downward excursion. Asymmetric Up vs Down lets the drift sit slightly off-center for a biological-feel rather than purely symmetric.

@@ -666,6 +666,20 @@ became a Segment selector with a length mode and value per segment.
   the old Host x cycle, a live tempo change, and one segment in beats at 60 BPM.
   Needs the runner's `--transport` options; see `jsfx_run/README.md`.
 
+## Resonance Bank's pitch per band — 2026-09-11
+
+`docs/layouts/resonance-bank-r22-r24.md`. 28 sliders to 35; 5 targets to 10.
+
+- **`resonance_bank_migrate_r22r24_20260911.py`** — slider line only; the plugin
+  remaps its own old blob. Idempotent by an exact gate: slider 3 of 20 or more is
+  Tuning reference, so the line is already done.
+- **`resonance_bank_verify_r22r24_20260911.py`** — old build (a993f0f) on each
+  snapshot against new on a temp migration, bit-identical, decoded by name;
+  synthetic v1/v2/v3 saves with drift and ramp on every old target, both modes;
+  each of the 10 targets moves the sound; a whole-plugin target is one setting;
+  A4 and the width units by equivalence. **It caught a real fault**: extra
+  `rand()` draws in `@init` shift every later Random drift.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in

@@ -24,17 +24,12 @@ desc: Resonance Bank
 //
 // === Multi-target drift (nested selector pattern) ===
 //
-// Each band can have up to 5 simultaneous drifts, one per
-// possible target (Frequency, Width up, Width down, Gain, Pan).
-// The Drift target slider picks which target you're currently
-// editing — the drift up/down/period/mode/shape sliders snap to
-// THAT target's stored values. Configure them, they're saved to
-// that target. Change Drift target → previous target's drift
-// keeps running; sliders now show the new target's stored values.
-//
-// All configured drifts on a band run together. So a single band
-// can have its frequency wandering, gain pulsing, and pan
-// sweeping simultaneously, each at its own rate.
+// Ten targets (2026-09-11, docs/layouts/resonance-bank-r22-r24.md). Six belong
+// to a band -- Frequency, Fine tune, Width up, Width down, Gain, Pan -- and are
+// stored per (band, target). Four belong to the whole plugin -- Input gain,
+// Tuning reference, Wet/dry mix, Output volume -- and hold ONE setting whichever
+// band is selected. The Drift target slider picks which target the drift sliders
+// edit; every configured drift keeps running when the selector moves.
 //
 // === Order (parallel mode only) ===
 //
@@ -44,96 +39,74 @@ desc: Resonance Bank
 //   Order 8: -48 dB/oct (near brick-wall)
 
 slider1:0.0<-24.0,24.0,0.01>Input gain (dB)
-
-slider3:0<0,15,1>Band selector (0-15)
-
-slider4:500<0,20000,1>Frequency (Hz)
-slider5:250<1,5000,1>Width up (Hz above center)
-slider6:250<1,5000,1>Width down (Hz below center)
-slider7:-60<-60,24,0.01>Gain (dB; -60 = off)
-slider8:0<-1,1,0.01>Pan (-1=L, 0=center, +1=R)
-slider9:0<0,3,1{1 (-6 dB/oct),2 (-12 dB/oct),4 (-24 dB/oct),8 (-48 dB/oct)}>Order (parallel mode only)
-slider10:0<0,1,1{Off,Solo}>Band solo
-slider13:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Drift target
-slider14:0<0,1000,0.01>Drift up amount (units match target)
-slider15:0<0,1000,0.01>Drift down amount (units match target)
-slider16:0<0,1000,0.001>Drift period (BPM / sec / Hz / beats per cycle by mode; 0 = off)
-// NOTE the ordering here is {BPM,Hz,Seconds} -- a THIRD variant. Melody Phase
-// and Polyrhythm use {BPM,Seconds,Hz}; Tremolo and the sweeping filter use
-// {Hz,Seconds,BPM}. Seconds is index 2 here, not 1. Any code copied between
-// plugins that special-cases "the Seconds branch" by index will be WRONG here
-// -- that mistake put Start Delay 60x out in two plugins already. The
-// conversions below are correct for THIS ordering; leave them keyed by name.
-//
-// Host x appends at index 3, and there Drift period means BEATS PER CYCLE --
-// 4 is one full wander every four beats (R13-revised, 2026-09-02). It used to
-// be a MULTIPLIER of the tempo, which is a number you cannot hear without doing
-// arithmetic against the project tempo first.
-//
-// No ratio picker on this one, and there never was: the period is a PER-BAND
-// value living behind the drift selector, not a headline rate, so a picker
-// writing into the visible slider would fight the selector's own save/restore
-// (see the nested-selector note in CLAUDE.md). That accident of design means
-// this plugin skips steps 3 and 4 of the R13-revised recipe entirely -- there
-// is no picker to retire and no landing block to delete.
-// R20/R21, 2026-09-06. `Host x` was the retired name for what the whole suite
-// now calls `Every N beats`, and `N per beat` -- its reciprocal -- was missing.
-// THIS COSTS NO MIGRATION: indices 0-3 keep their exact meanings and only the
-// label of index 3 changes, so nothing in the serialized per-band bank moves.
-// It was held back on the belief that touching this control needed a
-// version-gated blob migration; that is true of REORDERING the enum and not of
-// renaming one entry and appending another.
-//
-// Named `mode` and not `unit` on purpose: everywhere else in the suite a drift
-// period is a COUNT of cycles with a unit beside it. Here it is a RATE, because
-// each band drifts independently and there is no single cycle to count. That is
-// a real difference in what the control means, not an inconsistency to paper
-// over, and changing it would move stored values in a live project.
-slider17:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Drift period mode
-slider18:0<0,2,1{Sine,Triangle,Random}>Drift shape
-// --- Drift play/rest, and the Ramp block ---------------------------------
-// Added 2026-09-05. Rozaya spotted the gap: this plugin had Drift but not the
-// play/rest that goes with it, and no Ramp at all. "Anything that has Ramp
-// should have all the controls that go with Ramp."
-//
-// Both are stored PER (band, target), the same 16x5 shape the drift config
-// already uses -- so band 3's ramp on Frequency is a different setting from
-// band 4's, and switching either selector edits one without stopping the other.
-slider19:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider20:0<0,1000,0.01>Drift rest for (periods, 0 = always)
-
-slider21:0<0,4,1{Frequency,Width up,Width down,Gain,Pan}>Ramp target
-slider22:0<-1000,1000,0.001>Ramp by (units match target)
-slider23:1<0,2,1{Seconds,Minutes,Beats}>Ramp time unit
-slider24:0<0,1000,0.01>Ramp duration (in ramp time units)
-slider25:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider26:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider27:0<0,1,1{Off,On}>Ramp engage
-slider28:0<0,1000,0.01>Ramp start delay (in ramp time units)
-
 slider2:0<0,1,1{Parallel bandpass,Serial peaking EQ}>Mode
-slider11:0.5<0,1,0.01>Wet/dry mix
-slider12:0.5<0,1,0.01>Output volume
+slider3:440<20,2000,0.1>Tuning reference (Hz)
+
+slider4:0<0,15,1>Band selector (0-15)
+
+// --- Pitch (R22), per band, 2026-09-11. The value IS the pitch; the fine tune
+//     sits on top in its own unit. Names are the Sweeping Filter's and Sweep
+//     Dwell's, so the siblings read the same.
+slider5:0<0,2,1{Hz,Semitones,Cents}>Pitch mode
+slider6:69<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Note name
+slider7:500<0,20000,0.001>Frequency (Hz / semitones / cents)
+slider8:0<-1000,1000,0.001>Fine tune
+slider9:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
+// Widths in three units, Rozaya 2026-09-11: "Widths can take in semitones and
+// sents as well, there's no reason why not." In Semitones or Cents a width is an
+// interval measured from the band's frequency as it is that moment -- fine tune
+// and drift included -- so a band two semitones wide stays two semitones wide as
+// it moves. Floored at 1 Hz after conversion, as before.
+slider10:250<0,20000,0.001>Width up (Hz / semitones / cents)
+slider11:0<0,2,1{Hz,Semitones,Cents}>Width up unit
+slider12:250<0,20000,0.001>Width down (Hz / semitones / cents)
+slider13:0<0,2,1{Hz,Semitones,Cents}>Width down unit
+slider14:-60<-60,24,0.01>Gain (dB; -60 = off)
+slider15:0<-1,1,0.01>Pan (-1=L, 0=center, +1=R)
+slider16:0<0,3,1{1 (-6 dB/oct),2 (-12 dB/oct),4 (-24 dB/oct),8 (-48 dB/oct)}>Order (parallel mode only)
+slider17:0<0,1,1{Off,Solo}>Band solo
+
+slider18:0.5<0,1,0.01>Wet/dry mix
+slider19:0.5<0,1,0.01>Output volume
+
+slider20:2<0,9,1{Input gain,Tuning reference,Frequency,Fine tune,Width up,Width down,Gain,Pan,Wet/dry mix,Output volume}>Drift target
+slider21:0<0,1000,0.01>Drift up amount (units match target)
+slider22:0<0,1000,0.01>Drift down amount (units match target)
+slider23:0<0,1000,0.001>Drift period (BPM / sec / Hz / beats per cycle by mode; 0 = off)
+// Named `mode` and not `unit` on purpose: everywhere else in the suite a drift
+// period is a COUNT of cycles. Here it is a RATE, because each band drifts
+// independently and there is no single cycle to count. Canonical R20/R21 order.
+slider24:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Drift period mode
+slider25:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider26:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider27:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+
+slider28:2<0,9,1{Input gain,Tuning reference,Frequency,Fine tune,Width up,Width down,Gain,Pan,Wet/dry mix,Output volume}>Ramp target
+slider29:0<-1000,1000,0.001>Ramp by (units match target)
+slider30:1<0,2,1{Seconds,Minutes,Beats}>Ramp time unit
+slider31:0<0,1000,0.01>Ramp duration (in ramp time units)
+slider32:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider33:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider34:0<0,1,1{Off,On}>Ramp engage
+slider35:0<0,1000,0.01>Ramp start delay (in ramp time units)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).
 // NO ext_noinit: REAPER re-runs @init on every transport play / render
-// start, which resets all RUNTIME for free (SVF/biquad filter state +
-// per-band drift phase). Only the 16-band CONFIG (per-band params + per-
-// (band,target) drift config) must survive the re-run — guarded by
-// cfg_inited below. ext_noinit used to be load-bearing here because the
-// nested selector keeps 15 of 16 bands only in memory (not on sliders);
-// the guard replaces that protection without freezing runtime on render.
+// start, which resets all RUNTIME for free (filter state + per-slot drift
+// phase). Only the 16-band CONFIG must survive the re-run — guarded by
+// cfg_inited below.
 
 srate_inv = 1.0 / srate;
 pi_srate  = $pi * srate_inv;
 two_pi    = 2.0 * $pi;
 
 N_BANDS    = 16;
-N_TARGETS  = 5;
+N_TARGETS  = 10;
 MAX_ORDER  = 8;
+N_SLOTS    = N_BANDS * N_TARGETS;
 
-// === Per-band parameter memory banks (16 slots each) ===
+// === Per-band parameter banks (16 slots each) ===
 band_freq              = 0;
 band_gain              = 16;
 band_width_up          = 32;
@@ -142,45 +115,27 @@ band_pan               = 64;
 band_order_idx         = 80;
 band_last_drift_target = 96;
 
-// === Per-(band, target) drift configuration banks (80 slots each) ===
-// Indexing: band * N_TARGETS + target
-band_drift_up    = 112;
-band_drift_down  = 192;
-band_drift_per   = 272;
-band_drift_mode  = 352;
-band_drift_shape = 432;
+// === The OLD 5-target banks, 80 wide. Nothing runs from these any more: a v1,
+//     v2 or v3 save is read into them exactly as before, then copied into the
+//     10-target banks below through the old -> new target map. 512..751 and
+//     912..1071, 1472..1791 were runtime state and are now unused.
+ob_drift_up    = 112;
+ob_drift_down  = 192;
+ob_drift_per   = 272;
+ob_drift_mode  = 352;
+ob_drift_shape = 432;
+ob_drift_play  = 752;
+ob_drift_rest  = 832;
+ob_ramp_by     = 1072;
+ob_ramp_dur    = 1152;
+ob_ramp_delay  = 1232;
+ob_ramp_play   = 1312;
+ob_ramp_rest   = 1392;
+band_last_ramp_target = 1792;  // CONFIG, per BAND (16)
 
-// === Per-(band, target) drift runtime state (80 slots each) ===
-band_drift_phase = 512;
-band_rand_old    = 592;
-band_rand_new    = 672;
-
-// --- Drift play/rest and the whole Ramp block, added 2026-09-05. Same 16x5
-//     (band, target) shape the drift config already uses. band_rand_new ends at
-//     751, so these start at 752 and the first free slot is 1808 -- re-derive
-//     rather than trusting that number.
-band_drift_play      = 752;    // CONFIG   periods; 0 = gate off
-band_drift_rest      = 832;    // CONFIG
-band_drift_pr_rest   = 912;    // RUNTIME  1 = frozen
-band_drift_pr_accum  = 992;    // RUNTIME  fractional period while frozen
-band_ramp_by         = 1072;   // CONFIG   signed delta in the target's unit
-band_ramp_dur        = 1152;   // CONFIG
-band_ramp_delay      = 1232;   // CONFIG
-band_ramp_play       = 1312;   // CONFIG
-band_ramp_rest       = 1392;   // CONFIG
-band_ramp_t          = 1472;   // RUNTIME  progress 0..1
-band_ramp_elapsed    = 1552;   // RUNTIME  start-delay sample counter
-band_ramp_pr_rest    = 1632;   // RUNTIME
-band_ramp_pr_accum   = 1712;   // RUNTIME
-band_last_ramp_target = 1792;  // CONFIG   per BAND (16), not per slot
-
-// === Parallel SVF cascade state ===
-// 2026-09-10: filter state moved above every config bank. It used to sit at
-// 768-1407, on top of the drift play/rest and ramp banks.
+// === Filter state ===
 band_svf_L = 1808;   // 16 bands * 8 stages * 2 vars = 256 floats
-band_svf_R = 2064;  // same shape for R
-
-// === Serial peaking biquad state ===
+band_svf_R = 2064;
 band_bq_x1_L = 2320;
 band_bq_x2_L = 2336;
 band_bq_y1_L = 2352;
@@ -193,10 +148,68 @@ band_bq_y2_R = 2432;
 // Solo, 2026-09-10 (docs/layouts/solo-propagation-20260910.md). CONFIG, per band.
 band_solo    = 2448;
 
-// CONFIG banks (per-band params + per-(band,target) drift config) —
-// initialized ONCE per instance, guarded by cfg_inited so the @init
-// re-run on every transport play does NOT wipe the user's 16-band setup.
-// @serialize restores saved configs on project load.
+// Pitch and width units, 2026-09-11. CONFIG, per band.
+band_pmode   = 2464;
+band_note    = 2480;
+band_fine    = 2496;
+band_funit   = 2512;
+band_wu_unit = 2528;
+band_wd_unit = 2544;
+
+// === Per-slot drift and ramp banks, 160 wide (slot = rb_slot(band, target)).
+//     Placed well above everything else; the last one ends at 7455.
+band_drift_up       = 4096;   // CONFIG
+band_drift_down     = 4256;   // CONFIG
+band_drift_per      = 4416;   // CONFIG
+band_drift_mode     = 4576;   // CONFIG
+band_drift_shape    = 4736;   // CONFIG
+band_drift_phase    = 4896;   // RUNTIME
+band_rand_old       = 5056;   // RUNTIME
+band_rand_new       = 5216;   // RUNTIME
+band_drift_play     = 5376;   // CONFIG   periods; 0 = gate off
+band_drift_rest     = 5536;   // CONFIG
+band_drift_pr_rest  = 5696;   // RUNTIME  1 = frozen
+band_drift_pr_accum = 5856;   // RUNTIME
+band_ramp_by        = 6016;   // CONFIG   signed delta in the target's unit
+band_ramp_dur       = 6176;   // CONFIG
+band_ramp_delay     = 6336;   // CONFIG
+band_ramp_play      = 6496;   // CONFIG
+band_ramp_rest      = 6656;   // CONFIG
+band_ramp_t         = 6816;   // RUNTIME  progress 0..1
+band_ramp_elapsed   = 6976;   // RUNTIME
+band_ramp_pr_rest   = 7136;   // RUNTIME
+band_ramp_pr_accum  = 7296;   // RUNTIME
+
+// A whole-plugin target lives in band 0's row at its own index, which no
+// per-band target uses, so every band reaches the same slot.
+function rb_is_global(t) ( t == 0 || t == 1 || t == 8 || t == 9; );
+function rb_slot(b, t) ( rb_is_global(t) ? t : b * N_TARGETS + t; );
+// Old 5-target index -> new: Frequency, Width up, Width down, Gain, Pan.
+function rb_o2n(o) ( o == 0 ? 2 : o == 1 ? 4 : o == 2 ? 5 : o == 3 ? 6 : 7; );
+
+function rb_cfg_defaults() local(i) (
+  i = 0;
+  loop(N_SLOTS,
+    band_drift_up[i] = 0;    band_drift_down[i] = 0;
+    band_drift_per[i] = 0;   band_drift_mode[i] = 2;
+    band_drift_shape[i] = 0;
+    band_drift_play[i] = 0;  band_drift_rest[i] = 0;
+    band_ramp_by[i] = 0;     band_ramp_dur[i] = 0;
+    band_ramp_delay[i] = 0;
+    band_ramp_play[i] = 0;   band_ramp_rest[i] = 0;
+    i += 1;
+  );
+);
+function rb_pitch_defaults() local(i) (
+  i = 0;
+  loop(N_BANDS,
+    band_pmode[i] = 0;   band_note[i] = 69;
+    band_fine[i] = 0;    band_funit[i] = 2;
+    band_wu_unit[i] = 0; band_wd_unit[i] = 0;
+    i += 1;
+  );
+);
+
 cfg_inited != 1 ? (
   i = 0;
   loop(N_BANDS,
@@ -207,38 +220,33 @@ cfg_inited != 1 ? (
     band_pan[i]               = 0;
     band_order_idx[i]         = 0;
     band_solo[i]              = 0;
-    band_last_drift_target[i] = 0;
-    t = 0;
-    loop(N_TARGETS,
-      slot = i * N_TARGETS + t;
-      band_drift_up[slot]    = 0;
-      band_drift_down[slot]  = 0;
-      band_drift_per[slot]   = 0;
-      band_drift_mode[slot]  = 2;
-      band_drift_shape[slot] = 0;
-      t += 1;
-    );
+    band_last_drift_target[i] = 2;
+    band_last_ramp_target[i]  = 2;
     i += 1;
   );
+  rb_cfg_defaults();
+  rb_pitch_defaults();
   last_band_select         = -1;
   last_drift_target_select = -1;
   cfg_inited = 1;
 );
 
-// RUNTIME — resets on EVERY @init (every transport play / render start)
-// so renders and alt-tab resume start fresh: per-(band,target) drift
-// phase + random-shape state, and SVF/biquad filter state per band. Drift
-// phase is randomized per slot so the bands don't all crest together
-// (matches the original load-time seeding).
+// RUNTIME — resets on every @init. Drift phase is randomized per slot so the
+// bands don't all crest together. rand() is ONE stream shared with @sample's
+// Random drift shape, so this consumes exactly what the 5-target plugin did --
+// each band's Frequency, Width up, Width down, Gain, Pan, in that order -- and
+// nothing more. The new slots are scattered from those values arithmetically:
+// drawing 60 more numbers here shifted every later Random drift, and `wind`
+// stopped rendering bit-identical (measured 2026-09-11).
 i = 0;
 loop(N_BANDS,
-  t = 0;
-  loop(N_TARGETS,
-    slot = i * N_TARGETS + t;
+  o = 0;
+  loop(5,
+    slot = i * N_TARGETS + rb_o2n(o);
     band_drift_phase[slot] = rand(1);
     band_rand_old[slot]    = rand(2) - 1;
     band_rand_new[slot]    = rand(2) - 1;
-    t += 1;
+    o += 1;
   );
   j = 0;
   loop(MAX_ORDER * 2,
@@ -256,12 +264,34 @@ loop(N_BANDS,
   band_bq_y2_R[i] = 0;
   i += 1;
 );
+function rb_scatter(slot, from, turn) local(p) (
+  p = band_drift_phase[from] + turn;
+  band_drift_phase[slot] = p - floor(p);
+  band_rand_old[slot] = -band_rand_new[from];
+  band_rand_new[slot] = -band_rand_old[from];
+);
+i = 0;
+loop(N_BANDS,
+  // Fine tune, from the same band's Frequency slot.
+  rb_scatter(i * N_TARGETS + 3, i * N_TARGETS + 2, 0.618034);
+  i += 1;
+);
+t = 0;
+loop(N_TARGETS,
+  // A whole-plugin target, from the Gain slot of band t.
+  rb_is_global(t) ? rb_scatter(t, t * N_TARGETS + 6, 0.381966);
+  t += 1;
+);
+i = 0;
+loop(N_SLOTS,
+  band_drift_pr_rest[i] = 0;   band_drift_pr_accum[i] = 0;
+  band_ramp_t[i] = 0;          band_ramp_elapsed[i] = 0;
+  band_ramp_pr_rest[i] = 0;    band_ramp_pr_accum[i] = 0;
+  i += 1;
+);
 
 // Shared play/rest window counter, same one Veil and the Phaser use. `tick` is
-// how much of ONE window passes per sample, which lets each caller keep its own
-// units: Drift passes 1/period_samples so its windows are drift periods; Ramp
-// passes 1/(unit_seconds*srate) so its windows are minutes or beats. Off unless
-// BOTH values are > 0.
+// how much of ONE window passes per sample. Off unless BOTH values are > 0.
 function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
   play > 0 && rest > 0 ? (
     accum_bank[idx] += tick;
@@ -273,39 +303,103 @@ function pr_frozen(accum_bank, resting_bank, idx, tick, play, rest) (
   ) : ( 0; );
 );
 
-// New banks. The CONFIG half is guarded so a transport re-run of @init cannot
-// wipe the user's setup; @serialize overwrites them on project reload. The
-// RUNTIME half resets every time, which is the convention here.
-rb_new_cfg_inited != 1 ? (
-  i = 0;
-  loop(N_BANDS * N_TARGETS,
-    band_drift_play[i] = 0;  band_drift_rest[i] = 0;
-    band_ramp_by[i]    = 0;  band_ramp_dur[i]   = 0;
-    band_ramp_delay[i] = 0;
-    band_ramp_play[i]  = 0;  band_ramp_rest[i]  = 0;
-    i += 1;
+// One slot's drift plus ramp, in the target's own unit. Advances that slot's
+// drift phase, so it is called exactly once per slot per sample.
+function rb_offset(slot) (
+  d_up       = band_drift_up[slot];
+  d_down     = band_drift_down[slot];
+  d_per      = band_drift_per[slot];
+  d_per_mode = band_drift_mode[slot];
+
+  // Zeroed before the guard: Ramp applies even when Drift is off.
+  d_offset = 0;
+  d_per > 0 && (d_up > 0 || d_down > 0) ? (
+    d_cps = 0;
+    d_per_mode == 0 ? d_cps = d_per / 60;
+    d_per_mode == 1 ? d_cps = 1.0 / d_per;
+    d_per_mode == 2 ? d_cps = d_per;
+    // Every N beats: d_per is BEATS PER CYCLE. Written the safe way, because
+    // inverting a unit inverts its edge cases.
+    d_per_mode == 3 ? d_cps = d_per > 0.001 ? max(tempo, 0.001) / 60 / d_per : 0.001;
+    // N per beat: the reciprocal, so it MULTIPLIES where the line above divides.
+    d_per_mode == 4 ? d_cps = max(tempo, 0.001) / 60 * max(d_per, 0.001);
+
+    // Drift play/rest, counted in PERIODS. While resting the phase does not
+    // advance, so the offset STAYS where it stopped.
+    d_hold = pr_frozen(band_drift_pr_accum, band_drift_pr_rest, slot,
+                       d_cps / srate,
+                       band_drift_play[slot], band_drift_rest[slot]);
+    !d_hold ? (
+      band_drift_phase[slot] += d_cps / srate;
+      band_drift_phase[slot] >= 1.0 ? (
+        band_drift_phase[slot] -= 1.0;
+        band_drift_shape[slot] == 2 ? (
+          band_rand_old[slot] = band_rand_new[slot];
+          band_rand_new[slot] = rand(2) - 1;
+        );
+      );
+    );
+
+    d_phi   = band_drift_phase[slot];
+    d_shape = band_drift_shape[slot];
+    d_mod   = 0;
+    d_shape == 0 ? d_mod = sin(two_pi * d_phi);
+    d_shape == 1 ? d_mod = 1 - 4 * abs(d_phi - 0.5);
+    d_shape == 2 ? d_mod = band_rand_old[slot] + (band_rand_new[slot] - band_rand_old[slot]) * d_phi;
+
+    d_offset = d_mod >= 0 ? d_mod * d_up : d_mod * d_down;
   );
-  i = 0;
-  loop(N_BANDS, band_last_ramp_target[i] = 0; i += 1; );
-  rb_new_cfg_inited = 1;
-);
-i = 0;
-loop(N_BANDS * N_TARGETS,
-  band_drift_pr_rest[i] = 0;   band_drift_pr_accum[i] = 0;
-  band_ramp_t[i] = 0;          band_ramp_elapsed[i] = 0;
-  band_ramp_pr_rest[i] = 0;    band_ramp_pr_accum[i] = 0;
-  i += 1;
+  d_offset + band_ramp_t[slot] * band_ramp_by[slot];
 );
 
-// Project tempo, absolute -- never a ratio against a remembered reference,
-// because @init re-runs on every transport play and would wipe the reference.
+// Pitch to Hz. No 20 Hz floor: a band has always been able to sweep down through
+// zero, and the filter clamps its own centre. In Hz with a Cents fine tune of 0
+// this is the value times exactly 1, which keeps saved bands bit-identical.
+function rb_hz(m, v, f, fm) local(hz) (
+  hz = m == 1 ? tuning_eff * pow(2, (v - 69) / 12) :
+       m == 2 ? tuning_eff * pow(2, (v / 100 - 69) / 12) :
+                v;
+  fm == 1 ? hz * pow(2, f / 12) :
+  fm == 2 ? hz * pow(2, f / 1200) :
+            hz + f;
+);
+
+// A width to Hz. In Semitones or Cents it is the interval above (or below) the
+// band's frequency c, expressed as the distance in Hz to that edge.
+function rb_width(u, w, c, up) (
+  u == 1 ? ( up ? c * (pow(2, w / 12) - 1) : c * (1 - pow(2, -w / 12)) ) :
+  u == 2 ? ( up ? c * (pow(2, w / 1200) - 1) : c * (1 - pow(2, -w / 1200)) ) :
+           w;
+);
+
+// Everything one band plays with this sample, drift and ramp included.
+function rb_band_params(i) local(s) (
+  s = i * N_TARGETS;
+  off_f  = rb_offset(s + 2);
+  off_ft = rb_offset(s + 3);
+  off_wu = rb_offset(s + 4);
+  off_wd = rb_offset(s + 5);
+  off_g  = rb_offset(s + 6);
+  off_p  = rb_offset(s + 7);
+  eff_freq   = rb_hz(band_pmode[i], band_freq[i] + off_f, band_fine[i] + off_ft, band_funit[i]);
+  eff_w_up   = max(rb_width(band_wu_unit[i], band_width_up[i] + off_wu, eff_freq, 1), 1);
+  eff_w_down = max(rb_width(band_wd_unit[i], band_width_down[i] + off_wd, eff_freq, 0), 1);
+  eff_gain   = band_gain[i] + off_g;
+  eff_pan    = max(min(band_pan[i] + off_p, 1), -1);
+);
+
 host_bpm = max(tempo, 0.001);
+tuning_ref = slider3 >= 20 ? slider3 : 440;
+tuning_eff = tuning_ref;
 
 @block
-// Refreshed once per block; the tempo never changes mid-block. Used by the
-// Drift period mode's Host x branch and by the Ramp time unit's Beats setting.
-// This plugin had no @block section at all before 2026-09-05.
 host_bpm = max(tempo, 0.001);
+
+// Note-name mirrors adopted here, so a restore cannot read as a user edit.
+!rb_ui_init ? (
+  rb_ln = slider6; rb_lv = slider7;
+  rb_ui_init = 1;
+);
 
 // Solo: when any band is soloed, only soloed bands are processed. A soloed band
 // at -60 dB still makes nothing -- that is a level, not a switch.
@@ -314,173 +408,155 @@ loop(N_BANDS, band_solo[rbs] ? rb_any_solo = 1; rbs += 1;);
 
 @slider
 in_gain     = 10 ^ (slider1 / 20);
-band_select = slider3;
+mode        = slider2;
+tuning_ref  = slider3 >= 20 ? slider3 : 440;
+band_select = max(0, min(N_BANDS - 1, slider4 | 0));
+wet         = slider18;
+vol         = slider19;
 
-sel_freq         = slider4;
-sel_width_up     = slider5;
-sel_width_down   = slider6;
-sel_gain         = slider7;
-sel_pan          = slider8;
-sel_order_idx    = slider9;
-sel_solo         = slider10;
-sel_drift_target = slider13;
-sel_drift_up     = slider14;
-sel_drift_down   = slider15;
-sel_drift_per    = slider16;
-sel_drift_mode   = slider17;
-sel_drift_shape  = slider18;
-sel_drift_play   = slider19;
-sel_drift_rest   = slider20;
-
-mode = slider2;
-wet  = slider11;
-vol  = slider12;
+sel_drift_target = max(0, min(N_TARGETS - 1, slider20 | 0));
+sel_ramp_target  = max(0, min(N_TARGETS - 1, slider28 | 0));
 
 band_changed = last_band_select != band_select;
 
 band_changed ? (
   // Load this band's per-band sliders.
-  slider4 = band_freq[band_select];
-  slider5 = band_width_up[band_select];
-  slider6 = band_width_down[band_select];
-  slider7 = band_gain[band_select];
-  slider8 = band_pan[band_select];
-  slider9 = band_order_idx[band_select];
-  slider10 = band_solo[band_select];
-  slider_automate(slider4);
-  slider_automate(slider5);
-  slider_automate(slider6);
-  slider_automate(slider7);
-  slider_automate(slider8);
-  slider_automate(slider9);
-  slider_automate(slider10);
-
-  // Load this band's last selected drift target.
-  saved_target = band_last_drift_target[band_select];
-  slider13 = saved_target;
-  slider_automate(slider13);
-  sel_drift_target = saved_target;
-
-  // Load that target's drift config from (band, target) slot.
-  drift_slot = band_select * N_TARGETS + saved_target;
-  slider14 = band_drift_up[drift_slot];
-  slider15 = band_drift_down[drift_slot];
-  slider16 = band_drift_per[drift_slot];
-  slider17 = band_drift_mode[drift_slot];
-  slider18 = band_drift_shape[drift_slot];
-  slider19 = band_drift_play[drift_slot];
-  slider20 = band_drift_rest[drift_slot];
-  slider_automate(slider19);
-  slider_automate(slider20);
-  slider_automate(slider14);
-  slider_automate(slider15);
-  slider_automate(slider16);
+  slider5  = band_pmode[band_select];
+  slider6  = band_note[band_select];
+  slider7  = band_freq[band_select];
+  slider8  = band_fine[band_select];
+  slider9  = band_funit[band_select];
+  slider10 = band_width_up[band_select];
+  slider11 = band_wu_unit[band_select];
+  slider12 = band_width_down[band_select];
+  slider13 = band_wd_unit[band_select];
+  slider14 = band_gain[band_select];
+  slider15 = band_pan[band_select];
+  slider16 = band_order_idx[band_select];
+  slider17 = band_solo[band_select];
+  slider_automate(slider5);  slider_automate(slider6);  slider_automate(slider7);
+  slider_automate(slider8);  slider_automate(slider9);  slider_automate(slider10);
+  slider_automate(slider11); slider_automate(slider12); slider_automate(slider13);
+  slider_automate(slider14); slider_automate(slider15); slider_automate(slider16);
   slider_automate(slider17);
-  slider_automate(slider18);
+
+  // Load this band's last selected drift target, and that slot's config.
+  sel_drift_target = band_last_drift_target[band_select];
+  slider20 = sel_drift_target;
+  slider_automate(slider20);
+  drift_slot = rb_slot(band_select, sel_drift_target);
+  slider21 = band_drift_up[drift_slot];
+  slider22 = band_drift_down[drift_slot];
+  slider23 = band_drift_per[drift_slot];
+  slider24 = band_drift_mode[drift_slot];
+  slider25 = band_drift_shape[drift_slot];
+  slider26 = band_drift_play[drift_slot];
+  slider27 = band_drift_rest[drift_slot];
+  slider_automate(slider21); slider_automate(slider22); slider_automate(slider23);
+  slider_automate(slider24); slider_automate(slider25); slider_automate(slider26);
+  slider_automate(slider27);
 ) : (
-  // Band didn't change. Check if drift target changed.
+  // Note name and Frequency are one control two ways in Semitones. Reconciled
+  // BEFORE the banks are captured, so the sound never lags the display.
+  rb_ui_init && slider5 == 1 ? (
+    slider6 != rb_ln ? ( slider7 = slider6; slider_automate(slider7); ) :
+    slider7 != rb_lv ? ( slider6 = max(0, min(127, floor(slider7 + 0.5))); slider_automate(slider6); );
+  );
+
   drift_target_changed = last_drift_target_select != sel_drift_target;
 
   drift_target_changed ? (
-    // Save current drift sliders to OLD (band, old_target) slot.
-    old_slot = band_select * N_TARGETS + last_drift_target_select;
-    band_drift_up[old_slot]    = sel_drift_up;
-    band_drift_down[old_slot]  = sel_drift_down;
-    band_drift_per[old_slot]   = sel_drift_per;
-    band_drift_mode[old_slot]  = sel_drift_mode;
-    band_drift_shape[old_slot] = sel_drift_shape;
-    band_drift_play[old_slot]  = sel_drift_play;
-    band_drift_rest[old_slot]  = sel_drift_rest;
+    // Save the drift sliders to the OLD slot, then load the new one.
+    old_slot = rb_slot(band_select, last_drift_target_select);
+    band_drift_up[old_slot]    = slider21;
+    band_drift_down[old_slot]  = slider22;
+    band_drift_per[old_slot]   = slider23;
+    band_drift_mode[old_slot]  = slider24;
+    band_drift_shape[old_slot] = slider25;
+    band_drift_play[old_slot]  = slider26;
+    band_drift_rest[old_slot]  = slider27;
 
-    // Update this band's last drift target memory.
     band_last_drift_target[band_select] = sel_drift_target;
 
-    // Load NEW (band, new_target) drift config into sliders.
-    new_slot = band_select * N_TARGETS + sel_drift_target;
-    slider14 = band_drift_up[new_slot];
-    slider15 = band_drift_down[new_slot];
-    slider16 = band_drift_per[new_slot];
-    slider17 = band_drift_mode[new_slot];
-    slider18 = band_drift_shape[new_slot];
-    slider19 = band_drift_play[new_slot];
-    slider20 = band_drift_rest[new_slot];
-    slider_automate(slider19);
-    slider_automate(slider20);
-    slider_automate(slider14);
-    slider_automate(slider15);
-    slider_automate(slider16);
-    slider_automate(slider17);
-    slider_automate(slider18);
+    new_slot = rb_slot(band_select, sel_drift_target);
+    slider21 = band_drift_up[new_slot];
+    slider22 = band_drift_down[new_slot];
+    slider23 = band_drift_per[new_slot];
+    slider24 = band_drift_mode[new_slot];
+    slider25 = band_drift_shape[new_slot];
+    slider26 = band_drift_play[new_slot];
+    slider27 = band_drift_rest[new_slot];
+    slider_automate(slider21); slider_automate(slider22); slider_automate(slider23);
+    slider_automate(slider24); slider_automate(slider25); slider_automate(slider26);
+    slider_automate(slider27);
   ) : (
-    // Neither changed. Save current slider values to their stored
-    // locations.
-    band_freq[band_select]       = sel_freq;
-    band_width_up[band_select]   = sel_width_up;
-    band_width_down[band_select] = sel_width_down;
-    band_gain[band_select]       = sel_gain;
-    band_pan[band_select]        = sel_pan;
-    band_order_idx[band_select]  = sel_order_idx;
-    band_solo[band_select]       = sel_solo;
+    // Neither changed. Save the visible values to where they belong.
+    band_pmode[band_select]      = slider5;
+    band_note[band_select]       = slider6;
+    band_freq[band_select]       = slider7;
+    band_fine[band_select]       = slider8;
+    band_funit[band_select]      = slider9;
+    band_width_up[band_select]   = slider10;
+    band_wu_unit[band_select]    = slider11;
+    band_width_down[band_select] = slider12;
+    band_wd_unit[band_select]    = slider13;
+    band_gain[band_select]       = slider14;
+    band_pan[band_select]        = slider15;
+    band_order_idx[band_select]  = slider16;
+    band_solo[band_select]       = slider17;
 
-    drift_slot = band_select * N_TARGETS + sel_drift_target;
-    band_drift_up[drift_slot]    = sel_drift_up;
-    band_drift_down[drift_slot]  = sel_drift_down;
-    band_drift_per[drift_slot]   = sel_drift_per;
-    band_drift_mode[drift_slot]  = sel_drift_mode;
-    band_drift_shape[drift_slot] = sel_drift_shape;
-    band_drift_play[drift_slot]  = sel_drift_play;
-    band_drift_rest[drift_slot]  = sel_drift_rest;
+    drift_slot = rb_slot(band_select, sel_drift_target);
+    band_drift_up[drift_slot]    = slider21;
+    band_drift_down[drift_slot]  = slider22;
+    band_drift_per[drift_slot]   = slider23;
+    band_drift_mode[drift_slot]  = slider24;
+    band_drift_shape[drift_slot] = slider25;
+    band_drift_play[drift_slot]  = slider26;
+    band_drift_rest[drift_slot]  = slider27;
   );
 );
 
-// --- Ramp target selector, the same nested-selector pattern as Drift and
-//     stored per (band, target) exactly like it. Kept as its own block rather
-//     than folded into the drift branches above, because Ramp has its OWN
-//     target: you can be ramping Frequency on band 3 while drifting its Pan.
-//     slider27 (engage) and slider23 (time unit) stay GLOBAL.
-sel_ramp_target = slider21;
+// --- Ramp target selector, the same nested pattern, with its OWN target: you
+//     can be ramping Frequency on band 3 while drifting its Pan. Ramp engage and
+//     Ramp time unit stay GLOBAL.
 band_changed ? (
-  // New band: adopt whatever ramp target that band was last left on, and load
-  // its config. No save here -- the outgoing band's values were written on the
-  // pass that set them, in the else-branch below.
-  rb_rt = band_last_ramp_target[band_select];
-  slider21 = rb_rt;
-  slider_automate(slider21);
-  sel_ramp_target = rb_rt;
-  rslot = band_select * N_TARGETS + rb_rt;
-  slider22 = band_ramp_by[rslot];
-  slider24 = band_ramp_dur[rslot];
-  slider25 = band_ramp_play[rslot];
-  slider26 = band_ramp_rest[rslot];
-  slider28 = band_ramp_delay[rslot];
-  slider_automate(slider22); slider_automate(slider24);
-  slider_automate(slider25); slider_automate(slider26);
+  sel_ramp_target = band_last_ramp_target[band_select];
+  slider28 = sel_ramp_target;
   slider_automate(slider28);
+  rslot = rb_slot(band_select, sel_ramp_target);
+  slider29 = band_ramp_by[rslot];
+  slider31 = band_ramp_dur[rslot];
+  slider32 = band_ramp_play[rslot];
+  slider33 = band_ramp_rest[rslot];
+  slider35 = band_ramp_delay[rslot];
+  slider_automate(slider29); slider_automate(slider31);
+  slider_automate(slider32); slider_automate(slider33);
+  slider_automate(slider35);
 ) : (
   last_ramp_target_select != sel_ramp_target ? (
-    rslot = band_select * N_TARGETS + last_ramp_target_select;
-    band_ramp_by[rslot]    = slider22;
-    band_ramp_dur[rslot]   = slider24;
-    band_ramp_play[rslot]  = slider25;
-    band_ramp_rest[rslot]  = slider26;
-    band_ramp_delay[rslot] = slider28;
+    rslot = rb_slot(band_select, last_ramp_target_select);
+    band_ramp_by[rslot]    = slider29;
+    band_ramp_dur[rslot]   = slider31;
+    band_ramp_play[rslot]  = slider32;
+    band_ramp_rest[rslot]  = slider33;
+    band_ramp_delay[rslot] = slider35;
     band_last_ramp_target[band_select] = sel_ramp_target;
-    rslot = band_select * N_TARGETS + sel_ramp_target;
-    slider22 = band_ramp_by[rslot];
-    slider24 = band_ramp_dur[rslot];
-    slider25 = band_ramp_play[rslot];
-    slider26 = band_ramp_rest[rslot];
-    slider28 = band_ramp_delay[rslot];
-    slider_automate(slider22); slider_automate(slider24);
-    slider_automate(slider25); slider_automate(slider26);
-    slider_automate(slider28);
+    rslot = rb_slot(band_select, sel_ramp_target);
+    slider29 = band_ramp_by[rslot];
+    slider31 = band_ramp_dur[rslot];
+    slider32 = band_ramp_play[rslot];
+    slider33 = band_ramp_rest[rslot];
+    slider35 = band_ramp_delay[rslot];
+    slider_automate(slider29); slider_automate(slider31);
+    slider_automate(slider32); slider_automate(slider33);
+    slider_automate(slider35);
   ) : (
-    rslot = band_select * N_TARGETS + sel_ramp_target;
-    band_ramp_by[rslot]    = slider22;
-    band_ramp_dur[rslot]   = slider24;
-    band_ramp_play[rslot]  = slider25;
-    band_ramp_rest[rslot]  = slider26;
-    band_ramp_delay[rslot] = slider28;
+    rslot = rb_slot(band_select, sel_ramp_target);
+    band_ramp_by[rslot]    = slider29;
+    band_ramp_dur[rslot]   = slider31;
+    band_ramp_play[rslot]  = slider32;
+    band_ramp_rest[rslot]  = slider33;
+    band_ramp_delay[rslot] = slider35;
     band_last_ramp_target[band_select] = sel_ramp_target;
   );
 );
@@ -488,35 +564,28 @@ band_changed ? (
 last_band_select         = band_select;
 last_drift_target_select = sel_drift_target;
 last_ramp_target_select  = sel_ramp_target;
+rb_ln = slider6; rb_lv = slider7;
+slider_show(slider6, slider5 == 1);
 
 @sample
-// --- Ramp clocks, one per (band, target). Engage (slider27) is a freeze/resume
-//     gate: while Off, progress HOLDS; only transport play (via @init) resets
-//     it. Advanced ONCE per sample here rather than inside the mode branches,
-//     because only one of those two branches runs and the clocks must not
-//     depend on which.
-//     A minute is 60 s, a beat is 60/tempo s, recomputed per sample so a tempo
-//     change is followed live in Beats mode.
-// Ramp time unit. No Cycles entry here: this plugin has no rate, so there are no
-// cycles to count, and an option that did nothing would be worse than its
-// absence -- the same rule the drift period unit follows. Minutes is the DEFAULT
-// because every saved instance has this control unset.
+// --- Ramp clocks, one per slot. Engage is a freeze/resume gate: while Off,
+//     progress HOLDS; only transport play (via @init) resets it. A minute is
+//     60 s, a beat is 60/tempo s, recomputed per sample so tempo is followed.
+//     No Cycles entry: this plugin has no rate to count cycles of.
 rb_ramp_scale =
-  slider23 == 2 ? 60 / max(host_bpm, 0.001) :
-  slider23 == 1 ? 60 :
+  slider30 == 2 ? 60 / max(host_bpm, 0.001) :
+  slider30 == 1 ? 60 :
                   1;
-slider27 ? (
+slider34 ? (
   rs = 0;
-  loop(N_BANDS * N_TARGETS,
+  loop(N_SLOTS,
     band_ramp_dur[rs] > 0 ? (
       rb_delay_samples = band_ramp_delay[rs] * rb_ramp_scale * srate;
       band_ramp_elapsed[rs] < rb_delay_samples ? (
         band_ramp_elapsed[rs] += 1;
       ) : (
-        // Staircase: advance for `play`, hold for `rest`, repeat. The holds come
-        // OUT of the duration rather than extending it -- the advancing step is
-        // scaled by (play+rest)/play -- so Ramp duration still means "you arrive
-        // in about this long".
+        // Staircase: the holds come OUT of the duration rather than extending
+        // it, so Ramp duration still means "you arrive in about this long".
         rb_pl = band_ramp_play[rs];
         rb_rs = band_ramp_rest[rs];
         rb_on = rb_pl > 0 && rb_rs > 0;
@@ -534,8 +603,18 @@ slider27 ? (
   );
 );
 
-in_L = spl0 * in_gain;
-in_R = spl1 * in_gain;
+// --- The four whole-plugin targets, once per sample, before any band.
+g_in  = rb_offset(0);
+g_tr  = rb_offset(1);
+g_wet = rb_offset(8);
+g_vol = rb_offset(9);
+in_gain_eff = g_in != 0 ? 10 ^ ((slider1 + g_in) / 20) : in_gain;
+tuning_eff  = max(20, min(2000, tuning_ref + g_tr));
+wet_eff     = max(0, min(1, wet + g_wet));
+vol_eff     = max(0, min(1, vol + g_vol));
+
+in_L = spl0 * in_gain_eff;
+in_R = spl1 * in_gain_eff;
 
 mode == 1 ? (
   // === Serial peaking EQ mode ===
@@ -544,96 +623,7 @@ mode == 1 ? (
 
   i = 0;
   loop(N_BANDS,
-    b_freq_base   = band_freq[i];
-    b_w_up_base   = band_width_up[i];
-    b_w_down_base = band_width_down[i];
-    b_gain_base   = band_gain[i];
-    b_pan_base    = band_pan[i];
-
-    eff_freq   = b_freq_base;
-    eff_w_up   = b_w_up_base;
-    eff_w_down = b_w_down_base;
-    eff_gain   = b_gain_base;
-    eff_pan    = b_pan_base;
-
-    // Loop through all 5 drift slots for this band
-    t = 0;
-    loop(N_TARGETS,
-      slot         = i * N_TARGETS + t;
-      d_up         = band_drift_up[slot];
-      d_down       = band_drift_down[slot];
-      d_per        = band_drift_per[slot];
-      d_per_mode   = band_drift_mode[slot];
-
-      // Zeroed before the guard: Ramp applies even when Drift is off, and the
-      // two are summed below.
-      d_offset = 0;
-      d_per > 0 && (d_up > 0 || d_down > 0) ? (
-        d_cps = 0;
-        // R20 canonical order {BPM, Seconds, Hz, Host x}. Seconds and Hz were
-        // the other way round until 2026-09-05; the stored bank is remapped in
-        // @serialize for any project saved before that.
-        d_per_mode == 0 ? d_cps = d_per / 60;
-        d_per_mode == 1 ? d_cps = 1.0 / d_per;
-        d_per_mode == 2 ? d_cps = d_per;
-        // Host x: d_per is BEATS PER CYCLE. tempo/60 is beats per second, so N
-        // beats per cycle is (tempo/60)/N cycles per second. Applied right here,
-        // per band, so bands in other modes are untouched. The enclosing guard
-        // is `d_per > 0`, so the division cannot meet a zero -- but it is
-        // written the safe way anyway, because inverting a unit inverts its edge
-        // cases and `1/max(raw,0.001)` clamps the wrong side.
-        d_per_mode == 3 ? d_cps = d_per > 0.001 ? max(tempo, 0.001) / 60 / d_per : 0.001;
-        // N per beat: d_per is CYCLES PER BEAT, the reciprocal of the line above,
-        // so it MULTIPLIES where that one divides. Written as its own exact test
-        // rather than folded into a `>= 3` -- this is a conversion, and the two
-        // host modes fall on opposite sides of it.
-        d_per_mode == 4 ? d_cps = max(tempo, 0.001) / 60 * max(d_per, 0.001);
-
-        // Drift play/rest, per (band, target), counted in PERIODS. While
-        // resting the phase does not advance at all, so the offset STAYS where
-        // it stopped -- freeze in place, not a return to centre. The FRACTION
-        // of the play value chooses where it parks: x.25 crest, x.75 trough,
-        // x.0 and x.5 neutral, so a whole number parks at no change every time
-        // and is nearly inaudible.
-        d_hold = pr_frozen(band_drift_pr_accum, band_drift_pr_rest, slot,
-                           d_cps / srate,
-                           band_drift_play[slot], band_drift_rest[slot]);
-        // One-armed on purpose -- an empty else-branch is a silent compile
-        // failure in eel2 (CLAUDE.md).
-        !d_hold ? (
-          band_drift_phase[slot] += d_cps / srate;
-          band_drift_phase[slot] >= 1.0 ? (
-            band_drift_phase[slot] -= 1.0;
-            band_drift_shape[slot] == 2 ? (
-              band_rand_old[slot] = band_rand_new[slot];
-              band_rand_new[slot] = rand(2) - 1;
-            );
-          );
-        );
-
-        d_phi   = band_drift_phase[slot];
-        d_shape = band_drift_shape[slot];
-        d_mod   = 0;
-        d_shape == 0 ? d_mod = sin(two_pi * d_phi);
-        d_shape == 1 ? d_mod = 1 - 4 * abs(d_phi - 0.5);
-        d_shape == 2 ? d_mod = band_rand_old[slot] + (band_rand_new[slot] - band_rand_old[slot]) * d_phi;
-
-        d_offset = d_mod >= 0 ? d_mod * d_up : d_mod * d_down;
-      );
-
-      // Ramp rides OUTSIDE the drift guard, because a ramp with no drift set is
-      // an ordinary thing to want. Its progress is advanced once per sample in
-      // the ramp clock block above; here it is only read.
-      tot_offset = d_offset + band_ramp_t[slot] * band_ramp_by[slot];
-
-      t == 0 ? eff_freq   = eff_freq + tot_offset;
-      t == 1 ? eff_w_up   = max(eff_w_up + tot_offset, 1);
-      t == 2 ? eff_w_down = max(eff_w_down + tot_offset, 1);
-      t == 3 ? eff_gain   = eff_gain + tot_offset;
-      t == 4 ? eff_pan    = max(min(eff_pan + tot_offset, 1), -1);
-
-      t += 1;
-    );
+    rb_band_params(i);
 
     eff_gain > -59 && (!rb_any_solo || band_solo[i]) ? (
       b_bw       = eff_w_up + eff_w_down;
@@ -642,7 +632,7 @@ mode == 1 ? (
 
       b_Q = max(eff_center / b_bw, 0.1);
 
-      // Gain is now in dB directly. Peaking EQ formula needs A = sqrt(linear_gain) = 10^(dB/40).
+      // Peaking EQ needs A = sqrt(linear_gain) = 10^(dB/40).
       gain_db   = eff_gain;
       A         = 10 ^ (gain_db / 40);
       omega0    = two_pi * eff_center * srate_inv;
@@ -700,95 +690,7 @@ mode == 1 ? (
 
   i = 0;
   loop(N_BANDS,
-    b_freq_base   = band_freq[i];
-    b_w_up_base   = band_width_up[i];
-    b_w_down_base = band_width_down[i];
-    b_gain_base   = band_gain[i];
-    b_pan_base    = band_pan[i];
-
-    eff_freq   = b_freq_base;
-    eff_w_up   = b_w_up_base;
-    eff_w_down = b_w_down_base;
-    eff_gain   = b_gain_base;
-    eff_pan    = b_pan_base;
-
-    t = 0;
-    loop(N_TARGETS,
-      slot         = i * N_TARGETS + t;
-      d_up         = band_drift_up[slot];
-      d_down       = band_drift_down[slot];
-      d_per        = band_drift_per[slot];
-      d_per_mode   = band_drift_mode[slot];
-
-      // Zeroed before the guard: Ramp applies even when Drift is off, and the
-      // two are summed below.
-      d_offset = 0;
-      d_per > 0 && (d_up > 0 || d_down > 0) ? (
-        d_cps = 0;
-        // R20 canonical order {BPM, Seconds, Hz, Host x}. Seconds and Hz were
-        // the other way round until 2026-09-05; the stored bank is remapped in
-        // @serialize for any project saved before that.
-        d_per_mode == 0 ? d_cps = d_per / 60;
-        d_per_mode == 1 ? d_cps = 1.0 / d_per;
-        d_per_mode == 2 ? d_cps = d_per;
-        // Host x: d_per is BEATS PER CYCLE. tempo/60 is beats per second, so N
-        // beats per cycle is (tempo/60)/N cycles per second. Applied right here,
-        // per band, so bands in other modes are untouched. The enclosing guard
-        // is `d_per > 0`, so the division cannot meet a zero -- but it is
-        // written the safe way anyway, because inverting a unit inverts its edge
-        // cases and `1/max(raw,0.001)` clamps the wrong side.
-        d_per_mode == 3 ? d_cps = d_per > 0.001 ? max(tempo, 0.001) / 60 / d_per : 0.001;
-        // N per beat: d_per is CYCLES PER BEAT, the reciprocal of the line above,
-        // so it MULTIPLIES where that one divides. Written as its own exact test
-        // rather than folded into a `>= 3` -- this is a conversion, and the two
-        // host modes fall on opposite sides of it.
-        d_per_mode == 4 ? d_cps = max(tempo, 0.001) / 60 * max(d_per, 0.001);
-
-        // Drift play/rest, per (band, target), counted in PERIODS. While
-        // resting the phase does not advance at all, so the offset STAYS where
-        // it stopped -- freeze in place, not a return to centre. The FRACTION
-        // of the play value chooses where it parks: x.25 crest, x.75 trough,
-        // x.0 and x.5 neutral, so a whole number parks at no change every time
-        // and is nearly inaudible.
-        d_hold = pr_frozen(band_drift_pr_accum, band_drift_pr_rest, slot,
-                           d_cps / srate,
-                           band_drift_play[slot], band_drift_rest[slot]);
-        // One-armed on purpose -- an empty else-branch is a silent compile
-        // failure in eel2 (CLAUDE.md).
-        !d_hold ? (
-          band_drift_phase[slot] += d_cps / srate;
-          band_drift_phase[slot] >= 1.0 ? (
-            band_drift_phase[slot] -= 1.0;
-            band_drift_shape[slot] == 2 ? (
-              band_rand_old[slot] = band_rand_new[slot];
-              band_rand_new[slot] = rand(2) - 1;
-            );
-          );
-        );
-
-        d_phi   = band_drift_phase[slot];
-        d_shape = band_drift_shape[slot];
-        d_mod   = 0;
-        d_shape == 0 ? d_mod = sin(two_pi * d_phi);
-        d_shape == 1 ? d_mod = 1 - 4 * abs(d_phi - 0.5);
-        d_shape == 2 ? d_mod = band_rand_old[slot] + (band_rand_new[slot] - band_rand_old[slot]) * d_phi;
-
-        d_offset = d_mod >= 0 ? d_mod * d_up : d_mod * d_down;
-      );
-
-      // Ramp rides OUTSIDE the drift guard, because a ramp with no drift set is
-      // an ordinary thing to want. Its progress is advanced once per sample in
-      // the ramp clock block above; here it is only read.
-      tot_offset = d_offset + band_ramp_t[slot] * band_ramp_by[slot];
-
-      t == 0 ? eff_freq   = eff_freq + tot_offset;
-      t == 1 ? eff_w_up   = max(eff_w_up + tot_offset, 1);
-      t == 2 ? eff_w_down = max(eff_w_down + tot_offset, 1);
-      t == 3 ? eff_gain   = eff_gain + tot_offset;
-      t == 4 ? eff_pan    = max(min(eff_pan + tot_offset, 1), -1);
-
-      t += 1;
-    );
+    rb_band_params(i);
 
     eff_gain > -59 && (!rb_any_solo || band_solo[i]) ? (
       b_bw       = eff_w_up + eff_w_down;
@@ -804,7 +706,6 @@ mode == 1 ? (
       ord_idx == 2 ? b_order = 4;
       ord_idx == 3 ? b_order = 8;
 
-      // Convert dB to linear multiplier for parallel mode.
       gain_linear = 10 ^ (eff_gain / 20);
 
       svf_base_L = i * MAX_ORDER * 2;
@@ -843,45 +744,37 @@ mode == 1 ? (
   );
 );
 
-out_L = in_L * (1 - wet) + wet_L * wet;
-out_R = in_R * (1 - wet) + wet_R * wet;
+out_L = in_L * (1 - wet_eff) + wet_L * wet_eff;
+out_R = in_R * (1 - wet_eff) + wet_R * wet_eff;
 
-spl0 = out_L * vol;
-spl1 = out_R * vol;
+spl0 = out_L * vol_eff;
+spl1 = out_R * vol_eff;
 
 @serialize
-// Versioned config persistence (added 2026-06-15). resonance_bank shipped
-// (v2.5) with NO @serialize, so per-band setups never survived a project
-// save/load — only the selected band's slider values came back. This adds
-// it: the full 16-band config (per-band params + per-(band,target) drift
-// config) now persists. Lead with a count-encoded magic so future format
-// changes (band or drift-target count) degrade to @init defaults instead
-// of mis-reading a stale blob; projects saved before this had no blob, so
-// they deterministically load as defaults too. Runtime (filter state,
-// drift phase / random-shape state) is NOT serialized — it resets per
-// play in @init.
-// FORMAT BUMPED 2026-09-05 (v1 -> v2). v2 adds drift play/rest, the whole Ramp
-// block, and puts Drift period mode into the suite's canonical enum order.
+// Versioned config persistence. The magic is count-encoded, so a blob this
+// build does not know degrades to @init defaults instead of being mis-read.
 //
-// A v1 blob is still READ, and then its drift-mode values are MIGRATED, because
-// the enum order changed underneath them: v1 was {BPM, Hz, Seconds, Host x} and
-// v2 is {BPM, Seconds, Hz, Host x}, so a stored 1 and a stored 2 swap places.
-// The migration is gated on the blob HAVING the field (v1 magic), never on "the
-// blob is old" -- a pre-drift blob would not have written those banks at all,
-// and permuting @init's defaults is how that mistake mutes things (CLAUDE.md).
-// The new banks are only read from a v2 blob; a v1 blob leaves them at their
-// @init defaults, which is drift play/rest off and ramp off -- exactly how this
-// plugin behaved before today.
-rb_magic_v1 = 1000000 + N_BANDS * 1000 + N_TARGETS;   // 1016005
-rb_magic_v2 = 2000000 + N_BANDS * 1000 + N_TARGETS;   // 2016005
-rb_magic_v3 = 3000000 + N_BANDS * 1000 + N_TARGETS;   // 3016005, 2026-09-10: + band_solo
-res_ser_magic = rb_magic_v3;
+// v1 (1016005): the 16-band config and the 5-target drift config.
+// v2 (2016005, 2026-09-05): + drift play/rest, the Ramp block, canonical drift
+//    period mode order ({BPM, Hz, Seconds} -> {BPM, Seconds, Hz}).
+// v3 (3016005, 2026-09-10): + band solo.
+// v4 (4016010, 2026-09-11): 10 targets; + pitch mode, note, fine tune, fine tune
+//    unit and both width units per band. Target banks are 160 wide.
+//
+// v1-v3 are read into the old 80-wide banks exactly as before, then copied into
+// the 10-target banks through rb_o2n. Migrate only what was RESTORED: a v1 blob
+// never held play/rest or ramp, so those stay at their defaults.
+rb_magic_v1 = 1016005;
+rb_magic_v2 = 2016005;
+rb_magic_v3 = 3016005;
+rb_magic_v4 = 4000000 + N_BANDS * 1000 + N_TARGETS;   // 4016010
+res_ser_magic = rb_magic_v4;
 file_var(0, res_ser_magic);
 rb_is_v1 = res_ser_magic == rb_magic_v1;
 rb_is_v2 = res_ser_magic == rb_magic_v2;
 rb_is_v3 = res_ser_magic == rb_magic_v3;
-(rb_is_v1 || rb_is_v2 || rb_is_v3) ? (
-  !rb_is_v3 ? memset(band_solo, 0, N_BANDS);
+rb_is_v4 = res_ser_magic == rb_magic_v4;
+(rb_is_v1 || rb_is_v2 || rb_is_v3 || rb_is_v4) ? (
   file_mem(0, band_freq,              N_BANDS);
   file_mem(0, band_gain,              N_BANDS);
   file_mem(0, band_width_up,          N_BANDS);
@@ -889,75 +782,128 @@ rb_is_v3 = res_ser_magic == rb_magic_v3;
   file_mem(0, band_pan,               N_BANDS);
   file_mem(0, band_order_idx,         N_BANDS);
   file_mem(0, band_last_drift_target, N_BANDS);
-  file_mem(0, band_drift_up,    N_BANDS * N_TARGETS);
-  file_mem(0, band_drift_down,  N_BANDS * N_TARGETS);
-  file_mem(0, band_drift_per,   N_BANDS * N_TARGETS);
-  file_mem(0, band_drift_mode,  N_BANDS * N_TARGETS);
-  file_mem(0, band_drift_shape, N_BANDS * N_TARGETS);
 
-  // v2 additions. On WRITE rb_is_v2 is always true, so these are always saved.
-  (rb_is_v2 || rb_is_v3) ? (
-    file_mem(0, band_drift_play,  N_BANDS * N_TARGETS);
-    file_mem(0, band_drift_rest,  N_BANDS * N_TARGETS);
-    file_mem(0, band_ramp_by,     N_BANDS * N_TARGETS);
-    file_mem(0, band_ramp_dur,    N_BANDS * N_TARGETS);
-    file_mem(0, band_ramp_delay,  N_BANDS * N_TARGETS);
-    file_mem(0, band_ramp_play,   N_BANDS * N_TARGETS);
-    file_mem(0, band_ramp_rest,   N_BANDS * N_TARGETS);
+  rb_is_v4 ? (
+    file_mem(0, band_drift_up,    N_SLOTS);
+    file_mem(0, band_drift_down,  N_SLOTS);
+    file_mem(0, band_drift_per,   N_SLOTS);
+    file_mem(0, band_drift_mode,  N_SLOTS);
+    file_mem(0, band_drift_shape, N_SLOTS);
+    file_mem(0, band_drift_play,  N_SLOTS);
+    file_mem(0, band_drift_rest,  N_SLOTS);
+    file_mem(0, band_ramp_by,     N_SLOTS);
+    file_mem(0, band_ramp_dur,    N_SLOTS);
+    file_mem(0, band_ramp_delay,  N_SLOTS);
+    file_mem(0, band_ramp_play,   N_SLOTS);
+    file_mem(0, band_ramp_rest,   N_SLOTS);
     file_mem(0, band_last_ramp_target, N_BANDS);
-    rb_is_v3 ? file_mem(0, band_solo, N_BANDS);
-  );
+    file_mem(0, band_solo,        N_BANDS);
+    file_mem(0, band_pmode,       N_BANDS);
+    file_mem(0, band_note,        N_BANDS);
+    file_mem(0, band_fine,        N_BANDS);
+    file_mem(0, band_funit,       N_BANDS);
+    file_mem(0, band_wu_unit,     N_BANDS);
+    file_mem(0, band_wd_unit,     N_BANDS);
+  ) : (
+    // An old save. Only ever true on READ: a write stamps v4 above.
+    file_mem(0, ob_drift_up,    80);
+    file_mem(0, ob_drift_down,  80);
+    file_mem(0, ob_drift_per,   80);
+    file_mem(0, ob_drift_mode,  80);
+    file_mem(0, ob_drift_shape, 80);
+    rb_is_v1 ? (
+      memset(band_solo, 0, N_BANDS);
+    ) : (
+      file_mem(0, ob_drift_play,  80);
+      file_mem(0, ob_drift_rest,  80);
+      file_mem(0, ob_ramp_by,     80);
+      file_mem(0, ob_ramp_dur,    80);
+      file_mem(0, ob_ramp_delay,  80);
+      file_mem(0, ob_ramp_play,   80);
+      file_mem(0, ob_ramp_rest,   80);
+      file_mem(0, band_last_ramp_target, N_BANDS);
+      rb_is_v3 ? file_mem(0, band_solo, N_BANDS) : memset(band_solo, 0, N_BANDS);
+    );
+    // v1's drift period mode was {BPM, Hz, Seconds}: swap 1 and 2.
+    rb_is_v1 ? (
+      rbm = 0;
+      loop(80,
+        ob_drift_mode[rbm] == 1 ? ( ob_drift_mode[rbm] = 2; )
+        : ob_drift_mode[rbm] == 2 ? ( ob_drift_mode[rbm] = 1; );
+        rbm += 1;
+      );
+    );
 
-  // Enum migration, read-only by construction: rb_is_v1 can only be true after
-  // a READ, because a WRITE stamps rb_magic_v2 above. Swaps the two values that
-  // changed places and leaves 0 (BPM) and 3 (Host x) alone.
-  rb_is_v1 ? (
-    rbm = 0;
-    loop(N_BANDS * N_TARGETS,
-      band_drift_mode[rbm] == 1 ? ( band_drift_mode[rbm] = 2; )
-      : band_drift_mode[rbm] == 2 ? ( band_drift_mode[rbm] = 1; );
-      rbm += 1;
+    rb_cfg_defaults();
+    rb_pitch_defaults();
+    rbb = 0;
+    loop(N_BANDS,
+      rbo = 0;
+      loop(5,
+        rbf = rbb * 5 + rbo;
+        rbt = rbb * N_TARGETS + rb_o2n(rbo);
+        band_drift_up[rbt]    = ob_drift_up[rbf];
+        band_drift_down[rbt]  = ob_drift_down[rbf];
+        band_drift_per[rbt]   = ob_drift_per[rbf];
+        band_drift_mode[rbt]  = ob_drift_mode[rbf];
+        band_drift_shape[rbt] = ob_drift_shape[rbf];
+        !rb_is_v1 ? (
+          band_drift_play[rbt]  = ob_drift_play[rbf];
+          band_drift_rest[rbt]  = ob_drift_rest[rbf];
+          band_ramp_by[rbt]     = ob_ramp_by[rbf];
+          band_ramp_dur[rbt]    = ob_ramp_dur[rbf];
+          band_ramp_delay[rbt]  = ob_ramp_delay[rbf];
+          band_ramp_play[rbt]   = ob_ramp_play[rbf];
+          band_ramp_rest[rbt]   = ob_ramp_rest[rbf];
+        );
+        rbo += 1;
+      );
+      band_last_drift_target[rbb] = rb_o2n(max(0, min(4, band_last_drift_target[rbb] | 0)));
+      band_last_ramp_target[rbb]  = rb_is_v1 ? 2 : rb_o2n(max(0, min(4, band_last_ramp_target[rbb] | 0)));
+      rbb += 1;
     );
   );
 
-  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0;
-  // on WRITE it is < 0. @serialize is the only section guaranteed to run on
-  // both load AND duplicate, so it re-establishes the bank<->slider invariant.
-  // This plugin has TWO nested selectors (band + drift-target), so on read we
-  // force BOTH the per-band config sliders (3-8) for the selected band AND the
-  // drift config sliders (10-14) for that band's remembered drift target back
-  // to their restored bank values, and sync the last_* trackers so the next
-  // @slider capture writes the correct values (not a transient clobbered 0).
+  // TRACK-DUPLICATE FIX (v2.14). On READ (load/duplicate) file_avail(0) >= 0.
+  // @serialize is the only section guaranteed to run on both, so it
+  // re-establishes the bank<->slider invariant for both nested selectors.
   file_avail(0) >= 0 ? (
-    rb_band = slider3;
-    slider4 = band_freq[rb_band];
-    slider5 = band_width_up[rb_band];
-    slider6 = band_width_down[rb_band];
-    slider7 = band_gain[rb_band];
-    slider8 = band_pan[rb_band];
-    slider9 = band_order_idx[rb_band];
-    slider10 = band_solo[rb_band];
-    rb_dt   = band_last_drift_target[rb_band];
-    slider13 = rb_dt;
-    rb_slot = rb_band * N_TARGETS + rb_dt;
-    slider14 = band_drift_up[rb_slot];
-    slider15 = band_drift_down[rb_slot];
-    slider16 = band_drift_per[rb_slot];
-    slider17 = band_drift_mode[rb_slot];
-    slider18 = band_drift_shape[rb_slot];
-    slider19 = band_drift_play[rb_slot];
-    slider20 = band_drift_rest[rb_slot];
+    rb_band = max(0, min(N_BANDS - 1, slider4 | 0));
+    slider5  = band_pmode[rb_band];
+    slider6  = band_note[rb_band];
+    slider7  = band_freq[rb_band];
+    slider8  = band_fine[rb_band];
+    slider9  = band_funit[rb_band];
+    slider10 = band_width_up[rb_band];
+    slider11 = band_wu_unit[rb_band];
+    slider12 = band_width_down[rb_band];
+    slider13 = band_wd_unit[rb_band];
+    slider14 = band_gain[rb_band];
+    slider15 = band_pan[rb_band];
+    slider16 = band_order_idx[rb_band];
+    slider17 = band_solo[rb_band];
+    rb_dt    = band_last_drift_target[rb_band];
+    slider20 = rb_dt;
+    rb_slot_r = rb_slot(rb_band, rb_dt);
+    slider21 = band_drift_up[rb_slot_r];
+    slider22 = band_drift_down[rb_slot_r];
+    slider23 = band_drift_per[rb_slot_r];
+    slider24 = band_drift_mode[rb_slot_r];
+    slider25 = band_drift_shape[rb_slot_r];
+    slider26 = band_drift_play[rb_slot_r];
+    slider27 = band_drift_rest[rb_slot_r];
     rb_rt    = band_last_ramp_target[rb_band];
-    slider21 = rb_rt;
-    rb_rslot = rb_band * N_TARGETS + rb_rt;
-    slider22 = band_ramp_by[rb_rslot];
-    slider24 = band_ramp_dur[rb_rslot];
-    slider25 = band_ramp_play[rb_rslot];
-    slider26 = band_ramp_rest[rb_rslot];
-    slider28 = band_ramp_delay[rb_rslot];
+    slider28 = rb_rt;
+    rb_rslot = rb_slot(rb_band, rb_rt);
+    slider29 = band_ramp_by[rb_rslot];
+    slider31 = band_ramp_dur[rb_rslot];
+    slider32 = band_ramp_play[rb_rslot];
+    slider33 = band_ramp_rest[rb_rslot];
+    slider35 = band_ramp_delay[rb_rslot];
     last_band_select         = rb_band;
     last_drift_target_select = rb_dt;
     last_ramp_target_select  = rb_rt;
+    rb_ln = slider6; rb_lv = slider7;
     sliderchange(-1);
   );
 );
