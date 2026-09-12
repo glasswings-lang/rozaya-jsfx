@@ -327,18 +327,8 @@ predicted-versus-actual check), never from @init or a play edge alone.
 ### More than one Ramp -- suite-wide (Rozaya, 2026-09-12, being designed, nothing built)
 
 Rozaya: *"I noticed we only have one ramp. That's great for sleep. That's not so great for
-waking."* Today every plugin has one linear ramp per target, run once, then held. Shape
-Rozaya proposed: *"its own target list, ramp selecter, then the ramp stuff"* -- a Ramp
-selector (Ramp 1, 2, ...) above the target selector; in Passage, slot > ramp > target.
-Timing: each ramp's Start delay gets a "counts from" choice {start of the song, end of the
-ramp before it}; I proposed dropping the song-start choice for later ramps as rarely
-needed, and Rozaya: *"Rarely is not the same as never."* -- both stay. **Mine, unquoted:**
-overlapping ramps on one target add together; ramp 1 has nothing before it. **Eight ramps**
--- Rozaya: *"Yes. I think that's a good one"*. **A shape per (ramp, target)**, the fade names {Linear,
-Cosine, Logarithmic, Exponential}, default Linear so saved ramps stay even -- Rozaya: *"Yes,
-actually."* **Ramp engage and Ramp time unit per ramp**, no longer global -- Rozaya:
-*"Ramp engage is just like any other ramp control. needs to be per-ramp"*. **Open:** defaults; the layout per plugin before any
-migration (CLAUDE.md), with the nested-selector @serialize fix built in from the start.
+waking."* Eight ramps behind a Ramp selector, each with its own shape, engage and time
+unit. Everything settled and still open: `docs/layouts/multi-ramp.md`.
 
 ### A bar-shape change lands on the next click (Rozaya, 2026-09-11, not built)
 
