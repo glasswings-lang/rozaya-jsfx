@@ -711,7 +711,7 @@ note, in Semitones)`, the amount units and their thirteen-choice list -- all in
 0-5, 7-12: -48, -36, -24, -12, -7, -5, +5, +7, +12, +24, +36, +48), Layers 14-16 the
 Custom three (old 13-15, keeping their stored pitches). A fresh instance and every saved
 one sound the same. Layers are offsets from the main Transpose, so they carry no Source
-or Target note of their own -- ASK.
+or Target note of their own -- settled, see the questions below.
 
 **Targets, control order, 55 -> 87:** Morph, Auto-morph time, Texture, Wash grain,
 Spread, Transpose, Fine tune, Tuning reference, Stereo width, Denoise, Low cut, High
@@ -728,7 +728,10 @@ projects** (as of the R24 migration); captures inventoried before and verified a
 **Questions still open, to ask Rozaya one at a time:**
 - SETTLED: Auto-morph time before Rate mode, as R20 says -- asked with that
   recommendation; Rozaya: *"Yes"*. The source comment defending mode-first goes with it.
-- Layers without Source/Target notes of their own?
+- SETTLED: layers carry no Source or Target note; they stay offsets from the main
+  block. Rozaya: *"Nah, keep it as-is. the point of layers is to avoid the need to
+  introduce clashing via layering of tracks for the sake of fuller frequency
+  representation as like... the only way of getting it"*.
 - The pitch block where Pitch sits today (after Spread) rather than first in the sound?
 
 Noticed, not proposed: the transport labels still say "beats in Host x", a name R21
