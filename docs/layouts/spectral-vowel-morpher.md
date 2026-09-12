@@ -575,7 +575,12 @@ document, worse in the hand.
 
 > `Drift amount unit` and `Ramp by unit`, both PER-TARGET (they join the
 > existing nested selector alongside up/down/period), both
-> `{Target default, Hz, Cents, Semitones, BPM, Seconds, dB, Percent}`.
+> ~~`{Target default, Hz, Cents, Semitones, BPM, Seconds, dB, Percent}`~~
+
+**That option list is SUPERSEDED, 2026-09-11.** It lacked five units the suite uses.
+The list agreed for all nineteen plugins is in `docs/layouts/spectral-vowel-passage.md`,
+"The amount units": `{Target default, Hz, Semitones, Cents, Milliseconds, Seconds,
+Minutes, BPM, Beats, Cycles, dB, Percent, Degrees}`.
 
 **`Target default` is position 0 and is the live value for every saved
 instance** — it means "whatever this target's natural unit already was", so

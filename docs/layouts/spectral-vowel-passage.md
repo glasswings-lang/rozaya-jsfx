@@ -131,9 +131,13 @@ agreed in the Morpher's layout on 2026-09-08 (after *"No unit locks. ever."*) an
 built anywhere. Offered: fold it into Passage's and the Morpher's migrations now, then
 sweep the other seventeen straight after, or all nineteen later at a second migration
 each. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. **The
-sweep is owed** (`docs/backlog.md`). **Mine, unquoted, to ask:** the option list. The
-Morpher doc's `{Target default, Hz, Cents, Semitones, BPM, Seconds, dB, Percent}` has no
-Milliseconds (Wash grain) or Beats (slot timings), which Passage needs.
+sweep is owed** (`docs/backlog.md`). **The option list, one for all nineteen plugins,** built from a scan of every slider
+name in `src/` (units in use: Hz, dB, %, semitones, cents, ms, sec, minutes, BPM, beats,
+cycles, degrees, plus counts): `{Target default, Hz, Semitones, Cents, Milliseconds,
+Seconds, Minutes, BPM, Beats, Cycles, dB, Percent, Degrees}`. Proposed by me, grouped
+pitch / time / level / angle with pitch in the pitch pickers' order; Rozaya: *"Yes"*.
+Counts (harmonics, beats per bar) stay on Target default. It replaces the Morpher
+doc's 2026-09-08 list, which lacked five units the suite uses.
 
 **Drift and Ramp targets, in control order:** Transpose, Fine tune, Texture, Wash
 grain, Spread, Denoise, Low cut, High cut, Overtone harmonic, Overtone lift, Slot fade
