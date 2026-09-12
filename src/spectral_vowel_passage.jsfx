@@ -352,6 +352,13 @@ slot_srcnote  = freemem; freemem += NSLOTS;
 slot_srcfine  = freemem; freemem += NSLOTS;
 slot_srcfunit = freemem; freemem += NSLOTS;
 slot_tgtnote  = freemem; freemem += NSLOTS;
+// Per-slot Wash grain and High cut (2026-09-11). Not yet in @serialize either.
+slot_grain    = freemem; freemem += NSLOTS;
+slot_hicut    = freemem; freemem += NSLOTS;
+grain_seed = 0;
+hc_on = 0; hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;   // EEL2 has no scientific notation
+// A partial's High cut gain: 1 below the fade, falling to 0 at the cut.
+function hc_g(f) ( f > hc_lo ? (hc_top - f) * hc_inv : 1; );
 tuning_ref = 440;
 // Bubbler's model: every pitch value resolves to SEMITONES. Hz counts from the Tuning
 // reference. A Source fine tune in Hz counts from the source note's own frequency.
@@ -379,6 +386,7 @@ function ps_adopt() (
   ps_last[24] = slider55; ps_last[25] = slider58; ps_last[26] = slider62;
   ps_last[32] = slider5;  ps_last[33] = slider6;  ps_last[34] = slider7;  ps_last[35] = slider8;
   ps_last[36] = slider10; ps_last[37] = slider11; ps_last[38] = slider12;
+  ps_last[39] = slider14; ps_last[40] = slider18;
   pv_last_tgt = slider8; pv_last_tval = slider9; pv_last_src = slider5; pv_last_sf = slider6; pv_last_sfu = slider7;
 );
 i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
@@ -387,6 +395,7 @@ slots_inited == 0 ? (
   slots_inited = 1;
   i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_capavg[i] = 1; slot_ot_harm[i] = 0; slot_ot_depth[i] = 24; slot_linger[i] = 4; slot_xfade[i] = 1; slot_fadein[i] = 1; slot_gap[i] = 0; slot_xfadeon[i] = 1; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NSLOTS, slot_tunit[i] = 1; slot_fine[i] = 0; slot_funit[i] = 2; slot_srcnote[i] = 0; slot_srcfine[i] = 0; slot_srcfunit[i] = 2; slot_tgtnote[i] = 60; i += 1; );  // pitch block: Semitones, no fine tune, Source note None
+  i = 0; loop(NSLOTS, slot_grain[i] = 150; slot_hicut[i] = 20000; i += 1; );   // Wash grain's default; High cut off
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -611,6 +620,8 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir) (
     // two spectra are blended. GR only maps grain grid -> analysis grid.
     srcb = i * GR;
     (srcb >= 0 && srcb < NBINS - 1) ? ( b0 = floor(srcb); fr = srcb - b0; m = (curmag[b0]*(1-fr) + curmag[b0+1]*fr) * GINV; ) : ( m = 0; );
+    // High cut, after each slot's transposition: i is an absolute output frequency.
+    hc_on ? ( i >= hcg_hi ? ( m = 0; ) : ( i > hcg_lo ? ( m *= (hcg_hi - i) * hcg_inv; ); ); );
     ph = phase[i] + (useR ? woff*doff[i] : 0);
     re = m * cos(ph); im = m * sin(ph);
     fftwork[2*i] = re; fftwork[2*i+1] = im;
@@ -690,6 +701,10 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   pk = 0; i = 0; loop(NBINS, curmag[i] > pk ? pk = curmag[i]; i += 1; );
   thr = eff_denoise * 0.01 * 0.1 * pk;
   cutbin = floor(eff_lowcut_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
+  // High cut in the GRAIN's output bins, read at grain time (a grain is a snapshot).
+  hcg_hi  = hc_on ? hc_top * GFFT / srate : GBINS + 1;
+  hcg_lo  = hc_on ? hc_lo  * GFFT / srate : GBINS + 1;
+  hcg_inv = hc_on ? 1 / max(1, hcg_hi - hcg_lo) : 0;
   // Overtone on the WASH. Same control, same window shape, expressed in bins
   // instead of partials. The wash keeps the magnitude spectrum -- the harmonic
   // peaks are still there, phase-randomised into narrow noise bands -- so
@@ -950,6 +965,7 @@ slider_show(slider8, slider5 > 0 && slider10 == 1);
     slot_srcnote[last_cap_slot] = slider5; slot_srcfine[last_cap_slot] = slider6; slot_srcfunit[last_cap_slot] = slider7;
     slot_tgtnote[last_cap_slot] = slider8; slot_tunit[last_cap_slot] = slider10;
     slot_fine[last_cap_slot] = slider11; slot_funit[last_cap_slot] = slider12;
+    slot_grain[last_cap_slot] = slider14; slot_hicut[last_cap_slot] = slider18;
   );
   slider21 = slot_fadein[cap_slot];
   slider22 = slot_linger[cap_slot];
@@ -967,6 +983,7 @@ slider_show(slider8, slider5 > 0 && slider10 == 1);
   slider5 = slot_srcnote[cap_slot]; slider6 = slot_srcfine[cap_slot]; slider7 = slot_srcfunit[cap_slot];
   slider8 = slot_tgtnote[cap_slot]; slider10 = slot_tunit[cap_slot];
   slider11 = slot_fine[cap_slot]; slider12 = slot_funit[cap_slot];
+  slider14 = slot_grain[cap_slot]; slider18 = slot_hicut[cap_slot];
   sliderchange(-1);   // refresh the displayed values; NOT slider_automate
 
   slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering (All shows Slot 1's)
@@ -1013,6 +1030,8 @@ slider_show(slider8, slider5 > 0 && slider10 == 1);
     ps_all(36, slider10, slider10, slot_tunit);
     ps_all(37, slider11, slider11, slot_fine);
     ps_all(38, slider12, slider12, slot_funit);
+    ps_all(39, slider14, slider14, slot_grain);
+    ps_all(40, slider18, slider18, slot_hicut);
   );
   last_cap_slot = cap_slot; last_cap_sel = cap_sel; last_cap_all = cap_all;
 ) : (
@@ -1037,6 +1056,7 @@ slider_show(slider8, slider5 > 0 && slider10 == 1);
   slot_srcnote[cap_slot] = slider5; slot_srcfine[cap_slot] = slider6; slot_srcfunit[cap_slot] = slider7;
   slot_tgtnote[cap_slot] = slider8; slot_tunit[cap_slot] = slider10;
   slot_fine[cap_slot] = slider11; slot_funit[cap_slot] = slider12;
+  slot_grain[cap_slot] = slider14; slot_hicut[cap_slot] = slider18;
   ps_adopt();
   last_cap_slot = cap_slot; last_cap_sel = cap_sel; last_cap_all = cap_all;   // also syncs the first-load case above
 );
@@ -1182,6 +1202,13 @@ drift_restart_free = slider53;   // 0 = restart on play (sync), 1 = free-running
 // All slots: adopt what is on screen once the instance is configured, so the first
 // change-detected pass on All compares against real values, not defaults.
 !ps_inited ? ( ps_adopt(); ps_inited = 1; );
+// Per-slot Wash grain (2026-09-11). A project saved before it existed played every slot
+// at its one Wash grain, so a load seeds all eight from that value (interim: on EVERY
+// load, until the save-format stage stores the bank and gates this on the magic). The
+// grain then follows the heard slots -- one slot's exact value when they agree (a blend
+// of two equal numbers can round a hair low and floor a sample off the grain).
+grain_seed ? ( grain_seed = 0; gsd_i = 0; loop(NSLOTS, slot_grain[gsd_i] = slider14; gsd_i += 1; ); );
+grain_ms = slot_grain[sb_i] == slot_grain[sb_j] ? slot_grain[sb_i] : sblend(slot_grain, sb_i, sb_j, sb_f);
 // Transport play-edge: immediate runtime setup -- rebuild window, clear the
 // accumulator, reset runtime (captures themselves are NOT touched). With
 // ext_noinit, @init no longer does this on play, so it's explicit here. The
@@ -1329,6 +1356,7 @@ cap_dirty ? (
   slot_denoise[cpk] = slider16;
   slot_srcnote[cpk] = slider5; slot_srcfine[cpk] = slider6; slot_srcfunit[cpk] = slider7;
   slot_tgtnote[cpk] = slider8; slot_tunit[cpk] = slider10; slot_fine[cpk] = slider11; slot_funit[cpk] = slider12;
+  slot_grain[cpk] = slider14; slot_hicut[cpk] = slider18;
   cpk += 1; );
   slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
 cap_last = cap_trig;
@@ -1672,6 +1700,20 @@ eff_stereo_width = max(0, min(100, sblend(slot_width, sb_i, sb_j, sb_f)
                                    + dmod(3)));
 voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX;
 
+// High cut, per slot (2026-09-11), the Morpher's shape: both engines read hc_bound
+// (stop), hc_lo (start the fade), hc_inv (fade slope) and hc_top. Off is a fade that
+// starts at 1000000000 Hz, so every partial multiplies by exactly 1. The top fifth
+// fades rather than gates, so a cut swept by Drift never steps a partial off.
+eff_hicut_hz = slot_hicut[sb_i] == slot_hicut[sb_j] ? slot_hicut[sb_i] : sblend(slot_hicut, sb_i, sb_j, sb_f);
+eff_hicut_hz = max(200, min(20000, eff_hicut_hz));
+hc_on = eff_hicut_hz < 19999.5 ? 1 : 0;
+hc_on ? (
+  hc_top = eff_hicut_hz; hc_lo = eff_hicut_hz * 0.8;
+  hc_inv = 1 / max(1, hc_top - hc_lo);
+  hc_bound = min(srate*0.5, hc_top);
+) : (
+  hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;
+);
 eff_lowcut_hz = max(0, min(500, sblend(slot_lowcut, sb_i, sb_j, sb_f)
                                 + dmod(4)));
 
@@ -1855,14 +1897,14 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     // reads foreign memory when it happens.
     loop(NHARM,
       hmA = slot_harm[bA+vn]/normA * ot_gain[vn];   // Overtone: 1 everywhere when off
-      ((vn+1)*fAL) < srate*0.5 ? ( vvAL += hmA*wtsin(hph[vn]);
+      ((vn+1)*fAL) < hc_bound ? ( vvAL += hmA*hc_g((vn+1)*fAL)*wtsin(hph[vn]);
         hph[vn]   += TWOPI*(vn+1)*fAL/srate; hph[vn]   >= TWOPI ? hph[vn]   -= TWOPI; );
-      ((vn+1)*fAR) < srate*0.5 ? ( vvAR += hmA*wtsin(hphR[vn]);
+      ((vn+1)*fAR) < hc_bound ? ( vvAR += hmA*hc_g((vn+1)*fAR)*wtsin(hphR[vn]);
         hphR[vn]  += TWOPI*(vn+1)*fAR/srate; hphR[vn]  >= TWOPI ? hphR[vn]  -= TWOPI; );
       hmB = slot_harm[bB+vn]/normB * ot_gain[vn];
-      ((vn+1)*fBL) < srate*0.5 ? ( vvBL += hmB*wtsin(hphB[vn]);
+      ((vn+1)*fBL) < hc_bound ? ( vvBL += hmB*hc_g((vn+1)*fBL)*wtsin(hphB[vn]);
         hphB[vn]  += TWOPI*(vn+1)*fBL/srate; hphB[vn]  >= TWOPI ? hphB[vn]  -= TWOPI; );
-      ((vn+1)*fBR) < srate*0.5 ? ( vvBR += hmB*wtsin(hphBR[vn]);
+      ((vn+1)*fBR) < hc_bound ? ( vvBR += hmB*hc_g((vn+1)*fBR)*wtsin(hphBR[vn]);
         hphBR[vn] += TWOPI*(vn+1)*fBR/srate; hphBR[vn] >= TWOPI ? hphBR[vn] -= TWOPI; );
       vn += 1;
     );
@@ -1875,9 +1917,9 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
     // above -- see the note there for why an above-Nyquist partial could run its
     // accumulator away and read past the end of the sine table.
     loop(NHARM,
-      ((vn+1)*fA) < srate*0.5 ? ( vvA += (slot_harm[bA+vn]/normA)*ot_gain[vn]*wtsin(hph[vn]);
+      ((vn+1)*fA) < hc_bound ? ( vvA += (slot_harm[bA+vn]/normA)*ot_gain[vn]*hc_g((vn+1)*fA)*wtsin(hph[vn]);
         hph[vn]  += TWOPI*(vn+1)*fA/srate; hph[vn]  >= TWOPI ? hph[vn]  -= TWOPI; );
-      ((vn+1)*fB) < srate*0.5 ? ( vvB += (slot_harm[bB+vn]/normB)*ot_gain[vn]*wtsin(hphB[vn]);
+      ((vn+1)*fB) < hc_bound ? ( vvB += (slot_harm[bB+vn]/normB)*ot_gain[vn]*hc_g((vn+1)*fB)*wtsin(hphB[vn]);
         hphB[vn] += TWOPI*(vn+1)*fB/srate; hphB[vn] >= TWOPI ? hphB[vn] -= TWOPI; );
       vn += 1;
     );
@@ -1940,6 +1982,7 @@ file_var(0, ser_magic);
   ser_v2a = ser_magic == 7700002;   // old Option A; needs linger conversion below
   // A v2 blob's banks are authoritative -- cancel the fresh-instance seed.
   (file_avail(0) >= 0 && !ser_v1) ? ( seed_slots_from_sliders = 0; );
+  file_avail(0) >= 0 ? ( grain_seed = 1; );   // per-slot Wash grain: no blob holds it yet
   // Literal counts per format, NOT N_TARGETS -- that constant moves every time
   // a target is added, and using it here would read the new count out of an
   // old blob, which is precisely the misalignment the magic exists to stop.

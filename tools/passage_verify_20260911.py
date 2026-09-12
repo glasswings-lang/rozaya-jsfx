@@ -166,6 +166,37 @@ def pitch():
            "pitch: Transpose 7 on All == by hand on Slot 8")
 
 
+GRAIN, HICUT, INPUT_LEVEL = 14, 18, 37
+
+
+def rms(a):
+    return float(np.sqrt((a ** 2).mean()))
+
+
+def grainhc():
+    def one(morph, steps, first_slot=0):
+        return fresh_run(morph, [*steps, *WAIT], first_slot=first_slot)
+    # High cut at its lowest, 200 Hz, below the 220 Hz tone: the dry input is turned
+    # down so only Passage's own sound is measured.
+    for tex, label in ((100, "wash"), (0, "voice")):
+        open_ = one(0, [[(TEXTURE, tex), (INPUT_LEVEL, -60)], []], first_slot=1)
+        cut = one(0, [[(TEXTURE, tex), (INPUT_LEVEL, -60)], [(HICUT, 200)]], first_slot=1)
+        report(rms(open_) > 0 and rms(cut) < 0.1 * rms(open_),
+               f"highcut: 200 Hz silences the {label} of a 220 Hz tone (rms {rms(open_):.4f} -> {rms(cut):.4f})")
+    report(np.array_equal(one(100, [[], [(HICUT, 2000)]]), one(100, [[(CAP_SLOT, 8)], [(HICUT, 2000)]])),
+           "highcut: 2000 on All == by hand on Slot 8")
+    # Wash grain is per slot: 40 ms on Slot 8 changes Slot 8 and leaves Slot 1 alone.
+    for morph, heard, should in ((100, "Slot 8", True), (0, "Slot 1", False)):
+        base = one(morph, [[(TEXTURE, 100)], [(CAP_SLOT, 8)], []])
+        g = one(morph, [[(TEXTURE, 100)], [(CAP_SLOT, 8)], [(GRAIN, 40)]])
+        changed = not np.array_equal(base, g)
+        report(changed == should, f"grain: 40 ms on Slot 8 {'changes' if changed else 'leaves'} {heard}"
+                                  f" ({'right' if changed == should else 'WRONG'})")
+    report(np.array_equal(one(100, [[(TEXTURE, 100)], [], [(GRAIN, 40)]]),
+                          one(100, [[(TEXTURE, 100)], [(CAP_SLOT, 8)], [(GRAIN, 40)]])),
+           "grain: 40 ms on All == by hand on Slot 8")
+
+
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if not a.startswith("--") and not a.isdigit()] or ["current"]
     for w in want:

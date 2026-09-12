@@ -90,6 +90,16 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   moving Source note or its fine tune re-reads the Target note and never changes the
   sound -- to retune after correcting the source, pick the Target note again. **The new
   banks are NOT yet in @serialize** (the save-format stage adds them all at once).
+- **Stage 5, per-slot Wash grain and High cut: DONE.** `current` 49 of 49 bit-identical;
+  `grainhc`: High cut 200 Hz takes a 220 Hz tone's wash and voice to rms 0; High cut and
+  Wash grain on All == by hand on Slot 8; 40 ms grain on Slot 8 changes Slot 8 and
+  leaves Slot 1 bit-identical. Banks `slot_grain`, `slot_hicut`, banked like the others (All via
+  `ps_last` 39-40). High cut is the Morpher's shape (`hc_g`, `hc_bound`, fade over the
+  top fifth) in all six voice partial lines and in `build_spectrum` after the per-slot
+  transposition. Grain follows the heard slots in @block (one slot's exact value when
+  they agree). **SAVE-FORMAT STAGE MUST FIX:** `grain_seed` copies Wash grain into all
+  eight slots on EVERY load for now; once `slot_grain` is serialized, gate it on the
+  older magics only, or per-slot grain is flattened on every reopen.
 - **Stage 4 design notes (mine, from reading 2026-09-11):** Bubbler resolves a shift
   to semitones in `bb_semis_from(unit, v)` -- Semitones as is, Cents /100, Hz from the
   Tuning reference `12*log2((ref+v)/ref)` -- and mirrors Target note <-> Transpose value
