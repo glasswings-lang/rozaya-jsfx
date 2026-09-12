@@ -117,6 +117,24 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   place; rest applies to the output SUM (Pass-through keeps dry, Silence mutes all).
   Lengths via `tm_sec(slider41, ...)` per block. **Mine, unquoted:** the counters
   restart on every play edge (Passage sets `ext_noinit`, so @init cannot do it).
+- **Stage 8, Drift period unit + Drift play/rest, Ramp time unit + Ramp play/rest:
+  DONE.** `current` 49 of 49 bit-identical; `driftramp`: drift period 3 s != 2 s, 4
+  beats at 120 BPM == 2 s, Drift play/rest changes the sound; ramp 0.5 min != 0.25 min,
+  15 s and 30 beats == 0.25 min, Ramp play/rest changes the sound; `cycles`: 0.0625
+  cycles (a 48 s walk) == 3 s, 0.125 cycles != 3 s -- all after the fix below. Ported from the Morpher
+  (`pr_frozen`; rests come out of a ramp's duration). Units global, play/rest per
+  (slot, target), banked in both selectors and on All (`ps_last` 27-30). **Cycles is
+  OPEN:** built as one walk through the active slots' legs (`pv_cyc`, mine). Rozaya:
+  *"Passage's whole plan was very delayed, and by the time we got to it we'd settled on
+  the full thing for drift. cycles doesn't really make sense here. I can kind of see it
+  sort of? though. the way you describe it."* Asked: keep Cycles (same list everywhere)
+  or drop it from Passage. **SETTLED:** *"Keep it in. might be interesting"* -- a Cycle
+  is one walk through the active slots' legs. **A real fault the Cycles check found:**
+  the walk was summed before `rebuild_active_slots()`, so for one block after a capture
+  or a mute it read the old slot list; a drift in Cycles ran that block at the 0.05 s
+  floor and kept the phase it gained. Measured with a debug copy that wrote
+  `drift_unit_sec` and `n_active` out as audio (0.05 in the first block, then 48).
+  Moved after the rebuild; `cycles`, `current` and `driftramp` all pass after it.
 - **Stage 4 design notes (mine, from reading 2026-09-11):** Bubbler resolves a shift
   to semitones in `bb_semis_from(unit, v)` -- Semitones as is, Cents /100, Hz from the
   Tuning reference `12*log2((ref+v)/ref)` -- and mirrors Target note <-> Transpose value

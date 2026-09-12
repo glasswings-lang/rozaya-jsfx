@@ -241,6 +241,48 @@ def transport():
            "transport: Output at rest Silence differs from Pass-through")
 
 
+DRIFT_PUNIT, DRIFT_PLAY, DRIFT_REST = 49, 51, 52
+RAMP_TARGET, RAMP_BY, RAMP_TUNIT, RAMP_DUR, RAMP_PLAY, RAMP_REST, RAMP_ENGAGE = 54, 55, 57, 58, 59, 60, 61
+
+
+def driftramp():
+    # Heard: Slot 1; everything set on All in ONE stage. Target 0 is Texture for both.
+    def dr(sets):
+        return fresh_run(0, [list(sets), *WAIT, [], []], seconds=22)
+    d2 = dr([(DRIFT_UP, 40), (DRIFT_PERIOD, 2)])
+    report(np.abs(d2).max() > 0 and not np.array_equal(d2, dr([(DRIFT_UP, 40), (DRIFT_PERIOD, 3)])),
+           "drift: a period of 3 s instead of 2 changes the sound (the check can fail)")
+    report(np.array_equal(d2, dr([(DRIFT_PUNIT, 2), (DRIFT_UP, 40), (DRIFT_PERIOD, 4)])),
+           "drift: period 4 beats at 120 BPM == 2 s")
+    report(not np.array_equal(d2, dr([(DRIFT_UP, 40), (DRIFT_PERIOD, 2), (DRIFT_PLAY, 1.3), (DRIFT_REST, 0.7)])),
+           "drift: Play for 1.3 / Rest for 0.7 periods changes the sound")
+    r15 = dr([(RAMP_BY, -40), (RAMP_DUR, 0.25), (RAMP_ENGAGE, 1)])
+    report(np.abs(r15).max() > 0 and not np.array_equal(r15, dr([(RAMP_BY, -40), (RAMP_DUR, 0.5), (RAMP_ENGAGE, 1)])),
+           "ramp: half a minute instead of a quarter changes the sound (the check can fail)")
+    report(np.array_equal(r15, dr([(RAMP_TUNIT, 1), (RAMP_BY, -40), (RAMP_DUR, 15), (RAMP_ENGAGE, 1)])),
+           "ramp: 15 seconds == a quarter of a minute")
+    report(np.array_equal(r15, dr([(RAMP_TUNIT, 3), (RAMP_BY, -40), (RAMP_DUR, 30), (RAMP_ENGAGE, 1)])),
+           "ramp: 30 beats at 120 BPM == a quarter of a minute")
+    report(not np.array_equal(dr([(RAMP_TUNIT, 1), (RAMP_BY, -40), (RAMP_DUR, 15), (RAMP_ENGAGE, 1)]),
+                              dr([(RAMP_TUNIT, 1), (RAMP_BY, -40), (RAMP_DUR, 15), (RAMP_PLAY, 1), (RAMP_REST, 1), (RAMP_ENGAGE, 1)])),
+           "ramp: Play for 1 / Rest for 1 second changes the sound")
+
+
+def cycles():
+    # Rozaya kept Cycles: one walk through the active slots' legs. After a capture on All
+    # every slot has the default fade in 1 + hold 4 + fade out 1 with crossfade on (the
+    # gap is not part of a crossfading leg), so one walk is 8 x 6 = 48 s exactly, and
+    # 0.0625 cycles is 3 s.
+    def dr(sets):
+        return fresh_run(0, [list(sets), *WAIT, [], []], seconds=22)
+    in_seconds = dr([(DRIFT_UP, 40), (DRIFT_PERIOD, 3)])
+    report(np.abs(in_seconds).max() > 0 and
+           np.array_equal(in_seconds, dr([(DRIFT_PUNIT, 0), (DRIFT_UP, 40), (DRIFT_PERIOD, 0.0625)])),
+           "cycles: a drift period of 0.0625 cycles (a 48 s walk) == 3 s")
+    report(not np.array_equal(in_seconds, dr([(DRIFT_PUNIT, 0), (DRIFT_UP, 40), (DRIFT_PERIOD, 0.125)])),
+           "cycles: 0.125 cycles (6 s) differs from 3 s (the check can fail)")
+
+
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if not a.startswith("--") and not a.isdigit()] or ["current"]
     for w in want:
