@@ -316,7 +316,13 @@ follows) with NO @init. So the rule is buildable: keep memory through @init (ext
 and re-land on any position jump, stopped or playing. **Unexplained:** a probe freshly added
 while stopped got no blocks until the first play (in a new tab and in claude test alike).
 Rozaya: *"That unexplainable thing happens to me too with morfer sometimes. Only sometimes"*
--- probe test 3 (same session, AFTER a play since the project opened): all 18 claude test
+-- **MEASURED CAUSE (jsfx_run, 2026-09-12):** the Morpher analyses its captures only on a
+capture, a Capture point / Capture average change, or the play edge (`analysis_valid`,
+~1334 and ~1552). A copy saved on Capture point 0 AND Capture average 1 looks unchanged on
+load, so it stays SILENT until the first play: `breathing` #1 rms 0 stopped, 0.09 playing;
+`and the spirits speak` #1 (average 6) sounds stopped. 10 of 123 live copies sit on both
+defaults. Passage has the same play-edge code; not yet measured. Not fixed -- asked.
+Earlier: probe test 3 (same session, AFTER a play since the project opened): all 18 claude test
 tracks ran while stopped, and a freshly added probe ran at once. Tests 1-2 had had no play
 since the tab was made / the project opened. **Guess, untested:** a freshly opened project
 runs nothing while stopped until the first play. To test safely: probe claude test right
