@@ -64,7 +64,7 @@ list with Start delay / Play for / Rest for, and the two OPEN items further down
 
 ## THE LAYOUT, authored whole 2026-09-11 -- not yet shown to Rozaya, nothing built
 
-38 sliders become 59. Order follows Part 2 of the plan: the per-slot group whole and
+38 sliders become 60. Order follows Part 2 of the plan: the per-slot group whole and
 contiguous, then what covers all slots, then transport, Drift, Ramp. Quoted decisions
 are in the sections above; everything else here is mine and unquoted.
 
@@ -114,12 +114,13 @@ are in the sections above; everything else here is mine and unquoted.
 | 37 | Input level (dry, dB) | 13 |
 
 **Transport** -- new, as the Morpher has: 38 Start delay, 39 Play for, 40 Rest for,
-41 Rest mode `{Walk through, Freeze in place}`, 42 Output at rest `{Pass-through,
-Silence}`. All default off, so no sound change.
+41 Transport unit `{Seconds, Hz, Beats}`, default Seconds (proposed; Rozaya: *"Yes, I
+forgot about that too."*), 42 Rest mode `{Walk through, Freeze in place}`, 43 Output
+at rest `{Pass-through, Silence}`. All default off, so no sound change.
 
-**Drift** 43-51: target, up, down, period, period unit `{Cycles, Seconds, Beats}`
+**Drift** 44-52: target, up, down, period, period unit `{Cycles, Seconds, Beats}`
 (new, Seconds -- what `Drift period (seconds)` meant), shape, play for (new), rest for
-(new), restart. **Ramp** 52-59: target, by, time unit `{Cycles, Seconds, Minutes,
+(new), restart. **Ramp** 53-60: target, by, time unit `{Cycles, Seconds, Minutes,
 Beats}` (new, Minutes -- what `Ramp duration (minutes)` meant), duration, play for
 (new), rest for (new), engage, start delay.
 
@@ -138,8 +139,6 @@ Bubbler), every unit and shape picker, Crossfade into next, Mute, Auto-morph,
 Audition, Start delay, Rest mode, Output at rest, Drift restart, Ramp engage.
 
 **Questions still open, to ask Rozaya one at a time:**
-- Start delay, Play for and Rest for: in what unit? Passage has no rate mode to
-  borrow one from; the Morpher's say "sec, or beats in Host x".
 - Is Source fine tune a Drift target? It changes the sound only once a Target note is
   set, so I left it off, as Capture point is.
 - `Denoise (%)` is still an untraced name (see Also open).
