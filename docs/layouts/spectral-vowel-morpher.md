@@ -662,3 +662,75 @@ handles an arbitrary permutation of the target banks, and the `Drift target` /
 `Ramp target` slider values are remapped by the line migration that this change
 needs anyway. **If either of those is not true when this is built, append
 instead** — the grouping is a convenience and the correctness is not.
+
+**Superseded 2026-09-11 by R24 as built:** targets go in CONTROL order with an "all
+layers" entry per layer control (`spectral-vowel-morpher-r24-20260911.md`), not grouped
+by layer.
+
+## THE PITCH LAYOUT, authored whole 2026-09-11 -- not yet shown to Rozaya, nothing built
+
+One migration carrying everything owed: the free layer pitch above (2026-09-08), Bubbler's
+Source note block on the main pitch, a Tuning reference, the amount units, and the
+honest Denoise name. All slots is already built (no migration). 51 sliders become 64.
+
+**Decided by Rozaya, quoted where it was said:** the free layer pitch and its target
+status (above); Source note with its own fine tune and the names `(only with a Source
+note, in Semitones)`, the amount units and their thirteen-choice list -- all in
+`spectral-vowel-passage.md`, which carries the quotes. **Everything else here is mine.**
+
+| # | control | from, and what the migration does |
+|---|---|---|
+| 1-4 | Capture slot `{All, Slot 1-8}`, Capture now, Capture point, Capture average | 1-4 |
+| 5-7 | Audition, Morph, Auto-morph | 5-7 |
+| 8 | Auto-morph time (BPM / sec / Hz / beats per cycle / per beat) | 9 -- ASK: R20 puts the value before its mode |
+| 9 | Rate mode | 8 |
+| 10-12 | Texture (% wash), Wash grain (ms), Spread (Hz) | 10-12 |
+| 13 | Source note (where zero is) `{None, C-1 ... G9}` | new, None |
+| 14 | Source fine tune (only with a Source note, in Semitones) | new, 0 |
+| 15 | Source fine tune unit `{Hz, Semitones, Cents}` | new, Cents |
+| 16 | Target note (only with a Source note, in Semitones) | new |
+| 17 | Transpose value (Hz / semitones / cents) | 13 `Pitch (semitones)`, same number |
+| 18 | Transpose unit | new, Semitones |
+| 19-20 | Fine tune, Fine tune unit | new, 0 / Cents |
+| 21 | Tuning reference (Hz) | new, 440 |
+| 22 | Stereo width (%) | 14 |
+| 23 | Denoise (%, wash only) | 15, renamed (traced, same formula as Passage's) |
+| 24-25 | Low cut (Hz), High cut (Hz, 20000 = off) | 16-17 |
+| 26-28 | Overtone harmonic, Overtone lift, Overtone width | 18-20 |
+| 29 | Layer `{All, Layer 1 ... Layer 16}` | 21, remapped: old ladder index -> new layer, +1 for All |
+| 30 | Layer active | 22 |
+| 31-32 | Layer pitch value (Hz / semitones / cents), Layer pitch unit | 25 (Custom only) -> all sixteen, seeded from the ladder; unit Semitones |
+| 33-34 | Layer fine tune, Layer fine tune unit | new, 0 / Cents |
+| 35-38 | Layer level, Layer solo, Layer harmonics, Layer overtone harmonic | 23, 24, 26, 27 |
+| 39-40 | Input level, Output level | 28-29 |
+| 41-45 | Start delay, Play for, Rest for, Rest mode, Output at rest | 30-34 |
+| 46-55 | Drift: target, up, down, **amount unit (new, Target default)**, period, period unit, shape, play for, rest for, restart | 35-43 |
+| 56-64 | Ramp: target, by, **by unit (new, Target default)**, time unit, duration, play for, rest for, engage, start delay | 44-51 |
+
+**Layers, new order:** Layer 1 is the Original (old 6), Layers 2-13 the ladder (old
+0-5, 7-12: -48, -36, -24, -12, -7, -5, +5, +7, +12, +24, +36, +48), Layers 14-16 the
+Custom three (old 13-15, keeping their stored pitches). A fresh instance and every saved
+one sound the same. Layers are offsets from the main Transpose, so they carry no Source
+or Target note of their own -- ASK.
+
+**Targets, control order, 55 -> 87:** Morph, Auto-morph time, Texture, Wash grain,
+Spread, Transpose, Fine tune, Tuning reference, Stereo width, Denoise, Low cut, High
+cut, Overtone harmonic, Overtone lift, Overtone width; then Layer pitch, Layer fine
+tune, Layer level and Layer overtone harmonic, each as "(all layers)" plus Layers 1-16;
+then Input level, Output level, Play for, Rest for. Source note, Source fine tune and
+Target note are not targets (settled for Passage, same reason).
+
+**Save format:** magic bump from `7700055`; layer banks permute into the new order;
+`lay_semi` grows from 3 to 16, seeded from the ladder; target banks remap 55 -> 87 with
+both selectors; per-target amount-unit banks added at 0. **123 instances in 39
+projects** (as of the R24 migration); captures inventoried before and verified after.
+
+**Questions still open, to ask Rozaya one at a time:**
+- Auto-morph time before Rate mode, as R20 says? The source comment defends mode-first
+  ("you meet the unit before the number"); both are dated 2026-09-04, and R20's text
+  says value, then mode, everywhere.
+- Layers without Source/Target notes of their own?
+- The pitch block where Pitch sits today (after Spread) rather than first in the sound?
+
+Noticed, not proposed: the transport labels still say "beats in Host x", a name R21
+retired.
