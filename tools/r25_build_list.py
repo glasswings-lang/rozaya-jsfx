@@ -41,17 +41,31 @@ def new_label(old, kind):
 
 def main():
     report, board = sys.argv[1], sys.argv[2]
+    # A file name may contain a space ("heartbeat gen.jsfx"). The first version matched
+    # \S+ and dropped Heartbeat silently (caught reading the list by hand, 2026-09-12),
+    # so an unreadable map line now stops everything.
     files = {}
     for l in open(board, encoding="utf-8"):
-        m = re.match(r"^(\d+) (\d+) .* -> (\S+\.jsfx)$", l.strip())
-        if m:
-            files[int(m[1])] = m[3]
+        if not l.strip():
+            continue
+        m = re.match(r"^(\d+) (\d+) .*? -> (.+\.jsfx)$", l.strip())
+        if not m:
+            raise SystemExit(f"unreadable map line: {l.strip()!r}")
+        files[int(m[1])] = m[3]
     meas = collections.defaultdict(dict)       # (track, name) -> {selector: kind}
     for l in open(report, encoding="utf-8"):
         m = LINE.match(l.strip())
         if m:
             meas[(int(m[2]), m[6])][m[4]] = m[1]
     rows, skipped = [], []
+    tracks = {}
+    for l in open(report, encoding="utf-8"):
+        m = LINE.match(l.strip())
+        if m:
+            tracks[int(m[2])] = m[3]
+    for t, tname in sorted(tracks.items()):
+        if t not in files:
+            skipped.append(f"track {t} {tname}: measured, but no file in the map -- none of its controls renamed")
     for (t, name), by_sel in sorted(meas.items()):
         if not BLOCK.match(name) or t not in files:
             continue
