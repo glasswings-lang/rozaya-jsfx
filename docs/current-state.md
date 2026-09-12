@@ -105,8 +105,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   `wind` bit-identical. `docs/layouts/resonance-bank-r22-r24.md`.
 - **Tuning reference measured working in all 14**; Heartbeat and Womb no longer blow up above ~5 kHz.
 - **Sustain Looper, 2026-09-10:** Bubbler's pitch block, Drift and Ramp on eight
-  targets, and loop moves crossfade instead of cutting. 4 instances migrated,
-  bit-identical with the sample loaded. `docs/layouts/sustain-looper.md`.
+  targets, loop moves crossfade. 4 instances migrated, bit-identical. **09-11, both it and
+  Bubbler:** correcting Source note re-reads Target note (`tools/source_note_check.py`).
 
 - **Melody Phase:** pitch per voice and 55 drift targets (09-10); song placement
   FIXED 09-11 -- lands on the right note, stopped transport unchanged. Not heard.

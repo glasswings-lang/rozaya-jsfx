@@ -107,6 +107,7 @@ last_playing = 0;
 tr_ui_inited  = 0;
 last_tgt_note = 60;
 last_tval     = 0;
+last_src_note = 0;
 
 i = 0;
 loop(12, jtv[i] = 1; vlive[i] = 0; i += 1; );
@@ -188,6 +189,7 @@ reset_runtime();
 !tr_ui_inited ? (
   last_tgt_note = slider6;
   last_tval = slider7;
+  last_src_note = slider5;
   tr_ui_inited = 1;
 );
 host_bpm = max(tempo, 0.001);
@@ -219,7 +221,8 @@ tr_ui_inited ? (
     slider6 != last_tgt_note ? (
       slider7 = slider6 - (slider5 - 1);
       slider_automate(slider7);
-    ) : slider7 != last_tval ? (
+    ) : (slider7 != last_tval || slider5 != last_src_note) ? (
+      // Moving Source note never changes the sound: it re-reads the Target note.
       slider6 = max(0, min(127, floor(slider7 + (slider5 - 1) + 0.5)));
       slider_automate(slider6);
     );
@@ -227,6 +230,7 @@ tr_ui_inited ? (
 );
 last_tgt_note = slider6;
 last_tval     = slider7;
+last_src_note = slider5;
 slider_show(slider6, slider5 > 0 && slider8 == 1);
 
 sr_ratio = (file_sr > 0) ? file_sr / srate : 1;

@@ -21,8 +21,7 @@ on, extended, or "finished" until it has been heard. The correct action on
 unheard work is to ask for an ear test, never to add to it.
 
 Moved out of the plan 2026-09-08, verbatim. The R24 drift-target audit is in `docs/r24-drift-target-audit.md`.
-**OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations, the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units". **In the same sweep: Bubbler and Sustain Looper -- moving Source note must re-read Target note**, as Passage does (`src/spectral_vowel_passage.jsfx` ~964). Now Target keeps the old note, and re-picking it does nothing (Bubbler measured; Sustain Looper same code, its silent test proved nothing -- capture first). Rozaya: *"Yes, cuz it's supposed to anyway."*
-
+**OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations, the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units".
 ---
 
 ## R23 — drift steps on the target's own turn (2026-09-09)

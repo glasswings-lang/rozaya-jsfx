@@ -58,7 +58,7 @@ The same block as Bubbler, because the looper cannot know what note its sample i
 Tell the plugin what note the sample is. At None, the transpose value works on its own.
 
 **Target note** `C-1 to G9`
-Shown once Source note is set and Transpose unit is Semitones. Pick the note you want to hear; the transpose value follows, and moving the value moves the note.
+Shown once Source note is set and Transpose unit is Semitones. Pick the note you want to hear; the transpose value follows, and moving the value moves the note. Correcting Source note afterwards never changes the sound: Target note re-reads to name what you are really hearing. Pick the Target again to retune.
 
 **Transpose value (Hz / semitones / cents)** `default 0` · **Transpose unit** `Hz / Semitones / Cents, default Semitones`
 The shift. Hz is measured from the tuning reference.

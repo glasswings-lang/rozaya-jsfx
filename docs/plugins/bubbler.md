@@ -58,6 +58,8 @@ This used to be `Own rate / Host x`, where "Own rate" meant per second. It defau
   below changes and the semitone number is simply the control, exactly as before.
 - **Target note** — only appears once Source note is set. Pick the note you want to
   hear and the shift is worked out for you, so you never do the subtraction yourself.
+  Correcting Source note afterwards never changes the sound: Target note re-reads to
+  name what you are really hearing. Pick the Target again to retune.
 - **Transpose value (Hz / semitones / cents)** — **the shift**, always, whatever else
   is set. Nothing hides it or takes it over.
 - **Transpose unit** `{Hz, Semitones, Cents}, default Semitones`.

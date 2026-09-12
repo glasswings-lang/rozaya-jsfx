@@ -245,6 +245,7 @@ tuning_ref    = 440;
 tr_ui_inited  = 0;
 last_tgt_note = 60;
 last_tval     = 12;
+last_src_note = 0;
 
 // Shared play/rest window counter. `tick` is how much of ONE window passes per
 // sample, which lets each caller keep its own units: Drift passes
@@ -348,7 +349,8 @@ tr_ui_inited ? (
     slider5 != last_tgt_note ? (
       slider6 = slider5 - (slider4 - 1);
       slider_automate(slider6);
-    ) : slider6 != last_tval ? (
+    ) : (slider6 != last_tval || slider4 != last_src_note) ? (
+      // Moving Source note never changes the sound: it re-reads the Target note.
       slider5 = max(0, min(127, floor(slider6 + (slider4 - 1) + 0.5)));
       slider_automate(slider5);
     );
@@ -356,6 +358,7 @@ tr_ui_inited ? (
 );
 last_tgt_note = slider5;
 last_tval     = slider6;
+last_src_note = slider4;
 // Nothing to measure from while Source note is None, so the target is not shown.
 slider_show(slider5, slider4 > 0 && slider7 == 1);
 
@@ -450,6 +453,7 @@ last_target_select != sel_target ? (
 !tr_ui_inited ? (
   last_tgt_note = slider5;
   last_tval = slider6;
+  last_src_note = slider4;
   tr_ui_inited = 1;
 );
 // Project tempo, once per block. Used when Drift period unit or Ramp time

@@ -614,6 +614,15 @@ All twelve pass as of 2026-09-10. Heartbeat's case uses notes 57/69 because at
 note 45 the "All" target leaves S2's value at 120, a note near 8.4 kHz, and
 Heartbeat blows up above about 5 kHz in any mode — a separate bug.
 
+## source_note_check.py — does every Source note behave the same?
+
+`python tools/source_note_check.py [plugin ...] [--rev GITREV]`. Bubbler, Sustain
+Looper and Passage: correcting Source note must leave the sound bit-identical AND
+re-read the Target note (proved by re-picking the old Target equalling Transpose 2).
+Built 2026-09-11 when Passage did this and the other two did not. `--rev 45350c6`
+fails Bubbler and Sustain Looper, so it can fail. Add the Morpher when its pitch
+block is built.
+
 ## jsfx_renumber.py — renumber sliders from an authored map
 
 `apply FILE "55:11, 11-54:+1"` rewrites every `sliderN` token in one pass.
