@@ -57,11 +57,94 @@ Cents, directly after Source note, as Fine tune is -- Rozaya: *"Yes."* Source no
 still starts on None and the new fine tune at 0, so nothing sounds different until
 chosen -- Rozaya: *"Yeah, and I like it"*.
 
-**This layout is not yet whole.** Still to settle with Rozaya before any migration:
+**The whole layout is now authored below; its remaining questions are listed at its
+end.** What this paragraph used to list as unsettled, kept for the record:
 the rest of R22's pitch block for Passage (*"their own discussion"*), R24's full target
 list with Start delay / Play for / Rest for, and the two OPEN items further down.
 
-## The order
+## THE LAYOUT, authored whole 2026-09-11 -- not yet shown to Rozaya, nothing built
+
+38 sliders become 59. Order follows Part 2 of the plan: the per-slot group whole and
+contiguous, then what covers all slots, then transport, Drift, Ramp. Quoted decisions
+are in the sections above; everything else here is mine and unquoted.
+
+**Per slot -- pick a slot, then everything that slot is**
+
+| # | control | from, and what the migration does |
+|---|---|---|
+| 1 | Capture slot `{All, Slot 1 ... Slot 8}` | 1; value +1 |
+| 2 | Capture now | 2, renamed from `Capture spectrum` |
+| 3 | Capture point (%, per slot) | 3 |
+| 4 | Capture average (frames, per slot) | 4 |
+| 5 | Source note (where zero is, per slot) `{None, C-1 ... G9}` | new, None |
+| 6 | Source fine tune (per slot) | new, 0 |
+| 7 | Source fine tune unit `{Hz, Semitones, Cents}` | new, Cents |
+| 8 | Target note (per slot) | new |
+| 9 | Transpose value (Hz / semitones / cents, per slot) | 18 `Pitch (semitones)`, same number |
+| 10 | Transpose unit `{Hz, Semitones, Cents}` | new, Semitones |
+| 11 | Fine tune (per slot) | new, 0 |
+| 12 | Fine tune unit `{Hz, Semitones, Cents}` | new, Cents |
+| 13 | Texture (% wash, per slot) | 15 |
+| 14 | Wash grain (ms, per slot) | 16; the one global value copied into all eight slots |
+| 15 | Spread (Hz, per slot) | 17 |
+| 16 | Denoise (%, per slot) | 21 |
+| 17 | Low cut (Hz, per slot) | 20 |
+| 18 | High cut (Hz, 20000 = off, per slot) | new, 20000 -- no sound change |
+| 19 | Overtone harmonic (per slot) | 36 |
+| 20 | Overtone lift (dB, per slot) | 37 |
+| 21 | Slot fade in (seconds / Hz / beats, per slot) | 5 |
+| 22 | Slot hold (seconds / Hz / beats, per slot) | 6 |
+| 23 | Slot fade out (seconds / Hz / beats, per slot) | 7 |
+| 24 | Slot gap after (seconds / Hz / beats, per slot) | 8 |
+| 25 | Slot timing unit `{Seconds, Hz, Beats}` (per slot) | new, Seconds -- same meaning |
+| 26 | Slot crossfade into next (per slot) | 9 |
+| 27 | Slot mute (per slot) | 10 |
+| 28 | Stereo width (%, per slot) | 19 |
+| 29 | Output level (dB, per slot) | 14 |
+
+**All slots**
+
+| 30 | Tuning reference (Hz) | new, 440 -- R22: one per plugin |
+| 31 | Fade in shape (all slots) | 11 |
+| 32 | Fade out shape (all slots) | 12 |
+| 33 | Overtone width (harmonics, all slots) | 38 |
+| 34 | Morph (% across captured slots) | 23 |
+| 35 | Auto-morph | 24 |
+| 36 | Audition | 22 |
+| 37 | Input level (dry, dB) | 13 |
+
+**Transport** -- new, as the Morpher has: 38 Start delay, 39 Play for, 40 Rest for,
+41 Rest mode `{Walk through, Freeze in place}`, 42 Output at rest `{Pass-through,
+Silence}`. All default off, so no sound change.
+
+**Drift** 43-51: target, up, down, period, period unit `{Cycles, Seconds, Beats}`
+(new, Seconds -- what `Drift period (seconds)` meant), shape, play for (new), rest for
+(new), restart. **Ramp** 52-59: target, by, time unit `{Cycles, Seconds, Minutes,
+Beats}` (new, Minutes -- what `Ramp duration (minutes)` meant), duration, play for
+(new), rest for (new), engage, start delay.
+
+**Drift and Ramp targets, in control order:** Transpose, Fine tune, Texture, Wash
+grain, Spread, Denoise, Low cut, High cut, Overtone harmonic, Overtone lift, Slot fade
+in, Slot hold, Slot fade out, Slot gap after, Stereo width, Output level (sixteen per
+slot, reached through Capture slot, so All sets all eight); then Tuning reference,
+Overtone width, Morph, Input level, Play for, Rest for (whole plugin, held in Slot 1's
+row as Morph and Input level already are). 22 targets, from 14: the per-slot bank
+stride grows from 16 to 32, and every saved target remaps -- a blob migration with a
+magic bump.
+
+**Not targets:** Capture slot, Capture now, Capture point and Capture average
+(re-analysis, as on the Morpher), Source note and Target note (note pickers, as on
+Bubbler), every unit and shape picker, Crossfade into next, Mute, Auto-morph,
+Audition, Start delay, Rest mode, Output at rest, Drift restart, Ramp engage.
+
+**Questions still open, to ask Rozaya one at a time:**
+- Start delay, Play for and Rest for: in what unit? Passage has no rate mode to
+  borrow one from; the Morpher's say "sec, or beats in Host x".
+- Is Source fine tune a Drift target? It changes the sound only once a Target note is
+  set, so I left it off, as Capture point is.
+- `Denoise (%)` is still an untraced name (see Also open).
+
+## The order of 2026-08-31 -- SUPERSEDED by the layout above
 
 **Per slot — pick a slot, then everything that slot is**
 
@@ -186,7 +269,11 @@ it as a choice, not as a click hazard.
   can list and extract the captures inside it.
 
 
-## Tempo sync — added 2026-09-01, Rozaya's request
+## Tempo sync — added 2026-09-01, Rozaya's request. SUPERSEDED 2026-09-11
+
+**Its `Sync to host` switch is replaced by each slot's own `Slot timing unit
+{Seconds, Hz, Beats}`** (quoted at the top). R20 retired the switch shape on
+2026-09-04. Kept for the reasoning about durations, not as the design.
 
 Rozaya, 2026-09-01: *"[it] absolutely could do with ... a rate mode ... right now it just
 uses seconds ... I know hertz isn't in time, for instance, but beats is and seconds are."*
