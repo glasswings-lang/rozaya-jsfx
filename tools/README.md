@@ -787,6 +787,15 @@ rewritten every 0.4 s and a read can land mid-write; a target list may hold only
 two entries (Rhythm Track), and index 2 then silently means 1. A path with a space
 must be quoted in an RPP (`<JS "glasswings/heartbeat gen.jsfx" ""`).
 
+## morpher_cold_load_check_20260912.py — no silence on project load
+
+A Morpher saved on Capture point 0 and Capture average 1 never analysed its captures until
+the first play, so a project opened stopped was silent. Every live instance, old build
+against new, rand pinned: playing bit-identical; stopped sounds wherever playing does; and
+the old build silent stopped on the copies on both defaults (the can-fail). **Render with
+SILENT input**: the Morpher passes input through, and a -60 dB noise in made silent copies
+read as sounding. Passage's version is the `coldload` section of its verify tool.
+
 ## reaper_bridge.py and probes/ — driving REAPER itself (2026-09-12)
 
 `kin_bridge.lua` (in REAPER's Scripts folder, not this repo) now drives REAPER as well as

@@ -321,7 +321,10 @@ capture, a Capture point / Capture average change, or the play edge (`analysis_v
 ~1334 and ~1552). A copy saved on Capture point 0 AND Capture average 1 looks unchanged on
 load, so it stays SILENT until the first play: `breathing` #1 rms 0 stopped, 0.09 playing;
 `and the spirits speak` #1 (average 6) sounds stopped. 10 of 123 live copies sit on both
-defaults. Passage has the same play-edge code; not yet measured. Not fixed -- asked.
+defaults. **FIXED 2026-09-12** in both (a cold load now analyses at once; Rozaya: *"on
+project load, to walk into silence? cmmon"*). Morpher, silent input: 123 of 123 bit-identical
+playing; all 119 sounding copies sound stopped; the old build silent stopped in 9 of 9 on both
+defaults. Passage: old silent in 4 of 48, new 0. Morpher installed; Passage waits for its build.
 Earlier: probe test 3 (same session, AFTER a play since the project opened): all 18 claude test
 tracks ran while stopped, and a freshly added probe ran at once. Tests 1-2 had had no play
 since the tab was made / the project opened. **Guess, untested:** a freshly opened project

@@ -887,6 +887,7 @@ function analyze_harm(slot) local(base, ci, almin, almax, tmax, tau, ii, d, dd, 
 );
 
 function capture(slot) (
+  n_used == 0 ? analysis_valid = 1;   // the first capture: nothing else is waiting to be analysed
   grab_raw(slot);
   slot_cappoint[slot] = cap_point01;   // stamp this slot with the current capture point; scrubbing later re-tunes only this slot
   slot_capavg[slot]   = cap_avg;       // and the frame count on screen
@@ -1536,6 +1537,12 @@ gsamp != last_gsamp ? ( last_gsamp = gsamp; build_synwin(gsamp); );
 // Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub re-derives
 // once, when it settles, in one lump. (Fresh load is handled at the play-edge
 // above -- analysis_valid starts 0 in @init.) NOT an automation target.
+// A cold load analyses its captures at once, stopped or playing. A copy saved on
+// Capture point 0 and Capture average 1 looked unchanged here and stayed SILENT until
+// the first play (measured 2026-09-12: `breathing` #1). Rozaya: "on project load, to
+// walk into silence? cmmon". The settle below derives every captured slot at its own
+// point; a play edge first still does it there instead.
+analysis_valid == 0 && n_used > 0 && !cap_dirty ? ( cap_dirty = 1; settle = 0; );
 cap_point01 != last_cappoint ? ( last_cappoint = cap_point01; cap_dirty = 1; settle = 0; );
 // Capture average is global, so a change to it invalidates EVERY captured slot,
 // not just the focused one. Flag that separately: the settle below needs to know

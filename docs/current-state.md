@@ -130,7 +130,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   record. Never heard: the pitch block, the 88 targets, per-voice On Duration,
   Tremolo amount, Waveform, Solo, Pan rate mode, `Voice = All`.
 - The Morpher's new units off their defaults (drift in Cycles or Beats, ramp not in
-  Minutes); its All slots, 09-11. **Passage MID-BUILD, do not install** (progress atop its layout doc).
+  Minutes); its All slots, 09-11; sounding on a stopped project load, 09-12. **Passage MID-BUILD, do not install** (progress atop its layout doc).
 
 `docs/host-sync-ear-test.md` is the highest-value thing waiting: five tests,
 fifteen minutes, three never heard on any plugin.
