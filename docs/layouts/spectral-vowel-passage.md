@@ -118,11 +118,22 @@ are in the sections above; everything else here is mine and unquoted.
 forgot about that too."*), 42 Rest mode `{Walk through, Freeze in place}`, 43 Output
 at rest `{Pass-through, Silence}`. All default off, so no sound change.
 
-**Drift** 44-52: target, up, down, period, period unit `{Cycles, Seconds, Beats}`
-(new, Seconds -- what `Drift period (seconds)` meant), shape, play for (new), rest for
-(new), restart. **Ramp** 53-60: target, by, time unit `{Cycles, Seconds, Minutes,
-Beats}` (new, Minutes -- what `Ramp duration (minutes)` meant), duration, play for
-(new), rest for (new), engage, start delay.
+**Drift** 44-53: target, up, down, **Drift amount unit** (new, per target, `Target
+default` -- today's meaning), period, period unit `{Cycles, Seconds, Beats}` (new,
+Seconds -- what `Drift period (seconds)` meant), shape, play for (new), rest for (new),
+restart. **Ramp** 54-62: target, by, **Ramp by unit** (new, per target, `Target
+default`), time unit `{Cycles, Seconds, Minutes, Beats}` (new, Minutes -- what `Ramp
+duration (minutes)` meant), duration, play for (new), rest for (new), engage, start
+delay. **62 controls.**
+
+**The amount units, 2026-09-11.** The per-target `Drift amount unit` / `Ramp by unit`
+agreed in the Morpher's layout on 2026-09-08 (after *"No unit locks. ever."*) and never
+built anywhere. Offered: fold it into Passage's and the Morpher's migrations now, then
+sweep the other seventeen straight after, or all nineteen later at a second migration
+each. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. **The
+sweep is owed** (`docs/backlog.md`). **Mine, unquoted, to ask:** the option list. The
+Morpher doc's `{Target default, Hz, Cents, Semitones, BPM, Seconds, dB, Percent}` has no
+Milliseconds (Wash grain) or Beats (slot timings), which Passage needs.
 
 **Drift and Ramp targets, in control order:** Transpose, Fine tune, Texture, Wash
 grain, Spread, Denoise, Low cut, High cut, Overtone harmonic, Overtone lift, Slot fade
