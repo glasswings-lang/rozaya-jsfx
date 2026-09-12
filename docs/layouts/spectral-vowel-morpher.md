@@ -682,7 +682,7 @@ note, in Semitones)`, the amount units and their thirteen-choice list -- all in
 |---|---|---|
 | 1-4 | Capture slot `{All, Slot 1-8}`, Capture now, Capture point, Capture average | 1-4 |
 | 5-7 | Audition, Morph, Auto-morph | 5-7 |
-| 8 | Auto-morph time (BPM / sec / Hz / beats per cycle / per beat) | 9 -- ASK: R20 puts the value before its mode |
+| 8 | Auto-morph time (BPM / sec / Hz / beats per cycle / per beat) | 9 -- swapped to R20's value-then-mode, Rozaya *"Yes"* |
 | 9 | Rate mode | 8 |
 | 10-12 | Texture (% wash), Wash grain (ms), Spread (Hz) | 10-12 |
 | 13 | Source note (where zero is) `{None, C-1 ... G9}` | new, None |
@@ -726,9 +726,8 @@ both selectors; per-target amount-unit banks added at 0. **123 instances in 39
 projects** (as of the R24 migration); captures inventoried before and verified after.
 
 **Questions still open, to ask Rozaya one at a time:**
-- Auto-morph time before Rate mode, as R20 says? The source comment defends mode-first
-  ("you meet the unit before the number"); both are dated 2026-09-04, and R20's text
-  says value, then mode, everywhere.
+- SETTLED: Auto-morph time before Rate mode, as R20 says -- asked with that
+  recommendation; Rozaya: *"Yes"*. The source comment defending mode-first goes with it.
 - Layers without Source/Target notes of their own?
 - The pitch block where Pitch sits today (after Spread) rather than first in the sound?
 
