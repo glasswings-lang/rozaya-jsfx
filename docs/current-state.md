@@ -138,9 +138,9 @@ fifteen minutes, three never heard on any plugin.
 ## The tool that closes the gap
 
 `~/AppData/Roaming/REAPER/Scripts/kin_bridge.lua` (F4, Load ReaScript, Run, leave
-running) drives and reads every control in the **real** plugin. Use it to test a
-claim instead of asserting one. `tools/bridge_ui_test.py` did: every selector,
-mirror and save/reopen in 18 plugins passed 2026-09-11.
+running) drives and reads every control in the **real** plugin. `tools/bridge_ui_test.py`,
+2026-09-11 evening, all 18 live: every target name, Drift movement, "all" entry,
+selector and mirror passed, and 112 of 112 values survived save and reopen.
 
 ## The v1 → v3 Polyrhythm crossing — DONE 2026-09-10
 
