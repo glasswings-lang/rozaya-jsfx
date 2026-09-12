@@ -139,8 +139,16 @@ Bubbler), every unit and shape picker, Crossfade into next, Mute, Auto-morph,
 Audition, Start delay, Rest mode, Output at rest, Drift restart, Ramp engage.
 
 **Questions still open, to ask Rozaya one at a time:**
-- Is Source fine tune a Drift target? It changes the sound only once a Target note is
-  set, so I left it off, as Capture point is.
+- SETTLED: Source fine tune is NOT a Drift target -- Rozaya: *"Yes."* And its NAME
+  must say when it acts: *"that slider bit, whether it's 1 or 1000, needs to be
+  honest about what it is relative to everything else so people aren't confusedly
+  trying to change it and wondering wtf it's not doing anything"*. Read in Bubbler
+  (`src/bubbler.jsfx` ~341-360): Source note and Target note mirror Transpose value
+  ONLY while Source note is not None AND Transpose unit is Semitones; Target note is
+  hidden otherwise. Source fine tune joins that mirror, so it acts under exactly the
+  same condition. **Proposed names, mine, unquoted:** `Source fine tune (needs a
+  Source note and Transpose in Semitones)` and `Target note (needs a Source note and
+  Transpose in Semitones)`. Bubbler and Sustain Looper take the same names.
 
 ## The order of 2026-08-31 -- SUPERSEDED by the layout above
 
