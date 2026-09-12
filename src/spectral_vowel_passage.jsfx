@@ -355,6 +355,11 @@ slot_tgtnote  = freemem; freemem += NSLOTS;
 // Per-slot Wash grain and High cut (2026-09-11). Not yet in @serialize either.
 slot_grain    = freemem; freemem += NSLOTS;
 slot_hicut    = freemem; freemem += NSLOTS;
+// Per-slot timing unit (2026-09-11), for fade in, hold, fade out and gap: Rozaya's
+// {Seconds, Hz, Beats}. In Hz a timing lasts one cycle; 0 still means none (mine --
+// without it 0 Hz would be an endless leg). In Beats it follows the live tempo.
+slot_tmunit   = freemem; freemem += NSLOTS;
+function tm_sec(u, v) ( u == 1 ? (v > 0.000001 ? 1 / v : 0) : u == 2 ? v * 60 / max(tempo, 1) : v );
 grain_seed = 0;
 hc_on = 0; hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;   // EEL2 has no scientific notation
 // A partial's High cut gain: 1 below the fade, falling to 0 at the cut.
@@ -386,7 +391,7 @@ function ps_adopt() (
   ps_last[24] = slider55; ps_last[25] = slider58; ps_last[26] = slider62;
   ps_last[32] = slider5;  ps_last[33] = slider6;  ps_last[34] = slider7;  ps_last[35] = slider8;
   ps_last[36] = slider10; ps_last[37] = slider11; ps_last[38] = slider12;
-  ps_last[39] = slider14; ps_last[40] = slider18;
+  ps_last[39] = slider14; ps_last[40] = slider18; ps_last[41] = slider25;
   pv_last_tgt = slider8; pv_last_tval = slider9; pv_last_src = slider5; pv_last_sf = slider6; pv_last_sfu = slider7;
 );
 i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
@@ -395,7 +400,7 @@ slots_inited == 0 ? (
   slots_inited = 1;
   i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_capavg[i] = 1; slot_ot_harm[i] = 0; slot_ot_depth[i] = 24; slot_linger[i] = 4; slot_xfade[i] = 1; slot_fadein[i] = 1; slot_gap[i] = 0; slot_xfadeon[i] = 1; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
   i = 0; loop(NSLOTS, slot_tunit[i] = 1; slot_fine[i] = 0; slot_funit[i] = 2; slot_srcnote[i] = 0; slot_srcfine[i] = 0; slot_srcfunit[i] = 2; slot_tgtnote[i] = 60; i += 1; );  // pitch block: Semitones, no fine tune, Source note None
-  i = 0; loop(NSLOTS, slot_grain[i] = 150; slot_hicut[i] = 20000; i += 1; );   // Wash grain's default; High cut off
+  i = 0; loop(NSLOTS, slot_grain[i] = 150; slot_hicut[i] = 20000; slot_tmunit[i] = 0; i += 1; );   // Wash grain's default; High cut off
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -965,7 +970,7 @@ slider_show(slider8, slider5 > 0 && slider10 == 1);
     slot_srcnote[last_cap_slot] = slider5; slot_srcfine[last_cap_slot] = slider6; slot_srcfunit[last_cap_slot] = slider7;
     slot_tgtnote[last_cap_slot] = slider8; slot_tunit[last_cap_slot] = slider10;
     slot_fine[last_cap_slot] = slider11; slot_funit[last_cap_slot] = slider12;
-    slot_grain[last_cap_slot] = slider14; slot_hicut[last_cap_slot] = slider18;
+    slot_grain[last_cap_slot] = slider14; slot_hicut[last_cap_slot] = slider18; slot_tmunit[last_cap_slot] = slider25;
   );
   slider21 = slot_fadein[cap_slot];
   slider22 = slot_linger[cap_slot];
@@ -983,7 +988,7 @@ slider_show(slider8, slider5 > 0 && slider10 == 1);
   slider5 = slot_srcnote[cap_slot]; slider6 = slot_srcfine[cap_slot]; slider7 = slot_srcfunit[cap_slot];
   slider8 = slot_tgtnote[cap_slot]; slider10 = slot_tunit[cap_slot];
   slider11 = slot_fine[cap_slot]; slider12 = slot_funit[cap_slot];
-  slider14 = slot_grain[cap_slot]; slider18 = slot_hicut[cap_slot];
+  slider14 = slot_grain[cap_slot]; slider18 = slot_hicut[cap_slot]; slider25 = slot_tmunit[cap_slot];
   sliderchange(-1);   // refresh the displayed values; NOT slider_automate
 
   slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering (All shows Slot 1's)
@@ -1032,6 +1037,7 @@ slider_show(slider8, slider5 > 0 && slider10 == 1);
     ps_all(38, slider12, slider12, slot_funit);
     ps_all(39, slider14, slider14, slot_grain);
     ps_all(40, slider18, slider18, slot_hicut);
+    ps_all(41, slider25, slider25, slot_tmunit);
   );
   last_cap_slot = cap_slot; last_cap_sel = cap_sel; last_cap_all = cap_all;
 ) : (
@@ -1056,7 +1062,7 @@ slider_show(slider8, slider5 > 0 && slider10 == 1);
   slot_srcnote[cap_slot] = slider5; slot_srcfine[cap_slot] = slider6; slot_srcfunit[cap_slot] = slider7;
   slot_tgtnote[cap_slot] = slider8; slot_tunit[cap_slot] = slider10;
   slot_fine[cap_slot] = slider11; slot_funit[cap_slot] = slider12;
-  slot_grain[cap_slot] = slider14; slot_hicut[cap_slot] = slider18;
+  slot_grain[cap_slot] = slider14; slot_hicut[cap_slot] = slider18; slot_tmunit[cap_slot] = slider25;
   ps_adopt();
   last_cap_slot = cap_slot; last_cap_sel = cap_sel; last_cap_all = cap_all;   // also syncs the first-load case above
 );
@@ -1502,10 +1508,12 @@ automorph_mode > 0.5 ? (
       //     duration: continuous drift for levels, sampled-at-trigger for lengths.
       //     Every one is clamped at zero; a negative gap means nothing and a
       //     negative fade would run the leg backwards.
-      lg_fi = need_fadein ? max(0, slot_fadein[cur_slot] + lgo_fi) : 0;
-      lg_h  = max(0, slot_linger[cur_slot] + lgo_h);   // hold
-      lg_fo = max(0, slot_xfade[cur_slot]  + lgo_fo);  // fade out
-      lg_g  = max(0, slot_gap[cur_slot]    + lgo_g);   // gap of silence after
+      // Each timing in its slot's own unit, Drift added in that unit, then to seconds.
+      lg_tu = slot_tmunit[cur_slot];
+      lg_fi = need_fadein ? max(0, tm_sec(lg_tu, slot_fadein[cur_slot] + lgo_fi)) : 0;
+      lg_h  = max(0, tm_sec(lg_tu, slot_linger[cur_slot] + lgo_h));   // hold
+      lg_fo = max(0, tm_sec(lg_tu, slot_xfade[cur_slot]  + lgo_fo));  // fade out
+      lg_g  = max(0, tm_sec(lg_tu, slot_gap[cur_slot]    + lgo_g));   // gap of silence after
       lg_x  = slot_xfadeon[cur_slot] > 0.5;    // crossfade into next?
       leg_elapsed += 1 / srate;
       lg_t = leg_elapsed;

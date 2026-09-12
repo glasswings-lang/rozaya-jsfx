@@ -197,6 +197,29 @@ def grainhc():
            "grain: 40 ms on All == by hand on Slot 8")
 
 
+FADE_IN, HOLD, FADE_OUT, GAP, T_UNIT_SLOT, XFADE_ON, AUTOMORPH = 21, 22, 23, 24, 25, 26, 35
+
+
+def timing():
+    # Auto-morph Sweep walks the eight slots a capture on All filled, so the legs are
+    # heard. Unit and the four timings land on ONE stage (the unit is not a selector,
+    # and a unit a stage early would play one leg in the wrong unit). 120 BPM: ysfx's.
+    # Crossfade into next OFF: with it on (the default) a leg blends straight into the
+    # next slot and IGNORES the gap, and eight identical captures blend inaudibly -- the
+    # first version of this check could not fail for exactly that reason (2026-09-11).
+    # Off, each leg is fade in, hold, fade out to silence, gap: all four shape the level.
+    def legs(unit, fi, h, fo, g):
+        return fresh_run(0, [[(AUTOMORPH, 1), (XFADE_ON, 0), (T_UNIT_SLOT, unit), (FADE_IN, fi), (HOLD, h),
+                              (FADE_OUT, fo), (GAP, g)], *WAIT, [], []], seconds=18)
+    sec = legs(0, 0.5, 1, 0.5, 1)
+    report(np.abs(sec).max() > 0 and not np.array_equal(sec, legs(0, 0.5, 1, 0.5, 1.5)),
+           "timing: a gap of 1.5 s instead of 1 changes the sound (the check can fail)")
+    report(np.array_equal(sec, legs(2, 1, 2, 1, 2)), "timing: Beats 1, 2, 1, 2 at 120 BPM == Seconds 0.5, 1, 0.5, 1")
+    report(np.array_equal(sec, legs(1, 2, 1, 2, 1)), "timing: Hz 2, 1, 2, 1 == Seconds 0.5, 1, 0.5, 1")
+    report(np.array_equal(legs(0, 0.5, 1, 0.5, 0), legs(1, 2, 1, 2, 0)),
+           "timing: a gap of 0 in Hz == a gap of 0 in Seconds (0 still means none)")
+
+
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if not a.startswith("--") and not a.isdigit()] or ["current"]
     for w in want:

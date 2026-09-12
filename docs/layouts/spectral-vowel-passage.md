@@ -100,6 +100,15 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   they agree). **SAVE-FORMAT STAGE MUST FIX:** `grain_seed` copies Wash grain into all
   eight slots on EVERY load for now; once `slot_grain` is serialized, gate it on the
   older magics only, or per-slot grain is flattened on every reopen.
+- **Stage 6, the slot timing unit: DONE.** `current` 49 of 49 bit-identical; `timing`
+  (Auto-morph Sweep, crossfade OFF): gap 1.5 s != 1 s; Beats 1, 2, 1, 2 at 120 BPM and Hz
+  2, 1, 2, 1 == Seconds 0.5, 1, 0.5, 1; a gap of 0 in Hz == 0 s. **Test trap:** with
+  crossfade into next ON (default) a leg ignores its gap, and identical captures blend
+  inaudibly -- the first run's can-fail check caught it. Bank
+  `slot_tmunit` (All via `ps_last` 41), read once per leg start through `tm_sec`, with
+  Drift added in the timing's own unit. **Mine, unquoted, to tell Rozaya:** in Hz a
+  value of 0 still means none (not an endless leg); in Beats a leg follows the live
+  tempo at the moment it starts.
 - **Stage 4 design notes (mine, from reading 2026-09-11):** Bubbler resolves a shift
   to semitones in `bb_semis_from(unit, v)` -- Semitones as is, Cents /100, Hz from the
   Tuning reference `12*log2((ref+v)/ref)` -- and mirrors Target note <-> Transpose value
