@@ -146,9 +146,10 @@ Audition, Start delay, Rest mode, Output at rest, Drift restart, Ramp engage.
   (`src/bubbler.jsfx` ~341-360): Source note and Target note mirror Transpose value
   ONLY while Source note is not None AND Transpose unit is Semitones; Target note is
   hidden otherwise. Source fine tune joins that mirror, so it acts under exactly the
-  same condition. **Proposed names, mine, unquoted:** `Source fine tune (needs a
-  Source note and Transpose in Semitones)` and `Target note (needs a Source note and
-  Transpose in Semitones)`. Bubbler and Sustain Looper take the same names.
+  same condition. **Names:** `Source fine tune (only with a Source note, in Semitones)`
+  and `Target note (only with a Source note, in Semitones)` -- the shorter of two
+  offered; Rozaya: *"I think we should go with the shorter one"*. Passage, the
+  Morpher, Bubbler and Sustain Looper all take them; a rename moves nothing.
 
 ## The order of 2026-08-31 -- SUPERSEDED by the layout above
 
