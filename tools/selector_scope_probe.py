@@ -61,8 +61,11 @@ for t, track in enumerate(board["tracks"]):
         if ONLY and ONLY not in fx["name"].lower():
             continue
         params = fx["params"]
+        # A selector's name IS the selector word, or the word and a parenthesis: "Band solo"
+        # started with "Band" and was probed as a selector (2026-09-12).
         selectors = [(p, n) for p, (n, _, _) in params.items()
-                     if n in ("Drift target", "Ramp target") or n.startswith(EXTRA)]
+                     if n in ("Drift target", "Ramp target", "Band selector")
+                     or any(n == w or n.startswith(w + " (") for w in EXTRA)]
         members = [(p, n) for p, (n, _, _) in params.items()
                    if n.lower().startswith(("drift ", "ramp ")) and n not in ("Drift target", "Ramp target")]
         for sp, sname in selectors:
@@ -82,9 +85,14 @@ for t, track in enumerate(board["tracks"]):
                     seti(t, f, sp, 1); on1 = norm(t, f, mp)
                     setn(t, f, mp, B); b_on1 = norm(t, f, mp)
                     seti(t, f, sp, 0); back0 = norm(t, f, mp)
-                    if abs(on1 - a_on0) > 1e-4 and abs(back0 - a_on0) <= 1e-4:
+                    # Judged by what option 0 shows on return. Option 1 may already hold
+                    # the value A by chance (Melody's Drift movement did), so reading
+                    # "A" there proves nothing alone.
+                    if abs(b_on1 - a_on0) <= 1e-4:
+                        kind = "?"          # B did not take: cannot tell
+                    elif abs(back0 - a_on0) <= 1e-4:
                         kind = "PER"
-                    elif abs(on1 - a_on0) <= 1e-4 and abs(back0 - b_on1) <= 1e-4:
+                    elif abs(back0 - b_on1) <= 1e-4:
                         kind = "ALL"
                     else:
                         kind = "?"
