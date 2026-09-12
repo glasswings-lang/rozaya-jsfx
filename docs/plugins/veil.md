@@ -90,21 +90,21 @@ which one the amount/period/shape sliders are editing right now.
 **Drift target** `Left cutoff / Right cutoff / Left resonance / Right resonance / Output` —
 which parameter you're configuring. *(Output joined 2026-09-11; its amount is in dB.)*
 
-**Drift up amount / Drift down amount** `units match target` — how far it wanders
+**Drift up amount / Drift down amount (per target)** `units match target` — how far it wanders
 above / below the base value. Separate up and down let the wander sit off-centre.
 The amount is in the **target's own unit**: Hz for a cutoff (use the big end of
 the range), 0–1 for a resonance (use the small end). You tune it *by ear* — nudge
 until the wander feels right.
 
-**Drift period** `0–600, default 20, 0 = off` — how long one full wander cycle takes, in
+**Drift period (per target)** `0–600, default 20, 0 = off` — how long one full wander cycle takes, in
 whatever unit **Drift period unit** is set to (below). **Give Left and Right
 cutoffs *different* periods** (say 20 and 31) and the width itself breathes — the
 signature Veil move.
 
-**Drift shape** `Sine / Triangle / Random, default Sine` — Sine = smooth wander,
+**Drift shape (per target)** `Sine / Triangle / Random, default Sine` — Sine = smooth wander,
 Triangle = linear ramps, Random = smooth wander to unpredictable targets.
 
-**Drift period unit** `Seconds / Beats, default Seconds` — whether Drift period is
+**Drift period unit (all targets)** `Seconds / Beats, default Seconds` — whether Drift period is
 wall-clock seconds or beats at the project tempo. This one switch covers all four
 drift targets; there's no per-target unit. On **Beats** the wander follows the host,
 so a tempo change carries the breathing with it — and two Veils at 20 and 31 beats
@@ -126,18 +126,18 @@ and holds. All targets ramp in parallel on their own clocks.
 
 **Ramp target** `Left / Right cutoff / resonance, Output` — which parameter rides.
 
-**Ramp by** `units match target` — the signed amount to move by. **Positive
+**Ramp by (per target)** `units match target` — the signed amount to move by. **Positive
 on both cutoffs = the voice slowly CLEARING** (the muffle opening, as if the baby
 were growing); negative = deepening / darkening.
 
-**Ramp duration (in ramp time units)** `0–60, default 0` — how long the ride takes.
+**Ramp duration (per target, in ramp time units)** `0–60, default 0` — how long the ride takes.
 `0` = off.
 
-**Ramp engage** `Off / On, default Off` — a freeze/resume gate. While On the
+**Ramp engage (all targets)** `Off / On, default Off` — a freeze/resume gate. While On the
 ramp advances; flip Off and it freezes where it is; back On and it resumes (it does
 *not* restart). Only pressing transport Play restarts a ramp from the beginning.
 
-**Ramp start delay (in ramp time units)** `0–60, default 0` — wait this long after
+**Ramp start delay (per target, in ramp time units)** `0–60, default 0` — wait this long after
 engaging before the ride begins. "Let me settle first, then start clearing."
 
 

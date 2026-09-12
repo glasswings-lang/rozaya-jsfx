@@ -202,30 +202,30 @@ the duration, once.
 
 **Ramp target** `eighteen targets, default Breath rate` — the same list as Drift target, below.
 
-**Ramp by** `-1000 to 1000, default 0`
+**Ramp by (per target)** `-1000 to 1000, default 0`
 Signed, in the target's own unit. Negative shortens a segment or slows the breath
 rate; positive lengthens or speeds it. 0 means this target does not ramp.
 
-**Ramp time unit** `{Breaths, Seconds, Minutes, Beats}, default Minutes`
+**Ramp time unit (all targets)** `{Breaths, Seconds, Minutes, Beats}, default Minutes`
 One unit for the duration **and** the start delay, so they always mean the same
 as each other. **Breaths** counts whole breaths -- all four segments -- at the
 length *before* drift and ramp touch it, so a ramp cannot alter its own clock.
 **Beats** follows the project tempo, live.
 
-**Ramp duration** `0-1000, default 0` — per-target. How long this target takes to
+**Ramp duration (per target)** `0-1000, default 0` — per-target. How long this target takes to
 arrive. 0 means it does not ramp.
 
-**Ramp play for** `0-1000, default 0` · **Ramp rest for** `0-1000, default 0`
+**Ramp play for (per target)** `0-1000, default 0` · **Ramp rest for (per target)** `0-1000, default 0`
 Per-target. Turns the smooth ride into a **staircase**: advance for `play`, hold
 for `rest`, repeat. Both zero is the smooth ramp. The holds come *out of* the
 duration rather than extending it, so `Ramp duration` goes on meaning "you arrive
 in about this long".
 
-**Ramp engage** `{Off, On}, default Off` — global. One switch arms every
+**Ramp engage (all targets)** `{Off, On}, default Off` — global. One switch arms every
 configured target, each riding its own duration after its own start delay. It is
 a freeze/resume gate, not a reset: only transport play restarts a ramp.
 
-**Ramp start delay** `0-1000, default 0` — per-target, in ramp time units. Wait
+**Ramp start delay (per target)** `0-1000, default 0` — per-target, in ramp time units. Wait
 this long after engage before *this* target starts moving, so targets can be
 staggered. Useful for "fall asleep first, then begin the wind-down."
 
@@ -248,18 +248,18 @@ and Rest for in breaths. The new ones arrive `On a clock`; set to `With the targ
 anything past the four segments takes one step per whole breath. Play for and Rest
 for move how long each lasts; the gate still needs both controls above zero.
 
-**Drift up amount (units match target)** `0-1000, default 0`
+**Drift up amount (per target, units match target)** `0-1000, default 0`
 How far above baseline the wander reaches at its peak.
 
-**Drift down amount (units match target)** `0-1000, default 0`
+**Drift down amount (per target, units match target)** `0-1000, default 0`
 How far below. Independent of up, so asymmetric wander is supported — biological
 signals do not drift symmetrically. Either one above zero turns drift on for that
 target; both zero is off.
 
-**Drift period** `0-1000, default 8, 0 = off`
+**Drift period (per target)** `0-1000, default 8, 0 = off`
 One full wave, counted in the unit below.
 
-**Drift period unit** `{Breaths, Seconds, Beats}, default Breaths`
+**Drift period unit (all targets)** `{Breaths, Seconds, Beats}, default Breaths`
 For a target set to `With the target`, `Breaths` counts **turns of that target** —
 eight inhales, not eight of anything else. It is called `Breaths` rather than the
 suite's usual `Cycles` because here the thing that repeats is a whole breath, and the
@@ -268,7 +268,7 @@ clock and **Beats** follows the project tempo.
 
 **`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — an inhale during inhales, a pause during that pause, the breath rate through the whole breath — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target. So eight Seconds on an inhale is eight seconds of actual inhaling.
 
-**Drift movement** `{With the target, On a clock}` *(new 2026-09-09)*
+**Drift movement (per target)** `{With the target, On a clock}` *(new 2026-09-09)*
 Whether this target's drift moves in step with its own thing, or runs continuously
 underneath it. `With the target` advances the drift exactly one step each time that
 target happens — an inhale's drift moves on each inhale — so it is deterministic,
@@ -281,11 +281,11 @@ before this control existed**: the breath rate and the four segments arrive on
 `With the target`, the two pitch targets on `On a clock`. Nothing you have saved
 changed. Both are ordinary artistic choices and neither is the plugin's to make.
 
-**Drift shape** `{Sine, Triangle, Random}, default Sine`
+**Drift shape (per target)** `{Sine, Triangle, Random}, default Sine`
 Sine is smooth, Triangle is linear ramps with turnarounds, Random interpolates
 smoothly between fresh random targets at each period boundary.
 
-**Drift play for** `0-1000, default 0` · **Drift rest for** `0-1000, default 0`
+**Drift play for (per target)** `0-1000, default 0` · **Drift rest for (per target)** `0-1000, default 0`
 Makes the drift come and go. It drifts for `play` periods, **freezes exactly
 where it stopped** for `rest` periods, then carries on. Both must be above zero
 or the gate is off, which is what `0` means.

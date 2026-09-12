@@ -137,16 +137,16 @@ When the drift target changes within a band, the previous target's drift continu
 **Drift target** `Input gain / Tuning reference / Frequency / Fine tune / Width up / Width down / Gain / Pan / Wet/dry mix / Output volume, default Frequency`
 Which control the drift moves. *(Ten since 2026-09-11, in the order of the controls.)* Frequency, Fine tune, both widths, Gain and Pan belong to the selected band. **Input gain, Tuning reference, Wet/dry mix and Output volume belong to the whole plugin**: they hold one setting, and every band shows the same one.
 
-**Drift up amount** `0 to 1000, default 0`
+**Drift up amount (per band and target)** `0 to 1000, default 0`
 Maximum upward excursion of the drift, in the target's own unit: Frequency, Fine tune and the widths in that band's chosen unit; dB for Gain and Input gain; Hz for Tuning reference; -1 to +1 for Pan; 0 to 1 for Wet/dry and Output volume.
 
-**Drift down amount** `0 to 1000, default 0`
+**Drift down amount (per band and target)** `0 to 1000, default 0`
 Maximum downward excursion. Asymmetric Up vs Down lets the drift sit slightly off-center for a biological-feel rather than purely symmetric.
 
-**Drift period (BPM / Hz / sec / beats per cycle by mode; 0 = off)** `0 to 1000, default 0`
+**Drift period (per band and target, BPM / Hz / sec / beats per cycle by mode; 0 = off)** `0 to 1000, default 0`
 Length of one drift cycle. What the number *means* is set by Drift period mode below, and the slider's own name lists the four possibilities so it never changes meaning silently. **A period of 0 disables this drift target for this band**, even if Drift up and Drift down are non-zero.
 
-**Drift period mode** `BPM / Hz / Seconds / Host x, default Seconds`
+**Drift period mode (per band and target)** `BPM / Hz / Seconds / Host x, default Seconds`
 - **BPM** — beats per minute; cycles per second = period / 60.
 - **Hz** — cycles per second directly.
 - **Seconds** — how many seconds one wander takes.
@@ -156,7 +156,7 @@ Length of one drift cycle. What the number *means* is set by Drift period mode b
 
 This plugin never had the `Host ratio` menu the others carried, because the period lives behind the band and drift-target selectors rather than being a headline rate — so there was nothing here to retire.
 
-**Drift shape** `Sine / Triangle / Random, default Sine`
+**Drift shape (per band and target)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine is smooth continuous wander; Triangle has linear ramps with turnaround points; Random picks new value-noise targets at each cycle boundary and interpolates smoothly between them (not white noise — still smooth, just unpredictable in direction).
 
 ---

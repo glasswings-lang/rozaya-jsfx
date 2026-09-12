@@ -348,10 +348,10 @@ In-plugin one-time morph over time, without automation envelopes. Ramp is nested
 **Ramp target (slider 47)** `the seventeen targets, default Low frequency`
 Picks which target the `by` amount applies to. Switching the selector saves slider 30 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-**Ramp by (slider 30)** `-5000 to +5000, step 0.01, default 0` (units match the selected target)
+**Ramp by (per target, slider 30)** `-5000 to +5000, step 0.01, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over the duration. **0** = no change. For the rate-type targets (Sweep Rate, Pan Sweep Rate) the delta is in **that rate's currently-displayed unit** (Hz / Seconds / BPM): in BPM/Hz modes negative `by` = slower, in Seconds mode positive `by` = slower (longer period). Frequency Low/High are in Hz (the ±5000 range gives up to ±5 kHz ramps); Resonance and Wet/Dry are 0-1 fractions (use the low end of the range).
 
-**Ramp duration (slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp start delay (slider 33)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves (stagger targets by giving them different delays). · **Ramp engage (slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
+**Ramp duration (per target, slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp start delay (per target, slider 33)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves (stagger targets by giving them different delays). · **Ramp engage (all targets, slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage.
 
@@ -384,16 +384,16 @@ milliseconds, Pan sweep every is cycles. Projects saved with the old six-target
 list open with their drift and ramp on the same controls as before — measured
 bit-identical, including the three old targets no project used.
 
-**Drift up amount (slider 35)** `0.0–5000.0, default 0` (units match target)
+**Drift up amount (per target, slider 35)** `0.0–5000.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for Sweep Rate, Hz for the two Frequency targets, the Pan Sweep Rate's own unit for Pan Sweep Rate, a 0-1 fraction for Resonance and Wet/Dry. The 0-5000 range spans the frequencies (up to ±5 kHz wander); Resonance and Wet/Dry use the low end (e.g. 0.3), Hz-mode rates use small values. 0 = drift off on the up side.
 
-**Drift down amount (slider 36)** `0.0–5000.0, default 0` (units match target)
+**Drift down amount (per target, slider 36)** `0.0–5000.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (slider 37, cycles)** `0–1000, default 8, 0 = off`
+**Drift period (per target, slider 37, cycles)** `0–1000, default 8, 0 = off`
 How many filter LFO cycles one full drift wave takes for this target. All six targets use LFO cycles as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
-**Drift shape (slider 38)** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target, slider 38)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Notes

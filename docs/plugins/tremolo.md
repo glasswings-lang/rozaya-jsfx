@@ -272,10 +272,10 @@ In-plugin one-time morph over time. Ramp is nested-selector (same shape as Drift
 **Ramp target** `Rate value / On duration / Tremolo amount / Attack / Release / Stereo phase offset / Pan spread / Pan glide / Pan sweep rate / Pan sweep every / Play for / Rest for, default Rate value`
 Picks which target the `by` amount applies to. Switching the selector saves slider 25 into the old target's memory slot, then loads the new target's stored `by`. Sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-**Ramp by (slider 25)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
+**Ramp by (per target, slider 25)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over the duration. **0** = no change. For the rate-type targets (Rate Value, Pan Sweep Rate) the delta is in **that rate's currently-displayed unit** (Hz / Seconds / BPM): in BPM/Hz modes negative `by` = slower, in Seconds mode positive `by` = slower (longer period). Depth is dB, the three % targets are percentage points.
 
-**Ramp duration (slider 26)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp start delay (slider 28)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves (stagger targets by giving them different delays). · **Ramp engage (slider 27)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
+**Ramp duration (per target, slider 26)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp start delay (per target, slider 28)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves (stagger targets by giving them different delays). · **Ramp engage (all targets, slider 27)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage.
 
@@ -298,16 +298,16 @@ Drift on Tremolo amount makes the tremolo breathe stronger and gentler over time
 **Drift target** `Rate value / On duration / Tremolo amount / Attack / Release / Stereo phase offset / Pan spread / Pan glide / Pan sweep rate / Pan sweep every / Play for / Rest for, default Rate value`
 Picks which target's drift configuration sliders 30-33 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (slider 30)** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target, slider 30)** `0.0–100.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are the rate's current unit (BPM / Seconds / Hz) for Rate Value, dB for Depth, the Pan Sweep Rate's own unit for Pan Sweep Rate, percent for the three % targets. 0 = drift off on the up side. Rate / Pan-rate targets in Hz mode use the low end of the range.
 
-**Drift down amount (slider 31)** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target, slider 31)** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (slider 32, cycles)** `0–1000, default 8, 0 = off`
+**Drift period (per target, slider 32, cycles)** `0–1000, default 8, 0 = off`
 How many tremolo cycles one full drift wave takes for this target. All six targets use tremolo cycles as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
-**Drift shape (slider 33)** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target, slider 33)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Notes

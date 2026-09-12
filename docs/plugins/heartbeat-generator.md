@@ -129,7 +129,7 @@ The feature is **disabled when either slider is 0** (the default). With both at 
 > here, which is exactly the inconsistency the suite sweep exists to remove — a
 > thing learned on one plugin should be true of all of them.
 
-**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes`
 What the duration and start delay are counted in — one unit for both, so they
 always mean the same thing as each other. **Minutes** is the default and is what
 this block always did. **Seconds** is there so a thirty-second ramp can be typed
@@ -137,7 +137,7 @@ as `30` rather than as `0.5` minutes. **Cycles** counts this plugin's own cycles
 referenced against the rate *before* drift and ramp touch it, so a ramp cannot
 alter its own clock. **Beats** follows the project tempo, live.
 
-**Ramp play for** `0–1000, default 0` · **Ramp rest for** `0–1000, default 0`
+**Ramp play for (per target)** `0–1000, default 0` · **Ramp rest for (per target)** `0–1000, default 0`
 Per-target, in ramp time units. Turns the smooth ride into a **staircase**: the
 ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
 ramp, which is the default. The holds come **out of** the duration rather than
@@ -150,11 +150,11 @@ Nested-selector pattern matching Womb v3. Pick one of 18 targets — the same li
 **Ramp target** `eighteen targets, default Heart rate`
 Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. Every target ramps regardless of which one is selected.
 
-**Ramp duration (slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
+**Ramp duration (per target, slider 31)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (all targets, slider 32)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage. Only transport play resets the ramps.
 
-**Ramp by (slider 30)** `-400 to +400, step 0.01, default 0`
+**Ramp by (per target, slider 30)** `-400 to +400, step 0.01, default 0`
 Signed delta in the selected target's natural unit. **0** = no change. Examples:
 - Heart rate target, by -35: heart ramps from 70 → 35 BPM over the duration.
 
@@ -167,7 +167,7 @@ This matters more here than elsewhere: HRV figures are real quantities you'd rea
 
 Slider range is intentionally wide (-400 to +400) to span every target's natural range. Step is 0.01 to give fine control on the HRV targets (which have natural step 0.005-0.01). For BPM/ms targets you'd type a coarser value (e.g. -35 for BPM); for HRV targets you'd type something like 0.05.
 
-**Ramp start delay (slider 33)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Part of the contiguous 29–33 block. Saved/loaded per target by the selector, like `by` and duration.
+**Ramp start delay (per target, slider 33)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Part of the contiguous 29–33 block. Saved/loaded per target by the selector, like `by` and duration.
 
 A small ~100 ms smoother sits between the BPM slider and the audio, so manual BPM tweaks don't click. This is always on.
 
@@ -179,7 +179,7 @@ A small ~100 ms smoother sits between the BPM slider and the audio, so manual BP
 
 > **Added 2026-09-06**, for the same reason as the Ramp controls above.
 
-**Drift period unit** `Cycles / Seconds / Beats, default Cycles`
+**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Cycles`
 What the period above is counted in. **Cycles** counts this plugin's own cycles —
 exactly what the control did before this unit existed, and it follows the rate
 for free. **Seconds** is wall clock. **Beats** counts the project tempo, so the
@@ -189,7 +189,7 @@ drifting a rate cannot modulate its own drift period.
 
 **`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — for Heart rate and the S1-S2 gap, the heartbeat itself, once the start delay is over — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target.
 
-**Drift play for** `0–64 periods, default 0` · **Drift rest for** `0–64 periods, default 0`
+**Drift play for (per target)** `0–64 periods, default 0` · **Drift rest for (per target)** `0–64 periods, default 0`
 Makes the drift come and go instead of wandering forever. It drifts for `play`
 periods, then **freezes exactly where it stopped** for `rest` periods, then
 carries on. Both must be above zero or the gate is off entirely — which is what
@@ -217,10 +217,10 @@ For slow wall-clock-feel drift, set a long period (~360 heartbeats ≈ 5 min at 
 **Drift target** `Heart rate / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart rate`
 Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount** `0.0–50.0, default 0` (units match target)
+**Drift up amount (per target)** `0.0–50.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are BPM for Heart rate, ms for S1-S2 gap, fractional depth (0.0-0.25 range) for Breath HRV depth, fractional depth (0.0-0.08 range) for Random HRV depth. 0 = drift off on the up side.
 
-**Drift down amount** `0.0–50.0, default 0` (units match target)
+**Drift down amount (per target)** `0.0–50.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric biological-feel wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 ### Whose turn it is (2026-09-09)
@@ -253,10 +253,10 @@ A stepped wander is a staircase with as many steps as its period has events.
 Long periods sound much as they did; short ones are more obviously
 event-to-event.
 
-**Drift period (heartbeats)** `0–1000, default 8, 0 = off`
+**Drift period (per target, heartbeats)** `0–1000, default 8, 0 = off`
 How many heartbeats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period unit is the same across all 4 targets because heartbeat rate is the kin's master clock.
 
-**Drift shape** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Transport behavior (v2.9)

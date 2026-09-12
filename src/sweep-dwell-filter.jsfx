@@ -66,23 +66,23 @@ slider29:0<0,1,1{Pass-through,Silence}>Output at rest
 // Drift, then Ramp -- the Sweeping Filter's order. 16 targets in control order;
 // a length amount is in that segment's own length unit, a pitch in its own unit.
 slider30:0<0,15,1{High dwell length,Fade down length,Low dwell length,Fade up length,High dwell frequency,High dwell fine tune,Low dwell frequency,Low dwell fine tune,Tuning reference,Resonance,Stereo phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Wet/dry}>Drift target
-slider31:0<0,1000,0.01>Drift up amount (units match target)
-slider32:0<0,1000,0.01>Drift down amount (units match target)
-slider33:8<0,1000,1>Drift period (0 = off)
-slider34:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
-slider35:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider31:0<0,1000,0.01>Drift up amount (per target, units match target)
+slider32:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider33:8<0,1000,1>Drift period (per target, 0 = off)
+slider34:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
+slider35:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 // Drift play/rest in PERIODS; while resting the offset freezes where it stands.
-slider36:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider37:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider36:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider37:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 slider38:0<0,15,1{High dwell length,Fade down length,Low dwell length,Fade up length,High dwell frequency,High dwell fine tune,Low dwell frequency,Low dwell fine tune,Tuning reference,Resonance,Stereo phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Wet/dry}>Ramp target
-slider39:0<-1000,1000,0.001>Ramp by (units match target)
+slider39:0<-1000,1000,0.001>Ramp by (per target, units match target)
 // Default Minutes, which is what this block always counted in.
-slider40:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider41:0<0,1000,0.1>Ramp duration (in ramp time units)
-slider42:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider43:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider44:0<0,1,1{Off,On}>Ramp engage
-slider45:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider40:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider41:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider42:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider43:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider44:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider45:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 
 in_pin:left input
 in_pin:right input

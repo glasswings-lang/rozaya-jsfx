@@ -338,14 +338,14 @@ The three **"all"** entries work like Polyrhythm's "all voices": choosing one sh
 **Three controls are deliberately not targets**, and Rozaya asked that the reason be written here. **Layer harmonics** is a cap on processing cost, not a tone control, so a drift on it would make the CPU load rise and fall with the wave. **Capture point** and **Capture average** re-analyse the captured sound every time they move — a full spectrum and pitch analysis per slot — which is heavy and lands as a click; a drift would do that over and over.
 Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
 
-**Drift up amount** / **Drift down amount** `0 to 300, units match the target, default 0`
+**Drift up amount** / **Drift down amount (per target)** `0 to 300, units match the target, default 0`
 How far it wanders above (up) and below (down) the parameter's current value, in that parameter's own units — Texture in its 0–100, Pitch in semitones, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
-**Drift period** `0 to 1000, default 30, 0 = off`
+**Drift period (per target)** `0 to 1000, default 30, 0 = off`
 How long one full wander takes, counted in whatever **Drift period unit** says.
 30 seconds is a gentle sway; a few minutes is barely-there evolution.
 
-**Drift period unit** `Cycles / Seconds / Beats, default Seconds`
+**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Seconds`
 What the period above is counted in. **Seconds** is wall-clock. **Beats** follows
 the project tempo. **Cycles** counts whole Auto-morph passes — so the drift keeps
 step with the morph however you set its speed.
@@ -357,10 +357,10 @@ so a fresh instance has no cycle to count: defaulting to Cycles would give you a
 drift that never moved. It also keeps every project saved before this change
 meaning exactly what it already meant.
 
-**Drift shape** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target)** `Sine / Triangle / Random, default Sine`
 The path of the wander. Sine = smooth continuous sway; Triangle = straight ramps up and down with turnarounds; Random = drifts smoothly toward a new random spot each period (still smooth, just unpredictable in direction).
 
-**Drift play for (periods)** / **Drift rest for (periods)** `0 to 64, default 0 (off)`
+**Drift play for (periods)** / **Drift rest for (per target, periods)** `0 to 64, default 0 (off)`
 Makes the drift move in bursts with holds between, instead of wandering evenly
 forever. Play for 2 and rest for 2 and the parameter drifts for two periods,
 freezes exactly where it stopped for two, then carries on. Both must be above 0
@@ -378,7 +378,7 @@ cycles crest, neutral, trough, neutral before repeating; `1.2` gives five
 positions including two partial ones at different depths. Confirmed by simulating
 the code, not by reading it.
 
-**Drift restart** `Restart on play / Free-running, default Restart on play`
+**Drift restart (all targets)** `Restart on play / Free-running, default Restart on play`
 What the transport does to the drift — this is the choice between *synced* and *continuous*.
 - **Restart on play** snaps every drift back to the start of its cycle the moment you press play from a stop. Run the plugin on several tracks with the **same period and Sine/Triangle shape**, and they all reset *together* — so their drifts stay in step instead of wandering out of phase and clashing (e.g. Pitch drifts pulling against each other). This is the mode for locking multiple tracks together.
 - **Free-running** ignores the transport completely: the drift just keeps evolving. Loop a sound *under or over* it and the drift flows straight through, unbroken — no jump when the loop comes round, no jump when you press play. This is the mode for one continuous, ever-moving texture.
@@ -394,18 +394,18 @@ Like Drift, every target rides in parallel; the selector chooses which one the s
 **Ramp target** — the same fifty-five as Drift target, default Morph (see there, including why Layer harmonics, Capture point and Capture average are not on the list).
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
-**Ramp by** `-300 to +300, units match the target, default 0`
+**Ramp by (per target)** `-300 to +300, units match the target, default 0`
 How far to move the parameter, and which direction — in that parameter's own units (Texture 0–100, Pitch semitones, Low cut Hz…). Negative goes down, positive up. **0 means this target doesn't ramp**, so arming Ramp with everything at 0 safely does nothing.
 
-**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes`
 What Ramp duration, Ramp play/rest and Ramp start delay are all counted in —
 one control for the four of them. Minutes is what they have always meant, so
 nothing you have saved changes.
 
-**Ramp duration** `0 to 1000, default 0`
+**Ramp duration (per target)** `0 to 1000, default 0`
 How long the ride takes, in ramp time units. 0 = this target doesn't ramp. Set it to, say, 20 and the parameter takes twenty minutes to travel its full `by` amount, then holds.
 
-**Ramp play for** / **Ramp rest for** `0 to 1000 ramp time units, default 0 (smooth)`
+**Ramp play for** / **Ramp rest for (per target)** `0 to 1000 ramp time units, default 0 (smooth)`
 Turns the smooth ride into a **staircase**. It climbs for the play window,
 freezes for the rest window, climbs again. Both must be above 0; either at 0
 leaves the ride smooth.
@@ -423,10 +423,10 @@ behind during each hold, then overtakes during each climb, so the two keep
 crossing each other on the way up and land in the same place. That's the sound
 this exists for. (Heard first on Veil, 2026-09-04.)
 
-**Ramp engage** `Off / On, default Off`
+**Ramp engage (all targets)** `Off / On, default Off`
 Arms every configured target at once. While On, each rides its own duration from where it is; flip Off and they freeze in place (flip back On and they resume). The ride starts fresh from the current values each time the transport begins playing. You can aim several targets at once (Texture *and* Output level *and* Low cut, each over its own time) and one Engage winds them all down together.
 
-**Ramp start delay** `0 to 1000, default 0`
+**Ramp start delay (per target)** `0 to 1000, default 0`
 Wait this long after arming — in ramp time units — before the ride begins — e.g. "let me settle for 10 minutes, *then* start winding down."
 
 ---

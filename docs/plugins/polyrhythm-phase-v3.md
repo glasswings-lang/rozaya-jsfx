@@ -473,7 +473,7 @@ under **Drift target** below, including the "(all voices)" entries. Switching
 the selector loads that target's saved values; an edit is written the moment you
 make it. Running ramps on other targets keep going.
 
-**Ramp by** `-1000 to +1000, step 0.001, default 0`
+**Ramp by (per target)** `-1000 to +1000, step 0.001, default 0`
 Signed amount for the selected target, in that target's natural unit (rate unit for the rate targets, Hz for Binaural, dB for Gain/Depth, % for On Duration / Attack / Release). **0** = no ride.
 
 - **Base Rate** rides as a multiplicative ratio: at 60 BPM, `by -30` scales every voice by 0.5, so V2's 60.5 → 30.25 — the slow beat between voices is preserved.
@@ -482,7 +482,7 @@ Signed amount for the selected target, in that target's natural unit (rate unit 
 
 **Independent mode note:** Rate Value is still the reference for the Base Rate target's `by` interpretation even though it's not used for audio in Independent mode. Per-voice Rate targets ride each voice's own rate directly.
 
-**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes` *(new 2026-09-07)*
+**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes` *(new 2026-09-07)*
 What Ramp duration and Ramp start delay are counted in. **Minutes is the
 default and that is not a free choice** — every saved instance had no such
 control, so Minutes is the unit they were all already running on, and putting
@@ -490,14 +490,14 @@ Cycles at the top of the list would have quietly rewritten a thirty-minute ramp
 into a two-second one. *Cycles* counts this plugin's own tremolo cycles;
 *Beats* follows the live project tempo.
 
-**Ramp duration** `0–1000, default 0` — **per-target**: how long the *selected*
+**Ramp duration (per target)** `0–1000, default 0` — **per-target**: how long the *selected*
 target takes to travel from baseline to baseline + `by`, in Ramp time units. A
-target with duration 0 doesn't ramp. · **Ramp start delay** `0–1000, default 0`
+target with duration 0 doesn't ramp. · **Ramp start delay (per target)** `0–1000, default 0`
 — **per-target**: wait this long after engage before *this* target moves. ·
-**Ramp engage** `Off / On, default Off` — **global**: one switch arms every
+**Ramp engage (all targets)** `Off / On, default Off` — **global**: one switch arms every
 configured target.
 
-**Ramp play for** / **Ramp rest for** `0–1000, default 0 each` *(new 2026-09-07)*
+**Ramp play for** / **Ramp rest for (per target)** `0–1000, default 0 each` *(new 2026-09-07)*
 Per-target. The ramp advances for `play`, holds for `rest`, and repeats — so it
 climbs as a **staircase** rather than a smooth glide. The holds come *out* of
 the duration rather than extending it, so Ramp duration goes on meaning "you
@@ -542,23 +542,23 @@ What some of them do:
 - **On duration**, **Attack** and **Release** — wander the shape of a voice's pulse.
 - **Play for** / **Rest for** — wander the gate's counts. The gate still only switches on when both sliders are above zero.
 
-**Drift up amount** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target)** `0.0–100.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for the rate targets; the voice's own Pitch mode unit for Pitch and its Fine tune unit for Fine tune; semitones for Transpose; Hz for Tuning reference and Binaural Beat; dB for Gain and Tremolo amount; percent for On duration, Attack, Release, Pulse width and Pan spread; ms for Pan glide; cycles for Play for and Rest for. Rate targets in Hz mode use the low end; Gain/Tremolo amount use modest values (a few dB is a strong swell). 0 = drift off on the up side.
 
-**Drift down amount** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target)** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period** `0–1000, default 8, 0 = off`
+**Drift period (per target)** `0–1000, default 8, 0 = off`
 How long one full drift wave takes for this target, counted in the unit below.
 
-**Drift period unit** `Cycles / Seconds / Beats, default Cycles` *(new 2026-09-07)*
+**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Cycles` *(new 2026-09-07)*
 What the period counts. **Cycles** is this plugin's native count and the default
 — a period of 8 means eight tremolo cycles, and because it rides the same scale
 as everything else it follows the rate and the project tempo for free.
 **Seconds** is wall clock. **Beats** converts at the live project tempo, so the
 wander follows the host rather than the rhythm.
 
-**Drift play for** / **Drift rest for** `0–1000, default 0 each` *(new 2026-09-07)*
+**Drift play for** / **Drift rest for (per target)** `0–1000, default 0 each` *(new 2026-09-07)*
 Per-target, counted in **periods**. Both must be above zero for the gate to
 engage. While resting the drift phase does not advance at all, so the offset
 **freezes where it stopped** rather than sliding back to centre.
@@ -569,7 +569,7 @@ parks at neutral every time and is nearly inaudible — the awkward fraction is
 the interesting one, because each freeze lands further round the wave than the
 last.
 
-**Drift shape** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Notes

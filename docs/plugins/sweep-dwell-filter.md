@@ -271,7 +271,7 @@ The two sliders are orthogonal — all four combinations work and produce distin
 > here, which is exactly the inconsistency the suite sweep exists to remove — a
 > thing learned on one plugin should be true of all of them.
 
-**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes`
 What the duration and start delay are counted in — one unit for both, so they
 always mean the same thing as each other. **Minutes** is the default and is what
 this block always did. **Seconds** is there so a thirty-second ramp can be typed
@@ -279,7 +279,7 @@ as `30` rather than as `0.5` minutes. **Cycles** counts this plugin's own cycles
 referenced against the rate *before* drift and ramp touch it, so a ramp cannot
 alter its own clock. **Beats** follows the project tempo, live.
 
-**Ramp play for** `0–1000, default 0` · **Ramp rest for** `0–1000, default 0`
+**Ramp play for (per target)** `0–1000, default 0` · **Ramp rest for (per target)** `0–1000, default 0`
 Per-target, in ramp time units. Turns the smooth ride into a **staircase**: the
 ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
 ramp, which is the default. The holds come **out of** the duration rather than
@@ -298,14 +298,14 @@ Nested-selector pattern matching Womb v3 / breath_gen. Pick a target and set a s
 **Ramp target (slider 26)** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
 The 6-option selector (matches Drift). Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 6 targets ramp regardless of which one is selected. The `by` (slider 29) is in seconds for the dwell targets, the Pan Sweep Rate's own unit for that target, and a 0–1 fraction for Resonance.
 
-**Ramp duration (slider 27)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (slider 28)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
+**Ramp duration (per target, slider 27)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (all targets, slider 28)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off all freeze and resume on re-engage. As of v2.14 each target has its own duration + start delay (previously shared) — different dwell phases can ramp on different timelines from one engage.
 
-**Ramp by (slider 29)** `-60 to +60 seconds, step 0.001, default 0`
+**Ramp by (per target, slider 29)** `-60 to +60 seconds, step 0.001, default 0`
 Signed delta in seconds for the selected dwell phase. **0** = no change. **Negative** = shorten that phase (shorter cycle if that's High/Low dwell; quicker fade if that's a fade phase). **Positive** = lengthen. Example: target High dwell with `by +4` stretches high dwell from 4 sec → 8 sec over the duration; combined with target Low dwell with `by +2`, both phases ramp together as a coordinated wind-down.
 
-**Ramp start delay (slider 37)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. Lives at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
+**Ramp start delay (per target, slider 37)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. Lives at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. The existing ~3 ms cutoff smoother absorbs any per-sample step changes, so manual dwell-slider tweaks remain click-free.
 
@@ -315,7 +315,7 @@ Signed delta in seconds for the selected dwell phase. **0** = no change. **Negat
 
 > **Added 2026-09-06**, for the same reason as the Ramp controls above.
 
-**Drift period unit** `Cycles / Seconds / Beats, default Cycles`
+**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Cycles`
 What the period above is counted in. **Cycles** counts this plugin's own cycles —
 exactly what the control did before this unit existed, and it follows the rate
 for free. **Seconds** is wall clock. **Beats** counts the project tempo, so the
@@ -323,7 +323,7 @@ wander follows the host rather than the plugin, and it follows a live tempo
 change. The period is measured against the rate *before* drift touches it, so
 drifting a rate cannot modulate its own drift period.
 
-**Drift play for** `0–64 periods, default 0` · **Drift rest for** `0–64 periods, default 0`
+**Drift play for (per target)** `0–64 periods, default 0` · **Drift rest for (per target)** `0–64 periods, default 0`
 Makes the drift come and go instead of wandering forever. It drifts for `play`
 periods, then **freezes exactly where it stopped** for `rest` periods, then
 carries on. Both must be above zero or the gate is off entirely — which is what
@@ -347,16 +347,16 @@ The four dwell-phase targets are the same set as the Ramp targets and use the sa
 **Drift target** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
 Picks which target's drift configuration sliders 31-34 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target)** `0.0–100.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: seconds for the four dwell phases, the Pan Sweep Rate's own unit for Pan Sweep Rate, a 0-1 fraction for Resonance. 0 = drift off on the up side. Resonance uses the low end of the range (e.g. 0.3).
 
-**Drift down amount** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target)** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (cycles)** `0–1000, default 8, 0 = off`
+**Drift period (per target, cycles)** `0–1000, default 8, 0 = off`
 How many dwell patterns one full drift wave takes for this target. All six targets use dwell patterns as their period unit, scaled by Ramp so the wave-per-pattern relationship stays constant under wind-down.
 
-**Drift shape** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Notes

@@ -359,10 +359,10 @@ A **one-time signed-delta ride** on any target over a set duration — the in-pl
 **Ramp target** `55 options, default Rate value`
 Which parameter this ramp acts on — the same list as Drift target. All 55 ramp in parallel; the selector only chooses which one you are editing.
 
-**Ramp by** `-1000 to +1000, step 0.001, default 0` (units match target)
+**Ramp by (per target)** `-1000 to +1000, step 0.001, default 0` (units match target)
 Signed delta the target moves by over the duration (from 0 at the start to the full `by` at the end, then held). Units follow the target: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. **0** = no ramp for this target. For Rate Value / Pan Rate the sign follows Rate Mode — in BPM/Hz modes negative `by` = slower, in Seconds mode (period) positive `by` = slower.
 
-**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes`
 What the duration and start delay below are counted in — one unit for both, so
 they always mean the same thing as each other. **Minutes** is the default and is
 what this block always did. **Seconds** is there so a thirty-second ramp can be
@@ -370,10 +370,10 @@ typed as `30` rather than as `0.5` minutes. **Cycles** counts this plugin's own
 sequencer cycles, referenced against the rate before drift and ramp touch it, so
 a ramp cannot alter its own clock. **Beats** follows the project tempo live.
 
-**Ramp duration** `0–60, default 0` · **Ramp start delay** `0–60, default 0`
+**Ramp duration (per target)** `0–60, default 0` · **Ramp start delay (per target)** `0–60, default 0`
 Per-target, in ramp time units. Each target waits out its own start delay, then rides its `by` over its own duration. Because both are per-target, different targets can wind down over **different timelines** from a single engage (e.g. slow the tempo over 10 minutes while softening Attack over the first 2). Duration 0 = that target's ramp is off.
 
-**Ramp play for** `0–1000, default 0` · **Ramp rest for** `0–1000, default 0`
+**Ramp play for (per target)** `0–1000, default 0` · **Ramp rest for (per target)** `0–1000, default 0`
 Per-target, in ramp time units. Turns the smooth ride into a **staircase**: the
 ramp advances for `play`, holds for `rest`, and repeats. Both zero is the smooth
 ramp, which is the default.
@@ -382,7 +382,7 @@ The holds come **out of** the duration rather than extending it — the advancin
 steps are made proportionally faster — so Ramp duration goes on meaning "you
 arrive in about this long" however you set the staircase.
 
-**Ramp engage** `Off / On, default Off` — **GLOBAL**
+**Ramp engage (all targets)** `Off / On, default Off` — **GLOBAL**
 One switch arms every configured target. It's a freeze/resume gate (NOT a restart edge): while On, each target's ramp clock advances toward completion; while Off, all clocks freeze and resume from where they are on re-engage.
 
 **Granularity mirrors Drift:** Rate Value + Pan Rate convert the delta to a mode-aware ratio; per-voice Timing + Gain add per sample; the articulation targets (Note dur, Attack %, Release %) sample the ramp offset **once per note at trigger** so a ringing note's length/shape stay fixed. Ramp and Drift compose at the same consumption site — you can ramp a target down once *and* drift it at the same time.
@@ -403,10 +403,10 @@ Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **
 
 Every control that shapes the sound, in the order the controls appear: Rate value, Pulse width, Tuning reference, Transpose, Binaural beat, Attack, Release, Glide time, Pan spread, Pan glide, Pan base rate, Pan increment; then for each voice its Pitch, Fine tune, Next voice in, Note duration and Gain; then Master gain, Play for and Rest for. Amounts are in each target's own unit. Play for and Rest for round to whole steps.
 
-**Drift up amount** `0.0–20.0, default 0` (units match target)
+**Drift up amount (per target)** `0.0–20.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. Dial small values in Seconds / Hz modes. 0 = drift off on the up side.
 
-**Drift down amount** `0.0–20.0, default 0` (units match target)
+**Drift down amount (per target)** `0.0–20.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 ### Whose turn it is (2026-09-09)
@@ -441,11 +441,11 @@ A stepped wander is a staircase with as many steps as its period has events.
 Long periods sound much as they did; short ones are more obviously
 event-to-event.
 
-**Drift period** `0–1000, default 8, 0 = off`
+**Drift period (per target)** `0–1000, default 8, 0 = off`
 How long one full drift wave takes for this target, counted in whatever the unit
 below says.
 
-**Drift period unit** `Cycles / Seconds / Beats, default Cycles`
+**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Cycles`
 **Cycles** counts this plugin's own sequencer cycles — a period of 8 means eight
 cycles, and it follows the rate for free, which is what the control always did
 before this unit existed. **Seconds** is wall clock, independent of the rate.
@@ -457,7 +457,7 @@ the melody, and it follows a live tempo change.
 The period is measured against the rate **before** drift and ramp touch it, so
 drifting the rate cannot modulate its own drift period.
 
-**Drift play for** `0–64 periods, default 0` · **Drift rest for** `0–64 periods, default 0`
+**Drift play for (per target)** `0–64 periods, default 0` · **Drift rest for (per target)** `0–64 periods, default 0`
 Makes the drift come and go instead of wandering forever. It drifts for `play`
 periods, then **freezes exactly where it stopped** for `rest` periods, then
 carries on. Both must be above zero or the gate is off entirely — which is what
@@ -472,7 +472,7 @@ wave than the last, so `1.75` cycles through four different park points before
 repeating and `1.2` through five. Setting only `Drift down` wastes half of them,
 because every park on the positive half lands at no change.
 
-**Drift shape** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Granularity — per-sample vs per-note (by design)
