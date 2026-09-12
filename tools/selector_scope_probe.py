@@ -64,8 +64,11 @@ for t, track in enumerate(board["tracks"]):
         # A selector's name IS the selector word, or the word and a parenthesis: "Band solo"
         # started with "Band" and was probed as a selector (2026-09-12).
         selectors = [(p, n) for p, (n, _, _) in params.items()
-                     if n in ("Drift target", "Ramp target", "Band selector")
+                     if n in ("Drift target", "Ramp target")
+                     or n == "Band selector" or n.startswith("Band selector (")
                      or any(n == w or n.startswith(w + " (") for w in EXTRA)]
+        # "Band selector (0-15)" matched neither form above before this line and went
+        # unprobed on the full run (2026-09-12).
         members = [(p, n) for p, (n, _, _) in params.items()
                    if n.lower().startswith(("drift ", "ramp ")) and n not in ("Drift target", "Ramp target")]
         for sp, sname in selectors:
