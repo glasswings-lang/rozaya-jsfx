@@ -220,6 +220,27 @@ def timing():
            "timing: a gap of 0 in Hz == a gap of 0 in Seconds (0 still means none)")
 
 
+START_DELAY, PLAY_FOR, REST_FOR, TR_UNIT, OUT_AT_REST = 38, 39, 40, 41, 43
+
+
+def transport():
+    # Set once, two stages after the capture; the tail starts near 8.9 s and runs to
+    # 22 s, so a 16 s delay (counted from when it is set) ends inside it.
+    def tr(sets):
+        return fresh_run(0, [list(sets), *WAIT, [], []], seconds=22)
+    sec = tr([(START_DELAY, 16)])
+    report(np.abs(sec).max() > 0 and not np.array_equal(sec, tr([(START_DELAY, 17)])),
+           "transport: a start delay of 17 s instead of 16 changes the sound (the check can fail)")
+    report(np.array_equal(sec, tr([(TR_UNIT, 2), (START_DELAY, 32)])), "transport: Start delay 32 beats at 120 BPM == 16 s")
+    report(np.array_equal(sec, tr([(TR_UNIT, 1), (START_DELAY, 0.0625)])), "transport: Start delay 0.0625 Hz == 16 s")
+    pr = tr([(PLAY_FOR, 1), (REST_FOR, 1)])
+    report(not np.array_equal(pr, tr([])), "transport: Play for 1 s, Rest for 1 s changes the sound")
+    report(np.array_equal(pr, tr([(TR_UNIT, 2), (PLAY_FOR, 2), (REST_FOR, 2)])),
+           "transport: Play for and Rest for 2 beats at 120 BPM == 1 s")
+    report(not np.array_equal(pr, tr([(PLAY_FOR, 1), (REST_FOR, 1), (OUT_AT_REST, 1)])),
+           "transport: Output at rest Silence differs from Pass-through")
+
+
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if not a.startswith("--") and not a.isdigit()] or ["current"]
     for w in want:

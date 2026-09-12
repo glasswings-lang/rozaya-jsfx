@@ -109,6 +109,14 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   Drift added in the timing's own unit. **Mine, unquoted, to tell Rozaya:** in Hz a
   value of 0 still means none (not an endless leg); in Beats a leg follows the live
   tempo at the moment it starts.
+- **Stage 7, transport: DONE.** `current` 49 of 49 bit-identical; `transport`: Start
+  delay 17 s != 16 s; 32 beats at 120 BPM and 0.0625 Hz == 16 s; Play for / Rest for 1 s
+  changes the sound and == 2 beats; Silence at rest != Pass-through. Ported from
+  the Morpher (`src/spectral_vowel_morpher.jsfx` ~1667-1694 and its output ~2323): the
+  Start delay holds Drift, Ramp and the walk; a rest holds the walk only on Freeze in
+  place; rest applies to the output SUM (Pass-through keeps dry, Silence mutes all).
+  Lengths via `tm_sec(slider41, ...)` per block. **Mine, unquoted:** the counters
+  restart on every play edge (Passage sets `ext_noinit`, so @init cannot do it).
 - **Stage 4 design notes (mine, from reading 2026-09-11):** Bubbler resolves a shift
   to semitones in `bb_semis_from(unit, v)` -- Semitones as is, Cents /100, Hz from the
   Tuning reference `12*log2((ref+v)/ref)` -- and mirrors Target note <-> Transpose value
