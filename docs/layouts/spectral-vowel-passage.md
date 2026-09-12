@@ -103,7 +103,10 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
     one place, `eff_semi_A/B`.
 - **Still to build, in this order:** the 22-target list with Drift amount unit / Ramp by
   unit (blob magic bump, DSTRIDE 16 -> 32, target remap); the save format; renames of
-  existing labels to the table below; the manual; then the live migration, install, bridge
+  existing labels to the table below, **each Drift and Ramp control and every per-slot
+  control ending with its R25 kind** (`(per slot)`, `(per slot and target)`, `(all
+  targets)`), measured -- the installed suite is being renamed from 2026-09-12 (R25), and
+  Passage is not installed, so its labels wait for this stage; the manual; then the live migration, install, bridge
   test. (The save format's place after the target list is from the 2026-09-11 handoff.)
 
 ## THE LAYOUT, authored whole 2026-09-11 -- shown to Rozaya and settled the same day; nothing built
