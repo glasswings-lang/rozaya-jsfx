@@ -336,7 +336,8 @@ needed, and Rozaya: *"Rarely is not the same as never."* -- both stay. **Mine, u
 overlapping ramps on one target add together; ramp 1 has nothing before it. **Eight ramps**
 -- Rozaya: *"Yes. I think that's a good one"*. **A shape per (ramp, target)**, the fade names {Linear,
 Cosine, Logarithmic, Exponential}, default Linear so saved ramps stay even -- Rozaya: *"Yes,
-actually."* **Open:** defaults; the layout per plugin before any
+actually."* **Ramp engage and Ramp time unit per ramp**, no longer global -- Rozaya:
+*"Ramp engage is just like any other ramp control. needs to be per-ramp"*. **Open:** defaults; the layout per plugin before any
 migration (CLAUDE.md), with the nested-selector @serialize fix built in from the start.
 
 ### A bar-shape change lands on the next click (Rozaya, 2026-09-11, not built)
