@@ -24,13 +24,37 @@ plus its place in the route. The layout should say that, and the names should to
 Rozaya spotted this from the reading order alone: *"it feels like the routing for the
 slots should be... not there. Something feels off."*
 
+## All slots, and what Passage is FOR -- 2026-09-11
+
+Rozaya, on why Passage should exist beside the Morpher: *"I think the solution is to
+have an all slots thing, meaning you can capture to all of them, effect all of them,
+etc. then modify each as you see fit. That way it's not just a clunker morfer"*.
+And: *"Yes, capture should grab into all 8 slots. tbqh, morfer needs it too"*.
+
+**Mine, unquoted:** `Capture slot` becomes `{All, Slot 1, ..., Slot 8}`, All first as
+on Polyrhythm's Voice. The planned 1-based renumber already adds one to every saved
+value, so All at 0 costs nothing extra. On All: Capture now grabs the same moment into
+all eight; every per-slot control shows Slot 1 and writes all eight, change-detected
+so parking on All flattens nothing. The Morpher got the same on 2026-09-11 with no
+migration (`spectral-vowel-morpher-all-slots-20260911.md`).
+
+**The slot timings' unit, 2026-09-11.** Rozaya: *"Each slot should have its own:
+beats, hz, seconds. :)"* -- one unit picker per slot for its four timings, replacing
+the tempo section's `Sync to host` (retired by R20). Order `{Seconds, Hz, Beats}`, the
+rate list's relative order -- proposed by me, Rozaya: *"that's fine 🙂"*. **Mine,
+unquoted:** in Hz a timing lasts one cycle of that rate (bigger is shorter).
+
+**This layout is not yet whole.** Still to settle with Rozaya before any migration:
+R22's pitch block for Passage (*"their own discussion"*), R24's full target
+list with Start delay / Play for / Rest for, and the two OPEN items further down.
+
 ## The order
 
 **Per slot — pick a slot, then everything that slot is**
 
 | new | control | from |
 |---|---|---|
-| 1 | Capture slot (1-8) | 1, now 1-based |
+| 1 | Capture slot (All, Slot 1-8) | 1, now 1-based with All at 0 |
 | 2 | Capture now | 2, renamed from `Capture spectrum` |
 | 3 | Capture point (%, per slot) | 3 |
 | 4 | Capture average (frames, per slot) | 4 |
