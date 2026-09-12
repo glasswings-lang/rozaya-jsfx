@@ -74,8 +74,24 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
 
 - **Stage 1, renumber: DONE** (`096ad27`), `jsfx_renumber verify` passed all three.
 - **Stage 2, the 24 new controls declared, inert, seeded: DONE**, 49 of 49 bit-identical.
-- **Stage 3, All slots on Capture slot:** built, migration adds 1 to each saved slot;
-  `current` and `allslots` checks RUNNING at the time of writing -- see git log.
+- **Stage 3, All slots on Capture slot: DONE.** Migration adds 1 to each saved slot.
+  `current`: 49 of 49 bit-identical. `allslots`: a capture on All == an ordinary capture
+  (heard in Slot 8); Texture on All changes Slot 8 and == by hand; passing through All
+  keeps Slot 8's own Texture; a Drift set on All moves Slot 8 and == by hand. Change
+  detection via `ps_last` (adopted in @block and @serialize). Not yet tested: save and
+  reopen on All (bridge test, at the end).
+- **Stage 4 design notes (mine, from reading 2026-09-11):** Bubbler resolves a shift
+  to semitones in `bb_semis_from(unit, v)` -- Semitones as is, Cents /100, Hz from the
+  Tuning reference `12*log2((ref+v)/ref)` -- and mirrors Target note <-> Transpose value
+  only while Source note > 0 AND Transpose unit is Semitones (`src/bubbler.jsfx` ~230-360).
+  Passage's heard pitch is set in ONE place: `eff_semi_A/B = slot_pitch[sb_i/j] +
+  pitch_mod_A/B` (~line 1600), so each slot's semitones become `semis_from(Transpose
+  unit, value + drift) + semis_from(Fine tune unit, fine)`. New per-slot banks go at the
+  END of the allocations (after `ps_last`, which grows to 64 for their All indices);
+  all of them need `@serialize` fields behind a magic bump, gated on the magic that
+  WROTE them. Source fine tune enters the mirror as `transpose = target - (source - 1) -
+  source_fine_semis`; **mine, unquoted:** a source fine tune in Hz is measured from the
+  source note's own frequency, not from the Tuning reference.
 - **Still to build, in this order:** the pitch block (Source note, Source fine tune,
   Target note mirror, Transpose unit, Fine tune, Tuning reference); per-slot Wash grain;
   High cut; slot timing unit; transport (start delay, play/rest, unit, rest mode,
