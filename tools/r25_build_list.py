@@ -53,7 +53,9 @@ def main():
             raise SystemExit(f"unreadable map line: {l.strip()!r}")
         files[int(m[1])] = m[3]
     meas = collections.defaultdict(dict)       # (track, name) -> {selector: kind}
-    for l in open(report, encoding="utf-8"):
+    # utf-8-sig: a byte-order mark on the first line hid the Tremolo's "Drift up amount"
+    # from LINE.match and dropped it silently (2026-09-12, a report joined in PowerShell).
+    for l in open(report, encoding="utf-8-sig"):
         m = LINE.match(l.strip())
         if m:
             meas[(int(m[2]), m[6])][m[4]] = m[1]

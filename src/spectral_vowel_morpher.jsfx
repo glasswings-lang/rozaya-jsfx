@@ -320,9 +320,9 @@ slider34:0<0,1,1{Pass-through,Silence}>Output at rest
 // "all layers" entries on Polyrhythm's model (Rozaya: "Yes"). The plugin remaps an
 // old save; tools/morpher_r24_migrate_20260911.py remaps a project line's selectors.
 slider35:0<0,54,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Pitch,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer level (all layers),4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level,Layer pitch (all Custom layers),Custom 1 pitch,Custom 2 pitch,Custom 3 pitch,Layer overtone harmonic (all layers),4 octaves down overtone harmonic,3 octaves down overtone harmonic,2 octaves down overtone harmonic,1 octave down overtone harmonic,a fifth down overtone harmonic,a fourth down overtone harmonic,Original (unison) overtone harmonic,a fourth up overtone harmonic,a fifth up overtone harmonic,1 octave up overtone harmonic,2 octaves up overtone harmonic,3 octaves up overtone harmonic,4 octaves up overtone harmonic,Custom 1 overtone harmonic,Custom 2 overtone harmonic,Custom 3 overtone harmonic,Input level,Output level,Play for,Rest for}>Drift target
-slider36:0<0,1000,0.01>Drift up amount (units match target)
-slider37:0<0,1000,0.01>Drift down amount (units match target)
-slider38:30<0,1000,0.01>Drift period (in drift period units, 0 = off)
+slider36:0<0,1000,0.01>Drift up amount (per target, units match target)
+slider37:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider38:30<0,1000,0.01>Drift period (per target, in drift period units, 0 = off)
 // Drift period unit. Same three options as everywhere else in the suite, but it
 // declares SECONDS rather than the usual Cycles, for two reasons that agree:
 // every one of the 122 instances in the library means seconds today (a declared
@@ -331,8 +331,8 @@ slider38:30<0,1000,0.01>Drift period (in drift period units, 0 = off)
 // one Auto-morph traversal, and Auto-morph defaults to Off, which also hides its
 // own rate control. A fresh instance defaulting to Cycles would have a drift
 // that never advanced the first time it was switched on.
-slider39:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit
-slider40:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider39:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
+slider40:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 // --- Drift play/rest. Ported from Veil, the reference implementation, which
 //     has been heard. Makes the wander move in bursts with holds between
 //     instead of running evenly forever. PER TARGET, like the amounts it gates.
@@ -343,14 +343,14 @@ slider40:0<0,2,1{Sine,Triangle,Random}>Drift shape
 //     the trough, x.0 and x.5 at neutral. So an awkward fraction rotates the
 //     park point, and a whole number parks at no-change EVERY time, which is
 //     nearly inaudible. Confirmed by simulating the loop, not by reading it.
-slider41:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider42:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider41:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider42:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
 // drift ignores the transport and evolves continuously (loop under/over an
 // unbroken drift). A loop repeat is never a restart in either mode.
-slider43:0<0,1,1{Restart on play,Free-running}>Drift restart
+slider43:0<0,1,1{Restart on play,Free-running}>Drift restart (all targets)
 
 // --- Ramp: the suite's "Speed Ramp" under an honest name (this plugin has no
 //     speed to ramp). A one-time slow RIDE of a parameter: pick a target, how
@@ -358,7 +358,7 @@ slider43:0<0,1,1{Restart on play,Free-running}>Drift restart
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
 slider44:0<0,54,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Pitch,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer level (all layers),4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level,Layer pitch (all Custom layers),Custom 1 pitch,Custom 2 pitch,Custom 3 pitch,Layer overtone harmonic (all layers),4 octaves down overtone harmonic,3 octaves down overtone harmonic,2 octaves down overtone harmonic,1 octave down overtone harmonic,a fifth down overtone harmonic,a fourth down overtone harmonic,Original (unison) overtone harmonic,a fourth up overtone harmonic,a fifth up overtone harmonic,1 octave up overtone harmonic,2 octaves up overtone harmonic,3 octaves up overtone harmonic,4 octaves up overtone harmonic,Custom 1 overtone harmonic,Custom 2 overtone harmonic,Custom 3 overtone harmonic,Input level,Output level,Play for,Rest for}>Ramp target
-slider45:0<-1000,1000,0.001>Ramp by (units match target)
+slider45:0<-1000,1000,0.001>Ramp by (per target, units match target)
 // Ramp time unit -- the unit for Ramp duration, Ramp play/rest and Ramp start
 // delay, all four together. Default MINUTES (index 2), which is the suite
 // default AND exactly what these four already meant, so no saved instance
@@ -373,11 +373,11 @@ slider45:0<-1000,1000,0.001>Ramp by (units match target)
 // every other plugin in the suite does it. Beats are reachable now, and a beat
 // count too large for the range is one you can see rather than one applied
 // behind you.
-slider46:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+slider46:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 // 0..1000, widened 2026-09-06. `half-music-half-wind.RPP` has 120 typed into
 // this on two instances -- a two-hour ramp, above the one hour the control
 // used to offer.
-slider47:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider47:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
 // Ramp play/rest turns the smooth ride into a STAIRCASE -- "ramp on one side,
 // stairs on the other" (Rozaya, 2026-09-04). Windows are whole RAMP TIME
 // UNITS, matching Ramp duration. The rests come OUT of the duration
@@ -385,10 +385,10 @@ slider47:0<0,1000,0.1>Ramp duration (in ramp time units)
 // while moving it moves faster, by exactly (play+rest)/play, so a stepped ride
 // and a smooth one of the same length make the same journey in the same time --
 // crossing each other on the way, and landing on the destination together.
-slider48:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider49:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider50:0<0,1,1{Off,On}>Ramp engage
-slider51:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider48:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider49:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider50:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider51:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all

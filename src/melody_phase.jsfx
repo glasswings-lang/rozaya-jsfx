@@ -154,24 +154,24 @@ slider96:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // --- Drift: 55 targets in the order of the controls they reach ---
 slider97:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment,V1 Pitch,V1 Fine tune,V1 Next voice in,V1 Note duration,V1 Gain,V2 Pitch,V2 Fine tune,V2 Next voice in,V2 Note duration,V2 Gain,V3 Pitch,V3 Fine tune,V3 Next voice in,V3 Note duration,V3 Gain,V4 Pitch,V4 Fine tune,V4 Next voice in,V4 Note duration,V4 Gain,V5 Pitch,V5 Fine tune,V5 Next voice in,V5 Note duration,V5 Gain,V6 Pitch,V6 Fine tune,V6 Next voice in,V6 Note duration,V6 Gain,V7 Pitch,V7 Fine tune,V7 Next voice in,V7 Note duration,V7 Gain,V8 Pitch,V8 Fine tune,V8 Next voice in,V8 Note duration,V8 Gain,Master gain,Play for,Rest for}>Drift target
-slider98:0<0,1000,0.01>Drift up amount (units match target)
-slider99:0<0,1000,0.01>Drift down amount (units match target)
-slider100:8<0,1000,1>Drift period (0 = off)
-slider101:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
-slider102:0<0,1,1{With the target,On a clock}>Drift movement
-slider103:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider104:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider105:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider98:0<0,1000,0.01>Drift up amount (per target, units match target)
+slider99:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider100:8<0,1000,1>Drift period (per target, 0 = off)
+slider101:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
+slider102:0<0,1,1{With the target,On a clock}>Drift movement (per target)
+slider103:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
+slider104:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider105:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // --- Ramp: the same 55 targets ---
 slider106:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment,V1 Pitch,V1 Fine tune,V1 Next voice in,V1 Note duration,V1 Gain,V2 Pitch,V2 Fine tune,V2 Next voice in,V2 Note duration,V2 Gain,V3 Pitch,V3 Fine tune,V3 Next voice in,V3 Note duration,V3 Gain,V4 Pitch,V4 Fine tune,V4 Next voice in,V4 Note duration,V4 Gain,V5 Pitch,V5 Fine tune,V5 Next voice in,V5 Note duration,V5 Gain,V6 Pitch,V6 Fine tune,V6 Next voice in,V6 Note duration,V6 Gain,V7 Pitch,V7 Fine tune,V7 Next voice in,V7 Note duration,V7 Gain,V8 Pitch,V8 Fine tune,V8 Next voice in,V8 Note duration,V8 Gain,Master gain,Play for,Rest for}>Ramp target
-slider107:0<-1000,1000,0.001>Ramp by (units match target)
-slider108:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider109:0<0,1000,0.1>Ramp duration (in ramp time units)
-slider110:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider111:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider112:0<0,1,1{Off,On}>Ramp engage
-slider113:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider107:0<-1000,1000,0.001>Ramp by (per target, units match target)
+slider108:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider109:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider110:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider111:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider112:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider113:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 
 @init
 // Rate drift and Ramp are in BPM in EVERY mode -- "BPM is BPM". This mattered

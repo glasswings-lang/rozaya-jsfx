@@ -140,18 +140,18 @@ slider38:0<0,1,1{Pass-through,Silence}>Output at rest
 // 17 TARGETS since 2026-09-10, in control order; the six-target notes above are
 // history. docs/layouts/sweeping-filter-r22-r24.md has the list and the units.
 slider47:0<0,16,1{Low frequency,Low fine tune,High frequency,High fine tune,Tuning reference,Resonance,Rate value,On duration,Depth,Attack,Release,R channel phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Wet/dry}>Ramp target
-slider48:0<-5000,5000,0.001>Ramp by (units match target)
+slider48:0<-5000,5000,0.001>Ramp by (per target, units match target)
 // NEW 2026-09-05. Minutes is what this plugin's Ramp duration and start delay
 // already counted in, so index 0 leaves every saved value meaning what it did.
-slider49:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider50:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider49:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider50:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
 // NEW 2026-09-05. Turns the climb into a STAIRCASE -- climb, hold, climb. The
 // holds come OUT of the duration rather than extending it, so Ramp duration goes
 // on meaning "you arrive in about this long". Off unless BOTH are > 0.
-slider51:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider52:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider53:0<0,1,1{Off,On}>Ramp engage
-slider54:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider51:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider52:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider53:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider54:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / the rest of
 // the sweep. Pick a target (slider39), then sliders 35-38 hold THAT target's
@@ -180,21 +180,21 @@ slider54:0<0,1000,0.1>Ramp start delay (in ramp time units)
 // v2.14 reorg above — same reset story.)
 // 17 TARGETS since 2026-09-10 -- see the Ramp target note.
 slider39:0<0,16,1{Low frequency,Low fine tune,High frequency,High fine tune,Tuning reference,Resonance,Rate value,On duration,Depth,Attack,Release,R channel phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Wet/dry}>Drift target
-slider40:0<0,5000,0.01>Drift up amount (units match target)
-slider41:0<0,5000,0.01>Drift down amount (units match target)
-slider42:8<0,1000,1>Drift period (0 = off)
+slider40:0<0,5000,0.01>Drift up amount (per target, units match target)
+slider41:0<0,5000,0.01>Drift down amount (per target, units match target)
+slider42:8<0,1000,1>Drift period (per target, 0 = off)
 // NEW 2026-09-05. The first entry is whatever THIS plugin already counted in,
 // which here is CYCLES of its own sweep -- so nothing saved changes meaning, and
 // a period of 8 goes on meaning "wander over eight sweeps" and follows the rate.
 // Veil, the Phaser, Bubbler and Dapple say Seconds instead, because seconds is
 // what THEY natively count in. The second entry is Beats in every case.
-slider43:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
-slider44:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider43:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
+slider44:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 // NEW 2026-09-05. Drift runs for a while and then FREEZES WHERE IT STANDS
 // rather than returning to centre. Off unless BOTH are > 0, which is the
 // default and is bit-identical to the old always-wandering behaviour.
-slider45:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider46:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider45:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider46:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // Convenience picker for Host x. Writes a multiplier into Rate Value on
 // change then gets out of the way; "Custom" (default) never writes. Not

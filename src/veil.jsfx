@@ -58,13 +58,13 @@ slider6:0<-24,12,0.01>Output (dB)
 
 // --- Drift (nested selector) ---
 slider7:0<0,4,1{Left cutoff,Right cutoff,Left resonance,Right resonance,Output}>Drift target
-slider8:0<0,1000,0.01>Drift up amount (units match target)
-slider9:0<0,1000,0.01>Drift down amount (units match target)
+slider8:0<0,1000,0.01>Drift up amount (per target, units match target)
+slider9:0<0,1000,0.01>Drift down amount (per target, units match target)
 // Unit is set by slider11 (Drift period unit) — seconds by default, beats in
 // Host-synced projects. The unit is deliberately NOT in this label: NVDA
 // re-reads the parameter name on every arrow step, and a name that lies half
 // the time is worse than one that's short.
-slider10:20<0,1000,0.01>Drift period (0 = off)
+slider10:20<0,1000,0.01>Drift period (per target, 0 = off)
 // Host tempo sync for the drift period. Veil has no rate — the only musical
 // length in it is the drift period, so that is the only thing Host x touches.
 // Seconds is the default; Beats reinterprets slider10 as beats and follows the
@@ -72,8 +72,8 @@ slider10:20<0,1000,0.01>Drift period (0 = off)
 // Deliberately NOT synced: Ramp duration / start delay stay in minutes. A
 // wind-down is wall-clock — how long until you are asleep, not a musical
 // length — and the cutoffs are pitch, never tempo.
-slider11:0<0,1,1{Seconds,Beats}>Drift period unit
-slider12:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider11:0<0,1,1{Seconds,Beats}>Drift period unit (all targets)
+slider12:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 // Drift Play/Rest. The drift wanders for `play` periods, then FREEZES where
 // it stands for `rest` periods, then wanders on. Without this the drift never
 // settles — it is always moving, and stillness is only reachable by switching
@@ -83,12 +83,12 @@ slider12:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // wander while Right cutoff holds, which makes the WIDTH itself move in steps
 // rather than continuously. Both must be > 0 or the gate is off (the default),
 // which is bit-identical to the old always-drifting behaviour.
-slider13:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider14:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider13:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider14:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // --- Ramp (nested selector; signed delta) ---
 slider15:0<0,4,1{Left cutoff,Right cutoff,Left resonance,Right resonance,Output}>Ramp target
-slider16:0<-1000,1000,0.001>Ramp by (units match target)
+slider16:0<-1000,1000,0.001>Ramp by (per target, units match target)
 // Ramp time unit. REAPER is a DAW and counts in beats, and this suite has
 // three rate modes -- yet the Ramp ignored all of them and was hardwired to
 // wall clock. The comment that used to sit here argued a wind-down is
@@ -109,8 +109,8 @@ slider16:0<-1000,1000,0.001>Ramp by (units match target)
 // like it, the unit is NOT in the four labels below -- NVDA re-reads the
 // parameter name on every arrow step, and a name that lies half the time is
 // worse than a short one.
-slider17:1<0,2,1{Seconds,Minutes,Beats}>Ramp time unit
-slider18:0<0,1000,0.01>Ramp duration (in ramp time units)
+slider17:1<0,2,1{Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider18:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 // Ramp Play/Rest — the STAIRCASE. The ramp advances for `play` minutes, holds
 // still for `rest` minutes, and repeats: descend, settle, descend, settle.
 // The rests come OUT of the duration, they do NOT extend it — Ramp duration
@@ -121,10 +121,10 @@ slider18:0<0,1000,0.01>Ramp duration (in ramp time units)
 // the same idea: engage Off freezes the ramp where it stands and On resumes.
 // Both must be > 0 or the gate is off (the default) and the ramp is a smooth
 // slide exactly as before.
-slider19:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider20:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider21:0<0,1,1{Off,On}>Ramp engage
-slider22:0<0,1000,0.01>Ramp start delay (in ramp time units)
+slider19:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider20:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider21:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider22:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
 
 @init
 // NO ext_noinit: REAPER re-runs @init on every transport play / render

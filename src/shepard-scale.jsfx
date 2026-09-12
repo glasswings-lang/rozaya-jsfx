@@ -113,23 +113,23 @@ slider66:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // ===== DRIFT: 45 targets in control order =====
 slider67:0<0,44,1{Rate value,Attack,Release,Note length,Pulse width,Binaural beat,Tuning reference,C Gain,C Pan,C Fine tune,C# Gain,C# Pan,C# Fine tune,D Gain,D Pan,D Fine tune,D# Gain,D# Pan,D# Fine tune,E Gain,E Pan,E Fine tune,F Gain,F Pan,F Fine tune,F# Gain,F# Pan,F# Fine tune,G Gain,G Pan,G Fine tune,G# Gain,G# Pan,G# Fine tune,A Gain,A Pan,A Fine tune,A# Gain,A# Pan,A# Fine tune,B Gain,B Pan,B Fine tune,Play for,Rest for}>Drift target
-slider68:0<0,1000,0.01>Drift up amount (units match target)
-slider69:0<0,1000,0.01>Drift down amount (units match target)
-slider70:8<0,1000,1>Drift period (0 = off)
-slider71:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
-slider72:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider73:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider74:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider68:0<0,1000,0.01>Drift up amount (per target, units match target)
+slider69:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider70:8<0,1000,1>Drift period (per target, 0 = off)
+slider71:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
+slider72:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
+slider73:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider74:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // ===== RAMP: the same 45 targets =====
 slider75:0<0,44,1{Rate value,Attack,Release,Note length,Pulse width,Binaural beat,Tuning reference,C Gain,C Pan,C Fine tune,C# Gain,C# Pan,C# Fine tune,D Gain,D Pan,D Fine tune,D# Gain,D# Pan,D# Fine tune,E Gain,E Pan,E Fine tune,F Gain,F Pan,F Fine tune,F# Gain,F# Pan,F# Fine tune,G Gain,G Pan,G Fine tune,G# Gain,G# Pan,G# Fine tune,A Gain,A Pan,A Fine tune,A# Gain,A# Pan,A# Fine tune,B Gain,B Pan,B Fine tune,Play for,Rest for}>Ramp target
-slider76:0<-1000,1000,0.001>Ramp by (units match target)
-slider77:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider78:0<0,1000,0.1>Ramp duration (in ramp time units)
-slider79:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider80:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider81:0<0,1,1{Off,On}>Ramp engage
-slider82:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider76:0<-1000,1000,0.001>Ramp by (per target, units match target)
+slider77:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider78:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider79:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider80:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider81:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider82:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).

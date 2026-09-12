@@ -89,10 +89,10 @@ slider22:0<0,14,1{Bubble rate,Timing randomness,Pitch,Fine tune,Tuning reference
 // Amounts are per target, in the target's own unit -- except Bubble rate, which
 // is in BPM in every rate mode (the settled suite rule: the plugin converts,
 // you never do).
-slider23:0<0,1000,0.01>Drift up amount (units match target)
-slider24:0<0,1000,0.01>Drift down amount (units match target)
-slider25:20<0,1000,0.01>Drift period (0 = off)
-slider26:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider23:0<0,1000,0.01>Drift up amount (per target, units match target)
+slider24:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider25:20<0,1000,0.01>Drift period (per target, 0 = off)
+slider26:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
@@ -104,20 +104,20 @@ slider26:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // advances it continuously, drawing the whole curve.
 //
 // DEFAULTS REPRODUCE WHAT drift_is_stepped() HARDCODED, so nothing saved moves.
-slider27:0<0,1,1{With the target,On a clock}>Drift movement
-slider28:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider29:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider30:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider27:0<0,1,1{With the target,On a clock}>Drift movement (per target)
+slider28:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
+slider29:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider30:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // --- Ramp ----------------------------------------------------------------
 slider31:0<0,14,1{Bubble rate,Timing randomness,Pitch,Fine tune,Tuning reference,Pitch spread,Resonance,Bubble length,Rise,Tone vs noise,Excite from input,Stereo width,Output,Play for,Rest for}>Ramp target
-slider32:0<-1000,1000,0.001>Ramp by (units match target)
-slider33:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider34:0<0,1000,0.01>Ramp duration (in ramp time units)
-slider35:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider36:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider37:0<0,1,1{Off,On}>Ramp engage
-slider38:0<0,1000,0.01>Ramp start delay (in ramp time units)
+slider32:0<-1000,1000,0.001>Ramp by (per target, units match target)
+slider33:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider34:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
+slider35:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider36:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider37:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider38:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
 slider14:50<0,100,1>Tone vs noise (%, 0 = noise, 100 = tone plink)
 slider15:0<0,100,1>Excite from input (%, 0 = internal noise, 100 = input)
 

@@ -269,13 +269,13 @@ slider71:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // named for its control -- Rozaya: "Yes, and yes." The plugin remaps an old save;
 // a project line's two selectors are remapped by tools/womb_r24_migrate_20260911.py.
 slider72:0<0,48,1{Heart rate,Heart with breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter Hz,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter Hz,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Drift target
-slider73:0<0,2000,0.01>Drift up amount (units match target)
-slider74:0<0,2000,0.01>Drift down amount (units match target)
-slider75:8<0,1000,1>Drift period (in drift period units, 0 = off)
+slider73:0<0,2000,0.01>Drift up amount (per target, units match target)
+slider74:0<0,2000,0.01>Drift down amount (per target, units match target)
+slider75:8<0,1000,1>Drift period (per target, in drift period units, 0 = off)
 // Declared CYCLES, unlike the Morpher's, because this period already counted
 // heartbeats or breath cycles -- Cycles IS the current meaning here, so the
 // suite default and the back-compatible one are the same answer.
-slider76:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider76:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
@@ -286,10 +286,10 @@ slider76:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // advances it continuously, drawing the whole curve.
 //
 // DEFAULTS REPRODUCE WHAT drift_is_stepped() HARDCODED, so nothing saved moves.
-slider77:0<0,1,1{With the target,On a clock}>Drift movement
-slider78:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider79:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider80:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider77:0<0,1,1{With the target,On a clock}>Drift movement (per target)
+slider78:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
+slider79:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider80:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // --- RAMP -------------------------------------------------------------------
 // Ramps the selected target by `by` over `duration`, after a start delay.
@@ -297,18 +297,18 @@ slider80:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 // means no ramp, negative means decrease (slower heart, shorter inhale).
 // Each target is additive and independent.
 slider81:0<0,48,1{Heart rate,Heart with breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter Hz,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter Hz,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Ramp target
-slider82:0<-2000,2000,0.001>Ramp by
+slider82:0<-2000,2000,0.001>Ramp by (per target)
 // Declared MINUTES, which is both the suite default and what the duration and
 // start delay already meant, so no saved instance changes meaning.
-slider83:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider84:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider83:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider84:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
 // Turns the smooth ride into a STAIRCASE. The rests come OUT of the duration
 // rather than extending it, so a stepped ramp and a smooth one of the same
 // length arrive together. Off unless BOTH are above 0.
-slider85:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider86:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider87:0<0,1,1{Off,On}>Ramp engage
-slider88:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider85:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider86:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider87:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider88:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).

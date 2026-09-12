@@ -77,21 +77,21 @@ slider22:0<0,1000,1>Rest for (beats)
 // Speed Ramp configs reset on this upgrade (magic already bumped). Declared
 // here for context; REAPER orders by ID so they appear grouped at 29-33.
 slider32:0<0,17,1{Heart rate,S1-S2 gap,S1 volume,S2 volume,Brightness,S1 decay,S2 decay,S1 pitch,S2 pitch,S1 fine tune,S2 fine tune,Tuning reference,Stereo width,Breath cycle,Breath HRV depth,Random HRV depth,Play for,Rest for}>Ramp target
-slider33:0<-1000,1000,0.001>Ramp by
+slider33:0<-1000,1000,0.001>Ramp by (per target)
 // What the duration and start delay are counted in -- one unit for both, so they
 // always mean the same thing as each other. DEFAULT IS 2, Minutes, which is what
 // this block always did; index 0 would silently reinterpret every saved ramp.
 // Cycles counts heartbeats at the rate BEFORE drift and ramp touch it, so a ramp
 // cannot alter its own clock.
-slider34:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider35:0<0,1000,0.1>Ramp duration (in ramp time units)
+slider34:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider35:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
 // Ramp play/rest, per target, in ramp time units: the ramp advances for `play`,
 // holds for `rest`, and repeats -- a staircase instead of a smooth glide. The
 // holds come OUT of the duration rather than extending it, so Ramp duration goes
 // on meaning "you arrive in about this long". Both zero is the smooth ramp.
-slider36:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider37:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider38:0<0,1,1{Off,On}>Ramp engage
+slider36:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
+slider37:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider38:0<0,1,1{Off,On}>Ramp engage (all targets)
 
 // Per-target drift: nested-selector pattern matching Womb v3 / breath
 // gen v2.9. Pick a target (slider23), then sliders 22-25 hold THAT
@@ -119,14 +119,14 @@ slider38:0<0,1,1{Off,On}>Ramp engage
 // EIGHTEEN since 2026-09-11 (R24), in the order of the controls they reach. The
 // two HRV depths moved from 2 and 3 to 14 and 15; the plugin remaps an old save.
 slider23:0<0,17,1{Heart rate,S1-S2 gap,S1 volume,S2 volume,Brightness,S1 decay,S2 decay,S1 pitch,S2 pitch,S1 fine tune,S2 fine tune,Tuning reference,Stereo width,Breath cycle,Breath HRV depth,Random HRV depth,Play for,Rest for}>Drift target
-slider24:0<0,1000,0.01>Drift up amount (units match target)
-slider25:0<0,1000,0.01>Drift down amount (units match target)
-slider26:8<0,1000,1>Drift period (0 = off)
+slider24:0<0,1000,0.01>Drift up amount (per target, units match target)
+slider25:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider26:8<0,1000,1>Drift period (per target, 0 = off)
 // What the period is COUNTED IN. Cycles is this plugin's native count -- one
 // heartbeat -- and the default, which is exactly what this control did before
 // the unit existed. Seconds is wall clock. Beats counts the PROJECT tempo, a
 // different clock from the heart's own whenever the two disagree.
-slider27:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
+slider27:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
 // beginning" -- both are valid artistic decisions and neither is the plugin's
@@ -137,20 +137,20 @@ slider27:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit
 // advances it continuously, drawing the whole curve.
 //
 // DEFAULTS REPRODUCE WHAT drift_is_stepped() HARDCODED, so nothing saved moves.
-slider28:0<0,1,1{With the target,On a clock}>Drift movement
-slider29:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider28:0<0,1,1{With the target,On a clock}>Drift movement (per target)
+slider29:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 // Drift play/rest, per target, counted in PERIODS. Both must be above zero or
 // the gate is off, which is what 0 means. While resting the phase does not
 // advance, so the offset FREEZES where it stopped rather than returning to
 // centre -- and the FRACTION of the play value chooses where it parks: x.25
 // crest, x.75 trough, x.0 and x.5 neutral. A whole number parks at no-change
 // every time and is nearly inaudible; an awkward fraction is the useful one.
-slider30:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider31:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider30:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
+slider31:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // Speed ramp start delay — part of the v2.14 selector-first block (appears at
 // 33 in the UI, right after engage/32).
-slider39:0<0,1000,0.1>Ramp start delay (in ramp time units)
+slider39:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 
 // --- Host tempo sync (sliders 34-35) ------------------------------------
 // Own BPM: free-running, project tempo ignored -- original behaviour.
