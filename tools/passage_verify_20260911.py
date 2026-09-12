@@ -137,6 +137,35 @@ def allslots():
     report(np.array_equal(drift, drift_hand), "all: that drift == the same drift set by hand on Slot 8")
 
 
+SRC, SRC_FINE, TARGET, TRANSPOSE, T_UNIT, FINE, TUNING = 5, 6, 8, 9, 10, 11, 30
+
+
+def pitch():
+    # Heard: Slot 1 (Morph parked at 0), captured into Slot 1. Equal stage counts.
+    def one(steps):
+        return fresh_run(0, [*steps, *WAIT], first_slot=1)
+    base12 = one([[], [(TRANSPOSE, 12)]])
+    untouched = one([[], []])
+    report(not np.array_equal(base12, untouched) and np.abs(base12).max() > 0,
+           "pitch: Transpose 12 changes the sound (the check can fail)")
+    for label, steps in (("1200 cents", [[(T_UNIT, 2)], [(TRANSPOSE, 1200)]]),
+                         ("440 Hz from a 440 reference", [[(T_UNIT, 0)], [(TRANSPOSE, 440)]]),
+                         ("880 Hz from an 880 reference", [[(T_UNIT, 0), (TUNING, 880)], [(TRANSPOSE, 880)]]),
+                         # Same stage: a fine tune set a block earlier sounds +1 for that
+                         # block and moves the voice phases for good (jsfx_run README).
+                         ("11 semitones + Fine tune 100 cents", [[], [(FINE, 100), (TRANSPOSE, 11)]])):
+        report(np.array_equal(one(steps), base12), f"pitch: {label} == Transpose 12 semitones")
+    by_note = one([[(SRC, 61)], [(TARGET, 64)]])
+    report(np.array_equal(by_note, one([[(SRC, 61)], [(TRANSPOSE, 4)]])),
+           "pitch: Source C4, Target E4 == Transpose 4")
+    flat = one([[(SRC, 61), (SRC_FINE, -50)], [(TARGET, 64)]])
+    report(np.array_equal(flat, one([[(SRC, 61), (SRC_FINE, -50)], [(TRANSPOSE, 4.5)]])),
+           "pitch: Source C4 50 cents flat, Target E4 == Transpose 4.5")
+    on_all = fresh_run(100, [[], [(TRANSPOSE, 7)], *WAIT])
+    report(np.array_equal(on_all, fresh_run(100, [[(CAP_SLOT, 8)], [(TRANSPOSE, 7)], *WAIT])),
+           "pitch: Transpose 7 on All == by hand on Slot 8")
+
+
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if not a.startswith("--") and not a.isdigit()] or ["current"]
     for w in want:

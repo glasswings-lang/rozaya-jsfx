@@ -340,8 +340,29 @@ mod_active             = freemem; freemem += DBANK;  // @slider: 1 if a target h
 // (24-26), so that on All only a control actually moved reaches all eight slots --
 // Polyrhythm's change-detected model. Adopted in @block and @serialize, never on a
 // first @slider (jsfx-gotchas: an adopt-on-first-@slider flag is the bug).
-ps_last                = freemem; freemem += 32;
+ps_last                = freemem; freemem += 64;
 ps_inited = 0;
+// Pitch block, per slot (2026-09-11): Transpose unit, Fine tune and its unit, Source
+// note, Source fine tune and its unit, Target note. Transpose VALUE stays in slot_pitch.
+// Not yet in @serialize: the one save-format stage adds every new bank at once.
+slot_tunit    = freemem; freemem += NSLOTS;
+slot_fine     = freemem; freemem += NSLOTS;
+slot_funit    = freemem; freemem += NSLOTS;
+slot_srcnote  = freemem; freemem += NSLOTS;
+slot_srcfine  = freemem; freemem += NSLOTS;
+slot_srcfunit = freemem; freemem += NSLOTS;
+slot_tgtnote  = freemem; freemem += NSLOTS;
+tuning_ref = 440;
+// Bubbler's model: every pitch value resolves to SEMITONES. Hz counts from the Tuning
+// reference. A Source fine tune in Hz counts from the source note's own frequency.
+function pv_semis(u, v) local(r) (
+  r = max(tuning_ref, 0.001);
+  u == 0 ? 12 * log(max(r + v, 0.001) / r) / log(2) : u == 2 ? v / 100 : v;
+);
+function pv_src_semis(idx, u, v) local(f) (
+  f = max(tuning_ref, 0.001) * pow(2, (idx - 1 - 69) / 12);
+  u == 0 ? 12 * log(max(f + v, 0.001) / f) / log(2) : u == 2 ? v / 100 : v;
+);
 function ps_all(k, raw, v, bank) local(pa) (
   raw != ps_last[k] ? ( pa = 0; loop(NSLOTS, bank[pa] = v; pa += 1; ); ps_last[k] = raw; );
 );
@@ -356,12 +377,16 @@ function ps_adopt() (
   ps_last[16] = slider16;
   ps_last[20] = slider45; ps_last[21] = slider46; ps_last[22] = slider48; ps_last[23] = slider50;
   ps_last[24] = slider55; ps_last[25] = slider58; ps_last[26] = slider62;
+  ps_last[32] = slider5;  ps_last[33] = slider6;  ps_last[34] = slider7;  ps_last[35] = slider8;
+  ps_last[36] = slider10; ps_last[37] = slider11; ps_last[38] = slider12;
+  pv_last_tgt = slider8; pv_last_tval = slider9; pv_last_src = slider5; pv_last_sf = slider6; pv_last_sfu = slider7;
 );
 i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
   slots_inited = 1;
   i = 0; loop(NSLOTS, slot_norm[i] = 1; slot_cappoint[i] = 0; slot_capavg[i] = 1; slot_ot_harm[i] = 0; slot_ot_depth[i] = 24; slot_linger[i] = 4; slot_xfade[i] = 1; slot_fadein[i] = 1; slot_gap[i] = 0; slot_xfadeon[i] = 1; slot_mute[i] = 0; slot_voicedb[i] = 0.0; slot_texture[i] = 0.5; slot_spread[i] = 0.0; slot_pitch[i] = 0.0; slot_width[i] = 50.0; slot_lowcut[i] = 0.0; slot_denoise[i] = 0.0; i += 1; );  // per-slot capture point defaults to 0 (earliest); @serialize restores/migrates
+  i = 0; loop(NSLOTS, slot_tunit[i] = 1; slot_fine[i] = 0; slot_funit[i] = 2; slot_srcnote[i] = 0; slot_srcfine[i] = 0; slot_srcfunit[i] = 2; slot_tgtnote[i] = 60; i += 1; );  // pitch block: Semitones, no fine tune, Source note None
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -880,6 +905,21 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
 //     each slot keeps its own by-ear tuning. Editing slider3 writes the current
 //     slot. Suppress the @block re-derive on a pure slot-switch (each slot is
 //     already analyzed at its own point) by syncing last_cappoint. ---
+tuning_ref = slider30 >= 20 ? slider30 : 440;
+// Source note and Target note mirror Transpose value -- Bubbler's design -- only while
+// a Source note is set and Transpose is in Semitones. Reconciled BEFORE the slot banks
+// capture, so the sound never lags the display. Source note and its fine tune never
+// change the sound: moving them re-reads the Target note. Picking a Target note writes
+// the shift. Trackers are refreshed after the slot block below and in ps_adopt.
+(ps_inited && slider5 > 0 && slider10 == 1) ? (
+  pv_src = (slider5 - 1) + pv_src_semis(slider5, slider7, slider6);
+  slider8 != pv_last_tgt ? (
+    slider9 = slider8 - pv_src; slider_automate(slider9);
+  ) : (slider9 != pv_last_tval || slider5 != pv_last_src || slider6 != pv_last_sf || slider7 != pv_last_sfu) ? (
+    slider8 = max(0, min(127, floor(slider9 + pv_src + 0.5))); slider_automate(slider8);
+  );
+);
+slider_show(slider8, slider5 > 0 && slider10 == 1);
 // The first @slider after a load is NOT a slot switch, however it looks. A
 // project saved with Capture slot 3 arrives with last_cap_slot still 0 from
 // @init, and treating that as a switch loads slot 3's banks over the sliders --
@@ -907,6 +947,9 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
     slot_capavg[last_cap_slot] = max(1, min(CAPAVG_MAX, slider4));
     slot_ot_harm[last_cap_slot]  = max(0, min(NHARM, slider19));
     slot_ot_depth[last_cap_slot] = max(0, min(48, slider20));
+    slot_srcnote[last_cap_slot] = slider5; slot_srcfine[last_cap_slot] = slider6; slot_srcfunit[last_cap_slot] = slider7;
+    slot_tgtnote[last_cap_slot] = slider8; slot_tunit[last_cap_slot] = slider10;
+    slot_fine[last_cap_slot] = slider11; slot_funit[last_cap_slot] = slider12;
   );
   slider21 = slot_fadein[cap_slot];
   slider22 = slot_linger[cap_slot];
@@ -921,6 +964,9 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
   slider28 = slot_width[cap_slot];
   slider17 = slot_lowcut[cap_slot];
   slider16 = slot_denoise[cap_slot];
+  slider5 = slot_srcnote[cap_slot]; slider6 = slot_srcfine[cap_slot]; slider7 = slot_srcfunit[cap_slot];
+  slider8 = slot_tgtnote[cap_slot]; slider10 = slot_tunit[cap_slot];
+  slider11 = slot_fine[cap_slot]; slider12 = slot_funit[cap_slot];
   sliderchange(-1);   // refresh the displayed values; NOT slider_automate
 
   slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering (All shows Slot 1's)
@@ -960,6 +1006,13 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
     ps_all(14, slider28, slider28,                        slot_width);
     ps_all(15, slider17, slider17,                        slot_lowcut);
     ps_all(16, slider16, slider16,                        slot_denoise);
+    ps_all(32, slider5,  slider5,  slot_srcnote);
+    ps_all(33, slider6,  slider6,  slot_srcfine);
+    ps_all(34, slider7,  slider7,  slot_srcfunit);
+    ps_all(35, slider8,  slider8,  slot_tgtnote);
+    ps_all(36, slider10, slider10, slot_tunit);
+    ps_all(37, slider11, slider11, slot_fine);
+    ps_all(38, slider12, slider12, slot_funit);
   );
   last_cap_slot = cap_slot; last_cap_sel = cap_sel; last_cap_all = cap_all;
 ) : (
@@ -981,9 +1034,13 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
   slot_width[cap_slot] = slider28;
   slot_lowcut[cap_slot] = slider17;
   slot_denoise[cap_slot] = slider16;
+  slot_srcnote[cap_slot] = slider5; slot_srcfine[cap_slot] = slider6; slot_srcfunit[cap_slot] = slider7;
+  slot_tgtnote[cap_slot] = slider8; slot_tunit[cap_slot] = slider10;
+  slot_fine[cap_slot] = slider11; slot_funit[cap_slot] = slider12;
   ps_adopt();
   last_cap_slot = cap_slot; last_cap_sel = cap_sel; last_cap_all = cap_all;   // also syncs the first-load case above
 );
+pv_last_tgt = slider8; pv_last_tval = slider9; pv_last_src = slider5; pv_last_sf = slider6; pv_last_sfu = slider7;
 cap_point01   = slider3 * 0.01;
 cap_avg       = max(1, min(CAPAVG_MAX, slider4));
 dry_db_base   = slider37;                                    // base for Input level drift
@@ -1270,6 +1327,8 @@ cap_dirty ? (
   slot_spread[cpk]  = slider15;  slot_pitch[cpk]   = slider9;
   slot_width[cpk]   = slider28; slot_lowcut[cpk]  = slider17;
   slot_denoise[cpk] = slider16;
+  slot_srcnote[cpk] = slider5; slot_srcfine[cpk] = slider6; slot_srcfunit[cpk] = slider7;
+  slot_tgtnote[cpk] = slider8; slot_tunit[cpk] = slider10; slot_fine[cpk] = slider11; slot_funit[cpk] = slider12;
   cpk += 1; );
   slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
 cap_last = cap_trig;
@@ -1598,8 +1657,10 @@ pitch_mod_B = target_drift_offset[sb_j*DSTRIDE + 2] + ramp_offset_mem[sb_j*DSTRI
 // ramp 300 = 636 semitones, and pow(2, 636/12) is ~9e15: large, finite, and
 // nowhere near the ~12288 semitones it would take to overflow to infinity and
 // put a NaN into the audio.
-eff_semi_A = slot_pitch[sb_i] + pitch_mod_A;
-eff_semi_B = slot_pitch[sb_j] + pitch_mod_B;
+// Pitch block (2026-09-11): each slot's Transpose and Fine tune resolve to semitones in
+// their own units. At Semitones with no fine tune this is the same sum as before.
+eff_semi_A = pv_semis(slot_tunit[sb_i], slot_pitch[sb_i] + pitch_mod_A) + pv_semis(slot_funit[sb_i], slot_fine[sb_i]);
+eff_semi_B = pv_semis(slot_tunit[sb_j], slot_pitch[sb_j] + pitch_mod_B) + pv_semis(slot_funit[sb_j], slot_fine[sb_j]);
 pitch_ratio_A = pow(2.0, eff_semi_A/12);
 pitch_ratio_B = pow(2.0, eff_semi_B/12);
 // BOTH engines use these: the voice reads them directly (fA/fB below), and the

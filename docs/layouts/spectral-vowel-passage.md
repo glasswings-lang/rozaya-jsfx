@@ -80,6 +80,16 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   keeps Slot 8's own Texture; a Drift set on All moves Slot 8 and == by hand. Change
   detection via `ps_last` (adopted in @block and @serialize). Not yet tested: save and
   reopen on All (bridge test, at the end).
+- **Stage 4, the pitch block: DONE.** `current` 49 of 49 bit-identical; `pitch`: 1200
+  cents, 440 Hz from 440, 880 Hz from 880, and 11 semitones + 100 cents fine tune all ==
+  Transpose 12; Source C4 + Target E4 == Transpose 4; Source C4 50 cents flat + Target
+  E4 == Transpose 4.5; Transpose on All == by hand on Slot 8; Transpose 12 != none. Seven per-slot banks (`slot_tunit`, `slot_fine`, `slot_funit`, `slot_srcnote`,
+  `slot_srcfine`, `slot_srcfunit`, `slot_tgtnote`) banked on slot switch, stamped live,
+  All via `ps_last` 32-38, stamped on capture; `tuning_ref` from slider 30; the Target
+  note mirror in @slider before the slot block. **Mine, unquoted, to tell Rozaya:**
+  moving Source note or its fine tune re-reads the Target note and never changes the
+  sound -- to retune after correcting the source, pick the Target note again. **The new
+  banks are NOT yet in @serialize** (the save-format stage adds them all at once).
 - **Stage 4 design notes (mine, from reading 2026-09-11):** Bubbler resolves a shift
   to semitones in `bb_semis_from(unit, v)` -- Semitones as is, Cents /100, Hz from the
   Tuning reference `12*log2((ref+v)/ref)` -- and mirrors Target note <-> Transpose value
