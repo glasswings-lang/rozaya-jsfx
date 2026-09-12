@@ -84,7 +84,8 @@ def run(plugin_file, seconds=10, rpp=None, fx=None, inst=1, stages=()):
 def listing(plugin_file, rpp, fx, inst=1):
     r = subprocess.run([EXE, plugin_file, "--rpp", rpp, "--fx", fx, "--instance", str(inst), "--list"],
                        capture_output=True, text=True, check=True)
-    return {m.group(2): float(m.group(3)) for m in
+    from r25_names import base   # names match before and after the R25 rename (2026-09-12)
+    return {base(m.group(2)): float(m.group(3)) for m in
             (re.match(r"\s*slider(\d+)\s+(.*?)\s+\[.*\] = (\S+)", l) for l in r.stdout.splitlines()) if m}
 
 
