@@ -107,8 +107,11 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   inaudibly -- the first run's can-fail check caught it. Bank
   `slot_tmunit` (All via `ps_last` 41), read once per leg start through `tm_sec`, with
   Drift added in the timing's own unit. **SETTLED:** in Hz a value of 0 means none,
-  not an endless leg -- Rozaya: *"Yeah, keep it where it is."* **Mine, unquoted:** in
-  Beats a leg follows the live tempo at the moment it starts.
+  not an endless leg -- Rozaya: *"Yeah, keep it where it is."* **SETTLED:** in Beats a tempo
+  change lands at once, mid-leg -- Rozaya: *"a tempo change is meant to be a tempo
+  change, not a delayed tempo change."* (Before, lengths followed live but the time
+  counted stayed in seconds, so a fade JUMPED.) `leg_elapsed` is rescaled on a change;
+  `tempo` section of the verify tool.
 - **Stage 7, transport: DONE.** `current` 49 of 49 bit-identical; `transport`: Start
   delay 17 s != 16 s; 32 beats at 120 BPM and 0.0625 Hz == 16 s; Play for / Rest for 1 s
   changes the sound and == 2 beats; Silence at rest != Pass-through. Ported from

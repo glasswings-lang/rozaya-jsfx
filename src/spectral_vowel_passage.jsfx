@@ -357,7 +357,7 @@ slot_grain    = freemem; freemem += NSLOTS;
 slot_hicut    = freemem; freemem += NSLOTS;
 // Per-slot timing unit (2026-09-11), for fade in, hold, fade out and gap: Rozaya's
 // {Seconds, Hz, Beats}. In Hz a timing lasts one cycle; 0 still means none (mine --
-// without it 0 Hz would be an endless leg). In Beats it follows the live tempo.
+// settled: Rozaya kept it). In Beats a tempo change lands at once, mid-leg (@sample).
 slot_tmunit   = freemem; freemem += NSLOTS;
 function tm_sec(u, v) ( u == 1 ? (v > 0.000001 ? 1 / v : 0) : u == 2 ? v * 60 / max(tempo, 1) : v );
 grain_seed = 0;
@@ -1630,6 +1630,14 @@ ri = 0; loop(DBANK, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; ri +
       lg_fo = max(0, tm_sec(lg_tu, slot_xfade[cur_slot]  + lgo_fo));  // fade out
       lg_g  = max(0, tm_sec(lg_tu, slot_gap[cur_slot]    + lgo_g));   // gap of silence after
       lg_x  = slot_xfadeon[cur_slot] > 0.5;    // crossfade into next?
+      // In Beats a tempo change lands at once, mid-leg. The lengths above are already
+      // at the live tempo; rescaling the time counted so far keeps the leg's place in
+      // BEATS, so a fade carries on from where it is instead of jumping. At a steady
+      // tempo this never fires. Rozaya: "a tempo change is meant to be a tempo change,
+      // not a delayed tempo change."
+      lg_tnow = max(tempo, 1);
+      lg_tu == 2 && lg_tempo > 0 && lg_tnow != lg_tempo ? leg_elapsed *= lg_tempo / lg_tnow;
+      lg_tempo = lg_tnow;
       leg_elapsed += 1 / srate;
       lg_t = leg_elapsed;
       lg_advance = 0;

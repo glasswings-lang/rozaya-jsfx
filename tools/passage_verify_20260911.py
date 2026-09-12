@@ -283,6 +283,94 @@ def cycles():
            "cycles: 0.125 cycles (6 s) differs from 3 s (the check can fail)")
 
 
+# --- A tempo change lands at once, mid-slot (2026-09-11). Rozaya: "a tempo change is
+# meant to be a tempo change, not a delayed tempo change." The runner changes tempo at a
+# block boundary (0.743 s here), so the change moment B is known exactly. Crossfade into
+# next OFF, all eight slots captured alike, the walk on Sweep; edges found in 10 ms windows.
+TSR, PRE_TEMPO = 44100, "45350c6"   # the last build before the fix
+BLK_S = BLOCK / TSR
+
+
+def tempo_run(plugin, settings, extra, seconds=30):
+    stages = [[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0)], [(CAPTURE, 1)], list(settings)]
+    out = os.path.join(tmp, f"t{os.getpid()}_{abs(hash((plugin, str(settings), str(extra))))}.csv")
+    cmd = [EXE, plugin, "--seconds", str(seconds), "--csv", out, "--quiet", *TONE, *extra]
+    for k, st in enumerate(stages):
+        if k:
+            cmd += ["--stage"]
+        for s, v in st:
+            cmd += ["--set-after", f"{s}={v}"]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError(r.stderr[-600:])
+    a = np.loadtxt(out, delimiter=",", skiprows=1, usecols=(2, 3))
+    os.remove(out)
+    return a
+
+
+def win(a, n=441):
+    x = a[:len(a) // n * n, 0].reshape(-1, n)
+    return np.abs(x).max(1), np.sqrt((x ** 2).mean(1))
+
+
+def edges(a):
+    on = win(a)[0] > 1e-4
+    rise = [i * 0.01 for i in range(1, len(on)) if on[i] and not on[i - 1]]
+    fall = [i * 0.01 for i in range(1, len(on)) if on[i - 1] and not on[i]]
+    return rise, fall
+
+
+def block_in(lo, hi):
+    b = np.ceil(lo / BLK_S) * BLK_S
+    if b > hi:
+        raise RuntimeError("no block boundary in the window")
+    return b
+
+
+def tempo():
+    old = pinned(subprocess.run(["git", "show", f"{PRE_TEMPO}:src/{FX}.jsfx"], cwd=ROOT, capture_output=True,
+                                check=True).stdout.decode("utf-8"), "pre_tempo.jsfx")
+    steady = ["--tempo", "120"]
+    # Hold 8 beats, gap 4: at 120 BPM 4 s of sound, 2 s of silence.
+    held = [(INPUT_LEVEL, -60), (AUTOMORPH, 1), (XFADE_ON, 0), (T_UNIT_SLOT,2), (FADE_IN, 0), (HOLD, 8), (FADE_OUT, 0), (GAP, 4)]
+    ctl = tempo_run(NEW, held, steady)
+    rise, _ = edges(ctl)
+    r = next(t for t in rise if t > 8)
+    b = block_in(r + 1.0, r + 3.0)
+    change = steady + ["--tempo-at", f"{b - 0.000001:.6f}=60"]
+    want_fall = b + 8 - 2 * (b - r)          # the beats left of the hold, at one beat a second
+    for label, plugin, expect in (("fixed", NEW, want_fall), ("pre-fix", old, r + 8)):
+        a = tempo_run(plugin, held, change)
+        _, fall = edges(a)
+        f = next(t for t in fall if t > b)
+        nxt = next(t for t in edges(a)[0] if t > f)
+        ok = abs(f - expect) < 0.02 and abs(nxt - (f + 4)) < 0.02
+        report(ok if label == "fixed" else ok and abs(f - want_fall) > 0.5,
+               f"tempo ({label}): 120 -> 60 BPM {b - r:.3f} s into an 8-beat hold ends it at {f:.2f} s "
+               f"(beats say {want_fall:.2f}), and the 4-beat gap lasts {nxt - f:.2f} s")
+    # A fade crossing the change: hold 2 beats, fade out 8, gap 4. No jump in level at B.
+    # Texture 0: the wash flickers by up to 0.75 of full in 20 ms while merely holding,
+    # which hid the jump entirely (measured 2026-09-11); the voice holds within 0.016.
+    faded = [(TEXTURE, 0), (INPUT_LEVEL, -60), (AUTOMORPH, 1), (XFADE_ON, 0), (T_UNIT_SLOT,2), (FADE_IN, 0), (HOLD, 2), (FADE_OUT, 8), (GAP, 4)]
+    ctl = tempo_run(NEW, faded, steady)
+    r = next(t for t in edges(ctl)[0] if t > 8)
+    b = block_in(r + 2.2, r + 3.8)
+    change = steady + ["--tempo-at", f"{b - 0.000001:.6f}=60"]
+    jumps = {}
+    for label, plugin, extra in (("steady", NEW, steady), ("fixed", NEW, change), ("pre-fix", old, change)):
+        rms = win(tempo_run(plugin, faded, extra), 882)[1]
+        full = np.median(rms[int((r + 0.2) / 0.02):int((r + 0.9) / 0.02)])
+        k = int(round(b / 0.02))
+        jumps[label] = np.abs(np.diff(rms[k - 5:k + 6])).max() / full
+    report(jumps["fixed"] < 0.05 and jumps["pre-fix"] > 0.15,
+           f"tempo: the biggest level step (20 ms) where the tempo changes mid-fade: fixed "
+           f"{jumps['fixed']:.3f}, steady tempo {jumps['steady']:.3f}, pre-fix {jumps['pre-fix']:.3f} of full")
+    # Seconds ignores the tempo entirely.
+    secs = [(INPUT_LEVEL, -60), (AUTOMORPH, 1), (XFADE_ON, 0), (T_UNIT_SLOT,0), (FADE_IN, 0.3), (HOLD, 4), (FADE_OUT, 0.7), (GAP, 2)]
+    report(np.array_equal(tempo_run(NEW, secs, steady), tempo_run(NEW, secs, change)),
+           "tempo: slots in Seconds are bit-identical through the same tempo change")
+
+
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if not a.startswith("--") and not a.isdigit()] or ["current"]
     for w in want:

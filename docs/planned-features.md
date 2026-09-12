@@ -286,6 +286,21 @@ Same as polyrhythm and melody.
 
 (No Direction feature — Rhythm Track is a metronome, not a sequencer.)
 
+### A bar-shape change lands on the next click (Rozaya, 2026-09-11, not built)
+
+Rozaya noticed drift on the bar length seeming to wait for the end of the bar, and:
+*"if you've got 20 beats per bar and it drifts down to 4, where are you? ... I'd think
+it should start reaching for the current bar shape on the next click, treating the
+previous one, before drift said hey your bar's 4 now as like... the last beat on the
+one of 20. even if it wasn't."* So: the click just heard closes the old bar, and the
+next click is the one of the new shape. Rozaya: *"You can't have half-beats ... but
+that doesn't mean you can't have it readjust in the silences between beats."* **Unasked:** does a bar that GROWS (4 to 20)
+also restart, or carry on counting? **Unchecked:** whether what it heard is `Drift
+movement` on `With the target` (steps once per bar by design) or the bar edit that
+waits for the downbeat (`rhythm_r24_verify_20260911.py`). Pairs with Tempo changes
+landing at once, 2026-09-11: *"a tempo change is meant to be a tempo change, not a
+delayed tempo change."*
+
 
 
 ---
