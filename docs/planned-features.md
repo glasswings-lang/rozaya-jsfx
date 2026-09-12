@@ -334,7 +334,9 @@ Timing: each ramp's Start delay gets a "counts from" choice {start of the song, 
 ramp before it}; I proposed dropping the song-start choice for later ramps as rarely
 needed, and Rozaya: *"Rarely is not the same as never."* -- both stay. **Mine, unquoted:**
 overlapping ramps on one target add together; ramp 1 has nothing before it. **Eight ramps**
--- Rozaya: *"Yes. I think that's a good one"*. **Open:** a pace/shape per ramp (even today); defaults; the layout per plugin before any
+-- Rozaya: *"Yes. I think that's a good one"*. **A shape per (ramp, target)**, the fade names {Linear,
+Cosine, Logarithmic, Exponential}, default Linear so saved ramps stay even -- Rozaya: *"Yes,
+actually."* **Open:** defaults; the layout per plugin before any
 migration (CLAUDE.md), with the nested-selector @serialize fix built in from the start.
 
 ### A bar-shape change lands on the next click (Rozaya, 2026-09-11, not built)
