@@ -787,6 +787,19 @@ rewritten every 0.4 s and a read can land mid-write; a target list may hold only
 two entries (Rhythm Track), and index 2 then silently means 1. A path with a space
 must be quoted in an RPP (`<JS "glasswings/heartbeat gen.jsfx" ""`).
 
+## reaper_bridge.py and probes/ — driving REAPER itself (2026-09-12)
+
+`kin_bridge.lua` (in REAPER's Scripts folder, not this repo) now drives REAPER as well as
+controls: transport, cursor, loops, tempo, tracks, effects, any action, `eval`/`evalfile`
+for anything else. Its grammar is at the top of the script. `reaper_bridge.py` sends one
+command and waits for its answer (`send`), or parses the manifest (`board`):
+`python tools/reaper_bridge.py "state"`. **Send non-idempotent commands once** — a retried
+tab close closed the wrong tab. Test inside `claude-testing002-bridge.RPP` on a temporary
+track; never open or close tabs. `probes/position_probe.jsfx` (installed in
+`Effects/claude-test-tools/`) reports play_state, positions, @init runs and blocks as
+sliders, so the manifest shows what REAPER tells a plugin. Findings: `docs/planned-features.md`,
+"Pause is not stop".
+
 ## lock_test.py — does a tempo-synced plugin lock to the SONG?
 
 A render starting a few beats into the song must line up with one starting at beat

@@ -1,0 +1,41 @@
+desc: Position probe (test tool, not a plugin to use)
+// Designed by Rozaya, developed with Claude (Anthropic). CC0.
+//
+// Reports what REAPER tells a plugin about time, so the kin bridge can read it out of
+// its manifest while it moves the cursor, plays, pauses, stops and loops. Built
+// 2026-09-12 to find out whether a plugin can follow the song position with the
+// transport stopped: Rozaya heard Melody respond to cursor movement, mechanism unknown.
+// Passes audio through untouched. Every slider is a READOUT; setting one does nothing.
+
+slider1:0<-10,10,1>play_state (0 stop, 1 play, 2 pause, 5 rec)
+slider2:0<-100000,100000,0.001>play_position (seconds)
+slider3:0<-100000,100000,0.001>beat_position (beats)
+slider4:0<0,1000000,1>@init runs (survives @init, restored with the project)
+slider5:0<0,100000000,1>@block runs since the last @init
+slider6:0<0,100000000,0.001>seconds of audio since the last @init
+slider7:0<0,1000,0.001>tempo (BPM)
+slider8:0<0,1000000,1>@slider runs since the last @init
+
+@init
+slider4 += 1;
+blocks = 0;
+samples = 0;
+sliders = 0;
+sliderchange(-1);
+
+@slider
+sliders += 1;
+
+@block
+blocks += 1;
+slider1 = play_state;
+slider2 = play_position;
+slider3 = beat_position;
+slider5 = blocks;
+slider6 = samples / srate;
+slider7 = tempo;
+slider8 = sliders;
+sliderchange(-1);
+
+@sample
+samples += 1;

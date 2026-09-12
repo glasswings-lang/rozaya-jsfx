@@ -286,6 +286,37 @@ Same as polyrhythm and melody.
 
 (No Direction feature — Rhythm Track is a metronome, not a sequencer.)
 
+### Pause is not stop -- suite-wide (Rozaya, 2026-09-11, not built, not measured)
+
+*"There's play, there's stop, and then there's pause. I say all plugins should respect a
+pause. play/stop is play/stop, you'd expect that particular combonation to work exactly
+that way."* So play after STOP restarts counters, drift, ramp; play after PAUSE resumes.
+Read, not measured: Passage treats pause -> play as a play edge (`play_state == 1 || 5`
+against the last state, ~1303 and ~1349), so it restarts. `jsfx_run` cannot pause yet
+(playing or `--stopped` only). And its wider worry, all plugins: *"how it deals with
+movement forward in time."* Asked what that covers: *"If I've moved forward in a project
+by any means, or back by any means, manually, not by the progression of transport. I.E if
+I've moved even a beat in, or maybe I've bumped the right arrow by accident or whatever. So
+looping counts, rendering a section counts, anything."* Offered: land where it would have
+been had it played from the start (delay over, drift and walk where they would be), or
+start fresh from there. Rozaya: *"Yes, that."* -- read as the first, which was recommended.
+**The rule, in positive words Rozaya accepted:** *"Wherever you are in the project, the
+plugin sounds like that moment of the song, playing or stopped"* / *"The song position is
+the plugin's clock."* Shape offered: an always-running own clock, re-landed on every
+position jump, so moving the cursor while stopped is heard at once. It must NOT need play
+pressed -- the reverted Melody attempt (`dcfeead`) did, and Rozaya: *"At that point it
+becomes about as difficult to work with as any audio item."* It supersedes "play after
+stop restarts". Evidence: Rozaya heard Melody respond to cursor movement.
+**MEASURED in REAPER, 2026-09-12** (`tools/probes/position_probe.jsfx` through the bridge,
+claude test, track monitoring on, "run FX when stopped" on): REAPER re-runs @init on play,
+on a jump while playing, and on RESUME FROM PAUSE -- not on a loop wrapping. While paused a
+plugin gets no blocks at all (it never sees play_state 2). After a stop the plugin keeps
+running, and a cursor move while stopped reaches it at once (play_position = cursor, beat
+follows) with NO @init. So the rule is buildable: keep memory through @init (ext_noinit),
+and re-land on any position jump, stopped or playing. **Unexplained:** a probe freshly added
+while stopped got no blocks until the first play (in a new tab and in claude test alike).
+`tools/lock_test.py` covers only tempo-synced plugins starting mid-song.
+
 ### A bar-shape change lands on the next click (Rozaya, 2026-09-11, not built)
 
 Rozaya noticed drift on the bar length seeming to wait for the end of the bar, and:
