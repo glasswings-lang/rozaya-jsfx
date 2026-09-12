@@ -106,9 +106,9 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   crossfade into next ON (default) a leg ignores its gap, and identical captures blend
   inaudibly -- the first run's can-fail check caught it. Bank
   `slot_tmunit` (All via `ps_last` 41), read once per leg start through `tm_sec`, with
-  Drift added in the timing's own unit. **Mine, unquoted, to tell Rozaya:** in Hz a
-  value of 0 still means none (not an endless leg); in Beats a leg follows the live
-  tempo at the moment it starts.
+  Drift added in the timing's own unit. **SETTLED:** in Hz a value of 0 means none,
+  not an endless leg -- Rozaya: *"Yeah, keep it where it is."* **Mine, unquoted:** in
+  Beats a leg follows the live tempo at the moment it starts.
 - **Stage 7, transport: DONE.** `current` 49 of 49 bit-identical; `transport`: Start
   delay 17 s != 16 s; 32 beats at 120 BPM and 0.0625 Hz == 16 s; Play for / Rest for 1 s
   changes the sound and == 2 beats; Silence at rest != Pass-through. Ported from
