@@ -44,8 +44,21 @@ the tempo section's `Sync to host` (retired by R20). Order `{Seconds, Hz, Beats}
 rate list's relative order -- proposed by me, Rozaya: *"that's fine 🙂"*. **Mine,
 unquoted:** in Hz a timing lasts one cycle of that rate (bigger is shorter).
 
+**Pitch, 2026-09-11: Bubbler's Source note block, per slot -- and the Morpher's main
+Pitch takes it too.** Rozaya, describing its own design: *"a slider where you could
+set it with pitch on 0, to basically tell it, hey, this is where 0 is, that way
+adjusting by note name could actually work ... It itself wouldn't change anything"*.
+No "As captured" entry: *"As captured is basically what 0 would be there, anyway? ...
+you have to build it from there anyway."* **New:** *"you also gotta finetune the
+source note in case of some weird microtonal fuckery"* -- a fine tune ON the source
+note, which Bubbler and Sustain Looper do not have either, so it goes to all four.
+Its shape, proposed by me: a value then a unit `{Hz, Semitones, Cents}`, default
+Cents, directly after Source note, as Fine tune is -- Rozaya: *"Yes."* Source note
+still starts on None and the new fine tune at 0, so nothing sounds different until
+chosen -- Rozaya: *"Yeah, and I like it"*.
+
 **This layout is not yet whole.** Still to settle with Rozaya before any migration:
-R22's pitch block for Passage (*"their own discussion"*), R24's full target
+the rest of R22's pitch block for Passage (*"their own discussion"*), R24's full target
 list with Start delay / Play for / Rest for, and the two OPEN items further down.
 
 ## The order
@@ -118,7 +131,14 @@ would cause clicks and that the global scope was therefore deliberate. That is a
 mechanism repeated as a finding, which is the exact failure mode CLAUDE.md records for the
 `filt_stages` straight-wire theory. **Nobody has tested it.**
 
-## OPEN: should Wash grain be per slot?
+## SETTLED 2026-09-11: Wash grain is per slot
+
+Asked with a recommendation of yes; Rozaya: *"I like that idea yeah. especially now
+that we're not dealing with cpu shit with that"*. **Mine, unquoted, to MEASURE not
+assume:** whether a morph between two slots of different grain lengths costs more
+CPU (two grain sizes at once), and the loudness wobble predicted below.
+
+## (was OPEN) should Wash grain be per slot?
 
 Rozaya, 2026-08-31: *"letting old grains go at their old length is just... the right thing
 to do? My mental image is: grains of rice. You wouldn't chop them, so why do that to
