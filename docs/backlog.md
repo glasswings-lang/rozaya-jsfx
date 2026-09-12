@@ -21,7 +21,7 @@ on, extended, or "finished" until it has been heard. The correct action on
 unheard work is to ask for an ear test, never to add to it.
 
 Moved out of the plan 2026-09-08, verbatim. The R24 drift-target audit is in `docs/r24-drift-target-audit.md`.
-**OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations, the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units".
+**OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations, the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units". **Stale slider numbers on plugin pages** (seen 2026-09-12, not fixed): entries such as `Ramp engage (all targets, slider 28)` in sweep-dwell-filter.md, heartbeat-generator.md's `(slider 31)`, `Ramp target (slider 47)` and `(slider 23)` in sweeping-filter.md and rhythm-track.md name positions that have since moved.
 ---
 
 ## R23 — drift steps on the target's own turn (2026-09-09)

@@ -124,7 +124,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   Heartbeat, Melody, Bubbler, Dapple. No saved instance uses it.
 - **Solo, 2026-09-10:** new in Melody, Shepard Tone, Resonance Bank; overrides
   Active everywhere, Polyrhythm included. Migrated 84 instances, all identical.
-- The 2026-09-06 drift/ramp sweep, `N per beat`, Tremolo's Start delay, the ranges.
+- The 2026-09-06 drift/ramp sweep, `N per beat`, Tremolo's Start delay, the ranges; R25 names (per target / all targets), 18 plugins, 09-12.
 - **Polyrhythm v3's new controls.** Per-voice Attack/Release MEASURED 2026-09-10;
   Rozaya: *"ear-tested by somebody in here and passing, per-voice"*, no written
   record. Never heard: the pitch block, the 88 targets, per-voice On Duration,

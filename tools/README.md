@@ -787,6 +787,27 @@ rewritten every 0.4 s and a read can land mid-write; a target list may hold only
 two entries (Rhythm Track), and index 2 then silently means 1. A path with a space
 must be quoted in an RPP (`<JS "glasswings/heartbeat gen.jsfx" ""`).
 
+## R25 — which kind a control is, measured and written into its name (2026-09-12)
+
+Rule and history: `docs/suite-consistency-plan.md` R25, `docs/history/R25.md`. The list:
+`docs/layouts/r25-labels-20260912.md` (260 rows, 18 plugins; Passage waits for its rebuild).
+
+- **`selector_scope_probe.py`** — live in REAPER through the bridge, in claude test: set a
+  control on option 0, switch the selector, read, set, switch back, read. PER / ALL / `?`.
+  Judge by what option 0 shows on return; option 1 may hold the test value by chance. A
+  plugin with no claude test track needs a temporary one, played and stopped once first.
+- **`r25_names.py`** — `base(name)` strips the kind, so tools match a control by name before
+  and after; `bridge_ui_test.py` would otherwise have skipped its Drift movement checks.
+- **`r25_build_list.py`** — measured report + track-to-file map to list rows; refuses to guess.
+- **`r25_rename_apply.py`** — applies the list: exact old label on the exact slider, already
+  applied counts as done, anything else refuses; re-reads every file after writing.
+- **`r25_pages_apply.py`** — carries each kind onto the plugin pages' entry lines, from the
+  list only; selectors and "A / B" entries handled; refuses what it cannot match.
+- **Traps met:** a byte-order mark on a PowerShell-joined report dropped its first line; a
+  file name with a space dropped a whole plugin; backticks and quotes in inline
+  `python -c` broke two checks -- put checks in files. The traps that were caught were
+  caught by scans independent of any list, and by reading the list by hand.
+
 ## morpher_cold_load_check_20260912.py — no silence on project load
 
 A Morpher saved on Capture point 0 and Capture average 1 never analysed its captures until
