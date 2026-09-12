@@ -33,9 +33,9 @@
 > rather than scaling a value, so it cannot be crossfaded per grain).
 >
 > **3. The synthesis FFT is sized to the grain** rather than fixed at maximum — a
-> CPU saving on wash-heavy projects. (This was *meant* to also cure the
-> short-grain crackle; by ear it didn't, so that stays a known limitation — see
-> the note under **Wash grain**. The sizing is kept for the CPU win.)
+> CPU saving on wash-heavy projects. (The short-grain crackle it was meant to cure
+> is gone: heard at Wash grain 5 with Wash at 100, 2026-08-12 — see the note under
+> **Wash grain**.)
 >
 > Controls are also grouped by what they belong to rather than by when they were
 > added, so everything owned by the selected slot — **Capture point**, **Capture
@@ -152,13 +152,13 @@ of one.
 Passage sizes the synthesis FFT to the grain (instead of always
 using the maximum size), on the theory that shorter grains were firing
 constant-cost FFTs many times per second and that was what caused the
-dropouts. That theory was tested by ear and the crackle *did not go away*.
-Which means either the CPU-per-grain wasn't the bottleneck, or something
-else about grain boundaries at short lengths is producing the clicks. Real
-diagnosis is a next-session task; do not trust "short grain works now" —
-if you need short grain, expect crackle until this is properly fixed. The
-FFT-sizing change itself is kept because it does reduce CPU on wash-heavy
-projects even if it did not solve the crackle problem.
+dropouts. That theory was tested by ear and the crackle *did not go away* then.
+
+**It is gone now.** Rozaya tested at Wash grain 5 with Wash at 100 — the worst
+case the plugin offers — on 2026-08-12 and heard no crackle. Nobody fixed it
+deliberately: three changes landed on 2026-07-27 while chasing the slot-handoff
+click, and the likeliest is a read past the end of the sine table, which
+produced wrong samples. The FFT-sizing change is kept for its CPU saving.
 
 The Spread control is separately faster than before regardless — the
 running-sum optimisation is mathematically equivalent to the original, and

@@ -136,7 +136,11 @@ mechanism repeated as a finding, which is the exact failure mode CLAUDE.md recor
 Asked with a recommendation of yes; Rozaya: *"I like that idea yeah. especially now
 that we're not dealing with cpu shit with that"*. **Mine, unquoted, to MEASURE not
 assume:** whether a morph between two slots of different grain lengths costs more
-CPU (two grain sizes at once), and the loudness wobble predicted below.
+CPU, and the loudness wobble predicted below. Read so far: there is ONE synthesis
+window at a time (`build_synwin`: W, HOP, GFFT), rebuilt in @block whenever the grain
+length changes -- exactly what dragging Wash grain already does. So a per-slot grain
+is born at its slot's (or the blend's) length, and a morph costs about what dragging
+Wash grain costs. The crackle Rozaya refers to was heard GONE 2026-08-12 (`724f635`).
 
 ## (was OPEN) should Wash grain be per slot?
 
