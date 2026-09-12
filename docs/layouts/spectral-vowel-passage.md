@@ -87,7 +87,7 @@ are in the sections above; everything else here is mine and unquoted.
 | 13 | Texture (% wash, per slot) | 15 |
 | 14 | Wash grain (ms, per slot) | 16; the one global value copied into all eight slots |
 | 15 | Spread (Hz, per slot) | 17 |
-| 16 | Denoise (%, per slot) | 21 |
+| 16 | Denoise (%, wash only, per slot) | 21; traced 2026-09-11: subtracts (value% of a tenth of the loudest bin) from every wash bin, floored at 0 -- the voice engine never reads it. The Morpher's is the same formula (`thr`, line ~1011) and takes the same name |
 | 17 | Low cut (Hz, per slot) | 20 |
 | 18 | High cut (Hz, 20000 = off, per slot) | new, 20000 -- no sound change |
 | 19 | Overtone harmonic (per slot) | 36 |
@@ -141,7 +141,6 @@ Audition, Start delay, Rest mode, Output at rest, Drift restart, Ramp engage.
 **Questions still open, to ask Rozaya one at a time:**
 - Is Source fine tune a Drift target? It changes the sound only once a Target note is
   set, so I left it off, as Capture point is.
-- `Denoise (%)` is still an untraced name (see Also open).
 
 ## The order of 2026-08-31 -- SUPERSEDED by the layout above
 
