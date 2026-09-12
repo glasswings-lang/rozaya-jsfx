@@ -324,6 +324,19 @@ Rozaya: looping counts. So re-landing must come from WATCHING THE POSITION (Melo
 predicted-versus-actual check), never from @init or a play edge alone.
 `tools/lock_test.py` covers only tempo-synced plugins starting mid-song.
 
+### More than one Ramp -- suite-wide (Rozaya, 2026-09-12, being designed, nothing built)
+
+Rozaya: *"I noticed we only have one ramp. That's great for sleep. That's not so great for
+waking."* Today every plugin has one linear ramp per target, run once, then held. Shape
+Rozaya proposed: *"its own target list, ramp selecter, then the ramp stuff"* -- a Ramp
+selector (Ramp 1, 2, ...) above the target selector; in Passage, slot > ramp > target.
+Timing: each ramp's Start delay gets a "counts from" choice {start of the song, end of the
+ramp before it}; I proposed dropping the song-start choice for later ramps as rarely
+needed, and Rozaya: *"Rarely is not the same as never."* -- both stay. **Mine, unquoted:**
+overlapping ramps on one target add together; ramp 1 has nothing before it. **Open:** how
+many ramps; a pace/shape per ramp (even today); defaults; the layout per plugin before any
+migration (CLAUDE.md), with the nested-selector @serialize fix built in from the start.
+
 ### A bar-shape change lands on the next click (Rozaya, 2026-09-11, not built)
 
 Rozaya noticed drift on the bar length seeming to wait for the end of the bar, and:
