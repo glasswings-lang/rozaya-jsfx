@@ -30,6 +30,19 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 - **Ramp time unit: once per ramp.** Asked in the same question as engage and taken to
   follow it -- confirm if it ever matters.
 
+## Measured facts about today's Ramp start delay (read in code, 2026-09-12)
+
+- **Per target in every plugin with a Ramp** (all 17; Resonance Bank per band): the value
+  swaps with the Ramp target selector (`speed_ramp_delay_mem[target]`, the Morpher's and
+  Passage's `ramp_delay_mem`). Plugin pages say so ("per-target ... stagger targets").
+- **It counts from pressing play, only while the ramp is engaged** (Sustain Looper:
+  elapsed advances under `slider29 ?`, reset by `reset_runtime()` on the play edge). I
+  told Rozaya it counted from the start of the song -- wrong, unchecked. The "counts from"
+  choice settled above was offered in those words; its first option is really "from play".
+- Separate from the transport **Start delay**, which is one per plugin and holds drift and
+  ramps together. Rozaya: *"I was under the impression that start delay was global
+  affecting all ramp controls"* -- the single visible slider reads as global.
+
 ## Mine, unquoted -- ask before building on them
 
 - Overlapping ramps on one target add together.
