@@ -632,6 +632,7 @@ function analyze_harm(slot) local(base, ci, almin, almax, tmax, tau, ii, d, dd, 
 );
 
 function capture(slot) (
+  n_used == 0 ? analysis_valid = 1;   // the first capture: nothing else is waiting to be analysed
   grab_raw(slot);
   slot_cappoint[slot] = cap_point01;   // stamp this slot with the current capture point; scrubbing later re-tunes only this slot
   slot_capavg[slot]   = cap_avg;       // and with the frame count on screen, so the capture is analyzed the way you were listening
@@ -1418,6 +1419,11 @@ ramp_unit_sec  = slider57 == 0 ? pv_cyc : slider57 == 1 ? 1 : slider57 == 2 ? 60
 // Capture average rides the SAME debounce: it re-derives the same analysis for
 // the same reason, and stepping the dial by ear should recompute once when it
 // settles rather than once per step.
+// A cold load analyses its captures at once, stopped or playing. A copy saved on the
+// starting Capture point and Capture average looked unchanged here and stayed SILENT
+// until the first play (measured in the Morpher, 2026-09-12). Rozaya: "on project
+// load, to walk into silence? cmmon". A play edge first still derives there instead.
+analysis_valid == 0 && n_used > 0 && !cap_dirty ? ( cap_dirty = 1; settle = 0; );
 cap_point01 != last_cappoint ? ( last_cappoint = cap_point01; cap_dirty = 1; settle = 0; );
 cap_avg != last_capavg ? ( last_capavg = cap_avg; cap_dirty = 1; settle = 0; );
 cap_dirty ? (

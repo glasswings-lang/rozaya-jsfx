@@ -109,8 +109,11 @@ Moved out of `CLAUDE.md` 2026-09-08, verbatim.
   - **Lock what is constant; accumulate what is modulated.** Position-locking
     answers *"where would this be if it had run at this rate all along"*, which
     stops being the right question the moment drift or a ramp moves the rate.
-  - **Effects lock per sample; sequencers place once.** A sequencer that
-    recomputed its position continuously would jump mid-note.
+  - **A tempo change lands at once, mid-note or mid-leg -- never at the next one.**
+    Rozaya, 2026-09-11: *"a tempo change is meant to be a tempo change, not a delayed
+    tempo change."* This replaces "sequencers place once", which no quote supported: a
+    note need not jump if its progress is COUNTED in beats (rescale the count on a
+    change) rather than recomputed from scratch. Passage does this (`leg_elapsed`).
   - **Before changing what a control's number MEANS, ask what the user holds in
     their head when setting it** — a figure they know (5 BPM of HRV) or a feel
     they are dialling for. Neither the code nor the label can tell you, and

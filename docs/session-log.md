@@ -36,6 +36,7 @@ Newest entries are the most likely to still be accurate.
 
 | If you are working on | Read |
 |---|---|
+| Passage's build stages 1-8, Source note, tempo changes mid-count, the bridge driving REAPER, the Morpher's silent load | 2026-09-11/12 |
 | Womb's rebuild, the two rate pairs, a wrong finding corrected | 2026-09-06 (later) |
 | The Morpher's unit controls, appending vs reordering, the N-per-beat reciprocal | 2026-09-06 |
 | Polyrhythm Phase, pan modes, Host x as beats-per-cycle | 2026-09-02 |
@@ -61,6 +62,115 @@ Newest entries are the most likely to still be accurate.
 | Play/Rest gating across the suite | v2.1 sweep |
 
 ---
+
+## 2026-09-11/12 — Source note re-reads Target, tempo changes land mid-count, the bridge drives REAPER, the Morpher's silent load
+
+Rozaya asked, 2026-09-12, that finished work leave the working docs so a session need not
+load it to find what is left. This entry holds what moved out of
+`docs/layouts/spectral-vowel-passage.md` (BUILD PROGRESS) and `docs/planned-features.md`.
+
+**Source note (Bubbler, Sustain Looper, Passage).** The previous night's handoff asked one
+thing: moving Source note never changes the sound, it re-reads Target note. Rozaya: *"The
+source note is just to tell the targget what 0 semitones is though"* -- settled. Comparing
+plugins then showed Bubbler and Sustain Looper did NOT re-read: Target kept naming the old
+note, and re-picking it did nothing (measured in Bubbler: re-picking E4 after Source C4 -> D4
+== no change). Rozaya: *"Yes, cuz it's supposed to anyway."* Fixed with a `last_src_note`
+tracker adopted in @block (`36275eb`). `tools/source_note_check.py` runs one scenario on all
+three and fails both at `45350c6`. 16 of 16 saved copies bit-identical. Trap: Sustain Looper
+renders silence without `--data-root` and a sample, so its first test proved nothing. Why it
+was missed: the handoff only ever asked about Passage, and nothing compared the three.
+
+**Passage stages 1-8, as they stood in the layout doc (moved verbatim):**
+
+- **Stage 1, renumber: DONE** (`096ad27`), `jsfx_renumber verify` passed all three.
+- **Stage 2, the 24 new controls declared, inert, seeded: DONE**, 49 of 49 bit-identical.
+- **Stage 3, All slots on Capture slot: DONE.** Migration adds 1 to each saved slot.
+  `current`: 49 of 49 bit-identical. `allslots`: a capture on All == an ordinary capture
+  (heard in Slot 8); Texture on All changes Slot 8 and == by hand; passing through All
+  keeps Slot 8's own Texture; a Drift set on All moves Slot 8 and == by hand. Change
+  detection via `ps_last` (adopted in @block and @serialize).
+- **Stage 4, the pitch block: DONE.** `current` 49 of 49 bit-identical; `pitch`: 1200
+  cents, 440 Hz from 440, 880 Hz from 880, and 11 semitones + 100 cents fine tune all ==
+  Transpose 12; Source C4 + Target E4 == Transpose 4; Source C4 50 cents flat + Target
+  E4 == Transpose 4.5; Transpose on All == by hand on Slot 8; Transpose 12 != none. Seven
+  per-slot banks (`slot_tunit`, `slot_fine`, `slot_funit`, `slot_srcnote`, `slot_srcfine`,
+  `slot_srcfunit`, `slot_tgtnote`) banked on slot switch, stamped live, All via `ps_last`
+  32-38, stamped on capture; `tuning_ref` from slider 30; the Target note mirror in
+  @slider before the slot block.
+- **Stage 5, per-slot Wash grain and High cut: DONE.** `current` 49 of 49 bit-identical;
+  `grainhc`: High cut 200 Hz takes a 220 Hz tone's wash and voice to rms 0; High cut and
+  Wash grain on All == by hand on Slot 8; 40 ms grain on Slot 8 changes Slot 8 and leaves
+  Slot 1 bit-identical. Banks `slot_grain`, `slot_hicut` (All via `ps_last` 39-40). High
+  cut is the Morpher's shape (`hc_g`, `hc_bound`, fade over the top fifth) in all six voice
+  partial lines and in `build_spectrum` after the per-slot transposition. Grain follows the
+  heard slots in @block (one slot's exact value when they agree).
+- **Stage 6, the slot timing unit: DONE.** `current` 49 of 49 bit-identical; `timing`
+  (Auto-morph Sweep, crossfade OFF): gap 1.5 s != 1 s; Beats 1, 2, 1, 2 at 120 BPM and Hz
+  2, 1, 2, 1 == Seconds 0.5, 1, 0.5, 1; a gap of 0 in Hz == 0 s. **Test trap:** with
+  crossfade into next ON (default) a leg ignores its gap, and identical captures blend
+  inaudibly -- the first run's can-fail check caught it. Bank `slot_tmunit` (All via
+  `ps_last` 41), with Drift added in the timing's own unit. 0 Hz means none -- Rozaya:
+  *"Yeah, keep it where it is."*
+- **Stage 7, transport: DONE.** `current` 49 of 49 bit-identical; `transport`: Start delay
+  17 s != 16 s; 32 beats at 120 BPM and 0.0625 Hz == 16 s; Play for / Rest for 1 s changes
+  the sound and == 2 beats; Silence at rest != Pass-through. Ported from the Morpher: the
+  Start delay holds Drift, Ramp and the walk; a rest holds the walk only on Freeze in place;
+  rest applies to the output SUM (Pass-through keeps dry, Silence mutes all). Lengths via
+  `tm_sec(slider41, ...)` per block.
+- **Stage 8, Drift period unit + Drift play/rest, Ramp time unit + Ramp play/rest: DONE.**
+  `current` 49 of 49 bit-identical; `driftramp`: drift period 3 s != 2 s, 4 beats at 120 BPM
+  == 2 s, Drift play/rest changes the sound; ramp 0.5 min != 0.25 min, 15 s and 30 beats ==
+  0.25 min, Ramp play/rest changes the sound; `cycles`: 0.0625 cycles (a 48 s walk) == 3 s,
+  0.125 cycles != 3 s. Ported from the Morpher (`pr_frozen`; rests come out of a ramp's
+  duration). Units global, play/rest per (slot, target), banked in both selectors and on
+  All (`ps_last` 27-30). Cycles -- Rozaya first: *"cycles doesn't really make sense here. I
+  can kind of see it sort of? though"*, then *"Keep it in. might be interesting"*: a Cycle is
+  one walk through the active slots' legs. **A real fault the Cycles check found:** the walk
+  was summed before `rebuild_active_slots()`, so for one block after a capture or a mute it
+  read the old slot list; a drift in Cycles ran that block at the 0.05 s floor and kept the
+  phase it gained. Measured with a debug copy writing `drift_unit_sec` and `n_active` out as
+  audio (0.05 in the first block, then 48). Moved after the rebuild.
+
+**Tempo changes land mid-count (Passage).** I first told Rozaya a slot in Beats "keeps the
+speed it started at" and should stay that way -- from the docs, not the code, and wrong
+twice: the lengths already followed the live tempo, but `leg_elapsed` counted seconds, so a
+fade JUMPED (0.217 of full) and an 8-beat hold ended at 16.23 s where beats say 14.78. My
+reason for keeping it was the gotcha "sequencers place once", which no quote of Rozaya's
+supports and whose reason ("would jump mid-note") fails once position accumulates. Rozaya:
+*"a tempo change is meant to be a tempo change, not a delayed tempo change ... I think I can't
+see a case where this is OK."* Fixed by rescaling the count on a change (`eff51a1`). Then
+measured the other four Beats timings first: Start delay, Play for / Rest for and Ramp start
+delay had the same fault (18.22 s where beats say 15.26; 10.23 where 7.26); Drift period and
+Ramp duration accumulate and were already bit-exact. Fixed the same way (`a34e662`). Traps:
+Passage passes its input through, so edge tests need Input level -60; the wash flickers by up
+to 0.75 of full in 20 ms while merely holding, so a fade-continuity test must use Texture 0.
+
+**The bridge drives REAPER; what REAPER tells a plugin about time.** Rozaya: *"whatever else
+reaper can do, and whatever else reaper can be given access to via scripting, we should add
+that"* -- `kin_bridge.lua` gained transport, tracks, actions, eval, and answers in
+`reply.txt` (`a893d86`). Reloading offered "new instance", which left two copies taking
+turns at the mailbox (the manifest lacked its transport line 9 times in 15); `action 41898`
+closed both and Rozaya ran it once. A test script retried a tab close that had not answered
+and closed Rozaya's claude test tab (its file was untouched; reopened through the bridge).
+Probe tests: @init re-runs on play, a jump while playing, resume from pause, and effect
+bypass-then-enable -- not on a loop wrap, a monitoring or mute toggle; paused = no blocks;
+after a stop a cursor move reaches the plugin at once with no @init. Rozaya, on the reverted
+Melody attempt that held the sequencer until play: *"At that point it becomes about as
+difficult to work with as any audio item."*
+
+**The Morpher's silent load.** Probe tests 1-2 saw no blocks while stopped until a first
+play; Rozaya: *"That unexplainable thing happens to me too with morfer sometimes. Only
+sometimes"*, and *"it only does this with either migrated or first-time openings"*. Cause, in
+the code and measured: the Morpher analyses captures only on a capture, a Capture point or
+Capture average change, or the play edge; a copy saved on Capture point 0 and Capture
+average 1 looks unchanged on load and stays silent until play (`breathing` #1: rms 0
+stopped, 0.09 playing). Rozaya: *"I'd expect there to be a little stutter at play, but on
+project load, to walk into silence? cmmon"*. Fixed in both plugins (`bc70f98`): 123 of 123
+Morpher copies bit-identical playing, all 119 sounding copies sound stopped, the old build
+silent stopped in 9 of 9 on both defaults; Passage old 4 of 48, new 0. **Trap:** the first
+check fed a -60 dB noise, which the Morpher passes through, so silent copies read as
+sounding (3 of 10). Render such checks with silent input. My first scan also read slider 28
+as Capture average from an old layout; it is slider 4 -- read the declarations first.
 
 ## 2026-09-10 — Solo in every plugin with voices or bands
 

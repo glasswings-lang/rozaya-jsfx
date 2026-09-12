@@ -286,7 +286,7 @@ Same as polyrhythm and melody.
 
 (No Direction feature — Rhythm Track is a metronome, not a sequencer.)
 
-### Pause is not stop -- suite-wide (Rozaya, 2026-09-11, not built, not measured)
+### Pause is not stop, and the song position is the clock -- suite-wide (Rozaya, 2026-09-11, not built; REAPER's side measured)
 
 *"There's play, there's stop, and then there's pause. I say all plugins should respect a
 pause. play/stop is play/stop, you'd expect that particular combonation to work exactly
@@ -313,24 +313,13 @@ on a jump while playing, and on RESUME FROM PAUSE -- not on a loop wrapping. Whi
 plugin gets no blocks at all (it never sees play_state 2). After a stop the plugin keeps
 running, and a cursor move while stopped reaches it at once (play_position = cursor, beat
 follows) with NO @init. So the rule is buildable: keep memory through @init (ext_noinit),
-and re-land on any position jump, stopped or playing. **Unexplained:** a probe freshly added
-while stopped got no blocks until the first play (in a new tab and in claude test alike).
-Rozaya: *"That unexplainable thing happens to me too with morfer sometimes. Only sometimes"*
--- **MEASURED CAUSE (jsfx_run, 2026-09-12):** the Morpher analyses its captures only on a
-capture, a Capture point / Capture average change, or the play edge (`analysis_valid`,
-~1334 and ~1552). A copy saved on Capture point 0 AND Capture average 1 looks unchanged on
-load, so it stays SILENT until the first play: `breathing` #1 rms 0 stopped, 0.09 playing;
-`and the spirits speak` #1 (average 6) sounds stopped. 10 of 123 live copies sit on both
-defaults. **FIXED 2026-09-12** in both (a cold load now analyses at once; Rozaya: *"on
-project load, to walk into silence? cmmon"*). Morpher, silent input: 123 of 123 bit-identical
-playing; all 119 sounding copies sound stopped; the old build silent stopped in 9 of 9 on both
-defaults. Passage: old silent in 4 of 48, new 0. Morpher installed; Passage waits for its build.
-Earlier: probe test 3 (same session, AFTER a play since the project opened): all 18 claude test
-tracks ran while stopped, and a freshly added probe ran at once. Tests 1-2 had had no play
-since the tab was made / the project opened. **Guess, untested:** a freshly opened project
-runs nothing while stopped until the first play. To test safely: probe claude test right
-after Rozaya opens it, before any play. Also measured: bypass then enable re-runs @init;
-monitoring and mute toggles do not. **A loop wrap is a jump with no @init** (measured 51.74 -> 50.62 s), and
+and re-land on any position jump, stopped or playing. Bypass then enable also re-runs @init;
+monitoring and mute toggles do not. The Morpher's and Passage's silent load (a real cause,
+FIXED 2026-09-12) is in `docs/session-log.md`, 2026-09-11/12. **Still unexplained:** a probe
+freshly added while stopped got no blocks until the first play, in a just-made tab and a
+just-reopened project; after one play everything ran. Guess, untested: a freshly opened
+project runs nothing while stopped until the first play. Test by probing claude test right
+after Rozaya opens it (Rozaya does not press play there). **A loop wrap is a jump with no @init** (measured 51.74 -> 50.62 s), and
 Rozaya: looping counts. So re-landing must come from WATCHING THE POSITION (Melody's
 predicted-versus-actual check), never from @init or a play edge alone.
 `tools/lock_test.py` covers only tempo-synced plugins starting mid-song.

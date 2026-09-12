@@ -72,96 +72,39 @@ build `d5adcaf` on the project vs new build on a temp conversion, bit-identical)
 Inventory 2026-09-11: 49 instances in 11 projects; 5 in `nightfall.RPP` are 35-value
 lines (pre-Overtone), filled with the defaults REAPER has always supplied.
 
-- **Stage 1, renumber: DONE** (`096ad27`), `jsfx_renumber verify` passed all three.
-- **Stage 2, the 24 new controls declared, inert, seeded: DONE**, 49 of 49 bit-identical.
-- **Stage 3, All slots on Capture slot: DONE.** Migration adds 1 to each saved slot.
-  `current`: 49 of 49 bit-identical. `allslots`: a capture on All == an ordinary capture
-  (heard in Slot 8); Texture on All changes Slot 8 and == by hand; passing through All
-  keeps Slot 8's own Texture; a Drift set on All moves Slot 8 and == by hand. Change
-  detection via `ps_last` (adopted in @block and @serialize). Not yet tested: save and
-  reopen on All (bridge test, at the end).
-- **Stage 4, the pitch block: DONE.** `current` 49 of 49 bit-identical; `pitch`: 1200
-  cents, 440 Hz from 440, 880 Hz from 880, and 11 semitones + 100 cents fine tune all ==
-  Transpose 12; Source C4 + Target E4 == Transpose 4; Source C4 50 cents flat + Target
-  E4 == Transpose 4.5; Transpose on All == by hand on Slot 8; Transpose 12 != none. Seven per-slot banks (`slot_tunit`, `slot_fine`, `slot_funit`, `slot_srcnote`,
-  `slot_srcfine`, `slot_srcfunit`, `slot_tgtnote`) banked on slot switch, stamped live,
-  All via `ps_last` 32-38, stamped on capture; `tuning_ref` from slider 30; the Target
-  note mirror in @slider before the slot block. **SETTLED:** moving Source note or its
-  fine tune re-reads the Target note and never changes the sound. Rozaya: *"The source
-  note is just to tell the targget what 0 semitones is though"*. **The new
-  banks are NOT yet in @serialize** (the save-format stage adds them all at once).
-- **Stage 5, per-slot Wash grain and High cut: DONE.** `current` 49 of 49 bit-identical;
-  `grainhc`: High cut 200 Hz takes a 220 Hz tone's wash and voice to rms 0; High cut and
-  Wash grain on All == by hand on Slot 8; 40 ms grain on Slot 8 changes Slot 8 and
-  leaves Slot 1 bit-identical. Banks `slot_grain`, `slot_hicut`, banked like the others (All via
-  `ps_last` 39-40). High cut is the Morpher's shape (`hc_g`, `hc_bound`, fade over the
-  top fifth) in all six voice partial lines and in `build_spectrum` after the per-slot
-  transposition. Grain follows the heard slots in @block (one slot's exact value when
-  they agree). **SAVE-FORMAT STAGE MUST FIX:** `grain_seed` copies Wash grain into all
-  eight slots on EVERY load for now; once `slot_grain` is serialized, gate it on the
-  older magics only, or per-slot grain is flattened on every reopen.
-- **Stage 6, the slot timing unit: DONE.** `current` 49 of 49 bit-identical; `timing`
-  (Auto-morph Sweep, crossfade OFF): gap 1.5 s != 1 s; Beats 1, 2, 1, 2 at 120 BPM and Hz
-  2, 1, 2, 1 == Seconds 0.5, 1, 0.5, 1; a gap of 0 in Hz == 0 s. **Test trap:** with
-  crossfade into next ON (default) a leg ignores its gap, and identical captures blend
-  inaudibly -- the first run's can-fail check caught it. Bank
-  `slot_tmunit` (All via `ps_last` 41), read once per leg start through `tm_sec`, with
-  Drift added in the timing's own unit. **SETTLED:** in Hz a value of 0 means none,
-  not an endless leg -- Rozaya: *"Yeah, keep it where it is."* **SETTLED:** in Beats a tempo
-  change lands at once, mid-leg -- Rozaya: *"a tempo change is meant to be a tempo
-  change, not a delayed tempo change."* (Before, lengths followed live but the time
-  counted stayed in seconds, so a fade JUMPED.) `leg_elapsed` is rescaled on a change;
-  `tempo` section of the verify tool.
-- **Stage 7, transport: DONE.** `current` 49 of 49 bit-identical; `transport`: Start
-  delay 17 s != 16 s; 32 beats at 120 BPM and 0.0625 Hz == 16 s; Play for / Rest for 1 s
-  changes the sound and == 2 beats; Silence at rest != Pass-through. Ported from
-  the Morpher (`src/spectral_vowel_morpher.jsfx` ~1667-1694 and its output ~2323): the
-  Start delay holds Drift, Ramp and the walk; a rest holds the walk only on Freeze in
-  place; rest applies to the output SUM (Pass-through keeps dry, Silence mutes all).
-  Lengths via `tm_sec(slider41, ...)` per block. Counters restart on play after STOP --
-  Rozaya: *"play/stop is play/stop"* -- but **a PAUSE must resume** (*"all plugins should
-  respect a pause"*); Passage restarts on pause too (read, not measured; not yet fixed).
-  **Tempo change mid-count (2026-09-11):** in Beats, Start delay, Play for / Rest for and
-  Ramp start delay counted seconds and lost their place (a 16-beat delay ended at 18.22 s
-  where beats say 15.26); now rescaled per block. Drift period and Ramp duration already
-  followed. Measured: `beats` section, all five exact; `tempo` section for the slots.
-- **Stage 8, Drift period unit + Drift play/rest, Ramp time unit + Ramp play/rest:
-  DONE.** `current` 49 of 49 bit-identical; `driftramp`: drift period 3 s != 2 s, 4
-  beats at 120 BPM == 2 s, Drift play/rest changes the sound; ramp 0.5 min != 0.25 min,
-  15 s and 30 beats == 0.25 min, Ramp play/rest changes the sound; `cycles`: 0.0625
-  cycles (a 48 s walk) == 3 s, 0.125 cycles != 3 s -- all after the fix below. Ported from the Morpher
-  (`pr_frozen`; rests come out of a ramp's duration). Units global, play/rest per
-  (slot, target), banked in both selectors and on All (`ps_last` 27-30). **Cycles is
-  OPEN:** built as one walk through the active slots' legs (`pv_cyc`, mine). Rozaya:
-  *"Passage's whole plan was very delayed, and by the time we got to it we'd settled on
-  the full thing for drift. cycles doesn't really make sense here. I can kind of see it
-  sort of? though. the way you describe it."* Asked: keep Cycles (same list everywhere)
-  or drop it from Passage. **SETTLED:** *"Keep it in. might be interesting"* -- a Cycle
-  is one walk through the active slots' legs. **A real fault the Cycles check found:**
-  the walk was summed before `rebuild_active_slots()`, so for one block after a capture
-  or a mute it read the old slot list; a drift in Cycles ran that block at the 0.05 s
-  floor and kept the phase it gained. Measured with a debug copy that wrote
-  `drift_unit_sec` and `n_active` out as audio (0.05 in the first block, then 48).
-  Moved after the rebuild; `cycles`, `current` and `driftramp` all pass after it.
-- **Stage 4 design notes (mine, from reading 2026-09-11):** Bubbler resolves a shift
-  to semitones in `bb_semis_from(unit, v)` -- Semitones as is, Cents /100, Hz from the
-  Tuning reference `12*log2((ref+v)/ref)` -- and mirrors Target note <-> Transpose value
-  only while Source note > 0 AND Transpose unit is Semitones (`src/bubbler.jsfx` ~230-360).
-  Passage's heard pitch is set in ONE place: `eff_semi_A/B = slot_pitch[sb_i/j] +
-  pitch_mod_A/B` (~line 1600), so each slot's semitones become `semis_from(Transpose
-  unit, value + drift) + semis_from(Fine tune unit, fine)`. New per-slot banks go at the
-  END of the allocations (after `ps_last`, which grows to 64 for their All indices);
-  all of them need `@serialize` fields behind a magic bump, gated on the magic that
-  WROTE them. Source fine tune enters the mirror as `transpose = target - (source - 1) -
-  source_fine_semis`; **mine, unquoted:** a source fine tune in Hz is measured from the
-  source note's own frequency, not from the Tuning reference.
-- **Still to build, in this order:** the pitch block (Source note, Source fine tune,
-  Target note mirror, Transpose unit, Fine tune, Tuning reference); per-slot Wash grain;
-  High cut; slot timing unit; transport (start delay, play/rest, unit, rest mode,
-  output at rest); Drift period unit and play/rest; Ramp time unit and play/rest; the
-  22-target list with Drift amount unit / Ramp by unit (blob magic bump, DSTRIDE 16 ->
-  32, target remap); renames of existing labels to the table below; the manual;
-  then the live migration, install, bridge test.
+- **Stages 1-8 DONE and measured** (renumber; 24 new controls; All slots; the pitch
+  block; per-slot Wash grain and High cut; slot timing unit; transport; Drift and Ramp
+  units and play/rest). Also done since: a tempo change lands at once in every Beats count
+  (slots, Start delay, Play for / Rest for, Ramp start delay), and a cold load analyses its
+  captures at once, stopped. How each was measured, the faults found and the test traps:
+  `docs/session-log.md`, 2026-09-11/12. Verify sections: `current allslots pitch grainhc
+  timing transport driftramp cycles tempo beats coldload`, all passing 2026-09-12.
+- **Settled by Rozaya:** moving Source note re-reads Target note, never the sound (*"The
+  source note is just to tell the targget what 0 semitones is though"*); 0 Hz means none
+  (*"Yeah, keep it where it is."*); a tempo change lands at once (*"a tempo change is meant
+  to be a tempo change, not a delayed tempo change."*); Cycles stays, one walk through the
+  active slots' legs (*"Keep it in. might be interesting"*).
+- **OPEN, carried into the stages still to come:**
+  - **SAVE-FORMAT STAGE MUST FIX:** `grain_seed` copies Wash grain into all eight slots on
+    EVERY load for now; once `slot_grain` is serialized, gate it on the older magics only,
+    or per-slot grain is flattened on every reopen.
+  - **The new per-slot banks are NOT yet in @serialize** (`slot_tunit`, `slot_fine`,
+    `slot_funit`, `slot_srcnote`, `slot_srcfine`, `slot_srcfunit`, `slot_tgtnote`,
+    `slot_grain`, `slot_hicut`, `slot_tmunit`; check the stage 8 play/rest banks too). They
+    go at the END of the allocations, with `@serialize` fields behind a magic bump, gated on
+    the magic that WROTE them.
+  - **Not yet tested:** save and reopen on All (bridge test, at the end).
+  - **A PAUSE must resume** -- Rozaya: *"all plugins should respect a pause"*; play after
+    stop is play/stop. Passage restarts on pause (REAPER re-runs @init on resume, measured).
+    Not fixed; the suite-wide rule is in `docs/planned-features.md`, "Pause is not stop".
+  - **Mine, unquoted:** a Source fine tune in Hz is measured from the source note's own
+    frequency, not from the Tuning reference. Bubbler's shift resolution, for reference:
+    `bb_semis_from(unit, v)` in `src/bubbler.jsfx` ~230-360; Passage's heard pitch is set in
+    one place, `eff_semi_A/B`.
+- **Still to build, in this order:** the 22-target list with Drift amount unit / Ramp by
+  unit (blob magic bump, DSTRIDE 16 -> 32, target remap); the save format; renames of
+  existing labels to the table below; the manual; then the live migration, install, bridge
+  test. (The save format's place after the target list is from the 2026-09-11 handoff.)
 
 ## THE LAYOUT, authored whole 2026-09-11 -- shown to Rozaya and settled the same day; nothing built
 

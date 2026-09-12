@@ -448,6 +448,41 @@ def beats():
            "beats: Ramp duration 24 beats through 120 -> 60 == 12 s changed to 24 s at that moment (and != staying at 12 s)")
 
 
+# --- Cold load with the transport STOPPED (2026-09-12). The Morpher stayed silent until the
+# first play when saved on the starting Capture point and Capture average; Passage has the
+# same code. Every live instance: the pre-layout build (PRE) on the project, stopped, against
+# the new build on its temp conversion, stopped -- the new must sound wherever the same
+# instance sounds playing. Rozaya: "on project load, to walk into silence? cmmon".
+def coldload():
+    jobs = []
+    for live in mig.files():
+        text, n = mig.convert(live)
+        conv = os.path.join(tmp, "c-" + re.sub(r"[/\\: ']", "_", live))
+        open(conv, "w", encoding="utf-8", errors="surrogateescape", newline="").write(text)
+        jobs += [(live, conv, i) for i in range(1, n + 1)]
+    tail = slice(3 * 44100, None)
+    rms = lambda a: float(np.sqrt((a[tail] ** 2).mean()))
+
+    def one(j):
+        live, conv, i = j
+        quiet_in = ()   # SILENT input: a noise in passes through and reads as "sounds stopped"
+        play = rms(run(NEW, 8, conv, i, quiet_in))
+        old_stop = rms(run(OLD, 8, live, i, quiet_in + ("--stopped",)))
+        new_stop = rms(run(NEW, 8, conv, i, quiet_in + ("--stopped",)))
+        return live, i, play, old_stop, new_stop
+
+    with cf.ThreadPoolExecutor(JOBS) as ex:
+        res = list(ex.map(one, jobs))
+    sounding = [r for r in res if r[2] > 1e-6]
+    silent_new = [r for r in sounding if r[4] <= 1e-6]
+    silent_old = [r for r in sounding if r[3] <= 1e-6]
+    for live, i, *_ in silent_new:
+        report(False, f"coldload: {live} #{i} is silent stopped though it sounds playing")
+    report(len(sounding) > 0 and not silent_new,
+           f"coldload: all {len(sounding)} of {len(res)} instances that sound playing also sound stopped (new build)")
+    print(f"     (the pre-layout build was silent stopped in {len(silent_old)} of them)")
+
+
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if not a.startswith("--") and not a.isdigit()] or ["current"]
     for w in want:
