@@ -1257,6 +1257,24 @@ absolutely be drift candidates."* Drift and Ramp exist to replace automation.
 - **A new sound-shaping control gets its target in the same change that adds it.**
 - Drift and Ramp share one target list. New targets append to it (R18).
 
+## R25 — A control behind a selector says which kind it is (2026-09-12)
+
+Rozaya, finding Ramp start delay switched with the Ramp target: *"if it's gonna do that,
+can't it at least say that's what it's doing?"* Then: *"anything would do at this point,
+just don't forget to put this snag in the damn thing in case names come up as another
+problem"*. History: `docs/history/R25.md`.
+
+- **Every control in a block with a selector ends its name with which kind it is:**
+  `(per target)` when its value switches with the selector, `(all targets)` when one value
+  serves every option. A slot, band, layer, voice or segment selector says so the same way
+  (`(per slot)`, `(per slot and target)`), and a unit already in parentheses joins it:
+  `Ramp start delay (per target, in ramp time units)`.
+- **Measure which kind it is; never read it off a label or a comment.** Set it on one
+  option, switch, read it back: `tools/selector_scope_probe.py`, live in REAPER.
+- **A rename moves no value** (REAPER restores by position), so it needs no migration --
+  but the plugin's page in `docs/plugins/` changes with it.
+- **A new control added to such a block is named this way in the same change.**
+
 ---
 
 ## Part 2 — Canonical layout
