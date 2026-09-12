@@ -315,6 +315,15 @@ running, and a cursor move while stopped reaches it at once (play_position = cur
 follows) with NO @init. So the rule is buildable: keep memory through @init (ext_noinit),
 and re-land on any position jump, stopped or playing. **Unexplained:** a probe freshly added
 while stopped got no blocks until the first play (in a new tab and in claude test alike).
+Rozaya: *"That unexplainable thing happens to me too with morfer sometimes. Only sometimes"*
+-- probe test 3 (same session, AFTER a play since the project opened): all 18 claude test
+tracks ran while stopped, and a freshly added probe ran at once. Tests 1-2 had had no play
+since the tab was made / the project opened. **Guess, untested:** a freshly opened project
+runs nothing while stopped until the first play. To test safely: probe claude test right
+after Rozaya opens it, before any play. Also measured: bypass then enable re-runs @init;
+monitoring and mute toggles do not. **A loop wrap is a jump with no @init** (measured 51.74 -> 50.62 s), and
+Rozaya: looping counts. So re-landing must come from WATCHING THE POSITION (Melody's
+predicted-versus-actual check), never from @init or a play edge alone.
 `tools/lock_test.py` covers only tempo-synced plugins starting mid-song.
 
 ### A bar-shape change lands on the next click (Rozaya, 2026-09-11, not built)

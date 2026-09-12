@@ -371,6 +371,83 @@ def tempo():
            "tempo: slots in Seconds are bit-identical through the same tempo change")
 
 
+# --- The other Beats timings through the same tempo change (2026-09-11). A stage lands
+# after block k and a --tempo-at lands before block k+1, so a Seconds length changed at
+# stage K and a Beats length with the tempo changed at block K+1 meet on the same sample.
+RAMP_DELAY = 62
+
+
+def staged_run(plugin, settings, later, extra, seconds):
+    stages = [[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0)], [(CAPTURE, 1)], list(settings)] + [list(s) for s in later]
+    out = os.path.join(tmp, f"s{os.getpid()}_{abs(hash((plugin, str(settings), str(later), str(extra))))}.csv")
+    cmd = [EXE, plugin, "--seconds", str(seconds), "--csv", out, "--quiet", *TONE, *extra]
+    for k, st in enumerate(stages):
+        if k:
+            cmd += ["--stage"]
+        for s, v in st:
+            cmd += ["--set-after", f"{s}={v}"]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError(r.stderr[-600:])
+    a = np.loadtxt(out, delimiter=",", skiprows=1, usecols=(2, 3))
+    os.remove(out)
+    return a
+
+
+def beats():
+    K = 6                        # the change lands with stage K: the start of block K+1
+    B, t0 = (K + 1) * BLK_S, 3 * BLK_S   # settings land with stage 2
+    steady = ["--tempo", "120"]
+    change = steady + ["--tempo-at", f"{B - 0.000001:.6f}=60"]
+    base = [(TEXTURE, 0), (INPUT_LEVEL, -60)]
+
+    def later(at=()):
+        return [[]] * (K - 3) + [list(at)] + [[]] * 3
+
+    def first(times, after):
+        return next((t for t in times if t > after), float("nan"))
+
+    def edge_case(label, settings, which, beats_len, seconds):
+        # 120 -> 60 BPM: the beats done before B, at two a second; the rest at one a second.
+        say = B + (beats_len - 2 * (B - t0))
+        ctl = first(edges(staged_run(NEW, settings, later(), steady, seconds))[which], t0 + 0.1)
+        got = first(edges(staged_run(NEW, settings, later(), change, seconds))[which], t0 + 0.1)
+        report(abs(ctl - (t0 + beats_len / 2)) < 0.02 and abs(got - say) < 0.02,
+               f"beats: {label} -- steady ends {ctl:.2f} s (beats say {t0 + beats_len / 2:.2f}); through "
+               f"120 -> 60 at {B:.2f} s it ends {got:.2f} s (beats say {say:.2f}; counted in seconds {t0 + beats_len:.2f})")
+
+    rest_silent = base + [(OUT_AT_REST, 1), (TR_UNIT, 2)]
+    edge_case("Start delay 16 beats", rest_silent + [(START_DELAY, 16)], 0, 16, 22)
+    edge_case("Play for 8 beats (Rest 4)", rest_silent + [(PLAY_FOR, 8), (REST_FOR, 4)], 1, 8, 16)
+
+    # Ramp start delay: when the render first differs from the same ramp left disengaged.
+    ramp = base + [(RAMP_TUNIT, 3), (RAMP_BY, 80), (RAMP_DUR, 4), (RAMP_DELAY, 16)]
+
+    def diverge(extra):
+        a = staged_run(NEW, ramp + [(RAMP_ENGAGE, 1)], later(), extra, 22)
+        z = staged_run(NEW, ramp, later(), extra, 22)
+        d = np.nonzero(np.abs(a - z).max(1) > 1e-7)[0]
+        return d[0] / TSR if len(d) else float("nan")
+    say = B + (16 - 2 * (B - t0))
+    ctl, got = diverge(steady), diverge(change)
+    report(abs(ctl - (t0 + 8)) < 0.02 and abs(got - say) < 0.02,
+           f"beats: Ramp start delay 16 beats -- steady starts {ctl:.2f} s (beats say {t0 + 8:.2f}); through "
+           f"120 -> 60 at {B:.2f} s it starts {got:.2f} s (beats say {say:.2f}; counted in seconds {t0 + 16:.2f})")
+
+    # Drift period and Ramp duration accumulate, so they can be held to bit-identity.
+    drift_b = staged_run(NEW, base + [(DRIFT_PUNIT, 2), (DRIFT_UP, 40), (DRIFT_PERIOD, 4)], later(), change, 16)
+    drift_s = staged_run(NEW, base + [(DRIFT_PUNIT, 1), (DRIFT_UP, 40), (DRIFT_PERIOD, 2)], later([(DRIFT_PERIOD, 4)]), steady, 16)
+    drift_f = staged_run(NEW, base + [(DRIFT_PUNIT, 1), (DRIFT_UP, 40), (DRIFT_PERIOD, 2)], later(), steady, 16)
+    report(np.array_equal(drift_b, drift_s) and not np.array_equal(drift_s, drift_f) and np.abs(drift_b).max() > 0,
+           "beats: Drift period 4 beats through 120 -> 60 == 2 s changed to 4 s at that moment (and != staying at 2 s)")
+    rb = base + [(RAMP_BY, 80), (RAMP_ENGAGE, 1)]
+    ramp_b = staged_run(NEW, rb + [(RAMP_TUNIT, 3), (RAMP_DUR, 24)], later(), change, 16)
+    ramp_s = staged_run(NEW, rb + [(RAMP_TUNIT, 1), (RAMP_DUR, 12)], later([(RAMP_DUR, 24)]), steady, 16)
+    ramp_f = staged_run(NEW, rb + [(RAMP_TUNIT, 1), (RAMP_DUR, 12)], later(), steady, 16)
+    report(np.array_equal(ramp_b, ramp_s) and not np.array_equal(ramp_s, ramp_f) and np.abs(ramp_b).max() > 0,
+           "beats: Ramp duration 24 beats through 120 -> 60 == 12 s changed to 24 s at that moment (and != staying at 12 s)")
+
+
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if not a.startswith("--") and not a.isdigit()] or ["current"]
     for w in want:

@@ -118,8 +118,13 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   the Morpher (`src/spectral_vowel_morpher.jsfx` ~1667-1694 and its output ~2323): the
   Start delay holds Drift, Ramp and the walk; a rest holds the walk only on Freeze in
   place; rest applies to the output SUM (Pass-through keeps dry, Silence mutes all).
-  Lengths via `tm_sec(slider41, ...)` per block. **Mine, unquoted:** the counters
-  restart on every play edge (Passage sets `ext_noinit`, so @init cannot do it).
+  Lengths via `tm_sec(slider41, ...)` per block. Counters restart on play after STOP --
+  Rozaya: *"play/stop is play/stop"* -- but **a PAUSE must resume** (*"all plugins should
+  respect a pause"*); Passage restarts on pause too (read, not measured; not yet fixed).
+  **Tempo change mid-count (2026-09-11):** in Beats, Start delay, Play for / Rest for and
+  Ramp start delay counted seconds and lost their place (a 16-beat delay ended at 18.22 s
+  where beats say 15.26); now rescaled per block. Drift period and Ramp duration already
+  followed. Measured: `beats` section, all five exact; `tempo` section for the slots.
 - **Stage 8, Drift period unit + Drift play/rest, Ramp time unit + Ramp play/rest:
   DONE.** `current` 49 of 49 bit-identical; `driftramp`: drift period 3 s != 2 s, 4
   beats at 120 BPM == 2 s, Drift play/rest changes the sound; ramp 0.5 min != 0.25 min,

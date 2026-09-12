@@ -1266,6 +1266,26 @@ drift_restart_free = slider53;   // 0 = restart on play (sync), 1 = free-running
 grain_seed ? ( grain_seed = 0; gsd_i = 0; loop(NSLOTS, slot_grain[gsd_i] = slider14; gsd_i += 1; ); );
 grain_ms = slot_grain[sb_i] == slot_grain[sb_j] ? slot_grain[sb_i] : sblend(slot_grain, sb_i, sb_j, sb_f);
 // Transport lengths in the Transport unit, per block so Beats follow the live tempo.
+// A tempo change lands at once in a Beats count already under way: rescale the time
+// counted so far so it keeps its place in BEATS. Measured losing it before: a 16-beat
+// Start delay or Ramp start delay ran on as if the beats were still seconds, and so did
+// Play for / Rest for. Drift period and Ramp duration accumulate and never lost it. At
+// a steady tempo none of this fires. Rozaya: "a tempo change is meant to be a tempo
+// change, not a delayed tempo change."
+tr_tnow = max(tempo, 1); rm_tnow = max(tempo, 0.001);
+slider41 == 2 && tr_tempo > 0 && tr_tnow != tr_tempo ? (
+  start_delay_elapsed < start_delay_sec ? start_delay_elapsed *= tr_tempo / tr_tnow;   // old length, not yet recomputed
+  pr_accum *= tr_tempo / tr_tnow;
+);
+tr_tempo = tr_tnow;
+slider57 == 3 && rm_tempo > 0 && rm_tnow != rm_tempo ? (
+  rdi = 0;
+  loop(DBANK,
+    ramp_delay_elapsed_mem[rdi] < ramp_delay_mem[rdi] * 60 / rm_tempo * srate ? ramp_delay_elapsed_mem[rdi] *= rm_tempo / rm_tnow;
+    rdi += 1;
+  );
+);
+rm_tempo = rm_tnow;
 start_delay_sec = tm_sec(slider41, slider38);
 pr_play_sec     = tm_sec(slider41, slider39);
 pr_rest_sec     = tm_sec(slider41, slider40);
