@@ -62,7 +62,7 @@ end.** What this paragraph used to list as unsettled, kept for the record:
 the rest of R22's pitch block for Passage (*"their own discussion"*), R24's full target
 list with Start delay / Play for / Rest for, and the two OPEN items further down.
 
-## THE LAYOUT, authored whole 2026-09-11 -- not yet shown to Rozaya, nothing built
+## THE LAYOUT, authored whole 2026-09-11 -- shown to Rozaya and settled the same day; nothing built
 
 38 sliders become 60. Order follows Part 2 of the plan: the per-slot group whole and
 contiguous, then what covers all slots, then transport, Drift, Ramp. Quoted decisions

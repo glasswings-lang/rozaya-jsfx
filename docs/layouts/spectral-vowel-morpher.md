@@ -667,7 +667,7 @@ instead** — the grouping is a convenience and the correctness is not.
 layers" entry per layer control (`spectral-vowel-morpher-r24-20260911.md`), not grouped
 by layer.
 
-## THE PITCH LAYOUT, authored whole 2026-09-11 -- not yet shown to Rozaya, nothing built
+## THE PITCH LAYOUT, authored whole 2026-09-11 -- shown to Rozaya and settled the same day; nothing built
 
 One migration carrying everything owed: the free layer pitch above (2026-09-08), Bubbler's
 Source note block on the main pitch, a Tuning reference, the amount units, and the
@@ -732,7 +732,10 @@ projects** (as of the R24 migration); captures inventoried before and verified a
   block. Rozaya: *"Nah, keep it as-is. the point of layers is to avoid the need to
   introduce clashing via layering of tracks for the sake of fuller frequency
   representation as like... the only way of getting it"*.
-- The pitch block where Pitch sits today (after Spread) rather than first in the sound?
+- SETTLED: the pitch block stays where Pitch sits today, after Spread -- asked with
+  that recommendation; Rozaya: *"Leave it"*.
+
+**All three answered 2026-09-11: this layout is complete and ready to build.**
 
 Noticed, not proposed: the transport labels still say "beats in Host x", a name R21
 retired.
