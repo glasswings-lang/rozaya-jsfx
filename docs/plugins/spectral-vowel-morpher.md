@@ -47,8 +47,10 @@ Capture grabs the most recent ~0.68 seconds of input (a fixed sample count, so t
 
 ## Parameters
 
-**Capture slot** `1 to 8, default 1`
+**Capture slot** `All, Slot 1 to Slot 8, default Slot 1`
 Which of the eight slots the next Capture writes to, which slot Audition monitors in Focused mode, and — since each slot has its own **Capture point** — which slot's saved point the Capture point slider shows and edits. Switching slots swaps the Capture point display to that slot's stored value.
+
+**All** reaches every slot at once. Capture now grabs the same moment into all eight, so one press gives you eight identical starting points to pull apart. Capture point shows Slot 1's point, and moving it moves all eight. Just selecting All changes nothing, so you can pass through it safely. Audition in Focused slot plays Slot 1 while All is selected. (Added 2026-09-11. Saved projects keep their slot: Slot 3 is still Slot 3.)
 
 **Capture now** `Off / Capture now`
 Grab the current moment into the selected slot. It captures *whatever audio is reaching the track at that instant* — so if you fire it while nothing is playing (transport stopped, or no source feeding the track), you'll bank an **empty slot**, and the morph will fade to silence whenever it reaches that slot.

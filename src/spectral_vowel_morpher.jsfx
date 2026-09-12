@@ -39,7 +39,7 @@ desc: Spectral Vowel Morpher - voice<->wash capture instrument
 // --- Capture. Pick a slot, grab into it, then say where in the grab to look
 //     and how much to smooth. Slots are numbered 1-8 to match how they are
 //     spoken about; the engine is 0-based underneath and subtracts one. ---
-slider1:1<1,8,1>Capture slot
+slider1:1<0,8,1{All,Slot 1,Slot 2,Slot 3,Slot 4,Slot 5,Slot 6,Slot 7,Slot 8}>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture now
 // Capture point and Capture average are NOT Drift or Ramp targets, deliberately
 // (2026-09-11). Moving either re-analyses the captured sound -- a full FFT and pitch
@@ -612,6 +612,7 @@ slots_inited == 0 ? (
   lpi = 0; loop(N_LAY_SLOTS, lay_ot_norm[lpi] = 1; lot_bin[lpi] = 0; lpi += 1; );
   last_lay_sel = LAY_ORIG;
   last_cap_slot      = 0;   // per-slot Capture-point selector (mirrors the Drift/Ramp target selectors)
+  last_cap_sel = 1; last_cap_all = 0; cp_ui_last = 0; cap_all_scrub = 0;   // All slots (0 = All, 1-8 = Slot 1-8)
 );
 // Drift RUNTIME state (phase/prev/curr/offset) is reset here on load AND on the
 // transport play-edge in @block, so drift restarts at phase 0 on every play
@@ -1166,7 +1167,11 @@ time_mode_inited && last_time_mode != slider8 ? (
   last_time_mode = slider8;
 );
 
-cap_slot      = max(0, min(NSLOTS-1, slider1 - 1));   // slider is 1-8, engine is 0-7
+// All slots, 2026-09-11 (docs/layouts/spectral-vowel-morpher-all-slots-20260911.md):
+// index 0 is All, and 1-8 are the slots they always were, so no saved value moves.
+cap_sel       = max(0, min(NSLOTS, floor(slider1 + 0.5)));   // 0 = All, 1-8 = Slot 1-8
+cap_all       = cap_sel == 0;
+cap_slot      = cap_all ? 0 : cap_sel - 1;             // engine is 0-7; All shows and auditions Slot 1
 cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0; );  // first @slider after load: sync cap_last so a saved-ON Capture-now never fires a silent capture on reload
 // --- Per-slot Capture point (nested-selector, like Drift/Ramp targets). The
 //     Capture-point slider is now PER SLOT: switching Capture slot saves the
@@ -1174,14 +1179,23 @@ cap_trig      = slider2; first_slider ? ( cap_last = cap_trig; first_slider = 0;
 //     each slot keeps its own by-ear tuning. Editing slider3 writes the current
 //     slot. Suppress the @block re-derive on a pure slot-switch (each slot is
 //     already analyzed at its own point) by syncing last_cappoint. ---
-last_cap_slot != cap_slot ? (
-  slot_cappoint[last_cap_slot] = slider3 * 0.01;   // save the slot we're leaving
-  slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering
+last_cap_sel != cap_sel ? (
+  !last_cap_all ? slot_cappoint[last_cap_slot] = slider3 * 0.01;   // save the slot we're leaving; All holds nothing of its own
+  slider3 = slot_cappoint[cap_slot] * 100;         // load the slot we're entering (All shows Slot 1's)
   slider_automate(slider3);
-  last_cap_slot = cap_slot;
+  last_cap_slot = cap_slot; last_cap_sel = cap_sel; last_cap_all = cap_all;
   last_cappoint = slot_cappoint[cap_slot];          // no re-derive on switch: slot already analyzed at this point
+  cp_ui_last = slider3;
+) : cap_all ? (
+  // On All, a Capture point edit reaches all eight. Change-detected on Polyrhythm's
+  // model, so parking on All -- or a stray @slider pass on load -- flattens nothing.
+  slider3 != cp_ui_last ? (
+    cpa = 0; loop(NSLOTS, slot_cappoint[cpa] = slider3 * 0.01; cpa += 1; );
+    cp_ui_last = slider3; cap_all_scrub = 1;
+  );
 ) : (
   slot_cappoint[cap_slot] = slider3 * 0.01;         // capture a live scrub of the current slot
+  cp_ui_last = slider3;
 );
 cap_point01   = slider3 * 0.01;
 // Capture average is GLOBAL: one slider value stamped onto every slot, so
@@ -1548,13 +1562,20 @@ cap_dirty ? (
       // Warm: only the focused slot's capture point moved (that one IS per slot),
       // so re-derive JUST that slot -- scrubbing one slot no longer retunes the
       // others (the bug this fix addresses).
-      compute_spectrum(cap_slot); analyze_harm(cap_slot);
+      // On All slots the point moved on all eight, so all eight come back.
+      cap_all_scrub ? (
+        si2 = 0; loop(n_used, compute_spectrum(si2); analyze_harm(si2); si2 += 1; );
+      ) : (
+        compute_spectrum(cap_slot); analyze_harm(cap_slot);
+      );
     );
-    cap_dirty = 0; capavg_dirty = 0;
+    cap_dirty = 0; capavg_dirty = 0; cap_all_scrub = 0;
   );
 );
 
-(cap_trig > 0.5 && cap_last <= 0.5) ? ( capture(cap_slot); slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
+// On All slots one press grabs the same moment into all eight -- the same eight
+// analyses in one block that a Capture average change already runs.
+(cap_trig > 0.5 && cap_last <= 0.5) ? ( cap_all ? ( cpk = 0; loop(NSLOTS, capture(cpk); cpk += 1; ); ) : capture(cap_slot); slider2 = 0; cap_trig = 0; sliderchange(slider2); );  // momentary: auto-release Capture-now so it can never be SAVED on (which re-captured silence on every load)
 cap_last = cap_trig;
 
 // --- Everything DERIVED from a @serialize bank is computed here, every block,
@@ -2644,9 +2665,12 @@ file_var(0, ser_magic);
     // Per-slot Capture point: force slider3 to the restored slot's stored point,
     // and sync last_cap_slot so the first @slider doesn't mistake load for a
     // slot-switch (which would save the visible point into the wrong slot).
-    cps = max(0, min(NSLOTS-1, slider1 - 1));   // slider is 1-8, engine is 0-7
+    last_cap_sel = max(0, min(NSLOTS, floor(slider1 + 0.5)));   // 0 = All, 1-8 = Slot 1-8
+    last_cap_all = last_cap_sel == 0;
+    cps = last_cap_all ? 0 : last_cap_sel - 1;   // engine is 0-7; All shows Slot 1
     last_cap_slot = cps;
     slider3 = slot_cappoint[cps] * 100;
+    cp_ui_last = slider3;
     // Capture average is GLOBAL now, so this stamps the visible slider onto every
     // slot rather than loading one slot's value into the slider. A project saved
     // back when it was per slot flattens to the value the slider shows -- which

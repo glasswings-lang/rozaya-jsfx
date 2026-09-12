@@ -36,6 +36,12 @@ ITEM_SELECTORS = {
     "spectral_vowel_passage": (0, 4, 1, 2, None),
 }
 
+# A plugin's second per-item selector. The Morpher's Capture slot gained All
+# 2026-09-11; its Capture point is the per-slot value.
+EXTRA_ITEM_SELECTORS = {
+    "spectral_vowel_morpher": [(0, 2, 1, 2, 0)],
+}
+
 ITEM_VALUES = {   # (item a, item b, All)
     "polyrhythm_phase_v3": (62, 64, 61),
     "heartbeat gen":       (50, 52, 51),
@@ -244,8 +250,8 @@ def drive(state_path):
                 run.check(t, rng, f"'{entries[last]}' kept its own after '{entries[ai]}' "
                           f"was selected", ap, va, [[sp, last]])
         # item selectors
-        if plugin in ITEM_SELECTORS:
-            sp, ip, ia, ib, allix = ITEM_SELECTORS[plugin]
+        for sp, ip, ia, ib, allix in (([ITEM_SELECTORS[plugin]] if plugin in ITEM_SELECTORS else [])
+                                      + EXTRA_ITEM_SELECTORS.get(plugin, [])):
             # Pitch values stay musical (a fraction of 0..20000 would be note 6200).
             # All uses 61, never 60: on All, a value equal to what item 1 already
             # shows is no change and writes nothing -- the runner trap, live.
