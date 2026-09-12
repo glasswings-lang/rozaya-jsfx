@@ -62,6 +62,28 @@ end.** What this paragraph used to list as unsettled, kept for the record:
 the rest of R22's pitch block for Passage (*"their own discussion"*), R24's full target
 list with Start delay / Play for / Rest for, and the two OPEN items further down.
 
+## BUILD PROGRESS -- read this first if you are picking Passage up
+
+Projects migrate ONCE, at the end. Until then `src/` is ahead of every saved
+instance: **do not install it.** Tools: `tools/passage_migrate_20260911.py` (the one
+slider-line migration, grown stage by stage; `inventory` is a dry run) and
+`tools/passage_verify_20260911.py` (`current` = all 49 live instances, pre-layout
+build `d5adcaf` on the project vs new build on a temp conversion, bit-identical).
+Inventory 2026-09-11: 49 instances in 11 projects; 5 in `nightfall.RPP` are 35-value
+lines (pre-Overtone), filled with the defaults REAPER has always supplied.
+
+- **Stage 1, renumber: DONE** (`096ad27`), `jsfx_renumber verify` passed all three.
+- **Stage 2, the 24 new controls declared, inert, seeded: DONE**, 49 of 49 bit-identical.
+- **Stage 3, All slots on Capture slot:** built, migration adds 1 to each saved slot;
+  `current` and `allslots` checks RUNNING at the time of writing -- see git log.
+- **Still to build, in this order:** the pitch block (Source note, Source fine tune,
+  Target note mirror, Transpose unit, Fine tune, Tuning reference); per-slot Wash grain;
+  High cut; slot timing unit; transport (start delay, play/rest, unit, rest mode,
+  output at rest); Drift period unit and play/rest; Ramp time unit and play/rest; the
+  22-target list with Drift amount unit / Ramp by unit (blob magic bump, DSTRIDE 16 ->
+  32, target remap); renames of existing labels to the table below; the manual;
+  then the live migration, install, bridge test.
+
 ## THE LAYOUT, authored whole 2026-09-11 -- shown to Rozaya and settled the same day; nothing built
 
 38 sliders become 60. Order follows Part 2 of the plan: the per-slot group whole and
