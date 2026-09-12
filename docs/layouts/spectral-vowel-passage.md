@@ -86,9 +86,9 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   E4 == Transpose 4.5; Transpose on All == by hand on Slot 8; Transpose 12 != none. Seven per-slot banks (`slot_tunit`, `slot_fine`, `slot_funit`, `slot_srcnote`,
   `slot_srcfine`, `slot_srcfunit`, `slot_tgtnote`) banked on slot switch, stamped live,
   All via `ps_last` 32-38, stamped on capture; `tuning_ref` from slider 30; the Target
-  note mirror in @slider before the slot block. **Mine, unquoted, to tell Rozaya:**
-  moving Source note or its fine tune re-reads the Target note and never changes the
-  sound -- to retune after correcting the source, pick the Target note again. **The new
+  note mirror in @slider before the slot block. **SETTLED:** moving Source note or its
+  fine tune re-reads the Target note and never changes the sound. Rozaya: *"The source
+  note is just to tell the targget what 0 semitones is though"*. **The new
   banks are NOT yet in @serialize** (the save-format stage adds them all at once).
 - **Stage 5, per-slot Wash grain and High cut: DONE.** `current` 49 of 49 bit-identical;
   `grainhc`: High cut 200 Hz takes a 220 Hz tone's wash and voice to rms 0; High cut and
