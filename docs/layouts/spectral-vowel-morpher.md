@@ -667,6 +667,41 @@ instead** — the grouping is a convenience and the correctness is not.
 layers" entry per layer control (`spectral-vowel-morpher-r24-20260911.md`), not grouped
 by layer.
 
+## BUILD PROGRESS -- read this first if you are picking the Morpher up (2026-09-13)
+
+**Nothing of THE PITCH LAYOUT below is built. It is settled whole; no question is left.**
+It sat ready 09-11 to 09-13 while other work took the time (session-log 2026-09-13).
+Rozaya expected this to take less time than Passage did: tell it as each stage lands.
+
+- **Fold in:** Capture average's control becomes 1-6 (backlog, "Hidden limits"). Checked
+  2026-09-13: 0 of 135 saved copies above 6.
+- **Scope, 2026-09-13:** 135 instances in 40 files -- 39 on `E:/reaper` (`finished/` and
+  `to-play-with-later/`) and `C:/Users/solst/Dropbox/quick one.RPP`. The 123 below is stale. Backups and `.RPP-bak`
+  excluded. Re-count before writing anything.
+- **ONE migration for the plugin, at the end** (CLAUDE.md). Stages, mine: renumber and seeds
+  with a migration tool's `inventory`; the pitch block; the layers (reorder, all sixteen
+  pitched); targets 55 -> 87; the amount units; the save format; names with R25 kinds; the
+  page; the live migration; install; the REAPER round trip.
+- **Port from Passage, do not rebuild** (`src/spectral_vowel_passage.jsfx`): the Source note
+  mirror at the top of @slider and `pv_semis` / `pv_src_semis`; the amount units
+  (`au_pitch`, `au_freq`, `au_time`, `au_key`, `dmodc`); Tuning reference; the save format's
+  shape (new banks appended at the end, read only from the magic that wrote them, the
+  duplicate fix forcing every new control). Tools to copy: `tools/passage_migrate_20260911.py`
+  (MAP, SEEDS, target map; `inventory`, and `write` with snapshot, read-back and restore) and
+  `tools/passage_verify_20260911.py` (`current`, `saveformat`, `savedlive`, `scope`,
+  `migrated`, and `bankmap` / `crafted` / `prev` for a remap). `jsfx_run --save-rpp` measures
+  a save.
+- **What the Morpher has that Passage did not:** the layers -- `permute_bank` at `LAY_T0`,
+  the ladder order, `lay_semi` growing 3 -> 16; "all layers" target entries (`mo_remap`,
+  `mo_o2n` already exist); the drift loop visiting the old targets first, since rand() is one
+  stream.
+- **Traps met on Passage** (session-log 2026-09-13): installing does not reach an instance
+  REAPER already has open -- rebuild it from the migrated file on DISK (TrackFX_Delete, then
+  SetTrackStateChunk), never hand it the new line. `selector_scope_probe.py` cannot measure a
+  selector with All at option 0: measure Slot 1 against Slot 2, with enum values on real
+  positions. Set a selector a stage before its values (`--set-after`). Pin the per-load
+  rand() scramble in test copies.
+
 ## THE PITCH LAYOUT, authored whole 2026-09-11 -- shown to Rozaya and settled the same day; nothing built
 
 One migration carrying everything owed: the free layer pitch above (2026-09-08), Bubbler's

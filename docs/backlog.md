@@ -43,8 +43,8 @@ archived plugins, 12 replaced since. Caught, and what each is (read in the code,
   (*"sounds good"*): a longer grain is built from half-overlapping FFTSIZE pieces. Morpher
   and Passage (2026-09-13).
 - **Capture average** (Morpher) stops at 6 frames of 1000 -- only six fit in a capture of
-  today's length. **DECIDED 2026-09-13: the control becomes 1-6**, owed straight after
-  Passage (check no saved copy is above 6 first). Rozaya: *"6 seems OK, just has needed,
+  today's length. **DECIDED 2026-09-13: the control becomes 1-6**, folded into the
+  Morpher's pitch-layout migration (checked 2026-09-13: 0 of 135 saved copies above 6). Rozaya: *"6 seems OK, just has needed,
   and not had, spread to compensate for it because back then we were capped."* Longer
   captures would allow more frames; not asked for.
 - **Breath High-pass** (Womb) stops between 7200 and 7300 Hz of 20000 (7188 worked out) --
