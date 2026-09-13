@@ -295,17 +295,17 @@ extending it, so Ramp duration goes on meaning "you arrive in about this long".
 
 Nested-selector pattern matching Womb v3 / breath_gen. Pick a target and set a signed `by` amount. All targets ramp in parallel; the selector just changes which one you're editing.
 
-**Ramp target (slider 26)** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
-The 6-option selector (matches Drift). Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 6 targets ramp regardless of which one is selected. The `by` (slider 29) is in seconds for the dwell targets, the Pan Sweep Rate's own unit for that target, and a 0–1 fraction for Resonance.
+**Ramp target (slider 38)** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
+The 6-option selector (matches Drift). Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 6 targets ramp regardless of which one is selected. The `by` (slider 39) is in seconds for the dwell targets, the Pan Sweep Rate's own unit for that target, and a 0–1 fraction for Resonance.
 
-**Ramp duration (per target, slider 27)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (all targets, slider 28)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
+**Ramp duration (per target, slider 41)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (all targets, slider 44)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off all freeze and resume on re-engage. As of v2.14 each target has its own duration + start delay (previously shared) — different dwell phases can ramp on different timelines from one engage.
 
-**Ramp by (per target, slider 29)** `-60 to +60 seconds, step 0.001, default 0`
+**Ramp by (per target, slider 39)** `-60 to +60 seconds, step 0.001, default 0`
 Signed delta in seconds for the selected dwell phase. **0** = no change. **Negative** = shorten that phase (shorter cycle if that's High/Low dwell; quicker fade if that's a fade phase). **Positive** = lengthen. Example: target High dwell with `by +4` stretches high dwell from 4 sec → 8 sec over the duration; combined with target Low dwell with `by +2`, both phases ramp together as a coordinated wind-down.
 
-**Ramp start delay (per target, slider 37)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. Lives at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
+**Ramp start delay (per target, slider 45)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. It is slider 45 now; it first lived at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. The existing ~3 ms cutoff smoother absorbs any per-sample step changes, so manual dwell-slider tweaks remain click-free.
 

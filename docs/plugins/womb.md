@@ -42,7 +42,7 @@ Migration from v2: the audio-shaping sliders 1-47 keep their meaning, so the hea
 Identical to v2 for the three audio layers (see [Womb Sound Generator v2 → Signal Architecture](#womb-sound-generator-v2) for the full description). The change is in **how the drift modulations are computed and applied**:
 
 Each drift target has its own phase counter. **Six of them step on their own
-turn** and the rest advance per sample -- see "Whose turn it is" below. The phase advance scales with Ramp so all drifts slow together when Ramp engages. Per-target up amount, down amount, period, and shape are stored in a per-instance memory bank — the slider 56-58 values you see at any moment reflect whichever target is currently selected.
+turn** and the rest advance per sample -- see "Whose turn it is" below. The phase advance scales with Ramp so all drifts slow together when Ramp engages. Per-target up amount, down amount, period, and shape are stored in a per-instance memory bank — the slider 73-80 values you see at any moment reflect whichever target is currently selected.
 
 ### The forty-nine targets (2026-09-11)
 
@@ -100,27 +100,27 @@ Freq follow the value's own unit.
 
 Sliders 1-47: identical to [Womb Sound Generator v2](#womb-sound-generator-v2). See that section for full descriptions of BPM, the three layer Volume / Solo sliders, heartbeat sound parameters (Systole ms, S1/S2 Frequency Hz, Decay ms, Brightness, Stereo Width ms), breath sound parameters (Inhale/Top Pause/Exhale/Bottom Pause durations, Frequencies, Fade In/Out, Stereo Width, Post-filter), bloodflow parameters (Filter Hz, Dicrotic Level, Resonance, Attack, Decay, Stereo Width), Start Delay, and per-layer Play/Rest gates.
 
-**Layout as of 2026-09-06** (see `docs/layouts/womb.md` for the full authored order): sliders 1-15 are the heartbeat, 16-36 the breath, 37-46 bloodflow, 47-54 master and transport, 55-62 the Drift block, 63-70 the Ramp block. Heart-with-breath / RSA depth is slider 3, beside the heart rate it modifies; the Sigh pair is 32-33, inside the breath group; Breaths per minute is 16, at the head of the breath group with its own rate mode beside it.
+**Layout as it is now** (checked against the plugin 2026-09-13): sliders 1-23 are the heartbeat, 24-52 the breath, 53-62 bloodflow, 63-71 the master controls and transport, 72-80 the Drift block, 81-88 the Ramp block. Heart with breath is slider 3, beside the heart rate it modifies; the Sigh pair is 48-49, inside the breath group; Set breath rate is 24, at the head of the breath group with its unit beside it.
 
-### Drift target selector (slider 55)
+### Drift target selector (slider 72)
 
-`Drift target` — pick which parameter the drift sliders 55-58 are currently configuring. Options: **Heart rate**, **S1-S2 gap**, **Inhale**, **Top pause**, **Exhale**, **Bottom pause**, **RSA depth**, **Breaths/min**, **Inhale Freq**, **Exhale Freq** (last three v2.14).
+`Drift target` — pick which parameter the drift sliders 73-80 are currently configuring. Options: **Heart rate**, **S1-S2 gap**, **Inhale**, **Top pause**, **Exhale**, **Bottom pause**, **RSA depth**, **Breaths/min**, **Inhale Freq**, **Exhale Freq** (last three v2.14).
 
-Switching the selector saves the current values of sliders 55-58 to the previously-selected target's memory slot, then loads the newly-selected target's saved values into the sliders. So you never lose any target's configuration — it just gets hidden when you switch to another target. **All ten configured drifts run in parallel** regardless of which one you're currently editing.
+Switching the selector saves the current values of sliders 73-80 to the previously-selected target's memory slot, then loads the newly-selected target's saved values into the sliders. So you never lose any target's configuration — it just gets hidden when you switch to another target. **All ten configured drifts run in parallel** regardless of which one you're currently editing.
 
 **Inhale Freq / Exhale Freq (breath brightness).** These wander (or ramp) the breath-noise filter cutoff for the inhale and exhale — the breath's *brightness*. Low = dark/muffled, high = bright/airy. Units are Hz (base 250 inhale / 170 exhale, range 50–2000). A big up/down or a Ramp on these lets the breath brighten and darken over time — the "breath timbre" journey natively, no external automation. Because the shared drift up/down and Ramp `by` sliders must also serve the Hz-scale frequency targets, their ranges are wide (drift 0–2000, `by` ±2000); that makes them coarser for the small-value targets (a −35 BPM ramp is a small nudge on the ±2000 slider) — the one-slider-serves-all tradeoff.
 
-**Breaths/min (aggregate target).** Unlike the four individual segment targets, this one scales **all four breath segments in lockstep**, preserving the inhale:exhale ratio — it wanders (Drift) or winds (Ramp) the *whole breath rate* as one felt control, in breaths per minute (signed: negative = slower). It composes with the per-segment targets, so you can, e.g., slow the overall breath rate while independently drifting just the top pause. It's the live-modulation cousin of the one-way "Breaths per minute" setup slider (53), which rewrites the four duration sliders once and then reads 0 again — use slider 53 to dial a starting rate, use this target to move it over time.
+**Breaths/min (aggregate target).** Unlike the four individual segment targets, this one scales **all four breath segments in lockstep**, preserving the inhale:exhale ratio — it wanders (Drift) or winds (Ramp) the *whole breath rate* as one felt control, in breaths per minute (signed: negative = slower). It composes with the per-segment targets, so you can, e.g., slow the overall breath rate while independently drifting just the top pause. It's the live-modulation cousin of the one-way "Set breath rate" setup slider (24), which rewrites the four duration sliders once and then reads 0 again — use slider 24 to dial a starting rate, use this target to move it over time.
 
-### Drift up amount (slider 56)
+### Drift up amount (slider 73)
 
 `Drift up amount (units match target)` — peak amplitude the current target wanders ABOVE its baseline. Range 0-2000 step 0.1 (widened in v2.14 to reach the Hz-scale frequency targets); the unit depends on the target (BPM for Heart rate and RSA depth, ms for S1-S2 gap, seconds for breath segments, breaths/min for Breaths/min, Hz for Inhale/Exhale Freq). 0 disables the upward swing.
 
-### Drift down amount (slider 57)
+### Drift down amount (slider 74)
 
 `Drift down amount (units match target)` — peak amplitude the current target wanders BELOW its baseline. Same range and unit-by-target as Up. Setting Up and Down to different values gives biological-feel asymmetry around the baseline. Setting both to 0 disables drift for this target entirely.
 
-### Drift period (slider 58)
+### Drift period (slider 75)
 
 `Drift period (in drift period units)` — how many cycles one full drift wave takes. Range 1-1000 step 1. In `Cycles` the unit auto-matches the target: heartbeats for Heart rate and S1-S2 gap, breath cycles for the breath targets.
 
@@ -159,7 +159,7 @@ rate variability actually is.
 
 Period 1 with Random shape gives beat-to-beat (or breath-to-breath) jitter — each cycle gets a fresh random value within the up/down range.
 
-### Drift shape (slider 60)
+### Drift shape (slider 78)
 
 `Drift shape` — wave shape for the drift modulation. Options:
 
@@ -173,9 +173,9 @@ Period 1 with Random shape gives beat-to-beat (or breath-to-breath) jitter — e
 
 When drift target 6 (RSA depth) has nonzero up/down values, this baseline depth wanders too — the up/down amplitudes are in the same BPM peak-to-peak units.
 
-### Ramp (sliders 63-70)
+### Ramp (sliders 81-88)
 
-Ramp in v3 uses the nested-selector pattern (same shape as Drift) and all five Ramp sliders live in one place. Pick a target on slider 48, set the amount on slider 49, set the duration and engage. The targets and their natural units:
+Ramp in v3 uses the nested-selector pattern (same shape as Drift) and all five Ramp sliders live in one place. Pick a target on slider 81, set the amount on slider 82, set the duration and engage. The targets and their natural units:
 
 | Selector | Target | Amount unit |
 |---|---|---|
@@ -198,11 +198,11 @@ If you want the v2-style "whole womb winds down together" feel where everything 
 
 #### Sliders
 
-- **slider 48 — Ramp target** — the 10-option selector (v2.14 adds **Breaths/min**, **Inhale Freq**, **Exhale Freq**). Changing it saves the current slider 49 amount to the previous target's memory slot, then loads the new target's saved amount into slider 49. So you can configure multiple targets in sequence and switch between them without losing settings.
+- **slider 81 — Ramp target** — the 10-option selector (v2.14 adds **Breaths/min**, **Inhale Freq**, **Exhale Freq**). Changing it saves the current slider 82 amount to the previous target's memory slot, then loads the new target's saved amount into slider 82. So you can configure multiple targets in sequence and switch between them without losing settings.
 
   **All 10 ramps run in parallel** (same model as drift). The selector is just for editing — switching it does NOT stop a ramp already running on another target. If you set Heart rate `by` -35 and Inhale `by` +4 and engage, both ramp together over the same duration. Targets you haven't configured stay at amount 0, which is a no-op. The **Breaths/min** target rides the whole breath rate (all four segments in lockstep, I:E preserved) in breaths per minute — e.g. `by` -4 winds the breath from 8/min down to 4/min over the duration; the wind-down move for a dysregulated→resting descent. The **Inhale Freq / Exhale Freq** targets ride the breath's *brightness* (breath-noise filter cutoff, Hz) — e.g. Inhale Freq `by` -200 darkens the in-breath from 250 Hz airy down to ~50 Hz muffled over the duration; the breath-timbre journey natively.
 
-- **slider 49 — Ramp by** — signed delta in the selected target's natural units. Range -2000 to +2000, step 0.1 (widened in v2.14 to reach the Hz-scale Inhale/Exhale Freq targets; coarser for the small-value targets as a result). **0 = no change, negative = decrease, positive = increase.** Reads as a sentence with the selector: *"Ramp by -35, target Heart rate."* Examples:
+- **slider 82 — Ramp by** — signed delta in the selected target's natural units. Range -2000 to +2000, step 0.1 (widened in v2.14 to reach the Hz-scale Inhale/Exhale Freq targets; coarser for the small-value targets as a result). **0 = no change, negative = decrease, positive = increase.** Reads as a sentence with the selector: *"Ramp by -35, target Heart rate."* Examples:
     - Heart rate target, amount -35: heart ramps DOWN 35 BPM from wherever it started (70 → 35).
     - In **Host x** this is still BPM — the amount never becomes a multiplier, so `-35` stays `-35 BPM` whatever the project tempo does. HRV figures are real quantities you'd read off a page, and ±5 BPM of variability should stay ±5 BPM rather than growing because the project sped up. (Same reasoning as RSA depth, which is a BPM swing in every mode.)
     - Inhale target, amount +4: inhale ramps from 4 sec → 8 sec.
@@ -211,11 +211,11 @@ If you want the v2-style "whole womb winds down together" feel where everything 
 
   Each target stores its own amount, so configuring an amount for Heart rate, switching to Inhale, configuring there, and switching back to Heart rate brings back the original Heart rate amount.
 
-- **slider 50 — Ramp duration (minutes)** — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Range 0-60 minutes; 0 = that target doesn't ramp. Each target has its own duration (saved/loaded by the selector, like `by`).
+- **slider 84 — Ramp duration (minutes)** — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Range 0-60 minutes; 0 = that target doesn't ramp. Each target has its own duration (saved/loaded by the selector, like `by`).
 
-- **slider 51 — Ramp engage** — Off/On, **global**: one switch arms every configured target, each riding its own duration after its own start delay. Freeze/resume gate: when On, each target's clock advances; when Off, all freeze and resume on re-engage. Engage does NOT reset the ramps — only transport play does (each play press starts fresh from 0). You can switch the selector mid-ramp without affecting any running ramp.
+- **slider 87 — Ramp engage** — Off/On, **global**: one switch arms every configured target, each riding its own duration after its own start delay. Freeze/resume gate: when On, each target's clock advances; when Off, all freeze and resume on re-engage. Engage does NOT reset the ramps — only transport play does (each play press starts fresh from 0). You can switch the selector mid-ramp without affecting any running ramp.
 
-- **slider 52 — Ramp start delay (minutes)** — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving. Range 0-60. Stagger targets by giving them different start delays (e.g. Heart rate starts at 0, breath brightness at minute 10). Useful for "let me fall asleep first, then begin the wind-down."
+- **slider 88 — Ramp start delay (minutes)** — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving. Range 0-60. Stagger targets by giving them different start delays (e.g. Heart rate starts at 0, breath brightness at minute 10). Useful for "let me fall asleep first, then begin the wind-down."
 
 As of v2.14 the ramp is **fully per-target**: `by`, duration, and start delay are all per-target, so different targets can wind down over different timelines from a single engage — the coordinated multi-parameter wind-down that makes the nervous-system journey renderable natively.
 
@@ -249,7 +249,7 @@ This is a deliberate departure from v2. If the v2 "whole organism wind-down" fee
 
 ---
 
-### Sigh interval (slider 32)
+### Sigh interval (slider 48)
 
 `Sigh interval (minutes, 0=off)` — average minutes between sighs. Range 0-30 step 0.1. 0 disables sighs entirely (no event ever fires).
 
@@ -257,7 +257,7 @@ When the timer reaches the configured interval, the NEXT breath transition (stat
 
 The timer scales with Ramp — so when Ramp slows the whole womb down, sigh interval slows along with it. (Specifically: every sample, `sigh_time_since_last += (1/srate) * speed_scale_current`.)
 
-### Sigh extra length (slider 33)
+### Sigh extra length (slider 49)
 
 `Sigh extra length` — how much **longer** the sigh breath is than an ordinary one, in breath units. 0 to 1000, default 4. The extra is spread across all four segments in proportion, so the sigh keeps the breath's shape and simply takes longer. 0 = a sigh is the same length as any other breath, which effectively disables it even with a non-zero interval.
 
@@ -273,10 +273,10 @@ The timer scales with Ramp — so when Ramp slows the whole womb down, sigh inte
 
 ### Configuring drift across multiple targets
 
-1. Set slider 55 to the target you want to drift first (e.g. Heart rate).
-2. Set sliders 55-58 (up amount, down amount, period, shape) for THAT target.
-3. Change slider 55 to the next target. Sliders 56-62 will snap to fresh values (defaults for an unconfigured target, or whatever you set previously if you've already touched that target).
-4. Set 55-58 for the new target. The previous target's values are saved automatically.
+1. Set slider 72 to the target you want to drift first (e.g. Heart rate).
+2. Set sliders 73-80 (up amount, down amount, period and the rest of the block) for THAT target.
+3. Change slider 72 to the next target. Sliders 73-80 will snap to fresh values (defaults for an unconfigured target, or whatever you set previously if you've already touched that target).
+4. Set 73-80 for the new target. The previous target's values are saved automatically.
 5. Repeat for as many targets as you want. They all run in parallel.
 
 If you ever want to **disable** a target's drift without losing its configuration: select it, set Up amount AND Down amount to 0. The target is now effectively muted but its period and shape are still remembered for later.
@@ -295,7 +295,7 @@ Same trick works for S1-S2 gap (beat-to-beat systole length jitter), or for any 
 
 ### RSA depth wander
 
-To make the RSA coupling itself feel alive rather than mechanically constant, set slider 55 to RSA depth (target 6), give it a small up amount (e.g. 2 BPM) and a long period (e.g. 20 breath cycles). The RSA depth slowly wanders over the course of ~20 breaths, deepening and shallowing — matches real physiology where RSA strength rises with relaxation and decreases with tension.
+To make the RSA coupling itself feel alive rather than mechanically constant, set slider 72 to Heart with breath, give it a small up amount (e.g. 2 BPM) and a long period (e.g. 20 breath cycles). The RSA depth slowly wanders over the course of ~20 breaths, deepening and shallowing — matches real physiology where RSA strength rises with relaxation and decreases with tension.
 
 ---
 
@@ -304,7 +304,7 @@ To make the RSA coupling itself feel alive rather than mechanically constant, se
 - **Drift configurations persist across project save/load** via `@serialize`. All 10 targets' configs are written into the project file (about 40 numeric values total — negligible storage). Reopening a project restores every target's drift settings, not just the last-edited one.
 - **`ext_noinit = 1`** at the top of `@init` keeps the drift memory banks alive across transport play, so configured drifts don't reset every time you press the play button.
 - **Drift phases have small random offsets at @init** so the 10 drift waves don't all start at zero crossings in sync — first-listen feel is more organic.
-- **The selector counts as a slider edit** in REAPER's automation sense. If you change target via slider 55, sliders 56-62 will fire `slider_automate` callbacks as their values change. This is intended — it lets the slider state stay accurate for save/restore.
+- **The selector counts as a slider edit** in REAPER's automation sense. If you change target via slider 72, sliders 73-80 will fire `slider_automate` callbacks as their values change. This is intended — it lets the slider state stay accurate for save/restore.
 - **Heart rate drift modulates effective BPM**, which means it interacts with Ramp (multiplied together for the heart's final rate) and with RSA (added together). The display BPM remains your slider 1 value; the drift offset is applied at the audio path layer.
 - **Solo and Volume affect drift output the same way they affect normal output** — drift doesn't bypass any layer mixing.
 

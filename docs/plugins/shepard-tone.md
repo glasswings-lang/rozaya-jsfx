@@ -229,7 +229,7 @@ In-plugin one-time morph over time, without automation. As of v2.14 Ramp is nest
 **Ramp target** `40 options, default Rate value`
 The same list as Drift target. Switching it saves the current values into the old target and loads the new one's.
 
-**Ramp by (per target, slider 65)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
+**Ramp by (per target, slider 91)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over that target's duration. **0** = no change (safe default). For the rate targets (Rate Value + per-voice) the delta is in **the rate's currently-displayed unit**:
 
 - Rate Mode **BPM**, Rate Value 60, `by -30` → ramps 60 BPM → 30 BPM (slower).
@@ -238,7 +238,7 @@ Signed delta in the selected target's own unit, applied over that target's durat
 
 So in **BPM and Hz modes, negative = slower**; in **Seconds mode, positive = slower** (longer period) — the same mode-direction rule as Drift, because the offset is added in the native unit before conversion. For **Fade In / Out** targets the delta is in percentage points. The audible pitch of any oscillator is NOT scaled — only the sweep rate. The Play/Rest cycle counter scales with the Rate Value ramp too.
 
-**Ramp duration (per target, slider 66)** `0–60 minutes, default 0` — **per-target.** How long the *selected* target takes to travel from its baseline to baseline + `by`. Each target has its own duration; a target with duration 0 does not ramp (so set a duration for every target you want to move). · **Ramp start delay (per target, slider 68)** `0–60 minutes, default 0` — **per-target.** Wait this many minutes (after engage) before *this* target begins moving. Stagger targets by giving them different start delays. · **Ramp engage (all targets, slider 67)** `Off / On, default Off` — **global.** One switch arms the whole wind-down; every configured target then rides its own duration after its own start delay.
+**Ramp duration (per target, slider 93)** `0–60 minutes, default 0` — **per-target.** How long the *selected* target takes to travel from its baseline to baseline + `by`. Each target has its own duration; a target with duration 0 does not ramp (so set a duration for every target you want to move). · **Ramp start delay (per target, slider 97)** `0–60 minutes, default 0` — **per-target.** Wait this many minutes (after engage) before *this* target begins moving. Stagger targets by giving them different start delays. · **Ramp engage (all targets, slider 96)** `Off / On, default Off` — **global.** One switch arms the whole wind-down; every configured target then rides its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its duration; while Off, all clocks freeze where they are and resume on re-engage.
 
@@ -291,16 +291,16 @@ The per-voice targets are what make this plugin's drift special: with **Independ
 Every control that shapes the sound, in the order the controls appear: Rate value, Fade in, Fade out, Pulse width, Binaural beat, Tuning reference; then for each voice its Fine tune, Rate, Gain and Pan; then Play for and Rest for. A voice's Rate target only acts in Independent mode; its Fine tune target acts in both.
 Picks which target's drift configuration sliders 70-73 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (per target, slider 70)** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target, slider 83)** `0.0–100.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are the rate's current unit (BPM / Seconds / Hz) for Rate Value and per-voice targets, percent for Fade In/Out. The 0-100 range covers Fade fully and BPM-mode rate drift; in **Hz mode** you'll use the low end (e.g. 0.1-0.5), in **Seconds mode** small period offsets. 0 = drift off on the up side.
 
-**Drift down amount (per target, slider 71)** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target, slider 84)** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (per target, slider 72, cycles)** `0–1000, default 8, 0 = off`
+**Drift period (per target, slider 85, cycles)** `0–1000, default 8, 0 = off`
 How many glissando cycles one full drift wave takes for this target. All eleven targets use glissando cycles (paced by the global Rate Value clock) as their period unit, scaled by Ramp so the wave-per-cycle relationship stays constant under wind-down.
 
-**Drift shape (per target, slider 73)** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target, slider 87)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### How rate drift composes (internal note)

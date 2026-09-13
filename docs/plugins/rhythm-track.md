@@ -239,16 +239,16 @@ In-plugin one-time morph over time, without automation envelopes. Ramp is nested
 **Ramp target (slider 23)** `Tempo / Beats per bar / Swing amount / Strong pitch / Weak pitch / Strong fine tune / Weak fine tune / Tuning reference / Tone resonance / Strong volume / Weak volume / Strong decay / Weak decay / Pan spread / Play for / Rest for, default Tempo`
 
 Sixteen since 2026-09-11, in the order of the controls they reach; it was Tempo and Swing amount. A pitch moves in that beat's Pitch mode, a fine tune in its Fine tune unit, the reference in Hz, a decay in seconds, and Beats per bar, Play for and Rest for in beats. Volumes and Pan spread stay within 0-1, Tone resonance within 0.5-8. Pitch, tone, volume, decay and Pan spread are read when a click fires.
-Picks which target the `by` amount applies to. Switching the selector saves slider 18 into the old target's memory slot, then loads the new target's stored `by`. This selector sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
+Picks which target the `by` amount applies to. Switching the selector saves slider 24 into the old target's memory slot, then loads the new target's stored `by`. This selector sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-**Ramp by (per target, slider 18)** `-300 to +300, step 0.1, default 0` (units match the selected target)
+**Ramp by (per target, slider 24)** `-300 to +300, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit. **0** = no change (safe default — engaging at 0 produces no effect).
 - **Target = Tempo:** the delta is in **BPM**, in every Rate Mode. `-60` ramps Tempo from 120 → 60 over the duration; positive speeds up. (The wide ±300 range is here for this.)
 
 In **Host x** the delta stays in this plugin's own unit — it does **not** become a multiplier. That means a ramp does not stretch when the project tempo changes: `-60` is `-60 BPM` whatever the tempo does. That's a deliberate limitation. The alternative was tried and rejected: these amount sliders step in 0.1, a grain chosen for BPM, and in multiplier terms 0.1 is a 10% wander with nothing finer reachable — so the value you'd actually want stops being settable.
 - **Target = Swing amount:** the delta is in the same **swing fraction** as the Swing amount slider (−1…+1, where 0 = straight and ±1 = full triplet shuffle). So a `by` of `+0.8` gradually swings the groove from wherever it starts toward heavily swung; `-0.5` gradually straightens it. Only roughly ±2 of the slider's range is meaningful for this target (swing is clamped to ±1 at the consumer); the rest of the range is just headroom shared with the BPM target.
 
-**Ramp duration (per target, slider 19)** `0–60 minutes, default 0` — **per-target** (as of v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 doesn't ramp. · **Ramp start delay (per target, slider 21)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target begins moving. · **Ramp engage (all targets, slider 20)** `Off / On, default Off` — **global**: one switch arms both targets, each then riding its own duration after its own delay. (Duration and start delay are saved/loaded per target by the selector, exactly like `by`.)
+**Ramp duration (per target, slider 26)** `0–60 minutes, default 0` — **per-target** (as of v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 doesn't ramp. · **Ramp start delay (per target, slider 30)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target begins moving. · **Ramp engage (all targets, slider 29)** `Off / On, default Off` — **global**: one switch arms both targets, each then riding its own duration after its own delay. (Duration and start delay are saved/loaded per target by the selector, exactly like `by`.)
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its duration; while Off, all clocks freeze and resume on re-engage.
 
@@ -300,13 +300,13 @@ Wandering (or ramping) Swing while the tempo stays put is a useful musical effec
 **Drift target (slider 31)** — the same sixteen as Ramp target, default Tempo.
 Picks which target's drift configuration sliders 23-26 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (per target, slider 23)** `0.0–50.0, default 0` (units match target)
+**Drift up amount (per target, slider 32)** `0.0–50.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are **BPM** for Tempo, and **swing fraction** (the same −1…+1 unit as the Swing amount slider, clamped to ±1.0 at the consumer) for Swing amount. 0 = drift off on the up side.
 
-**Drift down amount (per target, slider 24)** `0.0–50.0, default 0` (units match target)
+**Drift down amount (per target, slider 33)** `0.0–50.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (per target, slider 25, beats)** `0–1000, default 8, 0 = off`
+**Drift period (per target, slider 34, beats)** `0–1000, default 8, 0 = off`
 How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
 **Drift movement (per target, slider 36)** `With the target / On a clock, default On a clock`, per target. Added 2026-09-11, inserted beside the period, not appended; Rozaya: *"it should get the switch."* **On a clock** draws the whole wave continuously, and each click catches it wherever it is; it is what Tempo and Swing always did. **With the target** moves the drift one whole step per beat, heard or silent, so a period of 8 is eight beats; for Beats per bar it is one step per bar. In Seconds or Beats the wave runs in that unit.

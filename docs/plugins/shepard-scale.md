@@ -149,14 +149,14 @@ In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ra
 **Ramp target** `45 options, default Rate value`
 The same list as Drift target. Switching it saves the current values into the old target and loads the new one's.
 
-**Ramp by (per target, slider 53)** `-300 to +300, step 0.1, default 0` (units match the selected target)
+**Ramp by (per target, slider 76)** `-300 to +300, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over that target's duration. **0** = no change (safe default). For **Note Length / Attack / Release** it's in percentage points. The wide ±300 range is headroom shared across targets — only the target's own sensible span is meaningful (e.g. a note-length ramp beyond ±100 is clamped).
 
 For **Rate value** the delta is in **BPM**, in every Rate Mode (`-60` ramps 120 → 60). The target used to be listed as `Tempo`; it now matches the slider it drives (R2).
 
 In **Host x** the delta stays in this plugin's own unit — it does **not** become a multiplier. That means a ramp does not stretch when the project tempo changes: `-60` is `-60 BPM` whatever the tempo does. That's a deliberate limitation. The alternative was tried and rejected: these amount sliders step in 0.1, a grain chosen for BPM, and in multiplier terms 0.1 is a 10% wander with nothing finer reachable — so the value you'd actually want stops being settable.
 
-**Ramp duration (per target, slider 54)** `0–60 minutes, default 0` — **per-target.** How long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 does not ramp (set a duration for every target you want to move). · **Ramp start delay (per target, slider 56)** `0–60 minutes, default 0` — **per-target.** Wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). · **Ramp engage (all targets, slider 55)** `Off / On, default Off` — **global.** One switch arms the whole wind-down; each configured target then rides its own duration after its own start delay.
+**Ramp duration (per target, slider 78)** `0–60 minutes, default 0` — **per-target.** How long the *selected* target takes to travel from baseline to baseline + `by`. Each target has its own; a target with duration 0 does not ramp (set a duration for every target you want to move). · **Ramp start delay (per target, slider 82)** `0–60 minutes, default 0` — **per-target.** Wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). · **Ramp engage (all targets, slider 81)** `Off / On, default Off` — **global.** One switch arms the whole wind-down; each configured target then rides its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its duration; while Off, all clocks freeze and resume on re-engage. The Freeze-mode Play/Rest rest timer scales with the BPM ramp so rest duration tracks the same effective tempo as the play period.
 
@@ -208,16 +208,16 @@ For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 B
 **Drift target** `45 options, default Rate value`
 Every control that shapes the sound, in the order the controls appear: Rate value, Attack, Release, Note length, Pulse width, Binaural beat, Tuning reference; then for each note C through B its Gain, Pan and Fine tune; then Play for and Rest for. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (per target, slider 58)** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target, slider 68)** `0.0–100.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are BPM for BPM, % for Note Length / Attack / Release. 0 = drift off on the up side. Note that going much above ±20 BPM on the BPM target will sound dramatic — typical musical use is 5–15 BPM.
 
-**Drift down amount (per target, slider 59)** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target, slider 69)** `0.0–100.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
-**Drift period (per target, slider 60, beats)** `0–1000, default 8, 0 = off`
+**Drift period (per target, slider 70, beats)** `0–1000, default 8, 0 = off`
 How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
-**Drift shape (per target, slider 61)** `Sine / Triangle / Random, default Sine`
+**Drift shape (per target, slider 72)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.
 
 #### Transport behavior (v2.9)
@@ -268,8 +268,8 @@ plugin offers these same four entries in this same position order, so what you
 learn here is true everywhere. **Slider 2, directly under the rate value.**
 It sat at slider 62 until 2026-09-04, sixty places from the value it defines.
 Moved with no migration needed, because no project uses this plugin. Everything
-between 2 and 61 shifted up by one, so the twelve per-note groups now start at
-slider 13 rather than 12.
+between 2 and 61 shifted up by one, so the twelve per-note groups then started at
+slider 13 rather than 12. (They start at slider 15 now, after later additions.)
 **BPM** is the original free-running behaviour — steps per minute, project tempo
 ignored. **Seconds** is seconds per step. **Hz** is steps per second.
 **Host x** locks the sequence to the project, and the rate value then means
