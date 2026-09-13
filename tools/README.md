@@ -803,6 +803,10 @@ Rule and history: `docs/suite-consistency-plan.md` R25, `docs/history/R25.md`. T
   applied counts as done, anything else refuses; re-reads every file after writing.
 - **`r25_pages_apply.py`** — carries each kind onto the plugin pages' entry lines, from the
   list only; selectors and "A / B" entries handled; refuses what it cannot match.
+- **`hidden_limit_audit_20260913.py`** (+ `_controls.json`) — LISTENS for controls the code
+  stops short of: each range-sweep control at half its old ceiling, the old ceiling, halfway
+  and the new top, in up to three saved copies. Found Low cut (500) in Passage and the
+  Morpher; "couldn't judge" means not heard, never clean. Ids are 2026-09-13's -- re-match.
 - **Traps met:** a byte-order mark on a PowerShell-joined report dropped its first line; a
   file name with a space dropped a whole plugin; backticks and quotes in inline
   `python -c` broke two checks -- put checks in files. The traps that were caught were

@@ -50,8 +50,8 @@ archived plugins, 12 replaced since. Caught, and what each is (read in the code,
   filters have, or an honest range.
 - Rhythm Track's Drift up/down amount was flagged and is NOT a limit: the drift in the copy
   heard was on Swing amount, which is -1 to 1 itself.
-**Still owed:** the 104 unjudged need a setup that makes each audible. The audit script and
-its lists are in a session scratchpad, not the repo -- rebuild before trusting this line.
+**Still owed:** the 104 unjudged need a setup that makes each audible. The audit is
+`tools/hidden_limit_audit_20260913.py`; its control list holds 2026-09-13's slider ids.
 
 ## R23 — drift steps on the target's own turn (2026-09-09)
 

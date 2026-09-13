@@ -1,0 +1,3264 @@
+[
+ {
+  "commit": "8423c4d",
+  "file": "src/Full_Feature_Tremolo.jsfx",
+  "slider": 15,
+  "name": "Cycle Steps (per-cycle modes)",
+  "old": [
+   "2",
+   "32"
+  ],
+  "new": [
+   "2",
+   "1000"
+  ],
+  "cur_id": 15,
+  "cur_name": "Cycle Steps (per-cycle modes)",
+  "cur_range": [
+   "2",
+   "1000"
+  ],
+  "cur_default": "8"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/Full_Feature_Tremolo.jsfx",
+  "slider": 30,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 30,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/Full_Feature_Tremolo.jsfx",
+  "slider": 31,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 31,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/Full_Feature_Tremolo.jsfx",
+  "slider": 25,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 25,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/Full_Feature_Tremolo.jsfx",
+  "slider": 26,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 26,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 28,
+  "name": "Ramp duration (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 37,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 23,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 32,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 24,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 33,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 32,
+  "name": "Ramp start delay (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 41,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/bubbler.jsfx",
+  "slider": 21,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 28,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/bubbler.jsfx",
+  "slider": 22,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 29,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/dapple.jsfx",
+  "slider": 23,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 29,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/dapple.jsfx",
+  "slider": 24,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 30,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/full-feature-sweeping-filter.jsfx",
+  "slider": 20,
+  "name": "Cycle Steps (per-cycle modes)",
+  "old": [
+   "2",
+   "32"
+  ],
+  "new": [
+   "2",
+   "1000"
+  ],
+  "cur_id": 29,
+  "cur_name": "Cycle Steps (per-cycle modes)",
+  "cur_range": [
+   "2",
+   "1000"
+  ],
+  "cur_default": "8"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/full-feature-sweeping-filter.jsfx",
+  "slider": 36,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 45,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/full-feature-sweeping-filter.jsfx",
+  "slider": 37,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 46,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 12,
+  "name": "Breath Cycle Seconds",
+  "old": [
+   "1.0",
+   "30.0"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 17,
+  "cur_name": "Breath Cycle Seconds",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "6.0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 29,
+  "name": "Ramp duration (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 35,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 19,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "50"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 24,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 20,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "50"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 25,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 24,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 30,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 25,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 31,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 33,
+  "name": "Ramp start delay (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 39,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 13,
+  "name": "Glide time (seconds; 0 = off)",
+  "old": [
+   "0",
+   "5"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 15,
+  "cur_name": "Glide time (seconds; 0 = off)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 19,
+  "name": "Cycle steps (per-cycle modes)",
+  "old": [
+   "2",
+   "32"
+  ],
+  "new": [
+   "2",
+   "1000"
+  ],
+  "cur_id": 21,
+  "cur_name": "Cycle steps (per-cycle modes)",
+  "cur_range": [
+   "2",
+   "1000"
+  ],
+  "cur_default": "8"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 27,
+  "name": "V1 Next voice in (cycles)",
+  "old": [
+   "0.01",
+   "16"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 31,
+  "cur_name": "V1 Next voice in (cycles)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 28,
+  "name": "V1 Note duration (cycles; 0 = silent)",
+  "old": [
+   "0",
+   "16"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 32,
+  "cur_name": "V1 Note duration (cycles; 0 = silent)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 32,
+  "name": "V2 Next voice in (cycles)",
+  "old": [
+   "0.01",
+   "16"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 39,
+  "cur_name": "V2 Next voice in (cycles)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 33,
+  "name": "V2 Note duration (cycles; 0 = silent)",
+  "old": [
+   "0",
+   "16"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 40,
+  "cur_name": "V2 Note duration (cycles; 0 = silent)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 37,
+  "name": "V3 Next voice in (cycles)",
+  "old": [
+   "0.01",
+   "16"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 47,
+  "cur_name": "V3 Next voice in (cycles)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 38,
+  "name": "V3 Note duration (cycles; 0 = silent)",
+  "old": [
+   "0",
+   "16"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 48,
+  "cur_name": "V3 Note duration (cycles; 0 = silent)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 42,
+  "name": "V4 Next voice in (cycles)",
+  "old": [
+   "0.01",
+   "16"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 55,
+  "cur_name": "V4 Next voice in (cycles)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 43,
+  "name": "V4 Note duration (cycles; 0 = silent)",
+  "old": [
+   "0",
+   "16"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 56,
+  "cur_name": "V4 Note duration (cycles; 0 = silent)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 47,
+  "name": "V5 Next voice in (cycles)",
+  "old": [
+   "0.01",
+   "16"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 63,
+  "cur_name": "V5 Next voice in (cycles)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 48,
+  "name": "V5 Note duration (cycles; 0 = silent)",
+  "old": [
+   "0",
+   "16"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 64,
+  "cur_name": "V5 Note duration (cycles; 0 = silent)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 52,
+  "name": "V6 Next voice in (cycles)",
+  "old": [
+   "0.01",
+   "16"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 71,
+  "cur_name": "V6 Next voice in (cycles)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 53,
+  "name": "V6 Note duration (cycles; 0 = silent)",
+  "old": [
+   "0",
+   "16"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 72,
+  "cur_name": "V6 Note duration (cycles; 0 = silent)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 57,
+  "name": "V7 Next voice in (cycles)",
+  "old": [
+   "0.01",
+   "16"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 79,
+  "cur_name": "V7 Next voice in (cycles)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 58,
+  "name": "V7 Note duration (cycles; 0 = silent)",
+  "old": [
+   "0",
+   "16"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 80,
+  "cur_name": "V7 Note duration (cycles; 0 = silent)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 62,
+  "name": "V8 Next voice in (cycles)",
+  "old": [
+   "0.01",
+   "16"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 87,
+  "cur_name": "V8 Next voice in (cycles)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 63,
+  "name": "V8 Note duration (cycles; 0 = silent)",
+  "old": [
+   "0",
+   "16"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 88,
+  "cur_name": "V8 Note duration (cycles; 0 = silent)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 72,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "20"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 98,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 73,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "20"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 99,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 77,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 104,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 78,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 105,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 82,
+  "name": "Ramp duration (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 109,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/melody_phase.jsfx",
+  "slider": 86,
+  "name": "Ramp start delay (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 113,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/polyrhythm_phase_v3.jsfx",
+  "slider": 79,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 45,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/polyrhythm_phase_v3.jsfx",
+  "slider": 80,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 46,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/polyrhythm_phase_v3.jsfx",
+  "slider": 90,
+  "name": "Cycle Steps (per-cycle modes)",
+  "old": [
+   "2",
+   "32"
+  ],
+  "new": [
+   "2",
+   "1000"
+  ],
+  "cur_id": 37,
+  "cur_name": "Cycle Steps (per-cycle modes)",
+  "cur_range": [
+   "2",
+   "1000"
+  ],
+  "cur_default": "8"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/resonance_bank.jsfx",
+  "slider": 18,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 26,
+  "cur_name": "Drift play for (per band and target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/resonance_bank.jsfx",
+  "slider": 19,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 27,
+  "cur_name": "Drift rest for (per band and target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 3,
+  "name": "Beats per bar",
+  "old": [
+   "1",
+   "20"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 3,
+  "cur_name": "Beats per bar",
+  "cur_range": [
+   "1",
+   "1000"
+  ],
+  "cur_default": "4"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 10,
+  "name": "Strong beat decay (seconds)",
+  "old": [
+   "0.001",
+   "1"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 15,
+  "cur_name": "Strong beat decay (seconds)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "0.04"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 11,
+  "name": "Weak beat decay (seconds)",
+  "old": [
+   "0.001",
+   "1"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 16,
+  "cur_name": "Weak beat decay (seconds)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "0.02"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 21,
+  "name": "Ramp duration (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 26,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 25,
+  "name": "Ramp start delay (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 30,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 27,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "50"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 32,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 28,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "50"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 33,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 32,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 38,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 33,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 39,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 56,
+  "name": "Ramp duration (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 78,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 60,
+  "name": "Ramp start delay (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 82,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 62,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 68,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 63,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 69,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 67,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 73,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 68,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 74,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-tone.jsfx",
+  "slider": 67,
+  "name": "Ramp duration (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 93,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-tone.jsfx",
+  "slider": 71,
+  "name": "Ramp start delay (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 97,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-tone.jsfx",
+  "slider": 73,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 83,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-tone.jsfx",
+  "slider": 74,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 84,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-tone.jsfx",
+  "slider": 78,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 88,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/shepard-tone.jsfx",
+  "slider": 79,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 89,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 4,
+  "name": "Capture average (frames, 1 = one frame)",
+  "old": [
+   "1",
+   "6"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 4,
+  "cur_name": "Capture average (frames, 1 = one frame)",
+  "cur_range": [
+   "1",
+   "1000"
+  ],
+  "cur_default": "1"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 36,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "300"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 36,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 37,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "300"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 37,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 40,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 41,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 41,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 42,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 26,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "300"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 45,
+  "cur_name": "Drift up amount (units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 27,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "300"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 46,
+  "cur_name": "Drift down amount (units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 33,
+  "name": "Ramp duration (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 59,
+  "cur_name": "Ramp duration (minutes)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 34,
+  "name": "Ramp start delay (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 63,
+  "cur_name": "Ramp start delay (minutes)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/stereo-phaser.jsfx",
+  "slider": 16,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 16,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/stereo-phaser.jsfx",
+  "slider": 17,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 17,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 17,
+  "name": "Cycle Steps (per-cycle modes)",
+  "old": [
+   "2",
+   "32"
+  ],
+  "new": [
+   "2",
+   "1000"
+  ],
+  "cur_id": 19,
+  "cur_name": "Cycle steps (per-cycle modes)",
+  "cur_range": [
+   "2",
+   "1000"
+  ],
+  "cur_default": "8"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 29,
+  "name": "Ramp duration (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 41,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 33,
+  "name": "Ramp start delay (in ramp time units)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 45,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 35,
+  "name": "Drift up amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 31,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 36,
+  "name": "Drift down amount (units match target)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 32,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 40,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 36,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 41,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 37,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/veil.jsfx",
+  "slider": 13,
+  "name": "Drift play for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 13,
+  "cur_name": "Drift play for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/veil.jsfx",
+  "slider": 14,
+  "name": "Drift rest for (periods, 0 = always)",
+  "old": [
+   "0",
+   "64"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 14,
+  "cur_name": "Drift rest for (per target, periods, 0 = always)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 59,
+  "name": "Heart with breath (BPM peak-to-peak)",
+  "old": [
+   "0",
+   "30"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 3,
+  "cur_name": "Heart with breath (BPM peak-to-peak)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 60,
+  "name": "Sigh interval (minutes, 0=off)",
+  "old": [
+   "0",
+   "30"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 48,
+  "cur_name": "Sigh interval (minutes, 0=off)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/Full_Feature_Tremolo.jsfx",
+  "slider": 14,
+  "name": "Pan Glide ms (0=instant)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 14,
+  "cur_name": "Pan Glide ms (0=instant)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "5"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/breath_gen.jsfx",
+  "slider": 26,
+  "name": "Ramp by",
+  "old": [
+   "-20",
+   "20"
+  ],
+  "new": [
+   "-1000",
+   "1000"
+  ],
+  "cur_id": 35,
+  "cur_name": "Ramp by (per target)",
+  "cur_range": [
+   "-1000",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/full-feature-sweeping-filter.jsfx",
+  "slider": 19,
+  "name": "Pan Glide ms (0=instant)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 28,
+  "cur_name": "Pan Glide ms (0=instant)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "5"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 3,
+  "name": "Systole ms (S1->S2 gap)",
+  "old": [
+   "50",
+   "400"
+  ],
+  "new": [
+   "50",
+   "1000"
+  ],
+  "cur_id": 3,
+  "cur_name": "Systole ms (S1->S2 gap)",
+  "cur_range": [
+   "50",
+   "1000"
+  ],
+  "cur_default": "120"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 7,
+  "name": "S1 Decay ms",
+  "old": [
+   "10",
+   "200"
+  ],
+  "new": [
+   "10",
+   "1000"
+  ],
+  "cur_id": 7,
+  "cur_name": "S1 Decay ms",
+  "cur_range": [
+   "10",
+   "1000"
+  ],
+  "cur_default": "60"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 8,
+  "name": "S2 Decay ms",
+  "old": [
+   "5",
+   "100"
+  ],
+  "new": [
+   "5",
+   "1000"
+  ],
+  "cur_id": 8,
+  "cur_name": "S2 Decay ms",
+  "cur_range": [
+   "5",
+   "1000"
+  ],
+  "cur_default": "25"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/heartbeat gen.jsfx",
+  "slider": 27,
+  "name": "Ramp by",
+  "old": [
+   "-400",
+   "400"
+  ],
+  "new": [
+   "-1000",
+   "1000"
+  ],
+  "cur_id": 33,
+  "cur_name": "Ramp by (per target)",
+  "cur_range": [
+   "-1000",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/melody_phase.jsfx",
+  "slider": 5,
+  "name": "Tuning reference (Hz)",
+  "old": [
+   "400",
+   "480"
+  ],
+  "new": [
+   "20",
+   "2000"
+  ],
+  "cur_id": 7,
+  "cur_name": "Tuning reference (Hz)",
+  "cur_range": [
+   "20",
+   "2000"
+  ],
+  "cur_default": "440"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/melody_phase.jsfx",
+  "slider": 8,
+  "name": "Binaural beat (Hz, L/R offset)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 10,
+  "cur_name": "Binaural beat (Hz, L/R offset)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/melody_phase.jsfx",
+  "slider": 18,
+  "name": "Pan glide ms (0 = instant)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 20,
+  "cur_name": "Pan glide ms (0 = instant)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "10"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/polyrhythm_phase_v3.jsfx",
+  "slider": 4,
+  "name": "Binaural Beat Hz (L/R offset)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 9,
+  "cur_name": "Binaural Beat Hz (L/R offset)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "4"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/polyrhythm_phase_v3.jsfx",
+  "slider": 11,
+  "name": "Tuning Reference Hz",
+  "old": [
+   "400",
+   "480"
+  ],
+  "new": [
+   "20",
+   "2000"
+  ],
+  "cur_id": 6,
+  "cur_name": "Tuning Reference Hz",
+  "cur_range": [
+   "20",
+   "2000"
+  ],
+  "cur_default": "440"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/polyrhythm_phase_v3.jsfx",
+  "slider": 89,
+  "name": "Pan Glide ms (0=instant)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 38,
+  "cur_name": "Pan Glide ms (0=instant)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "10"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/rhythm-track.jsfx",
+  "slider": 19,
+  "name": "Ramp by (units match target)",
+  "old": [
+   "-300",
+   "300"
+  ],
+  "new": [
+   "-1000",
+   "1000"
+  ],
+  "cur_id": 24,
+  "cur_name": "Ramp by (per target, units match target)",
+  "cur_range": [
+   "-1000",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 11,
+  "name": "Binaural Beat Hz",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 12,
+  "cur_name": "Binaural Beat Hz",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 12,
+  "name": "Tuning Reference Hz",
+  "old": [
+   "400",
+   "480"
+  ],
+  "new": [
+   "20",
+   "2000"
+  ],
+  "cur_id": 13,
+  "cur_name": "Tuning Reference Hz",
+  "cur_range": [
+   "20",
+   "2000"
+  ],
+  "cur_default": "440"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/shepard-scale.jsfx",
+  "slider": 54,
+  "name": "Ramp by (units match target)",
+  "old": [
+   "-300",
+   "300"
+  ],
+  "new": [
+   "-1000",
+   "1000"
+  ],
+  "cur_id": 76,
+  "cur_name": "Ramp by (per target, units match target)",
+  "cur_range": [
+   "-1000",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/shepard-tone.jsfx",
+  "slider": 9,
+  "name": "Binaural Beat Hz",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 10,
+  "cur_name": "Binaural Beat Hz",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/shepard-tone.jsfx",
+  "slider": 11,
+  "name": "Tuning Reference Hz",
+  "old": [
+   "400",
+   "480"
+  ],
+  "new": [
+   "20",
+   "2000"
+  ],
+  "cur_id": 12,
+  "cur_name": "Tuning Reference Hz",
+  "cur_range": [
+   "20",
+   "2000"
+  ],
+  "cur_default": "440"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 11,
+  "name": "Wash grain (ms)",
+  "old": [
+   "5",
+   "680"
+  ],
+  "new": [
+   "5",
+   "1000"
+  ],
+  "cur_id": 11,
+  "cur_name": "Wash grain (ms)",
+  "cur_range": [
+   "5",
+   "1000"
+  ],
+  "cur_default": "150"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 12,
+  "name": "Spread (Hz)",
+  "old": [
+   "0",
+   "150"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 12,
+  "cur_name": "Spread (Hz)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 16,
+  "name": "Low cut (Hz)",
+  "old": [
+   "0",
+   "500"
+  ],
+  "new": [
+   "0",
+   "20000"
+  ],
+  "cur_id": 16,
+  "cur_name": "Low cut (Hz)",
+  "cur_range": [
+   "0",
+   "20000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 44,
+  "name": "Ramp by (units match target)",
+  "old": [
+   "-300",
+   "300"
+  ],
+  "new": [
+   "-1000",
+   "1000"
+  ],
+  "cur_id": 45,
+  "cur_name": "Ramp by (per target, units match target)",
+  "cur_range": [
+   "-1000",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 16,
+  "name": "Wash grain (ms)",
+  "old": [
+   "5",
+   "680"
+  ],
+  "new": [
+   "5",
+   "1000"
+  ],
+  "cur_id": 14,
+  "cur_name": "Wash grain (ms)",
+  "cur_range": [
+   "5",
+   "1000"
+  ],
+  "cur_default": "150"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 17,
+  "name": "Spread (Hz)",
+  "old": [
+   "0",
+   "150"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 15,
+  "cur_name": "Spread (Hz)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 20,
+  "name": "Low cut (Hz)",
+  "old": [
+   "0",
+   "500"
+  ],
+  "new": [
+   "0",
+   "20000"
+  ],
+  "cur_id": 17,
+  "cur_name": "Low cut (Hz)",
+  "cur_range": [
+   "0",
+   "20000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 32,
+  "name": "Ramp by (units match target)",
+  "old": [
+   "-300",
+   "300"
+  ],
+  "new": [
+   "-1000",
+   "1000"
+  ],
+  "cur_id": 56,
+  "cur_name": "Ramp by (units match target)",
+  "cur_range": [
+   "-1000",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 27,
+  "name": "Ramp by (units match target)",
+  "old": [
+   "-60",
+   "60"
+  ],
+  "new": [
+   "-1000",
+   "1000"
+  ],
+  "cur_id": 39,
+  "cur_name": "Ramp by (per target, units match target)",
+  "cur_range": [
+   "-1000",
+   "1000"
+  ],
+  "cur_default": "0"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 9,
+  "name": "S1 Decay ms",
+  "old": [
+   "10",
+   "200"
+  ],
+  "new": [
+   "10",
+   "1000"
+  ],
+  "cur_id": 11,
+  "cur_name": "S1 Decay ms",
+  "cur_range": [
+   "10",
+   "1000"
+  ],
+  "cur_default": "60"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 10,
+  "name": "S2 Decay ms",
+  "old": [
+   "5",
+   "100"
+  ],
+  "new": [
+   "5",
+   "1000"
+  ],
+  "cur_id": 18,
+  "cur_name": "S2 Decay ms",
+  "cur_range": [
+   "5",
+   "1000"
+  ],
+  "cur_default": "25"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 22,
+  "name": "Breath High-pass Hz",
+  "old": [
+   "20",
+   "800"
+  ],
+  "new": [
+   "20",
+   "20000"
+  ],
+  "cur_id": 45,
+  "cur_name": "Breath High-pass Hz",
+  "cur_range": [
+   "20",
+   "20000"
+  ],
+  "cur_default": "80"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 1,
+  "name": "Inhale Duration (sec)",
+  "old": [
+   "0.5",
+   "20.0"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 3,
+  "cur_name": "Inhale (in breath units)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "4.0",
+  "matched": "range+words"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 3,
+  "name": "Exhale Duration (sec)",
+  "old": [
+   "0.5",
+   "20.0"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 5,
+  "cur_name": "Exhale (in breath units)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "4.0",
+  "matched": "range+words"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 16,
+  "name": "Inhale (sec / beats in Host x)",
+  "old": [
+   "0.02",
+   "64.0"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 26,
+  "cur_name": "Inhale (in breath units)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "4.0",
+  "matched": "range+words"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 18,
+  "name": "Exhale (sec / beats in Host x)",
+  "old": [
+   "0.02",
+   "64.0"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 28,
+  "cur_name": "Exhale (in breath units)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "4.0",
+  "matched": "range+words"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 16,
+  "name": "Pan Glide ms (0=instant)",
+  "old": [
+   "0",
+   "100"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 18,
+  "cur_name": "Pan glide (ms, 0 = instant)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "5",
+  "matched": "range+words"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/sweep-dwell-filter.jsfx",
+  "slider": 43,
+  "name": "Cycle length (beats)",
+  "old": [
+   "0.25",
+   "128"
+  ],
+  "new": [
+   "0.001",
+   "1000"
+  ],
+  "cur_id": 3,
+  "cur_name": "Length (BPM / sec / Hz / beats / per beat)",
+  "cur_range": [
+   "0.001",
+   "1000"
+  ],
+  "cur_default": "4",
+  "matched": "range+words"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 1,
+  "name": "Heart rate (BPM)",
+  "old": [
+   "1",
+   "200"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 1,
+  "cur_name": "Heart rate (in heart rate mode units)",
+  "cur_range": [
+   "1",
+   "1000"
+  ],
+  "cur_default": "70",
+  "matched": "range+words"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/Full_Feature_Tremolo.jsfx",
+  "slider": 35,
+  "name": "Ramp duration (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 35,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/Full_Feature_Tremolo.jsfx",
+  "slider": 39,
+  "name": "Ramp start delay (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 39,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 2,
+  "name": "Top pause (sec)",
+  "old": [
+   "0.0",
+   "20.0"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 4,
+  "cur_name": "Top pause (in breath units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0.3",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 18,
+  "name": "Drift up amount (seconds)",
+  "old": [
+   "0",
+   "10"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 26,
+  "cur_name": "Drift up amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/breath_gen.jsfx",
+  "slider": 19,
+  "name": "Drift down amount (seconds)",
+  "old": [
+   "0",
+   "10"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 27,
+  "cur_name": "Drift down amount (per target, units match target)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/full-feature-sweeping-filter.jsfx",
+  "slider": 41,
+  "name": "Ramp duration (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 50,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/full-feature-sweeping-filter.jsfx",
+  "slider": 45,
+  "name": "Ramp start delay (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 54,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/polyrhythm_phase_v3.jsfx",
+  "slider": 85,
+  "name": "Ramp duration (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 55,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/polyrhythm_phase_v3.jsfx",
+  "slider": 87,
+  "name": "Ramp start delay (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 59,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 45,
+  "name": "Ramp duration (minutes)",
+  "old": [
+   "0",
+   "240"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 47,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 49,
+  "name": "Ramp start delay (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 51,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 50,
+  "name": "Ramp duration (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 84,
+  "cur_name": "Ramp duration (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "8423c4d",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 52,
+  "name": "Ramp start delay (minutes)",
+  "old": [
+   "0",
+   "60"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 88,
+  "cur_name": "Ramp start delay (per target, in ramp time units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/bubbler.jsfx",
+  "slider": 18,
+  "name": "Drift period",
+  "old": [
+   "1",
+   "600"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 24,
+  "cur_name": "Drift period (per target, 0 = off)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "20",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/dapple.jsfx",
+  "slider": 20,
+  "name": "Drift period",
+  "old": [
+   "1",
+   "600"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 25,
+  "cur_name": "Drift period (per target, 0 = off)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "20",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_morpher.jsfx",
+  "slider": 38,
+  "name": "Drift period (sec, or beats in Host x)",
+  "old": [
+   "1",
+   "600"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 38,
+  "cur_name": "Drift period (per target, in drift period units, 0 = off)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "30",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/spectral_vowel_passage.jsfx",
+  "slider": 28,
+  "name": "Drift period (seconds)",
+  "old": [
+   "1",
+   "600"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 48,
+  "cur_name": "Drift period (seconds, 0 = off)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "30",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/stereo-phaser.jsfx",
+  "slider": 13,
+  "name": "Drift period",
+  "old": [
+   "1",
+   "600"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 13,
+  "cur_name": "Drift period (per target, 0 = off)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "20",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/veil.jsfx",
+  "slider": 10,
+  "name": "Drift period",
+  "old": [
+   "1",
+   "600"
+  ],
+  "new": [
+   "1",
+   "1000"
+  ],
+  "cur_id": 10,
+  "cur_name": "Drift period (per target, 0 = off)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "20",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 17,
+  "name": "Top pause (sec / beats in Host x)",
+  "old": [
+   "0.0",
+   "64.0"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 27,
+  "cur_name": "Top pause (in breath units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0.3",
+  "matched": "all words + same top"
+ },
+ {
+  "commit": "7e63784",
+  "file": "src/womb_sound_generator_v3.jsfx",
+  "slider": 19,
+  "name": "Bottom pause (sec / beats in Host x)",
+  "old": [
+   "0.0",
+   "64.0"
+  ],
+  "new": [
+   "0",
+   "1000"
+  ],
+  "cur_id": 29,
+  "cur_name": "Bottom pause (in breath units)",
+  "cur_range": [
+   "0",
+   "1000"
+  ],
+  "cur_default": "0.3",
+  "matched": "all words + same top"
+ }
+]
