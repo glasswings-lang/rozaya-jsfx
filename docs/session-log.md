@@ -36,6 +36,7 @@ Newest entries are the most likely to still be accurate.
 
 | If you are working on | Read |
 |---|---|
+| Passage's 22-target list, the Morph drift that never reached the sound, Drift movement for slot timings | 2026-09-12 (stage 9) |
 | Passage's build stages 1-8, Source note, tempo changes mid-count, the bridge driving REAPER, the Morpher's silent load | 2026-09-11/12 |
 | Womb's rebuild, the two rate pairs, a wrong finding corrected | 2026-09-06 (later) |
 | The Morpher's unit controls, appending vs reordering, the N-per-beat reciprocal | 2026-09-06 |
@@ -62,6 +63,48 @@ Newest entries are the most likely to still be accurate.
 | Play/Rest gating across the suite | v2.1 sweep |
 
 ---
+
+## 2026-09-12 (stage 9) — Passage's 22-target list, a Morph drift that never reached the sound, Drift movement
+
+**The list.** Drift and Ramp targets went from 14 to the layout's 22 in control order, the
+per-slot bank stride from 16 to 32, the blob magic to 7700007. An older blob is read at its
+own size and `tg_remap()` moves it; the slider line's two target pickers move by `TMAP` in
+`passage_migrate_20260911.py`. Per-target `Drift amount unit` / `Ramp by unit` banks and
+their selector plumbing went in; the conversion itself did not (next). Rozaya on a unit that
+cannot fit: *"It should fall back to the target's native unit, if one's not already been
+set :)"*.
+
+**Random drift draws from one rand() stream**, so the drift loop visits the old fourteen
+first, slot by slot in their old order (`dr_order`, the Morpher's rule). A plain loop over
+the new layout would have given two Random drifts wrapping on one sample each other's draw.
+
+**How it was measured, strongest first.** `bankmap`: a debug copy writes each bank's
+sum of (value - default) x (index + 1) after loading a crafted save; 16 of 16 equal the
+remap done in Python, for a per-slot (7700006) and a flat (7700005) save, Morph included.
+`crafted`: the same two real instances with Random drifts and ramps written into their blobs
+in the old layout, pre-layout build vs new build, bit-identical and moving. `prev`: fresh
+instances against `f384d1f`, 14 cases, at a 32768 Hz rate in 32768-sample blocks so two 1 s
+Random periods set two stages apart wrap on the same sample. `current`: 49 of 49. **Why
+`current` was not enough:** read from the blobs, 3 of 49 use Drift (Stereo width on every slot;
+rain-sound's slot timings; a capture-less test project) and none use Ramp or Random.
+
+**Morph drift never reached the sound -- older than today, fixed.** The slot was picked from
+`eff_morph01` before the drift was added, and the manual-morph branch reset it on the next
+sample. Measured in this build before the fix: a drift reaching Slot 8 changed nothing.
+Predicted, not measured, for every earlier build: the order was the same. No saved copy held
+one. So `prev` and `crafted` leave Morph out; `bankmap` reads its remap.
+
+**Two failures that were the test.** `targets` first found Slot hold, fade out and gap inert.
+A debug copy read the holds out as 4.44, 4.49 and 3.98 s: the drift worked. Crossfade into
+next Off had been set before the capture, reached one slot only, and a slot crossfading into
+an identical copy of itself sounds the same at any hold. Overtone harmonic needs a harmonic
+chosen; at 0 a slot fades its overtone out. And a background run ending in `grep -c FAIL`
+exits 1 on a CLEAN run -- the "failed" notice meant no failures.
+
+**Drift movement.** Reading the leg code showed the four slot timings read once per leg
+while drifting on a clock -- R23, which the 2026-09-09 sweep had cleared Passage of. Rozaya:
+*"Um. yes? Wow, when they said it was excluded they meant it."* Authored into the layout;
+built next.
 
 ## 2026-09-11/12 — Source note re-reads Target, tempo changes land mid-count, the bridge drives REAPER, the Morpher's silent load
 

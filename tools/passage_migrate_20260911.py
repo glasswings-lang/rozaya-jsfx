@@ -46,6 +46,13 @@ SEEDS = {5: "0",        # Source note None: nothing measured from it
          59: "0", 60: "0"}
 
 
+# Old Drift/Ramp target index -> new, authored in the layout doc ("Drift and Ramp targets,
+# in control order") and in the plugin's tg_o2n(). Old: Texture, Spread, Pitch, Stereo
+# width, Low cut, Output level, Denoise, Morph, Input level, Overtone harmonic, Slot fade
+# in, Slot hold, Slot fade out, Slot gap.
+TMAP = {0: 2, 1: 4, 2: 0, 3: 14, 4: 6, 5: 15, 6: 5, 7: 18, 8: 19, 9: 8, 10: 10, 11: 11, 12: 12, 13: 13}
+
+
 def refuse(where, why):
     raise SystemExit(f"REFUSED {where}: {why}")
 
@@ -89,6 +96,13 @@ def remap_line(line, where):
     if old_slot != int(old_slot) or not 0 <= old_slot <= 7:
         refuse(where, f"Capture slot {new[1]!r} is not a whole slot 0-7")
     new[1] = str(int(old_slot) + 1)
+    # Stage 9, the 22-target list: Drift target (44) and Ramp target (54) held an index
+    # into the old 14-target list; each moves to where that target now sits.
+    for k in (44, 54):
+        old_t = float(new[k])
+        if old_t != int(old_t) or int(old_t) not in TMAP:
+            refuse(where, f"slider {k} {new[k]!r} is not a whole target 0-13")
+        new[k] = str(TMAP[int(old_t)])
     for k, v in SEEDS.items():
         if k in new:
             refuse(where, f"seed {k} collides with a moved value")

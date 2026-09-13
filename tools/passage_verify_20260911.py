@@ -95,7 +95,9 @@ WAIT = [[]] * 5
 
 
 def fresh_run(morph, steps, seconds=16, first_slot=0):
-    stages = [[(AUDITION, 1), (MORPH, morph), (CAP_SLOT, first_slot)], [(CAPTURE, 1)]] + [list(s) for s in steps]
+    # Drift and Ramp target 2 is Texture in the 22-target list (it was 0 before 2026-09-12).
+    stages = [[(AUDITION, 1), (MORPH, morph), (CAP_SLOT, first_slot), (DRIFT_TARGET, 2), (RAMP_TARGET, 2)],
+              [(CAPTURE, 1)]] + [list(s) for s in steps]
     out = os.path.join(tmp, f"f{os.getpid()}_{abs(hash((morph, str(steps))))}.csv")
     cmd = [EXE, NEW, "--seconds", str(seconds), "--csv", out, "--quiet", *TONE]
     for k, st in enumerate(stages):
@@ -129,7 +131,7 @@ def allslots():
     via_all = fresh_run(100, [[(CAP_SLOT, 8)], [(TEXTURE, 90)], [(CAP_SLOT, 0)], [], [(CAP_SLOT, 8)], *WAIT])
     direct = fresh_run(100, [[(CAP_SLOT, 8)], [(TEXTURE, 90)], [], [], [], *WAIT])
     report(np.array_equal(via_all, direct), "all: passing through All kept Slot 8's own Texture")
-    # A Texture drift set on All moves Slot 8 (target 0 is Texture, the default).
+    # A Texture drift set on All moves Slot 8 (fresh_run picks target 2, Texture).
     drift = fresh_run(100, [[], [(DRIFT_UP, 40), (DRIFT_PERIOD, 1.3)], *WAIT])
     report(not np.array_equal(drift, on_all), "all: a Texture drift set on All moves Slot 8")
     # ...exactly as setting it by hand on Slot 8 does.
@@ -246,7 +248,7 @@ RAMP_TARGET, RAMP_BY, RAMP_TUNIT, RAMP_DUR, RAMP_PLAY, RAMP_REST, RAMP_ENGAGE = 
 
 
 def driftramp():
-    # Heard: Slot 1; everything set on All in ONE stage. Target 0 is Texture for both.
+    # Heard: Slot 1; everything set on All in ONE stage. Target 2 is Texture for both.
     def dr(sets):
         return fresh_run(0, [list(sets), *WAIT, [], []], seconds=22)
     d2 = dr([(DRIFT_UP, 40), (DRIFT_PERIOD, 2)])
@@ -292,7 +294,7 @@ BLK_S = BLOCK / TSR
 
 
 def tempo_run(plugin, settings, extra, seconds=30):
-    stages = [[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0)], [(CAPTURE, 1)], list(settings)]
+    stages = [[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0), (DRIFT_TARGET, 2), (RAMP_TARGET, 2)], [(CAPTURE, 1)], list(settings)]
     out = os.path.join(tmp, f"t{os.getpid()}_{abs(hash((plugin, str(settings), str(extra))))}.csv")
     cmd = [EXE, plugin, "--seconds", str(seconds), "--csv", out, "--quiet", *TONE, *extra]
     for k, st in enumerate(stages):
@@ -378,7 +380,8 @@ RAMP_DELAY = 62
 
 
 def staged_run(plugin, settings, later, extra, seconds):
-    stages = [[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0)], [(CAPTURE, 1)], list(settings)] + [list(s) for s in later]
+    stages = ([[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0), (DRIFT_TARGET, 2), (RAMP_TARGET, 2)], [(CAPTURE, 1)], list(settings)]
+              + [list(s) for s in later])
     out = os.path.join(tmp, f"s{os.getpid()}_{abs(hash((plugin, str(settings), str(later), str(extra))))}.csv")
     cmd = [EXE, plugin, "--seconds", str(seconds), "--csv", out, "--quiet", *TONE, *extra]
     for k, st in enumerate(stages):
@@ -481,6 +484,243 @@ def coldload():
     report(len(sounding) > 0 and not silent_new,
            f"coldload: all {len(sounding)} of {len(res)} instances that sound playing also sound stopped (new build)")
     print(f"     (the pre-layout build was silent stopped in {len(silent_old)} of them)")
+
+
+# --- The 22-target list (2026-09-12). 14 targets in another order at a bank stride of 16
+# became 22 in control order at 32. PREV is the last build with the old list: the same
+# drifts and ramps, named by the old index there and the new index here, must render
+# bit-identical. The two Random drifts are set two stages apart with a 1 s period at a
+# 32768 sample rate in 32768-sample blocks, so their phases step in exact binary fractions
+# and wrap on the SAME sample -- rand() is one stream, and the order the drift loop visits
+# them decides which draw each one gets.
+PREV, SR2 = "f384d1f", 32768
+DRIFT_DOWN, DRIFT_SHAPE, OT_HARM, OT_WIDTH = 46, 50, 19, 33
+# Old index -> (drift up and down, ramp by): big enough to hear, inside each range.
+OLD_AMT = {0: (40, 40), 1: (40, 40), 2: (3, 3), 3: (40, 40), 4: (300, 300), 5: (10, -10), 6: (50, 50),
+           7: (50, 50), 8: (10, -10), 9: (8, 8), 10: (0.5, 0.5), 11: (0.5, 0.5), 12: (0.5, 0.5), 13: (0.5, 0.5)}
+# (drift A, drift B, ramp C), old indices. Every target but Morph (old 7) is a drift and a
+# ramp. Morph cannot be held to PREV: its drift never reached the slot choice there, fixed
+# 2026-09-12 -- `targets` hears it and `bankmap` reads its remap.
+PREV_CASES = [(0, 1, 2), (2, 3, 4), (4, 5, 6), (6, 1, 8), (8, 9, 10), (10, 11, 12), (12, 13, 0),
+              (1, 3, 1), (5, 9, 3), (11, 12, 5), (13, 0, 12), (9, 2, 9), (3, 6, 11), (11, 4, 13)]
+_n = iter(range(10 ** 9))
+
+
+def staged(plugin, stages, seconds, extra):
+    out = os.path.join(tmp, f"g{os.getpid()}_{next(_n)}.csv")
+    cmd = [EXE, plugin, "--seconds", str(seconds), "--csv", out, "--quiet", *extra]
+    for k, st in enumerate(stages):
+        if k:
+            cmd += ["--stage"]
+        for s, v in st:
+            cmd += ["--set-after", f"{s}={v}"]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError(r.stderr[-600:])
+    a = np.loadtxt(out, delimiter=",", skiprows=1, usecols=(2, 3))
+    os.remove(out)
+    return a
+
+
+def prev():
+    old = pinned(subprocess.run(["git", "show", f"{PREV}:src/{FX}.jsfx"], cwd=ROOT, capture_output=True,
+                                check=True).stdout.decode("utf-8"), "prev.jsfx")
+    extra = ("--sr", str(SR2), "--block", str(SR2), "--input", "sine", "--input-hz", "220", "--input-db", "-6")
+
+    def stages(tgt, a, b, c, on):
+        s0 = [(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0), (DRIFT_TARGET, tgt(a)), (RAMP_TARGET, tgt(c))]
+        if 7 not in (a, b, c):   # Morph is heard only with Auto-morph off; the slot timings only with it on
+            s0 += [(AUTOMORPH, 1), (XFADE_ON, 0)]
+        da, db_ = OLD_AMT[a][0], OLD_AMT[b][0]
+        return [s0, [(CAPTURE, 1)], [(CAP_SLOT, 8)], [(TEXTURE, 100)], [(CAP_SLOT, 0)],
+                [(DRIFT_UP, da), (DRIFT_DOWN, da), (DRIFT_SHAPE, 2), (DRIFT_PERIOD, 1)] if on else [],
+                [(DRIFT_TARGET, tgt(b))],
+                [(DRIFT_UP, db_), (DRIFT_DOWN, db_), (DRIFT_SHAPE, 2), (DRIFT_PERIOD, 1)] if on else [],
+                [(RAMP_BY, OLD_AMT[c][1]), (RAMP_DUR, 0.1), (RAMP_ENGAGE, 1)] if on else [],
+                [], [], []]
+
+    def one(case):
+        a, b, c = case
+        was = staged(old, stages(lambda t: t, a, b, c, True), 30, extra)
+        now = staged(NEW, stages(mig.TMAP.get, a, b, c, True), 30, extra)
+        off = staged(NEW, stages(mig.TMAP.get, a, b, c, False), 30, extra)
+        return case, np.array_equal(was, now), not np.array_equal(now, off), float(np.abs(now).max())
+
+    with cf.ThreadPoolExecutor(JOBS) as ex:
+        for (a, b, c), same, moves, mx in ex.map(one, PREV_CASES):
+            report(same and moves and mx > 0,
+                   f"prev: Random drifts on old {a} and {b}, ramp on old {c} == new {mig.TMAP[a]}, {mig.TMAP[b]}, "
+                   f"{mig.TMAP[c]} ({'bit-identical' if same else 'DIFFERS'}; {'moves' if moves else 'NO EFFECT'})")
+
+
+# Every one of the 22 targets moves the sound, set on All and heard in Slot 1. Each gets what
+# makes it audible: Wash grain and Denoise act on the wash, Overtone lift and width need a
+# harmonic, the slot timings need the walk, Tuning reference acts only on a value in Hz, and
+# Play for / Rest for need both set with silence at rest.
+WALK = [(AUTOMORPH, 1), (XFADE_ON, 0)]
+PR_ON = [(PLAY_FOR, 1), (REST_FOR, 1), (OUT_AT_REST, 1)]
+# The walk is set AFTER the capture: set before it, Crossfade into next Off reached one slot
+# only, the other slots crossfaded into identical copies of themselves, and a longer hold
+# sounded exactly like a shorter one (read out of a debug copy, 2026-09-12). Overtone
+# harmonic needs a harmonic already chosen: at 0 a slot fades its overtone out. Morph drifts
+# the whole way so it reaches Slot 8, the one slot that sounds different.
+NEW_SETUP = {3: [(TEXTURE, 100)], 5: [(TEXTURE, 100)], 8: [(OT_HARM, 4)], 9: [(OT_HARM, 4)],
+             17: [(OT_HARM, 4)], 16: [(T_UNIT, 0)], 20: PR_ON, 21: PR_ON}
+NEW_SETUP2 = {16: [(TRANSPOSE, 100)], 10: WALK, 11: WALK, 12: WALK, 13: WALK}
+NEW_AMT = {0: 3, 1: 50, 2: 40, 3: 100, 4: 40, 5: 50, 6: 300, 7: 15000, 8: 8, 9: 20, 10: 0.5, 11: 0.5,
+           12: 0.5, 13: 0.5, 14: 40, 15: 10, 16: 200, 17: 2, 18: 100, 19: 10, 20: 0.5, 21: 0.5}
+
+
+def targets():
+    def stages(t, on, morph=0, slot=0):
+        return [[(AUDITION, 1), (MORPH, morph), (CAP_SLOT, 0), (DRIFT_TARGET, t), *NEW_SETUP.get(t, [])],
+                [(CAPTURE, 1)], [(CAP_SLOT, 8)], [(TEXTURE, 100)], [(CAP_SLOT, slot)], NEW_SETUP2.get(t, []),
+                [(DRIFT_UP, NEW_AMT[t]), (DRIFT_DOWN, NEW_AMT[t]), (DRIFT_PERIOD, 1.3)] if on else [],
+                [], [], [], [], [], []]
+
+    def one(t):
+        return t, not np.array_equal(staged(NEW, stages(t, True), 24, TONE), staged(NEW, stages(t, False), 24, TONE))
+
+    with cf.ThreadPoolExecutor(JOBS) as ex:
+        res = list(ex.map(one, range(22)))
+    still = [t for t, moved in res if not moved]
+    report(not still, f"targets: all 22 move the sound when drifted" + (f" -- NOT {still}" if still else ""))
+    # Fine tune is per slot: set on Slot 8 it is heard in Slot 8 and not in Slot 1.
+    for morph, heard, should in ((100, "Slot 8", True), (0, "Slot 1", False)):
+        moved = not np.array_equal(staged(NEW, stages(1, True, morph, 8), 24, TONE),
+                                   staged(NEW, stages(1, False, morph, 8), 24, TONE))
+        report(moved == should, f"targets: a Fine tune drift set on Slot 8 {'is' if moved else 'is not'} heard in {heard}")
+    # Morph is the whole plugin's: set while on Slot 8 it is the same drift as set on All.
+    report(np.array_equal(staged(NEW, stages(18, True, 0, 8), 24, TONE), staged(NEW, stages(18, True, 0, 0), 24, TONE)),
+           "targets: a Morph drift set on Slot 8 == set on All (one Morph)")
+
+
+# --- Saved drifts and ramps through the remap (2026-09-12). Only three live copies use
+# Drift, and none use Ramp or Random, so `current` cannot show the blob remap whole. Two
+# real instances -- a per-slot save (7700006) and a flat one (7700005) -- get Random drifts
+# and ramps written into their blobs in the OLD layout, on temp copies. The pre-layout
+# build on the copy must equal the new build on its conversion, and the edits must move the
+# sound. Play resets every drift phase, so the equal 1 s periods wrap on the same sample.
+import base64, struct
+from rpp_sliders import parse_line, render_line
+CRAFT_T = {7700005: 14, 7700006: 128}
+# (old slot, old target, up, down, period s, shape 0 sine / 1 triangle / 2 random)
+CRAFT_DRIFT = [(0, 0, 40, 40, 1, 2), (0, 1, 40, 40, 1, 2), (1, 0, 30, 30, 1, 2), (1, 2, 2, 2, 1, 2),
+               (0, 8, 10, 10, 3, 0), (1, 3, 40, 40, 1.5, 1)]
+# Morph (old 7) is left out of the bit-identical check (see PREV_CASES) and read in `bankmap`.
+CRAFT_MORPH = ([(0, 7, 50, 50, 1, 2)], [(0, 7, 20, 0.1, 0.03)])   # a start delay on slot 0, so a flat save holds one
+# (old slot, old target, by, minutes, start delay minutes)
+CRAFT_RAMP = [(0, 5, -10, 0.1, 0), (1, 2, 3, 0.1, 0.02), (0, 9, 6, 0.05, 0), (1, 6, 40, 0.1, 0)]
+
+
+def craft_copy(path, inst, drifts=CRAFT_DRIFT, ramps=CRAFT_RAMP):
+    lines = open(path, encoding="utf-8", errors="surrogateescape", newline="").read().splitlines(keepends=True)
+    hi = mig.heads(lines)[inst - 1]
+    sl = parse_line(lines[hi + 1])
+    sl[35] = "1"                                       # Ramp engage, old slider 35
+    lines[hi + 1] = render_line(lines[hi + 1], sl, mig.N_OLD)
+    j = next(k for k in range(hi, hi + 12) if lines[k].strip().startswith("<JS_SER"))
+    e = next(k for k in range(j + 1, len(lines)) if lines[k].strip().startswith(">"))
+    body = lines[j + 1:e]
+    raw = base64.b64decode("".join(l.strip() for l in body))
+    f = list(struct.unpack(f"<{len(raw) // 4}f", raw[:len(raw) // 4 * 4]))
+    magic, n_used = int(round(f[0])), int(round(f[2]))
+    t, per_slot = CRAFT_T[magic], magic == 7700006
+    o = 3 + n_used * 32768
+    r = o + 4 * t + 1
+    # Range-check the fields before writing into them: a wrong offset shows up here.
+    if not (all(0 <= x <= 1000 for x in f[o + 2 * t:o + 3 * t]) and set(f[o + 3 * t:o + 4 * t]) <= {0, 1, 2}
+            and all(0 <= x <= 1000 for x in f[r + t:r + 2 * t])):
+        raise SystemExit(f"crafted: {path} #{inst} does not read as a {magic} blob at the expected offsets")
+    key = lambda s, g: s * 16 + g if per_slot else g
+    for s, g, up, dn, per, sh in drifts:
+        if per_slot or s == 0:
+            k = key(s, g)
+            f[o + k], f[o + t + k], f[o + 2 * t + k], f[o + 3 * t + k] = up, dn, per, sh
+    for s, g, by, dur, dl in ramps:
+        if per_slot or s == 0:
+            k = key(s, g)
+            f[r + k], f[r + t + k], f[r + 2 * t + k] = by, dur, dl
+    b64 = base64.b64encode(struct.pack(f"<{len(f)}f", *f) + raw[len(raw) // 4 * 4:]).decode()
+    w = len(body[0].strip())
+    ind = body[0][:len(body[0]) - len(body[0].lstrip())]
+    eol = "\r\n" if body[0].endswith("\r\n") else "\n"
+    n_before = len(mig.heads(lines))
+    lines[j + 1:e] = [ind + b64[i:i + w] + eol for i in range(0, len(b64), w)]
+    text = "".join(lines)
+    if len(mig.heads(text.splitlines(keepends=True))) != n_before:
+        raise SystemExit("crafted: instance count changed")
+    # float32 round trip, so the expected values below are exactly what the plugin reads
+    f32 = struct.unpack(f"<{len(f)}f", struct.pack(f"<{len(f)}f", *f))
+    return text, magic, f32, o, t
+
+
+def crafted():
+    by_name = {os.path.basename(p): p for p in mig.files()}
+    for name, inst in (("never-may-you-breathe-alone.RPP", 2), ("rain-sound.RPP", 1)):
+        live = by_name[name]
+        text, magic, *_ = craft_copy(live, inst)
+        k = os.path.join(tmp, "k-" + name)
+        open(k, "w", encoding="utf-8", errors="surrogateescape", newline="").write(text)
+        paths = {}
+        for tag, src in (("kc-", k), ("oc-", live)):
+            paths[tag] = os.path.join(tmp, tag + name)
+            open(paths[tag], "w", encoding="utf-8", errors="surrogateescape", newline="").write(mig.convert(src)[0])
+        was = run(OLD, 20, k, inst)
+        now = run(NEW, 20, paths["kc-"], inst)
+        plain = run(NEW, 20, paths["oc-"], inst)
+        same, moves = np.array_equal(was, now), not np.array_equal(now, plain)
+        report(same and moves, f"crafted: {name} #{inst} ({magic}) with Random drifts and ramps written in -- "
+                               f"{'bit-identical' if same else 'DIFFERS'}, {'moves the sound' if moves else 'NO EFFECT'}")
+
+
+# --- The blob remap itself, read out of the plugin (2026-09-12). A debug copy writes, per
+# Drift and Ramp bank, the sum of (value - default) x (index + 1) to the output after
+# loading a crafted save -- one number that changes if any value lands on the wrong index.
+# The expected sums come from the OLD layout's floats moved by TMAP in Python. Includes a
+# Morph drift and ramp (old 7), which `crafted` cannot hold to bit-identity.
+BANKS = [("target_drift_up", 0, 0), ("target_drift_down", 1, 0), ("target_drift_per", 2, 30),
+         ("target_drift_shape", 3, 0), ("ramp_by_mem", 5, 0), ("ramp_dur_mem", 6, 0), ("ramp_delay_mem", 7, 0)]
+
+
+def bankmap():
+    src = open(os.path.join(ROOT, "src", f"{FX}.jsfx"), encoding="utf-8").read()
+    anchor = "\n@serialize\n"
+    if src.count(anchor) != 1:
+        raise SystemExit("bankmap: no single @serialize")
+    by_name = {os.path.basename(p): p for p in mig.files()}
+    for name, inst in (("never-may-you-breathe-alone.RPP", 2), ("rain-sound.RPP", 1)):
+        live = by_name[name]
+        text, magic, f, o, t = craft_copy(live, inst, CRAFT_DRIFT + CRAFT_MORPH[0], CRAFT_RAMP + CRAFT_MORPH[1])
+        conv = os.path.join(tmp, "bm-" + name)
+        k = os.path.join(tmp, "bk-" + name)
+        open(k, "w", encoding="utf-8", errors="surrogateescape", newline="").write(text)
+        open(conv, "w", encoding="utf-8", errors="surrogateescape", newline="").write(mig.convert(k)[0])
+        for pair in (BANKS[0:2], BANKS[2:4], BANKS[4:6], BANKS[6:7] * 2):
+            code = "".join(f"spl{c} = 0; bmk = 0; loop(DBANK, spl{c} += ({b} [bmk] - {d}) * (bmk + 1); bmk += 1;);"
+                           .replace(" [", "[") for c, (b, _, d) in enumerate(pair))
+            dbg = pinned(src.replace(anchor, "\n" + code + "\n" + anchor), f"bm_{pair[0][0]}.jsfx")
+            got = run(dbg, 0.1, conv, inst)[-1]
+            for c, (b, slot_in_blob, d) in enumerate(pair):
+                old = f[o + slot_in_blob * t:o + (slot_in_blob + 1) * t] if slot_in_blob < 4 else \
+                      f[o + 4 * t + 1 + (slot_in_blob - 5) * t:o + 4 * t + 1 + (slot_in_blob - 4) * t]
+                new = [float(d)] * (NSL * 32)
+                if magic == 7700006:
+                    for s in range(NSL):
+                        for g in range(14):
+                            new[s * 32 + mig.TMAP[g]] = old[s * 16 + g]
+                else:
+                    for g in range(14):
+                        new[mig.TMAP[g]] = old[g]
+                    for s in range(1, NSL):
+                        new[s * 32:(s + 1) * 32] = new[0:32]
+                want = sum((v - d) * (i + 1) for i, v in enumerate(new))
+                # the output may be float32: allow its relative precision, never a whole misplaced value
+                report(abs(got[c] - want) < max(1e-3, 1e-6 * abs(want)) and want != 0,
+                       f"bankmap: {name} ({magic}) {b}: read {got[c]:.4f}, the remap says {want:.4f}")
+
+
+NSL = 8
 
 
 if __name__ == "__main__":

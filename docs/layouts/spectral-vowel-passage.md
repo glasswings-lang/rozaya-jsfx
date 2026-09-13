@@ -77,11 +77,17 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   units and play/rest). Also done since: a tempo change lands at once in every Beats count
   (slots, Start delay, Play for / Rest for, Ramp start delay), and a cold load analyses its
   captures at once, stopped. How each was measured, the faults found and the test traps:
-  `docs/session-log.md`, 2026-09-11/12. Verify sections: `current allslots pitch grainhc
-  timing transport driftramp cycles tempo beats coldload`, all passing 2026-09-12.
+  `docs/session-log.md`, 2026-09-11/12. **Stage 9 DONE 2026-09-12:** the 22-target list
+  (stride 32, magic 7700007, target pickers remapped), the unit banks' plumbing without
+  conversion, and Morph drift reaching the slot pick (it never had) -- session-log
+  2026-09-12. Verify sections: `current allslots pitch grainhc timing transport driftramp
+  cycles tempo beats coldload prev targets crafted bankmap`, 86 checks passing 2026-09-12.
 - **Settled by Rozaya:** moving Source note re-reads Target note, never the sound (*"The
   source note is just to tell the targget what 0 semitones is though"*); 0 Hz means none
-  (*"Yeah, keep it where it is."*); a tempo change lands at once (*"a tempo change is meant
+  (*"Yeah, keep it where it is."*); an amount unit that cannot fit its target acts as
+  Target default (*"It should fall back to the target's native unit, if one's not
+  already been set :)"* -- read as: the target's own unit picker where it has one, and
+  said so back; the picker's name must say it falls back); a tempo change lands at once (*"a tempo change is meant
   to be a tempo change, not a delayed tempo change."*); Cycles stays, one walk through the
   active slots' legs (*"Keep it in. might be interesting"*).
 - **OPEN, carried into the stages still to come:**
@@ -90,7 +96,10 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
     or per-slot grain is flattened on every reopen.
   - **The new per-slot banks are NOT yet in @serialize** (`slot_tunit`, `slot_fine`,
     `slot_funit`, `slot_srcnote`, `slot_srcfine`, `slot_srcfunit`, `slot_tgtnote`,
-    `slot_grain`, `slot_hicut`, `slot_tmunit`; check the stage 8 play/rest banks too). They
+    `slot_grain`, `slot_hicut`, `slot_tmunit`; the stage 8 play/rest banks
+    `target_drift_play/rest`, `ramp_play/rest_mem`; stage 9's `target_drift_unit`,
+    `ramp_by_unit`, and Drift movement's bank; and the @serialize duplicate fix must then
+    force sliders 47/51/52 (Drift) and 56/59/60 (Ramp), numbers before Drift movement's insert). They
     go at the END of the allocations, with `@serialize` fields behind a magic bump, gated on
     the magic that WROTE them.
   - **Not yet tested:** save and reopen on All (bridge test, at the end).
@@ -101,8 +110,9 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
     frequency, not from the Tuning reference. Bubbler's shift resolution, for reference:
     `bb_semis_from(unit, v)` in `src/bubbler.jsfx` ~230-360; Passage's heard pitch is set in
     one place, `eff_semi_A/B`.
-- **Still to build, in this order:** the 22-target list with Drift amount unit / Ramp by
-  unit (blob magic bump, DSTRIDE 16 -> 32, target remap); the save format; renames of
+- **Still to build, in this order:** Drift movement (below; renumber 50-62 up one, verify
+  section `steps`); the amount units' CONVERSION (banks and pickers exist, every unit acts
+  as Target default until then); the save format; renames of
   existing labels to the table below, **each Drift and Ramp control and every per-slot
   control ending with its R25 kind** (`(per slot)`, `(per slot and target)`, `(all
   targets)`), measured -- the installed suite is being renamed from 2026-09-12 (R25), and
@@ -165,13 +175,24 @@ are in the sections above; everything else here is mine and unquoted.
 forgot about that too."*), 42 Rest mode `{Walk through, Freeze in place}`, 43 Output
 at rest `{Pass-through, Silence}`. All default off, so no sound change.
 
-**Drift** 44-53: target, up, down, **Drift amount unit** (new, per target, `Target
+**Drift** 44-54: target, up, down, **Drift amount unit** (new, per target, `Target
 default` -- today's meaning), period, period unit `{Cycles, Seconds, Beats}` (new,
-Seconds -- what `Drift period (seconds)` meant), shape, play for (new), rest for (new),
-restart. **Ramp** 54-62: target, by, **Ramp by unit** (new, per target, `Target
-default`), time unit `{Cycles, Seconds, Minutes, Beats}` (new, Minutes -- what `Ramp
-duration (minutes)` meant), duration, play for (new), rest for (new), engage, start
-delay. **62 controls.**
+Seconds -- what `Drift period (seconds)` meant), **Drift movement** `{With the target,
+On a clock}` (new 2026-09-12, per slot and target, Bubbler's control -- see below), shape,
+play for (new), rest for (new), restart. **Ramp** 55-63: target, by, **Ramp by unit**
+(new, per target, `Target default`), time unit `{Cycles, Seconds, Minutes, Beats}` (new,
+Minutes -- what `Ramp duration (minutes)` meant), duration, play for (new), rest for
+(new), engage, start delay. **63 controls.**
+
+**Drift movement, 2026-09-12.** The four slot timings are read ONCE, when a slot's leg
+begins, while their drift ran on a clock -- R23's fault, and the 2026-09-09 sweep had
+listed Passage as cleared. Raised from reading the leg code; Rozaya: *"Um. yes? Wow, when
+they said it was excluded they meant it."* **Mine, unquoted, from Bubbler:** With the
+target steps a (slot, timing) drift on that slot's own leg by the leg's length in the
+period unit, frozen between its turns; a continuously read target has a turn every
+sample, so there it is the same as On a clock. Fresh default: the four timings With the
+target, everything else On a clock. A saved copy is seeded On a clock throughout, which
+is how it has always played.
 
 **The amount units, 2026-09-11.** The per-target `Drift amount unit` / `Ramp by unit`
 agreed in the Morpher's layout on 2026-09-08 (after *"No unit locks. ever."*) and never

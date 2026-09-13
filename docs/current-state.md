@@ -118,8 +118,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - The Womb usability fix of 2026-09-06 and its 2026-09-09 drift stepping. Eight
   of nine projects bit-identical; `to-sleep-within` differs for pre-existing
   reasons (`docs/history/R22.md`).
-- **R23 is SWEPT** — fourteen plugins cleared and not to be "fixed"
-  (`docs/backlog.md` has the table).
+- **R23 is SWEPT** — plugins cleared and not to be "fixed" (`docs/backlog.md` has the
+  table). **Passage was cleared WRONGLY** (found 09-12): its four slot timings are read
+  once per leg; it gets `Drift movement` inside its migration.
 - Seconds/Beats on a `With the target` drift, 2026-09-10: Breath Gen, Womb,
   Heartbeat, Melody, Bubbler, Dapple. No saved instance uses it.
 - **Solo, 2026-09-10:** new in Melody, Shepard Tone, Resonance Bank; overrides
@@ -130,7 +131,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   record. Never heard: the pitch block, the 88 targets, per-voice On Duration,
   Tremolo amount, Waveform, Solo, Pan rate mode, `Voice = All`.
 - The Morpher's new units off their defaults (drift in Cycles or Beats, ramp not in
-  Minutes); its All slots, 09-11; sounding on a stopped project load, 09-12. **Passage MID-BUILD, do not install** (progress atop its layout doc).
+  Minutes); its All slots, 09-11; sounding on a stopped project load, 09-12. **Passage MID-BUILD, do not install** (progress atop its layout doc). Stage 9, 09-12: the 22-target list, measured; a Morph drift did not reach the sound (measured in this build, predicted from the same code order for earlier ones; no saved copy used it), fixed in src, never heard.
 
 `docs/host-sync-ear-test.md` is the highest-value thing waiting: five tests,
 fifteen minutes, three never heard on any plugin.

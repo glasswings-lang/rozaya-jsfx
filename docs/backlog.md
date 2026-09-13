@@ -56,9 +56,15 @@ the doc."* Both now carry `Drift movement`, so neither the plugin nor this file
 decides it: the three targets read once at a bubble's birth default to `With the
 target`, everything continuous to `On a clock`.
 
+**PASSAGE WAS WRONGLY CLEARED, corrected 2026-09-12.** Its four slot timings are read
+once, when a slot's leg begins (`lgo_*`), and were drifting on a clock. Rozaya: *"Um.
+yes? Wow, when they said it was excluded they meant it."* It gets `Drift movement` in
+its layout migration (`docs/layouts/spectral-vowel-passage.md`). **The Morpher is NOT
+re-checked** -- it has no slot timings as targets, but read it rather than trust this.
+
 **Checked and CLEARED — do not "fix" these.** Tremolo, Shepard Scale, Shepard
 Tone, Sweep Dwell, Sweeping Filter, Polyrhythm v3, Veil, Stereo Phaser, Morpher,
-Passage, Resonance Bank. (Rhythm Track left this list 2026-09-11: its clicks now
+Resonance Bank. (Rhythm Track left this list 2026-09-11: its clicks now
 read their targets as they fire, so it has the switch.) Their
 controls feed a shape or a threshold recomputed every sample, so the wander is
 expressed rather than sampled. The first three were on the old list
