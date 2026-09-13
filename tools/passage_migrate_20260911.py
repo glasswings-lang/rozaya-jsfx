@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Spectral Vowel Passage, the 2026-09-11 layout: 38 sliders -> 62, in ONE migration.
+"""Spectral Vowel Passage, the 2026-09-11 layout: 38 sliders -> 63, in ONE migration.
 docs/layouts/spectral-vowel-passage.md, "THE LAYOUT".
 
 The slider line only. Old positions move by the AUTHORED map below (the same map
@@ -20,13 +20,14 @@ from rpp_sliders import parse_line, render_line
 
 FX = "spectral_vowel_passage.jsfx"
 LIVE = "E:/reaper"
-N_OLD, N_NEW = 38, 62
+N_OLD, N_NEW = 38, 63
 
 # old id -> new id, copied from the renumber stage (docs/layouts/spectral-vowel-passage.md).
+# 2026-09-12: Drift movement inserted at 50, so everything from 50 on moved up one.
 MAP = {1: 1, 2: 2, 3: 3, 4: 4, 5: 21, 6: 22, 7: 23, 8: 24, 9: 26, 10: 27, 11: 31, 12: 32,
        13: 37, 14: 29, 15: 13, 16: 14, 17: 15, 18: 9, 19: 28, 20: 17, 21: 16, 22: 36, 23: 34,
-       24: 35, 25: 44, 26: 45, 27: 46, 28: 48, 29: 50, 30: 53, 31: 54, 32: 55, 33: 58, 34: 62,
-       35: 61, 36: 19, 37: 20, 38: 33}
+       24: 35, 25: 44, 26: 45, 27: 46, 28: 48, 29: 51, 30: 54, 31: 55, 32: 56, 33: 59, 34: 63,
+       35: 62, 36: 19, 37: 20, 38: 33}
 
 # new id -> the value that reproduces the old sound.
 SEEDS = {5: "0",        # Source note None: nothing measured from it
@@ -40,10 +41,11 @@ SEEDS = {5: "0",        # Source note None: nothing measured from it
          38: "0", 39: "0", 40: "0", 41: "0", 42: "0", 43: "0",  # transport off
          47: "0",       # Drift amount unit: Target default
          49: "1",       # Drift period unit Seconds: what Drift period (seconds) meant
-         51: "0", 52: "0",
-         56: "0",       # Ramp by unit: Target default
-         57: "2",       # Ramp time unit Minutes: what Ramp duration (minutes) meant
-         59: "0", 60: "0"}
+         50: "1",       # Drift movement On a clock: every drift ran on a clock
+         52: "0", 53: "0",
+         57: "0",       # Ramp by unit: Target default
+         58: "2",       # Ramp time unit Minutes: what Ramp duration (minutes) meant
+         60: "0", 61: "0"}
 
 
 # Old Drift/Ramp target index -> new, authored in the layout doc ("Drift and Ramp targets,
@@ -96,9 +98,9 @@ def remap_line(line, where):
     if old_slot != int(old_slot) or not 0 <= old_slot <= 7:
         refuse(where, f"Capture slot {new[1]!r} is not a whole slot 0-7")
     new[1] = str(int(old_slot) + 1)
-    # Stage 9, the 22-target list: Drift target (44) and Ramp target (54) held an index
+    # Stage 9, the 22-target list: Drift target (44) and Ramp target (55) held an index
     # into the old 14-target list; each moves to where that target now sits.
-    for k in (44, 54):
+    for k in (44, 55):
         old_t = float(new[k])
         if old_t != int(old_t) or int(old_t) not in TMAP:
             refuse(where, f"slider {k} {new[k]!r} is not a whole target 0-13")
@@ -108,7 +110,7 @@ def remap_line(line, where):
             refuse(where, f"seed {k} collides with a moved value")
         new[k] = v
     if sorted(new) != list(range(1, N_NEW + 1)):
-        refuse(where, "the new line does not cover 1..62 exactly")
+        refuse(where, f"the new line does not cover 1..{N_NEW} exactly")
     return render_line(line, new, N_NEW)
 
 

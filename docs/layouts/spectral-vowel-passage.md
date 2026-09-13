@@ -110,8 +110,13 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
     frequency, not from the Tuning reference. Bubbler's shift resolution, for reference:
     `bb_semis_from(unit, v)` in `src/bubbler.jsfx` ~230-360; Passage's heard pitch is set in
     one place, `eff_semi_A/B`.
-- **Still to build, in this order:** Drift movement (below; renumber 50-62 up one, verify
-  section `steps`); the amount units' CONVERSION (banks and pickers exist, every unit acts
+- **Drift movement DONE 2026-09-12** (50, sliders 50-62 moved up one, `jsfx_renumber.py`
+  verify PASS on text, declarations and renders). Section `steps`: With the target, Slot 1's
+  holds read 1.01 2.01 0.35 0.23 0.71 1.52 1.17 against 1.0 2.0 0.33 0.22 0.70 1.51 1.16
+  worked out, the same whether Slot 2 holds 1.7 or 2.9 s; On a clock they change with it.
+  **Mine, unmeasured:** the leg that begins after a play edge is not a turn (it reads no
+  offset either); a Beats step uses the tempo at the leg's start.
+- **Still to build, in this order:** the amount units' CONVERSION (banks and pickers exist, every unit acts
   as Target default until then); the save format; renames of
   existing labels to the table below, **each Drift and Ramp control and every per-slot
   control ending with its R25 kind** (`(per slot)`, `(per slot and target)`, `(all

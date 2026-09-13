@@ -103,8 +103,20 @@ exits 1 on a CLEAN run -- the "failed" notice meant no failures.
 
 **Drift movement.** Reading the leg code showed the four slot timings read once per leg
 while drifting on a clock -- R23, which the 2026-09-09 sweep had cleared Passage of. Rozaya:
-*"Um. yes? Wow, when they said it was excluded they meant it."* Authored into the layout;
-built next.
+*"Um. yes? Wow, when they said it was excluded they meant it."* Authored into the layout,
+then built on a scratch copy while the suite ran and brought over once stage 9 was
+committed. Bubbler's shape: a slot timing on With the target steps when its own slot's leg
+begins, by that leg's length over the period, and holds between turns; a continuously read
+target's turn is every sample. Proved by `steps`: two slots, Slot 1's hold drifting,
+Slot 2's hold changed from 1.7 to 2.9 s -- With the target Slot 1's holds do not move and
+equal the steps worked out by hand; On a clock they move.
+
+**A test trap it opened.** The full suite then failed `targets` on the four slot timings.
+Predicted, then measured: that check drifts them on All across eight walking slots, and With
+the target (their fresh default) steps each slot only on its own leg, fourteen legs apart;
+a new drift starts at zero, so each slot's first turn reads no change and its second never
+came within 24 s. With the check's drifts On a clock, all 22 moved (91 checks, 0 failures).
+A check of WIRING must say which movement it uses; stepping has its own check.
 
 ## 2026-09-11/12 — Source note re-reads Target, tempo changes land mid-count, the bridge drives REAPER, the Morpher's silent load
 

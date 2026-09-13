@@ -152,28 +152,34 @@ slider46:0<0,1000,0.01>Drift down amount (units match target)
 slider47:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit
 slider48:30<0,1000,0.01>Drift period (seconds, 0 = off)
 slider49:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit
-slider50:0<0,2,1{Sine,Triangle,Random}>Drift shape
-slider51:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider52:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+// WHETHER A DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK (2026-09-12, Bubbler's control).
+// The four slot timings are read once, when their slot's leg begins. `With the target` steps
+// such a drift on that slot's own legs, by each leg's length in the period unit, and holds
+// it between them; `On a clock` runs it all the time. Every other target is read all the
+// time, so its turn is every sample and the two are the same. Rozaya: "Um. yes?"
+slider50:0<0,1,1{With the target,On a clock}>Drift movement
+slider51:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider52:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider53:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
 // drift ignores the transport and evolves continuously (loop under/over an
 // unbroken drift). A loop repeat is never a restart in either mode.
-slider53:0<0,1,1{Restart on play,Free-running}>Drift restart
+slider54:0<0,1,1{Restart on play,Free-running}>Drift restart
 // --- Ramp: the suite's "Speed Ramp" under an honest name (this plugin has no
 //     speed to ramp). A one-time slow RIDE of a parameter: pick a target, how
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider54:0<0,21,1{Transpose,Fine tune,Texture,Wash grain,Spread,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Slot fade in,Slot hold,Slot fade out,Slot gap after,Stereo width,Output level,Tuning reference,Overtone width,Morph,Input level,Play for,Rest for}>Ramp target
-slider55:0<-1000,1000,0.001>Ramp by (units match target)
-slider56:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit
-slider57:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider58:0<0,1000,0.1>Ramp duration (minutes)
-slider59:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider60:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider62:0<0,1000,0.1>Ramp start delay (minutes)
-slider61:0<0,1,1{Off,On}>Ramp engage
+slider55:0<0,21,1{Transpose,Fine tune,Texture,Wash grain,Spread,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Slot fade in,Slot hold,Slot fade out,Slot gap after,Stereo width,Output level,Tuning reference,Overtone width,Morph,Input level,Play for,Rest for}>Ramp target
+slider56:0<-1000,1000,0.001>Ramp by (units match target)
+slider57:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit
+slider58:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
+slider59:0<0,1000,0.1>Ramp duration (minutes)
+slider60:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider61:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider63:0<0,1000,0.1>Ramp start delay (minutes)
+slider62:0<0,1,1{Off,On}>Ramp engage
 // --- Overtone: bring ONE partial of the voice out far enough to be heard as a
 //     note of its own, the way overtone / throat singing does. Appended at the
 //     end -- these are a new block belonging to nothing above them, so there is
@@ -390,6 +396,9 @@ ramp_pr_resting   = freemem; freemem += DBANK;
 // Not yet in @serialize.
 target_drift_unit = freemem; freemem += DBANK;
 ramp_by_unit      = freemem; freemem += DBANK;
+// Drift movement per (slot, target): 0 with the target, 1 on a clock. Not yet in @serialize.
+target_drift_moves = freemem; freemem += DBANK;
+drift_step_len     = freemem; freemem += DBANK;   // RUNTIME: seconds of the leg that just began; 0 = no turn
 ser_scratch       = freemem; freemem += DBANK;   // @serialize's remap of an older save
 dr_order          = freemem; freemem += DBANK;   // the drift loop's visiting order, below
 // Drift + Ramp on one (slot, target), in the target's own unit.
@@ -459,13 +468,13 @@ function ps_adopt() (
   ps_last[8]  = slider26; ps_last[9]  = slider27; ps_last[10] = slider29; ps_last[11] = slider13;
   ps_last[12] = slider15; ps_last[13] = slider9;  ps_last[14] = slider28; ps_last[15] = slider17;
   ps_last[16] = slider16;
-  ps_last[20] = slider45; ps_last[21] = slider46; ps_last[22] = slider48; ps_last[23] = slider50;
-  ps_last[24] = slider55; ps_last[25] = slider58; ps_last[26] = slider62;
-  ps_last[27] = slider51; ps_last[28] = slider52; ps_last[29] = slider59; ps_last[30] = slider60;
+  ps_last[20] = slider45; ps_last[21] = slider46; ps_last[22] = slider48; ps_last[23] = slider51;
+  ps_last[24] = slider56; ps_last[25] = slider59; ps_last[26] = slider63;
+  ps_last[27] = slider52; ps_last[28] = slider53; ps_last[29] = slider60; ps_last[30] = slider61;
   ps_last[32] = slider5;  ps_last[33] = slider6;  ps_last[34] = slider7;  ps_last[35] = slider8;
   ps_last[36] = slider10; ps_last[37] = slider11; ps_last[38] = slider12;
   ps_last[39] = slider14; ps_last[40] = slider18; ps_last[41] = slider25;
-  ps_last[42] = slider47; ps_last[43] = slider56;
+  ps_last[42] = slider47; ps_last[43] = slider57; ps_last[31] = slider50;
   pv_last_tgt = slider8; pv_last_tval = slider9; pv_last_src = slider5; pv_last_sf = slider6; pv_last_sfu = slider7;
 );
 i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
@@ -493,6 +502,7 @@ slots_inited == 0 ? (
     ramp_dur_mem[i]   = 0;   // 0 duration = ramp inert until the user sets it
     ramp_delay_mem[i] = 0;
     target_drift_unit[i] = 0; ramp_by_unit[i] = 0;   // Target default
+    target_drift_moves[i] = (i % DSTRIDE) >= 10 && (i % DSTRIDE) <= 13 ? 0 : 1;   // slot timings with the target
     i += 1;
   );
   last_drift_key = 0;   // composite (slot, target) keys now, not bare targets
@@ -1198,10 +1208,11 @@ dkey      = dsel_slot*DSTRIDE + sel_target;
 sel_up     = slider45;
 sel_down   = slider46;
 sel_per    = slider48;
-sel_shape  = slider50;
-sel_play   = slider51;
-sel_rest   = slider52;
+sel_shape  = slider51;
+sel_play   = slider52;
+sel_rest   = slider53;
 sel_unit   = slider47;
+sel_move   = slider50;
 last_drift_key != dkey ? (
   target_drift_up[last_drift_key]    = sel_up;
   target_drift_down[last_drift_key]  = sel_down;
@@ -1209,19 +1220,22 @@ last_drift_key != dkey ? (
   target_drift_shape[last_drift_key] = sel_shape;
   target_drift_play[last_drift_key] = sel_play; target_drift_rest[last_drift_key] = sel_rest;
   target_drift_unit[last_drift_key] = sel_unit;
+  target_drift_moves[last_drift_key] = sel_move;
   slider45 = target_drift_up[dkey];
   slider46 = target_drift_down[dkey];
   slider48 = target_drift_per[dkey];
-  slider50 = target_drift_shape[dkey];
-  slider51 = target_drift_play[dkey]; slider52 = target_drift_rest[dkey];
+  slider51 = target_drift_shape[dkey];
+  slider52 = target_drift_play[dkey]; slider53 = target_drift_rest[dkey];
   slider47 = target_drift_unit[dkey];
+  slider50 = target_drift_moves[dkey];
   slider_automate(slider45);
   slider_automate(slider46);
   slider_automate(slider48);
-  slider_automate(slider50);
   slider_automate(slider51);
   slider_automate(slider52);
+  slider_automate(slider53);
   slider_automate(slider47);
+  slider_automate(slider50);
   last_drift_key = dkey;
   ps_adopt();
 ) : (
@@ -1235,9 +1249,10 @@ last_drift_key != dkey ? (
     ps_all_key(27, sel_play,  sel_target, target_drift_play);
     ps_all_key(28, sel_rest,  sel_target, target_drift_rest);
     ps_all_key(42, sel_unit,  sel_target, target_drift_unit);
+    ps_all_key(31, sel_move,  sel_target, target_drift_moves);
   ) : (
     ps_last[20] = sel_up; ps_last[21] = sel_down; ps_last[22] = sel_per; ps_last[23] = sel_shape;
-    ps_last[27] = sel_play; ps_last[28] = sel_rest; ps_last[42] = sel_unit;
+    ps_last[27] = sel_play; ps_last[28] = sel_rest; ps_last[42] = sel_unit; ps_last[31] = sel_move;
   );
   target_drift_up[dkey]    = sel_up;
   target_drift_down[dkey]  = sel_down;
@@ -1245,41 +1260,42 @@ last_drift_key != dkey ? (
   target_drift_shape[dkey] = sel_shape;
   target_drift_play[dkey] = sel_play; target_drift_rest[dkey] = sel_rest;
   target_drift_unit[dkey] = sel_unit;
+  target_drift_moves[dkey] = sel_move;
 );
 // Per-target "is this target being driven at all?" flag — lets @sample skip the
 // per-sample effective-value recompute (and keep the exact original CPU/output)
 // for any target with no drift configured.
 // --- Ramp target selector save/restore (nested-selector, mirrors Drift).
-//     slider54 = target; 32 = per-target `by`; 33 = duration; 34 = start delay.
-//     slider61 (Engage) is GLOBAL. All targets ride in parallel from @sample. ---
-rsel_target = slider54;
+//     slider55 = target; 32 = per-target `by`; 33 = duration; 34 = start delay.
+//     slider62 (Engage) is GLOBAL. All targets ride in parallel from @sample. ---
+rsel_target = slider55;
 // Same two-dimensional keying as Drift above, and the same slot-0 pinning
 // for the two global targets.
 rsel_slot = rsel_target >= TG_GLOBAL ? 0 : cap_slot;
 rkey      = rsel_slot*DSTRIDE + rsel_target;
-rsel_by     = slider55;
-rsel_dur    = slider58;
-rsel_delay  = slider62;
-rsel_play   = slider59;
-rsel_rest   = slider60;
-rsel_unit   = slider56;
+rsel_by     = slider56;
+rsel_dur    = slider59;
+rsel_delay  = slider63;
+rsel_play   = slider60;
+rsel_rest   = slider61;
+rsel_unit   = slider57;
 last_ramp_key != rkey ? (
   ramp_by_mem[last_ramp_key]    = rsel_by;
   ramp_dur_mem[last_ramp_key]   = rsel_dur;
   ramp_delay_mem[last_ramp_key] = rsel_delay;
   ramp_play_mem[last_ramp_key] = rsel_play; ramp_rest_mem[last_ramp_key] = rsel_rest;
   ramp_by_unit[last_ramp_key] = rsel_unit;
-  slider55 = ramp_by_mem[rkey];
-  slider58 = ramp_dur_mem[rkey];
-  slider62 = ramp_delay_mem[rkey];
-  slider59 = ramp_play_mem[rkey]; slider60 = ramp_rest_mem[rkey];
-  slider56 = ramp_by_unit[rkey];
-  slider_automate(slider55);
-  slider_automate(slider58);
-  slider_automate(slider62);
-  slider_automate(slider59);
-  slider_automate(slider60);
+  slider56 = ramp_by_mem[rkey];
+  slider59 = ramp_dur_mem[rkey];
+  slider63 = ramp_delay_mem[rkey];
+  slider60 = ramp_play_mem[rkey]; slider61 = ramp_rest_mem[rkey];
+  slider57 = ramp_by_unit[rkey];
   slider_automate(slider56);
+  slider_automate(slider59);
+  slider_automate(slider63);
+  slider_automate(slider60);
+  slider_automate(slider61);
+  slider_automate(slider57);
   last_ramp_key = rkey;
   ps_adopt();
 ) : (
@@ -1300,7 +1316,7 @@ last_ramp_key != rkey ? (
   ramp_play_mem[rkey] = rsel_play; ramp_rest_mem[rkey] = rsel_rest;
   ramp_by_unit[rkey] = rsel_unit;
 );
-ramp_engaged = slider61;
+ramp_engaged = slider62;
 // Overtone harmonic and depth are PER SLOT (banked above); only width is
 // global -- a singer has one throat, and how sharply it resonates is their
 // technique rather than something chosen per note.
@@ -1310,7 +1326,7 @@ ot_width     = max(0.5, min(4, slider33));
 // computed in @block -- see the note there. Deriving them here was a bug.
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
-drift_restart_free = slider53;   // 0 = restart on play (sync), 1 = free-running
+drift_restart_free = slider54;   // 0 = restart on play (sync), 1 = free-running
 
 @block
 // All slots: adopt what is on screen once the instance is configured, so the first
@@ -1338,7 +1354,7 @@ slider41 == 2 && tr_tempo > 0 && tr_tnow != tr_tempo ? (
   pr_accum *= tr_tempo / tr_tnow;
 );
 tr_tempo = tr_tnow;
-slider57 == 3 && rm_tempo > 0 && rm_tnow != rm_tempo ? (
+slider58 == 3 && rm_tempo > 0 && rm_tnow != rm_tempo ? (
   rdi = 0;
   loop(DBANK,
     ramp_delay_elapsed_mem[rdi] < ramp_delay_mem[rdi] * 60 / rm_tempo * srate ? ramp_delay_elapsed_mem[rdi] *= rm_tempo / rm_tnow;
@@ -1472,7 +1488,7 @@ loop(n_active,
 );
 pv_cyc = max(pv_cyc, 0.05);
 drift_unit_sec = slider49 == 0 ? pv_cyc : slider49 == 1 ? 1 : 60 / max(tempo, 0.001);
-ramp_unit_sec  = slider57 == 0 ? pv_cyc : slider57 == 1 ? 1 : slider57 == 2 ? 60 : 60 / max(tempo, 0.001);
+ramp_unit_sec  = slider58 == 0 ? pv_cyc : slider58 == 1 ? 1 : slider58 == 2 ? 60 : 60 / max(tempo, 0.001);
 
 // Capture point -> HEAVY (re-FFT + YIN). Debounced so a by-ear scrub re-derives
 // once, when it settles, in one lump. (Fresh load is handled at the play-edge
@@ -1598,14 +1614,22 @@ loop(DBANK,
     // Period in its unit, as seconds. Play/Rest windows are whole drift periods; the
     // counter ticks every sample, and while resting the phase holds where it stopped.
     dper = target_drift_per[di] * drift_unit_sec;
-    dfrozen = pr_frozen(drift_pr_accum, drift_pr_resting, di, 1.0 / max(dper * srate, 1),
+    // Drift movement: a slot timing (10-13) on With the target takes one step when its own
+    // slot's leg begins, the leg's length in periods, and holds between. Play/Rest count
+    // those steps too. Everything else, or On a clock, advances every sample as before.
+    dtg = di % DSTRIDE;
+    dtick = (target_drift_moves[di] == 0 && dtg >= 10 && dtg <= 13)
+          ? drift_step_len[di] / max(dper, 0.000001)
+          : 1.0 / max(dper * srate, 1);
+    drift_step_len[di] = 0;
+    dfrozen = pr_frozen(drift_pr_accum, drift_pr_resting, di, dtick,
                         target_drift_play[di], target_drift_rest[di]);
     dfrozen ? (
       dphase = target_drift_phase[di];
     ) : (
-      dphase = target_drift_phase[di] + 1.0 / max(dper * srate, 1);
+      dphase = target_drift_phase[di] + dtick;
       dphase >= 1.0 ? (
-        dphase -= 1.0;
+        dphase -= floor(dphase);   // a step longer than a period wraps whole periods; a clock tick is < 1
         target_drift_shape[di] == 2 ? (
           target_drift_prev[di] = target_drift_curr[di];
           target_drift_curr[di] = rand(2) - 1;   // new random target in [-1,1]
@@ -1761,6 +1785,14 @@ ri = 0; loop(DBANK, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; ri +
         lgo_h  = target_drift_offset[lgk + 11] + ramp_offset_mem[lgk + 11];
         lgo_fo = target_drift_offset[lgk + 12] + ramp_offset_mem[lgk + 12];
         lgo_g  = target_drift_offset[lgk + 13] + ramp_offset_mem[lgk + 13];
+        // Drift movement: this slot's timing drifts take their turn now, by the length of
+        // the leg just begun (read with the offsets above, so the step follows the read).
+        lg_su = slot_tmunit[cur_slot];
+        lg_step = max(0.05, (lg_next_fadein ? max(0, tm_sec(lg_su, slot_fadein[cur_slot] + lgo_fi)) : 0)
+                          + max(0, tm_sec(lg_su, slot_linger[cur_slot] + lgo_h))
+                          + max(0, tm_sec(lg_su, slot_xfade[cur_slot] + lgo_fo))
+                          + (slot_xfadeon[cur_slot] > 0.5 ? 0 : max(0, tm_sec(lg_su, slot_gap[cur_slot] + lgo_g))));
+        lg_sk = 10; loop(4, td_active[lgk + lg_sk] ? drift_step_len[lgk + lg_sk] = lg_step; lg_sk += 1;);
         // Sequential arrives silent (fades in next); crossfade arrives at full.
         leg_env = lg_next_fadein ? 0 : 1;
         // Sequential handoff (crossfade OFF): flush the wash overlap-add buffer so
@@ -2279,6 +2311,8 @@ file_var(0, ser_magic);
     tg_remap(ramp_by_mem,        0,  rm_ns, rm_nt);
     tg_remap(ramp_dur_mem,       0,  rm_ns, rm_nt);
     tg_remap(ramp_delay_mem,     0,  rm_ns, rm_nt);
+    // Drift movement did not exist: every drift ran on a clock, so a saved copy keeps that.
+    rm_k = 0; loop(DBANK, target_drift_moves[rm_k] = 1; rm_k += 1;);
   );
 
   // --- MIGRATION: a pre-7700006 blob wrote one flat config per target, which
@@ -2491,16 +2525,16 @@ file_var(0, ser_magic);
     dupsel         = max(0, min(NSLOTS, floor(slider1 + 0.5)));   // 0 = All, 1-8 = Slot 1-8
     dupslot        = dupsel == 0 ? 0 : dupsel - 1;
     duptgt         = max(0, min(N_TARGETS-1, slider44));
-    duprtgt        = max(0, min(N_TARGETS-1, slider54));
+    duprtgt        = max(0, min(N_TARGETS-1, slider55));
     last_drift_key = (duptgt  >= TG_GLOBAL ? 0 : dupslot)*DSTRIDE + duptgt;
     last_ramp_key  = (duprtgt >= TG_GLOBAL ? 0 : dupslot)*DSTRIDE + duprtgt;
     slider45 = target_drift_up[last_drift_key];
     slider46 = target_drift_down[last_drift_key];
     slider48 = target_drift_per[last_drift_key];
-    slider50 = target_drift_shape[last_drift_key];
-    slider55 = ramp_by_mem[last_ramp_key];
-    slider58 = ramp_dur_mem[last_ramp_key];
-    slider62 = ramp_delay_mem[last_ramp_key];
+    slider51 = target_drift_shape[last_drift_key];
+    slider56 = ramp_by_mem[last_ramp_key];
+    slider59 = ramp_dur_mem[last_ramp_key];
+    slider63 = ramp_delay_mem[last_ramp_key];
     // Per-slot Capture point: force slider3 to the restored slot's stored point,
     // and sync last_cap_slot so the first @slider doesn't mistake load for a
     // slot-switch (which would save the visible point into the wrong slot).

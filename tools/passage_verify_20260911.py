@@ -243,8 +243,8 @@ def transport():
            "transport: Output at rest Silence differs from Pass-through")
 
 
-DRIFT_PUNIT, DRIFT_PLAY, DRIFT_REST = 49, 51, 52
-RAMP_TARGET, RAMP_BY, RAMP_TUNIT, RAMP_DUR, RAMP_PLAY, RAMP_REST, RAMP_ENGAGE = 54, 55, 57, 58, 59, 60, 61
+DRIFT_PUNIT, DRIFT_MOVE, DRIFT_PLAY, DRIFT_REST = 49, 50, 52, 53
+RAMP_TARGET, RAMP_BY, RAMP_TUNIT, RAMP_DUR, RAMP_PLAY, RAMP_REST, RAMP_ENGAGE = 55, 56, 58, 59, 60, 61, 62
 
 
 def driftramp():
@@ -294,7 +294,9 @@ BLK_S = BLOCK / TSR
 
 
 def tempo_run(plugin, settings, extra, seconds=30):
-    stages = [[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0), (DRIFT_TARGET, 2), (RAMP_TARGET, 2)], [(CAPTURE, 1)], list(settings)]
+    # The target pickers only on the new build: the pre-tempo build numbers its sliders otherwise.
+    picks = [(DRIFT_TARGET, 2), (RAMP_TARGET, 2)] if plugin == NEW else []
+    stages = [[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 0), *picks], [(CAPTURE, 1)], list(settings)]
     out = os.path.join(tmp, f"t{os.getpid()}_{abs(hash((plugin, str(settings), str(extra))))}.csv")
     cmd = [EXE, plugin, "--seconds", str(seconds), "--csv", out, "--quiet", *TONE, *extra]
     for k, st in enumerate(stages):
@@ -376,7 +378,7 @@ def tempo():
 # --- The other Beats timings through the same tempo change (2026-09-11). A stage lands
 # after block k and a --tempo-at lands before block k+1, so a Seconds length changed at
 # stage K and a Beats length with the tempo changed at block K+1 meet on the same sample.
-RAMP_DELAY = 62
+RAMP_DELAY = 63
 
 
 def staged_run(plugin, settings, later, extra, seconds):
@@ -494,7 +496,12 @@ def coldload():
 # and wrap on the SAME sample -- rand() is one stream, and the order the drift loop visits
 # them decides which draw each one gets.
 PREV, SR2 = "f384d1f", 32768
-DRIFT_DOWN, DRIFT_SHAPE, OT_HARM, OT_WIDTH = 46, 50, 19, 33
+DRIFT_DOWN, DRIFT_SHAPE, OT_HARM, OT_WIDTH = 46, 51, 19, 33
+
+
+def to_prev(stages):
+    # PREV predates Drift movement (inserted at 50): drop it, and every id above moves back one.
+    return [[(s - 1 if s > DRIFT_MOVE else s, v) for s, v in st if s != DRIFT_MOVE] for st in stages]
 # Old index -> (drift up and down, ramp by): big enough to hear, inside each range.
 OLD_AMT = {0: (40, 40), 1: (40, 40), 2: (3, 3), 3: (40, 40), 4: (300, 300), 5: (10, -10), 6: (50, 50),
            7: (50, 50), 8: (10, -10), 9: (8, 8), 10: (0.5, 0.5), 11: (0.5, 0.5), 12: (0.5, 0.5), 13: (0.5, 0.5)}
@@ -533,15 +540,16 @@ def prev():
             s0 += [(AUTOMORPH, 1), (XFADE_ON, 0)]
         da, db_ = OLD_AMT[a][0], OLD_AMT[b][0]
         return [s0, [(CAPTURE, 1)], [(CAP_SLOT, 8)], [(TEXTURE, 100)], [(CAP_SLOT, 0)],
-                [(DRIFT_UP, da), (DRIFT_DOWN, da), (DRIFT_SHAPE, 2), (DRIFT_PERIOD, 1)] if on else [],
+                # On a clock: PREV had nothing else, and a fresh slot timing starts With the target
+                [(DRIFT_UP, da), (DRIFT_DOWN, da), (DRIFT_SHAPE, 2), (DRIFT_PERIOD, 1), (DRIFT_MOVE, 1)] if on else [],
                 [(DRIFT_TARGET, tgt(b))],
-                [(DRIFT_UP, db_), (DRIFT_DOWN, db_), (DRIFT_SHAPE, 2), (DRIFT_PERIOD, 1)] if on else [],
+                [(DRIFT_UP, db_), (DRIFT_DOWN, db_), (DRIFT_SHAPE, 2), (DRIFT_PERIOD, 1), (DRIFT_MOVE, 1)] if on else [],
                 [(RAMP_BY, OLD_AMT[c][1]), (RAMP_DUR, 0.1), (RAMP_ENGAGE, 1)] if on else [],
                 [], [], []]
 
     def one(case):
         a, b, c = case
-        was = staged(old, stages(lambda t: t, a, b, c, True), 30, extra)
+        was = staged(old, to_prev(stages(lambda t: t, a, b, c, True)), 30, extra)
         now = staged(NEW, stages(mig.TMAP.get, a, b, c, True), 30, extra)
         off = staged(NEW, stages(mig.TMAP.get, a, b, c, False), 30, extra)
         return case, np.array_equal(was, now), not np.array_equal(now, off), float(np.abs(now).max())
@@ -575,7 +583,10 @@ def targets():
     def stages(t, on, morph=0, slot=0):
         return [[(AUDITION, 1), (MORPH, morph), (CAP_SLOT, 0), (DRIFT_TARGET, t), *NEW_SETUP.get(t, [])],
                 [(CAPTURE, 1)], [(CAP_SLOT, 8)], [(TEXTURE, 100)], [(CAP_SLOT, slot)], NEW_SETUP2.get(t, []),
-                [(DRIFT_UP, NEW_AMT[t]), (DRIFT_DOWN, NEW_AMT[t]), (DRIFT_PERIOD, 1.3)] if on else [],
+                # On a clock: this checks the wiring. With the target (a slot timing's fresh
+                # default) steps each slot on its own turn, eight slots apart, and a drift
+                # starts at zero -- no second turn comes within 24 s. `steps` checks stepping.
+                [(DRIFT_UP, NEW_AMT[t]), (DRIFT_DOWN, NEW_AMT[t]), (DRIFT_PERIOD, 1.3), (DRIFT_MOVE, 1)] if on else [],
                 [], [], [], [], [], []]
 
     def one(t):
@@ -721,6 +732,62 @@ def bankmap():
 
 
 NSL = 8
+
+
+# --- Drift movement (2026-09-12). Two slots, Crossfade into next Off, no dry signal, so every
+# leg is a hold of sound then a 0.5 s gap. A Triangle drift of +-1 s on Slot 1's hold only,
+# period 6 s. WITH THE TARGET, Slot 1's holds follow Slot 1's own legs alone: they must be the
+# same whether Slot 2 holds 1.7 s or 2.9 s, and must equal the steps worked out below (each
+# Slot 1 leg reads the drift, then steps it by that leg's length / 6). ON A CLOCK they must not.
+def steps():
+    set_at = 10 * BLK_S                      # the drift lands with stage 9
+
+    def one(job):
+        h2, move = job
+        st = [[(AUDITION, 1), (MORPH, 0), (CAP_SLOT, 1), (INPUT_LEVEL, -60), (DRIFT_TARGET, 11)],
+              [(CAPTURE, 1)], [(CAP_SLOT, 2)], [(CAPTURE, 1)], [(CAP_SLOT, 0)],
+              [(AUTOMORPH, 1), (XFADE_ON, 0), (FADE_IN, 0), (HOLD, 1), (FADE_OUT, 0), (GAP, 0.5)],
+              [(CAP_SLOT, 2)], [(HOLD, h2)], [(CAP_SLOT, 1)],
+              [(DRIFT_UP, 1), (DRIFT_DOWN, 1), (DRIFT_SHAPE, 1), (DRIFT_PERIOD, 6), (DRIFT_MOVE, move)]]
+        rise, fall = edges(staged(NEW, st, 70, TONE))
+        segs = []
+        for x in rise:
+            y = next((y for y in fall if y > x), None)
+            if y is not None and x > set_at - 3:
+                segs.append((x, y - x))
+        # Slot 2's holds are the ones that all read h2; Slot 1's are the others.
+        for p in (0, 1):
+            if all(abs(d - h2) < 0.025 for _, d in segs[p::2][1:]):
+                return job, [(x, d) for x, d in segs[1 - p::2]]
+        return job, None
+
+    with cf.ThreadPoolExecutor(JOBS) as ex:
+        got = dict(ex.map(one, [(1.7, 0), (2.9, 0), (1.7, 1), (2.9, 1)]))
+    if any(v is None for v in got.values()):
+        report(False, f"steps: could not tell Slot 2's legs from Slot 1's ({[k for k, v in got.items() if v is None]})")
+        return
+    tri = lambda p: 4 * p if p < 0.25 else 2 - 4 * p if p < 0.75 else 4 * p - 4
+    want, ph = [], 0.0
+    for _ in range(10):
+        h = max(0.0, 1 + tri(ph))
+        want.append(h)
+        ph = (ph + max(0.05, h + 0.5) / 6) % 1.0
+
+    def holds(job, n):
+        return [d for x, d in got[job] if x > set_at][:n]
+
+    def matches(seq):
+        # the first Slot 1 leg after the drift lands may have begun just before it: try both
+        return any(len(seq[k:k + 8]) == 8 and all(abs(a - b) < 0.025 for a, b in zip(seq[k:k + 8], want))
+                   for k in (0, 1))
+    a, b = holds((1.7, 0), 10), holds((2.9, 0), 10)
+    report(matches(a) and matches(b),
+           f"steps: With the target, Slot 1's holds step on its own legs -- worked out "
+           f"{[round(w, 2) for w in want[:8]]}; read {[round(x, 2) for x in a[:9]]} and {[round(x, 2) for x in b[:9]]}")
+    c, d = holds((1.7, 1), 8), holds((2.9, 1), 8)
+    report(len(c) == len(d) == 8 and any(abs(x - y) > 0.05 for x, y in zip(c, d)),
+           f"steps: On a clock, Slot 2's hold changes Slot 1's holds (the check can fail): "
+           f"{[round(x, 2) for x in c]} vs {[round(x, 2) for x in d]}")
 
 
 if __name__ == "__main__":
