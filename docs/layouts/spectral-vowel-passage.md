@@ -116,8 +116,20 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   worked out, the same whether Slot 2 holds 1.7 or 2.9 s; On a clock they change with it.
   **Mine, unmeasured:** the leg that begins after a play edge is not a turn (it reads no
   offset either); a Beats step uses the tempo at the leg's start.
-- **Still to build, in this order:** the amount units' CONVERSION (banks and pickers exist, every unit acts
-  as Target default until then); the save format; renames of
+- **Amount units' conversion BUILT 2026-09-13** (`au_pitch`, `au_freq`, `au_time`, `au_key`,
+  `dmodc` after `pv_semis`). A unit that cannot fit acts as Target default -- Rozaya:
+  *"It should fall back to the target's native unit, if one's not already been set :)"*.
+  Semitones and Cents on a cutoff at 0 count from a floor, because staying still would not
+  do as advertised -- Rozaya: *"I'd promptly open an issue and file it as a bug report if
+  it didn't"*. Floors, mine: 20 Hz (cutoffs, Tuning reference); one FFT bin for Spread
+  (measured: Spread 1.0 and 1.3 render identical to 0, 1.4 does not). Hz and BPM on a
+  length move the rate it is one cycle of (mine). Measured: 27 conversion cases read out
+  of a debug copy against sums worked out separately, all equal. Verify section `units`
+  checks the pickers reach it.
+- **Also in this piece:** Spread reaches 1000 (it stopped at 150) and Low cut 20000 (it
+  stopped at 500) -- `docs/backlog.md`, "Hidden limits".
+- **Still to build, in this order:** Wash grain past one FFT (built for the Morpher in
+  `b4b8656`; Passage's is on a scratch copy); the save format; renames of
   existing labels to the table below, **each Drift and Ramp control and every per-slot
   control ending with its R25 kind** (`(per slot)`, `(per slot and target)`, `(all
   targets)`), measured -- the installed suite is being renamed from 2026-09-12 (R25), and

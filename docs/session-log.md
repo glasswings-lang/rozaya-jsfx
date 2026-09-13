@@ -36,6 +36,7 @@ Newest entries are the most likely to still be accurate.
 
 | If you are working on | Read |
 |---|---|
+| Passage's amount units; controls that stopped short of what they said (Spread, Low cut, Wash grain); fft() stops at 32768 | 2026-09-13 |
 | Passage's 22-target list, the Morph drift that never reached the sound, Drift movement for slot timings | 2026-09-12 (stage 9) |
 | Passage's build stages 1-8, Source note, tempo changes mid-count, the bridge driving REAPER, the Morpher's silent load | 2026-09-11/12 |
 | Womb's rebuild, the two rate pairs, a wrong finding corrected | 2026-09-06 (later) |
@@ -117,6 +118,50 @@ the target (their fresh default) steps each slot only on its own leg, fourteen l
 a new drift starts at zero, so each slot's first turn reads no change and its second never
 came within 24 s. With the check's drifts On a clock, all 22 moved (91 checks, 0 failures).
 A check of WIRING must say which movement it uses; stepping has its own check.
+
+## 2026-09-13 — Passage's amount units; controls that stopped short of what they said
+
+**The units.** Each Drift and Ramp amount is converted from its picker's unit into the
+target's own, against the value it rides on. Rozaya set the two rules that shape it: a unit
+that cannot fit acts as Target default (*"It should fall back to the target's native unit,
+if one's not already been set :)"*), and a musical interval on a cutoff at 0 must still move
+(*"I'd expect it to do as advertised lol ... And I'd promptly open an issue and file it as a
+bug report if it didn't"*). I had proposed it stay still; that was wrong. Measured: 27
+conversions read out of a debug copy against sums worked out separately. The harness caught
+two things first: the conversion sat above `pv_semis`, which it calls, and did not compile;
+and one expectation was mine, not the plugin's (a timing's own unit passes an amount through
+untouched, and the timing clamps it at zero where it is used).
+
+**Controls that stopped short.** Spread said 1000 and stopped at 150 (150, 151 and 1000
+rendered identical). The limit came in with Drift (`a964027`); the range sweep widened the
+slider past it (`7e63784`) and its clamp scan, by its own note, followed a value one hop --
+Passage's Spread goes through the slot bank first. Rozaya: *"What I don't understand is why
+a hard-coded limit of anything was let in at all."* An audit that LISTENS followed: each of
+the sweep's 176 controls at half its old ceiling, the old ceiling, halfway and the new top.
+Its detector was proven on three known limits before the full run. 41 reach, 104 could not
+be judged, 9 flagged -- `docs/backlog.md`, "Hidden limits". Building its list I split file
+names at spaces, which silently dropped all 13 of `heartbeat gen.jsfx`'s controls; the
+commits' own count (176) is what exposed it. **Lesson:** reconcile a derived list against an
+independent count before trusting it.
+
+**Wash grain: fft() stops at 32768.** My first build grew the synthesis FFT to 65536 for
+long grains. Before committing it I doubted the limit and checked: REAPER's documentation
+lists 16..32768, and a round trip at 65536 came back wrong with no error. Nothing had been
+committed or installed. The build that shipped makes a long grain from FFTSIZE pieces every
+half piece, each with fresh random phases, under a periodic sqrt-Hann. Morpher: all 123
+copies bit-identical; level drifts under a dB across grain length and the drift is already
+there among one-piece grains; processor time flat. **Lesson:** a buffer or FFT size is a
+platform limit to look up, not a number to raise.
+
+**The Morpher's blur was most of its cost.** Porting Passage's running-total Spread took an
+8 s render at Spread 150 from about 25 s to 5 s of wall clock.
+
+**A fix that broke a check, correctly.** With Passage's units work in, `crafted` failed on
+never-may-you-breathe-alone: its slots sit at Spread 150, and the crafted Random drift on
+Spread pushed them up to 190, which the pre-layout build stopped at 150 and the new one no
+longer does. Predicted, then measured: with that drift made down-only the copy is
+bit-identical again. The check compares against a build that had the limit, so it must stay
+inside the limit to test the remap.
 
 ## 2026-09-11/12 — Source note re-reads Target, tempo changes land mid-count, the bridge drives REAPER, the Morpher's silent load
 

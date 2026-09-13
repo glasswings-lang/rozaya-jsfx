@@ -403,6 +403,8 @@ ser_scratch       = freemem; freemem += DBANK;   // @serialize's remap of an old
 dr_order          = freemem; freemem += DBANK;   // the drift loop's visiting order, below
 // Drift + Ramp on one (slot, target), in the target's own unit.
 function mo_q(k) ( target_drift_offset[k] + ramp_offset_mem[k]; );
+// (The amount units' conversion is below pv_semis, which it calls: EEL2 needs a function
+// defined before its first use.)
 // A 14-target save's index, in the 22-target list.
 function tg_o2n(o) (
   o == 0 ? 2 : o == 1 ? 4 : o == 2 ? 0 : o == 3 ? 14 : o == 4 ? 6 : o == 5 ? 15 :
@@ -455,6 +457,68 @@ function pv_semis(u, v) local(r) (
 function pv_src_semis(idx, u, v) local(f) (
   f = max(tuning_ref, 0.001) * pow(2, (idx - 1 - 69) / 12);
   u == 0 ? 12 * log(max(f + v, 0.001) / f) / log(2) : u == 2 ? v / 100 : v;
+);
+// --- The amount units (2026-09-12). A Drift or Ramp amount is held in the unit its picker
+// names, {0 Target default, 1 Hz, 2 Semitones, 3 Cents, 4 Milliseconds, 5 Seconds,
+// 6 Minutes, 7 BPM, 8 Beats, 9 Cycles, 10 dB, 11 Percent, 12 Degrees}, and turned into the
+// target's OWN unit here, against the value it rides on. A unit that cannot fit the target
+// acts as Target default -- Rozaya: "It should fall back to the target's native unit".
+// Percent, dB and count targets therefore take every amount as it stands.
+//
+// A pitch value (Transpose, Fine tune) in nu {0 Hz, 1 Semitones, 2 Cents}, Bubbler's
+// meanings: Hz counts from the Tuning reference. An Hz amount moves the heard frequency.
+function au_pitch(off, u, base, nu) local(s, s2, r) (
+  (u < 1 || u > 3) || (u == 1 && nu == 0) || (u == 2 && nu == 1) || (u == 3 && nu == 2) ? off : (
+    r = max(tuning_ref, 0.001);
+    s = pv_semis(nu, base);
+    s2 = u == 2 ? s + off : u == 3 ? s + off / 100 : 12 * log(max(r * pow(2, s / 12) + off, 0.001) / r) / log(2);
+    (nu == 1 ? s2 : nu == 2 ? s2 * 100 : r * pow(2, s2 / 12) - r) - base;
+  );
+);
+// A frequency in Hz (Spread, Low cut, High cut, Tuning reference): Semitones and Cents move
+// it by an interval, counted from the value -- or from `floor` when the value is below it.
+// A Low cut at 0 is off, and an interval needs a pitch to count from; staying still there
+// would not do as advertised (Rozaya: "I'd expect it to do as advertised lol ... And I'd
+// promptly open an issue and file it as a bug report if it didn't"). Floors, both mine:
+// 20 Hz for the cutoffs and the Tuning reference, the bottom of hearing; one FFT bin
+// (srate / FFTSIZE, about 1.35 Hz at 44.1 kHz) for Spread -- measured 2026-09-12, Spread
+// 1.0 and 1.3 render bit-identical to 0 and 1.4 does not. Either way the drift starts
+// from nothing audible and climbs.
+function au_freq(off, u, base, floor) local(b) (
+  b = max(base, floor);
+  u == 2 ? b * pow(2, off / 12) - base : u == 3 ? b * pow(2, off / 1200) - base : off;
+);
+// A length (Wash grain, the slot timings, Play for, Rest for) in nu {0 Seconds, 1 Hz,
+// 2 Beats, 3 Milliseconds}; the first three are tm_sec's codes. Time units add seconds.
+// Hz and BPM move the RATE the length is one cycle of, the way a timing in Hz already reads.
+// A Cycle is one walk through the active slots' legs, as in the period units.
+function au_sec(nu, v) ( nu == 3 ? v / 1000 : tm_sec(nu, v); );
+function au_back(nu, t) ( nu == 3 ? t * 1000 : nu == 1 ? (t > 0.000001 ? 1 / t : 0) : nu == 2 ? t * max(tempo, 1) / 60 : t; );
+function au_time(off, u, base, nu) local(b, t, rate) (
+  !(u == 1 || (u >= 4 && u <= 9)) || (u == 4 && nu == 3) || (u == 5 && nu == 0) || (u == 1 && nu == 1) || (u == 8 && nu == 2) ? off : (
+    b = au_sec(nu, base);
+    u == 1 || u == 7 ? (
+      rate = (b > 0.000001 ? 1 / b : 0) + (u == 7 ? off / 60 : off);
+      t = rate > 0.000001 ? 1 / rate : 0;
+    ) : (
+      t = b + (u == 4 ? off / 1000 : u == 6 ? off * 60 : u == 8 ? off * 60 / max(tempo, 1) : u == 9 ? off * max(pv_cyc, 0.05) : off);
+    );
+    au_back(nu, max(0, t)) - base;
+  );
+);
+// Drift + Ramp on one (slot, target) in the target's own unit, each amount converted in its
+// own unit. kind 1 pitch value (nu = its unit), 2 frequency (nu = the floor in Hz),
+// 3 length (nu = its unit); anything else takes them as they stand.
+// Both pickers on Target default is exactly mo_q, so nothing saved changes.
+function au_key(k, kind, base, nu) (
+  (target_drift_unit[k] == 0 && ramp_by_unit[k] == 0) || kind < 1 || kind > 3 ? mo_q(k) :
+  kind == 1 ? au_pitch(target_drift_offset[k], target_drift_unit[k], base, nu) + au_pitch(ramp_offset_mem[k], ramp_by_unit[k], base, nu) :
+  kind == 2 ? au_freq(target_drift_offset[k], target_drift_unit[k], base, nu) + au_freq(ramp_offset_mem[k], ramp_by_unit[k], base, nu) :
+              au_time(target_drift_offset[k], target_drift_unit[k], base, nu) + au_time(ramp_offset_mem[k], ramp_by_unit[k], base, nu);
+);
+// dmod with units: the morph pair's converted amounts, blended the way dmod blends them.
+function dmodc(dmt, kind, bank, nu) (
+  au_key(sb_i*DSTRIDE + dmt, kind, bank[sb_i], nu) * (1 - sb_f) + au_key(sb_j*DSTRIDE + dmt, kind, bank[sb_j], nu) * sb_f;
 );
 function ps_all(k, raw, v, bank) local(pa) (
   raw != ps_last[k] ? ( pa = 0; loop(NSLOTS, bank[pa] = v; pa += 1; ); ps_last[k] = raw; );
@@ -1340,7 +1404,7 @@ drift_restart_free = slider54;   // 0 = restart on play (sync), 1 = free-running
 grain_seed ? ( grain_seed = 0; gsd_i = 0; loop(NSLOTS, slot_grain[gsd_i] = slider14; gsd_i += 1; ); );
 grain_ms = slot_grain[sb_i] == slot_grain[sb_j] ? slot_grain[sb_i] : sblend(slot_grain, sb_i, sb_j, sb_f);
 // Wash grain as a Drift/Ramp target (3), read once a block: it rebuilds a window.
-(mod_active[sb_i*DSTRIDE + 3] || mod_active[sb_j*DSTRIDE + 3]) ? grain_ms = max(5, min(1000, grain_ms + dmod(3)));
+(mod_active[sb_i*DSTRIDE + 3] || mod_active[sb_j*DSTRIDE + 3]) ? grain_ms = max(5, min(1000, grain_ms + dmodc(3, 3, slot_grain, 3)));
 // Transport lengths in the Transport unit, per block so Beats follow the live tempo.
 // A tempo change lands at once in a Beats count already under way: rescale the time
 // counted so far so it keeps its place in BEATS. Measured losing it before: a 16-beat
@@ -1365,8 +1429,8 @@ rm_tempo = rm_tnow;
 start_delay_sec = tm_sec(slider41, slider38);
 // Play for and Rest for (targets 20, 21) while driven, the Morpher's shape: the gate
 // still switches on only when both SLIDERS are above zero.
-pr_play_sec     = tm_sec(slider41, mod_active[20] ? max(0.001, slider39 + mo_q(20)) : slider39);
-pr_rest_sec     = tm_sec(slider41, mod_active[21] ? max(0.001, slider40 + mo_q(21)) : slider40);
+pr_play_sec     = tm_sec(slider41, mod_active[20] ? max(0.001, slider39 + au_key(20, 3, slider39, slider41)) : slider39);
+pr_rest_sec     = tm_sec(slider41, mod_active[21] ? max(0.001, slider40 + au_key(21, 3, slider40, slider41)) : slider40);
 pr_enabled      = tm_sec(slider41, slider39) > 0 && tm_sec(slider41, slider40) > 0;
 morph_at_rest   = slider42;   // 0 walk through, 1 freeze in place
 out_at_rest     = slider43;   // 0 pass-through, 1 silence
@@ -1781,10 +1845,10 @@ ri = 0; loop(DBANK, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; ri +
         // slot's own timing drift -- no blend, because a leg is not a crossfade
         // of two durations, it is one slot's leg.
         lgk    = cur_slot*DSTRIDE;
-        lgo_fi = target_drift_offset[lgk + 10] + ramp_offset_mem[lgk + 10];
-        lgo_h  = target_drift_offset[lgk + 11] + ramp_offset_mem[lgk + 11];
-        lgo_fo = target_drift_offset[lgk + 12] + ramp_offset_mem[lgk + 12];
-        lgo_g  = target_drift_offset[lgk + 13] + ramp_offset_mem[lgk + 13];
+        lgo_fi = au_key(lgk + 10, 3, slot_fadein[cur_slot], slot_tmunit[cur_slot]);
+        lgo_h  = au_key(lgk + 11, 3, slot_linger[cur_slot], slot_tmunit[cur_slot]);
+        lgo_fo = au_key(lgk + 12, 3, slot_xfade[cur_slot],  slot_tmunit[cur_slot]);
+        lgo_g  = au_key(lgk + 13, 3, slot_gap[cur_slot],    slot_tmunit[cur_slot]);
         // Drift movement: this slot's timing drifts take their turn now, by the length of
         // the leg just begun (read with the offsets above, so the step follows the read).
         lg_su = slot_tmunit[cur_slot];
@@ -1909,8 +1973,11 @@ eff_tex = max(0, min(1, sblend(slot_texture, sb_i, sb_j, sb_f)
                         + (dmod(2)) * 0.01));
 hlevel = cos(eff_tex * PI * 0.5); wlevel = sin(eff_tex * PI * 0.5);
 
-eff_spread_hz = max(0, min(150, sblend(slot_spread, sb_i, sb_j, sb_f)
-                                + dmod(4)));
+// Spread reaches its slider's 1000 Hz (2026-09-12). It stopped at 150, a limit the range
+// sweep widened the slider past and left here: 150, 151 and 1000 rendered bit-identical.
+// Rozaya: "That should have been lifted with the slider extention, so... go for it".
+eff_spread_hz = max(0, min(1000, sblend(slot_spread, sb_i, sb_j, sb_f)
+                                + dmodc(4, 2, slot_spread, srate / FFTSIZE)));
 
 // --- Pitch is the ONE per-slot value that must NOT be blended. ---
 // Every other per-slot value is a quantity you can average: half of one
@@ -1928,10 +1995,10 @@ eff_spread_hz = max(0, min(150, sblend(slot_spread, sb_i, sb_j, sb_f)
 // this is more correct than the shared offset it replaces, not merely finer.
 // Blending two frequencies is a glide, which is why the base values are kept
 // separate here; blending their modulation would reintroduce exactly that.
-pitch_mod_A = mo_q(sb_i*DSTRIDE + 0);   // Transpose
-pitch_mod_B = mo_q(sb_j*DSTRIDE + 0);
-fine_mod_A  = mo_q(sb_i*DSTRIDE + 1);   // Fine tune, each slot's own for the same reason
-fine_mod_B  = mo_q(sb_j*DSTRIDE + 1);
+pitch_mod_A = au_key(sb_i*DSTRIDE + 0, 1, slot_pitch[sb_i], slot_tunit[sb_i]);   // Transpose
+pitch_mod_B = au_key(sb_j*DSTRIDE + 0, 1, slot_pitch[sb_j], slot_tunit[sb_j]);
+fine_mod_A  = au_key(sb_i*DSTRIDE + 1, 1, slot_fine[sb_i], slot_funit[sb_i]);    // Fine tune, each slot's own for the same reason
+fine_mod_B  = au_key(sb_j*DSTRIDE + 1, 1, slot_fine[sb_j], slot_funit[sb_j]);
 // NOT clamped. These used to be pinned to the slider's own +/-36, which meant
 // Drift and Ramp could push Pitch right up to the edge and then flatten
 // against it -- the modulation kept moving and the sound stopped, which reads
@@ -1947,7 +2014,7 @@ fine_mod_B  = mo_q(sb_j*DSTRIDE + 1);
 // Pitch block (2026-09-11): each slot's Transpose and Fine tune resolve to semitones in
 // their own units. At Semitones with no fine tune this is the same sum as before.
 // Tuning reference (16, whole plugin) is heard only where a value is in Hz.
-tuning_ref = mod_active[16] ? max(20, min(2000, tuning_base + mo_q(16))) : tuning_base;
+tuning_ref = mod_active[16] ? max(20, min(2000, tuning_base + au_key(16, 2, tuning_base, 20))) : tuning_base;
 eff_semi_A = pv_semis(slot_tunit[sb_i], slot_pitch[sb_i] + pitch_mod_A) + pv_semis(slot_funit[sb_i], slot_fine[sb_i] + fine_mod_A);
 eff_semi_B = pv_semis(slot_tunit[sb_j], slot_pitch[sb_j] + pitch_mod_B) + pv_semis(slot_funit[sb_j], slot_fine[sb_j] + fine_mod_B);
 pitch_ratio_A = pow(2.0, eff_semi_A/12);
@@ -1966,7 +2033,7 @@ voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX;
 // starts at 1000000000 Hz, so every partial multiplies by exactly 1. The top fifth
 // fades rather than gates, so a cut swept by Drift never steps a partial off.
 eff_hicut_hz = slot_hicut[sb_i] == slot_hicut[sb_j] ? slot_hicut[sb_i] : sblend(slot_hicut, sb_i, sb_j, sb_f);
-eff_hicut_hz = max(200, min(20000, eff_hicut_hz + dmod(7)));
+eff_hicut_hz = max(200, min(20000, eff_hicut_hz + dmodc(7, 2, slot_hicut, 20)));
 hc_on = eff_hicut_hz < 19999.5 ? 1 : 0;
 hc_on ? (
   hc_top = eff_hicut_hz; hc_lo = eff_hicut_hz * 0.8;
@@ -1975,8 +2042,10 @@ hc_on ? (
 ) : (
   hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;
 );
-eff_lowcut_hz = max(0, min(500, sblend(slot_lowcut, sb_i, sb_j, sb_f)
-                                + dmod(6)));
+// Low cut reaches its slider's 20000 Hz (2026-09-13). It stopped at 500, the same leftover
+// as Spread's 150: the hidden-limit audit heard 500 and 20000 render bit-identical.
+eff_lowcut_hz = max(0, min(20000, sblend(slot_lowcut, sb_i, sb_j, sb_f)
+                                + dmodc(6, 2, slot_lowcut, 20)));
 
 eff_vdb = max(-60, min(12, sblend(slot_voicedb, sb_i, sb_j, sb_f)
                            + dmod(15)));

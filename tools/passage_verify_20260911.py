@@ -616,7 +616,10 @@ import base64, struct
 from rpp_sliders import parse_line, render_line
 CRAFT_T = {7700005: 14, 7700006: 128}
 # (old slot, old target, up, down, period s, shape 0 sine / 1 triangle / 2 random)
-CRAFT_DRIFT = [(0, 0, 40, 40, 1, 2), (0, 1, 40, 40, 1, 2), (1, 0, 30, 30, 1, 2), (1, 2, 2, 2, 1, 2),
+# Spread (old 1) drifts DOWN only: never-may-you-breathe-alone's slots sit at Spread 150, and
+# Spread now reaches 1000 where the pre-layout build stopped at 150 (2026-09-13), so an
+# upward drift there is the fix at work, not a remap to hold to bit-identity.
+CRAFT_DRIFT = [(0, 0, 40, 40, 1, 2), (0, 1, 0, 40, 1, 2), (1, 0, 30, 30, 1, 2), (1, 2, 2, 2, 1, 2),
                (0, 8, 10, 10, 3, 0), (1, 3, 40, 40, 1.5, 1)]
 # Morph (old 7) is left out of the bit-identical check (see PREV_CASES) and read in `bankmap`.
 CRAFT_MORPH = ([(0, 7, 50, 50, 1, 2)], [(0, 7, 20, 0.1, 0.03)])   # a start delay on slot 0, so a flat save holds one
@@ -788,6 +791,58 @@ def steps():
     report(len(c) == len(d) == 8 and any(abs(x - y) > 0.05 for x, y in zip(c, d)),
            f"steps: On a clock, Slot 2's hold changes Slot 1's holds (the check can fail): "
            f"{[round(x, 2) for x in c]} vs {[round(x, 2) for x in d]}")
+
+
+# --- The amount units through the controls (2026-09-12). The conversion maths itself is
+# checked inside a debug copy (24 cases); here the pickers must reach it, keep their value
+# per target and per slot, and fall back where a unit cannot fit. A Ramp of 0.001 minutes
+# arrives within 0.06 s, so the amount it holds afterwards is exactly its `by`.
+DRIFT_UNIT, RAMP_UNIT = 47, 57
+
+
+def units():
+    def run_u(stages, morph=0, t=0, seconds=16):
+        s0 = [(AUDITION, 1), (MORPH, morph), (CAP_SLOT, 0), (DRIFT_TARGET, t), (RAMP_TARGET, t)]
+        return staged(NEW, [s0, [(CAPTURE, 1)], *[list(s) for s in stages], *WAIT, [], []], seconds, TONE)
+
+    near = lambda x, y: float(np.abs(x - y).max()) < 1e-6
+    ramp = [(RAMP_DUR, 0.001), (RAMP_ENGAGE, 1)]
+    # Transpose in Semitones: 1200 cents == 12 semitones, and differs from no ramp at all.
+    cents = run_u([[], [], [(RAMP_UNIT, 3), (RAMP_BY, 1200), *ramp]])
+    semis = run_u([[], [], [(RAMP_BY, 12), *ramp]])
+    none_ = run_u([[], [], []])
+    report(near(cents, semis) and not near(cents, none_),
+           f"units: a Transpose ramp of 1200 cents == 12 semitones (largest difference {np.abs(cents - semis).max():.2e})")
+    # The unit is kept per target: set on Transpose, away to Texture and back.
+    away = run_u([[(RAMP_UNIT, 3)], [(RAMP_TARGET, 2)], [(RAMP_TARGET, 0)], [(RAMP_BY, 1200), *ramp]])
+    stay = run_u([[(RAMP_UNIT, 3)], [], [], [(RAMP_BY, 1200), *ramp]])
+    report(np.array_equal(away, stay) and not near(away, none_),
+           "units: the Ramp by unit stays with its target through a target switch")
+    # On All it reaches Slot 8, exactly as set by hand there.
+    on_all = run_u([[], [], [(RAMP_UNIT, 3), (RAMP_BY, 700), *ramp]], morph=100)
+    by_hand = run_u([[(CAP_SLOT, 8)], [], [(RAMP_UNIT, 3), (RAMP_BY, 700), *ramp]], morph=100)
+    report(np.array_equal(on_all, by_hand), "units: a unit and amount set on All == set by hand on Slot 8")
+    # Slot hold in Seconds: 500 ms == 0.5 s, sampled at each leg's start after the ramp is in.
+    walk = [WALK]
+    ms = run_u([*walk, [], [(RAMP_UNIT, 4), (RAMP_BY, 500), *ramp]], t=11, seconds=24)
+    sec = run_u([*walk, [], [(RAMP_BY, 0.5), *ramp]], t=11, seconds=24)
+    plain = run_u([*walk, [], []], t=11, seconds=24)
+    report(np.array_equal(ms, sec) and not np.array_equal(ms, plain),
+           "units: a Slot hold ramp of 500 ms == 0.5 s, and it moves the legs")
+    # A unit that cannot fit acts as Target default: dB on Low cut is Hz.
+    db_ = run_u([[], [], [(DRIFT_UNIT, 10), (DRIFT_UP, 300), (DRIFT_DOWN, 300), (DRIFT_PERIOD, 1.3)]], t=6)
+    hz = run_u([[], [], [(DRIFT_UP, 300), (DRIFT_DOWN, 300), (DRIFT_PERIOD, 1.3)]], t=6)
+    report(np.array_equal(db_, hz) and not np.array_equal(hz, none_),
+           "units: dB on Low cut falls back to its own unit, Hz")
+    # Semitones on a Low cut at 0 (off) must do as advertised: counted from 20 Hz, it moves.
+    # Rozaya: "I'd promptly open an issue and file it as a bug report if it didn't".
+    st0 = run_u([[], [], [(DRIFT_UNIT, 2), (DRIFT_UP, 48), (DRIFT_DOWN, 48), (DRIFT_PERIOD, 1.3)]], t=6)
+    report(not np.array_equal(st0, none_), "units: semitones on a Low cut at 0 move it (counted from 20 Hz)")
+    # The same on Spread at 0, counted from one FFT bin. Heard on the wash, where Spread acts.
+    wash = [(TEXTURE, 100)]
+    sp_none = run_u([wash, [], []], t=4)
+    sp_st = run_u([wash, [], [(DRIFT_UNIT, 2), (DRIFT_UP, 60), (DRIFT_DOWN, 60), (DRIFT_PERIOD, 1.3)]], t=4)
+    report(not np.array_equal(sp_st, sp_none), "units: semitones on a Spread at 0 move it (counted from one bin)")
 
 
 if __name__ == "__main__":

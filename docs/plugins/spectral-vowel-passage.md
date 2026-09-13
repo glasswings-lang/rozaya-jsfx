@@ -165,7 +165,7 @@ running-sum optimisation is mathematically equivalent to the original, and
 verified numerically. That is a real perf win. But it does not touch the
 short-grain crackle.
 
-**Spread (Hz)** `0 to 150, default 0`
+**Spread (Hz)** `0 to 1000, default 0`
 Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
@@ -185,7 +185,7 @@ Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phas
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
-**Low cut (Hz)** `0 to 500, default 0`
+**Low cut (Hz)** `0 to 20000, default 0`
 Removes low rumble from the resynth.
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
