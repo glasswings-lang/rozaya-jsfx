@@ -66,6 +66,31 @@ Newest entries are the most likely to still be accurate.
 
 ---
 
+## 2026-09-13 (evening) — The Morpher's pitch layout, stages 1-4; a layer phase order; renders were never Idle
+
+**Built and measured, not installed:** the renumber (51 -> 64), the global pitch block, sixteen
+pitched layers with All (Layer 1 the Original), the 87-target list. `current` 123/123 after
+every stage. `quick one.RPP` (Dropbox) held 12 copies on the 2026-08-11 layout, never migrated
+since; mapped straight across by name and read back against `409b1ba`.
+
+**Two test mistakes of mine, caught by the plugin.** I expected Layer 5 to be a fifth down and
+Layer 9 an octave up; the authored order makes them -12 and +7, and the plugin matched the
+table. And "set the level to 0 on All" moved nothing, because All already showed 0.
+
+**A guess that measurement killed, then the real cause.** A crafted save differed. I guessed
+the computed layer intervals were a bit off; a debug copy showed all 16 exact. The split test
+then showed no-layer cases failing too, and controls narrowed it to one change: Texture 60.
+The copy was saved at Texture 100 with four downward layers raised. Layers below the Original
+moved one memory slot, so their voices started from other random phases -- silent at full
+wash, audible as a different waveform (same spectrum) the moment voice comes in. Fixed by
+filling phases in the old slot order; a scratch copy was identical in every case.
+
+**Every render this session ran at Normal priority.** The verify tool's
+`SetPriorityClass(GetCurrentProcess(), 0x40)` returned 0 on 64-bit Python: the pseudo-handle
+needs `c_void_p` types. Measured both forms; fixed in `morpher_verify_20260913.py`.
+`passage_verify_20260911.py` still has the broken call. **Also noted:** the plan's R22 header
+still says "Not built yet" suite-wide, which the 09-11 rollout overtook.
+
 ## 2026-09-12 (stage 9) — Passage's 22-target list, a Morph drift that never reached the sound, Drift movement
 
 **The list.** Drift and Ramp targets went from 14 to the layout's 22 in control order, the

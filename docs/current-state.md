@@ -26,11 +26,10 @@ sentence.
 - **Drift/Ramp: complete everywhere** (Passage 2026-09-13).
 - **Polyrhythm v1 CROSSED AND ARCHIVED 2026-09-10.** 144 instances in 31 files, all
   bit-identical by render. `docs/layouts/polyrhythm-v1-to-v3-crossing.md`.
-- **OWED NEXT, IN THIS ORDER -- tell Rozaya as each comes off.** The Morpher's pitch
-  layout sat settled and unbuilt 09-11 to 09-13 because nothing here named it. Passage: DONE
-  09-13. Next the Morpher's PITCH LAYOUT, ready since 09-11: start at its
-  "BUILD PROGRESS -- read this first" (`docs/layouts/spectral-vowel-morpher.md`); then
-  `Drift amount unit` / `Ramp by unit` in the other seventeen.
+- **OWED NEXT, IN THIS ORDER -- tell Rozaya as each comes off.** The Morpher's PITCH
+  LAYOUT is BEING BUILT (09-13): stages 1-4 + a phase fix in src (reruns owed), not installed.
+  Where it stands: "BUILD PROGRESS -- read this first" (`docs/layouts/spectral-vowel-
+  morpher.md`). Then `Drift amount unit` / `Ramp by unit` in the other seventeen.
 - **Polyrhythm v3:** 59 sliders, per-voice pitch, 88 targets. `docs/layouts/polyrhythm-phase-v3-r22-r24.md`.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.

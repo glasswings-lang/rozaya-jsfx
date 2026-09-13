@@ -43,8 +43,8 @@ archived plugins, 12 replaced since. Caught, and what each is (read in the code,
   (*"sounds good"*): a longer grain is built from half-overlapping FFTSIZE pieces. Morpher
   and Passage (2026-09-13).
 - **Capture average** (Morpher) stops at 6 frames of 1000 -- only six fit in a capture of
-  today's length. **DECIDED 2026-09-13: the control becomes 1-6**, folded into the
-  Morpher's pitch-layout migration (checked 2026-09-13: 0 of 135 saved copies above 6). Rozaya: *"6 seems OK, just has needed,
+  today's length. **DECIDED 2026-09-13: the control becomes 1-6. DONE in src** (stage 1 of
+  the Morpher's pitch layout, `ec2526f`; installed with that migration), 0 of 135 saved copies above 6. Rozaya: *"6 seems OK, just has needed,
   and not had, spread to compensate for it because back then we were capped."* Longer
   captures would allow more frames; not asked for.
 - **Breath High-pass** (Womb) stops between 7200 and 7300 Hz of 20000 (7188 worked out) --
@@ -272,7 +272,7 @@ Surveyed from source 2026-09-08. `Vn` collapses the per-voice banks.
 | `resonance_bank` | Frequency (Hz), per band | one block per band, behind its existing selector |
 | `shepard-scale` | Center Octave, Octave Count, tuning ref | one block |
 | `shepard-tone` | Root Note, Vn Note, Center Octave, Octave Count | selector first, then re-index |
-| `spectral_vowel_morpher` | Pitch (semitones), Layer pitch (semitones), Spread (Hz) | mode pair; **122 instances**, migrate with care |
+| `spectral_vowel_morpher` | Pitch (semitones), Layer pitch (semitones), Spread (Hz) | **BUILT 2026-09-13 in src, the pitch layout** (Source note, Transpose value + unit, Fine tune + unit, Tuning reference; every layer's pitch + unit and fine tune + unit); Spread stays Hz; **135 instances** migrate with it |
 | `spectral_vowel_passage` | Pitch (semitones), Spread (Hz) | mode pair, rides its owed reorder |
 | `sustain_looper` | Pitch (semitones), Spread (detune amount) | mode pair, detune to cents |
 

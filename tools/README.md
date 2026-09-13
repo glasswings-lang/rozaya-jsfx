@@ -784,6 +784,21 @@ takes all 49 converted copies through one save, `scope` measures each control's 
 its name, `migrated` checks the projects on disk against the snapshot. The names were
 applied with `r25_rename_apply.py --list docs/layouts/passage-labels-20260913.md`.
 
+## The Morpher's pitch layout — 2026-09-13
+
+`morpher_migrate_20260913.py` moves a Morpher slider line from 51 values to 64 by the
+layout doc's table (`inventory` is a dry run; `write` snapshots every project to
+`E:/reaper/finished/backups/snapshots/_pre-morpher-pitch-layout-20260913/`, writes, reads
+each file back, and puts everything back if any check fails). It also carries
+`quick one.RPP`'s twelve 31-value lines from the 2026-08-11 layout straight across, by name
+(`Q31`). The blob is not touched: the plugin remaps its own. `morpher_verify_20260913.py`
+measures it section by section -- `current` (old build on each live copy == new build on
+it converted), `pitch`, `layers`, `names`, `targets`, `blobs` (a real 24-target blob with
+drift and ramp on every target), `blobs55` (the same saved by the old build), `units`,
+`convert` (the unit conversions read out of a debug copy), `saveformat`, `savedlive`,
+`scope` (each control's kind, for its name) and `quick31` (every control read back by
+name against `409b1ba`). Names: `r25_rename_apply.py --list docs/layouts/morpher-labels-20260913.md`.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in

@@ -669,9 +669,46 @@ by layer.
 
 ## BUILD PROGRESS -- read this first if you are picking the Morpher up (2026-09-13)
 
-**Nothing of THE PITCH LAYOUT below is built. It is settled whole; no question is left.**
-It sat ready 09-11 to 09-13 while other work took the time (session-log 2026-09-13).
+**Being built 2026-09-13, on `feature/melody-reorder`. Not installed, no project migrated.**
 Rozaya expected this to take less time than Passage did: tell it as each stage lands.
+Tools: `tools/morpher_migrate_20260913.py` (`inventory` is a dry run) and
+`tools/morpher_verify_20260913.py` (`current` = old build `693c3ad` on each live copy vs new
+build on a temp conversion, silence in, bit-identical; sections `pitch layers names targets
+blobs blobs55 units convert`).
+
+- **Stage 1 DONE** (`ec2526f`): renumber by the table (jsfx_renumber verify PASS), thirteen
+  new controls seeded, Auto-morph time above Rate mode, Capture average 1-6. `current` 123/123.
+  Drift period unit and Ramp time unit are ABSENT ("-") in every saved line since the 09-06
+  migration; they move as absent and keep their declared defaults.
+- **Stage 2 DONE** (`ec2526f`): the pitch block, global. `pitch` 11 checks; `current` 123/123.
+- **Stage 3 DONE** (`ec2526f`): Layer {All, Layer 1-16}, Layer 1 the Original, every layer
+  pitched; blob layer banks permute ladder -> new (`lay_lad`). `layers` 12 checks, two read
+  back by `--list`; `current` 123/123. My first two layer tests had the order wrong (Layer 5 is
+  -12, Layer 9 is +7): the plugin matched the table and the tests did not.
+- **Stage 4, targets 55 -> 87: built** (committed with the handoff, 2026-09-13). Banks re-spaced
+  to 128; `t55_o2n` (old "Layer pitch (all Custom layers)" -> "all layers": nobody parked
+  there). Measured: `current` 123/123, `names`, `targets` 12, `layers`, `pitch`, `quick31`
+  (12 copies read back by name, all sound). Live blobs are all 7700008-7700011 (24 targets).
+- **Phase-order fix, applied at the handoff, RERUNS OWED.** `blobs`/`blobs55` failed: the six
+  layers below the Original moved one memory slot, so their voice started from different
+  random phases. Found on `i-was-born-here` #1 (Texture 100, ladder 0-3 raised): identical at
+  100, different the moment Texture drops. Proved by controls (only Texture 60 differed) and by
+  a scratch copy with the fix: every case identical. **Owed first:** rerun `current blobs blobs55
+  layers` on src, then commit.
+
+**NEXT, IN ORDER** (patch scripts and their passing trials are in
+`tools/morpher_pitch_layout_patches_20260913/`; each patch writes src):
+1. Stage 5, amount units: `stage5_units.py`; then `units convert current`. Trial: 23/23 conversions.
+2. Stage 6, save format 7700087: `stage6_saveformat.py`; then `saveformat savedlive`. Trial: 14/14.
+3. Names: `r25_rename_apply.py --list docs/layouts/morpher-labels-20260913.md --apply`, `scope`.
+   Dry run matched all 14. Backlog line 24 (amount-unit sweep) then marks the Morpher done.
+4. Live write: `morpher_migrate_20260913.py write` (135 in 40 files, snapshot), then `migrated`.
+5. Install (back up the installed file, == `b4b8656`, to `C:/Users/solst/jsfx-backups/`), then
+   `morpher_reaper_roundtrip_20260913.py --check`, `--run` (claude test project only).
+6. Page: the "what it changed" section says the migration tool does it; say it is done.
+- **`quick one.RPP` (Dropbox): 12 copies on the 2026-08-11 layout (31 sliders, blob 7700002),
+  never migrated since.** Mapped straight to 64 by name (`Q31` in the migration tool); verified
+  by reading every control back by name against `409b1ba`, not by render.
 
 - **Fold in:** Capture average's control becomes 1-6 (backlog, "Hidden limits"). Checked
   2026-09-13: 0 of 135 saved copies above 6.

@@ -326,10 +326,10 @@ slider45:0<0,1,1{Pass-through,Silence}>Output at rest
 //     Pick a target; it wanders by up/down amounts over a wall-clock period.
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
-// FIFTY-FIVE since 2026-09-11 (R24), in the order of the controls they reach, with
-// "all layers" entries on Polyrhythm's model (Rozaya: "Yes"). The plugin remaps an
-// old save; tools/morpher_r24_migrate_20260911.py remaps a project line's selectors.
-slider46:0<0,54,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Pitch,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer level (all layers),4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level,Layer pitch (all Custom layers),Custom 1 pitch,Custom 2 pitch,Custom 3 pitch,Layer overtone harmonic (all layers),4 octaves down overtone harmonic,3 octaves down overtone harmonic,2 octaves down overtone harmonic,1 octave down overtone harmonic,a fifth down overtone harmonic,a fourth down overtone harmonic,Original (unison) overtone harmonic,a fourth up overtone harmonic,a fifth up overtone harmonic,1 octave up overtone harmonic,2 octaves up overtone harmonic,3 octaves up overtone harmonic,4 octaves up overtone harmonic,Custom 1 overtone harmonic,Custom 2 overtone harmonic,Custom 3 overtone harmonic,Input level,Output level,Play for,Rest for}>Drift target
+// EIGHTY-SEVEN since 2026-09-13 (the pitch layout), in the order of the controls they reach,
+// with an "all layers" entry for each layer control (R24, Polyrhythm's model). The plugin
+// remaps an old save; tools/morpher_migrate_20260913.py remaps a project line's selectors.
+slider46:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Drift target
 slider47:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider48:0<0,1000,0.01>Drift down amount (per target, units match target)
 slider49:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (per target, Target default where it cannot fit)
@@ -368,7 +368,7 @@ slider55:0<0,1,1{Restart on play,Free-running}>Drift restart (all targets)
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider56:0<0,54,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Pitch,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer level (all layers),4 octaves down level,3 octaves down level,2 octaves down level,1 octave down level,a fifth down level,a fourth down level,Original (unison) level,a fourth up level,a fifth up level,1 octave up level,2 octaves up level,3 octaves up level,4 octaves up level,Custom 1 level,Custom 2 level,Custom 3 level,Layer pitch (all Custom layers),Custom 1 pitch,Custom 2 pitch,Custom 3 pitch,Layer overtone harmonic (all layers),4 octaves down overtone harmonic,3 octaves down overtone harmonic,2 octaves down overtone harmonic,1 octave down overtone harmonic,a fifth down overtone harmonic,a fourth down overtone harmonic,Original (unison) overtone harmonic,a fourth up overtone harmonic,a fifth up overtone harmonic,1 octave up overtone harmonic,2 octaves up overtone harmonic,3 octaves up overtone harmonic,4 octaves up overtone harmonic,Custom 1 overtone harmonic,Custom 2 overtone harmonic,Custom 3 overtone harmonic,Input level,Output level,Play for,Rest for}>Ramp target
+slider56:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Ramp target
 slider57:0<-1000,1000,0.001>Ramp by (per target, units match target)
 slider58:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (per target, Target default where it cannot fit)
 // Ramp time unit -- the unit for Ramp duration, Ramp play/rest and Ramp start
@@ -411,17 +411,18 @@ slider64:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
-N_TARGETS = 55;  // Drift/Ramp targets, in CONTROL ORDER since 2026-09-11 (R24):
-                 // 0 Morph, 1 Auto-morph time, 2 Texture, 3 Wash grain, 4 Spread, 5 Pitch,
-                 // 6 Stereo width, 7 Denoise, 8 Low cut, 9 High cut, 10 Overtone harmonic,
-                 // 11 Overtone lift, 12 Overtone width, 13 Level (all layers), 14-29 the
-                 // layer levels in ladder order, 30 Pitch (all Custom), 31-33 Custom 1-3
-                 // pitch, 34 Overtone harmonic (all layers), 35-50 the layer overtone
-                 // harmonics, 51 Input level, 52 Output level, 53 Play for, 54 Rest for.
-                 // It was 24 (0 Texture ... 7 High cut, 8-23 levels); a save is remapped.
-LEV_T0 = 14;     // layer i's level target
-CP_T0  = 31;     // Custom layer c's pitch target
-LOT_T0 = 35;     // layer i's overtone harmonic target
+N_TARGETS = 87;  // Drift/Ramp targets, in CONTROL ORDER (2026-09-13, the pitch layout):
+                 // 0 Morph, 1 Auto-morph time, 2 Texture, 3 Wash grain, 4 Spread, 5 Transpose,
+                 // 6 Fine tune, 7 Tuning reference, 8 Stereo width, 9 Denoise, 10 Low cut,
+                 // 11 High cut, 12 Overtone harmonic, 13 Overtone lift, 14 Overtone width,
+                 // 15 Layer pitch (all layers), 16-31 Layer 1-16 pitch, 32 fine tune (all),
+                 // 33-48 fine tunes, 49 level (all), 50-65 levels, 66 overtone harmonic (all),
+                 // 67-82 overtone harmonics, 83 Input level, 84 Output level, 85 Play for,
+                 // 86 Rest for. It was 55 (2026-09-11) and 24 before that; a save is remapped.
+LP_T0  = 16;     // Layer k's pitch target (k = 0 is Layer 1)
+LF_T0  = 33;     // Layer k's fine tune target
+LEV_T0 = 50;     // Layer k's level target
+LOT_T0 = 67;     // Layer k's overtone harmonic target
 NLAYERS  = 15;   // pitch-shifted copies of the morph, all behind one selector
 N_CUSTOM = 3;    // slots 0..12 are the fixed intervals, in pitch order:
                  // -48 -36 -24 -12 semitones, -7 -5, unison, +5 +7, +12 +24 +36 +48.
@@ -558,33 +559,34 @@ driftbag  = freemem; freemem += NSLOTS;        // Auto-morph Shuffle bag (even r
 //     did at 28 targets: at 16 the banks are contiguous, so target 16 of one
 //     bank IS target 0 of the next. Spacing is allocation only -- @serialize
 //     writes n_ser_targets from each bank's own base, so the format is unmoved. ---
-// Re-spaced 32 -> 64 on 2026-09-11, when the target list reached 55.
-target_drift_up     = freemem; freemem += 64;  // CONFIG: up amount   (survives transport)
-target_drift_down   = freemem; freemem += 64;  // CONFIG: down amount
-target_drift_per    = freemem; freemem += 64;  // CONFIG: period (seconds)
-target_drift_shape  = freemem; freemem += 64;  // CONFIG: 0 Sine / 1 Triangle / 2 Random
-target_drift_phase  = freemem; freemem += 64;  // RUNTIME: 0..1 phase (reset on play)
-target_drift_prev   = freemem; freemem += 64;  // RUNTIME: Random shape prev value
-target_drift_curr   = freemem; freemem += 64;  // RUNTIME: Random shape target value
-target_drift_offset = freemem; freemem += 64;  // RUNTIME: current offset (read at consumption)
-target_drift_play   = freemem; freemem += 64;  // CONFIG: play window, drift periods (0 = always)
-target_drift_rest   = freemem; freemem += 64;  // CONFIG: rest window, drift periods
-drift_pr_resting    = freemem; freemem += 64;  // RUNTIME: 1 = frozen
-drift_pr_accum      = freemem; freemem += 64;  // RUNTIME: fractional periods into this window
-ramp_play_mem       = freemem; freemem += 64;  // CONFIG: play window, ramp minutes (0 = smooth)
-ramp_rest_mem       = freemem; freemem += 64;  // CONFIG: rest window, ramp minutes
-ramp_pr_resting     = freemem; freemem += 64;  // RUNTIME: 1 = holding
-ramp_pr_accum       = freemem; freemem += 64;  // RUNTIME: fractional minutes into this window
-td_active           = freemem; freemem += 64;  // @slider: 1 if a target has any drift configured
+// Re-spaced 32 -> 64 on 2026-09-11, when the target list reached 55, and 64 -> 128 on 2026-09-13
+// when it reached 87.
+target_drift_up     = freemem; freemem += 128;  // CONFIG: up amount   (survives transport)
+target_drift_down   = freemem; freemem += 128;  // CONFIG: down amount
+target_drift_per    = freemem; freemem += 128;  // CONFIG: period (seconds)
+target_drift_shape  = freemem; freemem += 128;  // CONFIG: 0 Sine / 1 Triangle / 2 Random
+target_drift_phase  = freemem; freemem += 128;  // RUNTIME: 0..1 phase (reset on play)
+target_drift_prev   = freemem; freemem += 128;  // RUNTIME: Random shape prev value
+target_drift_curr   = freemem; freemem += 128;  // RUNTIME: Random shape target value
+target_drift_offset = freemem; freemem += 128;  // RUNTIME: current offset (read at consumption)
+target_drift_play   = freemem; freemem += 128;  // CONFIG: play window, drift periods (0 = always)
+target_drift_rest   = freemem; freemem += 128;  // CONFIG: rest window, drift periods
+drift_pr_resting    = freemem; freemem += 128;  // RUNTIME: 1 = frozen
+drift_pr_accum      = freemem; freemem += 128;  // RUNTIME: fractional periods into this window
+ramp_play_mem       = freemem; freemem += 128;  // CONFIG: play window, ramp minutes (0 = smooth)
+ramp_rest_mem       = freemem; freemem += 128;  // CONFIG: rest window, ramp minutes
+ramp_pr_resting     = freemem; freemem += 128;  // RUNTIME: 1 = holding
+ramp_pr_accum       = freemem; freemem += 128;  // RUNTIME: fractional minutes into this window
+td_active           = freemem; freemem += 128;  // @slider: 1 if a target has any drift configured
 // --- Ramp: per-target config + runtime banks (64-slot-spaced, as above) ---
-ramp_by_mem            = freemem; freemem += 64;  // CONFIG: signed `by` amount
-ramp_dur_mem           = freemem; freemem += 64;  // CONFIG: duration (minutes)
-ramp_delay_mem         = freemem; freemem += 64;  // CONFIG: start delay (minutes)
-ramp_t_mem             = freemem; freemem += 64;  // RUNTIME: 0..1 ride progress (reset on play)
-ramp_delay_elapsed_mem = freemem; freemem += 64;  // RUNTIME: start-delay sample counter
-ramp_offset_mem        = freemem; freemem += 64;  // RUNTIME: ramp_t * by (read at consumption)
-mod_active             = freemem; freemem += 64;  // @slider: 1 if a target has drift OR ramp configured
-mo_order               = freemem; freemem += 64;  // the drift loop's order: the old twenty-four first
+ramp_by_mem            = freemem; freemem += 128;  // CONFIG: signed `by` amount
+ramp_dur_mem           = freemem; freemem += 128;  // CONFIG: duration (minutes)
+ramp_delay_mem         = freemem; freemem += 128;  // CONFIG: start delay (minutes)
+ramp_t_mem             = freemem; freemem += 128;  // RUNTIME: 0..1 ride progress (reset on play)
+ramp_delay_elapsed_mem = freemem; freemem += 128;  // RUNTIME: start-delay sample counter
+ramp_offset_mem        = freemem; freemem += 128;  // RUNTIME: ramp_t * by (read at consumption)
+mod_active             = freemem; freemem += 128;  // @slider: 1 if a target has drift OR ramp configured
+mo_order               = freemem; freemem += 128;  // the drift loop's order: the old twenty-four first
 dui_last               = freemem; freemem += 16;  // mirror of the eleven visible Drift/Ramp controls
 lay_ot_eff             = freemem; freemem += 32;  // each layer's overtone harmonic with drift and ramp
 lay_punit   = freemem; freemem += 32;   // each layer's pitch unit {Hz, Semitones, Cents} (2026-09-13)
@@ -593,6 +595,7 @@ lay_funit   = freemem; freemem += 32;   // ...and its unit
 lay_lad     = freemem; freemem += 32;   // Layer k (0 = Layer 1) -> its index in the old pitch ladder
 lay_ladinv  = freemem; freemem += 32;   // ...and back
 lay_ui_last = freemem; freemem += 16;   // mirror of the nine visible layer controls
+tg_scratch  = freemem; freemem += 128;  // @init's and @serialize's copy of a 55-target list
 // The thirteen ladder layers' intervals, as Layers 1-13 start. Layer 1, the Original, is 0.
 function lay_seed_ladder() (
   lay_semi[0] = 0;
@@ -679,9 +682,15 @@ texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
 i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hph[i]; hphBR[i] = hphB[i]; i += 1; );
 // Layer phases: random start per layer, R seeded from L (they part company only
 // once Stereo width detunes them), mirroring the base banks above.
+// Filled in the OLD ladder's memory order (2026-09-13): Layer 1 became the Original, so the
+// six layers below it moved one slot along. Each layer keeps the starting phases it always
+// had, so a saved stack starts exactly as it did. Ladder slot s is Layer 1 at s = 6, Layer
+// s + 2 below it, and keeps its slot above it.
 i = 0; loop(N_LAY_SLOTS*NHARM,
-  lay_hph[i] = rand(1)*TWOPI; lay_hphB[i] = rand(1)*TWOPI;
-  lay_hphR[i] = lay_hph[i];   lay_hphBR[i] = lay_hphB[i];
+  lpo_s = floor(i / NHARM);
+  lpo_k = (lpo_s == 6 ? 0 : lpo_s < 6 ? lpo_s + 1 : lpo_s) * NHARM + (i - lpo_s * NHARM);
+  lay_hph[lpo_k] = rand(1)*TWOPI; lay_hphB[lpo_k] = rand(1)*TWOPI;
+  lay_hphR[lpo_k] = lay_hph[lpo_k];   lay_hphBR[lpo_k] = lay_hphB[lpo_k];
   i += 1;
 );
 // The ladder's fixed ratios became every layer's own pitch on 2026-09-13; @block derives
@@ -752,15 +761,15 @@ in_rest = 0; in_start_delay = 0; mod_frozen = 0; morph_frozen = 0;
 // starts somewhere different. One-time, bounded, ~free.
 _tp = time_precise(); i = 0; loop(floor(1 + (_tp - floor(_tp)) * 500), rand(1); i += 1; );
 
-// --- The fifty-five targets (2026-09-11) -------------------------------------
-// The three "all" entries -- 13 levels, 30 Custom pitches, 34 overtone harmonics --
-// hold nothing of their own, on Polyrhythm's model: reading one shows its first
-// member, writing it reaches every member.
-function mo_is_all(t) ( t == 13 || t == 30 || t == 34; );
+// --- The eighty-seven targets (2026-09-13) ------------------------------------
+// The four "all layers" entries -- 15 pitch, 32 fine tune, 49 level, 66 overtone harmonic --
+// hold nothing of their own, on Polyrhythm's model: reading one shows Layer 1's, writing it
+// reaches all sixteen.
+function mo_is_all(t) ( t == 15 || t == 32 || t == 49 || t == 66; );
 function mo_read_slot(t) ( mo_is_all(t) ? t + 1 : t; );
 function mo_write(t, tbank, tval) local(mw_k) (
   mo_is_all(t) ? (
-    mw_k = 1; loop(t == 30 ? 3 : 16, tbank[t + mw_k] = tval; mw_k += 1;);
+    mw_k = 1; loop(16, tbank[t + mw_k] = tval; mw_k += 1;);
   ) : (
     tbank[t] = tval;
   );
@@ -774,6 +783,19 @@ function mo_capture(t, tbank, tval, tslot) (
 function mo_o2n(o) (
   o == 0 ? 2 : o == 1 ? 4 : o == 2 ? 5 : o == 3 ? 6 : o == 4 ? 8 : o == 5 ? 52 :
   o == 6 ? 10 : o == 7 ? 9 : o + 6;
+);
+// A 55-target save's index (2026-09-11), in this list. Its layer entries were in the old
+// pitch ladder's order, so lay_ladinv finds each layer. Its "Layer pitch (all Custom layers)"
+// held nothing and no saved copy was parked on it (135 read); it becomes "all layers".
+function t55_o2n(o) (
+  o <= 5 ? o : o <= 12 ? o + 2 : o == 13 ? 49 : o <= 29 ? LEV_T0 + lay_ladinv[o - 14] :
+  o == 30 ? 15 : o <= 33 ? LP_T0 + 13 + (o - 31) : o == 34 ? 66 : o <= 50 ? LOT_T0 + lay_ladinv[o - 35] :
+  o + 32;
+);
+function t87_remap(bank, dflt) local(tr_k) (
+  tr_k = 0; loop(55, tg_scratch[tr_k] = bank[tr_k]; tr_k += 1;);
+  tr_k = 0; loop(N_TARGETS, bank[tr_k] = dflt; tr_k += 1;);
+  tr_k = 0; loop(55, bank[t55_o2n(tr_k)] = tg_scratch[tr_k]; tr_k += 1;);
 );
 function mo_remap(bank, dflt) local(mr_k) (
   mr_k = 0; loop(24, ser_scratch[mr_k] = bank[mr_k]; mr_k += 1;);
@@ -799,10 +821,19 @@ pv_inited = 0;   // the Source/Target note trackers are adopted in @block
 // THE DRIFT LOOP RUNS THE OLD TWENTY-FOUR FIRST, IN THEIR OLD ORDER. Random drift
 // draws rand(), one stream, so two targets wrapping on one sample must draw in the
 // order they always did.
-mo_k = 0; loop(24, mo_order[mo_k] = mo_o2n(mo_k); mo_k += 1;);
+// First the order the 55-target list was visited in (its old twenty-four first), then each of
+// those moved to where it sits now, then the thirty-two targets that are new.
+mo_k = 0; loop(24, tg_scratch[mo_k] = mo_o2n(mo_k); mo_k += 1;);
+mo_i = 0;
+loop(55,
+  mo_old = 0; mo_j = 0; loop(24, mo_o2n(mo_j) == mo_i ? mo_old = 1; mo_j += 1;);
+  !mo_old ? ( tg_scratch[mo_k] = mo_i; mo_k += 1; );
+  mo_i += 1;
+);
+mo_k = 0; loop(55, mo_order[mo_k] = t55_o2n(tg_scratch[mo_k]); mo_k += 1;);
 mo_i = 0;
 loop(N_TARGETS,
-  mo_old = 0; mo_j = 0; loop(24, mo_o2n(mo_j) == mo_i ? mo_old = 1; mo_j += 1;);
+  mo_old = 0; mo_j = 0; loop(55, t55_o2n(mo_j) == mo_i ? mo_old = 1; mo_j += 1;);
   !mo_old ? ( mo_order[mo_k] = mo_i; mo_k += 1; );
   mo_i += 1;
 );
@@ -1571,8 +1602,8 @@ tr_k            = time_mode >= 3 ? 60 / max(tempo, 0.001) : 1;
 start_delay_sec = slider41 * tr_k;
 // Play for and Rest for (targets 53, 54) while driven; the gate still switches on
 // only when both SLIDERS are above zero, which is what this always tested.
-pr_play_sec     = (mod_active[53] ? max(0.001, slider42 + mo_q(53)) : slider42) * tr_k;
-pr_rest_sec     = (mod_active[54] ? max(0.001, slider43 + mo_q(54)) : slider43) * tr_k;
+pr_play_sec     = (mod_active[85] ? max(0.001, slider42 + mo_q(85)) : slider42) * tr_k;
+pr_rest_sec     = (mod_active[86] ? max(0.001, slider43 + mo_q(86)) : slider43) * tr_k;
 pr_enabled      = slider42 * tr_k > 0 && slider43 * tr_k > 0;
 morph_at_rest   = slider44;   // 0 walk through, 1 freeze in place
 out_at_rest     = slider45;   // 0 pass-through, 1 silence
@@ -1748,12 +1779,12 @@ cap_last = cap_trig;
 // Only values derived from a SLIDER may live in @slider, because those arrive
 // with the slider itself.
 // Every layer's pitch, an offset from Transpose in its own units (2026-09-13). Layer 1 is
-// the Original and moves like the rest. Until the 87-target list, only Custom 1-3 (Layers
-// 14-16) are pitch targets. At Semitones with no fine tune this is the number it always was.
+// the Original and moves like the rest. Pitch (16-31) and fine tune (33-48) are targets.
+// At Semitones with no fine tune this is the number it always was.
 lz = 0;
 loop(N_LAY_SLOTS,
-  lzt = lz >= LAY_CUSTOM0 ? CP_T0 + lz - LAY_CUSTOM0 : -1;
-  layer_ratio[lz] = pow(2.0, (pv_semis(lay_punit[lz], lay_semi[lz] + (lzt >= 0 && mod_active[lzt] ? mo_q(lzt) : 0)) + pv_semis(lay_funit[lz], lay_fine[lz]))/12);
+  layer_ratio[lz] = pow(2.0, (pv_semis(lay_punit[lz], lay_semi[lz] + (mod_active[LP_T0+lz] ? mo_q(LP_T0+lz) : 0))
+                             + pv_semis(lay_funit[lz], lay_fine[lz] + (mod_active[LF_T0+lz] ? mo_q(LF_T0+lz) : 0)))/12);
   lz += 1;
 );
 // Inactive is a gain of 0 and nothing else -- the dB the user set stays in the
@@ -1942,8 +1973,8 @@ ri = 0; loop(N_TARGETS, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; 
 // real range. A derived global (hlevel/wlevel, pitch_ratio, voice_gain,
 // voice_detune) is only overwritten when its target is being modulated at all,
 // so a plugin with no Drift and no Ramp is bit-identical to before.
-// Target numbers below are the 2026-09-11 list: Texture 2, Spread 4, Pitch 5,
-// Stereo width 6, Low cut 8, Output level 52, High cut 9, Overtone harmonic 10.
+// Target numbers below are the 2026-09-13 list: Texture 2, Spread 4, Transpose 5, Fine tune 6,
+// Tuning reference 7, Stereo width 8, Low cut 10, High cut 11, Overtone harmonic 12, Output level 84.
 mo0 = target_drift_offset[2] + ramp_offset_mem[2];
 mod_active[2] ? (   // Texture: internal 0..1, offset is in 0-100 Texture units
   eff_tex = max(0, min(1, texture + mo0 * 0.01));
@@ -1953,22 +1984,25 @@ mod_active[2] ? (   // Texture: internal 0..1, offset is in 0-100 Texture units
 // sweep widened the slider past and left here. Rozaya: "That should have been lifted with
 // the slider extention, so... go for it". No saved copy sat above 150 (123 read).
 eff_spread_hz    = max(0,  min(1000, spread_hz    + (mod_active[4] ? target_drift_offset[4] + ramp_offset_mem[4] : 0)));
-mod_active[5] ? (   // Pitch (semitones)
+// Tuning reference (7) first: it is what an Hz value counts from.
+tuning_ref = mod_active[7] ? max(20, min(2000, tuning_base + mo_q(7))) : tuning_base;
+(mod_active[5] || mod_active[6] || mod_active[7]) ? (   // Transpose, Fine tune, Tuning reference
   // NOT clamped -- same reasoning as the twin in spectral_vowel_passage.
   // Pinning this to the slider's own +/-36 meant Drift and Ramp flattened
   // against the edge: the modulation kept moving and the sound stopped. The
   // spectral read is already bounds-guarded and the voice path only makes a
   // frequency, so an extreme value is inaudible rather than unsafe.
-  eff_semi = pv_semis(pitch_unit, pitch_semi + target_drift_offset[5] + ramp_offset_mem[5]) + pv_semis(pitch_funit, pitch_fine);
+  eff_semi = pv_semis(pitch_unit, pitch_semi + target_drift_offset[5] + ramp_offset_mem[5])
+           + pv_semis(pitch_funit, pitch_fine + target_drift_offset[6] + ramp_offset_mem[6]);
   pitch_ratio = pow(2.0, eff_semi/12);
 );
-eff_stereo_width = max(0,  min(100, stereo_width + (mod_active[6] ? target_drift_offset[6] + ramp_offset_mem[6] : 0)));
-mod_active[6] ? ( voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX; );
+eff_stereo_width = max(0,  min(100, stereo_width + (mod_active[8] ? target_drift_offset[8] + ramp_offset_mem[8] : 0)));
+mod_active[8] ? ( voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX; );
 // Low cut reaches its slider's 20000 Hz (2026-09-13). It stopped at 500, the same leftover
 // as Spread's 150: the hidden-limit audit heard 500 and 20000 render bit-identical.
-eff_lowcut_hz    = max(0,  min(20000, lowcut_hz    + (mod_active[8] ? target_drift_offset[8] + ramp_offset_mem[8] : 0)));
-mod_active[52] ? (   // Output level (dB) -- named Voice level until 2026-08
-  eff_vdb = max(-60, min(12, voice_db_base + target_drift_offset[52] + ramp_offset_mem[52]));
+eff_lowcut_hz    = max(0,  min(20000, lowcut_hz    + (mod_active[10] ? target_drift_offset[10] + ramp_offset_mem[10] : 0)));
+mod_active[84] ? (   // Output level (dB) -- named Voice level until 2026-08
+  eff_vdb = max(-60, min(12, voice_db_base + target_drift_offset[84] + ramp_offset_mem[84]));
   voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
 );
 // --- High cut (target 7). Derived into the four numbers both engines read:
@@ -1978,7 +2012,7 @@ mod_active[52] ? (   // Output level (dB) -- named Voice level until 2026-08
 //     Nyquist test compares against exactly srate*0.5, as it always did. The
 //     fade (the top fifth of the cut) is there because this is a Drift/Ramp
 //     target: a hard gate would step each partial off as the cut swept past it. ---
-eff_hicut_hz = max(200, min(20000, hicut_hz + (mod_active[9] ? target_drift_offset[9] + ramp_offset_mem[9] : 0)));
+eff_hicut_hz = max(200, min(20000, hicut_hz + (mod_active[11] ? target_drift_offset[11] + ramp_offset_mem[11] : 0)));
 hc_on = eff_hicut_hz < 19999.5 ? 1 : 0;
 hc_on ? (
   hc_top = eff_hicut_hz; hc_lo = eff_hicut_hz * 0.8;
@@ -2003,8 +2037,8 @@ loop(N_LAY_SLOTS,
   // Drift and Ramp move the level, never the switch: an Inactive layer stays
   // silent however far its level target wanders, so arming drift on a layer you
   // have muted cannot bring it back without you.
-  (mod_active[LEV_T0+lay_lad[lz]] && (any_solo ? lay_solo[lz] >= 0.5 : lay_active[lz] >= 0.5)) ? (
-    eff_ldb = max(-60, min(0, lay_db_base[lz] + target_drift_offset[LEV_T0+lay_lad[lz]] + ramp_offset_mem[LEV_T0+lay_lad[lz]]));
+  (mod_active[LEV_T0+lz] && (any_solo ? lay_solo[lz] >= 0.5 : lay_active[lz] >= 0.5)) ? (
+    eff_ldb = max(-60, min(0, lay_db_base[lz] + target_drift_offset[LEV_T0+lz] + ramp_offset_mem[LEV_T0+lz]));
     layer_gain[lz] = eff_ldb <= -60 ? 0 : pow(10, eff_ldb/20);
   );
   // nlay_on gates the pitch-shifted synthesis only, so the original never sets
@@ -2134,10 +2168,10 @@ audition_mode < 0.5 ? (
 // eff_ot_h is deliberately fractional: Drift and Ramp move it continuously, and a
 // real singer's resonance sweeps rather than jumps, so at 7.5 the window sits
 // across partials 7 and 8 and the emphasis hands over between them.
-eff_ot_h = max(0, min(NHARM, ot_harm_base + target_drift_offset[10] + ramp_offset_mem[10]));
+eff_ot_h = max(0, min(NHARM, ot_harm_base + target_drift_offset[12] + ramp_offset_mem[12]));
 // Overtone lift (11) and width (12), while driven; otherwise @slider's values stand.
-mod_active[11] ? ( ot_depth_db = max(0, min(48, ot_depth_base + mo_q(11))); );
-mod_active[12] ? ( ot_width = max(0.5, min(4, ot_width_base + mo_q(12))); );
+mod_active[13] ? ( ot_depth_db = max(0, min(48, ot_depth_base + mo_q(13))); );
+mod_active[14] ? ( ot_width = max(0.5, min(4, ot_width_base + mo_q(14))); );
 // Each layer's overtone harmonic (35-50). A drift moves only a layer that has its
 // own harmonic; a follower (-1) stays a follower. A change rebuilds the curve.
 lot_changed = 0; lok = 0;
@@ -2146,7 +2180,7 @@ loop(N_LAY_SLOTS,
   // lay_ot_eff[lok], so it read its own output, stayed at -2, and every layer
   // followed the global harmonic -- caught by a pitched-voice test, 2026-09-11.
   lot_e = lay_ot_harm[lok];
-  (lot_e >= 0 && mod_active[LOT_T0+lay_lad[lok]]) ? ( lot_e = max(0, min(NHARM, lot_e + mo_q(LOT_T0+lay_lad[lok]))); );
+  (lot_e >= 0 && mod_active[LOT_T0+lok]) ? ( lot_e = max(0, min(NHARM, lot_e + mo_q(LOT_T0+lok))); );
   lot_e != lay_ot_eff[lok] ? ( lay_ot_eff[lok] = lot_e; lot_changed = 1; );
   lok += 1;
 );
@@ -2247,9 +2281,9 @@ ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
 ) : ( ot_bin = 0; );
 
 // Denoise (7, percent) and Input level (51, dB), per sample only while driven.
-mod_active[7] ? ( denoise_amt = max(0, min(100, denoise_base + mo_q(7))); );
-mod_active[51] ? (
-  mo_dry_db = max(-60, min(12, dry_db_base + mo_q(51)));
+mod_active[9] ? ( denoise_amt = max(0, min(100, denoise_base + mo_q(9))); );
+mod_active[83] ? (
+  mo_dry_db = max(-60, min(12, dry_db_base + mo_q(83)));
   dry_gain = mo_dry_db <= -60 ? 0 : pow(10, mo_dry_db/20);
 );
 dryL = spl0 * dry_gain; dryR = spl1 * dry_gain;
@@ -2559,7 +2593,7 @@ in_rest ? (
 ser_magic = 7700055;
 file_var(0, ser_magic);
 (ser_magic == 7700055 || ser_magic == 7700011 || ser_magic == 7700010 || ser_magic == 7700009 || ser_magic == 7700008 || ser_magic == 7700007 || ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
-  n_ser_targets = ser_magic == 7700055 ? N_TARGETS : ser_magic >= 7700006 ? 24 : ser_magic == 7700005 ? 23 :
+  n_ser_targets = ser_magic == 7700055 ? 55 : ser_magic >= 7700006 ? 24 : ser_magic == 7700005 ? 23 :
                   ser_magic == 7700004 ? 19 : ser_magic == 7700002 ? 7 : 6;
   file_var(0, have);
   file_var(0, n_used);
@@ -2784,6 +2818,19 @@ file_var(0, ser_magic);
     mo_remap(ramp_play_mem, 0);      mo_remap(ramp_rest_mem, 0);
     last_target_select = mo_o2n(max(0, min(23, last_target_select | 0)));
     last_ramp_target   = mo_o2n(max(0, min(23, last_ramp_target | 0)));
+  );
+
+  // --- The 55-target list -> the 87 of 2026-09-13, walked after the remap above has brought
+  //     every older blob to 55. Uses lay_ladinv, so it reads the layer entries in ladder order.
+  (file_avail(0) >= 0 && ser_magic <= 7700055) ? (
+    t87_remap(target_drift_up, 0);    t87_remap(target_drift_down, 0);
+    t87_remap(target_drift_per, 30);  t87_remap(target_drift_shape, 0);
+    t87_remap(ramp_by_mem, 0);        t87_remap(ramp_dur_mem, 0);
+    t87_remap(ramp_delay_mem, 0);
+    t87_remap(target_drift_play, 0);  t87_remap(target_drift_rest, 0);
+    t87_remap(ramp_play_mem, 0);      t87_remap(ramp_rest_mem, 0);
+    last_target_select = t55_o2n(max(0, min(54, last_target_select | 0)));
+    last_ramp_target   = t55_o2n(max(0, min(54, last_ramp_target | 0)));
   );
 
   // --- The pitch ladder -> Layer 1-16 (2026-09-13), walked after every migration above has

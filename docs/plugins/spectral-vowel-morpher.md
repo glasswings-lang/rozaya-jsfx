@@ -62,7 +62,7 @@ Grab the current moment into the selected slot. It captures *whatever audio is r
 
 **Each slot keeps its own Capture point.** When you capture a slot it remembers where you scrubbed to, and scrubbing one slot no longer re-tunes the others. Switching **Capture slot** shows that slot's saved point on the slider, so you can bank several captures and tune each one to its own vowel independently. Saved points persist across reload. (Older projects made before this change open with every slot on the single point they shared; re-scrub any slot to give it its own.)
 
-**Capture average (frames)** `1 to 6, default 1` — *one setting for all eight slots*
+**Capture average (frames, all slots)** `1 to 6, default 1` — *one setting for all eight slots*
 How many analysis frames the **wash** spectrum is averaged over. At 1 you get the original single-frame analysis. Turn it up if a slot wobbles.
 
 A single frame freezes that one frame's per-bin scatter and replays it on every grain. On a natural sustained voice, successive frames look alike and you'll never hear it — but on material that has *already* been through a spectral process, the scatter is irregular and its repetition becomes an audible wobble sitting centre-image. Averaging several frames lets the scatter cancel while the real spectral shape survives. The cost is time-smear: the frames span a stretch of the grab, so a vowel that *moves* gets blended across the average. That's why it's a dial and not automatic — **turn it up until the wobble goes, and no further.**
@@ -80,17 +80,11 @@ Crossfades across the captured slots. Pitch-preserving — each slot plays at it
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. One full pass takes one Auto-morph time, so each slot gets an equal share of it — same timing and same gentle crossfades as Sweep, just shuffled (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
-**Rate Mode** `Off / On, default Off`
-Whether **Auto-morph time** below is counted in seconds or in beats of the project tempo.
+**Auto-morph time (BPM / sec / Hz / beats per cycle / per beat)** `0.01 to 1000, default 20`
+How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Shuffle it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow motion. Its unit is **Rate Mode**, right below it (see the Rate Mode section).
 
-Auto-morph time is a *duration*, and a duration's two honest units are seconds and beats — so this is one switch rather than a mode list. There is no ratio menu and no note-value grid: a morph every **5** beats is exactly as reachable as one every 4, which is the point in a suite about layers slipping against each other.
-
-Flipping it doesn't change what you hear. The value converts at the current tempo, so a 20-second morph becomes however many beats that is and keeps running at the same speed — only the unit you type in changes. With it On, a tempo change carries the morph with it.
-
-Shown only when Auto-morph is running, alongside the time it governs.
-
-**Auto-morph time (sec / min / beats by Rate Mode)** `0.01 to 1000, default 20`
-How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Shuffle it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow motion.
+**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`
+What Auto-morph time is counted in. *(Below its value since 2026-09-13, the way every rate block in the suite reads: the number, then its unit.)*
 
 **Texture (% wash)** `0 to 100, default 50`
 Crossfades 0 = Voice (harmonic, keeps the vowel) to 100 = Wash (spectral, breathy bed). The middle layers both — vowel plus air.
@@ -101,19 +95,31 @@ The wash's grain length: short = rougher and grainier, long = glassier and smoot
 **Spread (Hz)** `0 to 1000, default 0`
 Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
 
-**Pitch (semitones)** `-96 to +96, default 0`
+**The pitch block** — added 2026-09-13, the same controls Passage and Bubbler have, here for the whole plugin. Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes." Every layer's pitch is an offset from this, so the whole stack moves together.
 
-Drift and Ramp are applied ON TOP of this and are **not** clipped back to the
-slider range, so modulation can carry the pitch beyond +/-96. Previously it was
-pinned there, which meant a wide Drift flattened against the edge: the
-modulation carried on moving while the sound stopped changing.
-Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."
+**Source note (where zero is)** `None, C-1 to G9, default None`
+Tell the plugin what note your capture already is, and you can then pick the note you want by name in **Target note**. It never changes the sound on its own — it only says what 0 semitones means. At **None** nothing is measured from it.
+
+**Source fine tune (only with a Source note, in Semitones)** `-1000 to 1000, default 0` and **Source fine tune unit** `Hz / Semitones / Cents, default Cents`
+For a capture that sits between two notes — say C4 a little flat. Like Source note it changes nothing you hear; it corrects what Target note counts from. It only acts while a Source note is set and Transpose unit is Semitones, which its name says.
+
+**Target note (only with a Source note, in Semitones)** `C-1 to G9`
+Pick the note you want the capture to sound as. It writes the shift into Transpose value for you. Shown only while a Source note is set and Transpose unit is Semitones.
+
+**Transpose value (Hz / semitones / cents)** `-96 to +96, default 0` and **Transpose unit** `Hz / Semitones / Cents, default Semitones`
+How far to shift, in the unit you choose. Hz counts from the **Tuning reference**. (Named *Pitch (semitones)* until 2026-09-13; saved projects keep their number, in Semitones.) Drift and Ramp are applied on top and are **not** clipped back to the slider range, so modulation can carry the pitch beyond it.
+
+**Fine tune** `-1000 to 1000, default 0` and **Fine tune unit** `Hz / Semitones / Cents, default Cents`
+A small correction added to Transpose, in its own unit.
+
+**Tuning reference (Hz)** `20 to 2000, default 440`
+What A4 is, for every value in Hz. Heard only where something is in Hz.
 
 **Stereo width (%)** `0 to 100, default 50`
 Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phase (mono-safe). In the voice it runs a slightly-detuned copy on the right channel (up to ~14 cents at 100), so the two sides beat slowly against each other — real width plus a shimmer that softens the robotic edge of the pure harmonics. At 0 the voice is exactly mono (unchanged from older projects). The detuned voice is only computed when the voice is actually audible (Texture below full wash), so living on the wash costs nothing.
 
-**Denoise (%)** `0 to 100, default 0`
-Spectral subtraction — raise to thin toward the strongest partials (more tonal, more gated).
+**Denoise (%, wash only)** `0 to 100, default 0`
+Spectral subtraction on the wash — raise to thin toward the strongest partials (more tonal, more gated). The voice engine never reads it, which its name now says (it was *Denoise (%)*, same control, same values).
 
 **Low cut (Hz)** `0 to 20000, default 0`
 Removes low rumble from the resynth. It is applied to the captured spectrum *before* the pitch shift, so it **moves with Pitch** — pitch a capture down an octave and its low cut comes down with it. That is how it has always behaved and it is left alone so existing projects sound the same; High cut, below, deliberately works the other way.
@@ -171,58 +177,39 @@ How sharp the resonance is. **1** is the classic narrow whistle. Higher values l
 
 > **Corrected 2026-09-01: the wash overtone and Pitch.** The wash's overtone window was positioned by folding **Pitch** into it and then looking that position up in the *captured* spectrum — two different frequency scales. With Pitch at 0 they agree and it was right. At any other Pitch the wash lifted the wrong harmonic: at +12 semitones it lifted harmonic 2n instead of harmonic n. It now lands on the harmonic you asked for at every Pitch. **If you have a project using Overtone and Pitch together, its wash overtone will sit on a different partial than it used to** — the one it was always meant to. The voice engine was never affected. Found by reading the code, not by ear.
 
-### Layers (octave stacking)
+### Layers (sixteen, each with its own pitch)
 
-Extra copies of **the whole instrument** — voice and wash both — playing at a fixed interval from the main pitch, at the same time, from the same instance. Sixteen entries: twelve fixed intervals — four octaves each way, plus fifths and fourths — three free-interval Custom layers, and the Original itself, all behind **seven sliders**.
+Extra copies of **the whole instrument** — voice and wash both — at the same time, from the same instance, **each at a pitch you set**. Since 2026-09-13 there are sixteen plain layers, **Layer 1 to Layer 16**, and **Layer 1 is the Original**: the morph itself, which can now be shifted like any other. Rozaya: *"The layers were there to take away drift ... I didn't mean for them to stay in lockstep. So we do need fine tune per layer, and we do need all the modes that pitch has."*
 
-The point is the *lock*. Two instances of the plugin on Shuffle wander independently: one lands on your "ah" while the other is on an "oo" a fifth away, and the octaves you wanted arrive as a clash. A Layer is not another instance — it is the same capture, at the same morph position, in the same crossfade, an octave away. Every slot change, every Drift, every Shuffle step happens to all of them together, so a stack stays consonant no matter where the morph wanders. Layers ride Pitch as *offsets* from it, so pitching (or Drifting, or Ramping) the main Pitch transposes the whole stack as one.
+The point is still the *lock*. Two instances of the plugin on Shuffle wander independently: one lands on your "ah" while the other is on an "oo" a fifth away, and the octaves you wanted arrive as a clash. A layer is not another instance — it is the same capture, at the same morph position, in the same crossfade, at another pitch. Every slot change, every Drift, every Shuffle step happens to all of them together. What changed is that the intervals are yours to set rather than a ladder's to dictate. Layer pitches are *offsets* from Transpose, so moving Transpose (or Drifting, or Ramping it) moves the whole stack as one.
 
-They work the way Drift target and Capture slot do: **every layer sounds at once**, and the selector only chooses which one the sliders below are editing. The selector is a view, never a mute.
+They work the way Drift target and Capture slot do: **every layer sounds at once**, and the selector only chooses which one the controls below are editing. The selector is a view, never a mute.
 
-**Layer** `4, 3, 2, 1 octaves down / a fifth down / a fourth down / Original (unison) / a fourth up / a fifth up / 1, 2, 3, 4 octaves up / Custom 1-3, default Original`
-Which layer you are setting. For the twelve named entries the interval is decided by the name — there is nothing to convert and nothing else to set but the level.
+**Layer** `All, Layer 1 to Layer 16, default Layer 1`
+Which layer you are setting. **All** reaches every layer at once — but only the control you actually move, so passing through All, or parking on it, changes nothing. On All the controls show Layer 1's values. Setting a pitch on All puts every layer on that pitch, which is sometimes exactly what you want and easy to do by accident.
 
-The list is a **pitch ladder** — four octaves down at the top, four octaves up at the bottom, and the three Custom slots trailing it because an arbitrary interval has no place in a ladder. **Original (unison)** sits in the middle, between the fourth down and the fourth up, which is exactly where your ear puts it.
+**Where each layer starts.** A fresh instance is the instrument it always was: Layer 1 at 0, Layers 2–7 at −48, −36, −24, −12, −7 and −5 semitones, Layers 8–13 at +5, +7, +12, +24, +36 and +48, and Layers 14–16 at −12, +12 and −24 (the old Custom layers). Every layer except Layer 1 starts at −60 dB, off. Saved projects kept their layers: the layer that was "1 octave up" is Layer 10 at +12, and so on.
 
-The Original is the morph itself — the thing every layer stacks around. It takes Active, Level and Solo exactly like a layer does, so you can solo it to hear what the stack is built on, mute it to hear only the octaves, or pull it down and let an octave lead. It has no interval, because it *is* the interval everything else is measured from. Putting it at either *end* of the list was the same mistake twice — an entry out of musical order, just from opposite directions. Its position cost an index shift on saved projects; see the migration note at the bottom of this page.
+**Layer active (per layer)** `Inactive / Active, default Active`
+Silences the selected layer **without losing its level**. −60 means "this layer is silent because that's the level I want"; Inactive means "silence it and give it back to me later." Costs nothing while off. Drift and Ramp move the *level*, never this switch.
 
-Its level defaults to **0 dB**, not off — it's the sound.
+**Layer pitch value (Hz / semitones / cents, per layer)** `-96 to +96` and **Layer pitch unit (per layer)** `Hz / Semitones / Cents, default Semitones`
+Where this layer sits, as an offset from Transpose, in the unit you choose. Hz counts from the Tuning reference. A Drift and Ramp target, for every layer.
 
-**Layer active** `Inactive / Active, default Active`
-Silences the selected layer **without losing its level**. That's the difference between this and a level of −60: −60 means "this layer is silent because that's the level I want," Inactive means "silence it and give it back to me later." Flip it off, flip it back on, and the dB you tuned is exactly where you left it. Costs the same nothing as −60 while it's off — the layer's DSP is skipped either way.
+**Layer fine tune (per layer)** `-1000 to 1000, default 0` and **Layer fine tune unit (per layer)** `Hz / Semitones / Cents, default Cents`
+A small offset on top of the layer's pitch — a few cents for a slow beating unison. Also a Drift and Ramp target.
 
-Drift and Ramp move the *level*, never this switch, so arming drift on a layer you've muted can't bring it back without you.
+**Layer level (dB, per layer, -60 = off)** `-60 to 0`
+How loud the selected layer sits. **The number you set is the number you get**: no auto-balancing, nothing moving under your hand. Levels **add**, so a dozen layers at 0 dB will clip if you let them. **−60 is truly off** and costs no CPU.
 
-**Layer level (dB)** `-60 to 0, default -60 (off)`
-How loud the selected layer sits under the main voice.
+**Layer solo (per layer)** `Off / Solo, default Off`
+Audition one layer alone; solo more than one to hear those together. Solo **overrides Inactive**. While soloing, the wash's per-grain auto-gain lifts a quiet layer to a listening level, so solo is not for judging balance.
 
-**The number you set is the number you get.** A level of −12 puts that layer 12 dB under the main voice and changes *nothing else*. There is no auto-balancing and no compensation moving under your hand while you set the next one — set four octaves in any order and the first three still sound the way you left them.
+**Layer harmonics (per layer, 0 = full)** `0 to 64, default 0`
+Caps how many partials this layer synthesises on the voice engine. 0 is uncapped. A CPU control, not a tone control — which is why it is not a Drift target.
 
-The cost of that honesty is that levels **add**: eleven layers at 0 dB is twelve times the amplitude, and it will clip if you let it. That is the trade, and it is the right way round — a plugin quietly re-mixing you means every adjustment is a chase against a soundscape you are also moving.
-
-**−60 is truly off** and costs no CPU at all: the layer's DSP is skipped, not muted. Every layer's level is also its own Drift and Ramp target, which is where this gets interesting — octaves that swell in and out on their own periods, hands-free, while you do nothing.
-
-**Layer solo** `Off / Solo, default Off`
-Audition one layer alone. Anything soloed silences everything that isn't — including the Original, which is itself soloable, so "solo the thing the others stack around" works the way you'd expect. Solo more than one to hear those together.
-
-Solo deliberately **overrides Inactive**: you solo something in order to hear it, and a solo that returns silence because the layer was also muted is a bad thirty seconds when you're working by ear. A level of −60 is still silent though, because that's a level, not a mute.
-
-While soloing, the wash's per-grain auto-gain brings a quiet layer up to a normal listening level rather than leaving it at its mix level — which is what you want for auditioning, but means solo is not a way to judge relative balance.
-
-**Layer pitch (semitones, Custom layers)** `-96 to +96` — *shown only on a Custom layer*
-The interval by hand, for anything the selector doesn't name — a seventh, six octaves, or a fractional offset for a slow beating unison. Same eight-octave range as Pitch itself.
-
-**Layer overtone harmonic (-1 = follow the global)** `-1 to 64, default -1` — *per layer*
-Which harmonic **this** layer lifts, when you want it to differ from the global **Overtone harmonic**.
-
-Left at −1 the layer follows the global setting, which is what every layer did before this control existed — so nothing you have already built changes.
-
-Why it is worth having: the global overtone applies by harmonic *index*, so with it set to 8 the lift lands on the 8th partial of every layer at once — which in a stack of octaves means 8×f0 in the Original, 4×f0 an octave down, 16×f0 an octave up. Consonant, because the layers are octaves and fifths, but there was no way to say *overtone on the lead, none on the drone*, which is what a throat-singing patch actually wants. The harmonic is the melodic half of the effect (it is the Drift and Ramp target — that is how an overtone melody gets played hands-free), so it is the half that goes per layer. **Overtone lift** and **width** stay global, because they are character rather than melody.
-
-> **This works at both ends of Texture.** On the voice it isolates one exact partial; on the wash it leaves a pitched *band* around that partial — breathier, still a definite note — exactly as the global Overtone does. Each layer's harmonic is applied where that layer reads the captured spectrum, so a stack can hold one overtone on the lead and none on the drone at any Texture setting.
-
-**Layer harmonics (0 = full)** `0 to 64, default 0`
-Caps how many partials *this one layer* synthesises on the voice engine, independent of the main voice's own detail. 0 means uncapped — the layer gets whatever the source has, exactly as before this control existed, so no saved project changes sound on load. A plain count, nothing to convert: set it lower and the layer gets simpler; the plugin never lets it exceed what the source actually has, so raising it past that point does nothing further. A background/support layer usually doesn't need the same partial count as the layer you're actually listening to, so this is where to spend a CPU cut before touching High cut or Stereo width, which affect every layer and the main voice at once.
+**Layer overtone harmonic (per layer, -1 = follow the global)** `-1 to 64, default -1`
+Which harmonic **this** layer lifts, when you want it to differ from the global **Overtone harmonic** — overtone on the lead, none on the drone. Lift and width stay global.
 
 #### Cost, and how deep you can go
 
@@ -230,7 +217,7 @@ Near enough free on the wash — one extra spectrum read per bin, inside a grain
 
 On the voice each raised layer is another 64 partials, but the **upward** layers get cheaper the higher they go, because their partials cross Nyquist (or your High cut) and stop being computed at all. On a capture around 200 Hz, an octave up is 60 partials, two up is 30, three up is 15, four up is 7. The downward layers are the expensive ones — each is a full 64. Four octaves down all at once is real CPU; the same four upward is close to free. Layer harmonics is the direct lever on that: pull a downward layer's count down by hand instead of waiting for High cut to do it for every layer at once.
 
-Four octaves each way is the usable span of a voice capture: four down is at the floor of hearing, four up is past where a captured harmonic series has much content left. Anything wider is a Custom layer — **and depth is free, but watch your meters.** The Custom range goes to eight octaves either way because nothing in the engine cares. Past about five octaves down, though, a layer is below hearing: inaudible, but still eating headroom and moving speaker cones. A subsonic layer you can't hear is still on the meter.
+Four octaves each way is the usable span of a voice capture: four down is at the floor of hearing, four up is past where a captured harmonic series has much content left. Anything wider is a layer pitched by hand — **and depth is free, but watch your meters.** A layer's pitch goes to eight octaves either way because nothing in the engine cares. Past about five octaves down, though, a layer is below hearing: inaudible, but still eating headroom and moving speaker cones. A subsonic layer you can't hear is still on the meter.
 
 **Input level (dry, dB)** `-60 to +12, default 0`
 The source passed straight through. −60 = silent.
@@ -331,15 +318,19 @@ be built from whatever was in the buffer when the rest began.
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** — fifty-five, in the order of the controls they reach (2026-09-11; it was twenty-four): `Morph / Auto-morph time / Texture / Wash grain / Spread / Pitch / Stereo width / Denoise / Low cut / High cut / Overtone harmonic / Overtone lift / Overtone width / Layer level (all layers) / the sixteen layer levels / Layer pitch (all Custom layers) / Custom 1-3 pitch / Layer overtone harmonic (all layers) / the sixteen layer overtone harmonics / Input level / Output level / Play for / Rest for`, default Morph. A saved project keeps what it had selected.
+**Drift target** — eighty-seven, in the order of the controls they reach (2026-09-13; it was fifty-five): `Morph / Auto-morph time / Texture / Wash grain / Spread / Transpose / Fine tune / Tuning reference / Stereo width / Denoise / Low cut / High cut / Overtone harmonic / Overtone lift / Overtone width / Layer pitch (all layers) / Layer 1-16 pitch / Layer fine tune (all layers) / Layer 1-16 fine tune / Layer level (all layers) / Layer 1-16 level / Layer overtone harmonic (all layers) / Layer 1-16 overtone harmonic / Input level / Output level / Play for / Rest for`, default Morph. A saved project keeps what it had selected, under its new name (*Pitch* is Transpose, *1 octave up level* is Layer 10 level, *Custom 1 pitch* is Layer 14 pitch).
 
-The three **"all"** entries work like Polyrhythm's "all voices": choosing one shows the first layer's settings, and editing it writes the same setting into every layer it names. **Morph** moves the Morph slider's own position, so it acts while Auto-morph is Off. A **layer overtone harmonic** drift moves only a layer that has its own harmonic; a layer following the global one keeps following.
+The four **"all layers"** entries work like Polyrhythm's "all voices": choosing one shows Layer 1's settings, and editing it writes the same setting into all sixteen. **Morph** moves the Morph slider's own position, so it acts while Auto-morph is Off. A **layer overtone harmonic** drift moves only a layer that has its own harmonic; a layer following the global one keeps following.
 
-**Three controls are deliberately not targets**, and Rozaya asked that the reason be written here. **Layer harmonics** is a cap on processing cost, not a tone control, so a drift on it would make the CPU load rise and fall with the wave. **Capture point** and **Capture average** re-analyse the captured sound every time they move — a full spectrum and pitch analysis per slot — which is heavy and lands as a click; a drift would do that over and over.
-Which parameter the Drift sliders below are editing. Switch it and the four sliders show *that* target's settings; anything you set on another target keeps running in the background.
+**Not targets, deliberately**, and Rozaya asked that the reason be written here. **Layer harmonics** is a cap on processing cost, so a drift on it would make the CPU load rise and fall with the wave. **Capture point** and **Capture average** re-analyse the captured sound every time they move, which is heavy and lands as a click. Source note, Source fine tune and Target note are note pickers, as on Passage.
 
-**Drift up amount** / **Drift down amount (per target)** `0 to 300, units match the target, default 0`
-How far it wanders above (up) and below (down) the parameter's current value, in that parameter's own units — Texture in its 0–100, Pitch in semitones, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
+Which parameter the Drift controls below are editing. Switch it and they show *that* target's settings; anything you set on another target keeps running in the background.
+
+**Drift up amount** / **Drift down amount (per target, in the Drift amount unit)** `0 to 1000, default 0`
+How far it wanders above (up) and below (down) the parameter's current value, in the unit **Drift amount unit** names — on Target default, that parameter's own units: Texture in its 0–100, Transpose in its unit, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
+
+**Drift amount unit (per target, Target default where it cannot fit)** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default`
+Which unit the two amounts are in, for this target. **Target default** is the target's own unit, and it is what every saved project had. Pick **Cents** on a pitch and a drift of 50 is a quarter tone whatever Transpose is set in; pick **Semitones** on Low cut and it moves by an interval, counted from 20 Hz when the cut is at 0. A unit that makes no sense for the target — dB on a pitch — acts as Target default, as its name says. The same list as Passage's, and it will be the whole suite's. *(Added 2026-09-13. Rozaya: "No unit locks. ever.")*
 
 **Drift period (per target)** `0 to 1000, default 30, 0 = off`
 How long one full wander takes, counted in whatever **Drift period unit** says.
@@ -391,11 +382,14 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** — the same fifty-five as Drift target, default Morph (see there, including why Layer harmonics, Capture point and Capture average are not on the list).
+**Ramp target** — the same eighty-seven as Drift target, default Morph (see there, including what is not on the list and why).
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
-**Ramp by (per target)** `-300 to +300, units match the target, default 0`
-How far to move the parameter, and which direction — in that parameter's own units (Texture 0–100, Pitch semitones, Low cut Hz…). Negative goes down, positive up. **0 means this target doesn't ramp**, so arming Ramp with everything at 0 safely does nothing.
+**Ramp by (per target, in the Ramp by unit)** `-1000 to +1000, default 0`
+How far to move the parameter, and which direction — in the unit **Ramp by unit** names; on Target default, that parameter's own units (Texture 0–100, Transpose in its unit, Low cut Hz…). Negative goes down, positive up. **0 means this target doesn't ramp**, so arming Ramp with everything at 0 safely does nothing.
+
+**Ramp by unit (per target, Target default where it cannot fit)** `the same thirteen units as Drift amount unit, default Target default`
+Which unit Ramp by is in, for this target — ride a layer up 700 cents, or Wash grain by half a second. A unit that cannot fit acts as Target default.
 
 **Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes`
 What Ramp duration, Ramp play/rest and Ramp start delay are all counted in —
@@ -438,7 +432,7 @@ Wait this long after arming — in ramp time units — before the ride begins �
 - **The capture workflow.** Put audio on the track, Input level up and Output level down so you hear the source. When you hear the moment, hit Capture (set Capture slot first to bank several). Then pull Input down, Voice up, set Texture, and Morph between slots. Sweep Capture point by ear to land exactly on the moment — and because each slot keeps its own point, you can go slot by slot and tune every capture to its own vowel without disturbing the ones you already set.
 - **The voice end needs pitched material.** Texture 0 only sings on clearly pitched sources (a sustained vowel, organ, bowed note). On unpitched material it produces a tone — use the wash end (or the middle) there instead.
 - **Vowel + breath is the middle.** The pure voice end has no breath; the pure wash end has breath but de-voices. A blend around Texture 30–50 gives the vowel plus air.
-- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels (including every layer level), Stereo width, Low cut, High cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Twenty-four of the automatable ones — Texture, Spread, Pitch, Stereo width, Low cut, High cut, Output level, Overtone harmonic, all fifteen layer levels and the Original's — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
+- **What is safe to automate:** Texture, Morph, Pitch, Spread, the levels (including every layer level), Stereo width, Low cut, High cut, Denoise, and Wash grain. Capture point and Capture are not (they re-analyze, or are momentary). Eighty-seven targets — every sound control above, every layer's pitch, fine tune, level and overtone harmonic, and the transport's Play for and Rest for — can also be moved hands-free from *inside* the plugin with **Drift** (endless wander) and **Ramp** (a one-time slow ride), no automation lane needed.
 - **Source-agnostic.** It freezes anything — synths, field recordings, strings, cymbals, even a whole mix via a track send. The wash texturizes any source.
 - **Captures persist** across save and reopen (the raw audio is stored in the project; both engines rebuild on load).
 - **Transport must be moving** for it to sound — it is a generator. Loop the transport, or arm the track and monitor.
@@ -454,6 +448,33 @@ See [`docs/spectral-vowel-morpher.md`](spectral-vowel-morpher.md) for deeper des
 ---
 
 
+
+## The 2026-09-13 pitch layout — what it changed for a saved project
+
+Fifty-one controls became sixty-four, each in its logical place rather than added at the
+end, so every saved project needs its control line moved. `tools/morpher_migrate_20260913.py`
+does that, and the plugin moves its own saved captures and settings as it loads. Nothing
+you set should sound different; what changed is where things live and what they are called.
+
+- **New controls, all starting where your project already was:** Source note (None),
+  Source fine tune and its unit, Target note, Transpose unit (Semitones), Fine tune and its
+  unit, Tuning reference (440), each layer's pitch unit, fine tune and fine tune unit, and
+  the Drift amount unit and Ramp by unit (Target default).
+- **Pitch (semitones)** is now **Transpose value**, with the same number, in Semitones.
+- **Auto-morph time** now sits above **Rate Mode**.
+- **Capture average** goes from 1 to 6, which is all it ever used.
+- **Denoise** is now **Denoise (%, wash only)**.
+- **The layers kept their sounds under new names.** The Original is Layer 1. Four, three and
+  two octaves down are Layers 2, 3 and 4; one octave down is Layer 5; a fifth down and a
+  fourth down are Layers 6 and 7. A fourth up and a fifth up are Layers 8 and 9; one, two,
+  three and four octaves up are Layers 10 to 13. Custom 1, 2 and 3 are Layers 14, 15 and 16,
+  keeping their pitches.
+- **Drift and Ramp targets kept what they point at**, under the new names in the new list:
+  Pitch is Transpose, a layer's level or overtone harmonic is that layer's by number, and
+  "Layer pitch (all Custom layers)" is now "Layer pitch (all layers)".
+
+A project saved on the August Morpher (31 controls), like `quick one`, is carried straight
+across to this layout by name.
 
 ## Migrating projects across the 2026-09-04 transport change
 
