@@ -248,10 +248,17 @@ WA = 8192;   // ~170 ms @ 48k: good spectral resolution, leaves ~0.5 s scrub ran
 // K = 6 that is 28672 of the 32768-sample grab, leaving room for the capture
 // point to still choose WHERE inside the grab the average sits.
 CAPAVG_HOP = WA / 2; CAPAVG_MAX = 6;
-// ACCLEN must exceed the LONGEST grain (W up to MAXFFT) plus a hop, or a long
-// grain wraps the circular accumulator onto the read pointer (audible at the
-// top of the Window-size range). 2*MAXFFT is comfortable headroom.
-ACCLEN = 65536;
+// Wash grain reaches its control's 1000 ms at ANY sample rate (2026-09-13). It stopped at
+// MAXFFT samples -- 743 ms at 44.1 kHz, 680 at 48, 341 at 96 -- because a grain was at most
+// one FFTSIZE inverse FFT, and JSFX's fft() stops at 32768 (REAPER's documentation; a round
+// trip at 65536 measured silently wrong). A longer grain is now built from FFTSIZE pieces
+// half-overlapping inside it, each with its own random phases (the Morpher's build); a
+// grain that fits one piece is built exactly as before. GMAX samples is one second.
+// Rozaya: "sounds good".
+GMAX = ceil(srate);
+// ACCLEN must exceed the LONGEST grain plus a hop, or a long grain wraps the circular
+// accumulator onto the read pointer. 65536 still covers a second at 44.1 and 48 kHz.
+ACCLEN = 65536; loop(8, ACCLEN < GMAX + GMAX/4 + 1 ? ACCLEN *= 2; );
 NHARM = 64; WHARM = 3072;          // 64 harmonics; ~64 ms YIN analysis window
 WTBL = 8192; WTSCALE = WTBL / TWOPI;
 // Voice stereo width: at full Stereo width the right-channel voice runs +-0.8%
@@ -269,14 +276,19 @@ freemem = 0;
 fftwork   = freemem; freemem += 2*FFTSIZE;    // FFT scratch (interleaved re/im)
 inbuf     = freemem; freemem += INRING;        // live input ring
 window    = freemem; freemem += WA;            // Hann of length WA (fixed analysis window)
-synwin    = freemem; freemem += MAXFFT;        // sqrt-Hann synthesis grain (length W = Wash grain)
+synwin    = freemem; freemem += GMAX;          // sqrt-Hann synthesis grain (length W = Wash grain, up to 1 s)
 accL      = freemem; freemem += ACCLEN;        // overlap-add accumulator L
 accR      = freemem; freemem += ACCLEN;        // overlap-add accumulator R
 mtmp      = freemem; freemem += NBINS;
 curmag    = freemem; freemem += NBINS;
 phase     = freemem; freemem += NBINS;
 doff      = freemem; freemem += NBINS;         // per-bin stereo decorrelation offsets
-grainbuf  = freemem; freemem += MAXFFT;
+grainbuf  = freemem; freemem += GMAX;          // a grain, left (and right, when a short grain reads it from fftwork)
+grainR    = freemem; freemem += GMAX;          // a long grain's right channel, assembled piece by piece
+// A long grain's piece window: periodic sqrt-Hann, so two pieces half a piece apart keep
+// the power constant where they overlap (their squares sum to exactly 1). No rand().
+pwin      = freemem; freemem += FFTSIZE;
+pw_i = 0; loop(FFTSIZE, pwin[pw_i] = sqrt(0.5 - 0.5*cos(6.283185307179586*pw_i/FFTSIZE)); pw_i += 1; );
 // --- per-slot capture stores (ALL sized by NSLOTS -- this is what makes the
 //     slot count a free dial) ---
 slotmag   = freemem; freemem += NSLOTS*NBINS;  // wash (spectral) magnitudes
@@ -790,7 +802,7 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir) (
 );
 
 function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw,
-                          sA, sB, ia, ib, fa, fb, ma, mb) (
+                          sA, sB, ia, ib, fa, fb, ma, mb, npc, pk2, pst, pn, pw) (
   // slot selection (vsi/vsj/vmfr) is computed once per sample in @sample so the
   // wash and the harmonic voice always agree on which slot(s) they're playing.
   si = vsi; sj = vsj; mfr = vmfr;
@@ -889,6 +901,8 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
     );
     i += 1;
   );
+  W <= FFTSIZE ? (
+  // --- A grain that fits one FFTSIZE piece: the original build, unchanged. ---
   // Only the bins this grain's FFT actually reads need a fresh random phase.
   // Was NBINS unconditionally -- another cost that ignored grain size.
   i = 0; loop(GBINS, phase[i] = rand(1)*TWOPI; i += 1; );
@@ -909,6 +923,46 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
     accL[aw] += grainbuf[i]   * gnorm * synwin[i];
     accR[aw] += fftwork[2*i]  * gnorm * synwin[i];
     i += 1;
+  );
+  ) : (
+  // --- A grain longer than FFTSIZE (2026-09-13), the Morpher's build: FFTSIZE pieces every
+  //     half piece, each with fresh random phases, summed under pwin. The first piece is
+  //     not faded in and the last not faded out -- synwin shapes the grain's two ends.
+  //     build_synwin has already held GFFT at FFTSIZE for any grain this long. ---
+  npc = ceil((W - FFTSIZE) / (FFTSIZE/2)) + 1;
+  i = 0; loop(W, grainbuf[i] = 0; grainR[i] = 0; i += 1; );
+  pk2 = 0;
+  loop(npc,
+    pst = pk2 * FFTSIZE/2;
+    pn = min(FFTSIZE, W - pst);
+    i = 0; loop(GBINS, phase[i] = rand(1)*TWOPI; i += 1; );
+    build_spectrum(0);
+    j = 0;
+    loop(pn,
+      pw = ((pk2 == 0 && j < FFTSIZE/2) || (pk2 == npc - 1 && j >= FFTSIZE/2)) ? 1 : pwin[j];
+      grainbuf[pst + j] += fftwork[2*j] * pw;
+      j += 1;
+    );
+    build_spectrum(1);
+    j = 0;
+    loop(pn,
+      pw = ((pk2 == 0 && j < FFTSIZE/2) || (pk2 == npc - 1 && j >= FFTSIZE/2)) ? 1 : pwin[j];
+      grainR[pst + j] += fftwork[2*j] * pw;
+      j += 1;
+    );
+    pk2 += 1;
+  );
+  rms = 0; i = 0; loop(W, sv = grainbuf[i]; rms += sv*sv; i += 1; );
+  rms = sqrt(rms / W);
+  rms > 0.0000001 ? ( rms_smooth <= 0 ? rms_smooth = rms : rms_smooth += 0.02 * (rms - rms_smooth); );
+  gnorm = rms_smooth > 0.0000001 ? (0.07 / rms_smooth) : 0;
+  i = 0;
+  loop(W,
+    aw = accpos + i; aw >= ACCLEN ? aw -= ACCLEN;
+    accL[aw] += grainbuf[i] * gnorm * synwin[i];
+    accR[aw] += grainR[i]   * gnorm * synwin[i];
+    i += 1;
+  );
   );
 );
 
@@ -951,7 +1005,7 @@ function dmod(dmt) (
 );
 
 function build_synwin(wlen) local(i) (
-  wlen = max(64, min(MAXFFT, floor(wlen)));
+  wlen = max(64, min(GMAX, floor(wlen)));   // was MAXFFT: see GMAX
   W = wlen; HOP = max(1, floor(W / 4));
   GFFT = 256;
   loop(16, GFFT < W ? GFFT *= 2; );      // bounded: 256 << 16 covers MAXFFT

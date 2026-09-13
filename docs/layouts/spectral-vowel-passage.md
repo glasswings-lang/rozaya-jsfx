@@ -128,8 +128,14 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   checks the pickers reach it.
 - **Also in this piece:** Spread reaches 1000 (it stopped at 150) and Low cut 20000 (it
   stopped at 500) -- `docs/backlog.md`, "Hidden limits".
-- **Still to build, in this order:** Wash grain past one FFT (built for the Morpher in
-  `b4b8656`; Passage's is on a scratch copy); the save format; renames of
+- **Wash grain past one FFT, 2026-09-13** -- the Morpher's build (`b4b8656`): a grain longer
+  than FFTSIZE is FFTSIZE pieces every half piece, fresh random phases, periodic sqrt-Hann;
+  JSFX's fft() stops at 32768. Rozaya: *"sounds good"*. Measured on bilateral-support,
+  silent input, 48 kHz: build before, 700 vs 1000 identical, now they differ; 600 ms
+  bit-identical; 96 kHz 1000 ms finite; level -19.96..-20.17 dB one piece, -20.16..-20.26 two;
+  50 ms wobble 1.25-1.32 vs 1.03-1.28 dB; loudest 50 ms 3.13-4.03 vs 2.91-3.71 dB; processor
+  16.03 s at 600 ms, 16.12 at 1000.
+- **Still to build, in this order:** the save format; renames of
   existing labels to the table below, **each Drift and Ramp control and every per-slot
   control ending with its R25 kind** (`(per slot)`, `(per slot and target)`, `(all
   targets)`), measured -- the installed suite is being renamed from 2026-09-12 (R25), and

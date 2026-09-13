@@ -142,7 +142,7 @@ Crossfades 0 = Voice (harmonic, keeps the vowel) to 100 = Wash (spectral, breath
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
-**Wash grain (ms)** `5 to 680, default 150`
+**Wash grain (ms)** `5 to 1000, default 150`
 The wash's grain length: short = rougher and grainier, long = glassier and
 smoother. Affects only the wash; cheap and safe to automate. The unit is
 **milliseconds**, so 300 is about a third of a second per grain — not a fraction
