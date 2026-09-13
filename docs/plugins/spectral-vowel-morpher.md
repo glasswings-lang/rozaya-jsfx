@@ -115,7 +115,7 @@ Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phas
 **Denoise (%)** `0 to 100, default 0`
 Spectral subtraction — raise to thin toward the strongest partials (more tonal, more gated).
 
-**Low cut (Hz)** `0 to 500, default 0`
+**Low cut (Hz)** `0 to 20000, default 0`
 Removes low rumble from the resynth. It is applied to the captured spectrum *before* the pitch shift, so it **moves with Pitch** — pitch a capture down an octave and its low cut comes down with it. That is how it has always behaved and it is left alone so existing projects sound the same; High cut, below, deliberately works the other way.
 
 **High cut (Hz)** `200 to 20000, default 20000 (off)`

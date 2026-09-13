@@ -24,6 +24,34 @@ Moved out of the plan 2026-09-08, verbatim. The R24 drift-target audit is in `do
 **OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations, the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units". **Stale slider numbers on plugin pages** (seen 2026-09-12, not fixed): entries such as `Ramp engage (all targets, slider 28)` in sweep-dwell-filter.md, heartbeat-generator.md's `(slider 31)`, `Ramp target (slider 47)` and `(slider 23)` in sweeping-filter.md and rhythm-track.md name positions that have since moved.
 ---
 
+## Hidden limits: controls whose code stops short of what they say (2026-09-13)
+
+**Found by listening, not reading.** Spread said 1000 and stopped at 150 -- a limit left
+when the 2026-09-06 range sweep widened the slider; its clamp scan followed a value one
+hop and missed it. Rozaya: *"What I don't understand is why a hard-coded limit of anything
+was let in at all. especially when people manually type in weird values because it's jsfx
+all the fucking time."* An audit then rendered each of the sweep's 176 widened controls at
+half its old ceiling, the old ceiling, halfway up and the new top, in up to three of
+Rozaya's saved copies: 41 reach, 104 COULD NOT BE JUDGED (not heard in the copies tried --
+most are drift, ramp and per-voice values that nothing in those copies was using), 10 in
+archived plugins, 12 replaced since. Caught, and what each is (read in the code, measured):
+- **Spread** (Passage, Morpher) stopped at 150 -- a leftover. Lifted: Morpher committed
+  `fa8c650`; Passage inside its migration.
+- **Low cut** (Passage, Morpher) stopped at 500 -- a leftover. Being lifted, same way.
+- **Wash grain** (Passage, Morpher) stops at one capture buffer, 743 ms at 44.1 kHz, 680 at
+  48 kHz, of 1000 -- REAL. Asked 2026-09-12: its own grain buffer, or a control that
+  stops where the plugin does. Not answered.
+- **Capture average** (Morpher) stops at 6 frames of 1000 -- REAL, only six fit in a
+  capture; Passage's control already stops at 6. Not yet asked: the control back to 1-6
+  (no saved copy above 6).
+- **Breath High-pass** (Womb) stops between 7200 and 7300 Hz of 20000 (7188 worked out) --
+  REAL for that filter type (Chamberlin). Not yet asked: a TPT filter, as the sweeping
+  filters have, or an honest range.
+- Rhythm Track's Drift up/down amount was flagged and is NOT a limit: the drift in the copy
+  heard was on Swing amount, which is -1 to 1 itself.
+**Still owed:** the 104 unjudged need a setup that makes each audible. The audit script and
+its lists are in a session scratchpad, not the repo -- rebuild before trusting this line.
+
 ## R23 — drift steps on the target's own turn (2026-09-09)
 
 **From a problem Rozaya found, and approved by it plugin by plugin. The wording

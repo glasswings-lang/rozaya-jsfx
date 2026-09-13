@@ -1834,7 +1834,9 @@ mod_active[5] ? (   // Pitch (semitones)
 );
 eff_stereo_width = max(0,  min(100, stereo_width + (mod_active[6] ? target_drift_offset[6] + ramp_offset_mem[6] : 0)));
 mod_active[6] ? ( voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX; );
-eff_lowcut_hz    = max(0,  min(500, lowcut_hz    + (mod_active[8] ? target_drift_offset[8] + ramp_offset_mem[8] : 0)));
+// Low cut reaches its slider's 20000 Hz (2026-09-13). It stopped at 500, the same leftover
+// as Spread's 150: the hidden-limit audit heard 500 and 20000 render bit-identical.
+eff_lowcut_hz    = max(0,  min(20000, lowcut_hz    + (mod_active[8] ? target_drift_offset[8] + ramp_offset_mem[8] : 0)));
 mod_active[52] ? (   // Output level (dB) -- named Voice level until 2026-08
   eff_vdb = max(-60, min(12, voice_db_base + target_drift_offset[52] + ramp_offset_mem[52]));
   voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
