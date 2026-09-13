@@ -37,6 +37,7 @@ Newest entries are the most likely to still be accurate.
 | If you are working on | Read |
 |---|---|
 | Passage's amount units; controls that stopped short of what they said (Spread, Low cut, Wash grain); fft() stops at 32768 | 2026-09-13 |
+| Passage finished and installed; a running JSFX keeps its old code in REAPER; the scope probe cannot see a selector with All at 0; plugin pages' slider numbers; the ramp design settled | 2026-09-13 |
 | Passage's 22-target list, the Morph drift that never reached the sound, Drift movement for slot timings | 2026-09-12 (stage 9) |
 | Passage's build stages 1-8, Source note, tempo changes mid-count, the bridge driving REAPER, the Morpher's silent load | 2026-09-11/12 |
 | Womb's rebuild, the two rate pairs, a wrong finding corrected | 2026-09-06 (later) |
@@ -162,6 +163,51 @@ Spread pushed them up to 190, which the pre-layout build stopped at 150 and the 
 longer does. Predicted, then measured: with that drift made down-only the copy is
 bit-identical again. The check compares against a build that had the limit, so it must stay
 inside the limit to test the remap.
+
+## 2026-09-13 (later) — Passage finished; the ramp design settled; the thread that slipped
+
+**Passage's 2026-09-11 layout is complete, migrated and installed. None of it has been heard.**
+Save format 7700008 appends the seventeen new banks, read only from a save that wrote them;
+Wash grain's seed from one old value now runs only for older saves. `jsfx_run --save-rpp`
+came first: before it nothing here could measure a SAVE, only a load of what REAPER wrote.
+Measured: `saveformat`, 12 checks (fresh instances saved on Slot 6 and on All, four views
+each equal to the same view without a save; the build before fails them; a second save
+byte-identical); `savedlive` 49 of 49; the whole suite 108 checks, 0 failures. 42 labels
+renamed with their kind, measured 59 of 59 through jsfx_run. 49 instances in 11 projects
+written, snapshot `_pre-passage-layout-20260913/`, `migrated` 49 of 49 bit-identical. Old
+build in `jsfx-backups/spectral_vowel_passage.pre-layout-20260913.jsfx`.
+
+**My mistake in REAPER, and what it showed.** The claude test project was open with the old
+Passage in memory. I handed that running instance the migrated line through
+SetTrackStateChunk: REAPER kept the OLD compile (41 parameters, old names) and clamped four
+values into the old ranges. After rebuilding from the chunk that instance had written,
+Slot 1 read Wash grain 0 and High cut 0 -- values those controls cannot hold. Ruled out by
+measurement: the migrated file's chunk loaded onto a fresh track (all eight slots right,
+and jsfx_run agrees), and state written back onto a running NEW instance, the undo path
+(right, twice). **Not traced:** how Slot 1 reached 0. Track 13 rebuilt from the file on
+disk; then a real REAPER round trip (values on Slot 2 and Slot 6 including the new banks,
+parked on All, copied onto a temporary track) read 8 of 8 right, copy and original. Nothing
+was saved. **Rule:** after installing, rebuild an open instance from the migrated file on
+DISK, never from a chunk the old instance wrote.
+
+**`selector_scope_probe.py` cannot measure a selector with All at option 0.** It compares
+options 0 and 1; a value set on All lands on Slot 1, so every per-slot Drift and Ramp control
+read as shared. The same controls against Drift target and Ramp target read as named. Measured
+again with Slot 1 against Slot 2: 25 of 25 as named (two first reads unclear because I set
+enum controls between their positions).
+
+**Plugin pages:** 60 of 70 "slider N" entries named controls that had moved, plus 20 in
+prose, mostly Womb's. `tools/page_slider_numbers.py`; Womb's page is owed a rewrite.
+
+**Settled with Rozaya:** More than one Ramp's last choices (`docs/layouts/multi-ramp.md`);
+the Morpher's Capture average becomes 1-6 -- *"6 seems OK, just has needed, and not had,
+spread to compensate for it because back then we were capped."*; Womb's Breath High-pass
+gets a better filter, every saved copy measured first -- *"We need a better filter."*
+
+**The thread that slipped.** The Morpher's pitch layout, with the amount units, was settled
+and "ready to build" on 09-11 and then not built; R25, the hidden limits and the bridge took
+the next two days and `current-state.md` never named it. Rozaya caught it: *"feels like we
+did a big sweep and then possibly got distracted?"* It is named there now, in order.
 
 ## 2026-09-11/12 — Source note re-reads Target, tempo changes land mid-count, the bridge drives REAPER, the Morpher's silent load
 

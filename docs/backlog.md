@@ -21,7 +21,7 @@ on, extended, or "finished" until it has been heard. The correct action on
 unheard work is to ask for an ear test, never to add to it.
 
 Moved out of the plan 2026-09-08, verbatim. The R24 drift-target audit is in `docs/r24-drift-target-audit.md`.
-**OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations, the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units". **Stale slider numbers on plugin pages** (seen 2026-09-12, not fixed): entries such as `Ramp engage (all targets, slider 28)` in sweep-dwell-filter.md, heartbeat-generator.md's `(slider 31)`, `Ramp target (slider 47)` and `(slider 23)` in sweeping-filter.md and rhythm-track.md name positions that have since moved.
+**OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations, the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units". **Womb's page** (`docs/plugins/womb.md`) still describes eleven drift targets and ten ramps, and its sigh lines multiply by `slider61`, which is Bloodflow Volume now -- owed a rewrite from the plugin. Its slider numbers were corrected 2026-09-13 (`tools/page_slider_numbers.py`).
 ---
 
 ## Hidden limits: controls whose code stops short of what they say (2026-09-13)
@@ -35,19 +35,23 @@ half its old ceiling, the old ceiling, halfway up and the new top, in up to thre
 Rozaya's saved copies: 41 reach, 104 COULD NOT BE JUDGED (not heard in the copies tried --
 most are drift, ramp and per-voice values that nothing in those copies was using), 10 in
 archived plugins, 12 replaced since. Caught, and what each is (read in the code, measured):
-- **Spread** (Passage, Morpher) stopped at 150 -- a leftover. Lifted: Morpher committed
-  `fa8c650`; Passage inside its migration.
-- **Low cut** (Passage, Morpher) stopped at 500 -- a leftover. Being lifted, same way.
+- **Spread** (Passage, Morpher) stopped at 150 -- a leftover. Lifted: Morpher `fa8c650`;
+  Passage 2026-09-13.
+- **Low cut** (Passage, Morpher) stopped at 500 -- a leftover. Lifted in the Morpher and in Passage (2026-09-13).
 - **Wash grain** (Passage, Morpher) stopped at one capture buffer, 743 ms at 44.1 kHz, 680 at
   48 kHz, of 1000 -- REAL: JSFX's fft() stops at 32768. Rozaya chose the full 1000
   (*"sounds good"*): a longer grain is built from half-overlapping FFTSIZE pieces. Morpher
-  committed; Passage inside its migration.
-- **Capture average** (Morpher) stops at 6 frames of 1000 -- REAL, only six fit in a
-  capture; Passage's control already stops at 6. Not yet asked: the control back to 1-6
-  (no saved copy above 6).
+  and Passage (2026-09-13).
+- **Capture average** (Morpher) stops at 6 frames of 1000 -- only six fit in a capture of
+  today's length. **DECIDED 2026-09-13: the control becomes 1-6**, owed straight after
+  Passage (check no saved copy is above 6 first). Rozaya: *"6 seems OK, just has needed,
+  and not had, spread to compensate for it because back then we were capped."* Longer
+  captures would allow more frames; not asked for.
 - **Breath High-pass** (Womb) stops between 7200 and 7300 Hz of 20000 (7188 worked out) --
-  REAL for that filter type (Chamberlin). Not yet asked: a TPT filter, as the sweeping
-  filters have, or an honest range.
+  REAL for that filter type (Chamberlin). **DECIDED 2026-09-13: a better filter** (TPT, as
+  the sweeping filters have), offered against an honest range. Rozaya: *"We need a better
+  filter."* Condition agreed with it: measure every saved Womb copy old against new before
+  installing, and say how big any difference is.
 - Rhythm Track's Drift up/down amount was flagged and is NOT a limit: the drift in the copy
   heard was on Swing amount, which is -1 to 1 itself.
 **Still owed:** the 104 unjudged need a setup that makes each audible. The audit is
@@ -85,11 +89,8 @@ the doc."* Both now carry `Drift movement`, so neither the plugin nor this file
 decides it: the three targets read once at a bubble's birth default to `With the
 target`, everything continuous to `On a clock`.
 
-**PASSAGE WAS WRONGLY CLEARED, corrected 2026-09-12.** Its four slot timings are read
-once, when a slot's leg begins (`lgo_*`), and were drifting on a clock. Rozaya: *"Um.
-yes? Wow, when they said it was excluded they meant it."* It gets `Drift movement` in
-its layout migration (`docs/layouts/spectral-vowel-passage.md`). **The Morpher is NOT
-re-checked** -- it has no slot timings as targets, but read it rather than trust this.
+**Passage** was wrongly cleared; it got `Drift movement` in its 2026-09-13 migration. **The
+Morpher is NOT re-checked** -- it has no slot timings as targets, but read it rather than trust this.
 
 **Checked and CLEARED — do not "fix" these.** Tremolo, Shepard Scale, Shepard
 Tone, Sweep Dwell, Sweeping Filter, Polyrhythm v3, Veil, Stereo Phaser, Morpher,
@@ -114,11 +115,8 @@ Free once we are migrating anyway; expensive as separate version bumps later.
 | Plugin | Gains | Note |
 |---|---|---|
 | Breath Generator | `Breaths per minute` | R3; it already offers the target |
-| Resonance Bank | full Speed Ramp block | the only plugin with Drift and no ramp |
 | Veil | Start delay, Play/Rest | has drift + ramp, no transport |
-| Morpher, Passage | Start delay, Play/Rest | same |
-| Bubbler, Dapple, Stereo Phaser | Drift + Speed Ramp | got Host x, never in the drift sweep |
-| Tremolo, Sweeping Filter | `Host x` on the pan rate mode | Sweep Dwell already has it |
+| Sustain Looper | Start delay, Play/Rest | checked 2026-09-13: still missing |
 
 Confirm each against use before building — Harmonic Sculptor and Sustain Looper are
 sound-design tools and are deliberately left out.
@@ -129,24 +127,11 @@ sound-design tools and are deliberately left out.
 
 **Blocking:**
 
-1. ~~**Part 2's canonical layout is stale.**~~ **CLOSED 2026-09-05** — rewritten
-   and approved. Read Part 2; Drift and Ramp stay shared and last.
-2. ~~**The version forks.**~~ **CLOSED 2026-08-31.** Melody: archive v2, its note
-   picker moves to v1. Polyrhythm: migrate v1's projects up to v3, archive v1.
-   Both forks end.
 3. **Scope.** Harmonic Sculptor is under an overhaul-or-drop question and Rozaya would not
    reach for it — still open. **Sustain Looper is IN**, corrected 2026-08-31: excluding it
    was Claude's judgement call, not Rozaya's, on the reasoning that it is a "sound-design
    tool". It is not — it runs in a project and plays for the length of a piece, which is
    exactly the profile drift and ramp exist for. Targets below.
-4. ~~**Validation — the real hole.**~~ **CLOSED.** Reload and track-duplicate ARE
-   testable — ask for one. And since 2026-09-09 `tools/jsfx_run` compiles and
-   RUNS a plugin outside REAPER, so behaviour can be measured before it ever
-   hears it. Read its README for what it cannot see; the list is real.
-   Ear-testing happens over weeks of ordinary use, so the sweep does not block on
-   a testing phase. What I owe in return is that everything checkable without
-   ears IS checked before it ships.
-
 **Needed, not blocking:**
 
 5. **Drift period units under host sync.** Periods count heartbeats or breath cycles —
@@ -159,17 +144,8 @@ sound-design tools and are deliberately left out.
 8. **Open Questions 1 and 3** — selector-backed target names, and 0- vs 1-based selectors.
 9. **Per-plugin layouts** — 22 hand-authored orders. The bulk of the work, done per batch.
 
-10. **Nothing is merged or released.** `feature/morpher-layers` is **98 commits ahead of
-    master**, master is 4 ahead of `origin/master`, and the last tag is **v2.20
-    (2026-07-29) — 102 commits ago.** Every plugin Rozaya is currently using was
-    hand-copied into the Effects folder from an unmerged branch, so there is no clean
-    release to fall back to if something turns out wrong. This is not a consistency
-    problem and it is not in the plan, which is exactly why it kept not getting noticed.
-    Merging and tagging is cheap and it is the only thing on this list that reduces risk
-    rather than adding scope.
-
-**Suggested next:** 10 first because it is cheap and protective, then 1 and 4, which
-shape everything else.
+10. **Nothing is released since v2.21 (2026-08-31).** The release waits for this list, and
+    R19's pan mode order blocks it (Rozaya: not shipping it like that).
 
 ### Sustain Looper — drift and ramp targets
 
@@ -191,71 +167,11 @@ modulating, and one of them is the most valuable target in the plugin.
 that plays for eight cycles and rests for four is an obvious and currently impossible
 thing to ask for.
 
-### Three more unpropagated decisions, found by grepping for the pattern
+### Heartbeat's file name
 
-Once R17 named the failure mode — good decisions made in one plugin and never carried
-across — it became something searchable. Found 2026-08-31:
-
-**1. The waveform palette drifted, against an explicit written rule.** CLAUDE.md states:
-*"any new waveform added to Polyrhythm Phase or Melody Phase should land in all four
-plugins at the same slot index."* Measured:
-
-| | waveforms |
-|---|---|
-| Polyrhythm v1, Polyrhythm v3, Harmonic Sculptor | **14** |
-| Melody Phase v1, Melody Phase v2, Shepard Scale, Shepard Tone | **12** |
-
-**Square** and **Pulse** (slots 12–13) never propagated. Cheap to fix and completely safe:
-waveforms append to the end of the enum, so slots 0–11 keep their meaning and no project
-changes. Note this also explains a stale-docs finding already in the plan — both
-Polyrhythm pages document 12 against a source with 14.
-
-**2. Solo exists in two plugins out of six that need it.** **DONE 2026-09-10** in all
-six — `docs/layouts/solo-propagation-20260910.md`. Solo overrides Active everywhere.
-
-| plugin | things to audition | Solo |
-|---|---|---|
-| Spectral Vowel Morpher | 16 layers | **yes** |
-| Womb | 3 layers | **yes** |
-| Polyrhythm v1 / v3 | 8 voices | no |
-| Melody Phase | 8 voices | no |
-| Shepard Tone | per-voice | no |
-| Resonance Bank | **16 bands** | no |
-
-Solo is not a luxury control, it is *how you hear what you are editing* — Rozaya on the
-Morpher's: *"you solo to hear a thing."* Without one, auditioning a single band in
-Resonance Bank means turning the other **fifteen** down to −60 dB and back afterwards.
-Every plugin with per-voice / per-band / per-layer anything should have Solo, and the
-Morpher's semantics are the reference: **Solo overrides Inactive**, because you solo in
-order to hear something.
-
-**3. `src/heartbeat gen.jsfx` is the only filename in the suite with a space in it.**
-Every other file is hyphenated or underscored. It broke two of my own scripts tonight.
-**Renaming is NOT free** — `.RPP` files reference the plugin by filename, so it needs a
-project rewrite like any migration. Fold it into Heartbeat's own batch rather than doing
-it loose.
-
-### Womb's breath in Host x — the units are right, the labels are not
-
-Verified in source (`breath_host_scale`, `breath_state_advance`): in **Host x** the breath
-cycle is **`Beats per breath` beats long, full stop**. The four second-sliders
-(`Inhale/Top/Exhale/Bottom Duration sec`) are divided out and used **only as
-proportions** — a 4/0.3/4/0.3 setting means the same shape whether it reads as seconds or
-not. So the plugin is doing the right thing and saying the wrong thing: it is showing four
-numbers in seconds that are not seconds.
-
-Under the suite's own rule (*no silent value or unit changes*) an annotation is not
-enough when the **unit itself** stops applying. Two candidate fixes, to be decided:
-
-1. **Rename to the thing they always are.** `Inhale (shape)`, `Top pause (shape)` … with
-   the seconds parenthetical dropped. Cheap, but it costs the Own-BPM user a real unit.
-2. **Add four `... share` sliders** that are the shape, and let the seconds sliders be
-   seconds only in Own BPM — hiding the pair that does not apply, the way `Breaths per
-   minute` already hides in Host x. Honest in both modes, four more sliders.
-
-Note the same question exists in reverse for `Beats per breath`, which is visible only in
-Host x and is the *correct* control there — R10 makes it always-visible within Host x
-rather than gated behind the picker.
+`src/heartbeat gen.jsfx` is the only filename in the suite with a space. Renaming needs its
+projects rewritten -- fold it into Heartbeat's own batch. (The waveform palette, Solo and
+Womb's breath-unit labels, listed beside it 2026-08-31, were checked done 2026-09-13.)
 
 ### Breath features propagate to every plugin with a breath
 
@@ -497,7 +413,7 @@ working the list rather than reading it:
 | 3 | **Full Feature Tremolo** (7) | layout authored and R20-compliant; same pan-unit fix as the filter |
 | 4 | **polyrhythm_phase v1 -> v3** (17+5) | biggest, and blocked until its layout is AUTHORED |
 | 5 | **womb_sound_generator_v3** (8) | converts off the dead sync-block shape (R20) |
-| 6 | **spectral_vowel_passage** (10) | blocked on a design conversation, not on work — see below |
+| 6 | ~~spectral_vowel_passage~~ | **DONE 2026-09-13**, 49 instances |
 | 7 | the singles | `resonance_bank`'s enum needs a version-gated BLOB migration; `sweep-dwell-filter`'s `Cycle mode` needs Passage's answer |
 
 ### CORRECTION, same day: "appended, no migration" is true for exactly three plugins
@@ -544,15 +460,6 @@ Only the three above can be done ahead of it.
 
 ---
 
-**Passage is blocked on a question, not a queue position.** Rozaya, 2026-09-05:
-*"the whole reason I kinda hate using passage is because there's, you know,
-there's no real reason to right now."* It was born to supersede the Morpher and
-in practice does not. **Reordering a plugin nobody wants to open buys nothing,
-and spends a migration across ten projects to buy it.** What it needs first is a
-decision about what it is FOR — the live candidates being durations that follow
-the rate mode's unit (the `(in rate mode units)` control the Sweeping Filter
-already has), and Play for / Rest for gaining their own target lists.
-
 ---
 
 ### Phase 2 — the migrations, ordered by USE, not by family
@@ -564,7 +471,7 @@ Measured across 91 projects, 2026-08-31:
 | 1 | ~~**spectral_vowel_morpher**~~ **DONE + EAR-TESTED 2026-09-01** | **38** | 122 instances migrated, 0 problems; 848 captures byte-identical; an existing project reopened correctly. Sync to host and the Pitch+Overtone fix still unheard. |
 | 2 | polyrhythm_phase v1 → v3 | 17 (+5) | fork closes; migrate templates too |
 | 3 | full-feature-sweeping-filter | 11 | |
-| 4 | spectral_vowel_passage | 10 | |
+| 4 | ~~spectral_vowel_passage~~ | 11 | **DONE 2026-09-13**, 49 instances |
 | 5 | womb_sound_generator_v3 | 8 | partly done already |
 | 6 | Full_Feature_Tremolo | 7 | |
 | 7 | ~~melody_phase~~ **DONE 2026-09-02** | 5 | 58 instances migrated, 0 problems, verified. v2 archived. Awaiting ears. |

@@ -306,18 +306,13 @@ than a per-moment setting (the fade *times* stay per slot). **Fade out shape**
 governs the crossfade-**Off** fall to silence; with crossfade **On** the handover
 is the spectral crossfade, which these curves don't touch.
 
-**Older projects need migrating.** These two shapes were added as sliders 10 and
-11, and **Capture average** later as slider 4 — and REAPER restores plugin values
-by slider *position*, so a project saved before either one opens with everything
-above the insert shifted along: Wash grain's 150 arriving as Voice level
-(now Output level),
-Auto-morph landing on Audition, and so on. Your captures are safe regardless —
-they're stored separately and have no idea what a slider number is — so it is
-only the control values that move. Run `tools/passage_migrate_sliders.py` over any
-project saved before this build; it applies whichever shifts that project still
-needs, setting the fade shapes to **Linear** and Capture average to **1**, which
-is what those projects actually were. Change them afterwards if you want the new
-defaults. It keeps a `.pre-slider-migrate-bak` copy and is safe to run twice.
+**Older projects.** On 2026-09-13 every Passage project on E: was moved to this
+layout: 49 copies in 11 projects, each rendered against a snapshot taken first and
+sounding exactly as before. Your captures are stored separately and were never touched.
+A project from anywhere else that was saved before this build needs the same move:
+`tools/passage_migrate_sliders.py` for the older layouts, then
+`tools/passage_migrate_20260911.py`, which today looks only in E:/reaper — ask for it to
+be pointed at the file. Opening such a project without it would shift every value along.
 
 **Slot gap after (seconds / Hz / beats, per slot)** `0 to 300, default 0`
 Seconds of silence after this slot, before the next one begins. **This is how you

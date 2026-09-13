@@ -90,19 +90,11 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   said so back; the picker's name must say it falls back); a tempo change lands at once (*"a tempo change is meant
   to be a tempo change, not a delayed tempo change."*); Cycles stays, one walk through the
   active slots' legs (*"Keep it in. might be interesting"*).
-- **OPEN, carried into the stages still to come:**
-  - **SAVE-FORMAT STAGE MUST FIX:** `grain_seed` copies Wash grain into all eight slots on
-    EVERY load for now; once `slot_grain` is serialized, gate it on the older magics only,
-    or per-slot grain is flattened on every reopen.
-  - **The new per-slot banks are NOT yet in @serialize** (`slot_tunit`, `slot_fine`,
-    `slot_funit`, `slot_srcnote`, `slot_srcfine`, `slot_srcfunit`, `slot_tgtnote`,
-    `slot_grain`, `slot_hicut`, `slot_tmunit`; the stage 8 play/rest banks
-    `target_drift_play/rest`, `ramp_play/rest_mem`; stage 9's `target_drift_unit`,
-    `ramp_by_unit`, and Drift movement's bank; and the @serialize duplicate fix must then
-    force sliders 47/51/52 (Drift) and 56/59/60 (Ramp), numbers before Drift movement's insert). They
-    go at the END of the allocations, with `@serialize` fields behind a magic bump, gated on
-    the magic that WROTE them.
-  - **Not yet tested:** save and reopen on All (bridge test, at the end).
+- **SAVE FORMAT DONE 2026-09-13 (magic 7700008, `34160de`):** all seventeen new banks
+  appended, read only from a 7700008 save; `grain_seed` only for older saves; the duplicate
+  fix forces 5-8, 10-12, 14, 18, 25, 47, 50, 52, 53, 57, 60, 61. Save and reopen on All and
+  on a slot: measured in jsfx_run (`saveformat`, `savedlive`) and in REAPER (session-log).
+- **OPEN, not this layout's:**
   - **A PAUSE must resume** -- Rozaya: *"all plugins should respect a pause"*; play after
     stop is play/stop. Passage restarts on pause (REAPER re-runs @init on resume, measured).
     Not fixed; the suite-wide rule is in `docs/planned-features.md`, "Pause is not stop".
@@ -135,12 +127,10 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   bit-identical; 96 kHz 1000 ms finite; level -19.96..-20.17 dB one piece, -20.16..-20.26 two;
   50 ms wobble 1.25-1.32 vs 1.03-1.28 dB; loudest 50 ms 3.13-4.03 vs 2.91-3.71 dB; processor
   16.03 s at 600 ms, 16.12 at 1000.
-- **Still to build, in this order:** the save format; renames of
-  existing labels to the table below, **each Drift and Ramp control and every per-slot
-  control ending with its R25 kind** (`(per slot)`, `(per slot and target)`, `(all
-  targets)`), measured -- the installed suite is being renamed from 2026-09-12 (R25), and
-  Passage is not installed, so its labels wait for this stage; the manual; then the live migration, install, bridge
-  test. (The save format's place after the target list is from the 2026-09-11 handoff.)
+- **ALL STAGES DONE 2026-09-13.** Renames (`docs/layouts/passage-labels-20260913.md`, kinds
+  measured), the plugin page, the live migration (49 instances, 11 projects, snapshot
+  `_pre-passage-layout-20260913/`, `migrated` 49 of 49 bit-identical), installed, and tested
+  in REAPER. **Nothing of it has been heard.**
 
 ## THE LAYOUT, authored whole 2026-09-11 -- shown to Rozaya and settled the same day; nothing built
 
