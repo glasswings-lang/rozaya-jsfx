@@ -29,6 +29,21 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
   whether per ramp or per ramp and target: *"Once per ramp"*.
 - **Ramp time unit: once per ramp.** Asked in the same question as engage and taken to
   follow it -- confirm if it ever matters.
+- **Overlapping ramps on one target add together**, so each ramp always moves by its own
+  amount. Offered against "the later ramp takes over from where the earlier one got to",
+  with adding recommended; Rozaya, 2026-09-13: *"I'd go with adding as well"*.
+- **Ramps 2-8 start on "the end of the ramp before it"**, so fresh ramps follow one another
+  with no sums; any ramp can be switched to the other. Rozaya, asked which is less maths and
+  told each avoids a different sum: *"As long as it's clearly described. And as long as it's
+  an optout lol"*. So the switch's name and options must say plainly what each counts from.
+- **"Counts from" is per ramp and target**, like Start delay itself. Offered once per ramp,
+  recommended; Rozaya: *"To maximize automation-replacability, I'd lean per-targget"* -- each
+  target behaves like its own automation lane.
+- **"End of the ramp before" means the SAME TARGET's ride in the ramp before** -- the next
+  point on that target's own lane. Offered with, and accepted as, this detail (mine): a ramp
+  that does not move the target is skipped back to the last one that did, and play start
+  if none did. Against "when the whole ramp before finishes"; Rozaya: *"The same target,
+  yeah."*
 
 ## Measured facts about today's Ramp start delay (read in code, 2026-09-12)
 
@@ -45,11 +60,12 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 
 ## Mine, unquoted -- ask before building on them
 
-- Overlapping ramps on one target add together.
-- Ramps 2-8 default "counts from" to the end of the ramp before it.
+- **The first option's NAME, not settled.** "Start of the song" is wrong: it counts from
+  pressing play. Offered renaming (nothing saved changes) against changing the behaviour;
+  Rozaya: *"From play start maybe? IDK"*. Leading candidate, mine: the switch `Ramp start
+  delay counts from` with options `Play start` / `End of the ramp before`. To be heard in
+  REAPER's parameter list once built, before it is final.
 - A saved project's one ramp becomes Ramp 1, unchanged in sound; Ramps 2-8 start empty.
-- Whether "counts from" is per ramp or per ramp and target (Start delay itself is per
-  target today).
 
 ## Still to decide
 
