@@ -95,7 +95,7 @@ How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Sh
 **Texture (% wash)** `0 to 100, default 50`
 Crossfades 0 = Voice (harmonic, keeps the vowel) to 100 = Wash (spectral, breathy bed). The middle layers both — vowel plus air.
 
-**Wash grain (ms)** `5 to 680, default 150`
+**Wash grain (ms)** `5 to 1000, default 150`
 The wash's grain length: short = rougher and grainier, long = glassier and smoother. Affects only the wash; cheap and safe to automate.
 
 **Spread (Hz)** `0 to 1000, default 0`

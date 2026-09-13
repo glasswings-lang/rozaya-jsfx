@@ -439,10 +439,16 @@ WA = 8192;   // ~170 ms @ 48k: good spectral resolution, leaves ~0.5 s scrub ran
 // Capture average: frames step by half a window, and CAPAVG_MAX is what fits
 // inside one grab while leaving the capture point somewhere to move.
 CAPAVG_HOP = WA / 2; CAPAVG_MAX = 6;
-// ACCLEN must exceed the LONGEST grain (W up to MAXFFT) plus a hop, or a long
-// grain wraps the circular accumulator onto the read pointer (audible at the
-// top of the Window-size range). 2*MAXFFT is comfortable headroom.
-ACCLEN = 65536;
+// Wash grain reaches its control's 1000 ms at ANY sample rate (2026-09-13). It stopped at
+// MAXFFT samples -- 743 ms at 44.1 kHz, 680 at 48, 341 at 96 -- because a grain was one
+// FFTSIZE inverse FFT, and JSFX's fft() stops at 32768 (REAPER's documentation; a round
+// trip at 65536 measured silently wrong). A longer grain is now built from FFTSIZE pieces
+// half-overlapping inside it, each with its own random phases; a grain that fits one piece
+// is built exactly as before. GMAX samples is one second. Rozaya: "sounds good".
+GMAX = ceil(srate);
+// ACCLEN must exceed the LONGEST grain plus a hop, or a long grain wraps the circular
+// accumulator onto the read pointer. 65536 still covers a second at 44.1 and 48 kHz.
+ACCLEN = 65536; loop(8, ACCLEN < GMAX + GMAX/4 + 1 ? ACCLEN *= 2; );
 NHARM = 64; WHARM = 3072;          // 64 harmonics; ~64 ms YIN analysis window
 // Magnitudes are peak-normalised, so this is roughly -66 dB below the loudest
 // partial: comfortably under anything audible under the rest of the series,
@@ -464,14 +470,19 @@ freemem = 0;
 fftwork   = freemem; freemem += 2*FFTSIZE;    // FFT scratch (interleaved re/im)
 inbuf     = freemem; freemem += INRING;        // live input ring
 window    = freemem; freemem += WA;            // Hann of length WA (fixed analysis window)
-synwin    = freemem; freemem += MAXFFT;        // sqrt-Hann synthesis grain (length W = Wash grain)
+synwin    = freemem; freemem += GMAX;          // sqrt-Hann synthesis grain (length W = Wash grain, up to 1 s)
 accL      = freemem; freemem += ACCLEN;        // overlap-add accumulator L
 accR      = freemem; freemem += ACCLEN;        // overlap-add accumulator R
 mtmp      = freemem; freemem += NBINS;
 curmag    = freemem; freemem += NBINS;
 phase     = freemem; freemem += NBINS;
 doff      = freemem; freemem += NBINS;         // per-bin stereo decorrelation offsets
-grainbuf  = freemem; freemem += MAXFFT;
+grainbuf  = freemem; freemem += GMAX;          // a grain, left (and right, when a short grain reads it from fftwork)
+grainR    = freemem; freemem += GMAX;          // a long grain's right channel, assembled piece by piece
+// A long grain's piece window: periodic sqrt-Hann, so two pieces half a piece apart keep
+// the power constant where they overlap (their squares sum to exactly 1). No rand().
+pwin      = freemem; freemem += FFTSIZE;
+pw_i = 0; loop(FFTSIZE, pwin[pw_i] = sqrt(0.5 - 0.5*cos(6.283185307179586*pw_i/FFTSIZE)); pw_i += 1; );
 // --- per-slot capture stores (ALL sized by NSLOTS -- this is what makes the
 //     slot count a free dial) ---
 slotmag   = freemem; freemem += NSLOTS*NBINS;  // wash (spectral) magnitudes
@@ -988,7 +999,8 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, l
   ifft(fftwork, FFTSIZE);
 );
 
-function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw, lq2) (
+function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw, lq2,
+                          npc, pk2, pst, pn, pw, bsb, bsa) (
   // slot selection (vsi/vsj/vmfr) is computed once per sample in @sample so the
   // wash and the harmonic voice always agree on which slot(s) they're playing.
   si = vsi; sj = vsj; mfr = vmfr;
@@ -1046,6 +1058,8 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   hcbin_lo  = hc_on ? hc_lo  * FFTSIZE / srate : NBINS + 1;
   hcbin_inv = hc_on ? 1 / max(1, hcbin_hi - hcbin_lo) : 0;
   lq2 = 0; loop(N_LAY_SLOTS, lpr[lq2] = pitch_ratio * layer_ratio[lq2]; lq2 += 1; );
+  W <= FFTSIZE ? (
+  // --- A grain that fits one FFTSIZE piece: the original build, unchanged. ---
   i = 0; loop(NBINS, phase[i] = rand(1)*TWOPI; i += 1; );
   build_spectrum(0);
   rms = 0; i = 0; loop(W, sv = fftwork[2*i]; grainbuf[i] = sv; rms += sv*sv; i += 1; );
@@ -1070,13 +1084,56 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
     accR[aw] += fftwork[2*i]  * gnorm * synwin[i];
     i += 1;
   );
+  ) : (
+  // --- A grain longer than FFTSIZE (2026-09-13): FFTSIZE pieces every half piece, each
+  //     with fresh random phases, summed under pwin. The first piece is not faded in and
+  //     the last not faded out -- synwin already shapes the grain's two ends. Pieces are
+  //     independent noise with the same spectrum, so constant power across an overlap is
+  //     a constant level. The auto-gain then measures the assembled grain as before. ---
+  npc = ceil((W - FFTSIZE) / (FFTSIZE/2)) + 1;
+  i = 0; loop(W, grainbuf[i] = 0; grainR[i] = 0; i += 1; );
+  bsb = 0; bsa = 0; pk2 = 0;
+  loop(npc,
+    pst = pk2 * FFTSIZE/2;
+    pn = min(FFTSIZE, W - pst);
+    i = 0; loop(NBINS, phase[i] = rand(1)*TWOPI; i += 1; );
+    build_spectrum(0);
+    bsb += bsum_base; bsa += bsum_all;
+    j = 0;
+    loop(pn,
+      pw = ((pk2 == 0 && j < FFTSIZE/2) || (pk2 == npc - 1 && j >= FFTSIZE/2)) ? 1 : pwin[j];
+      grainbuf[pst + j] += fftwork[2*j] * pw;
+      j += 1;
+    );
+    build_spectrum(1);
+    j = 0;
+    loop(pn,
+      pw = ((pk2 == 0 && j < FFTSIZE/2) || (pk2 == npc - 1 && j >= FFTSIZE/2)) ? 1 : pwin[j];
+      grainR[pst + j] += fftwork[2*j] * pw;
+      j += 1;
+    );
+    pk2 += 1;
+  );
+  rms = 0; i = 0; loop(W, sv = grainbuf[i]; rms += sv*sv; i += 1; );
+  rms = sqrt(rms / W);
+  (nlay_on && bsb > 0 && bsa > 0) ? ( rms = rms * sqrt(bsb / bsa); );
+  rms > 0.0000001 ? ( rms_smooth <= 0 ? rms_smooth = rms : rms_smooth += 0.02 * (rms - rms_smooth); );
+  gnorm = rms_smooth > 0.0000001 ? (0.07 / rms_smooth) : 0;
+  i = 0;
+  loop(W,
+    aw = accpos + i; aw >= ACCLEN ? aw -= ACCLEN;
+    accL[aw] += grainbuf[i] * gnorm * synwin[i];
+    accR[aw] += grainR[i]   * gnorm * synwin[i];
+    i += 1;
+  );
+  );
 );
 
 // Rebuild ONLY the synthesis grain window (sqrt-Hann, length W = Wash grain).
 // CHEAP: no FFT, no YIN, no accumulator clear -- so Wash grain can be dragged
 // or AUTOMATED without dropouts (old-length grains finish as new ones start).
 function build_synwin(wlen) local(i) (
-  wlen = max(64, min(MAXFFT, floor(wlen)));
+  wlen = max(64, min(GMAX, floor(wlen)));   // was MAXFFT: see GMAX
   W = wlen; HOP = max(1, floor(W / 4));
   i = 0; loop(W, synwin[i] = sqrt(0.5 - 0.5*cos(TWOPI*i/(W-1))); i += 1; );
 );

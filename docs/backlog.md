@@ -38,9 +38,10 @@ archived plugins, 12 replaced since. Caught, and what each is (read in the code,
 - **Spread** (Passage, Morpher) stopped at 150 -- a leftover. Lifted: Morpher committed
   `fa8c650`; Passage inside its migration.
 - **Low cut** (Passage, Morpher) stopped at 500 -- a leftover. Being lifted, same way.
-- **Wash grain** (Passage, Morpher) stops at one capture buffer, 743 ms at 44.1 kHz, 680 at
-  48 kHz, of 1000 -- REAL. Asked 2026-09-12: its own grain buffer, or a control that
-  stops where the plugin does. Not answered.
+- **Wash grain** (Passage, Morpher) stopped at one capture buffer, 743 ms at 44.1 kHz, 680 at
+  48 kHz, of 1000 -- REAL: JSFX's fft() stops at 32768. Rozaya chose the full 1000
+  (*"sounds good"*): a longer grain is built from half-overlapping FFTSIZE pieces. Morpher
+  committed; Passage inside its migration.
 - **Capture average** (Morpher) stops at 6 frames of 1000 -- REAL, only six fit in a
   capture; Passage's control already stops at 6. Not yet asked: the control back to 1-6
   (no saved copy above 6).

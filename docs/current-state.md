@@ -135,7 +135,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   150 (it stopped there whatever the control said) and the faster Spread blur, 09-13:
   112 of 123 copies bit-identical, the 11 using Spread within 3e-8; renders at Spread
   150 went from about 25 s to 5 s. Low cut past 500 (it stopped there too), 09-13: all 123
-  bit-identical. Both installed. **Passage MID-BUILD, do not install** (progress atop its layout doc). Stage 9, 09-12: the 22-target list, measured; a Morph drift did not reach the sound (measured in this build, predicted from the same code order for earlier ones; no saved copy used it), fixed in src, never heard.
+  bit-identical. Wash grain past 680 ms at 48 kHz, built from pieces past one FFT, 09-13:
+  all 123 bit-identical. All installed. **Passage MID-BUILD, do not install** (progress atop its layout doc). Stage 9, 09-12: the 22-target list, measured; a Morph drift did not reach the sound (measured in this build, predicted from the same code order for earlier ones; no saved copy used it), fixed in src, never heard.
 
 `docs/host-sync-ear-test.md` is the highest-value thing waiting: five tests,
 fifteen minutes, three never heard on any plugin.
