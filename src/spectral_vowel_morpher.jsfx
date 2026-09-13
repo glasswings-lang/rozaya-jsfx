@@ -998,12 +998,21 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   i = 0;
   loop(NBINS, mtmp[i] = (1-mfr)*(slotmag[bi+i]/ni) + mfr*(slotmag[bj+i]/nj); i += 1; );
   sp = floor(eff_spread_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
+  // Spread's box blur as a RUNNING TOTAL, Passage's version (2026-09-12). The counted
+  // version re-added every neighbour for every bin, so its cost grew with the width --
+  // with Spread now reaching 1000 Hz that is about seven times Spread 150's work per
+  // grain. Entering bin i, add the neighbour that came into range and drop the one that
+  // left; the window is clipped at both ends and divided by its real width, as before.
   i = 0;
+  sp > 0 ? (
+    sumv = 0; cnt = 0; j = 0;
+    loop(min(sp, NBINS - 1) + 1, sumv += mtmp[j]; cnt += 1; j += 1; );
+  );
   loop(NBINS,
     sp <= 0 ? ( curmag[i] = mtmp[i]; ) : (
-      sumv = 0; cnt = 0; j = -sp;
-      loop(2*sp + 1, bj2 = i + j; (bj2 >= 0 && bj2 < NBINS) ? ( sumv += mtmp[bj2]; cnt += 1; ); j += 1; );
       curmag[i] = sumv / cnt;
+      bj2 = i + 1 + sp; bj2 < NBINS ? ( sumv += mtmp[bj2]; cnt += 1; );
+      bj2 = i - sp;     bj2 >= 0    ? ( sumv -= mtmp[bj2]; cnt -= 1; );
     );
     i += 1;
   );
@@ -1810,7 +1819,10 @@ mod_active[2] ? (   // Texture: internal 0..1, offset is in 0-100 Texture units
   eff_tex = max(0, min(1, texture + mo0 * 0.01));
   hlevel = cos(eff_tex * PI * 0.5); wlevel = sin(eff_tex * PI * 0.5);
 );
-eff_spread_hz    = max(0,  min(150, spread_hz    + (mod_active[4] ? target_drift_offset[4] + ramp_offset_mem[4] : 0)));
+// Spread reaches its slider's 1000 Hz (2026-09-12). It stopped at 150, a limit the range
+// sweep widened the slider past and left here. Rozaya: "That should have been lifted with
+// the slider extention, so... go for it". No saved copy sat above 150 (123 read).
+eff_spread_hz    = max(0,  min(1000, spread_hz    + (mod_active[4] ? target_drift_offset[4] + ramp_offset_mem[4] : 0)));
 mod_active[5] ? (   // Pitch (semitones)
   // NOT clamped -- same reasoning as the twin in spectral_vowel_passage.
   // Pinning this to the slider's own +/-36 meant Drift and Ramp flattened

@@ -131,7 +131,10 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   record. Never heard: the pitch block, the 88 targets, per-voice On Duration,
   Tremolo amount, Waveform, Solo, Pan rate mode, `Voice = All`.
 - The Morpher's new units off their defaults (drift in Cycles or Beats, ramp not in
-  Minutes); its All slots, 09-11; sounding on a stopped project load, 09-12. **Passage MID-BUILD, do not install** (progress atop its layout doc). Stage 9, 09-12: the 22-target list, measured; a Morph drift did not reach the sound (measured in this build, predicted from the same code order for earlier ones; no saved copy used it), fixed in src, never heard.
+  Minutes); its All slots, 09-11; sounding on a stopped project load, 09-12. Spread past
+  150 (it stopped there whatever the control said) and the faster Spread blur, 09-13:
+  112 of 123 copies bit-identical, the 11 using Spread within 3e-8; renders at Spread
+  150 went from about 25 s to 5 s. **Passage MID-BUILD, do not install** (progress atop its layout doc). Stage 9, 09-12: the 22-target list, measured; a Morph drift did not reach the sound (measured in this build, predicted from the same code order for earlier ones; no saved copy used it), fixed in src, never heard.
 
 `docs/host-sync-ear-test.md` is the highest-value thing waiting: five tests,
 fifteen minutes, three never heard on any plugin.

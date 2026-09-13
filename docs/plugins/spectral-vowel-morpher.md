@@ -98,7 +98,7 @@ Crossfades 0 = Voice (harmonic, keeps the vowel) to 100 = Wash (spectral, breath
 **Wash grain (ms)** `5 to 680, default 150`
 The wash's grain length: short = rougher and grainier, long = glassier and smoother. Affects only the wash; cheap and safe to automate.
 
-**Spread (Hz)** `0 to 150, default 0`
+**Spread (Hz)** `0 to 1000, default 0`
 Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
 
 **Pitch (semitones)** `-96 to +96, default 0`
