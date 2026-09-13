@@ -22,15 +22,16 @@ is built everywhere" sat here for weeks while Womb offered two rate options
 where the standard is five. Nobody noticed because nothing contradicted the
 sentence.
 
-- **The rate block (R20) and both host modes (R21): built everywhere.** True as
-  of 2026-09-06 and not before.
+- **The rate block (R20) and both host modes (R21): built everywhere** since 2026-09-06.
 - **Drift/Ramp: complete except Passage.**
-- **Polyrhythm v1 CROSSED AND ARCHIVED 2026-09-10.** 144 instances in 31 files
-  (E:/reaper, TrackTemplates, Tensor's folder), all bit-identical by render.
-- **Reorders owed:** Passage (blocked on what it is FOR).
-- **Polyrhythm v3** — voices behind a `Voice` selector 2026-09-07; per-voice pitch
-  block and 88 Drift/Ramp targets with all-voices entries 2026-09-10, 59 sliders.
-  8 instances bit-identical both times. `docs/layouts/polyrhythm-phase-v3-r22-r24.md`.
+- **Polyrhythm v1 CROSSED AND ARCHIVED 2026-09-10.** 144 instances in 31 files, all
+  bit-identical by render. `docs/layouts/polyrhythm-v1-to-v3-crossing.md`.
+- **OWED NEXT, IN THIS ORDER -- tell Rozaya as each comes off.** The Morpher's pitch
+  layout sat settled and unbuilt 09-11 to 09-13 because nothing here named it. Passage's
+  migration and install (09-13); the Morpher's PITCH LAYOUT, ready since 09-11
+  (`docs/layouts/spectral-vowel-morpher.md`), with Capture average 1-6 folded in; then
+  `Drift amount unit` / `Ramp by unit` in the other seventeen.
+- **Polyrhythm v3:** 59 sliders, per-voice pitch, 88 targets. `docs/layouts/polyrhythm-phase-v3-r22-r24.md`.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
 - **R22:** Breath Gen's block was rebuilt twice in the hearing, so the plan's rule
@@ -147,10 +148,3 @@ fifteen minutes, three never heard on any plugin.
 running) drives and reads every control in the **real** plugin. `tools/bridge_ui_test.py`,
 2026-09-11 evening, all 18 live: every target name, Drift movement, "all" entry,
 selector and mirror passed, and 112 of 112 values survived save and reopen.
-
-## The v1 → v3 Polyrhythm crossing — DONE 2026-09-10
-
-`docs/layouts/polyrhythm-v1-to-v3-crossing.md`. Snapshot
-`_pre-polyv1-crossing-20260910/`; the old plugin is `archive/versions/polyrhythm_phase/v2.jsfx`
-and `C:/Users/solst/jsfx-backups/polyrhythm_phase.archived-20260910.jsfx`.
-Unconverted: the `.RPP-bak` files beside those projects, which REAPER wrote.

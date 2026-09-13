@@ -127,6 +127,56 @@ def convert(path):
     return "".join(lines), len(hs)
 
 
+# The live write (2026-09-13). Every file converts in memory first, so a refusal anywhere
+# writes nothing. Each file is copied to the snapshot and compared byte for byte before
+# any file is written. After writing, each file is read back: the only lines that changed
+# are the Passage value lines, each now holding exactly 63 values. Any failure puts every
+# file back from the snapshot.
+SNAP = "E:/reaper/finished/backups/snapshots/_pre-passage-layout-20260913"
+EXPECT_FILES, EXPECT_INSTANCES = 11, 49   # the inventory of 2026-09-11, re-counted 2026-09-13
+
+
+def write_all():
+    import shutil
+    if os.path.exists(SNAP):
+        refuse(SNAP, "the snapshot already exists -- this migration has been run")
+    plans = [(p, *convert(p)) for p in files()]
+    n_inst = sum(n for _, _, n in plans)
+    if (len(plans), n_inst) != (EXPECT_FILES, EXPECT_INSTANCES):
+        refuse("inventory", f"{len(plans)} files and {n_inst} instances, expected {EXPECT_FILES} and {EXPECT_INSTANCES}")
+    snaps = {}
+    for p, _, _ in plans:
+        dst = os.path.join(SNAP, os.path.relpath(p, LIVE)).replace("\\", "/")
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy2(p, dst)
+        if open(dst, "rb").read() != open(p, "rb").read():
+            refuse(dst, "the snapshot copy does not match its project")
+        snaps[p] = dst
+    try:
+        for p, text, _ in plans:
+            open(p, "w", encoding="utf-8", errors="surrogateescape", newline="").write(text)
+        for p, text, n in plans:
+            new = open(p, encoding="utf-8", errors="surrogateescape", newline="").read()
+            old = open(snaps[p], encoding="utf-8", errors="surrogateescape", newline="").read()
+            ol, nl = old.splitlines(keepends=True), new.splitlines(keepends=True)
+            if new != text or len(ol) != len(nl):
+                refuse(p, "read back differently from what was written")
+            changed = [i for i in range(len(ol)) if ol[i] != nl[i]]
+            if changed != [h + 1 for h in heads(ol)] or len(changed) != n:
+                refuse(p, f"changed lines {changed[:5]} are not exactly its {n} Passage value lines")
+            for i in changed:
+                stored = sorted(k for k, v in parse_line(nl[i]).items() if v is not None)
+                if stored != list(range(1, N_NEW + 1)):
+                    refuse(p, f"line {i + 1} does not hold sliders 1..{N_NEW}")
+            print(f"{n:3} written and read back  {p}")
+    except BaseException:
+        for p, dst in snaps.items():
+            shutil.copy2(dst, p)
+        print("FAILED -- every project put back from the snapshot")
+        raise
+    print(f"{n_inst} instances in {len(plans)} files migrated; snapshot {SNAP}")
+
+
 if __name__ == "__main__":
     if sys.argv[1:2] == ["inventory"]:
         total = 0
@@ -135,5 +185,7 @@ if __name__ == "__main__":
             total += n
             print(f"{n:3} {p}")
         print(f"{total} instances convert cleanly (nothing written)")
+    elif sys.argv[1:2] == ["write"]:
+        write_all()
     else:
         raise SystemExit(__doc__)

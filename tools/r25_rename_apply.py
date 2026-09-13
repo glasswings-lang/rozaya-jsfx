@@ -22,7 +22,9 @@ else touched.
 import collections, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LIST = os.path.join(ROOT, "docs", "layouts", "r25-labels-20260912.md")
+# --list PATH applies another authored list in the same table shape (Passage's, 2026-09-13).
+LIST = sys.argv[sys.argv.index("--list") + 1] if "--list" in sys.argv else \
+       os.path.join(ROOT, "docs", "layouts", "r25-labels-20260912.md")
 APPLY = "--apply" in sys.argv
 ROW = re.compile(r"^\|\s*(src/[^|]+?\.jsfx)\s*\|\s*(\d+)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*$")
 

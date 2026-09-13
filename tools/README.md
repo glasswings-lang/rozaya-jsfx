@@ -772,6 +772,18 @@ nothing written.
   ramp on every old target; the 31 new targets; an "all layers" entry reaching past its
   first member; names. `--jobs N` runs in parallel; Morpher renders are slow.
 
+## Passage's layout — 2026-09-11 to 13
+
+`passage_migrate_20260911.py` moves a Passage slider line from 38 values to 63
+(`inventory` is a dry run; `write` snapshots every project to
+`E:/reaper/finished/backups/snapshots/_pre-passage-layout-20260913/`, writes, reads each
+file back, and puts everything back if any check fails). The blob is not touched: the
+plugin remaps its own. `passage_verify_20260911.py` measures it section by section --
+`saveformat` saves fresh instances with `jsfx_run --save-rpp` and reopens them, `savedlive`
+takes all 49 converted copies through one save, `scope` measures each control's kind for
+its name, `migrated` checks the projects on disk against the snapshot. The names were
+applied with `r25_rename_apply.py --list docs/layouts/passage-labels-20260913.md`.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in
@@ -801,6 +813,7 @@ Rule and history: `docs/suite-consistency-plan.md` R25, `docs/history/R25.md`. T
 - **`r25_build_list.py`** — measured report + track-to-file map to list rows; refuses to guess.
 - **`r25_rename_apply.py`** — applies the list: exact old label on the exact slider, already
   applied counts as done, anything else refuses; re-reads every file after writing.
+  `--list PATH` applies another list in the same table shape (Passage's, 2026-09-13).
 - **`r25_pages_apply.py`** — carries each kind onto the plugin pages' entry lines, from the
   list only; selectors and "A / B" entries handled; refuses what it cannot match.
 - **`hidden_limit_audit_20260913.py`** (+ `_controls.json`) — LISTENS for controls the code
@@ -871,6 +884,14 @@ does not re-run `@init` on a locate, so 3 is the check for REAPER's play path).
   blob from 28 targets to 55. Idempotent: skips a line storing anything above 96.
 - **The ysfx fork** that `jsfx_run` builds against (Joep Vanlier's, 256 sliders)
   is documented in `tools/jsfx_run/README.md`, with the build commands.
+
+## page_slider_numbers.py — do the pages' slider numbers still name the right control?
+
+Reads every "(slider N)" written beside a control's name on `docs/plugins/`, finds that
+control in `src/` by its declared label, and reports numbers that have moved; `--fix`
+rewrites a number only when exactly one control carries the name. Other mentions are
+printed for reading by hand. 2026-09-13: 60 of 70 were wrong, plus 20 in prose. Run it
+after any reorder.
 
 ## doc_budget.py
 

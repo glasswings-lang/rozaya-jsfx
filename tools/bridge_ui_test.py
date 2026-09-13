@@ -33,13 +33,17 @@ ITEM_SELECTORS = {
     "rhythm-track":        (4, 7, 1, 2, 0),
     "resonance_bank":      (3, 6, 1, 2, None),
     "spectral_vowel_morpher": (20, 22, 7, 8, None),
-    "spectral_vowel_passage": (0, 4, 1, 2, None),
+    # Passage's 2026-09-11 layout (installed 2026-09-13): Capture slot {All, Slot 1-8},
+    # Wash grain per slot -- one of the banks only saved from magic 7700008.
+    "spectral_vowel_passage": (0, 13, 1, 2, 0),
 }
 
 # A plugin's second per-item selector. The Morpher's Capture slot gained All
-# 2026-09-11; its Capture point is the per-slot value.
+# 2026-09-11; its Capture point is the per-slot value. Passage's High cut is the other
+# bank 7700008 began to save.
 EXTRA_ITEM_SELECTORS = {
     "spectral_vowel_morpher": [(0, 2, 1, 2, 0)],
+    "spectral_vowel_passage": [(0, 17, 1, 2, 0)],
 }
 
 ITEM_VALUES = {   # (item a, item b, All)

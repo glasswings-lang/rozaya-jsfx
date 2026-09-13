@@ -63,6 +63,9 @@ static void usage()
         "                      this is what moving a control by hand looks like.\n"
         "  --rms MS            print an RMS envelope every MS ms, default 50\n"
         "  --csv FILE          dump every output sample as time,L,R\n"
+        "  --save-rpp FILE     after the run, SAVE the plugin as a host does (the\n"
+        "                      slider line and @serialize's blob) into a one-instance\n"
+        "                      project that --rpp reads back: the save-and-reopen path\n"
         "  --quiet             suppress the envelope (use with --csv)\n"
         "\n"
         "The envelope is what you want for anything rhythmic: each line is one\n"
@@ -99,6 +102,25 @@ static std::vector<uint8_t> b64decode(const std::string &s)
         if (v < 0) continue;                 // skips '=' and whitespace
         acc = (acc << 6) | v; bits += 6;
         if (bits >= 8) { bits -= 8; out.push_back((uint8_t)((acc >> bits) & 0xFF)); }
+    }
+    return out;
+}
+
+static std::string b64encode(const uint8_t *p, size_t n)
+{
+    static const char *T = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string out;
+    size_t i = 0;
+    for (; i + 2 < n; i += 3) {
+        uint32_t v = ((uint32_t)p[i] << 16) | ((uint32_t)p[i + 1] << 8) | p[i + 2];
+        out += T[(v >> 18) & 63]; out += T[(v >> 12) & 63]; out += T[(v >> 6) & 63]; out += T[v & 63];
+    }
+    if (i < n) {
+        uint32_t v = (uint32_t)p[i] << 16;
+        if (i + 1 < n) v |= (uint32_t)p[i + 1] << 8;
+        out += T[(v >> 18) & 63]; out += T[(v >> 12) & 63];
+        out += (i + 1 < n) ? T[(v >> 6) & 63] : '=';
+        out += '=';
     }
     return out;
 }
@@ -226,6 +248,7 @@ int main(int argc, char **argv)
     double in_hz = 220.0, in_db = -12.0;
     bool list_only = false, quiet = false;
     const char *csv = nullptr, *rpp = nullptr, *fxmatch = nullptr, *data_root = nullptr;
+    const char *save_rpp = nullptr;
     int which = 1;
     std::vector<Assign> before;
     std::vector<std::vector<Assign>> stages(1);
@@ -263,6 +286,7 @@ int main(int argc, char **argv)
         else if (a == "--seconds") seconds = std::strtod(next(), nullptr);
         else if (a == "--rms") rms_ms = std::strtod(next(), nullptr);
         else if (a == "--csv") csv = next();
+        else if (a == "--save-rpp") save_rpp = next();
         else if (a == "--rpp") rpp = next();
         else if (a == "--fx") fxmatch = next();
         else if (a == "--instance") which = (int)std::strtol(next(), nullptr, 10);
@@ -487,6 +511,39 @@ int main(int argc, char **argv)
     }
 
     if (cf) std::fclose(cf);
+
+    // Save as a host does: the slider values and @serialize's write, into a project
+    // holding one <JS> block that --rpp reads back. The value line keeps REAPER's
+    // shape (64 tokens padded with '-', then a "" marker and slider 65 on), so the
+    // same parser -- and tools/rpp_sliders.py -- read it as they read a real project.
+    if (save_rpp) {
+        ysfx_state_t *st = ysfx_save_state(fx);
+        if (!st) { std::fprintf(stderr, "ysfx_save_state failed\n"); return 1; }
+        std::map<uint32_t, double> vals;
+        uint32_t top = 0;
+        for (uint32_t i = 0; i < st->slider_count; ++i) {
+            vals[st->sliders[i].index] = st->sliders[i].value;
+            top = std::max(top, st->sliders[i].index + 1);
+        }
+        FILE *sf = std::fopen(save_rpp, "wb");
+        if (!sf) { std::fprintf(stderr, "cannot write %s\n", save_rpp); return 1; }
+        std::fprintf(sf, "<REAPER_PROJECT 0.1 \"jsfx_run\"\n  <FXCHAIN\n    <JS \"%s\" \"\"\n      ", path);
+        uint32_t width = std::max<uint32_t>(top, 64);
+        for (uint32_t sid = 0; sid < width; ++sid) {
+            if (sid == 64) std::fprintf(sf, "\"\" ");
+            auto it = vals.find(sid);
+            if (it == vals.end()) std::fprintf(sf, "- ");
+            else std::fprintf(sf, "%.9g ", it->second);
+        }
+        std::fprintf(sf, "\n    >\n    <JS_SER\n");
+        std::string b = b64encode(st->data, st->data_size);
+        for (size_t k = 0; k < b.size(); k += 128)
+            std::fprintf(sf, "      %s\n", b.substr(k, 128).c_str());
+        std::fprintf(sf, "    >\n  >\n>\n");
+        std::fclose(sf);
+        ysfx_state_free(st);
+    }
+
     ysfx_free(fx);
     ysfx_config_free(cfg);
     return 0;

@@ -14,6 +14,12 @@ current   every live instance: the pre-layout build (PRE) on the project as it i
 import concurrent.futures as cf, os, re, subprocess, sys, tempfile
 import numpy as np
 
+# Idle priority, inherited by every render it starts: parallel renders at normal priority
+# made NVDA lag (2026-09 memory, "Heavy renders at Idle priority").
+if os.name == "nt":
+    import ctypes
+    ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), 0x40)
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 import passage_migrate_20260911 as mig
@@ -843,6 +849,191 @@ def units():
     sp_none = run_u([wash, [], []], t=4)
     sp_st = run_u([wash, [], [(DRIFT_UNIT, 2), (DRIFT_UP, 60), (DRIFT_DOWN, 60), (DRIFT_PERIOD, 1.3)]], t=4)
     report(not np.array_equal(sp_st, sp_none), "units: semitones on a Spread at 0 move it (counted from one bin)")
+
+
+# --- The save format, magic 7700008 (2026-09-13). Every bank the layout added is saved.
+# `jsfx_run --save-rpp` saves an instance the way a host does and `--rpp` reads it back.
+# A view is the stages that bring a slot or target onto the controls; a view reached
+# after a save and reopen must list every control exactly as the same view reached in
+# one sitting. PRE_SAVE, the build before, reads none of it: the check can fail.
+PRE_SAVE = "d1f0f6c"
+SRC_FUNIT, FINE_UNIT, DRIFT_UNIT_S, RAMP_UNIT_S = 7, 12, 47, 57
+SAVE_STAGES = [
+    [(CAP_SLOT, 2)],
+    [(T_UNIT, 2), (FINE, 37), (FINE_UNIT, 0), (GRAIN, 333), (HICUT, 5000), (T_UNIT_SLOT, 2), (SRC_FUNIT, 1)],
+    [(SRC, 62), (SRC_FINE, -30)],
+    [(DRIFT_TARGET, 5)],
+    [(DRIFT_UP, 10), (DRIFT_UNIT_S, 11), (DRIFT_MOVE, 0), (DRIFT_PLAY, 2.5), (DRIFT_REST, 1.5)],
+    [(RAMP_TARGET, 12)],
+    [(RAMP_BY, 0.5), (RAMP_UNIT_S, 4), (RAMP_PLAY, 3), (RAMP_REST, 4)],
+    [(CAP_SLOT, 6)],
+    [(GRAIN, 77), (HICUT, 900), (T_UNIT_SLOT, 1), (T_UNIT, 0), (FINE, 5), (FINE_UNIT, 1)],
+    [(DRIFT_UNIT_S, 3), (RAMP_UNIT_S, 2), (DRIFT_MOVE, 0)],
+    [(DRIFT_TARGET, 17)],
+    [(DRIFT_UP, 1), (DRIFT_PLAY, 9), (DRIFT_MOVE, 0)],
+]
+VIEWS = {"as saved": [],
+         "Slot 2, Drift Denoise, Ramp Slot fade out": [[(CAP_SLOT, 2)], [(DRIFT_TARGET, 5)], [(RAMP_TARGET, 12)]],
+         "Slot 6, Drift Denoise": [[(CAP_SLOT, 6)], [(DRIFT_TARGET, 5)]],
+         "Slot 1": [[(CAP_SLOT, 1)]]}
+
+
+def _staged_cmd(cmd, stages):
+    for k, st in enumerate(stages):
+        if k:
+            cmd += ["--stage"]
+        for s, v in st:
+            cmd += ["--set-after", f"{s}={v}"]
+    return cmd
+
+
+def listing(plugin, stages, rpp=None):
+    cmd = _staged_cmd([EXE, plugin, "--list"] + (["--rpp", rpp, "--fx", FX] if rpp else []), stages)
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError(r.stderr[-600:])
+    return {int(m[1]): float(m[2]) for m in re.finditer(r"^\s*slider(\d+)\s.*= (\S+)", r.stdout, re.M)}
+
+
+def save(plugin, stages, path, rpp=None, inst=1, seconds=0.3):
+    cmd = _staged_cmd([EXE, plugin, "--seconds", str(seconds), "--quiet", "--save-rpp", path]
+                      + (["--rpp", rpp, "--fx", FX, "--instance", str(inst)] if rpp else []), stages)
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError(r.stderr[-600:])
+    # The runner names the plugin by the file it ran (a pinned temp copy); name it as a project does.
+    text = open(path, encoding="utf-8").read()
+    head = next(l for l in text.splitlines() if l.strip().startswith("<JS "))
+    open(path, "w", encoding="utf-8", newline="").write(text.replace(head, f'    <JS "{FX}.jsfx" ""', 1))
+
+
+def saveformat():
+    pre = pinned(subprocess.run(["git", "show", f"{PRE_SAVE}:src/{FX}.jsfx"], cwd=ROOT, capture_output=True,
+                                check=True).stdout.decode("utf-8"), "pre_save.jsfx")
+    for end, tail in (("Slot 6", []), ("All", [[(CAP_SLOT, 0)]])):
+        stages = SAVE_STAGES + tail
+        s = os.path.join(tmp, f"sv-{end.replace(' ', '')}.RPP")
+        save(NEW, stages, s)
+        for vname, view in VIEWS.items():
+            want = listing(NEW, stages + view)
+            got = listing(NEW, view, rpp=s)
+            diff = sorted(k for k in want if k != CAPTURE and want[k] != got.get(k))
+            report(not diff and len(want) == mig.N_NEW,
+                   f"save: saved on {end}, reopened, {vname}: {len(want) - 1} controls as before the save"
+                   + (f" -- DIFFER at sliders {diff}" if diff else ""))
+        view = VIEWS["Slot 2, Drift Denoise, Ramp Slot fade out"]
+        want = listing(NEW, stages + view)
+        old = listing(pre, view, rpp=s)
+        report(any(want[k] != old.get(k) for k in (GRAIN, HICUT, T_UNIT_SLOT, DRIFT_UNIT_S, RAMP_PLAY)),
+               f"save: saved on {end}, the build before the save format reopens Slot 2 without its values (the check can fail)")
+        s2 = os.path.join(tmp, f"sv2-{end.replace(' ', '')}.RPP")
+        save(NEW, [], s2, rpp=s)
+        report(open(s, "rb").read() == open(s2, "rb").read(),
+               f"save: saved on {end}, reopened and saved again: the second save is byte-identical to the first")
+
+
+def savedlive():
+    # Every live instance, converted, then saved once in the new format: it must render
+    # exactly as the converted project does. This is the old-save path (grain seed, remap)
+    # meeting the new one.
+    jobs = []
+    for live in mig.files():
+        text, n = mig.convert(live)
+        conv = os.path.join(tmp, "sl-" + re.sub(r"[/\\: ']", "_", live))
+        open(conv, "w", encoding="utf-8", errors="surrogateescape", newline="").write(text)
+        jobs += [(live, conv, i) for i in range(1, n + 1)]
+
+    def one(j):
+        live, conv, i = j
+        s = os.path.join(tmp, f"sl{i}-" + os.path.basename(conv))
+        save(NEW, [], s, rpp=conv, inst=i, seconds=0.05)
+        a = run(NEW, 8, conv, i)
+        b = run(NEW, 8, s, 1)
+        return live, i, np.array_equal(a, b), float(np.abs(b).max())
+
+    with cf.ThreadPoolExecutor(JOBS) as ex:
+        res = list(ex.map(one, jobs))
+    for live, i, eq, _ in res:
+        if not eq:
+            report(False, f"savedlive: {live} #{i}: differs after a save")
+    same = sum(r[2] for r in res)
+    report(same == len(res) == 49 and all(r[3] > 0 for r in res),
+           f"savedlive: {same} of {len(res)} converted instances render bit-identical after one save in 7700008")
+
+
+# --- Which kind each control is (R25), measured the way tools/selector_scope_probe.py does
+# it live: set a value on one option, switch, read; switch back, read. Here through
+# jsfx_run, since Passage is not installed until its migration; the live probe repeats it
+# after. PER = it read something else on the other option and its own value back;
+# ALL = it read its own value on the other option too. Slot selector: Capture slot, Slot 1
+# and Slot 2. Target selectors: Transpose (0) and Fine tune (1), both per slot.
+# control -> (a value unlike its default, the kind it is named)
+SCOPE = {3: (40, "slot"), 4: (3, "slot"), 5: (62, "slot"), 6: (12.5, "slot"), 7: (1, "slot"), 8: (64, "slot"),
+         9: (7, "slot"), 10: (2, "slot"), 11: (33, "slot"), 12: (1, "slot"), 13: (80, "slot"), 14: (300, "slot"),
+         15: (40, "slot"), 16: (25, "slot"), 17: (120, "slot"), 18: (5000, "slot"), 19: (4, "slot"),
+         20: (12, "slot"), 21: (2.5, "slot"), 22: (6.5, "slot"), 23: (3.5, "slot"), 24: (1.5, "slot"),
+         25: (2, "slot"), 26: (0, "slot"), 27: (1, "slot"), 28: (80, "slot"), 29: (-6, "slot"),
+         30: (432, "all slots"), 31: (0, "all slots"), 32: (2, "all slots"), 33: (2.5, "all slots"),
+         34: (40, "all slots"), 35: (1, "all slots"), 36: (0, "all slots"), 37: (-10, "all slots"),
+         38: (2, "all slots"), 39: (3, "all slots"), 40: (4, "all slots"), 41: (1, "all slots"),
+         42: (1, "all slots"), 43: (1, "all slots"),
+         45: (5, "drift"), 46: (6, "drift"), 47: (2, "drift"), 48: (12, "drift"), 49: (2, "all drift"),
+         50: (0, "drift"), 51: (1, "drift"), 52: (2, "drift"), 53: (3, "drift"), 54: (1, "all drift"),
+         56: (3, "ramp"), 57: (3, "ramp"), 58: (1, "all ramp"), 59: (4, "ramp"), 60: (2, "ramp"),
+         61: (3, "ramp"), 62: (1, "all ramp"), 63: (1.5, "ramp")}
+
+
+def scope():
+    def switches(ctl, a, sel, o0, o1):
+        # PER, ALL or ? for one control against one selector
+        on_other = listing(NEW, [[(sel, o0)], [(ctl, a)], [(sel, o1)]])[ctl]
+        back = listing(NEW, [[(sel, o0)], [(ctl, a)], [(sel, o1)], [(sel, o0)]])[ctl]
+        return "PER" if on_other != a and back == a else "ALL" if on_other == a and back == a else "?"
+
+    def one(item):
+        ctl, (a, kind) = item
+        got = {"slot": switches(ctl, a, CAP_SLOT, 1, 2)}
+        if kind in ("drift", "all drift"):
+            got["target"] = switches(ctl, a, DRIFT_TARGET, 0, 1)
+        if kind in ("ramp", "all ramp"):
+            got["target"] = switches(ctl, a, RAMP_TARGET, 0, 1)
+        want = {"slot": {"slot": "PER"}, "all slots": {"slot": "ALL"},
+                "drift": {"slot": "PER", "target": "PER"}, "ramp": {"slot": "PER", "target": "PER"},
+                "all drift": {"slot": "ALL", "target": "ALL"}, "all ramp": {"slot": "ALL", "target": "ALL"}}[kind]
+        return ctl, kind, got, got == want
+
+    with cf.ThreadPoolExecutor(JOBS) as ex:
+        res = list(ex.map(one, SCOPE.items()))
+    for ctl, kind, got, ok in res:
+        if not ok:
+            report(False, f"scope: slider {ctl} is named {kind} but measured {got}")
+    report(all(r[3] for r in res),
+           f"scope: {sum(r[3] for r in res)} of {len(res)} controls measured as the kind their name says")
+
+
+# --- After the live write (2026-09-13): every migrated project against its snapshot. The
+# pre-layout build on the snapshot == the new build on the project as it now is on disk.
+def migrated():
+    jobs = []
+    for live in mig.files():
+        snap = os.path.join(mig.SNAP, os.path.relpath(live, mig.LIVE))
+        n = len(mig.heads(open(live, encoding="utf-8", errors="surrogateescape", newline="").read().splitlines(True)))
+        jobs += [(live, snap, i) for i in range(1, n + 1)]
+
+    def one(j):
+        live, snap, i = j
+        a = run(OLD, 8, snap, i)
+        b = run(NEW, 8, live, i)
+        return live, i, np.array_equal(a, b), float(np.abs(b).max())
+
+    with cf.ThreadPoolExecutor(JOBS) as ex:
+        res = list(ex.map(one, jobs))
+    for live, i, eq, _ in res:
+        if not eq:
+            report(False, f"migrated: {live} #{i} differs from its snapshot")
+    same = sum(r[2] for r in res)
+    report(same == len(res) == 49 and all(r[3] > 0 for r in res),
+           f"migrated: {same} of {len(res)} instances on disk render bit-identical to their snapshots")
 
 
 if __name__ == "__main__":

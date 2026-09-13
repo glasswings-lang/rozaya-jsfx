@@ -69,6 +69,22 @@ any migration is called done:
 > streams must be **bit-identical**. "Nothing should sound different" stops being
 > a prediction and becomes a measurement.
 
+## Save and reopen — `--save-rpp`
+
+```bash
+jsfx_run src/spectral_vowel_passage.jsfx --set-after 1=3 --stage --set-after 14=333 \
+         --seconds 0.3 --quiet --save-rpp saved.RPP
+jsfx_run src/spectral_vowel_passage.jsfx --rpp saved.RPP --fx passage --list --set-after 1=3
+```
+
+After the run, saves the plugin the way a host does — its slider values and what
+`@serialize` writes — into a one-instance project that `--rpp` reads back. Added
+2026-09-13 for Passage's save format: before it, nothing here could test a SAVE, only a
+load of a project REAPER had written. The `<JS` line names the file that ran, so a
+pinned temp copy needs its name put back before `--fx` can find it by plugin name
+(`tools/passage_verify_20260911.py`, `save()`). It follows ysfx's restore order, not
+REAPER's — a real save and reopen is still for the bridge.
+
 ## Plugins that load a file — `--data-root`
 
 ```bash
