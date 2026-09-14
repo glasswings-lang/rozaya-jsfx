@@ -26,7 +26,7 @@ desc: Shepard Scale Generator
 //   Attack %       — Fraction of the note's length spent fading in.
 //   Release %      — Fraction of the note's length spent fading out.
 //   Note Length %  — How much of each beat the note occupies before silence.
-//   Octave Count   — How many octave layers stack per note (2-12), and how
+//   Octave Count   — How many octave layers stack per note (2-16), and how
 //                    wide the pitch window is. These are the same thing.
 //   Center Octave  — Which octave sits at the middle of the stack.
 //   Waveform       — Sine is cleanest for the illusion.
@@ -47,7 +47,7 @@ slider4:0<0,1,1{Skip,Rest}>Inactive notes
 slider5:10<0,100,0.1>Attack (% of note length)
 slider6:10<0,100,0.1>Release (% of note length)
 slider7:100<1,100,0.1>Note length (%)
-slider8:8<2,12,1>Octave count
+slider8:8<2,16,1>Octave count
 slider9:4<0,8,1>Center octave
 slider10:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
 slider11:25<1,99,0.1>Pulse width (%, 50 = square)
@@ -159,13 +159,15 @@ rate_units = slider1;
 bpm        = slider1;
 
 PHI = 1.6180339887;
-NUM_OSC = 12; // max octave layers per note
+NUM_OSC = 16; // max octave layers per note, as Shepard Tone
 
-// Memory: note 0-11, osc 0-11 → index = note * NUM_OSC + osc (max 144 slots)
-osc_freq    = 0;   // 0-143:   fixed frequency per oscillator
-osc_phase_l = 144; // 144-287: oscillator phase left
-osc_phase_r = 288; // 288-431: oscillator phase right
-osc_gain    = 432; // 432-575: smoothed gain per oscillator
+// Memory: note 0-11, osc 0-15 → index = note * NUM_OSC + osc (192 slots each).
+// Moved 2026-09-14 from 0-575 to the free space between the drift banks and
+// n_gain_db, when the octave count widened from 12 to 16. Not serialized.
+osc_freq    = 2048; // 2048-2239: fixed frequency per oscillator
+osc_phase_l = 2240; // 2240-2431: oscillator phase left
+osc_phase_r = 2432; // 2432-2623: oscillator phase right
+osc_gain    = 2624; // 2624-2815: smoothed gain per oscillator
 
 // Per-note (12 slots each)
 n_active    = 576; // 576-587
@@ -194,7 +196,7 @@ i = 0;
 loop(12, n_env[i] = 0; i += 1;);
 
 i = 0;
-loop(144,
+loop(12 * NUM_OSC,
   osc_freq[i]    = 1; // 1Hz placeholder — avoids log(0)
   osc_phase_l[i] = 0;
   osc_phase_r[i] = 0;
@@ -505,7 +507,7 @@ skip_mode     = slider4;
 attack_frac   = slider5 / 100.0;
 release_frac  = slider6 / 100.0;
 note_len_frac = slider7 / 100.0;
-num_osc       = max(2, min(12, floor(slider8 + 0.5)));
+num_osc       = max(2, min(16, floor(slider8 + 0.5)));
 center_oct    = floor(slider9 + 0.5);
 waveform      = slider10;
 // Pulse duty as a 0..1 fraction of the cycle. Only read by waveform

@@ -117,7 +117,7 @@ the difference between a pad and a blip lives.
 **Release Shape** `Linear / Cosine / Logarithmic / Exponential`
 Curve shape applied to the release ramp. Global, same reasoning.
 
-**Transpose (half steps)** `-12 to +12, default 0`
+**Transpose (half steps)** `-20000 to +20000, default 0`
 Shifts every voice up or down by whole note steps, without touching any voice's
 own Note setting. At the default of 0, each voice sounds exactly the note it
 names. `+2` moves the whole set up two steps; `-12` drops everything one octave.

@@ -32,7 +32,7 @@ slider5:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
 
 // ===== BASE PITCH =====
 slider6:440<20,2000,0.1>Tuning reference (Hz)
-slider7:0<-12,12,1>Transpose (half steps)
+slider7:0<-20000,20000,1>Transpose (half steps)
 slider8:0<-4,4,1>Octave shift
 slider9:4<0,1000,0.001>Binaural beat (Hz, L/R offset)
 
@@ -712,15 +712,18 @@ function poly_copy_old(ot, nt) (
 // exponent -- so every saved voice lands on the identical frequency, fine tune
 // included. With every offset idle, x + 0 is x. The other combinations follow
 // Melody's voice_hz.
+// pow(2, e) with e held to +-100 octaves: far past hearing, so a very wide Transpose
+// pins the pitch at the edge instead of overflowing it (measured 2026-09-14).
+function pow2_safe(e) ( pow(2, min(max(e, -100), 100)) );
 function voice_pitch_hz(pv, pm, pf, pu, vo, fo, tro, refo) local(h, s, rs) (
   pm == 1 && pu == 2 ? (
     s = (pv + vo - 60) + (pf + fo) * 0.01;
-    h = (tuning_ref + refo) * pow(2, ((center_octave + 1) * 12 + (base_note + tro) + s - 69) / 12.0);
+    h = (tuning_ref + refo) * pow2_safe(((center_octave + 1) * 12 + (base_note + tro) + s - 69) / 12.0);
   ) : (
     rs = (base_note + tro) + 12 * (center_octave - 4);
-    h = pm == 1 ? (tuning_ref + refo) * pow(2, (pv + vo + rs - 69) / 12.0) :
-        pm == 2 ? (tuning_ref + refo) * pow(2, ((pv + vo) / 100 + rs - 69) / 12.0) :
-                  (pv + vo) * pow(2, rs / 12.0);
+    h = pm == 1 ? (tuning_ref + refo) * pow2_safe((pv + vo + rs - 69) / 12.0) :
+        pm == 2 ? (tuning_ref + refo) * pow2_safe(((pv + vo) / 100 + rs - 69) / 12.0) :
+                  (pv + vo) * pow2_safe(rs / 12.0);
     h = pu == 0 ? h + (pf + fo) :
         pu == 1 ? h * pow(2, (pf + fo) / 12) :
                   h * pow(2, (pf + fo) / 1200);
@@ -729,7 +732,7 @@ function voice_pitch_hz(pv, pm, pf, pu, vo, fo, tro, refo) local(h, s, rs) (
 );
 
 function semitones_to_hz(base_note, center_octave, semitones) (
-  tuning_ref * pow(2, ((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
+  tuning_ref * pow2_safe(((center_octave + 1) * 12 + base_note + semitones - 69) / 12.0)
 );
 
 function apply_curve(t, shape) (

@@ -49,7 +49,7 @@ The fraction of each note's length spent fading the note out. At 0% the note cut
 **Note length (%)** `1-100%, default 100`
 The fraction of each beat during which the note is present. At 100% the note occupies the full beat. At 50% the note plays for the first half of the beat then falls silent for the second half.
 
-**Octave Count** `2-12, default 8`
+**Octave Count** `2 to 16, default 8`
 The number of oscillator layers stacked per note, and the width of the pitch window in octaves. Higher values produce a richer, more ambiguous pitch quality; lower values sound thinner but more distinct.
 
 **Center Octave** `0-8, default 4`
