@@ -28,14 +28,12 @@ non-numeric order, with R17 buried inside "Where to pick this up" and R18 inside
 Every line of the old document is in one of these three files, verbatim. Nothing
 was rewritten in the split.
 
-**The rules are in numeric order here for the first time.** R11 is superseded and
-lives in the history; its slot below says so.
+**The rules are in numeric order.**
 
 ---
 
 ## The rules, in order
 
-- **R11** — One tempo-sync block — SUPERSEDED BY R20, 2026-09-04
 - **R12** — A numeric range spans 0–1000, or −1000–1000 where the sign does something real
 - **R13** — Every rate reads in a real unit, and Host x is one of them
 - **R13a** — The sigh states its change in the breath's own unit
@@ -83,13 +81,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## ~~R11. One tempo-sync block~~ — SUPERSEDED BY R20, 2026-09-04
-
-**Do not build this shape.** Its `Sync to host` / `Host sync target` /
-`Every N beats` block is what Womb and Melody used to carry, and both have
-converted away from it. The full text, and the measurement that killed it,
-are in `docs/history/plan-history.md`. R20 below is the rule that replaced it.
 
 ## R12. A numeric range spans 0–1000, or −1000–1000 where the sign does something real
 
