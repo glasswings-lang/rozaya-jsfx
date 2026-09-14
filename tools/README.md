@@ -932,6 +932,16 @@ rewrites a number only when exactly one control carries the name. Other mentions
 printed for reading by hand. 2026-09-13: 60 of 70 were wrong, plus 20 in prose. Run it
 after any reorder.
 
+## page_controls.py — do the pages describe the controls the plugins really have?
+
+The rest of the page check: a page's range, default or option list against the plugin's
+declaration (MISMATCH), a control entry the plugin does not declare (NOT IN PLUGIN), an
+entry in an old name style (NAME STYLE), and a declared control named nowhere on its page
+(NOT ON PAGE). Report only; each finding is a question for whoever edits that page. Built
+2026-09-13 when Passage's page still said -96 to +96; `page_controls_test.py` holds it to
+that. First full run: 618 findings, tuned to 224 by reading samples -- most remaining are
+ranges the 2026-09-06 range sweep widened and pages that never describe Drift and Ramp.
+
 ## doc_budget.py
 
 Checks the docs a session actually reads against a line budget, and exits 1 if
