@@ -13,9 +13,13 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 
 ## Settled
 
-- **A Ramp selector above the target selector.** Rozaya: *"its own target list, ramp
-  selecter, then the ramp stuff"*. In Passage the nesting is slot > ramp > target (Passage
-  already nests slot > target, measured).
+- **WRONG WAY ROUND, corrected 2026-09-14: this said "a Ramp selector above the target
+  selector".** Rozaya's words, 2026-09-12, in full: *"that could go under its own target
+  list, ramp selecter, then the ramp stuff for the... wait, can we have nested stuff within
+  nested stuff?"* -- target list FIRST, then the ramp selector, then the ramp settings. The
+  2026-09-12 note inverted it and Veil's plan was drafted on the inversion. Rozaya, on catching
+  it: *"ramps and all that shit is replacement for automation"* -- a target is a lane, its
+  ramps are pieces of that lane. Re-asked 2026-09-14.
 - **Eight ramps.** Rozaya: *"Yes. I think that's a good one"*.
 - **Start delay "counts from" {start of the song, end of the ramp before it}.** Offered
   dropping the song-start choice for later ramps as rarely needed; Rozaya: *"Rarely is not
@@ -27,8 +31,11 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 - **Ramp engage: once per ramp**, covering all of that ramp's targets. Rozaya first:
   *"Ramp engage is just like any other ramp control. needs to be per-ramp"*; then, asked
   whether per ramp or per ramp and target: *"Once per ramp"*.
-- **Ramp time unit: once per ramp.** Asked in the same question as engage and taken to
-  follow it -- confirm if it ever matters.
+- **Ramp time unit: NOT settled.** Written as "once per ramp, taken to follow engage"; the
+  transcript shows it was never asked on its own. Part 2's rule puts a unit immediately after
+  what it modifies, so it belongs beside the durations whatever its scope.
+- **Engage, the exact exchange:** offered once per ramp against per ramp AND per control, with
+  per control recommended; Rozaya: *"Once per ramp"*. Asked under the inverted nesting above.
 - **Overlapping ramps on one target add together**, so each ramp always moves by its own
   amount. Offered against "the later ramp takes over from where the earlier one got to",
   with adding recommended; Rozaya, 2026-09-13: *"I'd go with adding as well"*.
@@ -51,7 +58,8 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
   automation does; Rozaya, 2026-09-13: *"Keep it like you suggested, yeah."* A ramp that never
   moved the target is still skipped back past, as settled above.
 - **`Rest mode (for Ramp)` once per ramp**, `{Walk through, Freeze in place}`, so one ramp can
-  walk through a rest while another freezes. The switch was first decided on Veil (two, for
+  walk through a rest while another freezes. **Caveat, 2026-09-14:** Claude offered only "per
+  ramp or one for all eight", never per target, and under the inverted nesting. The switch was first decided on Veil (two, for
   Drift and for Ramp: `veil-r26-r27.md`). Offered per ramp against one for all eight; Rozaya,
   2026-09-13: *"Yeah, I was going to ask for that actually"*. Every plugin with Drift and Ramp
   gets both switches; Rozaya: *"Yes, all of them should get both"* (R27).

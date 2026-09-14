@@ -50,10 +50,11 @@ wide at fixed addresses from 4096 to 4447; SVF state below them at 0..29.
 Every new control is off or on its old meaning, so the saved copy sounds the same: its one
 ramp becomes Ramp 1, counting from play start, Linear, walking through rests.
 
-**Mine, unquoted, to walk through with Rozaya:** the ORDER inside Drift and Ramp. A per-ramp
-control has to sit below the Ramp selector and above the target selector, since the target
-selector does not change it; so time unit, engage and Rest mode (for Ramp) go there.
-Labels follow Passage's.
+**THE RAMP BLOCK BELOW IS WRONG, 2026-09-14 -- do not build it.** It puts the Ramp selector
+above the target selector, from a note that inverted Rozaya's words (`multi-ramp.md`, first
+Settled item: target list first, then ramp selector). Rozaya caught it: *"this goes against
+some shit"*, *"ramps and all that shit is replacement for automation"*. Rows 22-34 are
+re-authored once the nesting is re-asked. Labels follow Passage's.
 
 **`Rest mode (for Drift)` at the end of the Drift block, decided.** Offered against the
 transport block, next to Play for / Rest for; Rozaya, 2026-09-14: *"I'd rather have it in the
