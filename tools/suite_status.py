@@ -58,7 +58,8 @@ def sliders(path):
         out.append({"n": int(m.group(1)), "default": m.group(2), "label": m.group(4).strip(),
                     "range": re.sub(r"\{[^}]*\}", "", rng).strip(","),
                     "options": opts.group(1).split(",") if opts else None})
-    return out
+    # REAPER lists and restores controls by slider number, never by file position.
+    return sorted(out, key=lambda s: s["n"])
 
 
 def find(ss, pattern):
