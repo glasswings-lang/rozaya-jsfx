@@ -2681,13 +2681,21 @@ in_rest ? (
 //              evening on one machine, but layers had been dialled in against
 //              it, and resetting someone's work to save fifteen lines is the
 //              same disrespect as moving their values silently.
-//   7700055 -- current (2026-09-11). Fifty-five targets in control order. Every
+//   7700055 -- (2026-09-11). Fifty-five targets in control order. Every
 //              older magic reads at its own width, runs the migrations below, and
 //              is then remapped from the 24-target list, selectors included.
-ser_magic = 7700055;
+//   7700087 -- current (2026-09-13, the pitch layout). 87 targets, Layer 1-16 in their new
+//              order, and APPENDED at the very end: every layer's pitch, pitch unit, fine
+//              tune and fine tune unit, the Layer selector as shown (All included), and the
+//              Drift amount unit and Ramp by unit per target. Read only from a blob that
+//              WROTE them; an older one keeps @init's defaults (the ladder's intervals,
+//              Semitones, no fine tune, Target default), which are what the slider
+//              migration seeds, and walks 55 -> 87 and the ladder -> Layer 1-16 below.
+ser_magic = 7700087;
 file_var(0, ser_magic);
-(ser_magic == 7700055 || ser_magic == 7700011 || ser_magic == 7700010 || ser_magic == 7700009 || ser_magic == 7700008 || ser_magic == 7700007 || ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
-  n_ser_targets = ser_magic == 7700055 ? 55 : ser_magic >= 7700006 ? 24 : ser_magic == 7700005 ? 23 :
+(ser_magic == 7700087 || ser_magic == 7700055 || ser_magic == 7700011 || ser_magic == 7700010 || ser_magic == 7700009 || ser_magic == 7700008 || ser_magic == 7700007 || ser_magic == 7700006 || ser_magic == 7700005 || ser_magic == 7700004 || ser_magic == 7700002 || ser_magic == 7700001) ? (
+  ser_new = ser_magic >= 7700087;   // holds the pitch layout's appended banks
+  n_ser_targets = ser_magic == 7700087 ? N_TARGETS : ser_magic == 7700055 ? 55 : ser_magic >= 7700006 ? 24 : ser_magic == 7700005 ? 23 :
                   ser_magic == 7700004 ? 19 : ser_magic == 7700002 ? 7 : 6;
   file_var(0, have);
   file_var(0, n_used);
@@ -2842,6 +2850,20 @@ file_var(0, ser_magic);
   file_mem(0, target_drift_rest, n_ser_targets);
   file_mem(0, ramp_play_mem,     n_ser_targets);
   file_mem(0, ramp_rest_mem,     n_ser_targets);
+
+  // --- 7700087 (2026-09-13): the pitch layout's banks, APPENDED at the very end. Gated on the
+  //     magic that WROTE them, never on EOF (Passage's rule). The selector is saved as SHOWN,
+  //     0 = All, since last_lay_sel above holds only a layer. ---
+  ser_new ? (
+    file_avail(0) < 0 ? ( ser_lay_selv = last_lay_selv; );
+    file_mem(0, lay_semi,  N_LAY_SLOTS);
+    file_mem(0, lay_punit, N_LAY_SLOTS);
+    file_mem(0, lay_fine,  N_LAY_SLOTS);
+    file_mem(0, lay_funit, N_LAY_SLOTS);
+    file_var(0, ser_lay_selv);
+    file_mem(0, target_drift_unit, N_TARGETS);
+    file_mem(0, ramp_by_unit,      N_TARGETS);
+  );
 
   // --- Layer order migration, walked LAST so every older layout above has
   //     already been brought up to CANON: Custom 1..3, the twelve intervals low
@@ -3020,7 +3042,8 @@ file_var(0, ser_magic);
     // last_cap_slot is not in the stream, so the slider is its only source.)
     // Layers (2026-09-13): the selector as the blob last showed it, and its nine controls.
     last_lay_sel = max(0, min(N_LAY_SLOTS-1, last_lay_sel | 0));
-    lay_selv = last_lay_sel + 1; last_lay_selv = lay_selv;
+    lay_selv = ser_new ? max(0, min(N_LAY_SLOTS, ser_lay_selv | 0)) : last_lay_sel + 1;
+    last_lay_sel = lay_selv == 0 ? 0 : lay_selv - 1; last_lay_selv = lay_selv;
     slider29 = lay_selv;
     slider30 = lay_active[last_lay_sel];
     slider31 = lay_semi[last_lay_sel];
