@@ -25,7 +25,8 @@ start delay (units, then value, then switch,  "begin start delay: from start of 
 When a ramp begins before another has ended, it should be allowed to; start delay serves, alone, to let timing be adjusted manually. 
 
 when a ramp is switched off, it shouldn't move other ramps; let the gap exist. 
-
+From claude, pasted by me. "When a ramp runs late, because it was paused or frozen during a rest, the next ramp's start delay switch decides what happens. It has three choices. Count from the start. Count from when the ramp before was supposed to end. Or count from when the ramp before really ended."
+That gives your start delay switch three choices instead of two.
 
 
 This is for all plugins. 
