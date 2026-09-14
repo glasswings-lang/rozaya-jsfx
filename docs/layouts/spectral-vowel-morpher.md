@@ -695,7 +695,8 @@ we should leave it as-is." Rozaya watches the context meter and will say when it
   to 128; `t55_o2n` (old "Layer pitch (all Custom layers)" -> "all layers": nobody parked
   there). Measured: `current` 123/123, `names`, `targets` 12, `layers`, `pitch`, `quick31`
   (12 copies read back by name, all sound). Live blobs are all 7700008-7700011 (24 targets).
-- **Phase-order fix, applied at the handoff, RERUNS OWED.** `blobs`/`blobs55` failed: the six
+- **Phase-order fix DONE, rerun on src 2026-09-13: `current blobs blobs55 layers`, 0 failures
+  (current 123/123).** `blobs`/`blobs55` had failed: the six
   layers below the Original moved one memory slot, so their voice started from different
   random phases. Found on `i-was-born-here` #1 (Texture 100, ladder 0-3 raised): identical at
   100, different the moment Texture drops. Proved by controls (only Texture 60 differed) and by
