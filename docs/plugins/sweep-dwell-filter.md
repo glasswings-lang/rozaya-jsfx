@@ -302,7 +302,7 @@ The 6-option selector (matches Drift). Switching saves the current target's `by`
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off all freeze and resume on re-engage. As of v2.14 each target has its own duration + start delay (previously shared) — different dwell phases can ramp on different timelines from one engage.
 
-**Ramp by (per target, slider 39)** `-60 to +60 seconds, step 0.001, default 0`
+**Ramp by (per target, slider 39)** `-20000 to +20000 seconds, step 0.001, default 0`
 Signed delta in seconds for the selected dwell phase. **0** = no change. **Negative** = shorten that phase (shorter cycle if that's High/Low dwell; quicker fade if that's a fade phase). **Positive** = lengthen. Example: target High dwell with `by +4` stretches high dwell from 4 sec → 8 sec over the duration; combined with target Low dwell with `by +2`, both phases ramp together as a coordinated wind-down.
 
 **Ramp start delay (per target, slider 45)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. It is slider 45 now; it first lived at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
@@ -347,10 +347,10 @@ The four dwell-phase targets are the same set as the Ramp targets and use the sa
 **Drift target** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
 Picks which target's drift configuration sliders 31-34 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (per target)** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target)** `0 to 20000, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: seconds for the four dwell phases, the Pan Sweep Rate's own unit for Pan Sweep Rate, a 0-1 fraction for Resonance. 0 = drift off on the up side. Resonance uses the low end of the range (e.g. 0.3).
 
-**Drift down amount (per target)** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target)** `0 to 20000, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (per target, cycles)** `0–1000, default 8, 0 = off`

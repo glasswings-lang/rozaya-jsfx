@@ -43,7 +43,7 @@ The delay between the S1 and S2 events within each cycle. Shorter values produce
 **S1 Volume** `0.0-1.0, default 1.0`
 Output level for S1, applied after envelope shaping and independently of S2.
 
-**S1 decay (ms)** `10-200 ms, default 60`
+**S1 decay (ms)** `5 to 1000 ms, default 60`
 How quickly S1 fades after its attack peak. Longer values produce a sustained, resonant thud; shorter values a sharper knock.
 
 **Pitch** *(the block, new 2026-09-09)* — the two thump frequencies, now one set of
@@ -154,7 +154,7 @@ Switching saves the current target's `by` + duration + start delay to its memory
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage. Only transport play resets the ramps.
 
-**Ramp by (per target, slider 33)** `-400 to +400, step 0.01, default 0`
+**Ramp by (per target, slider 33)** `-20000 to +20000, step 0.01, default 0`
 Signed delta in the selected target's natural unit. **0** = no change. Examples:
 - Heart rate target, by -35: heart ramps from 70 → 35 BPM over the duration.
 
@@ -217,10 +217,10 @@ For slow wall-clock-feel drift, set a long period (~360 heartbeats ≈ 5 min at 
 **Drift target** `Heart rate / Systole / Breath HRV depth / Random HRV depth, default Heart rate`
 Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (per target)** `0.0–50.0, default 0` (units match target)
+**Drift up amount (per target)** `0 to 20000, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are BPM for Heart rate, ms for Systole, fractional depth (0.0-0.25 range) for Breath HRV depth, fractional depth (0.0-0.08 range) for Random HRV depth. 0 = drift off on the up side.
 
-**Drift down amount (per target)** `0.0–50.0, default 0` (units match target)
+**Drift down amount (per target)** `0 to 20000, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric biological-feel wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 ### Whose turn it is (2026-09-09)

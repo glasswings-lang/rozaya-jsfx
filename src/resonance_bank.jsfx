@@ -38,7 +38,7 @@ desc: Resonance Bank
 //   Order 4: -24 dB/oct
 //   Order 8: -48 dB/oct (near brick-wall)
 
-slider1:0.0<-24.0,24.0,0.01>Input gain (dB)
+slider1:0.0<-60,24,0.01>Input gain (dB)
 slider2:0<0,1,1{Parallel bandpass,Serial peaking EQ}>Mode
 slider3:440<20,2000,0.1>Tuning reference (Hz)
 
@@ -70,8 +70,8 @@ slider18:0.5<0,1,0.01>Wet/dry mix
 slider19:0.5<0,1,0.01>Output volume
 
 slider20:2<0,9,1{Input gain,Tuning reference,Frequency,Fine tune,Width up,Width down,Gain,Pan,Wet/dry mix,Output volume}>Drift target
-slider21:0<0,1000,0.01>Drift up amount (per band and target, units match target)
-slider22:0<0,1000,0.01>Drift down amount (per band and target, units match target)
+slider21:0<0,20000,0.01>Drift up amount (per band and target, units match target)
+slider22:0<0,20000,0.01>Drift down amount (per band and target, units match target)
 slider23:0<0,1000,0.001>Drift period (per band and target, 0 = off)
 // Named `mode` and not `unit` on purpose: everywhere else in the suite a drift
 // period is a COUNT of cycles. Here it is a RATE, because each band drifts
@@ -82,7 +82,7 @@ slider26:0<0,1000,0.01>Drift play for (per band and target, periods, 0 = always)
 slider27:0<0,1000,0.01>Drift rest for (per band and target, periods, 0 = always)
 
 slider28:2<0,9,1{Input gain,Tuning reference,Frequency,Fine tune,Width up,Width down,Gain,Pan,Wet/dry mix,Output volume}>Ramp target
-slider29:0<-1000,1000,0.001>Ramp by (per band and target, units match target)
+slider29:0<-20000,20000,0.001>Ramp by (per band and target, units match target)
 slider30:1<0,2,1{Seconds,Minutes,Beats}>Ramp time unit (all targets)
 slider31:0<0,1000,0.01>Ramp duration (per band and target, in ramp time units)
 slider32:0<0,1000,0.01>Ramp play for (per band and target, 0 = smooth)

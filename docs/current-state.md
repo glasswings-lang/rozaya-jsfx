@@ -27,8 +27,8 @@ has been heard, and what Rozaya has said is next.
 - **Veil is first:** `docs/layouts/veil-r26-r27.md`, PROPOSED. Its Transport unit takes
   Drift's units, `{Seconds, Beats}` (Rozaya's). Walk-or-freeze is TWO switches on Veil,
   `Rest mode (for Drift)` and `Rest mode (for Ramp)` (Rozaya's, 2026-09-13). Nothing built.
-- **Held for Rozaya's decision:** dB and semitone ranges (the range sweep's passes 1 and 2
-  widened 176 sliders and left these).
+- **Held for Rozaya's decision:** semitone ranges. dB volumes were decided 2026-09-14: -60 to
+  +24 everywhere.
 - R22 opens with an attribution warning: parts of it were Claude's, cited back as settled.
 
 ## What has been heard, and what has not

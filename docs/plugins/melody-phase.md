@@ -147,7 +147,7 @@ the note names on the voices are literally true.
 **Loop** `Off / On`
 When on, the sequence wraps from the last active voice back to the first. When off, the sequence plays one full pass and stops.
 
-**Master Gain dB** `-60 – 0`
+**Master Gain dB** `-60 to +24`
 Output level for the whole plugin.
 
 **Binaural Beat Hz** `0 – 100`
@@ -265,7 +265,7 @@ How long this voice's note actually sounds, in cycles. Controls *sound timing* �
 - **Note duration > Next voice in** → Vn's release continues while the next voice plays (overlap / phrasing).
 - **Note duration = 0** → Vn is a silent step (rest) of duration "Next voice in." Silent on entry and exit, no click.
 
-**Vn gain (dB)** `-60 – 6`
+**Vn gain (dB)** `-60 to +24`
 Per-voice level.
 
 **Vn Active** `Off / On`
@@ -359,7 +359,7 @@ A **one-time signed-delta ride** on any target over a set duration — the in-pl
 **Ramp target** `55 options, default Rate value`
 Which parameter this ramp acts on — the same list as Drift target. All 55 ramp in parallel; the selector only chooses which one you are editing.
 
-**Ramp by (per target)** `-1000 to +1000, step 0.001, default 0` (units match target)
+**Ramp by (per target)** `-20000 to +20000, step 0.001, default 0` (units match target)
 Signed delta the target moves by over the duration (from 0 at the start to the full `by` at the end, then held). Units follow the target: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. **0** = no ramp for this target. For Rate Value / Pan Rate the sign follows Rate Mode — in BPM/Hz modes negative `by` = slower, in Seconds mode (period) positive `by` = slower.
 
 **Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes`
@@ -403,10 +403,10 @@ Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **
 
 Every control that shapes the sound, in the order the controls appear: Rate value, Pulse width, Tuning reference, Transpose, Binaural beat, Attack, Release, Glide time, Pan spread, Pan glide, Pan base rate, Pan increment per voice; then for each voice its Pitch, Fine tune, Next voice in, Note duration and Gain; then Master gain, Play for and Rest for. Amounts are in each target's own unit. Play for and Rest for round to whole steps.
 
-**Drift up amount (per target)** `0.0–20.0, default 0` (units match target)
+**Drift up amount (per target)** `0 to 20000, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. Dial small values in Seconds / Hz modes. 0 = drift off on the up side.
 
-**Drift down amount (per target)** `0.0–20.0, default 0` (units match target)
+**Drift down amount (per target)** `0 to 20000, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 ### Whose turn it is (2026-09-09)

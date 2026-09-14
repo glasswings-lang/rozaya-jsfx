@@ -81,7 +81,7 @@ Each of the twelve chromatic notes has four controls, together: Active, Gain, Pa
 **Active** `Off / On`
 Whether this note is part of the scale. When off, behavior depends on the Inactive Notes setting. The note's other controls are hidden while it is off.
 
-**Gain (dB)** `-60–+6 dB, default 0`
+**Gain (dB)** `-60 to +24 dB, default 0`
 Volume of this note relative to the others. Allows individual notes to be emphasized or de-emphasized within the sequence.
 
 **Pan** `-100–+100, default 0`
@@ -149,7 +149,7 @@ In-plugin one-time morph over time, without automation envelopes. As of v2.14 Ra
 **Ramp target** `45 options, default Rate value`
 The same list as Drift target. Switching it saves the current values into the old target and loads the new one's.
 
-**Ramp by (per target, slider 76)** `-300 to +300, step 0.1, default 0` (units match the selected target)
+**Ramp by (per target, slider 76)** `-20000 to +20000, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over that target's duration. **0** = no change (safe default). For **Note Length / Attack / Release** it's in percentage points. The wide ±300 range is headroom shared across targets — only the target's own sensible span is meaningful (e.g. a note-length ramp beyond ±100 is clamped).
 
 For **Rate value** the delta is in **BPM**, in every Rate Mode (`-60` ramps 120 → 60). The target used to be listed as `Tempo`; it now matches the slider it drives (R2).
@@ -208,10 +208,10 @@ For slow wall-clock-feel drift, set a long period (~960 beats ≈ 8 min at 120 B
 **Drift target** `45 options, default Rate value`
 Every control that shapes the sound, in the order the controls appear: Rate value, Attack, Release, Note length, Pulse width, Binaural beat, Tuning reference; then for each note C through B its Gain, Pan and Fine tune; then Play for and Rest for. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (per target, slider 68)** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target, slider 68)** `0 to 20000, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are BPM for BPM, % for Note Length / Attack / Release. 0 = drift off on the up side. Note that going much above ±20 BPM on the BPM target will sound dramatic — typical musical use is 5–15 BPM.
 
-**Drift down amount (per target, slider 69)** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target, slider 69)** `0 to 20000, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (per target, slider 70, beats)** `0–1000, default 8, 0 = off`

@@ -331,7 +331,7 @@ and they save with the project. In Seconds every value is the seconds you hear �
 arithmetic, no allowance for a fade bleeding in from a neighbour, nothing about
 one slot's timing living on another slot.
 
-**Slot fade in (seconds / Hz / beats, per slot)** `0 to 300, default 1`
+**Slot fade in (seconds / Hz / beats, per slot)** `0 to 1000, default 1`
 How long this slot takes to rise from silence when it arrives. You hear it at
 the very start of a pass, and any time a slot arrives *out of silence* — after a
 **gap**, or after the previous slot faded out with its crossfade **Off**. When
@@ -339,14 +339,14 @@ the previous slot **crossfades into** this one instead, the crossfade has alread
 raised it to full, so its own fade-in is skipped (nothing fades in twice, and the
 boundary stays click-safe either way). Fade in 2 = a two-second rise.
 
-**Slot hold (seconds / Hz / beats, per slot)** `0 to 300, default 4`
+**Slot hold (seconds / Hz / beats, per slot)** `0 to 1000, default 4`
 How long the slot stays up at full, alone, once it has arrived. **The number you
 type is the number of seconds.** Hold 4 on every slot and each holds four
 seconds; hold 4 on one and 8 on another and their holds differ, which is what an
 uneven cycle (like a real breath) needs. Hold 0 means no steady part — the slot
 rises and immediately begins to fall.
 
-**Slot fade out (seconds / Hz / beats, per slot)** `0 to 300, default 1`
+**Slot fade out (seconds / Hz / beats, per slot)** `0 to 1000, default 1`
 How long the slot takes to fall at the end of its hold. What the fall *is*
 depends on the crossfade toggle below:
 
@@ -360,7 +360,7 @@ Fade out 0 is a hard edge — an instant switch to the next slot with crossfade 
 or a hard cut to silence with it off (which can click on sharp-edged captures;
 soft-edged captures like breath cut cleanly).
 
-**Slot gap after (seconds / Hz / beats, per slot)** `0 to 300, default 0`
+**Slot gap after (seconds / Hz / beats, per slot)** `0 to 1000, default 0`
 Seconds of silence after this slot, before the next one begins. **This is how you
 place silence now** — the quiet lives between the slots, where it is, so you no
 longer capture a silent slot to make a pause. Four seconds of quiet means typing
@@ -442,7 +442,7 @@ Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phas
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
-**Output level (dB, per slot)** `-60 to +12, default 0`
+**Output level (dB, per slot)** `-60 to +24, default 0`
 The level of everything this slot *makes* — both the voice and the wash. Not the voice engine's own level, despite what it was called until now: it sits after the voice/wash crossfade, so it moves the pair together. Per slot like the rest of the capture settings, so the morph crossfades it along with the spectra. The dry input is the one thing it doesn't touch; that has its own **Input level**.
 
 *(Renamed from “Voice level”. Same slider, same behaviour, same saved values — the name was simply describing one part of what it did.)*
@@ -507,7 +507,7 @@ nothing at all. A pure-wash patch never had it; anything with voice in it did.
 **Audition** `Focused slot / Morph, default Morph`
 *Focused slot* plays exactly the Capture-slot, ignoring Morph (so you can hear each grab as you build it). *Morph* plays the morph blend.
 
-**Input level (dry, dB)** `-60 to +12, default 0`
+**Input level (dry, dB)** `-60 to +24, default 0`
 The source passed straight through. −60 = silent.
 
 ### Transport — *whole plugin*
@@ -546,7 +546,7 @@ Which parameter the Drift controls below are editing. The list is in the order t
 
 Which is what makes a breath out of slots possible: **fade in is the inhale, hold is the top pause, fade out is the exhale, gap is the bottom pause.** Give each a small drift and the breathing stops being metronomic. Results are clamped at zero, so a drift larger than the setting itself shortens the leg to nothing rather than inverting it.
 
-**Drift up amount** / **Drift down amount** `0 to 1000, in the Drift amount unit, default 0` — *per slot and target*
+**Drift up amount** / **Drift down amount** `0 to 20000, in the Drift amount unit, default 0` — *per slot and target*
 How far it wanders above (up) and below (down) the parameter's current value. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
 **Drift amount unit** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default` — *per slot and target*
@@ -583,7 +583,7 @@ Like Drift, every target rides in parallel; the selector chooses which one the s
 **Ramp target** — the same 22 targets as Drift, default Transpose
 Which parameter the Ramp controls below are editing. Like Drift, they are *per slot and target*: Capture slot picks the slot, Ramp target the parameter, and the six whole-plugin targets ignore the slot. On **All**, a Ramp setting you move reaches that target in all eight slots.
 
-**Ramp by** `-1000 to +1000, in the Ramp by unit, default 0` — *per slot and target*
+**Ramp by** `-20000 to +20000, in the Ramp by unit, default 0` — *per slot and target*
 How far to move the parameter, and which direction. Negative goes down, positive up. **0 means this target doesn't ramp**, so arming Ramp with everything at 0 safely does nothing.
 
 **Ramp by unit** — the same list as Drift amount unit, default Target default — *per slot and target*

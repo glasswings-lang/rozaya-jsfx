@@ -229,7 +229,7 @@ slider30:1<0,1,1{Inactive,Active}>Layer active (per layer)
 // project too, where REAPER supplies this slider's declared default because the
 // saved line has no value for it. Two defaults that have to agree: the level
 // slider's default is the default-selected layer's level.
-slider35:0<-60,0,0.01>Layer level (dB, per layer, -60 = off)
+slider35:0<-60,24,0.01>Layer level (dB, per layer, -60 = off)
 slider36:0<0,1,1{Off,Solo}>Layer solo (per layer)
 slider31:0<-20000,20000,0.001>Layer pitch value (Hz / semitones / cents, per layer)
 slider32:1<0,2,1{Hz,Semitones,Cents}>Layer pitch unit (per layer)
@@ -262,14 +262,14 @@ slider38:-1<-1,64,1>Layer overtone harmonic (per layer, -1 = follow the global)
 
 // --- Levels. Both are global and both belong at the end of the sound section,
 //     after everything they scale. ---
-slider39:0<-60,12,0.01>Input level (dry, dB)
+slider39:0<-60,24,0.01>Input level (dry, dB)
 // Named "Voice level" since this plugin was born, and wrong the whole time: it
 // is applied to voutL/voutR, which is the equal-power crossfade of the voice
 // AND the wash, after every layer has been summed into both. So it has always
 // scaled the wash too, and now it scales all sixteen layers as well. The only
 // thing it does not touch is the dry input, which has its own Input level.
 // Relabelled rather than re-scoped -- the behaviour is right, the name was not.
-slider40:0<-60,12,0.01>Output level (dB, everything but the dry input)
+slider40:0<-60,24,0.01>Output level (dB, everything but the dry input)
 
 // --- TRANSPORT (canonical block B) -----------------------------------------
 //     Start delay, then the Play/Rest gate. Added 2026-09-04: the Morpher had
@@ -330,8 +330,8 @@ slider45:0<0,1,1{Pass-through,Silence}>Output at rest
 // with an "all layers" entry for each layer control (R24, Polyrhythm's model). The plugin
 // remaps an old save; tools/morpher_migrate_20260913.py remaps a project line's selectors.
 slider46:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Drift target
-slider47:0<0,1000,0.01>Drift up amount (per target, in the Drift amount unit)
-slider48:0<0,1000,0.01>Drift down amount (per target, in the Drift amount unit)
+slider47:0<0,20000,0.01>Drift up amount (per target, in the Drift amount unit)
+slider48:0<0,20000,0.01>Drift down amount (per target, in the Drift amount unit)
 slider49:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (per target, Target default where it cannot fit)
 slider50:30<0,1000,0.001>Drift period (per target, in drift period units, 0 = off)
 // Drift period unit. Same three options as everywhere else in the suite, but it
@@ -369,7 +369,7 @@ slider55:0<0,1,1{Restart on play,Free-running}>Drift restart (all targets)
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
 slider56:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Ramp target
-slider57:0<-1000,1000,0.001>Ramp by (per target, in the Ramp by unit)
+slider57:0<-20000,20000,0.001>Ramp by (per target, in the Ramp by unit)
 slider58:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (per target, Target default where it cannot fit)
 // Ramp time unit -- the unit for Ramp duration, Ramp play/rest and Ramp start
 // delay, all four together. Default MINUTES (index 2), which is the suite
@@ -2096,7 +2096,7 @@ mod_active[8] ? ( voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX; );
 // as Spread's 150: the hidden-limit audit heard 500 and 20000 render bit-identical.
 eff_lowcut_hz    = max(0,  min(20000, lowcut_hz    + (mod_active[10] ? au_key(10, 2, lowcut_hz, 20) : 0)));
 mod_active[84] ? (   // Output level (dB) -- named Voice level until 2026-08
-  eff_vdb = max(-60, min(12, voice_db_base + target_drift_offset[84] + ramp_offset_mem[84]));
+  eff_vdb = max(-60, min(24, voice_db_base + target_drift_offset[84] + ramp_offset_mem[84]));
   voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
 );
 // --- High cut (target 7). Derived into the four numbers both engines read:
@@ -2132,7 +2132,7 @@ loop(N_LAY_SLOTS,
   // silent however far its level target wanders, so arming drift on a layer you
   // have muted cannot bring it back without you.
   (mod_active[LEV_T0+lz] && (any_solo ? lay_solo[lz] >= 0.5 : lay_active[lz] >= 0.5)) ? (
-    eff_ldb = max(-60, min(0, lay_db_base[lz] + target_drift_offset[LEV_T0+lz] + ramp_offset_mem[LEV_T0+lz]));
+    eff_ldb = max(-60, min(24, lay_db_base[lz] + target_drift_offset[LEV_T0+lz] + ramp_offset_mem[LEV_T0+lz]));
     layer_gain[lz] = eff_ldb <= -60 ? 0 : pow(10, eff_ldb/20);
   );
   // nlay_on gates the pitch-shifted synthesis only, so the original never sets
@@ -2377,7 +2377,7 @@ ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
 // Denoise (7, percent) and Input level (51, dB), per sample only while driven.
 mod_active[9] ? ( denoise_amt = max(0, min(100, denoise_base + mo_q(9))); );
 mod_active[83] ? (
-  mo_dry_db = max(-60, min(12, dry_db_base + mo_q(83)));
+  mo_dry_db = max(-60, min(24, dry_db_base + mo_q(83)));
   dry_gain = mo_dry_db <= -60 ? 0 : pow(10, mo_dry_db/20);
 );
 dryL = spl0 * dry_gain; dryR = spl1 * dry_gain;

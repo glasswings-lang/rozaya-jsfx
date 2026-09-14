@@ -76,7 +76,7 @@ Number of detuned ensemble voices stacked on the loop. 0 = a single clean loop; 
 **Spread (%)** `0 to 100, default 50`
 How far the ensemble voices detune apart and drift. Low = tight and subtle; high = wide and lush (very high goes warbly).
 
-**Output (dB)** `-24 to +12, default 0`
+**Output (dB)** `-60 to +24, default 0`
 Final output level.
 
 ### Drift and Ramp

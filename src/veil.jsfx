@@ -54,12 +54,12 @@ slider2:520<100,2000,1>Right cutoff (Hz)
 slider3:0.15<0,1,0.01>Left resonance
 slider4:0.15<0,1,0.01>Right resonance
 slider5:0<0,5,1{-12,-24,-36,-48,-60,-72}>Slope (dB/oct)
-slider6:0<-24,12,0.01>Output (dB)
+slider6:0<-60,24,0.01>Output (dB)
 
 // --- Drift (nested selector) ---
 slider7:0<0,4,1{Left cutoff,Right cutoff,Left resonance,Right resonance,Output}>Drift target
-slider8:0<0,1000,0.01>Drift up amount (per target, units match target)
-slider9:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider8:0<0,20000,0.01>Drift up amount (per target, units match target)
+slider9:0<0,20000,0.01>Drift down amount (per target, units match target)
 // Unit is set by slider11 (Drift period unit) — seconds by default, beats in
 // Host-synced projects. The unit is deliberately NOT in this label: NVDA
 // re-reads the parameter name on every arrow step, and a name that lies half
@@ -88,7 +88,7 @@ slider14:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // --- Ramp (nested selector; signed delta) ---
 slider15:0<0,4,1{Left cutoff,Right cutoff,Left resonance,Right resonance,Output}>Ramp target
-slider16:0<-1000,1000,0.001>Ramp by (per target, units match target)
+slider16:0<-20000,20000,0.001>Ramp by (per target, units match target)
 // Ramp time unit. REAPER is a DAW and counts in beats, and this suite has
 // three rate modes -- yet the Ramp ignored all of them and was hardwired to
 // wall clock. The comment that used to sit here argued a wind-down is
@@ -551,7 +551,7 @@ loop(n_stages,
 // Output (target 4), in dB, clamped to the slider's own range. Untouched by
 // drift and ramp it is exactly the @slider value, as it always was.
 out_move = drift_offset_mem[4] + speed_ramp_ramp_t_mem[4] * speed_ramp_by_mem[4];
-out_gain_eff = out_move != 0 ? 10 ^ (max(-24, min(12, slider6 + out_move)) / 20) : out_gain;
+out_gain_eff = out_move != 0 ? 10 ^ (max(-60, min(24, slider6 + out_move)) / 20) : out_gain;
 
 spl0 = in_L * out_gain_eff;
 spl1 = in_R * out_gain_eff;

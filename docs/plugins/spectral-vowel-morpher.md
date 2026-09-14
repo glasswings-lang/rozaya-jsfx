@@ -199,7 +199,7 @@ Where this layer sits, as an offset from Transpose, in the unit you choose. Hz c
 **Layer fine tune (per layer)** `-1000 to 1000, default 0` and **Layer fine tune unit (per layer)** `Hz / Semitones / Cents, default Cents`
 A small offset on top of the layer's pitch — a few cents for a slow beating unison. Also a Drift and Ramp target.
 
-**Layer level (dB, per layer, -60 = off)** `-60 to 0`
+**Layer level (dB, per layer, -60 = off)** `-60 to +24`
 How loud the selected layer sits. **The number you set is the number you get**: no auto-balancing, nothing moving under your hand. Levels **add**, so a dozen layers at 0 dB will clip if you let them. **−60 is truly off** and costs no CPU.
 
 **Layer solo (per layer)** `Off / Solo, default Off`
@@ -219,10 +219,10 @@ On the voice each raised layer is another 64 partials, but the **upward** layers
 
 Four octaves each way is the usable span of a voice capture: four down is at the floor of hearing, four up is past where a captured harmonic series has much content left. Anything wider is a layer pitched by hand — **and depth is free, but watch your meters.** A layer's pitch goes to eight octaves either way because nothing in the engine cares. Past about five octaves down, though, a layer is below hearing: inaudible, but still eating headroom and moving speaker cones. A subsonic layer you can't hear is still on the meter.
 
-**Input level (dry, dB)** `-60 to +12, default 0`
+**Input level (dry, dB)** `-60 to +24, default 0`
 The source passed straight through. −60 = silent.
 
-**Output level (dB, everything but the dry input)** `-60 to +12, default 0`
+**Output level (dB, everything but the dry input)** `-60 to +24, default 0`
 The master level for everything the plugin *makes* — the voice, the wash, and every layer. Not the voice engine's own level, despite what it was called until now: it sits after the voice/wash crossfade and after every layer has been summed in, so it moves the whole instrument together. The dry input is the one thing it doesn't touch; that has its own **Input level**.
 
 *(Renamed from “Voice level”. Same slider, same behaviour, same saved values — the name was simply describing one part of what it did.)*
@@ -326,7 +326,7 @@ The four **"all layers"** entries work like Polyrhythm's "all voices": choosing 
 
 Which parameter the Drift controls below are editing. Switch it and they show *that* target's settings; anything you set on another target keeps running in the background.
 
-**Drift up amount** / **Drift down amount (per target, in the Drift amount unit)** `0 to 1000, default 0`
+**Drift up amount** / **Drift down amount (per target, in the Drift amount unit)** `0 to 20000, default 0`
 How far it wanders above (up) and below (down) the parameter's current value, in the unit **Drift amount unit** names — on Target default, that parameter's own units: Texture in its 0–100, Transpose in its unit, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
 **Drift amount unit (per target, Target default where it cannot fit)** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default`
@@ -385,7 +385,7 @@ Like Drift, every target rides in parallel; the selector chooses which one the s
 **Ramp target** — the same eighty-seven as Drift target, default Morph (see there, including what is not on the list and why).
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
-**Ramp by (per target, in the Ramp by unit)** `-1000 to +1000, default 0`
+**Ramp by (per target, in the Ramp by unit)** `-20000 to +20000, default 0`
 How far to move the parameter, and which direction — in the unit **Ramp by unit** names; on Target default, that parameter's own units (Texture 0–100, Transpose in its unit, Low cut Hz…). Negative goes down, positive up. **0 means this target doesn't ramp**, so arming Ramp with everything at 0 safely does nothing.
 
 **Ramp by unit (per target, Target default where it cannot fit)** `the same thirteen units as Drift amount unit, default Target default`

@@ -473,7 +473,7 @@ under **Drift target** below, including the "(all voices)" entries. Switching
 the selector loads that target's saved values; an edit is written the moment you
 make it. Running ramps on other targets keep going.
 
-**Ramp by (per target)** `-1000 to +1000, step 0.001, default 0`
+**Ramp by (per target)** `-20000 to +20000, step 0.001, default 0`
 Signed amount for the selected target, in that target's natural unit (rate unit for the rate targets, Hz for Binaural, dB for Gain/Depth, % for On Duration / Attack / Release). **0** = no ride.
 
 - **Rate value** rides as a multiplicative ratio: at 60 BPM, `by -30` scales every voice by 0.5, so V2's 60.5 → 30.25 — the slow beat between voices is preserved.
@@ -542,10 +542,10 @@ What some of them do:
 - **On duration**, **Attack** and **Release** — wander the shape of a voice's pulse.
 - **Play for** / **Rest for** — wander the gate's counts. The gate still only switches on when both sliders are above zero.
 
-**Drift up amount (per target)** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target)** `0 to 20000, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for the rate targets; the voice's own Pitch mode unit for Pitch and its Fine tune unit for Fine tune; semitones for Transpose; Hz for Tuning reference and Binaural Beat; dB for Gain and Tremolo amount; percent for On duration, Attack, Release, Pulse width and Pan spread; ms for Pan glide; cycles for Play for and Rest for. Rate targets in Hz mode use the low end; Gain/Tremolo amount use modest values (a few dB is a strong swell). 0 = drift off on the up side.
 
-**Drift down amount (per target)** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target)** `0 to 20000, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (per target)** `0–1000, default 8, 0 = off`

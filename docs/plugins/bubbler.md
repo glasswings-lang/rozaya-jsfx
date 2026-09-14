@@ -77,7 +77,7 @@ This used to be `Own rate / Host x`, where "Own rate" meant per second. It defau
 
 **Dry/Wet %** `0–100, default 100` — blend of bubbled signal against the untouched original.
 
-**Output (dB)** `-24 to +12, default 0` — wet level trim.
+**Output (dB)** `-60 to +24, default 0` — wet level trim.
 
 ## Usage Notes
 

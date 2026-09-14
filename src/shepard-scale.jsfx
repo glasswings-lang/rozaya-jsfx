@@ -57,51 +57,51 @@ slider14:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit (for every note)
 
 // ===== NOTES, C through B: Active, Gain, Pan, Fine tune =====
 slider15:1<0,1,1{Off,On}>C active
-slider16:0<-60,6,0.01>C gain (dB)
+slider16:0<-60,24,0.01>C gain (dB)
 slider17:0<-100,100,0.1>C pan
 slider18:0<-1000,1000,0.001>C fine tune (in fine tune units)
 slider19:1<0,1,1{Off,On}>C# active
-slider20:0<-60,6,0.01>C# gain (dB)
+slider20:0<-60,24,0.01>C# gain (dB)
 slider21:0<-100,100,0.1>C# pan
 slider22:0<-1000,1000,0.001>C# fine tune (in fine tune units)
 slider23:1<0,1,1{Off,On}>D active
-slider24:0<-60,6,0.01>D gain (dB)
+slider24:0<-60,24,0.01>D gain (dB)
 slider25:0<-100,100,0.1>D pan
 slider26:0<-1000,1000,0.001>D fine tune (in fine tune units)
 slider27:1<0,1,1{Off,On}>D# active
-slider28:0<-60,6,0.01>D# gain (dB)
+slider28:0<-60,24,0.01>D# gain (dB)
 slider29:0<-100,100,0.1>D# pan
 slider30:0<-1000,1000,0.001>D# fine tune (in fine tune units)
 slider31:1<0,1,1{Off,On}>E active
-slider32:0<-60,6,0.01>E gain (dB)
+slider32:0<-60,24,0.01>E gain (dB)
 slider33:0<-100,100,0.1>E pan
 slider34:0<-1000,1000,0.001>E fine tune (in fine tune units)
 slider35:1<0,1,1{Off,On}>F active
-slider36:0<-60,6,0.01>F gain (dB)
+slider36:0<-60,24,0.01>F gain (dB)
 slider37:0<-100,100,0.1>F pan
 slider38:0<-1000,1000,0.001>F fine tune (in fine tune units)
 slider39:1<0,1,1{Off,On}>F# active
-slider40:0<-60,6,0.01>F# gain (dB)
+slider40:0<-60,24,0.01>F# gain (dB)
 slider41:0<-100,100,0.1>F# pan
 slider42:0<-1000,1000,0.001>F# fine tune (in fine tune units)
 slider43:1<0,1,1{Off,On}>G active
-slider44:0<-60,6,0.01>G gain (dB)
+slider44:0<-60,24,0.01>G gain (dB)
 slider45:0<-100,100,0.1>G pan
 slider46:0<-1000,1000,0.001>G fine tune (in fine tune units)
 slider47:1<0,1,1{Off,On}>G# active
-slider48:0<-60,6,0.01>G# gain (dB)
+slider48:0<-60,24,0.01>G# gain (dB)
 slider49:0<-100,100,0.1>G# pan
 slider50:0<-1000,1000,0.001>G# fine tune (in fine tune units)
 slider51:1<0,1,1{Off,On}>A active
-slider52:0<-60,6,0.01>A gain (dB)
+slider52:0<-60,24,0.01>A gain (dB)
 slider53:0<-100,100,0.1>A pan
 slider54:0<-1000,1000,0.001>A fine tune (in fine tune units)
 slider55:1<0,1,1{Off,On}>A# active
-slider56:0<-60,6,0.01>A# gain (dB)
+slider56:0<-60,24,0.01>A# gain (dB)
 slider57:0<-100,100,0.1>A# pan
 slider58:0<-1000,1000,0.001>A# fine tune (in fine tune units)
 slider59:1<0,1,1{Off,On}>B active
-slider60:0<-60,6,0.01>B gain (dB)
+slider60:0<-60,24,0.01>B gain (dB)
 slider61:0<-100,100,0.1>B pan
 slider62:0<-1000,1000,0.001>B fine tune (in fine tune units)
 
@@ -113,8 +113,8 @@ slider66:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // ===== DRIFT: 45 targets in control order =====
 slider67:0<0,44,1{Rate value,Attack,Release,Note length,Pulse width,Binaural beat,Tuning reference,C gain,C pan,C fine tune,C# gain,C# pan,C# fine tune,D gain,D pan,D fine tune,D# gain,D# pan,D# fine tune,E gain,E pan,E fine tune,F gain,F pan,F fine tune,F# gain,F# pan,F# fine tune,G gain,G pan,G fine tune,G# gain,G# pan,G# fine tune,A gain,A pan,A fine tune,A# gain,A# pan,A# fine tune,B gain,B pan,B fine tune,Play for,Rest for}>Drift target
-slider68:0<0,1000,0.01>Drift up amount (per target, units match target)
-slider69:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider68:0<0,20000,0.01>Drift up amount (per target, units match target)
+slider69:0<0,20000,0.01>Drift down amount (per target, units match target)
 slider70:8<0,1000,0.001>Drift period (per target, 0 = off)
 slider71:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 slider72:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
@@ -123,7 +123,7 @@ slider74:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // ===== RAMP: the same 45 targets =====
 slider75:0<0,44,1{Rate value,Attack,Release,Note length,Pulse width,Binaural beat,Tuning reference,C gain,C pan,C fine tune,C# gain,C# pan,C# fine tune,D gain,D pan,D fine tune,D# gain,D# pan,D# fine tune,E gain,E pan,E fine tune,F gain,F pan,F fine tune,F# gain,F# pan,F# fine tune,G gain,G pan,G fine tune,G# gain,G# pan,G# fine tune,A gain,A pan,A fine tune,A# gain,A# pan,A# fine tune,B gain,B pan,B fine tune,Play for,Rest for}>Ramp target
-slider76:0<-1000,1000,0.001>Ramp by (per target, units match target)
+slider76:0<-20000,20000,0.001>Ramp by (per target, units match target)
 slider77:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 slider78:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 slider79:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)

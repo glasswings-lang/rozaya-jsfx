@@ -152,7 +152,7 @@ Whether this voice sweeps upward or downward. Setting two voices to opposite dir
 **Vn Rate (in rate mode units; 0 = holds still)** `-1000–+1000, default 0`
 Independent mode only, and hidden in Synced mode. This voice's own sweep speed, in the units set by Rate Mode. At 0 or below the voice does not sweep at all: it holds as a steady chord of its note in every octave.
 
-**Vn gain (dB)** `-60–+6 dB, default 0`
+**Vn gain (dB)** `-60 to +24 dB, default 0`
 Per-voice output level, applied before the voice is summed into the mix.
 
 **Vn Pan** `-100–+100, default 0`
@@ -229,7 +229,7 @@ In-plugin one-time morph over time, without automation. As of v2.14 Ramp is nest
 **Ramp target** `40 options, default Rate value`
 The same list as Drift target. Switching it saves the current values into the old target and loads the new one's.
 
-**Ramp by (per target, slider 91)** `-1000 to +1000, step 0.001, default 0` (units match the selected target)
+**Ramp by (per target, slider 91)** `-20000 to +20000, step 0.001, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over that target's duration. **0** = no change (safe default). For the rate targets (Rate Value + per-voice) the delta is in **the rate's currently-displayed unit**:
 
 - Rate Mode **BPM**, Rate Value 60, `by -30` → ramps 60 BPM → 30 BPM (slower).
@@ -291,10 +291,10 @@ The per-voice targets are what make this plugin's drift special: with **Independ
 Every control that shapes the sound, in the order the controls appear: Rate value, Fade in, Fade out, Pulse width, Binaural beat, Tuning reference; then for each voice its Fine tune, Rate, Gain and Pan; then Play for and Rest for. A voice's Rate target only acts in Independent mode; its Fine tune target acts in both.
 Picks which target's drift configuration sliders 70-73 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (per target, slider 83)** `0.0–100.0, default 0` (units match target)
+**Drift up amount (per target, slider 83)** `0 to 20000, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are the rate's current unit (BPM / Seconds / Hz) for Rate Value and per-voice targets, percent for Fade In/Out. The 0-100 range covers Fade fully and BPM-mode rate drift; in **Hz mode** you'll use the low end (e.g. 0.1-0.5), in **Seconds mode** small period offsets. 0 = drift off on the up side.
 
-**Drift down amount (per target, slider 84)** `0.0–100.0, default 0` (units match target)
+**Drift down amount (per target, slider 84)** `0 to 20000, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (per target, slider 85, cycles)** `0–1000, default 8, 0 = off`

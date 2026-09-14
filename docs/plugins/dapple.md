@@ -82,7 +82,7 @@ semitones and it drifts in semitones.
 
 **Stereo width %** `0–100, default 80` — 0 = mono, 100 = fully independent L/R streams.
 
-**Output (dB)** `-24 to +12, default 0` — level. Dense settings stack up loud; pull this down if it distorts.
+**Output (dB)** `-60 to +24, default 0` — level. Dense settings stack up loud; pull this down if it distorts.
 
 **Tone vs Noise %** `0–100, default 50` — blend between the two voices. 0 = noise gurgle bed, 100 = pure sine plinks, in between = the dappled mix.
 

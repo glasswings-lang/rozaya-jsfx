@@ -78,7 +78,7 @@ Two things hold true at every slope, which is not automatic and took some care:
   total emphasis whether that's one stage or six. Applied per stage, the peaks
   would multiply — six mild peaks stacking into a wall.
 
-**Output (dB)** `−24 to +12, default 0` — level trim.
+**Output (dB)** `-60 to +24, default 0` — level trim.
 
 ### Drift (nested selector)
 

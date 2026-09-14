@@ -202,7 +202,7 @@ the duration, once.
 
 **Ramp target** `eighteen targets, default Breath rate` — the same list as Drift target, below.
 
-**Ramp by (per target)** `-1000 to 1000, default 0`
+**Ramp by (per target)** `-20000 to +20000, default 0`
 Signed, in the target's own unit. Negative shortens a segment or slows the breath
 rate; positive lengthens or speeds it. 0 means this target does not ramp.
 
@@ -248,10 +248,10 @@ and Rest for in breaths. The new ones arrive `On a clock`; set to `With the targ
 anything past the four segments takes one step per whole breath. Play for and Rest
 for move how long each lasts; the gate still needs both controls above zero.
 
-**Drift up amount (per target, units match target)** `0-1000, default 0`
+**Drift up amount (per target, units match target)** `0 to 20000, default 0`
 How far above baseline the wander reaches at its peak.
 
-**Drift down amount (per target, units match target)** `0-1000, default 0`
+**Drift down amount (per target, units match target)** `0 to 20000, default 0`
 How far below. Independent of up, so asymmetric wander is supported — biological
 signals do not drift symmetrically. Either one above zero turns drift on for that
 target; both zero is off.
@@ -306,7 +306,7 @@ move.
 
 ### Output
 
-**Output (dB)** `-60 to +12, default 0`
+**Output (dB)** `-60 to +24, default 0`
 Overall level. Added 2026-09-08 -- the plugin previously had no output control of
 any kind, so the only way to set its level was on the track.
 

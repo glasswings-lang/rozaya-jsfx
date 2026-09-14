@@ -57,7 +57,7 @@ This is the windscape engine: configure one band with simultaneous drifts on Fre
 
 ### Global
 
-**Input Gain (dB)** `-24.0 to +24.0, default 0.0`
+**Input Gain (dB)** `-60 to +24, default 0.0`
 Pre-gain applied to the input signal before any band processing.
 
 **Mode** `Parallel bandpass / Serial peaking EQ, default Parallel bandpass`
@@ -137,10 +137,10 @@ When the drift target changes within a band, the previous target's drift continu
 **Drift target** `Input gain / Tuning reference / Frequency / Fine tune / Width up / Width down / Gain / Pan / Wet/dry mix / Output volume, default Frequency`
 Which control the drift moves. *(Ten since 2026-09-11, in the order of the controls.)* Frequency, Fine tune, both widths, Gain and Pan belong to the selected band. **Input gain, Tuning reference, Wet/dry mix and Output volume belong to the whole plugin**: they hold one setting, and every band shows the same one.
 
-**Drift up amount (per band and target)** `0 to 1000, default 0`
+**Drift up amount (per band and target)** `0 to 20000, default 0`
 Maximum upward excursion of the drift, in the target's own unit: Frequency, Fine tune and the widths in that band's chosen unit; dB for Gain and Input gain; Hz for Tuning reference; -1 to +1 for Pan; 0 to 1 for Wet/dry and Output volume.
 
-**Drift down amount (per band and target)** `0 to 1000, default 0`
+**Drift down amount (per band and target)** `0 to 20000, default 0`
 Maximum downward excursion. Asymmetric Up vs Down lets the drift sit slightly off-center for a biological-feel rather than purely symmetric.
 
 **Drift period (per band and target, BPM / Hz / sec / beats per cycle by mode; 0 = off)** `0 to 1000, default 0`

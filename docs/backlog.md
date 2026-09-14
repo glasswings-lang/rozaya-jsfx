@@ -118,7 +118,7 @@ one. Finish it, re: the audit."*
   what each percent is a percent OF before authoring: converting one is a value migration.
 
 - **No control counts in fractions of one (R9).** Every control whose range sits inside -1 to 1
-  changes unit: volumes become dB with -60 as off, and everything else becomes percent (pan
+  changes unit: volumes become dB from -60 (off) to +24, and everything else becomes percent (pan
   runs -100 to 100). Each one is a value migration. Rozaya, 2026-09-14: *"That'd be fine by
   me"*, and on volumes: *"db, that's the only unit it makes sense in for volumes"*. On
   2026-09-14 that was 45 controls in 12 plugins; find them by reading each plugin's ranges.

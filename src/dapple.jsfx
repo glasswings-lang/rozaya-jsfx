@@ -57,7 +57,7 @@ slider11:0.85<0,0.97,0.01>Resonance (noise voice)
 slider12:120<5,1000,1>Bubble length (ms)
 slider13:40<0,100,1>Rise (%)
 slider16:80<0,100,1>Stereo width (%)
-slider17:0<-24,12,0.01>Output (dB)
+slider17:0<-60,24,0.01>Output (dB)
 
 // --- Transport -----------------------------------------------------------
 // Added 2026-09-05. Part 2 puts transport after the plugin's own controls and
@@ -89,8 +89,8 @@ slider22:0<0,14,1{Bubble rate,Timing randomness,Pitch,Fine tune,Tuning reference
 // Amounts are per target, in the target's own unit -- except Bubble rate, which
 // is in BPM in every rate mode (the settled suite rule: the plugin converts,
 // you never do).
-slider23:0<0,1000,0.01>Drift up amount (per target, units match target)
-slider24:0<0,1000,0.01>Drift down amount (per target, units match target)
+slider23:0<0,20000,0.01>Drift up amount (per target, units match target)
+slider24:0<0,20000,0.01>Drift down amount (per target, units match target)
 slider25:20<0,1000,0.001>Drift period (per target, 0 = off)
 slider26:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
@@ -111,7 +111,7 @@ slider30:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // --- Ramp ----------------------------------------------------------------
 slider31:0<0,14,1{Bubble rate,Timing randomness,Pitch,Fine tune,Tuning reference,Pitch spread,Resonance,Bubble length,Rise,Tone vs noise,Excite from input,Stereo width,Output,Play for,Rest for}>Ramp target
-slider32:0<-1000,1000,0.001>Ramp by (per target, units match target)
+slider32:0<-20000,20000,0.001>Ramp by (per target, units match target)
 slider33:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 slider34:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 slider35:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)

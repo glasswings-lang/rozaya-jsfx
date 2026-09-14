@@ -487,7 +487,7 @@ and one in bursts, is the whole effect.
   widen only with an ear on it.
 * **Capture average (1..6)** — check it against the capture buffer's size first;
   it may be an array bound rather than a preference.
-* **dB and semitones** — still held for a decision.
+* **Semitones** — still held for a decision. (dB volumes: -60 to +24, decided 2026-09-14.)
 
 ## Womb got repurposed as a noise source ONCE, and that is still a signal (2026-09-06)
 

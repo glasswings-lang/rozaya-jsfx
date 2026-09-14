@@ -256,7 +256,7 @@ In-plugin one-time morph over time, without automation envelopes. Ramp is nested
 Sixteen since 2026-09-11, in the order of the controls they reach; it was Tempo and Swing amount. A pitch moves in that beat's Pitch mode, a fine tune in its Fine tune unit, the reference in Hz, a decay in seconds, and Beats per bar, Play for and Rest for in beats. Volumes and Pan spread stay within 0-1, Tone resonance within 0.5-8. Pitch, tone, volume, decay and Pan spread are read when a click fires.
 Picks which target the `by` amount applies to. Switching the selector saves slider 24 into the old target's memory slot, then loads the new target's stored `by`. This selector sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.
 
-**Ramp by (per target, slider 24)** `-300 to +300, step 0.1, default 0` (units match the selected target)
+**Ramp by (per target, slider 24)** `-20000 to +20000, step 0.1, default 0` (units match the selected target)
 Signed delta in the selected target's own unit. **0** = no change (safe default — engaging at 0 produces no effect).
 - **Target = Tempo:** the delta is in **BPM**, in every Rate Mode. `-60` ramps Tempo from 120 → 60 over the duration; positive speeds up. (The wide ±300 range is here for this.)
 
@@ -315,10 +315,10 @@ Wandering (or ramping) Swing while the tempo stays put is a useful musical effec
 **Drift target (slider 31)** — the same sixteen as Ramp target, default Tempo.
 Picks which target's drift configuration sliders 23-26 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
-**Drift up amount (per target, slider 32)** `0.0–50.0, default 0` (units match target)
+**Drift up amount (per target, slider 32)** `0 to 20000, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units are **BPM** for Tempo, and **swing fraction** (the same −1…+1 unit as the Swing amount slider, clamped to ±1.0 at the consumer) for Swing amount. 0 = drift off on the up side.
 
-**Drift down amount (per target, slider 33)** `0.0–50.0, default 0` (units match target)
+**Drift down amount (per target, slider 33)** `0 to 20000, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric wander supported. Either non-zero activates drift for the target; both 0 = drift off.
 
 **Drift period (per target, slider 34, beats)** `0–1000, default 8, 0 = off`
