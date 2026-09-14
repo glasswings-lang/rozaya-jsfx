@@ -100,11 +100,11 @@ The shared base tremolo rate, in the units set by Rate Mode. Each voice's own
 Drift / Rate is added to it. **Only visible in Drift mode** — in Independent
 mode there is no shared rate, because each voice's Drift / Rate *is* its rate.
 
-*The label carries its full unit list and says "all voices" on purpose.* The
-2026-09-07 rebuild briefly shortened it to a bare `Rate Value`, and the first
-thing that tripped Rozaya up was tabbing onto a rate control that named neither
-its unit nor its scope. Restored the same day, to the form four other plugins
-in the suite already use.
+*The label says "all voices" on purpose.* The 2026-09-07 rebuild briefly
+shortened it to a bare `Rate Value`, and Rozaya: *"the rate at the top wasn't
+marked as anything."* What was missing was whose rate it is -- Rate Mode beside
+it already says the unit. Rozaya, 2026-09-14: *"Rate value (all voices) would
+have been fine. the unit shit is for the unit mode."*
 
 **Binaural beat (Hz, L/R offset)** `0-100 Hz, default 4`
 The frequency difference between each voice's left and right oscillators. At 4 Hz, the left oscillator runs at the voice's base pitch and the right runs 4 Hz higher, creating a 4 Hz binaural beat when heard on headphones. This value is the same for all voices simultaneously.

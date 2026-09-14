@@ -35,7 +35,6 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R7** — The rate controls sit together, always
 - **R8** — The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
 - **R9** — Choose the unit that makes ordinary values whole numbers
 - **R10** — The value stays visible; a picker jumps to a value and gets out of the way
@@ -85,17 +84,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
-## R7. The rate controls sit together, always
-
-`<rate slider>` → `Rate mode` → `Host ratio`, in that order, adjacent, no exceptions.
-This is what makes `Rate Value` legible and it is what dissolves the `Sweep Rate` /
-`Pan Sweep Rate` confusion.
-
-Applies to the secondary rates too: `Pan sweep rate` → `Pan sweep rate mode`. Note the
-current suite calls this one `Unit` where the primary is called `Mode`; standardise on
-**`mode`**. Sweep Dwell's pan unit offers `Host x` and the other two filters' do not —
-they should all offer it.
 
 ## R8. The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
 
@@ -866,10 +854,12 @@ equivalent of the nine plugins that had nothing stored on Host x.
 > notes, 8.18 Hz to 12543 Hz).**
 >
 > **All four names are R4/R5 compliant** — sentence case, unit in parentheses at
-> the end. The value slider lists its three units the way `Rate Value (BPM / sec
-> / Hz / beats per cycle / per beat)` already does in four plugins, which is
-> also the fix Rozaya asked for on 2026-09-07 after a bare `Rate Value` named
-> neither its unit nor its scope.
+> the end.
+>
+> *(Corrected 2026-09-14. This used to say the value slider lists its three
+> units, as "the fix Rozaya asked for". It never asked. Rozaya: "the unit shit is
+> for the unit mode" -- the mode beside a value says its unit; see
+> `docs/history/R7.md`.)*
 >
 > **`Fine tune` is a SECOND pair, always present, always after the first:
 > `Fine tune value`, then `Fine tune mode`, the same `{Hz, Semitones, Cents}`.**
@@ -1039,10 +1029,9 @@ please" — and it was right, two of these I was re-deriving from scratch.**
 - **R6 — mode dependence is annotated once, where meaning changes.** The value
   slider does not need a `(in Pitch mode units)` tag, because under the
   contiguity rule the mode slider is sitting next to it saying so.
-- **R7 — contiguity.** R22 is R7 applied to pitch: value then mode, adjacent, no
-  exceptions, and a second pitch gets its own complete pair. (R7's own text
-  still names `Host ratio` as the third member; that was retired by R20 and R7
-  is stale there, not R22.)
+- **R7 — contiguity** (done, `docs/history/R7.md`). R22 is R7 applied to pitch:
+  value then mode, adjacent, no exceptions, and a second pitch gets its own
+  complete pair.
 - **R9 — ALREADY SAYS MOST OF THIS, and I did not check before writing it out
   again.** R9: *"Prefer whichever unit makes ordinary values whole numbers:
   percent over fraction, dB over linear gain, **cents or semitones over
