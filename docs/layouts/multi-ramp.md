@@ -45,6 +45,12 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
   if none did. Against "when the whole ramp before finishes"; Rozaya: *"The same target,
   yeah."*
 
+- **A ramp switched off keeps its place in the chain.** Its targets do not move, but the ramps
+  after it start exactly when they would have, so switching one off to compare changes nothing
+  else. Offered against "later ramps slide earlier", keeping recommended as muting one piece of
+  automation does; Rozaya, 2026-09-13: *"Keep it like you suggested, yeah."* A ramp that never
+  moved the target is still skipped back past, as settled above.
+
 ## Measured facts about today's Ramp start delay (read in code, 2026-09-12)
 
 - **Per target in every plugin with a Ramp** (all 17; Resonance Bank per band): the value
@@ -70,7 +76,6 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 ## Still to decide
 
 - The above four.
-- What "the ramp before it" means when that ramp is disengaged or empty.
 - Where each new control sits in each plugin's list, per plugin layout doc.
 
 ## Traps known before building
