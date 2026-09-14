@@ -53,8 +53,8 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 - **`Rest mode (for Ramp)` once per ramp**, `{Walk through, Freeze in place}`, so one ramp can
   walk through a rest while another freezes. The switch was first decided on Veil (two, for
   Drift and for Ramp: `veil-r26-r27.md`). Offered per ramp against one for all eight; Rozaya,
-  2026-09-13: *"Yeah, I was going to ask for that actually"*. Not yet asked: whether every
-  plugin with a Ramp gets it, or Veil alone.
+  2026-09-13: *"Yeah, I was going to ask for that actually"*. Every plugin with Drift and Ramp
+  gets both switches; Rozaya: *"Yes, all of them should get both"* (R27).
 
 ## Measured facts about today's Ramp start delay (read in code, 2026-09-12)
 
