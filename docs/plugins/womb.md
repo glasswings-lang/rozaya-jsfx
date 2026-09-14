@@ -102,6 +102,32 @@ Sliders 1-47: identical to [Womb Sound Generator v2](#womb-sound-generator-v2). 
 
 **Layout as it is now** (checked against the plugin 2026-09-13): sliders 1-23 are the heartbeat, 24-52 the breath, 53-62 bloodflow, 63-71 the master controls and transport, 72-80 the Drift block, 81-88 the Ramp block. Heart rate swing per breath is slider 3, beside the heart rate it modifies; the Sigh pair is 48-49, inside the breath group; Set breath rate is 24, at the head of the breath group with its unit beside it.
 
+### Play and rest, per layer (sliders 66-71)
+
+Each layer can take breaks on its own: it plays for a while, rests for a while, and repeats.
+Each counts in its own layer's natural unit. A gate is on only when both its play and its rest
+are above 0, so the default of 0 means that layer never rests. All six are Drift and Ramp
+targets too. Measured by rendering each layer soloed, 2026-09-14.
+
+**HB play for (beats)** `0-1000, default 0`
+**HB rest for (beats)** `0-1000, default 0`
+The heartbeat plays this many heartbeats, then is silent for this many. The heart keeps its
+time underneath, so it comes back on the beat. "Beats" here means heartbeats, not the project's
+beats.
+
+**Breath play for (breaths)** `0-1000, default 0`
+**Breath rest for (breaths)** `0-1000, default 0`
+The breath takes this many whole breaths, then rests for as long as this many breaths would
+take at its current length, then starts again with a fresh inhale. During the rest it holds in
+its bottom pause, **which is not complete silence**: a faint breath hiss stays, about 18 dB
+quieter than the breath itself.
+
+**Bloodflow play for (heartbeats)** `0-1000, default 0`
+**Bloodflow rest for (heartbeats)** `0-1000, default 0`
+The bloodflow swells with this many heartbeats, then fades to silence for this many, and fades
+back in. It counts the heart's beats even while the heartbeat itself is resting (read in the
+code, not measured).
+
 ### Drift target selector (slider 72)
 
 `Drift target` — pick which parameter the drift sliders 73-80 are currently configuring. Options: **Heart rate**, **S1-S2 gap**, **Inhale**, **Top pause**, **Exhale**, **Bottom pause**, **RSA depth**, **Breaths/min**, **Inhale Freq**, **Exhale Freq** (last three v2.14).
