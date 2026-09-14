@@ -150,7 +150,7 @@ slider44:0<0,21,1{Transpose,Fine tune,Texture,Wash grain,Spread,Denoise,Low cut,
 slider45:0<0,1000,0.01>Drift up amount (per slot and target, in the Drift amount unit)
 slider46:0<0,1000,0.01>Drift down amount (per slot and target, in the Drift amount unit)
 slider47:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (per slot and target, Target default where it cannot fit)
-slider48:30<0,1000,0.01>Drift period (per slot and target, in drift period units, 0 = off)
+slider48:30<0,1000,0.001>Drift period (per slot and target, in drift period units, 0 = off)
 slider49:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // WHETHER A DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK (2026-09-12, Bubbler's control).
 // The four slot timings are read once, when their slot's leg begins. `With the target` steps
@@ -175,10 +175,10 @@ slider55:0<0,21,1{Transpose,Fine tune,Texture,Wash grain,Spread,Denoise,Low cut,
 slider56:0<-1000,1000,0.001>Ramp by (per slot and target, in the Ramp by unit)
 slider57:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (per slot and target, Target default where it cannot fit)
 slider58:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
-slider59:0<0,1000,0.1>Ramp duration (per slot and target, in ramp time units)
+slider59:0<0,1000,0.01>Ramp duration (per slot and target, in ramp time units)
 slider60:0<0,1000,0.01>Ramp play for (per slot and target, 0 = smooth)
 slider61:0<0,1000,0.01>Ramp rest for (per slot and target, 0 = smooth)
-slider63:0<0,1000,0.1>Ramp start delay (per slot and target, in ramp time units)
+slider63:0<0,1000,0.01>Ramp start delay (per slot and target, in ramp time units)
 slider62:0<0,1,1{Off,On}>Ramp engage (all targets)
 // --- Overtone: bring ONE partial of the voice out far enough to be heard as a
 //     note of its own, the way overtone / throat singing does. Appended at the

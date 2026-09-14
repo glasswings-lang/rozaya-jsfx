@@ -138,15 +138,15 @@ slider77:0<0,1,1{Off,On}>V8 solo (heard even when Active is off)
 
 // ===== TRANSPORT =====
 slider78:0<0,1000,0.001>Start delay (in rate mode units)
-slider79:0<0,1000,1>Play for (cycles)
-slider80:0<0,1000,1>Rest for (cycles)
+slider79:0<0,1000,0.001>Play for (cycles)
+slider80:0<0,1000,0.001>Rest for (cycles)
 slider81:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // ===== DRIFT: 40 targets in control order =====
 slider82:0<0,39,1{Rate value,Fade in,Fade out,Pulse width,Binaural beat,Tuning reference,V1 fine tune,V1 rate,V1 gain,V1 pan,V2 fine tune,V2 rate,V2 gain,V2 pan,V3 fine tune,V3 rate,V3 gain,V3 pan,V4 fine tune,V4 rate,V4 gain,V4 pan,V5 fine tune,V5 rate,V5 gain,V5 pan,V6 fine tune,V6 rate,V6 gain,V6 pan,V7 fine tune,V7 rate,V7 gain,V7 pan,V8 fine tune,V8 rate,V8 gain,V8 pan,Play for,Rest for}>Drift target
 slider83:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider84:0<0,1000,0.01>Drift down amount (per target, units match target)
-slider85:8<0,1000,1>Drift period (per target, 0 = off)
+slider85:8<0,1000,0.001>Drift period (per target, 0 = off)
 slider86:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 slider87:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 slider88:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
@@ -156,11 +156,11 @@ slider89:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 slider90:0<0,39,1{Rate value,Fade in,Fade out,Pulse width,Binaural beat,Tuning reference,V1 fine tune,V1 rate,V1 gain,V1 pan,V2 fine tune,V2 rate,V2 gain,V2 pan,V3 fine tune,V3 rate,V3 gain,V3 pan,V4 fine tune,V4 rate,V4 gain,V4 pan,V5 fine tune,V5 rate,V5 gain,V5 pan,V6 fine tune,V6 rate,V6 gain,V6 pan,V7 fine tune,V7 rate,V7 gain,V7 pan,V8 fine tune,V8 rate,V8 gain,V8 pan,Play for,Rest for}>Ramp target
 slider91:0<-1000,1000,0.001>Ramp by (per target, units match target)
 slider92:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
-slider93:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider93:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 slider94:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
 slider95:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
 slider96:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider97:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
+slider97:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
 
 @init
 // Rate drift and Speed Ramp are in BPM in EVERY mode, Host x included --

@@ -58,8 +58,8 @@ slider23:1<0,1,0.01>Wet/dry mix
 slider24:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Start delay mode
 slider25:0<0,1000,0.001>Start delay
 // Per-cycle Play/Rest gate: play N whole cycles, rest M, repeat. 0 in either is off.
-slider26:0<0,1000,1>Play for (cycles)
-slider27:0<0,1000,1>Rest for (cycles)
+slider26:0<0,1000,0.001>Play for (cycles)
+slider27:0<0,1000,0.001>Rest for (cycles)
 slider28:0<0,1,1{Walk through,Freeze in place}>LFO at rest
 slider29:0<0,1,1{Pass-through,Silence}>Output at rest
 
@@ -68,7 +68,7 @@ slider29:0<0,1,1{Pass-through,Silence}>Output at rest
 slider30:0<0,15,1{High dwell length,Fade down length,Low dwell length,Fade up length,High dwell frequency,High dwell fine tune,Low dwell frequency,Low dwell fine tune,Tuning reference,Resonance,Stereo phase offset,Pan spread,Pan glide,Pan sweep rate,Pan sweep every,Wet/dry mix}>Drift target
 slider31:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider32:0<0,1000,0.01>Drift down amount (per target, units match target)
-slider33:8<0,1000,1>Drift period (per target, 0 = off)
+slider33:8<0,1000,0.001>Drift period (per target, 0 = off)
 slider34:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 slider35:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 // Drift play/rest in PERIODS; while resting the offset freezes where it stands.
@@ -78,11 +78,11 @@ slider38:0<0,15,1{High dwell length,Fade down length,Low dwell length,Fade up le
 slider39:0<-1000,1000,0.001>Ramp by (per target, units match target)
 // Default Minutes, which is what this block always counted in.
 slider40:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
-slider41:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider41:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 slider42:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
 slider43:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
 slider44:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider45:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
+slider45:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
 
 in_pin:left input
 in_pin:right input

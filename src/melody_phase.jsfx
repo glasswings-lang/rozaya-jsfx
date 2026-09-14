@@ -156,7 +156,7 @@ slider96:0<0,1,1{Walk through,Freeze in place}>Rest mode
 slider97:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment per voice,V1 pitch,V1 fine tune,V1 next voice in,V1 note duration,V1 gain,V2 pitch,V2 fine tune,V2 next voice in,V2 note duration,V2 gain,V3 pitch,V3 fine tune,V3 next voice in,V3 note duration,V3 gain,V4 pitch,V4 fine tune,V4 next voice in,V4 note duration,V4 gain,V5 pitch,V5 fine tune,V5 next voice in,V5 note duration,V5 gain,V6 pitch,V6 fine tune,V6 next voice in,V6 note duration,V6 gain,V7 pitch,V7 fine tune,V7 next voice in,V7 note duration,V7 gain,V8 pitch,V8 fine tune,V8 next voice in,V8 note duration,V8 gain,Master gain,Play for,Rest for}>Drift target
 slider98:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider99:0<0,1000,0.01>Drift down amount (per target, units match target)
-slider100:8<0,1000,1>Drift period (per target, 0 = off)
+slider100:8<0,1000,0.001>Drift period (per target, 0 = off)
 slider101:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 slider102:0<0,1,1{With the target,On a clock}>Drift movement (per target)
 slider103:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
@@ -167,11 +167,11 @@ slider105:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 slider106:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment per voice,V1 pitch,V1 fine tune,V1 next voice in,V1 note duration,V1 gain,V2 pitch,V2 fine tune,V2 next voice in,V2 note duration,V2 gain,V3 pitch,V3 fine tune,V3 next voice in,V3 note duration,V3 gain,V4 pitch,V4 fine tune,V4 next voice in,V4 note duration,V4 gain,V5 pitch,V5 fine tune,V5 next voice in,V5 note duration,V5 gain,V6 pitch,V6 fine tune,V6 next voice in,V6 note duration,V6 gain,V7 pitch,V7 fine tune,V7 next voice in,V7 note duration,V7 gain,V8 pitch,V8 fine tune,V8 next voice in,V8 note duration,V8 gain,Master gain,Play for,Rest for}>Ramp target
 slider107:0<-1000,1000,0.001>Ramp by (per target, units match target)
 slider108:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
-slider109:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider109:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 slider110:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
 slider111:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
 slider112:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider113:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
+slider113:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
 
 @init
 // Rate drift and Ramp are in BPM in EVERY mode -- "BPM is BPM". This mattered

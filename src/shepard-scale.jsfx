@@ -115,7 +115,7 @@ slider66:0<0,1,1{Walk through,Freeze in place}>Rest mode
 slider67:0<0,44,1{Rate value,Attack,Release,Note length,Pulse width,Binaural beat,Tuning reference,C gain,C pan,C fine tune,C# gain,C# pan,C# fine tune,D gain,D pan,D fine tune,D# gain,D# pan,D# fine tune,E gain,E pan,E fine tune,F gain,F pan,F fine tune,F# gain,F# pan,F# fine tune,G gain,G pan,G fine tune,G# gain,G# pan,G# fine tune,A gain,A pan,A fine tune,A# gain,A# pan,A# fine tune,B gain,B pan,B fine tune,Play for,Rest for}>Drift target
 slider68:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider69:0<0,1000,0.01>Drift down amount (per target, units match target)
-slider70:8<0,1000,1>Drift period (per target, 0 = off)
+slider70:8<0,1000,0.001>Drift period (per target, 0 = off)
 slider71:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 slider72:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 slider73:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
@@ -125,11 +125,11 @@ slider74:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 slider75:0<0,44,1{Rate value,Attack,Release,Note length,Pulse width,Binaural beat,Tuning reference,C gain,C pan,C fine tune,C# gain,C# pan,C# fine tune,D gain,D pan,D fine tune,D# gain,D# pan,D# fine tune,E gain,E pan,E fine tune,F gain,F pan,F fine tune,F# gain,F# pan,F# fine tune,G gain,G pan,G fine tune,G# gain,G# pan,G# fine tune,A gain,A pan,A fine tune,A# gain,A# pan,A# fine tune,B gain,B pan,B fine tune,Play for,Rest for}>Ramp target
 slider76:0<-1000,1000,0.001>Ramp by (per target, units match target)
 slider77:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
-slider78:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider78:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 slider79:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
 slider80:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
 slider81:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider82:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
+slider82:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).

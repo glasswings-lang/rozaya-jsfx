@@ -333,7 +333,7 @@ slider46:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine
 slider47:0<0,1000,0.01>Drift up amount (per target, in the Drift amount unit)
 slider48:0<0,1000,0.01>Drift down amount (per target, in the Drift amount unit)
 slider49:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (per target, Target default where it cannot fit)
-slider50:30<0,1000,0.01>Drift period (per target, in drift period units, 0 = off)
+slider50:30<0,1000,0.001>Drift period (per target, in drift period units, 0 = off)
 // Drift period unit. Same three options as everywhere else in the suite, but it
 // declares SECONDS rather than the usual Cycles, for two reasons that agree:
 // every one of the 122 instances in the library means seconds today (a declared
@@ -389,7 +389,7 @@ slider59:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 // 0..1000, widened 2026-09-06. `half-music-half-wind.RPP` has 120 typed into
 // this on two instances -- a two-hour ramp, above the one hour the control
 // used to offer.
-slider60:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider60:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 // Ramp play/rest turns the smooth ride into a STAIRCASE -- "ramp on one side,
 // stairs on the other" (Rozaya, 2026-09-04). Windows are whole RAMP TIME
 // UNITS, matching Ramp duration. The rests come OUT of the duration
@@ -400,7 +400,7 @@ slider60:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
 slider61:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
 slider62:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
 slider63:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider64:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
+slider64:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all

@@ -47,7 +47,7 @@ desc: Womb Sound Generator v3
 // ============================================================================
 
 // --- HEARTBEAT -------------------------------------------------------------
-slider1:70<1,1000,1>Heart rate
+slider1:70<1,1000,0.001>Heart rate
 // R20/R21. This plugin used to offer TWO options here, `{Own BPM, Host x}`,
 // where every other plugin with a rate offers these five -- so anything learned
 // about rates elsewhere in the suite was partly untrue here, which is the exact
@@ -158,9 +158,9 @@ slider25:0<0,1,1{Seconds,Beats}>Breath unit
 // The shape of the breath, and its LENGTH -- their sum is the cycle. Absolute
 // durations, always, in the unit above.
 slider26:4.0<0.001,1000,0.001>Inhale (in breath units)
-slider27:0.3<0,1000,0.01>Top pause (in breath units)
+slider27:0.3<0,1000,0.001>Top pause (in breath units)
 slider28:4.0<0.001,1000,0.001>Exhale (in breath units)
-slider29:0.3<0,1000,0.01>Bottom pause (in breath units)
+slider29:0.3<0,1000,0.001>Bottom pause (in breath units)
 // --- Inhale pitch (R22) -------------------------------------------------
 // Replicated in place rather than pulled out behind one selector. Rozaya,
 // 2026-09-09: "womb is 3-layered. just replicate the block where it needs
@@ -257,7 +257,7 @@ slider65:0<0,1000,0.001>Start delay (beats)
 slider66:0<0,1000,1>HB play for (beats)
 slider67:0<0,1000,1>HB rest for (beats)
 slider68:0<0,1000,1>Breath play for (breaths)
-slider69:0<0,1000,1>Breath rest for (breaths)
+slider69:0<0,1000,0.001>Breath rest for (breaths)
 slider70:0<0,1000,1>Bloodflow play for (heartbeats)
 slider71:0<0,1000,1>Bloodflow rest for (heartbeats)
 
@@ -271,7 +271,7 @@ slider71:0<0,1000,1>Bloodflow rest for (heartbeats)
 slider72:0<0,48,1{Heart rate,Heart rate swing per breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate (all 4 parts together),Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Drift target
 slider73:0<0,2000,0.01>Drift up amount (per target, units match target)
 slider74:0<0,2000,0.01>Drift down amount (per target, units match target)
-slider75:8<0,1000,1>Drift period (per target, in drift period units, 0 = off)
+slider75:8<0,1000,0.001>Drift period (per target, in drift period units, 0 = off)
 // Declared CYCLES, unlike the Morpher's, because this period already counted
 // heartbeats or breath cycles -- Cycles IS the current meaning here, so the
 // suite default and the back-compatible one are the same answer.
@@ -301,14 +301,14 @@ slider82:0<-2000,2000,0.001>Ramp by (per target)
 // Declared MINUTES, which is both the suite default and what the duration and
 // start delay already meant, so no saved instance changes meaning.
 slider83:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
-slider84:0<0,1000,0.1>Ramp duration (per target, in ramp time units)
+slider84:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 // Turns the smooth ride into a STAIRCASE. The rests come OUT of the duration
 // rather than extending it, so a stepped ramp and a smooth one of the same
 // length arrive together. Off unless BOTH are above 0.
 slider85:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
 slider86:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
 slider87:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider88:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
+slider88:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
 
 @init
 // v2.10 render-state fix (Path A — see docs/v2.9-render-state-bug.md).

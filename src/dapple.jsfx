@@ -68,8 +68,8 @@ slider17:0<-24,12,0.01>Output (dB)
 // A "cycle" here is one MEAN bubble interval, i.e. whatever Bubble rate is set
 // to. Timing randomness still scatters the individual bubbles inside it.
 slider18:0<0,1000,0.001>Start delay (in rate mode units)
-slider19:0<0,1000,1>Play for (cycles)
-slider20:0<0,1000,1>Rest for (cycles)
+slider19:0<0,1000,0.001>Play for (cycles)
+slider20:0<0,1000,0.001>Rest for (cycles)
 // There is no "LFO at rest" here, and deliberately: this plugin has no LFO to
 // freeze. Drift carries its own play/rest, which is the equivalent control.
 slider21:0<0,1,1{Pass-through,Silence}>Output at rest
@@ -91,7 +91,7 @@ slider22:0<0,14,1{Bubble rate,Timing randomness,Pitch,Fine tune,Tuning reference
 // you never do).
 slider23:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider24:0<0,1000,0.01>Drift down amount (per target, units match target)
-slider25:20<0,1000,0.01>Drift period (per target, 0 = off)
+slider25:20<0,1000,0.001>Drift period (per target, 0 = off)
 slider26:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // WHETHER THIS TARGET'S DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK.
 // Rozaya, 2026-09-09: the choice "should have been a switch from the very
