@@ -194,7 +194,7 @@ For a capture that sits between two notes. It acts only while a Source note is s
 **Target note (per slot, only with a Source note, in Semitones)** `C-1 … G9`
 The note you want to hear. Picking one sets **Transpose value** to the distance from the source note; moving Transpose value shows the nearest note here. It is hidden unless a Source note is set and Transpose unit is Semitones.
 
-**Transpose value (Hz / semitones / cents, per slot)** `-96 to +96, default 0`, with **Transpose unit** `Hz / Semitones / Cents, default Semitones`
+**Transpose value (Hz / semitones / cents, per slot)** `-20000 to +20000, default 0`, with **Transpose unit** `Hz / Semitones / Cents, default Semitones`
 How far to shift the slot. In Semitones and Cents it is an interval. In Hz it counts from the **Tuning reference**, so with the reference at 440, a value of 440 is one octave up. *(This was "Pitch (semitones)". A saved project's number is unchanged and still means semitones.)*
 
 **Fine tune (per slot)** `-1000 to 1000, default 0`, with **Fine tune unit** `Hz / Semitones / Cents, default Cents`
@@ -204,7 +204,8 @@ Added on top of Transpose value.
 What an Hz pitch value counts from. It is one for the whole plugin, and a Drift and Ramp target.
 
 Drift and Ramp are applied ON TOP of Transpose value and are **not** clipped back to the
-slider range, so modulation can carry the pitch beyond +/-96. Previously it was
+slider range, so modulation can carry the pitch beyond it. (The range was -96 to +96 until
+2026-09-13, too narrow for Hz or cents; it is now -20000 to +20000.) Previously it was
 pinned there, which meant a wide Drift flattened against the edge: the
 modulation carried on moving while the sound stopped changing.
 Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes."

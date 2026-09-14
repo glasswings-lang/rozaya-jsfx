@@ -47,6 +47,13 @@ archived plugins, 12 replaced since. Caught, and what each is (read in the code,
   the Morpher's pitch layout, `ec2526f`; installed with that migration), 0 of 135 saved copies above 6. Rozaya: *"6 seems OK, just has needed,
   and not had, spread to compensate for it because back then we were capped."* Longer
   captures would allow more frames; not asked for.
+- **Transpose value and Layer pitch value** (Morpher) were declared -96..96 while saying
+  "Hz / semitones / cents": 700 cents set in REAPER read back 96 (the round trip, 2026-09-13).
+  R12 decided -20000..20000 in August. **Morpher DONE 2026-09-13.** Passage's Transpose value
+  (slider 9, installed) was the same -96..96; Rozaya: "yes". Widened 2026-09-13.
+- **jsfx_run does not clamp to a slider's range** (`ysfx_slider_set_value`): 700 set into a
+  -96..96 control stored 700 (measured 2026-09-13), so an offline test passed what REAPER caps.
+  Owed: clamp like REAPER, or check every set value against the declared range.
 - **Breath High-pass** (Womb) stops between 7200 and 7300 Hz of 20000 (7188 worked out) --
   REAL for that filter type (Chamberlin). **DECIDED 2026-09-13: a better filter** (TPT, as
   the sweeping filters have), offered against an honest range. Rozaya: *"We need a better
