@@ -679,7 +679,8 @@ Reading: read only the part you are changing. After each edit run
 `python tools/jsfx_map.py impact --git HEAD src/spectral_vowel_morpher.jsfx` (commit first)
 or `impact OLD NEW`, and answer every QUESTION before measuring. Two sessions filled their
 context in a few prompts on 2026-09-13, about half of it thinking inside one long build reply.
-Proposed to Rozaya, not yet agreed: one stage per session, then hand off.
+One stage per session was proposed and declined: "We've only got 2 more stages to go, I think
+we should leave it as-is." Rozaya watches the context meter and will say when it climbs.
 
 - **Stage 1 DONE** (`ec2526f`): renumber by the table (jsfx_renumber verify PASS), thirteen
   new controls seeded, Auto-morph time above Rate mode, Capture average 1-6. `current` 123/123.
