@@ -401,7 +401,7 @@ Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **
 
 **Drift target** `55 options, default Rate value`
 
-Every control that shapes the sound, in the order the controls appear: Rate value, Pulse width, Tuning reference, Transpose, Binaural beat, Attack, Release, Glide time, Pan spread, Pan glide, Pan base rate, Pan increment; then for each voice its Pitch, Fine tune, Next voice in, Note duration and Gain; then Master gain, Play for and Rest for. Amounts are in each target's own unit. Play for and Rest for round to whole steps.
+Every control that shapes the sound, in the order the controls appear: Rate value, Pulse width, Tuning reference, Transpose, Binaural beat, Attack, Release, Glide time, Pan spread, Pan glide, Pan base rate, Pan increment per voice; then for each voice its Pitch, Fine tune, Next voice in, Note duration and Gain; then Master gain, Play for and Rest for. Amounts are in each target's own unit. Play for and Rest for round to whole steps.
 
 **Drift up amount (per target)** `0.0–20.0, default 0` (units match target)
 How far above the target's baseline the drift wanders at its peak. Units: the rate's current unit (BPM / Seconds / Hz) for Rate Value + Pan Rate, cycles for Timing + Note dur, dB for Gain, percent for Attack / Release. Dial small values in Seconds / Hz modes. 0 = drift off on the up side.

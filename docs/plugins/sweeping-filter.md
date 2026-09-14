@@ -372,7 +372,7 @@ The two Frequency targets are what make this the most evolving of the filter eff
 **Drift target (slider 39)** — seventeen targets since 2026-09-10, in the order the controls sit:
 Low frequency, Low fine tune, High frequency, High fine tune, Tuning reference,
 Resonance, Rate value, On duration, Depth, Attack, Release, R channel phase
-offset, Pan spread, Pan glide, Pan sweep rate, Pan sweep every, Wet/dry.
+offset, Pan spread, Pan glide, Pan sweep rate, Pan sweep every, Wet/dry mix.
 Picks which target's drift configuration the sliders below reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Units, for the targets added 2026-09-10.** A frequency or fine tune amount is in

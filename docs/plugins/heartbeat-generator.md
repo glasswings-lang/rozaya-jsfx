@@ -161,7 +161,7 @@ Signed delta in the selected target's natural unit. **0** = no change. Examples:
 In **Host x** the delta stays in this plugin's own unit — it does **not** become a multiplier. That means a ramp does not stretch when the project tempo changes: `-60` is `-60 BPM` whatever the tempo does. That's a deliberate limitation. The alternative was tried and rejected: these amount sliders step in 0.1, a grain chosen for BPM, and in multiplier terms 0.1 is a 10% wander with nothing finer reachable — so the value you'd actually want stops being settable.
 
 This matters more here than elsewhere: HRV figures are real quantities you'd read off a page. "±5 BPM of variability" should stay ±5 BPM, not become ±8 because the project sped up.
-- S1-S2 gap target, by +50: systole stretches from 120 → 170 ms.
+- Systole target, by +50: systole stretches from 120 → 170 ms.
 - Breath HRV depth target, by +0.05: breath-coupled HRV grows from baseline by 0.05.
 - Random HRV depth target, by -0.01: random HRV shrinks by 0.01 toward 0.
 
@@ -187,7 +187,7 @@ wander follows the host rather than the plugin, and it follows a live tempo
 change. The period is measured against the rate *before* drift touches it, so
 drifting a rate cannot modulate its own drift period.
 
-**`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — for Heart rate and the S1-S2 gap, the heartbeat itself, once the start delay is over — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target.
+**`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — for Heart rate and Systole, the heartbeat itself, once the start delay is over — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target.
 
 **Drift play for (per target)** `0–64 periods, default 0` · **Drift rest for (per target)** `0–64 periods, default 0`
 Makes the drift come and go instead of wandering forever. It drifts for `play`
@@ -204,7 +204,7 @@ wave than the last, so `1.75` cycles through four park points before repeating
 and `1.2` through five. Setting only `Drift down` wastes half of them, because
 every park on the positive half lands at no change.
 
-Slow organic wander applied independently to any of eighteen targets, in the order of the controls they reach: Heart rate, S1-S2 gap, S1 volume, S2 volume, Brightness, S1 decay, S2 decay, S1 pitch, S2 pitch, S1 fine tune, S2 fine tune, Tuning reference, Stereo width, Breath cycle, Breath HRV depth, Random HRV depth, Play for and Rest for. Each target can have its own drift configuration; all of them drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
+Slow organic wander applied independently to any of eighteen targets, in the order of the controls they reach: Heart rate, Systole, S1 volume, S2 volume, Brightness, S1 decay, S2 decay, S1 pitch, S2 pitch, S1 fine tune, S2 fine tune, Tuning reference, Stereo width, Breath cycle, Breath HRV depth, Random HRV depth, Play for and Rest for. Each target can have its own drift configuration; all of them drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 
 **Fourteen of those joined 2026-09-11**, and the two HRV depths moved down the list to sit in control order. Saved setups were carried across by the plugin itself, so a drift on Breath HRV depth is still on Breath HRV depth. Amounts are in each target's own unit: 0 to 1 for the volumes and Brightness, ms for the decays and Stereo width, that thump's own pitch mode and fine tune unit for S1/S2 pitch and fine tune, Hz for Tuning reference, seconds for Breath cycle, beats for Play for and Rest for. **Stereo width never drifts across zero**: the sign chooses which side the heart sits on, and crossing it would clear the delay with a click. The new targets arrive `On a clock`; on `With the target` they step once per heartbeat. Play for and Rest for move how long each lasts; the gate still needs both controls above zero.
 
@@ -214,11 +214,11 @@ Switching the **Drift target** selector saves the current sliders 22-25 into the
 
 For slow wall-clock-feel drift, set a long period (~360 heartbeats ≈ 5 min at 72 BPM). The old v2.8 "musical vs slow" split is gone — there's a single period unit (heartbeats), and you express the timescale you want with the period value.
 
-**Drift target** `Heart rate / S1-S2 gap / Breath HRV depth / Random HRV depth, default Heart rate`
+**Drift target** `Heart rate / Systole / Breath HRV depth / Random HRV depth, default Heart rate`
 Picks which target's drift configuration sliders 22-25 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount (per target)** `0.0–50.0, default 0` (units match target)
-How far above the target's baseline the drift wanders at its peak. Units are BPM for Heart rate, ms for S1-S2 gap, fractional depth (0.0-0.25 range) for Breath HRV depth, fractional depth (0.0-0.08 range) for Random HRV depth. 0 = drift off on the up side.
+How far above the target's baseline the drift wanders at its peak. Units are BPM for Heart rate, ms for Systole, fractional depth (0.0-0.25 range) for Breath HRV depth, fractional depth (0.0-0.08 range) for Random HRV depth. 0 = drift off on the up side.
 
 **Drift down amount (per target)** `0.0–50.0, default 0` (units match target)
 How far below the baseline the drift wanders at its trough. Independent from Up — asymmetric biological-feel wander supported. Either non-zero activates drift for the target; both 0 = drift off.
@@ -240,7 +240,7 @@ it *"should have been a switch from the very beginning"* -- both are ordinary
 artistic choices and neither is the plugin's to make. The defaults below are
 what the plugin used to decide on its own, so nothing saved changed.
 
-**Defaults to `With the target`:** **Heart rate** and the **S1-S2 gap**, both once per
+**Defaults to `With the target`:** **Heart rate** and **Systole**, both once per
 heartbeat. The heart rate's period counts heartbeats while being the thing that
 changes a heartbeat's length, so continuously it was measuring itself with a
 ruler it was stretching. A real heart also settles a beat's length when the beat

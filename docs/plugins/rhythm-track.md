@@ -139,13 +139,28 @@ running at. (Suite rule R13-revised, 2026-09-02; converted here 2026-09-04.)
 
 ### Tone
 
-Both the strong and weak beats use the same filter architecture, with independent frequency, gain, and decay settings.
+Both the strong and weak beats use the same filter architecture, each with its own pitch, volume and decay.
 
-**Strong beat frequency (Hz)** `20-2000 Hz, default 880`
-The center frequency of the strong beat tick. The resonant bandpass is tuned to this value, giving the tick its pitched character. Higher values produce a brighter, more cutting click; lower values produce a deeper, more thuddy accent.
+**Pitch target** `{All, Strong, Weak}, default All`
+Which beat's pitch the controls below are editing. On **All** you see the strong beat's settings, and a control you move is written to both beats; only the control you actually move is written, so resting on All changes nothing. This is how the Drift and Ramp targets **Strong pitch**, **Weak pitch**, **Strong fine tune** and **Weak fine tune** are reached: pick that beat here to see and set it. *(These controls replaced Strong beat frequency and Weak beat frequency on 2026-09-11; this page caught up on 2026-09-14.)*
 
-**Weak beat frequency (Hz)** `20-2000 Hz, default 440`
-The center frequency of the weak beat tick. Typically set lower than the strong beat to create a clear hierarchy between accented and unaccented beats.
+**Pitch mode** `{Hz, Semitones, Cents}, default Hz`
+What the pitch value means.
+
+**Note name** `C-1 to G9, default A5`
+The pitch said as a note. It works both ways: pick a note, or type into Pitch value, and the other follows. Only shown in Semitones.
+
+**Pitch value (Hz / semitones / cents)** `0-20000, default 880`
+The center frequency the beat's resonant bandpass is tuned to, which gives the tick its pitched character. Higher is brighter and more cutting; lower is deeper and more thuddy. The strong beat starts at 880 Hz and the weak beat at 440 Hz, an octave below, so the accent stands out.
+
+**Fine tune** `-1000 to 1000, default 0`
+A small offset on top of the pitch, in the Fine tune unit.
+
+**Fine tune unit** `{Hz, Semitones, Cents}, default Cents`
+What the fine tune is counted in.
+
+**Tuning reference (Hz)** `20-2000, default 440`
+The A that notes and semitones are measured from.
 
 **Tone resonance (Q)** `0.5-8.0, default 1.5`
 The Q of the resonant bandpass filter applied to both ticks. Higher values produce a more pitched, ringing quality with a narrower frequency peak. Lower values produce a broader, more noise-like sound. Both ticks share the same Q value.

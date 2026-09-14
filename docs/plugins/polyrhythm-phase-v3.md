@@ -467,7 +467,7 @@ A one-time ride of a chosen parameter over a duration, then it holds — the in-
 
 This is the complement to Drift: Drift is a *repeating* wander that always returns; Ramp is a *one-time* move that stays. Between them you can replace most automation-envelope use without leaving the plugin.
 
-**Ramp target** `88 options, default Base Rate`
+**Ramp target** `88 options, default Rate value`
 Picks which target the `by` amount edits. The same list as Drift, described
 under **Drift target** below, including the "(all voices)" entries. Switching
 the selector loads that target's saved values; an edit is written the moment you
@@ -476,11 +476,11 @@ make it. Running ramps on other targets keep going.
 **Ramp by (per target)** `-1000 to +1000, step 0.001, default 0`
 Signed amount for the selected target, in that target's natural unit (rate unit for the rate targets, Hz for Binaural, dB for Gain/Depth, % for On Duration / Attack / Release). **0** = no ride.
 
-- **Base Rate** rides as a multiplicative ratio: at 60 BPM, `by -30` scales every voice by 0.5, so V2's 60.5 → 30.25 — the slow beat between voices is preserved.
+- **Rate value** rides as a multiplicative ratio: at 60 BPM, `by -30` scales every voice by 0.5, so V2's 60.5 → 30.25 — the slow beat between voices is preserved.
 - **The other 87 targets** ride as additive offsets on their own value.
 - In BPM/Hz modes a negative `by` = slower; in Seconds mode a positive `by` = slower (longer period).
 
-**Independent mode note:** Rate Value is still the reference for the Base Rate target's `by` interpretation even though it's not used for audio in Independent mode. Per-voice Rate targets ride each voice's own rate directly.
+**Independent mode note:** Rate Value is still the reference for the Rate value target's `by` interpretation even though it's not used for audio in Independent mode. Per-voice Rate targets ride each voice's own rate directly.
 
 **Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes` *(new 2026-09-07)*
 What Ramp duration and Ramp start delay are counted in. **Minutes is the
@@ -520,19 +520,19 @@ The per-voice Rate targets are the rhythmic heart: drift each voice's rate indep
 
 Same pattern as the rest of the suite. Switching the **Drift target** selector loads that target's saved values; an edit is written the moment you make it. All 88 configurations persist across project save/load.
 
-**Drift target** `88 options, default Base Rate` *(24 until 2026-09-10)*
+**Drift target** `88 options, default Rate value` *(24 until 2026-09-10; the first entry was called Base Rate until 2026-09-14)*
 
 The list runs in the same order as the controls themselves:
 
-- **Base Rate, Tuning reference, Transpose, Binaural Beat, Pulse width, Tone, Edge, Movement, Body** — one each.
+- **Rate value, Tuning reference, Transpose, Binaural beat, Pulse width, Tone, Edge, Movement, Body** — one each.
 - **Eight groups, one for each control a voice has:** Pitch, Fine tune, Rate, Tremolo amount, On duration, Attack, Release, Gain. Each group is an "(all voices)" entry followed by V1 to V8.
-- **Pan spread, Pan base rate, Pan increment, Pan glide, Reverse drift offset, Play for, Rest for.**
+- **Pan spread, Pan base rate, Pan increment per voice, Pan glide, Reverse drift offset, Play for, Rest for.**
 
 **An "(all voices)" entry holds nothing of its own.** Pick one and you see voice 1's setup; move a control and it is written into all eight voices' targets, the same way the Voice selector's All works. Afterwards each voice has its own copy, so with Sine or Triangle they move in step, and with Random each wanders its own way. Parking on one and moving some other control writes nothing.
 
 What some of them do:
 
-- **Base Rate** — uniform Hz delta to every voice; preserves inter-voice rate relationships (the whole pattern breathes together).
+- **Rate value** — uniform Hz delta to every voice; preserves inter-voice rate relationships (the whole pattern breathes together).
 - **V1–V8 Rate** — wanders each voice's own rate independently. Voices drift against each other. In Both modes the reverse-layer slot 8+k follows V(k+1)'s drift.
 - **V1–V8 Pitch** and **Fine tune** — wander that voice's pitch, in that voice's own Pitch mode and Fine tune unit.
 - **Pan Base Rate** / **Pan Increment** — wander the Increment-mode pan controls. Only affect Increment pan mode.
@@ -575,7 +575,7 @@ Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random
 #### Notes
 
 - **Per-voice Rate drift vs. the per-voice Drift/Rate slider.** Each voice already has a static Drift/Rate value (its rate offset in Drift mode, or its rate in Independent mode). The new V1–V8 Rate drift targets add *time-varying wander* on top of that static value — the voice's rate now moves around its set point on a slow schedule.
-- **Pan Base Rate / Pan Increment drift only affect Increment pan mode.** In Tremolo pan mode the pan follows each voice's tremolo rate (already moved by Base Rate / per-voice Rate drift); Spread modes are static positions.
+- **Pan Base Rate / Pan Increment drift only affect Increment pan mode.** In Tremolo pan mode the pan follows each voice's tremolo rate (already moved by Rate value / per-voice Rate drift); Spread modes are static positions.
 - **Mode-direction asymmetry on the rate targets:** in BPM and Hz modes a positive drift amount speeds up; in Seconds mode (period) a positive amount slows down.
 - **Per-voice Gain drift is continuous (per-sample), so it's a smooth volume swell.** Tremolo amount, On duration, Attack and Release drift are per voice since 2026-09-10; use the "(all voices)" entry to set all eight at once. Together with per-voice Rate and Gain drift, the same notes can wander in timing AND dynamics on independent schedules — the closest the plugin gets to "an unforced live ensemble."
 
