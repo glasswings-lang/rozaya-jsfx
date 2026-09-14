@@ -105,7 +105,12 @@ stopped describing built work. Removed sections were checked against `src/` firs
 still shaping work moved first: "bpm is bpm" to `docs/history/R20.md`; the sideways-slider
 rule, position locking and the Harmonic Sculptor quote to the backlog's Settled list; the R22
 rollout to its history. Every other quote in the removed text was about work now built, and
-is in `docs/planned-features.md` as it stood before the commit that trimmed it.
+is in `docs/planned-features.md` as it stood before the commit that trimmed it. Four finished
+documents were removed whole, each saying so of itself: `womb-v2-design.md` (v2 archived),
+`morpher-v2-slot-timing-design.md` (built as Passage), `v2.9-render-state-bug.md` (resolved
+suite-wide), `r24-drift-target-audit.md` (its bugs fixed in `36bb8a4`); older entries here
+still name them, and git has them. `open-bugs.md` stays whole: its closed entries are kept on
+purpose and pointed at by the gotchas and working-practice.
 
 ## 2026-09-13 (evening) — The Morpher's pitch layout, stages 1-4; a layer phase order; renders were never Idle
 
