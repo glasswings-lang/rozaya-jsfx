@@ -3,6 +3,11 @@
 **PROPOSED 2026-09-13, not yet agreed with Rozaya. Nothing built.** The first plugin of the
 amount-unit sweep. One layout, one migration: everything Veil gains is here.
 
+**NOT YET WHOLE: the eight ramps (`docs/layouts/multi-ramp.md`) are missing.** Veil has a Ramp,
+so it gets them, and building this first would move Veil's saved copies twice. That design still
+has open items. Asked Rozaya 2026-09-13 whether Veil waits for them; not answered yet. Also open
+once they land: one `Rest mode (for Ramp)` for all eight, or one per ramp.
+
 Checked in `src/veil.jsfx` 2026-09-13: 22 sliders; no plugin-wide Start delay, Play for or
 Rest for (it has only the Drift and Ramp versions); Veil filters incoming sound (`@sample`
 reads `spl0`/`spl1`), so `Output at rest` means something here. Saved copies outside
@@ -52,7 +57,9 @@ is what the Drift and Ramp clocks do while resting. Labels follow Passage's.
 (read `src/veil.jsfx`: no LFO, no walk; only Drift and Ramp), while every other walk-or-freeze
 switch freezes the plugin's own motion and leaves Drift and Ramp running. Offered one switch,
 `Rest mode (for Drift and Ramp)`, Rozaya: *"drift and/or ramp. if it's gonna be like that it needs
-both as distinct shit"*. So `Rest mode (for Drift)` and `Rest mode (for Ramp)`, each on its own.
+both as distinct shit"*, then *"Drift is its own thing. ramp is its own thing. when the 8 ramps
+come in, the distinction is going to be even more important"*. So `Rest mode (for Drift)` and
+`Rest mode (for Ramp)`, each on its own.
 The `(for X)` naming follows Rozaya's own idea for the LFO plugins (`docs/backlog.md`). Veil is
 the first plugin where a rest can freeze Drift or Ramp. **Mine, unquoted:** both in the transport
 block, Walk through by default (what every plugin does today); Freeze holds that clock's phase,
