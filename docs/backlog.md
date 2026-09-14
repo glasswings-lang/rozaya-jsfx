@@ -91,6 +91,11 @@ one. Finish it, re: the audit."*
   Morpher, Passage (read in each @sample 2026-09-13); Veil, Stereo Phaser and Resonance Bank
   lack it today. The nine that make their own sound have nothing to pass. Rozaya: *"Feels
   like you'd want that as a switch. passthrough or silence."*
+  **The walk-or-freeze switch's name.** Today it is `Rest mode` in the Morpher, Passage, Melody
+  and both Shepards, and `LFO at rest` in Tremolo, the Sweeping Filter and Sweep Dwell (read
+  2026-09-13). Rozaya: *"rest mode (for LFO) seems like it'd be clearer for the ones called the
+  other thing."* Those three freeze only their LFOs (`in_frozen_rest` gates LFO phase alone),
+  so the name is true of them. A label change, no position moves; goes in each one's layout.
 - **Every pitch spread takes a value and a unit picker** `{Hz, Semitones, Cents}`, as Fine tune
   does -- not locked to cents (no unit locks). Bubbler's `Pitch spread (semitones)` 0..24 and
   `Rise (semitones)` 0..36; Dapple's `Pitch spread (%)`; Sustain Looper's `Spread (%)`. Read

@@ -47,6 +47,14 @@ Rozaya: *"play/rest for should have the same units as drift does"*, *"Just for t
 that's literally all I meant, that thing has drift already"*. **Mine, unquoted:** Rest mode
 is what the Drift and Ramp clocks do while resting. Labels follow Passage's.
 
+**OPEN, found 2026-09-13 after Rozaya said yes to the name.** Veil has nothing that moves on
+its own (read `src/veil.jsfx`: no LFO, no walk; only Drift and Ramp). Every other walk-or-freeze
+switch freezes the plugin's OWN motion and leaves Drift and Ramp running -- the Morpher's page
+says so, and says freezing Drift and Ramp too was tried there and taken out (unquoted: whose call
+is not recorded). So on Veil this switch would either freeze Drift and Ramp, which no plugin does
+today, or have nothing to do. Rozaya answered *"Yeah"* to `Rest mode` while Claude had explained
+it as freezing Drift and Ramp, without knowing this. Ask before building.
+
 ## Targets, 5 -> 7
 
 `{Left cutoff, Right cutoff, Left resonance, Right resonance, Output, Play for, Rest for}` --
