@@ -3,6 +3,12 @@
 **Budget: 150 lines. Over it? This file describes NOW — delete what stopped
 being now.** Narrative belongs in `docs/session-log.md`, not here.
 
+**What a plugin HAS is never written here: `python tools/suite_status.py` reads it from the
+plugin files** (`--installed` for REAPER's copies; `controls NAME` for one plugin's every
+control). This file used to copy that, and the copy rotted -- on 2026-09-13 built work was
+passed to Rozaya as owed. Write here only what the plugins cannot say: the branch, what
+has been heard, and what Rozaya has said is next.
+
 ## The branch
 
 - On `feature/melody-reorder`, pushed, unmerged. **Re-run
@@ -12,30 +18,18 @@ being now.** Narrative belongs in `docs/session-log.md`, not here.
   2026-09-05: *"I am not tagging that. This is not done."* Pushing is welcome; a
   tag is a distribution artefact and the sweep is mid-flight.
 
-## The consistency sweep
+## What is next
 
-`docs/suite-consistency-plan.md` is authoritative. Read it before touching any
-slider's name, order, range or unit.
-
-**Grep before believing any claim in this section.** The line "the rate block
-is built everywhere" sat here for weeks while Womb offered two rate options
-where the standard is five. Nobody noticed because nothing contradicted the
-sentence.
-
-- **The rate block (R20) and both host modes (R21): built everywhere** since 2026-09-06.
-- **Drift/Ramp: complete everywhere** (Passage 2026-09-13).
-- **Polyrhythm v1 CROSSED AND ARCHIVED 2026-09-10.** 144 instances in 31 files, all
-  bit-identical by render. `docs/layouts/polyrhythm-v1-to-v3-crossing.md`.
-- **The Morpher's PITCH LAYOUT: DONE and INSTALLED 2026-09-13**, 135 copies moved, REAPER
-  round trip 14/14 with REAPER in front (`docs/layouts/spectral-vowel-morpher.md`, BUILD
-  PROGRESS). NONE of it heard. **OWED NEXT:** the amount units in the other seventeen, each
-  plugin's ONE layout also holding backlog "Decided 2026-09-13". `jsfx_map.py impact` per edit.
-- **Polyrhythm v3:** 59 sliders, per-voice pitch, 88 targets. `docs/layouts/polyrhythm-phase-v3-r22-r24.md`.
-- **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
-  verified against all 641. dB and semitone ranges held for Rozaya's decision.
-- **R22:** Breath Gen's block was rebuilt twice in the hearing, so the plan's rule
-  is BEHIND the built one — `docs/layouts/breath-gen.md` ships. R22 opens with an
-  attribution warning: parts of it were mine, cited back as settled.
+- **The amount units (R26) with R27's same things, ONE PLUGIN AT A TIME** -- each planned
+  with Rozaya, built, moved, measured and installed before the next. Rozaya: *"I'm wondering
+  if we should take this per-plugin rather than a giant sweep."* What each plugin gains:
+  `docs/backlog.md`, "Decided 2026-09-13". `tools/jsfx_map.py impact` after every edit.
+- **Veil is first:** `docs/layouts/veil-r26-r27.md`, PROPOSED. Its Transport unit takes
+  Drift's units, `{Seconds, Beats}` (Rozaya's). Asked, not answered: is `Rest mode` the
+  right name for walk-or-freeze on Veil. Nothing built.
+- **Held for Rozaya's decision:** dB and semitone ranges (the range sweep's passes 1 and 2
+  widened 176 sliders and left these).
+- R22 opens with an attribution warning: parts of it were Claude's, cited back as settled.
 
 ## What has been heard, and what has not
 
@@ -67,76 +61,38 @@ one, or load the plugin onto a new track in that new one."* Cheaper than the
 full quit this used to demand, and it matters — see the 2026-09-08 breath build
 heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 
-**Not heard:**
+**Not heard** -- all built and installed; how each was built is in git and the layouts:
 
-- **Shepard Tone and Scale, 2026-09-10:** Tone's voice control split into Rate and
-  Fine tune; Scale's fine tunes sit with their notes; pitch acts live; 40 and 45
-  targets in control order. `docs/layouts/shepards-r22-r24.md`. Ears owed.
-
-- **THE R22 ROLLOUT — DONE 2026-09-11 in every plugin with a pitch.** Breath Gen
-  heard; Dapple, Bubbler, Heartbeat, Womb, Rhythm Track, Melody, Sweep Dwell,
-  Shepard Scale, Polyrhythm v3, the Sweeping Filter and Resonance Bank not. Rozaya: doing some and not
-  others is *"shipping a pool ... and only having water that fills half the
-  fucking pool"*. Four shapes: Dapple took Breath Gen's block unchanged;
-  **Bubbler took the SHIFT form Rozaya designed** — `Source note` says where zero
-  is, defaults to `None`, and the semitone value is never gated; Heartbeat's two
-  went behind an {All, S1, S2} target, its migration CREATING the blob it never
-  had; **Womb and Sweep Dwell replicate the block IN PLACE**, keeping their
-  migrations line-only. **Melody and Shepard needed no selector**: a voice already
-  has its note, so it gains one fine tune — nine controls, not thirty-two.
-
-- **`Drift movement` — the whole sweep, 2026-09-09.** Per-target switch in all six
-  plugins that had stepping: Breath Gen, Bubbler, Dapple, Womb, Heartbeat, Melody.
-  Rozaya: it *"should have been a switch from the very beginning"*. Inserted, never
-  appended. **110 instances over 24 projects migrated, every project
-  bit-identical**; measured changing the sound in five of six. Defaults are what
-  `drift_is_stepped()` hardcoded. Backups: `_pre-driftmoves-*-20260909/`. Bubbler's
-  could NOT be shown — drift on Bubbler ignores the runner, before as much as
-  after; pre-existing. Owed: an open-and-play, and a Breath Gen pitch target on
-  `With the target`, which is ears-only.
-
-- **Sweeping Filter, 2026-09-10:** two pitch blocks, Tuning reference at 11, 17
-  targets. 25 instances: E:/reaper's 20 bit-identical; Tensor's 5 had NEVER been
-  migrated and took every step since April. `docs/layouts/sweeping-filter-r22-r24.md`.
-- **Sweep Dwell, 2026-09-10:** Rozaya's Segment selector, 45 controls, 16 targets; surges.RPP
-  bit-identical. Tensor's two point at a missing path, skipped. `docs/layouts/sweep-dwell.md`.
-- **R24, 2026-09-11:** Veil, Bubbler, Dapple, Tremolo, Breath Gen, Heartbeat, Rhythm Track (+ Drift movement, Beats per bar, clicks built as they fire), Womb (49, renamed; Breath rate counts like Set breath rate), the Morpher (55, "all layers" entries) have every target in control order; Tensor's copies, a template, `scattered` (its Dapples and its Womb) carried over. `docs/layouts/*-20260911.md`.
-- **Resonance Bank, 2026-09-11:** pitch set and width units per band, Tuning reference, 10 targets.
-  `wind` bit-identical. `docs/layouts/resonance-bank-r22-r24.md`.
-- **Tuning reference measured working in all 14**; Heartbeat and Womb no longer blow up above ~5 kHz.
-- **Sustain Looper, 2026-09-10:** Bubbler's pitch block, Drift and Ramp on eight
-  targets, loop moves crossfade. 4 instances migrated, bit-identical. **09-11, both it and
-  Bubbler:** correcting Source note re-reads Target note (`tools/source_note_check.py`).
-
-- **Melody Phase:** pitch per voice and 55 drift targets (09-10); song placement
-  FIXED 09-11 -- lands on the right note, stopped transport unchanged. Not heard.
-
-- **Breath Generator:** 40-slider build promoted 09-09 (projects not opened since);
-  18 Drift/Ramp targets 09-11, Tensor's seven carried over from April.
-  `docs/layouts/breath-gen-r24-20260911.md`.
-
-- The Womb usability fix of 2026-09-06 and its 2026-09-09 drift stepping. Eight
-  of nine projects bit-identical; `to-sleep-within` differs for pre-existing
-  reasons (`docs/history/R22.md`).
-- **R23 is SWEPT** — plugins cleared and not to be "fixed" (`docs/backlog.md` has the
-  table). **Passage was cleared WRONGLY** (found 09-12): its four slot timings are read
-  once per leg; it got `Drift movement` in its migration, 09-13.
-- Seconds/Beats on a `With the target` drift, 2026-09-10: Breath Gen, Womb,
-  Heartbeat, Melody, Bubbler, Dapple. No saved instance uses it.
-- **Solo, 2026-09-10:** new in Melody, Shepard Tone, Resonance Bank; overrides
-  Active everywhere, Polyrhythm included. Migrated 84 instances, all identical.
-- The 2026-09-06 drift/ramp sweep, `N per beat`, Tremolo's Start delay, the ranges; R25 names (per target / all targets), 18 plugins, 09-12.
-- **Polyrhythm v3's new controls.** Per-voice Attack/Release MEASURED 2026-09-10;
-  Rozaya: *"ear-tested by somebody in here and passing, per-voice"*, no written
-  record. Never heard: the pitch block, the 88 targets, per-voice On Duration,
-  Tremolo amount, Waveform, Solo, Pan rate mode, `Voice = All`.
-- The Morpher's new units off their defaults (drift in Cycles or Beats, ramp not in
-  Minutes); its All slots, 09-11; sounding on a stopped project load, 09-12. Spread past
-  150 (it stopped there whatever the control said) and the faster Spread blur, 09-13:
-  112 of 123 copies bit-identical, the 11 using Spread within 3e-8; renders at Spread
-  150 went from about 25 s to 5 s. Low cut past 500 (it stopped there too), 09-13: all 123
-  bit-identical. Wash grain past 680 ms at 48 kHz, built from pieces past one FFT, 09-13:
-  all 123 bit-identical. All installed. **Passage's whole 2026-09-11 layout INSTALLED 2026-09-13**, 49 instances migrated bit-identical, save and reopen measured in REAPER, NONE of it heard (`docs/layouts/spectral-vowel-passage.md`). Stage 9, 09-12: the 22-target list, measured; a Morph drift did not reach the sound (measured in this build, predicted from the same code order for earlier ones; no saved copy used it), fixed in src, never heard. **The Morpher's pitch layout, 09-13:** Source/Target note, Transpose and Fine tune units, Tuning reference, sixteen pitched layers, 87 targets, the amount units, save format 7700087, Transpose value and Layer pitch value to -20000..20000 (Passage's Transpose value too) -- never heard.
+- **The Morpher's pitch layout, 2026-09-13:** Source/Target note, Transpose and Fine tune
+  units, sixteen pitched layers, 87 targets, the amount units, Transpose value and Layer
+  pitch value to -20000..20000. Also its new drift/ramp units off their defaults, All slots
+  (09-11), sounding on a stopped load (09-12), Spread past 150, Low cut past 500 and Wash
+  grain past 680 ms (09-13).
+- **Passage's whole 2026-09-11 layout**, installed 09-13, with its 22 targets, the Morph
+  drift fix and Transpose value to -20000..20000.
+- **The R22 pitch blocks, 2026-09-11:** Dapple, Bubbler, Heartbeat, Womb, Rhythm Track,
+  Melody, Sweep Dwell, Shepard Scale, Polyrhythm v3, the Sweeping Filter, Resonance Bank
+  (Breath Generator's is heard). Resonance Bank's width units per band with it.
+- **Shepard Tone and Scale, 2026-09-10:** Tone's voice split into Rate and Fine tune,
+  Scale's fine tunes with their notes, pitch acting live, full targets.
+- **`Drift movement`, 2026-09-09:** Breath Gen, Bubbler, Dapple, Womb, Heartbeat, Melody.
+  Owed: an open-and-play (Bubbler's could not be shown by the runner), and a Breath Gen
+  pitch target on `With the target`. Seconds/Beats on such a drift (09-10) too.
+- **R24, targets in control order, 2026-09-11:** Veil, Bubbler, Dapple, Tremolo, Breath Gen,
+  Heartbeat, Rhythm Track, Womb, the Morpher. Sweep Dwell's Segment selector, 09-10.
+- **Sustain Looper's pitch block, Drift and Ramp, 2026-09-10**; Source note re-reading
+  Target note in it and Bubbler, 09-11.
+- **Melody's pitch per voice and targets (09-10)** and its song placement fix (09-11).
+- **Breath Generator's 18 targets (09-11)**; its projects not opened since 09-09.
+- **Womb's usability fix (09-06) and drift stepping (09-09)**; `to-sleep-within` differs for
+  pre-existing reasons (`docs/history/R22.md`).
+- **Solo** in Melody, Shepard Tone and Resonance Bank, overriding Active everywhere (09-10).
+- **Polyrhythm v3:** the pitch block, 88 targets, per-voice On Duration, Tremolo amount,
+  Waveform, Solo, Pan rate mode, `Voice = All`. Per-voice Attack/Release: Rozaya,
+  *"ear-tested by somebody in here and passing, per-voice"*, no written record.
+- The 2026-09-06 drift/ramp sweep, Tremolo's Start delay, the ranges; R25 names (09-12).
+- Measured, not heard: Tuning reference works in all 14; Heartbeat and Womb no longer blow up
+  above ~5 kHz.
 
 `docs/host-sync-ear-test.md` is the highest-value thing waiting: five tests,
 fifteen minutes, three never heard on any plugin.
@@ -146,4 +102,5 @@ fifteen minutes, three never heard on any plugin.
 `~/AppData/Roaming/REAPER/Scripts/kin_bridge.lua` (F4, Load ReaScript, Run, leave
 running) drives and reads every control in the **real** plugin. `tools/bridge_ui_test.py`,
 2026-09-11 evening, all 18 live: every target name, Drift movement, "all" entry,
-selector and mirror passed, and 112 of 112 values survived save and reopen.
+selector and mirror passed, and 112 of 112 values survived save and reopen. **REAPER must
+be the front window** or its audio is closed and no plugin runs `@block`.

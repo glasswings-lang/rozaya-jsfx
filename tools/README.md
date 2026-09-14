@@ -637,6 +637,16 @@ exists for: stage 3 of the Morpher pitch layout (`ec2526f`) reordered five layer
 banks and not the layers' random phases, and the report must raise exactly those.
 Reads four allocation styles (`freemem`, fixed numbers, `db + 144`, `8192 + 13*SDB`).
 
+## suite_status.py — what each plugin has, read from the plugin files
+
+The answer to "is X built?" -- asked of the plugins, not of a doc. Default: every plugin's
+missing suite blocks (transport, unit pickers, Drift and Ramp parts, pitch block, Solo) and
+its spreads, pan modes and rate modes with their options. `lacks BLOCK` lists the plugins
+without one; `controls NAME` prints one plugin's every control, range and options;
+`--installed` reads REAPER's copies. Every answer prints the labels it matched. It says a
+control exists, never that it works. Built 2026-09-13 after a doc that copied this went
+stale; `suite_status_test.py` holds it to facts read by hand that day.
+
 ## jsfx_renumber.py — renumber sliders from an authored map
 
 `apply FILE "55:11, 11-54:+1"` rewrites every `sliderN` token in one pass.

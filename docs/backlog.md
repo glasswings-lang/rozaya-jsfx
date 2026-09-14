@@ -15,10 +15,10 @@ haven't heard them. It was like we were having two different conversations."*
 when you are already working on that plugin and have been asked to. Do not read
 it to decide what to do next. That decision is Rozaya's.
 
-**And check it against `docs/current-state.md` AND THE PLUGIN before believing any
-line here.** On 2026-09-13 most of this file described work already built, and a
-session passed it to Rozaya as open. Every item below was checked against `src/`
-that day; an item you cannot find in the source the way it is described is stale.
+**What a plugin has comes from `python tools/suite_status.py`, never from this file.** On
+2026-09-13 most of this file described built work, and a session passed it to Rozaya as
+open. This file holds what Rozaya decided and what is owed; where an item says what a plugin
+lacks, check it with the tool first. Built work is not listed here -- git history has it.
 Anything on the not-heard list in current-state is BLOCKED, not pending.
 
 ---
@@ -129,16 +129,3 @@ everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole 
   v3, Veil, Stereo Phaser, Resonance Bank. Seconds and Beats on a stepped target were
   decided and built 2026-09-10.
 
-## Removed 2026-09-13 because it is built
-
-Checked in `src/` before removal: every Rate Mode and pan rate mode reads `BPM, Seconds, Hz,
-Every N beats, N per beat`; every plugin has Drift and Ramp play for / rest for, a Drift
-period unit or mode and a Ramp time unit; Breath Generator's `Breath rate`; Sustain
-Looper's Drift and Ramp targets; pitch blocks in Breath Generator, Bubbler, Dapple,
-Heartbeat, Melody (per voice), Polyrhythm v3, Resonance Bank (per band), Sustain Looper,
-Passage and the Morpher; Transpose value and Layer pitch value at -20000..20000; the capture
-slot selector `{All, Slot 1-8}`; a version stamp in every `@serialize`; Polyrhythm v3's voice
-gain at -6 dB; Sweep Dwell's segments behind a selector; the Spread, Low cut, Wash grain and
-Capture average limits. With them went the Phase 0/1/2 plans and migration tables, all
-worked through (Polyrhythm v1 crossed, the Sweeping Filter, Tremolo, Womb, Melody, Passage,
-the Morpher). The full earlier text is in git, in this file before the commit that says so.
