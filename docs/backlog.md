@@ -37,10 +37,15 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   across every plugin with a Pan Mode, with the value remap for 0-3 in the same commit.
   Re-count stored values first -- "nothing is saved on 4+" expires the moment one is used.
   The proposed order is R19 in `docs/suite-consistency-plan.md`.
-- **Sweep Dwell puts two modes before their values.** Everywhere else a value comes first
-  and its mode follows (R7, R20). Here `Length mode` (slider 2) sits before `Length` (3),
-  and `Start delay mode` (24) before `Start delay` (25). Swapping them moves saved values,
-  so it needs a migration; it rides Sweep Dwell's next reorder. Found 2026-09-14.
+- **Every mode or unit goes BEFORE its value, in every plugin.** Rozaya, 2026-09-14:
+  *"every thing with a mode gets the mode before the value. everything. I don't care what
+  it is."* Also its own ramp layout (`docs/layouts/multi-ramp.md`): unit, then value, every
+  time. The rules file said value first in Claude's words from 2026-09-04 (commit
+  `13b385f`, no quote), and the suite was built that way: about 64 pairs are value first.
+  Already right: Sweep Dwell's Length and Start delay, and the pitch blocks (mode, note
+  name, value). Moving controls moves saved values, so each plugin's swap rides its ONE
+  migration with its R26/R27 work (current-state), never a sweep of its own. Shape
+  selectors (`Attack shape`) are not modes; where they go is not decided.
 - **Rate value names carry no unit list**; the mode beside them says it. Rozaya, 2026-09-14:
   *"the unit shit is for the unit mode."* Done that day wherever the mode sits beside the
   value. Not touched, because each shares a unit switch that is not beside it: Passage's

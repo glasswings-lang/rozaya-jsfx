@@ -712,12 +712,16 @@ dead.
 
 ## The rule, in full
 
-**Every rate in a plugin carries exactly two controls, adjacent, in this order:**
+**Every rate in a plugin carries exactly two controls, adjacent, MODE FIRST:**
 
 ```
-<Name> rate value        free number
 <Name> rate mode         {BPM, Seconds, Hz, Host x}   -- ALWAYS these four, ALWAYS this order
+<Name> rate value        free number
 ```
+
+Rozaya, 2026-09-14: *"every thing with a mode gets the mode before the value.
+everything. I don't care what it is."* This used to say value first, in Claude's
+words; almost the whole suite was built that way and is owed a reorder (backlog).
 
 - **In Host x, the rate value means EVERY N BEATS.** One cycle takes N beats of
   the project. Bigger is slower. It is a free number, so `0.333333` — every
@@ -843,8 +847,8 @@ equivalent of the nine plugins that had nothing stored on Host x.
 
 ## The rule
 
-> **Every pitch carries a value and a mode, adjacent, in that order:
-> `Pitch value (Hz / semitones / cents)`, then `Pitch mode`. The mode is always
+> **Every pitch carries a mode and a value, adjacent, mode first:
+> `Pitch mode`, then `Pitch value`. The mode is always
 > `{Hz, Semitones, Cents}` — always those three, always that order. A plugin
 > with two pitches has two complete pairs.**
 >
@@ -862,7 +866,7 @@ equivalent of the nine plugins that had nothing stored on Host x.
 > `docs/history/R7.md`.)*
 >
 > **`Fine tune` is a SECOND pair, always present, always after the first:
-> `Fine tune value`, then `Fine tune mode`, the same `{Hz, Semitones, Cents}`.**
+> `Fine tune mode`, then `Fine tune value`, the same `{Hz, Semitones, Cents}`.**
 > It is a finer offset that coexists with the coarse one; it is not the same
 > control at a different scale.
 >
@@ -1007,7 +1011,7 @@ two-mode pitch list, and it fails the same test: `Pitch spread (%)` in Dapple
 and `Spread (Hz)` in the Morpher are not clumsy spellings of cents, they are
 different questions with different right answers.
 
-> **`Spread value` then `Spread mode`, always `{Cents, Semitones, Hz, %}`,
+> **`Spread mode` then `Spread value`, always `{Cents, Semitones, Hz, %}`,
 > always that order.**
 
 Only one thing is genuinely fixed here: Sustain Looper's `Spread (detune
@@ -1030,7 +1034,7 @@ please" — and it was right, two of these I was re-deriving from scratch.**
   slider does not need a `(in Pitch mode units)` tag, because under the
   contiguity rule the mode slider is sitting next to it saying so.
 - **R7 — contiguity** (done, `docs/history/R7.md`). R22 is R7 applied to pitch:
-  value then mode, adjacent, no exceptions, and a second pitch gets its own
+  mode then value, adjacent, no exceptions, and a second pitch gets its own
   complete pair.
 - **R9 — ALREADY SAYS MOST OF THIS, and I did not check before writing it out
   again.** R9: *"Prefer whichever unit makes ordinary values whole numbers:
@@ -1264,7 +1268,7 @@ and then approved:
 
 ```
 1. What the plugin IS          its identity — the sound, the frequencies, the voices
-2. Its rate                    rate value, then rate mode          (the R20 pair)
+2. Its rate                    rate mode, then rate value          (the R20 pair)
 3. The shape of its movement   depth, on-duration, attack + its shape, release + its shape
 4. Stereo and pan
 5. Output level                wet/dry mix, output volume
@@ -1285,10 +1289,11 @@ plugin-wide but simpler, and you set it once and leave it.
   per-band or per-slot group is whole and contiguous, and its own rate, gain,
   timing and toggles sit inside it. This is what replaced the old block
   structure: the grouping follows the *thing*, not an abstract category.
-- **A modifier is numbered immediately after the thing it modifies.** Unit
-  selectors, shape selectors, mode selectors. This is the rule that puts
-  `Drift period unit` directly after `Drift period`, and `Attack shape` directly
-  after `Attack` rather than after both amounts.
+- **A mode or unit comes immediately BEFORE the value it qualifies.** Rozaya,
+  2026-09-14: *"every thing with a mode gets the mode before the value.
+  everything. I don't care what it is."* So `Drift period unit` goes directly
+  before `Drift period`. (This used to say after, in Claude's words.) Shape
+  selectors such as `Attack shape` are not modes; where they go is not decided.
 - **A second rate carries its own complete pair** (R20). The pan gets its own
   rate value and its own rate mode, inside the pan group. It never borrows the
   main rate's mode and nothing points across at it.
