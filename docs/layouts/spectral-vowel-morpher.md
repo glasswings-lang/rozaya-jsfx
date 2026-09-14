@@ -705,7 +705,8 @@ we should leave it as-is." Rozaya watches the context meter and will say when it
 
 **NEXT, IN ORDER** (patch scripts and their passing trials are in
 `tools/morpher_pitch_layout_patches_20260913/`; each patch writes src):
-1. Stage 5, amount units: `stage5_units.py`; then `units convert current`. Trial: 23/23 conversions.
+1. **DONE 2026-09-13.** Stage 5, amount units: `stage5_units.py`; then `units convert current`
+   on src: units 7, convert 23/23, current 123/123, 0 failures. `jsfx_map impact`: no questions.
 2. Stage 6, save format 7700087: `stage6_saveformat.py`; then `saveformat savedlive`. Trial: 14/14.
 3. Names: `r25_rename_apply.py --list docs/layouts/morpher-labels-20260913.md --apply`, `scope`.
    Dry run matched all 14. Backlog line 24 (amount-unit sweep) then marks the Morpher done.

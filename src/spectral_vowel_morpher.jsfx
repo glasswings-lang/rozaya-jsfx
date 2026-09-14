@@ -596,6 +596,9 @@ lay_lad     = freemem; freemem += 32;   // Layer k (0 = Layer 1) -> its index in
 lay_ladinv  = freemem; freemem += 32;   // ...and back
 lay_ui_last = freemem; freemem += 16;   // mirror of the nine visible layer controls
 tg_scratch  = freemem; freemem += 128;  // @init's and @serialize's copy of a 55-target list
+// Drift amount unit and Ramp by unit, per target (2026-09-13). 0 = Target default.
+target_drift_unit = freemem; freemem += 128;
+ramp_by_unit      = freemem; freemem += 128;
 // The thirteen ladder layers' intervals, as Layers 1-13 start. Layer 1, the Original, is 0.
 function lay_seed_ladder() (
   lay_semi[0] = 0;
@@ -625,6 +628,8 @@ slots_inited == 0 ? (
     target_drift_rest[i]  = 0;
     ramp_play_mem[i]      = 0;
     ramp_rest_mem[i]      = 0;
+    target_drift_unit[i]  = 0;   // Target default: today's meaning
+    ramp_by_unit[i]       = 0;
     ramp_by_mem[i]    = 0;   // Ramp CONFIG defaults (same one-time-guard rationale)
     ramp_dur_mem[i]   = 0;   // 0 duration = ramp inert until the user sets it
     ramp_delay_mem[i] = 0;
@@ -818,6 +823,77 @@ function pv_src_semis(idx, u, v) local(f) (
   u == 0 ? 12 * log(max(f + v, 0.001) / f) / log(2) : u == 2 ? v / 100 : v;
 );
 pv_inited = 0;   // the Source/Target note trackers are adopted in @block
+// --- The amount units (2026-09-13), Passage's. A Drift or Ramp amount is held in the unit its
+// picker names, {0 Target default, 1 Hz, 2 Semitones, 3 Cents, 4 Milliseconds, 5 Seconds,
+// 6 Minutes, 7 BPM, 8 Beats, 9 Cycles, 10 dB, 11 Percent, 12 Degrees}, and turned into the
+// target's OWN unit here, against the value it rides on. A unit that cannot fit acts as Target
+// default -- Rozaya: "It should fall back to the target's native unit, if one's not already
+// been set :)". Percent, dB and count targets therefore take every amount as it stands.
+//
+// A pitch value (Transpose, Fine tune, a layer's pitch and fine tune) in nu {0 Hz, 1 Semitones,
+// 2 Cents}: Hz counts from the Tuning reference, and an Hz amount moves the heard frequency.
+function au_pitch(off, u, base, nu) local(s, s2, r) (
+  (u < 1 || u > 3) || (u == 1 && nu == 0) || (u == 2 && nu == 1) || (u == 3 && nu == 2) ? off : (
+    r = max(tuning_ref, 0.001);
+    s = pv_semis(nu, base);
+    s2 = u == 2 ? s + off : u == 3 ? s + off / 100 : 12 * log(max(r * pow(2, s / 12) + off, 0.001) / r) / log(2);
+    (nu == 1 ? s2 : nu == 2 ? s2 * 100 : r * pow(2, s2 / 12) - r) - base;
+  );
+);
+// A frequency in Hz (Spread, Low cut, High cut, Tuning reference): Semitones and Cents move it
+// by an interval, counted from the value, or from `floor` below it -- a cutoff at 0 still moves
+// (Rozaya: "I'd expect it to do as advertised lol"). Floors, Passage's: 20 Hz for the cutoffs
+// and the Tuning reference, one FFT bin for Spread.
+function au_freq(off, u, base, floor) local(b) (
+  b = max(base, floor);
+  u == 2 ? b * pow(2, off / 12) - base : u == 3 ? b * pow(2, off / 1200) - base : off;
+);
+// A length (Wash grain, Play for, Rest for) in nu {0 Seconds, 1 Hz, 2 Beats, 3 Milliseconds}.
+// Time units add time; Hz and BPM move the rate the length is one cycle of. A Cycle is one
+// Auto-morph traversal, as in the period units (au_cyc, set per block).
+au_cyc = 20;
+function au_sec(nu, v) ( nu == 3 ? v / 1000 : nu == 1 ? (v > 0.000001 ? 1 / v : 0) : nu == 2 ? v * 60 / max(tempo, 0.001) : v; );
+function au_back(nu, tt) ( nu == 3 ? tt * 1000 : nu == 1 ? (tt > 0.000001 ? 1 / tt : 0) : nu == 2 ? tt * max(tempo, 0.001) / 60 : tt; );
+function au_time(off, u, base, nu) local(b, tt, rate) (
+  !(u == 1 || (u >= 4 && u <= 9)) || (u == 4 && nu == 3) || (u == 5 && nu == 0) || (u == 1 && nu == 1) || (u == 8 && nu == 2) ? off : (
+    b = au_sec(nu, base);
+    u == 1 || u == 7 ? (
+      rate = (b > 0.000001 ? 1 / b : 0) + (u == 7 ? off / 60 : off);
+      tt = rate > 0.000001 ? 1 / rate : 0;
+    ) : (
+      tt = b + (u == 4 ? off / 1000 : u == 6 ? off * 60 : u == 8 ? off * 60 / max(tempo, 0.001) : u == 9 ? off * max(au_cyc, 0.05) : off);
+    );
+    au_back(nu, max(0, tt)) - base;
+  );
+);
+// Auto-morph time, in its Rate mode {0 BPM, 1 Seconds, 2 Hz, 3 Every N beats, 4 N per beat}.
+// Mine, from the same rules: the amount passes through where its unit is the mode's own, time
+// units add to the period, Hz and BPM add to the rate, and a Cycle is the period itself.
+function au_rate(off, u, base, mode) local(beat, b, tt, rate) (
+  beat = 60 / max(tempo, 0.001);
+  !(u == 1 || (u >= 4 && u <= 9)) || (u == 7 && mode == 0) || (u == 5 && mode == 1) || (u == 1 && mode == 2) || (u == 8 && mode == 3) ? off : (
+    b = mode == 0 ? 60 / max(base, 0.001) : mode == 1 ? base : mode == 2 ? 1 / max(base, 0.001) : mode == 3 ? base * beat : beat / max(base, 0.001);
+    u == 1 || u == 7 ? (
+      rate = 1 / max(b, 0.000001) + (u == 7 ? off / 60 : off);
+      tt = rate > 0.000001 ? 1 / rate : 1000000;
+    ) : (
+      tt = b + (u == 4 ? off / 1000 : u == 5 ? off : u == 6 ? off * 60 : u == 8 ? off * beat : off * max(au_cyc, 0.05));
+    );
+    tt = max(tt, 0.000001);
+    (mode == 0 ? 60 / tt : mode == 1 ? tt : mode == 2 ? 1 / tt : mode == 3 ? tt / beat : beat / tt) - base;
+  );
+);
+// Drift + Ramp on one target in its own unit, each amount converted from its own picker. kind
+// 1 pitch value (nu = its unit), 2 frequency (nu = the floor in Hz), 3 length (nu = its unit),
+// 4 Auto-morph time (nu = Rate mode); anything else takes the amounts as they stand. Both
+// pickers on Target default is exactly mo_q, so nothing saved changes.
+function au_key(k, kind, base, nu) (
+  (target_drift_unit[k] == 0 && ramp_by_unit[k] == 0) || kind < 1 || kind > 4 ? mo_q(k) :
+  kind == 1 ? au_pitch(target_drift_offset[k], target_drift_unit[k], base, nu) + au_pitch(ramp_offset_mem[k], ramp_by_unit[k], base, nu) :
+  kind == 2 ? au_freq(target_drift_offset[k], target_drift_unit[k], base, nu) + au_freq(ramp_offset_mem[k], ramp_by_unit[k], base, nu) :
+  kind == 3 ? au_time(target_drift_offset[k], target_drift_unit[k], base, nu) + au_time(ramp_offset_mem[k], ramp_by_unit[k], base, nu) :
+              au_rate(target_drift_offset[k], target_drift_unit[k], base, nu) + au_rate(ramp_offset_mem[k], ramp_by_unit[k], base, nu);
+);
 // THE DRIFT LOOP RUNS THE OLD TWENTY-FOUR FIRST, IN THEIR OLD ORDER. Random drift
 // draws rand(), one stream, so two targets wrapping on one sample must draw in the
 // order they always did.
@@ -1479,6 +1555,8 @@ drift_ui_inited ? (
     slider52 = target_drift_shape[dts];
     slider53 = target_drift_play[dts];
     slider54 = target_drift_rest[dts];
+    slider49 = target_drift_unit[dts];
+    slider_automate(slider49);
     slider_automate(slider47);
     slider_automate(slider48);
     slider_automate(slider50);
@@ -1487,6 +1565,7 @@ drift_ui_inited ? (
     slider_automate(slider54);
     dui_last[0] = slider47; dui_last[1] = slider48; dui_last[2] = slider50;
     dui_last[3] = slider52; dui_last[4] = slider53; dui_last[5] = slider54;
+    dui_last[11] = slider49;
     last_target_select = sel_target;
   ) : (
     mo_capture(sel_target, target_drift_up,    slider47, 0);
@@ -1495,6 +1574,7 @@ drift_ui_inited ? (
     mo_capture(sel_target, target_drift_shape, slider52, 3);
     mo_capture(sel_target, target_drift_play,  slider53, 4);
     mo_capture(sel_target, target_drift_rest,  slider54, 5);
+    mo_capture(sel_target, target_drift_unit,  slider49, 11);
   );
 );
 // Per-target "is this target being driven at all?" flag — lets @sample skip the
@@ -1512,6 +1592,8 @@ drift_ui_inited ? (
     slider64 = ramp_delay_mem[rts];
     slider61 = ramp_play_mem[rts];
     slider62 = ramp_rest_mem[rts];
+    slider58 = ramp_by_unit[rts];
+    slider_automate(slider58);
     slider_automate(slider57);
     slider_automate(slider60);
     slider_automate(slider64);
@@ -1519,6 +1601,7 @@ drift_ui_inited ? (
     slider_automate(slider62);
     dui_last[6] = slider57; dui_last[7] = slider60; dui_last[8] = slider64;
     dui_last[9] = slider61; dui_last[10] = slider62;
+    dui_last[12] = slider58;
     last_ramp_target = rsel_target;
   ) : (
     mo_capture(rsel_target, ramp_by_mem,    slider57, 6);
@@ -1526,6 +1609,7 @@ drift_ui_inited ? (
     mo_capture(rsel_target, ramp_delay_mem, slider64, 8);
     mo_capture(rsel_target, ramp_play_mem,  slider61, 9);
     mo_capture(rsel_target, ramp_rest_mem,  slider62, 10);
+    mo_capture(rsel_target, ramp_by_unit,   slider58, 12);
   );
 );
 ramp_engaged = slider63;
@@ -1554,6 +1638,7 @@ drift_restart_free = slider55;   // 0 = restart on play (sync), 1 = free-running
   dui_last[3] = slider52; dui_last[4] = slider53; dui_last[5] = slider54;
   dui_last[6] = slider57; dui_last[7] = slider60; dui_last[8] = slider64;
   dui_last[9] = slider61; dui_last[10] = slider62;
+  dui_last[11] = slider49; dui_last[12] = slider58;
   drift_ui_inited = 1;
 );
 // Auto-morph time in SECONDS, derived every block. Under sync the slider is a
@@ -1577,7 +1662,14 @@ drift_restart_free = slider55;   // 0 = restart on play (sync), 1 = free-running
 // auto_time_raw is already clamped to >= 0.01 at its @slider read, so neither
 // arm can divide by zero.
 // Auto-morph time (target 1), in the slider's own unit, while driven.
-mo_at_raw = mod_active[1] ? max(0.01, auto_time_raw + mo_q(1)) : auto_time_raw;
+// One Auto-morph traversal without its own drift: what a Cycle is in the amount units.
+au_cyc = max(0.01,
+  time_mode == 0 ? 60 / max(auto_time_raw, 0.001) :
+  time_mode == 1 ? auto_time_raw :
+  time_mode == 2 ? 1 / max(auto_time_raw, 0.001) :
+  time_mode == 3 ? auto_time_raw * 60 / max(tempo, 0.001) :
+                   (60 / max(tempo, 0.001)) / auto_time_raw);
+mo_at_raw = mod_active[1] ? max(0.01, auto_time_raw + au_key(1, 4, auto_time_raw, time_mode)) : auto_time_raw;
 auto_time = max(0.01,
   time_mode == 0 ? 60 / max(mo_at_raw, 0.001) :
   time_mode == 1 ? mo_at_raw :
@@ -1602,8 +1694,8 @@ tr_k            = time_mode >= 3 ? 60 / max(tempo, 0.001) : 1;
 start_delay_sec = slider41 * tr_k;
 // Play for and Rest for (targets 53, 54) while driven; the gate still switches on
 // only when both SLIDERS are above zero, which is what this always tested.
-pr_play_sec     = (mod_active[85] ? max(0.001, slider42 + mo_q(85)) : slider42) * tr_k;
-pr_rest_sec     = (mod_active[86] ? max(0.001, slider43 + mo_q(86)) : slider43) * tr_k;
+pr_play_sec     = (mod_active[85] ? max(0.001, slider42 + au_key(85, 3, slider42, time_mode >= 3 ? 2 : 0)) : slider42) * tr_k;
+pr_rest_sec     = (mod_active[86] ? max(0.001, slider43 + au_key(86, 3, slider43, time_mode >= 3 ? 2 : 0)) : slider43) * tr_k;
 pr_enabled      = slider42 * tr_k > 0 && slider43 * tr_k > 0;
 morph_at_rest   = slider44;   // 0 walk through, 1 freeze in place
 out_at_rest     = slider45;   // 0 pass-through, 1 silence
@@ -1635,7 +1727,7 @@ drift_per_k     = drift_unit_sec;
 
 // Wash grain (target 3), in ms, while driven. Rebuilding the grain is the cheap
 // path (see below), so a drift on it is safe.
-eff_grain_ms = mod_active[3] ? max(5, min(1000, grain_ms + mo_q(3))) : grain_ms;
+eff_grain_ms = mod_active[3] ? max(5, min(1000, grain_ms + au_key(3, 3, grain_ms, 3))) : grain_ms;
 
 // Transport play-edge: immediate runtime setup -- rebuild window, clear the
 // accumulator, reset runtime (captures themselves are NOT touched). With
@@ -1783,8 +1875,8 @@ cap_last = cap_trig;
 // At Semitones with no fine tune this is the number it always was.
 lz = 0;
 loop(N_LAY_SLOTS,
-  layer_ratio[lz] = pow(2.0, (pv_semis(lay_punit[lz], lay_semi[lz] + (mod_active[LP_T0+lz] ? mo_q(LP_T0+lz) : 0))
-                             + pv_semis(lay_funit[lz], lay_fine[lz] + (mod_active[LF_T0+lz] ? mo_q(LF_T0+lz) : 0)))/12);
+  layer_ratio[lz] = pow(2.0, (pv_semis(lay_punit[lz], lay_semi[lz] + (mod_active[LP_T0+lz] ? au_key(LP_T0+lz, 1, lay_semi[lz], lay_punit[lz]) : 0))
+                             + pv_semis(lay_funit[lz], lay_fine[lz] + (mod_active[LF_T0+lz] ? au_key(LF_T0+lz, 1, lay_fine[lz], lay_funit[lz]) : 0)))/12);
   lz += 1;
 );
 // Inactive is a gain of 0 and nothing else -- the dB the user set stays in the
@@ -1983,24 +2075,26 @@ mod_active[2] ? (   // Texture: internal 0..1, offset is in 0-100 Texture units
 // Spread reaches its slider's 1000 Hz (2026-09-12). It stopped at 150, a limit the range
 // sweep widened the slider past and left here. Rozaya: "That should have been lifted with
 // the slider extention, so... go for it". No saved copy sat above 150 (123 read).
-eff_spread_hz    = max(0,  min(1000, spread_hz    + (mod_active[4] ? target_drift_offset[4] + ramp_offset_mem[4] : 0)));
+eff_spread_hz    = max(0,  min(1000, spread_hz    + (mod_active[4] ? au_key(4, 2, spread_hz, srate / FFTSIZE) : 0)));
 // Tuning reference (7) first: it is what an Hz value counts from.
-tuning_ref = mod_active[7] ? max(20, min(2000, tuning_base + mo_q(7))) : tuning_base;
+tuning_ref = mod_active[7] ? max(20, min(2000, tuning_base + au_key(7, 2, tuning_base, 20))) : tuning_base;
 (mod_active[5] || mod_active[6] || mod_active[7]) ? (   // Transpose, Fine tune, Tuning reference
   // NOT clamped -- same reasoning as the twin in spectral_vowel_passage.
   // Pinning this to the slider's own +/-36 meant Drift and Ramp flattened
   // against the edge: the modulation kept moving and the sound stopped. The
   // spectral read is already bounds-guarded and the voice path only makes a
   // frequency, so an extreme value is inaudible rather than unsafe.
-  eff_semi = pv_semis(pitch_unit, pitch_semi + target_drift_offset[5] + ramp_offset_mem[5])
-           + pv_semis(pitch_funit, pitch_fine + target_drift_offset[6] + ramp_offset_mem[6]);
+  // On Target default Transpose keeps the sum exactly as it was always written.
+  eff_semi = pv_semis(pitch_unit, target_drift_unit[5] == 0 && ramp_by_unit[5] == 0 ? pitch_semi + target_drift_offset[5] + ramp_offset_mem[5]
+                                                                                   : pitch_semi + au_key(5, 1, pitch_semi, pitch_unit))
+           + pv_semis(pitch_funit, pitch_fine + au_key(6, 1, pitch_fine, pitch_funit));
   pitch_ratio = pow(2.0, eff_semi/12);
 );
 eff_stereo_width = max(0,  min(100, stereo_width + (mod_active[8] ? target_drift_offset[8] + ramp_offset_mem[8] : 0)));
 mod_active[8] ? ( voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX; );
 // Low cut reaches its slider's 20000 Hz (2026-09-13). It stopped at 500, the same leftover
 // as Spread's 150: the hidden-limit audit heard 500 and 20000 render bit-identical.
-eff_lowcut_hz    = max(0,  min(20000, lowcut_hz    + (mod_active[10] ? target_drift_offset[10] + ramp_offset_mem[10] : 0)));
+eff_lowcut_hz    = max(0,  min(20000, lowcut_hz    + (mod_active[10] ? au_key(10, 2, lowcut_hz, 20) : 0)));
 mod_active[84] ? (   // Output level (dB) -- named Voice level until 2026-08
   eff_vdb = max(-60, min(12, voice_db_base + target_drift_offset[84] + ramp_offset_mem[84]));
   voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
@@ -2012,7 +2106,7 @@ mod_active[84] ? (   // Output level (dB) -- named Voice level until 2026-08
 //     Nyquist test compares against exactly srate*0.5, as it always did. The
 //     fade (the top fifth of the cut) is there because this is a Drift/Ramp
 //     target: a hard gate would step each partial off as the cut swept past it. ---
-eff_hicut_hz = max(200, min(20000, hicut_hz + (mod_active[11] ? target_drift_offset[11] + ramp_offset_mem[11] : 0)));
+eff_hicut_hz = max(200, min(20000, hicut_hz + (mod_active[11] ? au_key(11, 2, hicut_hz, 20) : 0)));
 hc_on = eff_hicut_hz < 19999.5 ? 1 : 0;
 hc_on ? (
   hc_top = eff_hicut_hz; hc_lo = eff_hicut_hz * 0.8;
@@ -2877,6 +2971,9 @@ file_var(0, ser_magic);
     slider54 = target_drift_rest[dts];
     slider61 = ramp_play_mem[rts];
     slider62 = ramp_rest_mem[rts];
+    slider49 = target_drift_unit[dts];
+    slider58 = ramp_by_unit[rts];
+    dui_last[11] = slider49; dui_last[12] = slider58;
     dui_last[0] = slider47; dui_last[1] = slider48; dui_last[2] = slider50;
     dui_last[3] = slider52; dui_last[4] = slider53; dui_last[5] = slider54;
     dui_last[6] = slider57; dui_last[7] = slider60; dui_last[8] = slider64;
