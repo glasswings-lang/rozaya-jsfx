@@ -44,6 +44,8 @@ q = questions("b4b8656")
 check("Wash grain change raises no question", q == set(), sorted(q))
 q = questions("82c6398")
 check("phase-order fix does not raise the phase arrays", not (q & PHASES), sorted(q))
+q = questions("5f3d1fa")
+check("stage 6 (saving four layer banks) raises no question -- a save is not a reorder", q == set(), sorted(q))
 
 plugins = sorted(glob.glob(os.path.join(ROOT, "src", "*.jsfx")))
 check("found the plugins", len(plugins) >= 19, len(plugins))

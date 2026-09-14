@@ -21,7 +21,7 @@ on, extended, or "finished" until it has been heard. The correct action on
 unheard work is to ask for an ear test, never to add to it.
 
 Moved out of the plan 2026-09-08, verbatim. The R24 drift-target audit is in `docs/r24-drift-target-audit.md`.
-**OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations, the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units". **Womb's page** (`docs/plugins/womb.md`) still describes eleven drift targets and ten ramps, and its sigh lines multiply by `slider61`, which is Bloodflow Volume now -- owed a rewrite from the plugin. Its slider numbers were corrected 2026-09-13 (`tools/page_slider_numbers.py`).
+**OWED, COMMITTED 2026-09-11: per-target `Drift amount unit` / `Ramp by unit` in all nineteen** -- Passage and the Morpher inside their coming migrations (the Morpher's built and measured 2026-09-13, stage 5 of its pitch layout; not yet installed), the other seventeen as one sweep straight after. Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Why and how: `docs/layouts/spectral-vowel-passage.md`, "The amount units". **Womb's page** (`docs/plugins/womb.md`) still describes eleven drift targets and ten ramps, and its sigh lines multiply by `slider61`, which is Bloodflow Volume now -- owed a rewrite from the plugin. Its slider numbers were corrected 2026-09-13 (`tools/page_slider_numbers.py`).
 ---
 
 ## Hidden limits: controls whose code stops short of what they say (2026-09-13)
