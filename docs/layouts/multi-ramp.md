@@ -80,6 +80,13 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 
 ## Still to decide
 
+- **A ramp PAUSED partway: does the ramp after it wait, or start on time?** Found 2026-09-13
+  after the "keeps its place" answer: `Ramp engage` is a pause, not an off switch (Veil's page
+  and code, Passage's code: Off holds the ride where it stands, On resumes, only Play
+  restarts). Claude asked about "switched off" as a mute, so that answer covers a ramp never
+  engaged; a ramp paused mid-ride was not asked. The same question comes from `Rest mode (for
+  Ramp)` on Freeze, which also makes a ride finish later.
+
 - The above four.
 - Where each new control sits in each plugin's list, per plugin layout doc.
 
