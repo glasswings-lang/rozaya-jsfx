@@ -119,8 +119,9 @@ beats.
 **Breath rest for (breaths)** `0-1000, default 0`
 The breath takes this many whole breaths, then rests for as long as this many breaths would
 take at its current length, then starts again with a fresh inhale. During the rest it holds in
-its bottom pause, **which is not complete silence**: a faint breath hiss stays, about 18 dB
-quieter than the breath itself.
+its bottom pause, and a faint breath hiss stays on purpose, about 18 dB below the breath itself.
+The top pause keeps one too, a little louder, about 15 dB below (both measured 2026-09-14).
+Rozaya: *"That was a deliberate thing."*
 
 **Bloodflow play for (heartbeats)** `0-1000, default 0`
 **Bloodflow rest for (heartbeats)** `0-1000, default 0`
