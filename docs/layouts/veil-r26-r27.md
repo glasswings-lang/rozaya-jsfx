@@ -1,21 +1,20 @@
-# Veil -- the amount units (R26) and the same things (R27)
+# Veil -- the amount units (R26), the same things (R27) and the eight ramps
 
-**PROPOSED 2026-09-13, not yet agreed with Rozaya. Nothing built.** The first plugin of the
-amount-unit sweep. One layout, one migration: everything Veil gains is here.
-
-**NOT YET WHOLE: the eight ramps (`docs/layouts/multi-ramp.md`) are missing.** Veil has a Ramp,
-so it gets them, and building this first would move Veil's saved copies twice. That design still
-has open items. Asked whether Veil waits for them, Rozaya 2026-09-13: *"Yes, we need to take
-this plugin by plugin anyway."* So the eight ramps are settled, then added here. When they land,
-`Rest mode (for Ramp)` is one per ramp (Rozaya's, `multi-ramp.md`).
+**PROPOSED 2026-09-13, being walked through with Rozaya. Nothing built.** The first plugin of
+the per-plugin work. One layout, one migration: everything Veil gains is here, the eight ramps
+(`docs/layouts/multi-ramp.md`) included. Rozaya, on waiting for them: *"Yes, we need to take
+this plugin by plugin anyway."*
 
 Checked in `src/veil.jsfx` 2026-09-13: 22 sliders; no plugin-wide Start delay, Play for or
-Rest for (it has only the Drift and Ramp versions); Veil filters incoming sound (`@sample`
-reads `spl0`/`spl1`), so `Output at rest` means something here. Saved copies outside
-backups: ONE, in `finished/test-projects/claude-testing002-bridge.RPP`. Blob magic
-`3300000 + N_TARGETS` (3300005), banks 16 wide at fixed addresses from 4096.
+Rest for (only the Drift and Ramp versions); Veil filters incoming sound (`@sample` reads
+`spl0`/`spl1`), so `Output at rest` means something here. Nothing in Veil moves on its own: no
+LFO, no walk; only Drift and Ramp. Saved copies: ONE outside backups,
+`E:/reaper/finished/test-projects/claude-testing002-bridge.RPP` (searched every .RPP under
+`E:/reaper`); its line is `480 520 0.15 0.15 0 0 2 600 0 20 0 0 0 0 2 600 1 0 0 0 0 0` -- both
+selectors on Left resonance (index 2) showing up 600 and by 600, Minutes, engage Off. Blob magic `3300000 + N_TARGETS` (3300005), banks 16
+wide at fixed addresses from 4096 to 4447; SVF state below them at 0..29.
 
-## The layout, 22 -> 31
+## The layout, 22 -> 34
 
 | new | control | from | seeded to |
 |---|---|---|---|
@@ -26,51 +25,74 @@ backups: ONE, in `finished/test-projects/claude-testing002-bridge.RPP`. Blob mag
 | 8 | **Play for (seconds / beats, 0 = always)** | new | 0 |
 | 9 | **Rest for (seconds / beats, 0 = always)** | new | 0 |
 | 10 | **Transport unit** `{Seconds, Beats}` | new | 0 Seconds |
-| 11 | **Rest mode (for Drift)** `{Walk through, Freeze in place}` | new | 0 |
-| 12 | **Rest mode (for Ramp)** `{Walk through, Freeze in place}` | new | 0 |
-| 13 | **Output at rest** `{Pass-through, Silence}` | new | 0 |
-| 14 | Drift target | 7 | as saved |
-| 15-16 | Drift up amount, Drift down amount (per target, in the Drift amount unit) | 8-9 | as saved |
-| 17 | **Drift amount unit (per target, Target default where it cannot fit)** | new | 0 |
-| 18 | Drift period (per target, 0 = off) | 10 | as saved |
-| 19 | Drift period unit (all targets) | 11 | as saved |
-| 20 | Drift shape (per target) | 12 | as saved |
-| 21-22 | Drift play for, Drift rest for (per target) | 13-14 | as saved |
-| 23 | Ramp target | 15 | as saved |
-| 24 | Ramp by (per target, in the Ramp by unit) | 16 | as saved |
-| 25 | **Ramp by unit (per target, Target default where it cannot fit)** | new | 0 |
-| 26 | Ramp time unit (all targets) | 17 | as saved |
-| 27 | Ramp duration (per target, in ramp time units) | 18 | as saved |
-| 28-29 | Ramp play for, Ramp rest for (per target) | 19-20 | as saved |
-| 30 | Ramp engage (all targets) | 21 | as saved |
-| 31 | Ramp start delay (per target, in ramp time units) | 22 | as saved |
+| 11 | **Output at rest** `{Pass-through, Silence}` | new | 0 |
+| 12 | Drift target | 7 | as saved |
+| 13-14 | Drift up amount, Drift down amount (per target, in the Drift amount unit) | 8-9 | as saved |
+| 15 | **Drift amount unit (per target, Target default where it cannot fit)** | new | 0 |
+| 16 | Drift period (per target, 0 = off) | 10 | as saved |
+| 17 | Drift period unit (all targets) | 11 | as saved |
+| 18 | Drift shape (per target) | 12 | as saved |
+| 19-20 | Drift play for, Drift rest for (per target) | 13-14 | as saved |
+| 21 | **Rest mode (for Drift)** `{Walk through, Freeze in place}` | new | 0 |
+| 22 | **Ramp** `{Ramp 1 .. Ramp 8}` | new | 0 Ramp 1 |
+| 23 | Ramp time unit (per ramp) | 17 | as saved |
+| 24 | Ramp engage (per ramp) | 21 | as saved |
+| 25 | **Rest mode (for Ramp)** (per ramp) `{Walk through, Freeze in place}` | new | 0 |
+| 26 | Ramp target | 15 | as saved |
+| 27 | Ramp by (per ramp and target, in the Ramp by unit) | 16 | as saved |
+| 28 | **Ramp by unit (per ramp and target, Target default where it cannot fit)** | new | 0 |
+| 29 | **Ramp shape (per ramp and target)** `{Linear, Cosine, Logarithmic, Exponential}` | new | 0 |
+| 30 | Ramp duration (per ramp and target, in ramp time units) | 18 | as saved |
+| 31-32 | Ramp play for, Ramp rest for (per ramp and target) | 19-20 | as saved |
+| 33 | Ramp start delay (per ramp and target, in ramp time units) | 22 | as saved |
+| 34 | **Ramp start delay counts from (per ramp and target)** `{From play start, From ramp end, From ramp end incl. play/rest for}` | new | 0 |
 
-Order: Part 2 (identity, output, transport, Drift, Ramp); a unit picker directly after what
-it modifies (Drift amount unit after the amounts, Ramp by unit after Ramp by). Every new
-control is off or on its old meaning, so the saved copy sounds the same.
+Every new control is off or on its old meaning, so the saved copy sounds the same: its one
+ramp becomes Ramp 1, counting from play start, Linear, walking through rests.
 
-**The Transport unit takes the units Veil's Drift period already has, `{Seconds, Beats}`.**
-Rozaya: *"play/rest for should have the same units as drift does"*, *"Just for that thing.
-that's literally all I meant, that thing has drift already"*. **Mine, unquoted:** Rest mode
-is what the Drift and Ramp clocks do while resting. Labels follow Passage's.
+**Mine, unquoted, to walk through with Rozaya:** the ORDER inside Drift and Ramp. A per-ramp
+control has to sit below the Ramp selector and above the target selector, since the target
+selector does not change it; so time unit, engage and Rest mode (for Ramp) go there.
+`Rest mode (for Drift)` is put at the end of the Drift block to mirror it; R27 and Part 2's
+order put "what happens at rest" in the transport, so that is the other place it could go.
+Labels follow Passage's.
 
-**Walk or freeze: TWO switches, decided 2026-09-13.** Veil has nothing that moves on its own
-(read `src/veil.jsfx`: no LFO, no walk; only Drift and Ramp), while every other walk-or-freeze
-switch freezes the plugin's own motion and leaves Drift and Ramp running. Offered one switch,
-`Rest mode (for Drift and Ramp)`, Rozaya: *"drift and/or ramp. if it's gonna be like that it needs
-both as distinct shit"*, then *"Drift is its own thing. ramp is its own thing. when the 8 ramps
-come in, the distinction is going to be even more important"*. So `Rest mode (for Drift)` and
-`Rest mode (for Ramp)`, each on its own.
-The `(for X)` naming follows Rozaya's own idea for the LFO plugins (`docs/backlog.md`). Veil is
-the first plugin where a rest can freeze Drift or Ramp. **Mine, unquoted:** both in the transport
-block, Walk through by default (what every plugin does today); Freeze holds that clock's phase,
-its random steps and its ramp progress, and resumes where it stopped.
+## What Rozaya decided for Veil
+
+- **Transport unit takes Drift's units, `{Seconds, Beats}`.** Rozaya: *"play/rest for should
+  have the same units as drift does"*, *"Just for that thing. that's literally all I meant,
+  that thing has drift already"*.
+- **Walk or freeze: TWO switches.** Offered one, `Rest mode (for Drift and Ramp)`; Rozaya:
+  *"drift and/or ramp. if it's gonna be like that it needs both as distinct shit"*, then
+  *"Drift is its own thing. ramp is its own thing. when the 8 ramps come in, the distinction
+  is going to be even more important"*. Every other plugin's walk-or-freeze switch freezes its
+  own motion and leaves Drift and Ramp running; Veil has none, so Veil is the first where a
+  rest can freeze Drift or Ramp. R27 now gives both to all 19 plugins with Drift and Ramp.
+- **The eight ramps as `multi-ramp.md` settles them**, including `Rest mode (for Ramp)` per
+  ramp and the three "counts from" options (Rozaya's names).
+
+## What each new thing does (mine, to be measured)
+
+- **Start delay** holds everything -- filter at its set values, every drift and ramp clock
+  still -- and `Output at rest` decides what is heard meanwhile, as Passage's does.
+- **Play for / Rest for** alternate in the Transport unit. **Freeze** holds that clock: Drift's
+  phase, its random step and its own play/rest count; a ramp's progress, its start-delay count
+  and its staircase count. **Walk through** runs them unheard. Output at rest as Passage's.
+- **Ramp shape** bends each ride with `apply_curve`, copied from the Sweeping Filter (identical
+  in the six that have it). It bends the output of progress, so the staircase invariant holds:
+  a stepped ride and a smooth twin still land together (`planned-features.md`, Entry 1).
+- **Counts from:** `From play start` is today's behaviour. `From ramp end` starts when the same
+  target's ride in the ramp before was DUE to end; `From ramp end incl. play/rest for` waits for
+  its REAL end, after rests and Engage pauses (Rozaya: *"Count it yeah"*). A ramp before that
+  never moves the target is skipped back past; one never engaged keeps its place.
+- **Defaults for Ramps 2-8, not yet asked:** time unit Minutes, engage Off, Walk through,
+  Linear, and which "ramp end" option they count from.
 
 ## Targets, 5 -> 7
 
 `{Left cutoff, Right cutoff, Left resonance, Right resonance, Output, Play for, Rest for}` --
 Play for and Rest for appended, which is also control order (R18, R24; as Passage). Old saves
-keep their indices.
+keep their indices. Drift and Ramp share the list.
 
 Amount units by target kind (the Morpher's and Passage's `au_*`): the cutoffs are frequencies
 (Semitones and Cents move them by an interval, floor 20 Hz); resonance is a 0-1 value and
@@ -79,15 +101,31 @@ Transport unit.
 
 ## Save format
 
-Magic `3300000 + N_TARGETS` becomes 3300007. Two new banks, `target_drift_unit` and
-`ramp_by_unit`, at 4448 and 4464 (after `sr_pr_accum_mem`, 4432), APPENDED at the end of the
-stream and read only from a blob that wrote them. A 3300005 blob reads its five and the new
-entries keep their defaults.
+Magic becomes `3400000 + N_TARGETS` (3400007). Drift banks stay 16 wide and gain
+`target_drift_unit`. Every per-(ramp, target) bank is 8 x 16 = 128 wide: by, duration, start
+delay, play, rest, by unit, shape, counts from, and the runtime progress/delay/staircase
+counters. Per-ramp banks, 8 wide: time unit, engage, rest mode. Plus `last_ramp`. Addresses
+are read from the source at build (`jsfx-gotchas.md`: re-derive, never copy a map).
+
+A 3300005 blob reads its five per-target ramp values into Ramp 1's row; 3200004 as today.
+
+## Traps for this migration
+
+- **The per-ramp controls on an OLD blob come from the slider line, not a bank.** Ramp 1's
+  time unit and engage were saved as sliders 17 and 21. `@serialize`'s restore branch re-asserts
+  visible sliders from banks; on a 3300005 read it must ADOPT sliders 23-24 into Ramp 1's banks
+  instead, or it overwrites them with defaults ("migrate what was restored").
+- Two nested selectors (Ramp > target) zero the selected entry on duplicate unless
+  `@serialize` re-asserts them; set the Ramp selector one stage before its values in tests.
+- A Beats count rescales on a tempo change, at once.
 
 ## Measured before install (the gate)
 
 - Old build on the snapshot == new build on the migrated copy, bit-identical, noise in.
 - Each new control does what it says: Start delay, Play/Rest in Seconds and Beats, both Rest
-  modes each on its own (Drift frozen with Ramp walking, and the reverse), Output at rest; units on a cutoff (Semitones, Cents) against worked answers.
+  modes each on its own (Drift frozen with Ramp walking, and the reverse), Output at rest;
+  units on a cutoff (Semitones, Cents) against worked answers; each shape against
+  `apply_curve`; two ramps chained under all three "counts from" options, with a rest and an
+  Engage pause in ramp 1.
 - Save and reopen; `jsfx_map impact` with no unanswered question; the REAPER round trip with
   REAPER in front. Page `docs/plugins/veil.md` updated with the controls.
