@@ -36,6 +36,13 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
   what it modifies, so it belongs beside the durations whatever its scope.
 - **Engage, the exact exchange:** offered once per ramp against per ramp AND per control, with
   per control recommended; Rozaya: *"Once per ramp"*. Asked under the inverted nesting above.
+- **NOTHING in a ramp is shared, 2026-09-14.** Rozaya: *"Engage is a per ramp thing. That's
+  all there is to it. So why is it sitting above everything else ... Why is any of that
+  globally affecting all the ramps?"* With the target list first, a ramp is a piece of one
+  target's lane, so "once per ramp" never meant "across every target": Claude's framing did.
+  Every ramp setting -- engage, time unit, Rest mode (for Ramp), by, its unit, shape,
+  duration, play/rest, start delay, counts from -- belongs to one ramp on one target, and
+  sits below both pickers. Today's `(all targets)` Ramp time unit and Ramp engage end.
 - **Overlapping ramps on one target add together**, so each ramp always moves by its own
   amount. Offered against "the later ramp takes over from where the earlier one got to",
   with adding recommended; Rozaya, 2026-09-13: *"I'd go with adding as well"*.

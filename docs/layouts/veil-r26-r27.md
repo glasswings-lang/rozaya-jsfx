@@ -54,7 +54,9 @@ ramp becomes Ramp 1, counting from play start, Linear, walking through rests.
 above the target selector, from a note that inverted Rozaya's words (`multi-ramp.md`, first
 Settled item: target list first, then ramp selector). Rozaya caught it: *"this goes against
 some shit"*, *"ramps and all that shit is replacement for automation"*. Rows 22-34 are
-re-authored once the nesting is re-asked. Labels follow Passage's.
+re-authored: Ramp target, then Ramp, then every ramp setting, none shared (Rozaya, 2026-09-14,
+`multi-ramp.md`: *"Why is any of that globally affecting all the ramps?"*). Labels follow
+Passage's.
 
 **`Rest mode (for Drift)` at the end of the Drift block, decided.** Offered against the
 transport block, next to Play for / Rest for; Rozaya, 2026-09-14: *"I'd rather have it in the
