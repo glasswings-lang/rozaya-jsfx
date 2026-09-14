@@ -18,7 +18,13 @@ import numpy as np
 # made NVDA lag (2026-09 memory, "Heavy renders at Idle priority").
 if os.name == "nt":
     import ctypes
-    ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), 0x40)
+    # The handle types must be declared, as in morpher_verify_20260913.py: left to ctypes'
+    # default int, the 64-bit pseudo-handle was passed wrongly and the call did nothing.
+    _k32 = ctypes.windll.kernel32
+    _k32.GetCurrentProcess.restype = ctypes.c_void_p
+    _k32.SetPriorityClass.argtypes = (ctypes.c_void_p, ctypes.c_uint32)
+    if not _k32.SetPriorityClass(_k32.GetCurrentProcess(), 0x40):
+        print("warning: could not set Idle priority; renders will run at Normal", flush=True)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
