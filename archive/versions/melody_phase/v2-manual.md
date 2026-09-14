@@ -10,7 +10,7 @@
 > voice. **All eight voices still play** — the selector is an editing cursor,
 > not a mute. Everything else — rate, waveforms, pan, glide, legato, direction,
 > play/rest gating, Ramp and Drift — is carried over unchanged. (The flat-slider version is still
-> maintained as `melody_phase.jsfx` — see [melody-phase.md](melody-phase.md).
+> maintained as `melody_phase.jsfx` — see [melody-phase.md](../../../docs/plugins/melody-phase.md).
 > It came back out of the archive on 2026-08-11 because every project on disk
 > uses it and none use v2.)
 
