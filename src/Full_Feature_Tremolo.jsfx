@@ -425,7 +425,9 @@ slider2 == 2 ? (freq_smoothed = slider1) :
 // Host x: BEATS PER CYCLE (R13-revised). Guarded on the NUMERATOR -- inverting
 // a unit inverts its edge cases, and 1/max(v,0.001) clamps the denominator,
 // turning a stopped tremolo into a 1000 Hz one.
-               (freq_smoothed = slider1 > 0.001 ? 1 / slider1 : 0.001);   // 3 Host x
+slider2 == 3 ? (freq_smoothed = slider1 > 0.001 ? 1 / slider1 : 0.001) :   // 3 Every N beats
+               (freq_smoothed = slider1);   // 4 N per beat, as Hz. It fell into the line above until
+                                            // 2026-09-14 and started at the reciprocal speed.
 // Speed Ramp state. Engage (global) is a freeze/resume gate, not an edge;
 // only transport play resets the per-target ramp clocks. As of v2.14 the
 // ramp is PER-TARGET (own by/duration/start-delay/clock per target; banks

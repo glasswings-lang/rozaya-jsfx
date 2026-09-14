@@ -423,7 +423,9 @@ rate_smoother_coeff      = 1.0 - exp(-1.0 / (srate * 0.1));
 slider15 == 0 ? (freq_smoothed = slider14 / 60) :
 slider15 == 1 ? (freq_smoothed = 1 / max(slider14, 0.001)) :
 slider15 == 2 ? (freq_smoothed = slider14) :
-               (freq_smoothed = slider14 > 0.001 ? 1 / slider14 : 0.001);   // 3 Host x
+slider15 == 3 ? (freq_smoothed = slider14 > 0.001 ? 1 / slider14 : 0.001) :   // 3 Every N beats
+               (freq_smoothed = slider14);   // 4 N per beat, as Hz. It fell into the line above until
+                                             // 2026-09-14 and started at the reciprocal speed.
 // Speed Ramp state. Engage (global) is a freeze/resume gate, not an edge;
 // only transport play resets the per-target ramp clocks. As of v2.14 the
 // ramp is PER-TARGET (own by/duration/start-delay/clock per target; banks
