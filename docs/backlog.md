@@ -84,6 +84,13 @@ one. Finish it, re: the audit."*
   (cycles, beats, breaths, steps; Seconds where it has no turn, as Veil), with Seconds and
   Beats offered. Nothing saved changes meaning. Rozaya: *"Yes. should have had that from
   the beginning."*
+  **At rest:** anything with movement offers BOTH Walk through and Freeze in place (Rozaya:
+  *"Walk *and* freez, those two things are not either/or"*). The `Output at rest` switch
+  `{Pass-through, Silence}` goes in every plugin that works on incoming sound -- Tremolo, the
+  Sweeping Filter, Sweep Dwell, Veil, Stereo Phaser, Resonance Bank, Bubbler, Dapple, the
+  Morpher, Passage (read in each @sample 2026-09-13); Veil, Stereo Phaser and Resonance Bank
+  lack it today. The nine that make their own sound have nothing to pass. Rozaya: *"Feels
+  like you'd want that as a switch. passthrough or silence."*
 - **Every pitch spread takes a value and a unit picker** `{Hz, Semitones, Cents}`, as Fine tune
   does -- not locked to cents (no unit locks). Bubbler's `Pitch spread (semitones)` 0..24 and
   `Rise (semitones)` 0..36; Dapple's `Pitch spread (%)`; Sustain Looper's `Spread (%)`. Read
