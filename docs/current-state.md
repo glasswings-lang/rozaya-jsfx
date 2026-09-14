@@ -26,10 +26,10 @@ sentence.
 - **Drift/Ramp: complete everywhere** (Passage 2026-09-13).
 - **Polyrhythm v1 CROSSED AND ARCHIVED 2026-09-10.** 144 instances in 31 files, all
   bit-identical by render. `docs/layouts/polyrhythm-v1-to-v3-crossing.md`.
-- **OWED NEXT, IN THIS ORDER -- tell Rozaya as each comes off.** The Morpher's PITCH
-  LAYOUT is BEING BUILT (09-13): stages 1-4 + a phase fix in src (reruns owed), not installed.
-  Where it stands: "BUILD PROGRESS -- read this first" (`docs/layouts/spectral-vowel-
-  morpher.md`). Then `Drift amount unit` / `Ramp by unit` in the other seventeen.
+- **The Morpher's PITCH LAYOUT: DONE and INSTALLED 2026-09-13**, 135 copies moved, REAPER
+  round trip 14/14 with REAPER in front (`docs/layouts/spectral-vowel-morpher.md`, BUILD
+  PROGRESS). NONE of it heard. **OWED NEXT:** `Drift amount unit` / `Ramp by unit` in the
+  other seventeen. `tools/jsfx_map.py impact` after every plugin edit.
 - **Polyrhythm v3:** 59 sliders, per-voice pitch, 88 targets. `docs/layouts/polyrhythm-phase-v3-r22-r24.md`.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
@@ -136,7 +136,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   112 of 123 copies bit-identical, the 11 using Spread within 3e-8; renders at Spread
   150 went from about 25 s to 5 s. Low cut past 500 (it stopped there too), 09-13: all 123
   bit-identical. Wash grain past 680 ms at 48 kHz, built from pieces past one FFT, 09-13:
-  all 123 bit-identical. All installed. **Passage's whole 2026-09-11 layout INSTALLED 2026-09-13**, 49 instances migrated bit-identical, save and reopen measured in REAPER, NONE of it heard (`docs/layouts/spectral-vowel-passage.md`). Stage 9, 09-12: the 22-target list, measured; a Morph drift did not reach the sound (measured in this build, predicted from the same code order for earlier ones; no saved copy used it), fixed in src, never heard.
+  all 123 bit-identical. All installed. **Passage's whole 2026-09-11 layout INSTALLED 2026-09-13**, 49 instances migrated bit-identical, save and reopen measured in REAPER, NONE of it heard (`docs/layouts/spectral-vowel-passage.md`). Stage 9, 09-12: the 22-target list, measured; a Morph drift did not reach the sound (measured in this build, predicted from the same code order for earlier ones; no saved copy used it), fixed in src, never heard. **The Morpher's pitch layout, 09-13:** Source/Target note, Transpose and Fine tune units, Tuning reference, sixteen pitched layers, 87 targets, the amount units, save format 7700087, Transpose value and Layer pitch value to -20000..20000 (Passage's Transpose value too) -- never heard.
 
 `docs/host-sync-ear-test.md` is the highest-value thing waiting: five tests,
 fifteen minutes, three never heard on any plugin.

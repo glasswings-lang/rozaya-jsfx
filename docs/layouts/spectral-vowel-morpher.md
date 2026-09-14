@@ -724,8 +724,9 @@ we should leave it as-is." Rozaya watches the context meter and will say when it
    (`audiocloseinactive=1`), so no @block; the tool now refuses then. Run 2 (REAPER in front)
    12/14: Layer 14 pitch 700 cents read 96 on original and copy -- slider 17 and 31 were declared
    -96..96 against R12's -20000..20000 (jsfx_run never clamps, so no offline test saw it).
-   Widened (and Passage's slider 9); `layers pitch` 23/23. **Owed:** `migrated` on both,
-   reinstall both, run 3 with REAPER in front. Was: install (back up the installed file), then
+   Widened (and Passage's slider 9); `layers pitch` 23/23; `migrated` 123/123 + quick one;
+   reinstalled (`037ef0e`). **Run 3 (REAPER in front): 14/14, 0 failures -- DONE.**
+   Was: install (back up the installed file), then
    `morpher_reaper_roundtrip_20260913.py --check`, `--run` (claude test project only).
 6. Page: the "what it changed" section says the migration tool does it; say it is done.
 - **`quick one.RPP` (Dropbox): 12 copies on the 2026-08-11 layout (31 sliders, blob 7700002),
