@@ -35,7 +35,6 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R8** — The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
 - **R9** — Choose the unit that makes ordinary values whole numbers
 - **R10** — The value stays visible; a picker jumps to a value and gets out of the way
 - **R11** — One tempo-sync block — SUPERSEDED BY R20, 2026-09-04
@@ -84,57 +83,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
-## R8. The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
-
-Step sizes across the suite do not correlate with range, concept, or precision. They are
-authorial accident. The proof is `Start delay`: the same concept with the same range
-`0..1000` in all thirteen plugins that have it, at step **0.001** in nine and **0.01** in
-four. Nothing else about those sliders differs.
-
-The same range appears at different steps for the same control elsewhere — `Drift up
-amount` over `0..100` at step 0.01 (Tremolo, Polyrhythm, Shepard Tone) and at step 0.1
-(Shepard Scale); `Speed ramp by` over `-1000..1000` at step 0.001 (Tremolo, Melody,
-Polyrhythm, Shepard Tone) and at step 0.1 (Veil).
-
-**Rule: the step is set by the finest adjustment you would ever want to make. The range
-is set by the widest value you would ever want to reach. How many positions that produces
-is not a problem to be solved.** Where two plugins disagree on the step for the same
-control, **take the finer one.**
-
-**Typing is available in both places** — focus a parameter and Tab for an editable
-field, or type into the box beside the slider in the FX dialog. Two earlier drafts of this
-rule assumed otherwise and are in `docs/history/R8.md`.
-
-What a step controls is not how far you have to travel — you can always type — it is **which values
-exist at all**. A step of 0.1 where 0.05 is needed means 0.05 cannot be set by any means,
-typed or arrowed, because the control quantises to the step. So a coarse step does not
-make a value awkward to reach; it deletes it.
-
-And the position count stops mattering entirely. A slider spanning 0.01 to 1000 at step
-0.01 is 100,000 positions and is perfectly usable: you type the number you want, then
-nudge by ear from there. This is what makes **one slider serve two units** viable —
-Systole as milliseconds in Own BPM and beats in Host x on a single 0.01–1000 range —
-where an arrow-only reading of the constraint said it needed two sliders.
-(Star, 2026-08-31: *"you don't need extra sliders or anything. You can just trust the
-ears."*)
-(Rozaya, 2026-08-28: *"I want the full range of stuff, and I want it to have the fine
-grain control, not the hundredfold bullshit."*)
-
-Standardising downward — always to the finer step — can only ever add reachable values.
-It cannot remove a setting from any existing project, so it stays Phase 1 work.
-
-There are two distinct causes and they need different fixes.
-
-**Accident** — `Start delay`, `Drift period` (four conventions for one slider),
-`Output (dB)` at 0.5 in Veil and 0.1 everywhere else. Pick one, apply it, done.
-
-**Structural** — dual-purpose sliders whose range must span the union of everything they
-can mean: `Speed ramp by`, `Drift up/down amount`, and `Vn Drift / Rate` (drift in Drift
-mode, rate in Independent mode). The range goes wide to reach the largest meaning and the
-step goes fine to reach the smallest, and the result serves neither. The cure is in Open
-Question 2: size the slider to the largest sensible *change*, not the largest target, and
-bring the targets into a comparable magnitude. **Not** by normalising the units away.
 
 ## R9. Choose the unit that makes ordinary values whole numbers
 

@@ -47,7 +47,7 @@ desc: Womb Sound Generator v3
 // ============================================================================
 
 // --- HEARTBEAT -------------------------------------------------------------
-slider1:70<1,1000,0.001>Heart rate
+slider1:70<0.001,1000,0.001>Heart rate
 // R20/R21. This plugin used to offer TWO options here, `{Own BPM, Host x}`,
 // where every other plugin with a rate offers these five -- so anything learned
 // about rates elsewhere in the suite was partly untrue here, which is the exact
