@@ -35,7 +35,6 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R3** — Every target has a slider you can reach
 - **R6** — One phrasing for mode dependence, used where the meaning actually changes
 - **R7** — The rate controls sit together, always
 - **R8** — The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
@@ -87,19 +86,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
-## R3. Every target has a slider you can reach
-
-A target list may not offer something the user cannot see or set. Two consequences:
-
-- **Breath Generator gains `Breaths per minute`.** It is the dedicated breathing plugin
-  and it currently lets you drift and ramp a rate it gives you no way to set. Womb has
-  had this slider since v2.
-- Where a target names one entry of a **selector-backed group** (Melody v2's `Voice`
-  selector, Morpher's `Layer` selector), the target string is `<selector option> <slider
-  label minus parenthetical>` and the plugin page must say it is reached via the
-  selector. This is the one legitimate case of a target with no dedicated slider. See
-  Open Question 1.
 
 ## R6. One phrasing for mode dependence, used where the meaning actually changes
 
