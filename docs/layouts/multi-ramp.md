@@ -71,25 +71,29 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 
 ## Mine, unquoted -- ask before building on them
 
-- **The first option's NAME, not settled.** "Start of the song" is wrong: it counts from
-  pressing play. Offered renaming (nothing saved changes) against changing the behaviour;
-  Rozaya: *"From play start maybe? IDK"*. Leading candidate, mine: the switch `Ramp start
-  delay counts from` with options `Play start` / `End of the ramp before`. To be heard in
-  REAPER's parameter list once built, before it is final.
+- The switch's own name, mine: `Ramp start delay counts from`. To be heard in REAPER.
 - A saved project's one ramp becomes Ramp 1, unchanged in sound; Ramps 2-8 start empty.
+- **Reading of the two "ramp end" options, mine, not yet confirmed:** `From ramp end` = when
+  the ramp before was DUE to end, ignoring anything that made it late; `From ramp end incl.
+  play/rest for` = when it REALLY ends, after rests that froze it. Open inside that: whether a
+  manual Engage pause counts like a rest. Note `Ramp play for / rest for` (the staircase)
+  never makes a ramp late -- its holds come out of the duration -- so the name could be read
+  as that staircase; hear it in REAPER.
+
+## Decided, 2026-09-13
+
+- **After a paused or late ramp, the next one waits or keeps its time: a choice, on the
+  "counts from" switch as three options.** Found after the "keeps its place" answer:
+  `Ramp engage` is a pause, not an off switch (Veil's page and code, Passage's code: Off holds
+  the ride where it stands, On resumes, only Play restarts), so that answer covers a ramp never
+  engaged. Offered wait against start on time; Rozaya: *"It should be controlable"*. Offered a
+  third option against a switch of its own; Rozaya named all three: *"From play start, from
+  ramp end, from ramp incl. play/rest for"*, then *"ramp end incl. play/rest for"*. So:
+  `{From play start, From ramp end, From ramp end incl. play/rest for}`.
 
 ## Still to decide
 
-- **A ramp PAUSED partway: does the ramp after it wait, or start on time?** Found 2026-09-13
-  after the "keeps its place" answer: `Ramp engage` is a pause, not an off switch (Veil's page
-  and code, Passage's code: Off holds the ride where it stands, On resumes, only Play
-  restarts). Claude asked about "switched off" as a mute, so that answer covers a ramp never
-  engaged; a ramp paused mid-ride was not asked. The same question comes from `Rest mode (for
-  Ramp)` on Freeze, which also makes a ride finish later. Offered wait against start on time,
-  wait recommended; Rozaya, 2026-09-13: *"It should be controlable"*. **Both, as a choice.**
-  Asked next: a third option on the "counts from" switch, or a switch of its own.
-
-- The above four.
+- Whether a manual Engage pause counts like a rest in `From ramp end incl. play/rest for`.
 - Where each new control sits in each plugin's list, per plugin layout doc.
 
 ## Traps known before building
