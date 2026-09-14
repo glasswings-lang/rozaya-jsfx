@@ -6,8 +6,8 @@ amount-unit sweep. One layout, one migration: everything Veil gains is here.
 **NOT YET WHOLE: the eight ramps (`docs/layouts/multi-ramp.md`) are missing.** Veil has a Ramp,
 so it gets them, and building this first would move Veil's saved copies twice. That design still
 has open items. Asked whether Veil waits for them, Rozaya 2026-09-13: *"Yes, we need to take
-this plugin by plugin anyway."* So the eight ramps are settled, then added here. Also open
-once they land: one `Rest mode (for Ramp)` for all eight, or one per ramp.
+this plugin by plugin anyway."* So the eight ramps are settled, then added here. When they land,
+`Rest mode (for Ramp)` is one per ramp (Rozaya's, `multi-ramp.md`).
 
 Checked in `src/veil.jsfx` 2026-09-13: 22 sliders; no plugin-wide Start delay, Play for or
 Rest for (it has only the Drift and Ramp versions); Veil filters incoming sound (`@sample`

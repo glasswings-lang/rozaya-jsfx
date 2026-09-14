@@ -50,6 +50,11 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
   else. Offered against "later ramps slide earlier", keeping recommended as muting one piece of
   automation does; Rozaya, 2026-09-13: *"Keep it like you suggested, yeah."* A ramp that never
   moved the target is still skipped back past, as settled above.
+- **`Rest mode (for Ramp)` once per ramp**, `{Walk through, Freeze in place}`, so one ramp can
+  walk through a rest while another freezes. The switch was first decided on Veil (two, for
+  Drift and for Ramp: `veil-r26-r27.md`). Offered per ramp against one for all eight; Rozaya,
+  2026-09-13: *"Yeah, I was going to ask for that actually"*. Not yet asked: whether every
+  plugin with a Ramp gets it, or Veil alone.
 
 ## Measured facts about today's Ramp start delay (read in code, 2026-09-12)
 
