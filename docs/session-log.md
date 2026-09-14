@@ -66,6 +66,38 @@ Newest entries are the most likely to still be accurate.
 
 ---
 
+## 2026-09-13 (night) — The pitch layout finished and installed; REAPER's closed audio; a backlog that described built work
+
+**Why sessions filled.** Two sessions went from ~8% to ~68% in one reply each. Measured from
+their transcripts: about half was thinking held for the whole session, the rest mostly file
+reads (the Morpher read in pieces, about one whole copy's worth) and long scripts. Answer:
+`tools/jsfx_map.py` (map / uses / impact), held to the bug it exists for by
+`jsfx_map_test.py`. This session did stages 5-6, names, the live write, install, two range
+fixes and three REAPER runs in about a third of its context.
+
+**Stages 5, 6 and names** applied from the tested patch scripts, each measured (units 7,
+convert 23/23, current 123/123; save 14/14, savedlive 135/135; scope 28/28). Live write: 135
+copies in 40 files, `migrated` 123/123 + quick one. A slip of mine: `quick31` and `current`
+after the write refuse or find nothing by design -- they read the OLD layout.
+
+**REAPER run 1: six failures that were not the plugin.** Decoding both state chunks showed the
+original never STORED the values; `reaper.Audio_IsRunning()` was 0. `audiocloseinactive=1`:
+REAPER closes its audio device when it is not the front window, so no @block runs, and a fresh
+Morpher adopts its selector mirrors only in @block. My first theory (the @block adopt re-runs)
+was wrong -- it is guarded to once. The round trip now refuses with the engine off.
+
+**Run 2 found a real limit.** 700 cents read back 96: Transpose value and Layer pitch value
+were declared -96..96 against R12's -20000..20000, and so was Passage's Transpose value.
+jsfx_run never clamps to a declared range, so every offline test that set -700 cents passed.
+Widened (Rozaya: "yes" for Passage); migrated 123/123 and 49/49; run 3 14/14.
+
+**The backlog.** Asked what else was owed, I listed backlog sections as open. Most were built:
+Rozaya caught it -- *"melody phase deliberately lacks a voice selecter, and the pitch work was
+described to me as done"* -- and suggested checking the plugins, not the docs. Every item was
+checked against `src/`; the file went from ~590 lines to 120. One more lesson from it: I read
+Breath Generator's layout "No sigh" as a decision. It is my own scope note; the same list's
+"no new targets" had already been wrong. Unquoted text in a layout is not Rozaya's no.
+
 ## 2026-09-13 (evening) — The Morpher's pitch layout, stages 1-4; a layer phase order; renders were never Idle
 
 **Built and measured, not installed:** the renumber (51 -> 64), the global pitch block, sixteen
