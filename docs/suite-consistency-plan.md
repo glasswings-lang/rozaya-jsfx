@@ -3,7 +3,9 @@
 **Budget: 1600 lines.** Run `python tools/doc_budget.py` before committing.
 
 **This file is a reference you check, not a list of work.** It holds the rules
-R1–R22 and nothing else. Look up the rule you need, obey it, and close the file.
+R1–R27, then the canonical layout (Part 2) and the migration strategy (Part 4). Look up
+the rule you need, obey it, and close the file. **A rule here does not mean the plugins
+obey it** -- R12 said 20000 while two plugins stopped at 96. Read the plugin.
 
 **Where the other two thirds went, 2026-09-08.** This document used to be 2742
 lines of three different things stacked together: the rules, a backlog of what
@@ -56,8 +58,12 @@ lives in the history; its slot below says so.
 - **R19** — Pan modes run in one canonical order: still, then stepped, then continuous
 - **R20** — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere
 - **R21** — The host modes name their DIRECTION, and there are two
-- **R22** — THE PITCH BLOCK, settled with Rozaya 2026-09-08: a pitch value and a pitch mode, adjacent. Not built yet.
+- **R22** — THE PITCH BLOCK, settled with Rozaya 2026-09-08: a pitch value and a pitch mode, adjacent. Built.
+- **R23** — A drift steps on its target's own turn
 - **R24** — Every control that shapes the sound is a Drift and Ramp target
+- **R25** — A control behind a selector says which kind it is
+- **R26** — No unit locks: every Drift and Ramp amount names its unit
+- **R27** — Every plugin has the same things
 
 ---
 
@@ -1238,6 +1244,23 @@ self-migration has to be built first.
 
 ---
 
+## R23 — A drift steps on its target's own turn (2026-09-09)
+
+Rozaya, on drift sampled from a free-running clock: *"you don't get to say drift this thing
+every two cycles and drift this thing every four. it's being fucked."*
+
+- A target read ONCE PER OCCURRENCE (a breath's length, a note's duration, a bubble's birth)
+  steps once per occurrence, and its period counts occurrences. A target read continuously
+  drifts continuously, on a clock. *(This wording is Claude's.)*
+- Where a plugin has both kinds, `Drift movement {With the target, On a clock}` decides, per
+  target. On Bubbler and Dapple, Rozaya: *"The stepping was deliberately live"*.
+- Seconds and Beats on a stepped target run only while the target's own thing happens.
+  Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next
+  cycle from wherever the clock was last."*
+- Classify a target by READING where the plugin reads it, never by its name.
+
+---
+
 ## R24 — Every control that shapes the sound is a Drift and Ramp target
 
 Star, 2026-09-10: *"all the targets ... that directly affect your sound should
@@ -1274,6 +1297,40 @@ problem"*. History: `docs/history/R25.md`.
 - **A rename moves no value** (REAPER restores by position), so it needs no migration --
   but the plugin's page in `docs/plugins/` changes with it.
 - **A new control added to such a block is named this way in the same change.**
+
+---
+
+## R26 — No unit locks: every Drift and Ramp amount names its unit (2026-09-11)
+
+Rozaya: *"No unit locks. ever."* On doing it in every plugin: *"Yes, do it your way. I'd
+prefer that while we have room"*.
+
+- Every Drift block has `Drift amount unit (per target)` beside the amounts; every Ramp
+  block has `Ramp by unit (per target)` beside `Ramp by`. One option list for every plugin:
+  `{Target default, Hz, Semitones, Cents, Milliseconds, Seconds, Minutes, BPM, Beats,
+  Cycles, dB, Percent, Degrees}` (Rozaya: *"Yes"*).
+- `Target default` is what the amount meant before, so a migrated copy sounds the same. A
+  unit that cannot fit its target acts as Target default (Rozaya: *"It should fall back to
+  the target's native unit, if one's not already been set"*).
+- A unit is at most a default, never a lock, in any control.
+- Built in Passage and the Morpher, 2026-09-13; their `au_*` functions are the conversion.
+
+---
+
+## R27 — Every plugin has the same things (2026-09-13)
+
+Rozaya: *"They should all have the same things"*.
+
+- **Transport:** Start delay, Play for and Rest for, sharing ONE `Transport unit` that
+  defaults to what the plugin counts in today (cycles, beats, breaths, steps; Seconds where
+  it has no turn) and offers Seconds and Beats. Rozaya: *"Yes. should have had that from the
+  beginning."*
+- **At rest:** where something moves, Walk through and Freeze in place are both offered
+  (*"those two things are not either/or"*). Where the plugin works on incoming sound,
+  `Output at rest {Pass-through, Silence}` (*"Feels like you'd want that as a switch"*). A
+  plugin that only makes its own sound has nothing to pass: read its `@sample` to tell.
+- **Every pitch spread takes a value and a unit picker** `{Hz, Semitones, Cents}`.
+- It lands inside each plugin's one amount-unit migration (R26), never as a second pass.
 
 ---
 

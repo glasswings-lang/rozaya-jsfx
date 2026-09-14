@@ -95,7 +95,7 @@ read what else is in the block** -- never trust a document over the source.
 - `docs/current-state.md` -- branch, sweep progress, what has and has not been
   heard. The only file claiming to describe now, so the one that rots. On
   `feature/melody-reorder`, unmerged. **Cut no release until the sweep finishes.**
-- `docs/suite-consistency-plan.md` -- the rules R1-R22, in numeric order. A
+- `docs/suite-consistency-plan.md` -- the rules R1-R27, in numeric order. A
   reference you check, not a list of work.
 - `docs/backlog.md` -- what each plugin is owed. Not a queue you may start from.
 - `docs/jsfx-gotchas.md` -- read before editing a `.jsfx`.
