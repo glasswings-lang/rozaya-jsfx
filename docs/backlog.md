@@ -37,21 +37,9 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   across every plugin with a Pan Mode, with the value remap for 0-3 in the same commit.
   Re-count stored values first -- "nothing is saved on 4+" expires the moment one is used.
   The proposed order is R19 in `docs/suite-consistency-plan.md`.
-- **Every mode or unit goes BEFORE its value, in every plugin.** Rozaya, 2026-09-14:
-  *"every thing with a mode gets the mode before the value. everything. I don't care what
-  it is."* Also its own ramp layout (`docs/layouts/multi-ramp.md`): unit, then value, every
-  time. The rules file said value first in Claude's words from 2026-09-04 (commit
-  `13b385f`, no quote), and the suite was built that way: about 64 pairs are value first.
-  Already right: Sweep Dwell's Length and Start delay, and the pitch blocks (mode, note
-  name, value). Moving controls moves saved values, so each plugin's swap rides its ONE
-  migration with its R26/R27 work (current-state), never a sweep of its own. Shape
-  selectors go AFTER their value. Rozaya: *"They'd universally go afterward. except where
-  there's durations and other stuff in the way. then they go under all that"*.
-- **Rate value names carry no unit list**; the mode beside them says it. Rozaya, 2026-09-14:
-  *"the unit shit is for the unit mode."* Done that day wherever the mode sits beside the
-  value. Not touched, because each shares a unit switch that is not beside it: Passage's
-  slot durations and Start delay / Play for / Rest for (`seconds / Hz / beats`). Breath
-  Generator's and Womb's breath rate say `per minute`, which their unit switch does not.
+- **Put every mode before its value, in every plugin.** Most plugins still have the value
+  first. Fix it inside each plugin's own planned migration, not as a separate pass. The
+  rule is in the rules file, under "The four rules inside the order".
 - **Womb's Breath High-pass: a better filter.** Still the Chamberlin SVF, which stops near
   7200 Hz of 20000. Rozaya, 2026-09-13: *"We need a better filter."* (TPT, as the sweeping
   filters have.) Agreed condition: measure every saved Womb copy old against new before

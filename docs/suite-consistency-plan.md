@@ -720,8 +720,7 @@ dead.
 ```
 
 Rozaya, 2026-09-14: *"every thing with a mode gets the mode before the value.
-everything. I don't care what it is."* This used to say value first, in Claude's
-words; almost the whole suite was built that way and is owed a reorder (backlog).
+everything. I don't care what it is."*
 
 - **In Host x, the rate value means EVERY N BEATS.** One cycle takes N beats of
   the project. Bigger is slower. It is a free number, so `0.333333` — every
@@ -860,10 +859,7 @@ equivalent of the nine plugins that had nothing stored on Host x.
 > **All four names are R4/R5 compliant** — sentence case, unit in parentheses at
 > the end.
 >
-> *(Corrected 2026-09-14. This used to say the value slider lists its three
-> units, as "the fix Rozaya asked for". It never asked. Rozaya: "the unit shit is
-> for the unit mode" -- the mode beside a value says its unit; see
-> `docs/history/R7.md`.)*
+> The mode says the unit, so the value's name lists none.
 >
 > **`Fine tune` is a SECOND pair, always present, always after the first:
 > `Fine tune mode`, then `Fine tune value`, the same `{Hz, Semitones, Cents}`.**
@@ -1292,7 +1288,7 @@ plugin-wide but simpler, and you set it once and leave it.
 - **A mode or unit comes immediately BEFORE the value it qualifies.** Rozaya,
   2026-09-14: *"every thing with a mode gets the mode before the value.
   everything. I don't care what it is."* So `Drift period unit` goes directly
-  before `Drift period`. (This used to say after, in Claude's words.) A shape
+  before `Drift period`. A shape
   selector (`Attack shape`) is not a mode and goes AFTER its value. Rozaya,
   2026-09-14: *"They'd universally go afterward. except where there's durations
   and other stuff in the way. then they go under all that"*.
