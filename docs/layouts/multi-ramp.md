@@ -73,10 +73,9 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 
 - The switch's own name, mine: `Ramp start delay counts from`. To be heard in REAPER.
 - A saved project's one ramp becomes Ramp 1, unchanged in sound; Ramps 2-8 start empty.
-- **Reading of the two "ramp end" options, mine, not yet confirmed:** `From ramp end` = when
-  the ramp before was DUE to end, ignoring anything that made it late; `From ramp end incl.
-  play/rest for` = when it REALLY ends, after rests that froze it. Open inside that: whether a
-  manual Engage pause counts like a rest. Note `Ramp play for / rest for` (the staircase)
+- **Reading of the two "ramp end" options, mine, told to Rozaya and not corrected:** `From
+  ramp end` = when the ramp before was DUE to end, ignoring anything that made it late; `From
+  ramp end incl. play/rest for` = when it REALLY ends, after rests and pauses. Note `Ramp play for / rest for` (the staircase)
   never makes a ramp late -- its holds come out of the duration -- so the name could be read
   as that staircase; hear it in REAPER.
 
@@ -91,9 +90,12 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
   ramp end, from ramp incl. play/rest for"*, then *"ramp end incl. play/rest for"*. So:
   `{From play start, From ramp end, From ramp end incl. play/rest for}`.
 
+- **A manual Engage pause counts like a rest** in `From ramp end incl. play/rest for`: the
+  next ramp waits for the real end either way. Recommended; Rozaya: *"Count it yeah"*. The
+  option's name mentions only play/rest, so hear it in REAPER with this in mind.
+
 ## Still to decide
 
-- Whether a manual Engage pause counts like a rest in `From ramp end incl. play/rest for`.
 - Where each new control sits in each plugin's list, per plugin layout doc.
 
 ## Traps known before building
