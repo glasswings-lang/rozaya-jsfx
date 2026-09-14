@@ -91,6 +91,13 @@ def setv(track, slider, value, pause=0.35):
 def check():
     proj = project_path()
     report(proj.endswith(PROJECT), f"the open project is {proj}")
+    # A fresh Morpher adopts its selector mirrors in @block, and nothing it is sent is stored
+    # until then. With REAPER's audio engine stopped no @block runs, so every value would read
+    # back as a default and look like a broken save (2026-09-13: six false failures this way).
+    audio = lua('return tostring(reaper.Audio_IsRunning())').strip()
+    report(audio == "1", f"REAPER's audio engine is running (Audio_IsRunning = {audio})")
+    if audio != "1":
+        raise SystemExit("REFUSED: REAPER's audio engine is not running -- no @block, so nothing would be stored")
     idx = track_index(TRACK)
     report(idx is not None, f"track {TRACK!r} is index {idx}")
     if idx is None:
