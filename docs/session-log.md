@@ -98,6 +98,15 @@ checked against `src/`; the file went from ~590 lines to 120. One more lesson fr
 Breath Generator's layout "No sigh" as a decision. It is my own scope note; the same list's
 "no new targets" had already been wrong. Unquoted text in a layout is not Rozaya's no.
 
+**Then the docs stopped copying the plugins.** Rozaya, on the pattern: *"It's the endless
+fucking failyars to keep them 1, tity and 2, not stail."* `tools/suite_status.py` reads what
+each plugin has; current-state, the backlog and `planned-features.md` (2480 -> 583 lines)
+stopped describing built work. Removed sections were checked against `src/` first. Decisions
+still shaping work moved first: "bpm is bpm" to `docs/history/R20.md`; the sideways-slider
+rule, position locking and the Harmonic Sculptor quote to the backlog's Settled list; the R22
+rollout to its history. Every other quote in the removed text was about work now built, and
+is in `docs/planned-features.md` as it stood before the commit that trimmed it.
+
 ## 2026-09-13 (evening) — The Morpher's pitch layout, stages 1-4; a layer phase order; renders were never Idle
 
 **Built and measured, not installed:** the renumber (51 -> 64), the global pitch block, sixteen

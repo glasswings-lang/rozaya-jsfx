@@ -120,7 +120,15 @@ everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole 
   are the step's job). Sizing an amount to a "sensible wander" was retracted as condescension.
 - **Scatter (random slot per wash grain) is ruled out** for Rozaya's chordal captures.
   `docs/planned-features.md`.
-- **Harmonic Sculptor is archived** (`4d0339f`).
+- **Harmonic Sculptor is archived** (`4d0339f`). Rozaya, 2026-07: *"harmonic sculpter is
+  something I feel like needs a serious overhaul, either that, or to be dropped entirely. I
+  certainly wouldn't reach for it."*
+- **Before adding a slider, check whether the plugin already knows the answer.** The rule
+  that killed two invented pan sliders (2026-09-02), Rozaya: *"Add to the slider that reaches
+  sideways... you could extend to infinity"* -- the enum is the free axis.
+- **Position locking is for plugins that play a sequence of notes** (Shepard Scale, Melody):
+  starting mid-song on the wrong note is audibly wrong. The rest keep their own time.
+  2026-08-12; `tools/lock_test.py`.
 - **JSFX stays the format.** Plain source that runs, no toolchain, CC0-compatible, and the
   flat slider list is what makes the plugins reachable through OSARA.
 - **Drift steps on the target's own turn (R23): swept 2026-09-09.** Bubbler and Dapple step

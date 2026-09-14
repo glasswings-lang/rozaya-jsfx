@@ -41,7 +41,7 @@ BUDGETS = {
     "docs/suite-consistency-plan.md": (1600, "the rules R1-R27; a rule does not mean the plugins obey it"),
     "docs/backlog.md": (650, "what is owed; NOT a list of work to start"),
     "docs/plan-history.md": (700, "why the rules are what they are"),
-    "docs/planned-features.md": (2500, "in-flight and deferred design work"),
+    "docs/planned-features.md": (700, "designs NOT built; what a plugin has is tools/suite_status.py"),
 }
 
 # docs/history/<RULE>.md -- one file per rule, each capped on its own.
