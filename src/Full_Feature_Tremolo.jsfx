@@ -20,8 +20,8 @@ slider1:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle / per be
 slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider3:50<0,100,0.1>On Duration % of Cycle
 slider4:-6<-60,0,0.01>Tremolo amount (dB, 0 = strongest)
-slider5:0<0,100,0.1>Attack %
-slider7:0<0,100,0.1>Release %
+slider5:0<0,100,0.1>Attack % of Cycle
+slider7:0<0,100,0.1>Release % of Cycle
 slider6:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
 slider9:0<-180,180,0.1>Stereo Phase Offset degrees

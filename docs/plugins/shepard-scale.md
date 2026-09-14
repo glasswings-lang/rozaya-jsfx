@@ -38,11 +38,11 @@ Determines how notes with Active set to Off are handled.
 - **Skip** — inactive notes are skipped entirely; the sequencer advances to the next active note immediately.
 - **Rest** — inactive notes hold silence for their full beat duration before advancing.
 
-**Attack %** `0-100%, default 10`
-The fraction of each beat spent fading the note in from silence. At 0% the note begins at full amplitude immediately.
+**Attack % of Note Length** `0-100%, default 10`
+The fraction of each note's length spent fading the note in from silence. At 0% the note begins at full amplitude immediately. *(Renamed 2026-09-14 from `Attack %`; the sound did not change. This page used to say it was a fraction of the beat, which the code never did.)*
 
-**Release %** `0-100%, default 10`
-The fraction of each beat spent fading the note out. At 0% the note cuts off at the end of its on-time without fading.
+**Release % of Note Length** `0-100%, default 10`
+The fraction of each note's length spent fading the note out. At 0% the note cuts off at the end of its length without fading. *(Renamed 2026-09-14 from `Release %`; the sound did not change.)*
 
 > If Attack % + Release % exceeds 100%, both are scaled down proportionally to fit.
 

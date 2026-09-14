@@ -100,11 +100,11 @@ where it is called `Amount (dB)`.
 *Renamed 2026-09-10 from `Depth dB`. The sound did not change. Until then this
 manual described it backwards, which is what the old name invited.*
 
-**Attack %** `0-100%, default 0`
-Proportion of the on-time spent fading in from silence to full level. At 0%, the tremolo opens instantly at the start of each on-period. Attack and Release proportions are expressed relative to the on-time, not the full cycle — so an Attack of 50% means the first half of the on-duration is the attack ramp. If Attack % + Release % exceeds 100% of the on-time, both are scaled down proportionally.
+**Attack % of Cycle** `0-100%, default 0`
+Proportion of the whole cycle spent fading in from silence to full level. At 0%, the tremolo opens instantly at the start of each on-period. If attack and release together are longer than the on-time, both are scaled down proportionally to fit it. *(Renamed 2026-09-14 from `Attack %`; the sound did not change. This page used to say it was a proportion of the on-time, which the code never did.)*
 
-**Release %** `0-100%, default 0`
-Proportion of the on-time spent fading from full level back to silence. At 0%, the tremolo closes instantly at the end of each on-period.
+**Release % of Cycle** `0-100%, default 0`
+Proportion of the whole cycle spent fading from full level back to silence. At 0%, the tremolo closes instantly at the end of each on-period. *(Renamed 2026-09-14 from `Release %`; the sound did not change.)*
 
 **Attack Shape** `Linear / Cosine / Logarithmic / Exponential`
 Curve applied to the attack ramp.

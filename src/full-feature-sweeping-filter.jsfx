@@ -36,8 +36,8 @@ slider15:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider16:0<-180,180,0.1>LFO Start Phase (degrees)
 slider17:50<0,100,0.1>On Duration % of Cycle
 slider18:100<0,100,0.1>Depth %
-slider19:0<0,100,0.1>Attack %
-slider21:0<0,100,0.1>Release %
+slider19:0<0,100,0.1>Attack % of Cycle
+slider21:0<0,100,0.1>Release % of Cycle
 slider20:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
 slider22:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
 slider12:0.7<0,1,0.01>Resonance

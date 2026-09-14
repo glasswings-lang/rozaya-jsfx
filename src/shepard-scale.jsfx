@@ -23,8 +23,8 @@ desc: Shepard Scale Generator
 //   BPM            — Tempo.
 //   Direction      — Ascending (C to B) or descending (B to C).
 //   Inactive Notes — Skip or Rest behavior.
-//   Attack %       — Fraction of beat spent fading in.
-//   Release %      — Fraction of beat spent fading out.
+//   Attack %       — Fraction of the note's length spent fading in.
+//   Release %      — Fraction of the note's length spent fading out.
 //   Note Length %  — How much of each beat the note occupies before silence.
 //   Octave Count   — How many octave layers stack per note (2-12), and how
 //                    wide the pitch window is. These are the same thing.
@@ -44,8 +44,8 @@ slider1:120<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle / per 
 slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 slider3:0<0,1,1{Asc,Desc}>Direction
 slider4:0<0,1,1{Skip,Rest}>Inactive Notes
-slider5:10<0,100,0.1>Attack %
-slider6:10<0,100,0.1>Release %
+slider5:10<0,100,0.1>Attack % of Note Length
+slider6:10<0,100,0.1>Release % of Note Length
 slider7:100<1,100,0.1>Note Length %
 slider8:8<2,12,1>Octave Count
 slider9:4<0,8,1>Center Octave

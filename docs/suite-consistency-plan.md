@@ -3,7 +3,7 @@
 **Budget: 1600 lines.** Run `python tools/doc_budget.py` before committing.
 
 **This file is a reference you check, not a list of work.** It holds the rules
-R1–R27, then the canonical layout (Part 2) and the migration strategy (Part 4). Look up
+still open, R2–R27 (a rule that is done moves to `docs/history/<RULE>.md`), then the canonical layout (Part 2) and the migration strategy (Part 4). Look up
 the rule you need, obey it, and close the file. **A rule here does not mean the plugins
 obey it** -- R12 said 20000 while two plugins stopped at 96. Read the plugin.
 
@@ -35,7 +35,6 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R1** — The descriptive name wins, and travels to both ends
 - **R2** — A target string is its slider's label, derived mechanically
 - **R3** — Every target has a slider you can reach
 - **R4** — The unit goes in parentheses at the end of the name
@@ -91,24 +90,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
-## R1. The descriptive name wins, and travels to both ends
-
-Where a slider and a target list name the same thing differently, keep whichever tells a
-stranger what the thing **is**, and push it to both. The winner is sometimes the target
-list and sometimes the slider:
-
-| Plugin | Slider today | Target today | Winner | Becomes |
-|---|---|---|---|---|
-| Womb | `BPM` | `Heart rate` | target — "BPM of what?" in a plugin with a heart, a breath and bloodflow | slider → `Heart rate (BPM)` |
-| Womb | `Heart with breath (BPM peak-to-peak)` | `RSA depth` | **neither** — one is jargon, the other is vague | both → `Heart rate swing per breath (BPM)` |
-| Sweeping Filter | `Rate Value` | `Sweep Rate` | target — and it makes `Sweep Rate` / `Pan Sweep Rate` genuine siblings | slider → `Sweep rate` |
-| Shepard Scale | `BPM (or multiplier in Host x)` | `Tempo` | target; Rhythm Track already writes `Tempo (BPM…)` | slider → `Tempo (BPM…)` |
-| Breath Gen | `Inhale Duration (sec)` | `Inhale` | slider — the plugin also has Inhale Frequency and two Inhale fades | target → `Inhale duration` |
-| Tremolo, Shepard Scale, Sweeping Filter | `Attack %` | `Attack %` | Polyrhythm's and Melody's longer forms — "percent of what?" | → `Attack % of cycle` / `Attack % of note duration` |
-
-`Rate Value` is **kept** where the rate triple is contiguous (see R7). It is only
-illegible when orphaned.
 
 ## R2. A target string is its slider's label, derived mechanically
 
@@ -333,7 +314,7 @@ is an editable field. So you type the value and nudge by ear from there.
 
 | Control | Verdict |
 |---|---|
-| `Heart with breath (BPM peak-to-peak)`, Womb | **Yes** — negative is *inverted RSA*, the heart slowing on the inhale. Normal RSA is a coherence signature and its inversion is a dysregulation one, which is the exact axis the nervous-system-states work runs on. Today you can depict "no RSA" and not "backwards RSA". |
+| `Heart rate swing per breath (BPM)`, Womb | **Yes** — negative is *inverted RSA*, the heart slowing on the inhale. Normal RSA is a coherence signature and its inversion is a dysregulation one, which is the exact axis the nervous-system-states work runs on. Today you can depict "no RSA" and not "backwards RSA". |
 | `HB Stereo Width ms`, Womb | Already signed, and correctly — the sign picks which side the heart sits on. |
 | `Sigh depth multiplier`, Womb | Not a negative: it wants a **floor below 1**. `1..3` cannot express a breath *shorter* than normal — a catch, a gasp, a held-in flinch. |
 | Any volume / level | **No.** Negative means polarity inversion, which reads as nothing alone and cancels when layers sum — against the suite's mono-compatibility rule. A trap, not a feature. |
@@ -692,7 +673,7 @@ cycle_len = cycle_len_base * (1.0 - breath_mod + rand_hrv)
 ```
 
 They are fractions of the beat interval. **Womb already names this quantity properly** —
-`Heart with breath (BPM peak-to-peak)` — so the same measurement is honest in one plugin
+`Heart rate swing per breath (BPM)` — so the same measurement is honest in one plugin
 and an unlabelled decimal in its sibling. Heartbeat's two become **BPM peak-to-peak**,
 matching Womb. The fraction-to-BPM relation is not linear across tempo, but Womb has
 worked in BPM and converted internally since v2, so the precedent is built and tested.

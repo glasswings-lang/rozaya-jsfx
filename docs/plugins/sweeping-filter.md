@@ -189,11 +189,11 @@ The proportion of each cycle during which the LFO is in its active (non-minimum)
 **Depth %** `0-100%, default 100`
 How much of the frequency range the sweep covers. At 100%, the sweep moves fully between Frequency Low and Frequency High. At 50%, it sweeps only the inner half of that range, centered between the two values. At 0%, the filter stays fixed at the center frequency with no movement.
 
-**Attack %** `0-100%, default 0`
-Proportion of the on-time spent in the attack ramp, where the cutoff rises from the low to the high frequency. At 0%, the filter opens instantly.
+**Attack % of Cycle** `0-100%, default 0`
+Proportion of the whole cycle spent in the attack ramp, where the cutoff rises from the low to the high frequency. At 0%, the filter opens instantly. *(Renamed 2026-09-14 from `Attack %`; the sound did not change. This page used to say it was a proportion of the on-time, which the code never did.)*
 
-**Release %** `0-100%, default 0`
-Proportion of the on-time spent in the release ramp, where the cutoff falls from high to low. At 0%, the filter closes instantly. If Attack % + Release % exceeds 100% of the on-time, both are scaled down proportionally.
+**Release % of Cycle** `0-100%, default 0`
+Proportion of the whole cycle spent in the release ramp, where the cutoff falls from high to low. At 0%, the filter closes instantly. If attack and release together are longer than the on-time, both are scaled down proportionally to fit it. *(Renamed 2026-09-14 from `Release %`; the sound did not change.)*
 
 **Attack Shape** `Linear / Cosine / Logarithmic / Exponential`
 Curve applied to the attack ramp.

@@ -95,7 +95,7 @@ read what else is in the block** -- never trust a document over the source.
 - **What a plugin HAS: `python tools/suite_status.py`**, read from the plugin files. No doc
   holds that; docs hold decisions and what has been heard. `docs/current-state.md` -- the
   branch, what is heard, what is next. **Cut no release until the sweep finishes.**
-- `docs/suite-consistency-plan.md` -- the rules R1-R27, in numeric order. A
+- `docs/suite-consistency-plan.md` -- the rules still open, in numeric order (done ones move to `docs/history/`). A
   reference you check, not a list of work.
 - `docs/backlog.md` -- what each plugin is owed. Not a queue you may start from.
 - `docs/jsfx-gotchas.md` -- read before editing a `.jsfx`.

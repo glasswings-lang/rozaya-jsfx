@@ -48,11 +48,11 @@ turn** and the rest advance per sample -- see "Whose turn it is" below. The phas
 
 **Every control that shapes the sound is a Drift and Ramp target, in the order of
 the controls, each named for its control.** It was eleven. Four were renamed to
-match their controls -- S1-S2 gap is now **Systole**, RSA depth **Heart with
-breath**, Inhale Freq and Exhale Freq **Inhale pitch** and **Exhale pitch** -- and
+match their controls -- S1-S2 gap is now **Systole**, RSA depth **Heart rate swing
+per breath** (called Heart with breath until 2026-09-14), Inhale Freq and Exhale Freq **Inhale pitch** and **Exhale pitch** -- and
 Sigh interval joined. Rozaya: *"Yes, and yes."*
 
-Heart: Heart rate, Heart with breath, Systole, S1 pitch, S1 fine tune, S1 decay,
+Heart: Heart rate, Heart rate swing per breath, Systole, S1 pitch, S1 fine tune, S1 decay,
 S1 volume, S2 pitch, S2 fine tune, S2 decay, S2 volume, Brightness, HB stereo width,
 HB master volume. Breath: Breath rate, Inhale, Top pause, Exhale, Bottom pause,
 Inhale pitch, Inhale fine tune, Exhale pitch, Exhale fine tune, the four fades,
@@ -75,7 +75,7 @@ Beats, and its drift was converted to reach the same quickest and slowest breath
 **On `With the target`** a heart or bloodflow target (and Tuning reference) steps
 once per heartbeat, a breath target once per breath, and each segment on its own
 turn. Heart rate, Systole, the segments and Breath rate default to it; everything
-else to `On a clock`. In Cycles, Heart with breath, the breath targets and Bloodflow
+else to `On a clock`. In Cycles, Heart rate swing per breath, the breath targets and Bloodflow
 offset count breath cycles, as they always did; the rest count heartbeats.
 
 *(The sections below still name the eleven targets as they were.)*
@@ -100,7 +100,7 @@ Freq follow the value's own unit.
 
 Sliders 1-47: identical to [Womb Sound Generator v2](#womb-sound-generator-v2). See that section for full descriptions of BPM, the three layer Volume / Solo sliders, heartbeat sound parameters (Systole ms, S1/S2 Frequency Hz, Decay ms, Brightness, Stereo Width ms), breath sound parameters (Inhale/Top Pause/Exhale/Bottom Pause durations, Frequencies, Fade In/Out, Stereo Width, Post-filter), bloodflow parameters (Filter Hz, Dicrotic Level, Resonance, Attack, Decay, Stereo Width), Start Delay, and per-layer Play/Rest gates.
 
-**Layout as it is now** (checked against the plugin 2026-09-13): sliders 1-23 are the heartbeat, 24-52 the breath, 53-62 bloodflow, 63-71 the master controls and transport, 72-80 the Drift block, 81-88 the Ramp block. Heart with breath is slider 3, beside the heart rate it modifies; the Sigh pair is 48-49, inside the breath group; Set breath rate is 24, at the head of the breath group with its unit beside it.
+**Layout as it is now** (checked against the plugin 2026-09-13): sliders 1-23 are the heartbeat, 24-52 the breath, 53-62 bloodflow, 63-71 the master controls and transport, 72-80 the Drift block, 81-88 the Ramp block. Heart rate swing per breath is slider 3, beside the heart rate it modifies; the Sigh pair is 48-49, inside the breath group; Set breath rate is 24, at the head of the breath group with its unit beside it.
 
 ### Drift target selector (slider 72)
 
@@ -167,9 +167,9 @@ Period 1 with Random shape gives beat-to-beat (or breath-to-breath) jitter — e
 - **Triangle** — linear ramps with turnaround points at the peaks.
 - **Random** — value noise that interpolates smoothly between random targets at each period boundary. Random targets are independent per-target (each of the 10 wander-targets has its own random state).
 
-### Heart with breath (slider 3)
+### Heart rate swing per breath (slider 3)
 
-`Heart with breath (BPM peak-to-peak)` — baseline RSA coupling depth. Identical semantics to v2's slider 56 (moved to slider 59 in v3 because the drift block needed those slots). 0 = no RSA. A value of 6 means HR climbs ~3 above baseline at the peak (top of inhale) and descends ~3 below at the trough (bottom of exhale).
+`Heart rate swing per breath (BPM)` — baseline RSA coupling depth, measured peak to peak. *(Renamed 2026-09-14 from `Heart with breath (BPM peak-to-peak)`; the sound did not change.)* Identical semantics to v2's slider 56 (moved to slider 59 in v3 because the drift block needed those slots). 0 = no RSA. A value of 6 means HR climbs ~3 above baseline at the peak (top of inhale) and descends ~3 below at the trough (bottom of exhale).
 
 When drift target 6 (RSA depth) has nonzero up/down values, this baseline depth wanders too — the up/down amplitudes are in the same BPM peak-to-peak units.
 
@@ -295,7 +295,7 @@ Same trick works for S1-S2 gap (beat-to-beat systole length jitter), or for any 
 
 ### RSA depth wander
 
-To make the RSA coupling itself feel alive rather than mechanically constant, set slider 72 to Heart with breath, give it a small up amount (e.g. 2 BPM) and a long period (e.g. 20 breath cycles). The RSA depth slowly wanders over the course of ~20 breaths, deepening and shallowing — matches real physiology where RSA strength rises with relaxation and decreases with tension.
+To make the RSA coupling itself feel alive rather than mechanically constant, set slider 72 to Heart rate swing per breath, give it a small up amount (e.g. 2 BPM) and a long period (e.g. 20 breath cycles). The RSA depth slowly wanders over the course of ~20 breaths, deepening and shallowing — matches real physiology where RSA strength rises with relaxation and decreases with tension.
 
 ---
 
@@ -543,7 +543,7 @@ gained three options.
 
 **What moved and nothing else:** five controls that had ended up stranded at the
 bottom of the list are back with their groups — the breath post-filter pair,
-Breaths per minute, Heart with breath, and the sigh pair. S1 and S2 are grouped by
+Breaths per minute, Heart rate swing per breath, and the sigh pair. S1 and S2 are grouped by
 sound rather than by parameter, so tuning one heart sound is one place instead of
 three. Sliders 37 and 38 had been an empty hole and are not any more.
 
