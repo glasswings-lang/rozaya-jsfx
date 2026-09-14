@@ -85,7 +85,9 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
   and code, Passage's code: Off holds the ride where it stands, On resumes, only Play
   restarts). Claude asked about "switched off" as a mute, so that answer covers a ramp never
   engaged; a ramp paused mid-ride was not asked. The same question comes from `Rest mode (for
-  Ramp)` on Freeze, which also makes a ride finish later.
+  Ramp)` on Freeze, which also makes a ride finish later. Offered wait against start on time,
+  wait recommended; Rozaya, 2026-09-13: *"It should be controlable"*. **Both, as a choice.**
+  Asked next: a third option on the "counts from" switch, or a switch of its own.
 
 - The above four.
 - Where each new control sits in each plugin's list, per plugin layout doc.
