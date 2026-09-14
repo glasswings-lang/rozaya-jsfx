@@ -79,7 +79,11 @@ one. Finish it, re: the audit."*
   What they DO have is `Drift play for / rest for`, `Ramp play for / rest for` and `Ramp start
   delay` -- per target, a different thing. Rozaya, on whether every plugin should have the same
   things: *"They should all have the same things"*, then *"Yes both"* (the spreads below, and
-  the suite).
+  the suite). **The shape, agreed 2026-09-13:** Start delay, Play for and Rest for share ONE
+  `Transport unit` picker in every plugin, defaulting to what the plugin counts in today
+  (cycles, beats, breaths, steps; Seconds where it has no turn, as Veil), with Seconds and
+  Beats offered. Nothing saved changes meaning. Rozaya: *"Yes. should have had that from
+  the beginning."*
 - **Every pitch spread takes a value and a unit picker** `{Hz, Semitones, Cents}`, as Fine tune
   does -- not locked to cents (no unit locks). Bubbler's `Pitch spread (semitones)` 0..24 and
   `Rise (semitones)` 0..36; Dapple's `Pitch spread (%)`; Sustain Looper's `Spread (%)`. Read
