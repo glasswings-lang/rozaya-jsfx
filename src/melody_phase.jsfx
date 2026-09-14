@@ -52,7 +52,7 @@ slider4:25<1,99,0.1>Pulse width (%, 50 = square)
 slider5:1<0,2,1{Hz,Semitones,Cents}>Pitch mode
 slider6:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit (for every voice)
 slider7:440<20,2000,0.1>Tuning reference (Hz)
-slider8:0<-20000,20000,1>Transpose (semitones)
+slider8:0<-127,127,1>Transpose (semitones)
 slider9:0<-4,4,1>Octave shift
 slider10:0<0,1000,0.001>Binaural beat (Hz, L/R offset)
 // --- Envelope ---

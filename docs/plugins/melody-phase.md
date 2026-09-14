@@ -140,7 +140,7 @@ is middle C, and each voice's Note name follows it both ways. **Hz:** the
 frequency itself. **Cents:** the MIDI note times 100, so 6950 is a quarter tone
 above A4.
 
-**Transpose (semitones)** `-20000 to +20000` · **Octave shift** `-4 – 4`
+**Transpose (semitones)** `-127 to +127` · **Octave shift** `-4 – 4`
 Move every voice together. The intervals between voices stay the same. At 0 and 0
 the note names on the voices are literally true.
 

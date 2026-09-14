@@ -32,7 +32,7 @@ slider5:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
 
 // ===== BASE PITCH =====
 slider6:440<20,2000,0.1>Tuning reference (Hz)
-slider7:0<-20000,20000,1>Transpose (half steps)
+slider7:0<-127,127,1>Transpose (half steps)
 slider8:0<-4,4,1>Octave shift
 slider9:4<0,1000,0.001>Binaural beat (Hz, L/R offset)
 
