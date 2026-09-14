@@ -35,7 +35,6 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R10** — The value stays visible; a picker jumps to a value and gets out of the way
 - **R11** — One tempo-sync block — SUPERSEDED BY R20, 2026-09-04
 - **R12** — A numeric range spans 0–1000, or −1000–1000 where the sign does something real
 - **R13** — Every rate reads in a real unit, and Host x is one of them
@@ -84,42 +83,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## R10. The value stays visible; a picker jumps to a value and gets out of the way
-
-The suite's convenience pickers (`Host ratio`, `Breath rate`, the pan-speed pickers)
-were designed to *write a value and get out of the way*. In practice they do the
-opposite: **13 plugins hide the rate slider whenever the picker is on anything but
-`Custom`** — `slider_show(slider1, rate_mode != 1 || sliderN == 0)`.
-
-That turns a shortcut into a grid. The picker's table is a list of ratios against the
-beat, so while it is visible the only reachable speeds are the ones on that list. A cycle
-every **5** beats of a 4/4 track — an ordinary thing to want in phase music, and the
-whole reason this suite prefers a multiplier to a note-division grid — cannot be set at
-all without first finding the entry called `Custom`. The value that would express it is
-sitting right there and is invisible.
-
-**Rule: the value slider is always visible. The picker is a jump-to, never a gate.**
-
-- The picker writes the value and is done. It never controls whether the value can be
-  seen or reached.
-- **When the value no longer matches what the picker names, the picker snaps back to
-  `Custom`.** This is the other half, and without it the picker becomes a label that
-  lies — the failure mode CLAUDE.md already records from the `infantile.RPP` hunt, where
-  a hidden picker stamped `0.5` over a hand-set rate. A picker that cannot lie also
-  cannot need mode-gating for safety.
-- Reconcile by **comparing the value against the picker's own table**, not by tracking
-  edits. It is stateless, so it needs no adopt flag and cannot fire early on a restore —
-  a fresh instance's default value and default picker agree by construction, so nothing
-  is written.
-
-**Cost: free.** `slider_show` and label text only. No renumber, no range change, no
-migration. This is Phase 1 work and it is the largest usability change in the phase.
-
-Applies to: Tremolo, Sweeping Filter, Sweep Dwell, Heartbeat, Rhythm Track, Melody v1/v2,
-Polyrhythm v1/v3, Shepard Scale, Shepard Tone, Stereo Phaser, Bubbler, Dapple, Womb
-(both its heart picker and its breath picker).
-
 
 ## ~~R11. One tempo-sync block~~ — SUPERSEDED BY R20, 2026-09-04
 
