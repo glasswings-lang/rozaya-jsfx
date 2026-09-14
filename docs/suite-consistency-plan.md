@@ -1292,8 +1292,10 @@ plugin-wide but simpler, and you set it once and leave it.
 - **A mode or unit comes immediately BEFORE the value it qualifies.** Rozaya,
   2026-09-14: *"every thing with a mode gets the mode before the value.
   everything. I don't care what it is."* So `Drift period unit` goes directly
-  before `Drift period`. (This used to say after, in Claude's words.) Shape
-  selectors such as `Attack shape` are not modes; where they go is not decided.
+  before `Drift period`. (This used to say after, in Claude's words.) A shape
+  selector (`Attack shape`) is not a mode and goes AFTER its value. Rozaya,
+  2026-09-14: *"They'd universally go afterward. except where there's durations
+  and other stuff in the way. then they go under all that"*.
 - **A second rate carries its own complete pair** (R20). The pan gets its own
   rate value and its own rate mode, inside the pan group. It never borrows the
   main rate's mode and nothing points across at it.

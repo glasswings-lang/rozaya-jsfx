@@ -45,7 +45,8 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   Already right: Sweep Dwell's Length and Start delay, and the pitch blocks (mode, note
   name, value). Moving controls moves saved values, so each plugin's swap rides its ONE
   migration with its R26/R27 work (current-state), never a sweep of its own. Shape
-  selectors (`Attack shape`) are not modes; where they go is not decided.
+  selectors go AFTER their value. Rozaya: *"They'd universally go afterward. except where
+  there's durations and other stuff in the way. then they go under all that"*.
 - **Rate value names carry no unit list**; the mode beside them says it. Rozaya, 2026-09-14:
   *"the unit shit is for the unit mode."* Done that day wherever the mode sits beside the
   value. Not touched, because each shares a unit switch that is not beside it: Passage's
