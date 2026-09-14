@@ -1,6 +1,7 @@
 # Polyrhythm Phase — the v1/v3 fork, and how it closes
 
-Written 2026-08-31. **Status: decision evidenced, layout not yet authored, nothing built.**
+Written 2026-08-31. **Status: DONE -- the fork closed 2026-09-10 (`89af7bc`), v1 archived;
+the how is `polyrhythm-v1-to-v3-crossing.md`. This file is the decision's record, not a plan.**
 
 ## The decision: migrate v1's projects up to v3, then archive v1
 

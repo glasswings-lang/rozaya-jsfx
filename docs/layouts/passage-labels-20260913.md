@@ -1,5 +1,7 @@
 # Spectral Vowel Passage's labels, 2026-09-13 -- the authored list
 
+**Status: APPLIED 2026-09-13 (`34160de`). A record, not a plan.**
+
 The renames stage of Passage's layout (`docs/layouts/spectral-vowel-passage.md`). Names
 come from THE LAYOUT's table, settled with Rozaya 2026-09-11, with R25's kind added to
 every control behind a selector. Shared controls read as the Morpher's do where the table

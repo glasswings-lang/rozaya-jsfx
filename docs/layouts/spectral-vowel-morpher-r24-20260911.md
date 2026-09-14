@@ -1,7 +1,8 @@
 # Spectral Vowel Morpher — fifty-five Drift and Ramp targets, 2026-09-11
 
 No slider moves; the two target lists grow from 24 to 55 and reorder. **Status:
-AUTHORED 2026-09-11, before any code.** Snapshot `_pre-morpher-r24-20260911/`
+AUTHORED 2026-09-11 before any code; BUILT (`e9ca736`), then superseded by the 87-target
+pitch layout, 2026-09-13. A record, not a plan.** Snapshot `_pre-morpher-r24-20260911/`
 (39 projects, 123 instances); previous build in
 `jsfx-backups/effects-folder-baks/pre-morpher-r24-20260911/`.
 

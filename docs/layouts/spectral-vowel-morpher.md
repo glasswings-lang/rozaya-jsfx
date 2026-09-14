@@ -1,6 +1,9 @@
 # Spectral Vowel Morpher — authored layout
 
 Written by hand 2026-08-31, not generated. Reading order **approved by Rozaya**.
+**Latest: THE PITCH LAYOUT -- BUILT, MIGRATED (135 copies) and INSTALLED 2026-09-13; REAPER
+round trip 14/14. NOT HEARD.** BUILD PROGRESS below is its record. The status that follows
+is the first migration's:
 **Status: BUILT, MIGRATED and EAR-TESTED 2026-09-01.** 122 instances across 38
 projects migrated with 0 problems; the capture inventory is byte-identical before and
 after -- 848 slots, every peak, RMS and detected pitch unchanged. Rozaya then opened

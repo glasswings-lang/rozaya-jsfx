@@ -1,5 +1,7 @@
 # Spectral Vowel Morpher's labels, 2026-09-13 -- the authored list
 
+**Status: APPLIED 2026-09-13 (`1582542`), measured (scope 28/28). A record, not a plan.**
+
 The renames stage of the Morpher's pitch layout (`docs/layouts/spectral-vowel-morpher.md`,
 THE PITCH LAYOUT). Names come from that table, settled with Rozaya 2026-09-11, with R25's
 kind added to every control behind a selector. Shared controls read as Passage's do where

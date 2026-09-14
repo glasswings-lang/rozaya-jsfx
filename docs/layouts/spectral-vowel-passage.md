@@ -1,6 +1,7 @@
 # Spectral Vowel Passage — authored layout
 
-Written by hand 2026-08-31, not generated. **Status: order drafted, awaiting review.**
+Written by hand 2026-08-31, not generated. **Status: BUILT, MIGRATED (49 instances) and
+INSTALLED 2026-09-13 (`e2b6ecc`). NOT HEARD.** BUILD PROGRESS below is the record of how.
 10 projects. Sibling to the Morpher; shared controls must read the same in both.
 
 ## The finding that shaped this layout

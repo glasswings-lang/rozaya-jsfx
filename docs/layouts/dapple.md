@@ -1,6 +1,6 @@
 # Dapple — authored pitch layout (R22)
 
-**Status: AUTHORED 2026-09-09. Build follows this file, not the other way round.**
+**Status: BUILT 2026-09-09 (`78bfc59`), authored first. NOT HEARD. A record, not a plan.**
 
 Rozaya, 2026-09-09, on the four plugins R22 had deferred: *"a plug in that can't
 make its own audio doesn't know its pitch. No. But it can pitch shift ... Morpher
