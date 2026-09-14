@@ -25,8 +25,8 @@ has been heard, and what Rozaya has said is next.
   if we should take this per-plugin rather than a giant sweep."* What each plugin gains:
   `docs/backlog.md`, "Decided 2026-09-13". `tools/jsfx_map.py impact` after every edit.
 - **Veil is first:** `docs/layouts/veil-r26-r27.md`, PROPOSED. Its Transport unit takes
-  Drift's units, `{Seconds, Beats}` (Rozaya's). Asked, not answered: is `Rest mode` the
-  right name for walk-or-freeze on Veil. Nothing built.
+  Drift's units, `{Seconds, Beats}` (Rozaya's). Walk-or-freeze is TWO switches on Veil,
+  `Rest mode (for Drift)` and `Rest mode (for Ramp)` (Rozaya's, 2026-09-13). Nothing built.
 - **Held for Rozaya's decision:** dB and semitone ranges (the range sweep's passes 1 and 2
   widened 176 sliders and left these).
 - R22 opens with an attribution warning: parts of it were Claude's, cited back as settled.

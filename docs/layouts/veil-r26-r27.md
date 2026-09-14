@@ -9,7 +9,7 @@ reads `spl0`/`spl1`), so `Output at rest` means something here. Saved copies out
 backups: ONE, in `finished/test-projects/claude-testing002-bridge.RPP`. Blob magic
 `3300000 + N_TARGETS` (3300005), banks 16 wide at fixed addresses from 4096.
 
-## The layout, 22 -> 30
+## The layout, 22 -> 31
 
 | new | control | from | seeded to |
 |---|---|---|---|
@@ -20,23 +20,24 @@ backups: ONE, in `finished/test-projects/claude-testing002-bridge.RPP`. Blob mag
 | 8 | **Play for (seconds / beats, 0 = always)** | new | 0 |
 | 9 | **Rest for (seconds / beats, 0 = always)** | new | 0 |
 | 10 | **Transport unit** `{Seconds, Beats}` | new | 0 Seconds |
-| 11 | **Rest mode** `{Walk through, Freeze in place}` | new | 0 |
-| 12 | **Output at rest** `{Pass-through, Silence}` | new | 0 |
-| 13 | Drift target | 7 | as saved |
-| 14-15 | Drift up amount, Drift down amount (per target, in the Drift amount unit) | 8-9 | as saved |
-| 16 | **Drift amount unit (per target, Target default where it cannot fit)** | new | 0 |
-| 17 | Drift period (per target, 0 = off) | 10 | as saved |
-| 18 | Drift period unit (all targets) | 11 | as saved |
-| 19 | Drift shape (per target) | 12 | as saved |
-| 20-21 | Drift play for, Drift rest for (per target) | 13-14 | as saved |
-| 22 | Ramp target | 15 | as saved |
-| 23 | Ramp by (per target, in the Ramp by unit) | 16 | as saved |
-| 24 | **Ramp by unit (per target, Target default where it cannot fit)** | new | 0 |
-| 25 | Ramp time unit (all targets) | 17 | as saved |
-| 26 | Ramp duration (per target, in ramp time units) | 18 | as saved |
-| 27-28 | Ramp play for, Ramp rest for (per target) | 19-20 | as saved |
-| 29 | Ramp engage (all targets) | 21 | as saved |
-| 30 | Ramp start delay (per target, in ramp time units) | 22 | as saved |
+| 11 | **Rest mode (for Drift)** `{Walk through, Freeze in place}` | new | 0 |
+| 12 | **Rest mode (for Ramp)** `{Walk through, Freeze in place}` | new | 0 |
+| 13 | **Output at rest** `{Pass-through, Silence}` | new | 0 |
+| 14 | Drift target | 7 | as saved |
+| 15-16 | Drift up amount, Drift down amount (per target, in the Drift amount unit) | 8-9 | as saved |
+| 17 | **Drift amount unit (per target, Target default where it cannot fit)** | new | 0 |
+| 18 | Drift period (per target, 0 = off) | 10 | as saved |
+| 19 | Drift period unit (all targets) | 11 | as saved |
+| 20 | Drift shape (per target) | 12 | as saved |
+| 21-22 | Drift play for, Drift rest for (per target) | 13-14 | as saved |
+| 23 | Ramp target | 15 | as saved |
+| 24 | Ramp by (per target, in the Ramp by unit) | 16 | as saved |
+| 25 | **Ramp by unit (per target, Target default where it cannot fit)** | new | 0 |
+| 26 | Ramp time unit (all targets) | 17 | as saved |
+| 27 | Ramp duration (per target, in ramp time units) | 18 | as saved |
+| 28-29 | Ramp play for, Ramp rest for (per target) | 19-20 | as saved |
+| 30 | Ramp engage (all targets) | 21 | as saved |
+| 31 | Ramp start delay (per target, in ramp time units) | 22 | as saved |
 
 Order: Part 2 (identity, output, transport, Drift, Ramp); a unit picker directly after what
 it modifies (Drift amount unit after the amounts, Ramp by unit after Ramp by). Every new
@@ -47,13 +48,15 @@ Rozaya: *"play/rest for should have the same units as drift does"*, *"Just for t
 that's literally all I meant, that thing has drift already"*. **Mine, unquoted:** Rest mode
 is what the Drift and Ramp clocks do while resting. Labels follow Passage's.
 
-**OPEN, found 2026-09-13 after Rozaya said yes to the name.** Veil has nothing that moves on
-its own (read `src/veil.jsfx`: no LFO, no walk; only Drift and Ramp). Every other walk-or-freeze
-switch freezes the plugin's OWN motion and leaves Drift and Ramp running -- the Morpher's page
-says so, and says freezing Drift and Ramp too was tried there and taken out (unquoted: whose call
-is not recorded). So on Veil this switch would either freeze Drift and Ramp, which no plugin does
-today, or have nothing to do. Rozaya answered *"Yeah"* to `Rest mode` while Claude had explained
-it as freezing Drift and Ramp, without knowing this. Ask before building.
+**Walk or freeze: TWO switches, decided 2026-09-13.** Veil has nothing that moves on its own
+(read `src/veil.jsfx`: no LFO, no walk; only Drift and Ramp), while every other walk-or-freeze
+switch freezes the plugin's own motion and leaves Drift and Ramp running. Offered one switch,
+`Rest mode (for Drift and Ramp)`, Rozaya: *"drift and/or ramp. if it's gonna be like that it needs
+both as distinct shit"*. So `Rest mode (for Drift)` and `Rest mode (for Ramp)`, each on its own.
+The `(for X)` naming follows Rozaya's own idea for the LFO plugins (`docs/backlog.md`). Veil is
+the first plugin where a rest can freeze Drift or Ramp. **Mine, unquoted:** both in the transport
+block, Walk through by default (what every plugin does today); Freeze holds that clock's phase,
+its random steps and its ramp progress, and resumes where it stopped.
 
 ## Targets, 5 -> 7
 
@@ -76,7 +79,7 @@ entries keep their defaults.
 ## Measured before install (the gate)
 
 - Old build on the snapshot == new build on the migrated copy, bit-identical, noise in.
-- Each new control does what it says: Start delay, Play/Rest in Seconds and Beats, Rest mode,
-  Output at rest; units on a cutoff (Semitones, Cents) against worked answers.
+- Each new control does what it says: Start delay, Play/Rest in Seconds and Beats, both Rest
+  modes each on its own (Drift frozen with Ramp walking, and the reverse), Output at rest; units on a cutoff (Semitones, Cents) against worked answers.
 - Save and reopen; `jsfx_map impact` with no unanswered question; the REAPER round trip with
   REAPER in front. Page `docs/plugins/veil.md` updated with the controls.
