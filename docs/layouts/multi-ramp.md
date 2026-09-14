@@ -13,21 +13,35 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
 *these are Rozaya's words. 
 
 ramp layout for all plugins since claude kept making such a mess he couldn't understand his own notes: 
-ramp selecter 
-ramp targget selecter 
-ramp controls (ramp from, then ramp *to*, replacing the current 'ramp by', then ramp shape, then duration units, then ramp duration.)
-ramp engage (per targget, to mimic automation) 
-play/rest for controls (per-targget)
-switch that determines  what happens for play/rest for (per-target; "play mode, rest mode, both are side-branches hosting: freez, walk through.")
-
-start delay (units, then value, then switch,  "begin start delay: from start of project, or from prior ramp's ending, only for ramps 2 and up). 
-
-When a ramp begins before another has ended, it should be allowed to; start delay serves, alone, to let timing be adjusted manually. 
+Ramp (1 to 8)
+Ramp target
+"Everything below this is for one ramp on one target."
+Ramp from
+Ramp to
+Ramp shape
+Ramp duration unit
+Ramp duration
+Slide unit (Off, or a unit)
+Slide time
+Ramp engage
+Ramp play for
+Ramp rest for
+Ramp at rest (Play through, or Freeze)
+Ramp start delay unit
+Ramp start delay
+'Start delay counts from': from pressing play, from the start of the project, from when the ramp before was planned to end, or from when the ramp before really ended. Per target. On ramp 1, the last two fall back to the start of the project.
+Here are notes on the unbuilt bits: 
+When a ramp begins before another has ended, it should be allowed to; start delay serves, alone, to let timing be adjusted manually. When it does take over: (claude's words, my agreement; I pasted this in, not it.) "If a ramp begins while another ramp on the same target is still running, the newer ramp takes over. It glides from wherever the control is to its own starting value, using its slide time, then carries on to its end value."
 
 when a ramp is switched off, it shouldn't move other ramps; let the gap exist. 
-From claude, pasted by me. "When a ramp runs late, because it was paused or frozen during a rest, the next ramp's start delay switch decides what happens. It has three choices. Count from the start. Count from when the ramp before was supposed to end. Or count from when the ramp before really ended."
-That gives your start delay switch three choices instead of two.
+From claude, pasted by me. "When a ramp runs late, because it was paused or frozen during a rest, the next ramp's start delay switch decides what happens. It has four choices. From pressing play
+From the start of the project
+From when the ramp before was planned to end
+From when the ramp before really ended
 
+From claude, about more new, as yet unbuilt, controls: "Ramp from and ramp to: the ramp starts at one value and ends at another. Old saved ramps convert on their own and sound the same. While a ramp waits out its start delay, the control stays wherever its knob is. When the ramp begins, a slide time glides the control from the knob's value to the ramp's starting value. Slide time has its own unit picker, and Off means jump."
+"When a ramp reaches its 'to' value, it stays there."
+"Slide: whenever a ramp takes over a control, it glides there first. That happens when a ramp begins, from the knob's value to the ramp's 'from'. It also happens when a ramp overlaps another, from wherever the control is. Slide unit Off means it jumps."
 
 This is for all plugins. 
 
