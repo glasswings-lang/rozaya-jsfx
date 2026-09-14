@@ -66,11 +66,6 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 - **The `0..1` inventory.** Sliders topping out at 1.0 or less split into dB and percent,
   and nobody has listed which is which. current-state holds dB and semitone ranges for
   Rozaya's decision.
-- **Pitch spread in cents -- Claude's old pitch table, NOT confirmed with Rozaya.** The table
-  said "detune to cents" for Bubbler, Dapple and Sustain Looper, and it is not built: Bubbler's
-  `Pitch spread (semitones)` is 0..24 and `Rise (semitones)` 0..36, Dapple's `Pitch spread (%)`
-  and Sustain Looper's `Spread (%)` are percents (read 2026-09-13). The pitch blocks themselves
-  are built in all three. Ask before building.
 - **Drift period units under host sync** -- periods count heartbeats or breaths; should
   they be beats when synced? Not checked against the source on 2026-09-13.
 
@@ -79,10 +74,19 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 Rozaya, asked all three: *"Yes, and yes, re: sustain looper, breath generater, and the other
 one. Finish it, re: the audit."*
 
-- **Start delay, Play for and Rest for in Sustain Looper and Veil.** Neither has any of the
-  three for the whole plugin (read ignoring capitals, 2026-09-13). What both DO have is
-  `Drift play for / rest for`, `Ramp play for / rest for` and `Ramp start delay` -- per target,
-  a different thing. Author each layout before migrating (CLAUDE.md).
+- **Start delay, Play for and Rest for in every plugin.** Missing for the whole plugin in
+  Sustain Looper, Veil, Stereo Phaser and Resonance Bank (read ignoring capitals, 2026-09-13).
+  What they DO have is `Drift play for / rest for`, `Ramp play for / rest for` and `Ramp start
+  delay` -- per target, a different thing. Rozaya, on whether every plugin should have the same
+  things: *"They should all have the same things"*, then *"Yes both"* (the spreads below, and
+  the suite).
+- **Every pitch spread takes a value and a unit picker** `{Hz, Semitones, Cents}`, as Fine tune
+  does -- not locked to cents (no unit locks). Bubbler's `Pitch spread (semitones)` 0..24 and
+  `Rise (semitones)` 0..36; Dapple's `Pitch spread (%)`; Sustain Looper's `Spread (%)`. Read
+  what each percent is a percent OF before authoring: converting one is a value migration.
+
+**All of this rides the amount-unit sweep: one layout and one migration per plugin**, holding
+everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole layout").
 - **A sigh for Breath Generator**, matching Womb's (`Sigh interval`, `Sigh extra length`),
   plus its drift and ramp targets. Its layout's "No sigh" was a Claude scope note, not a no.
 - **Finish the hidden-limit audit**: the 104 controls it could not judge each need a setup

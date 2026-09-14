@@ -28,8 +28,8 @@ sentence.
   bit-identical by render. `docs/layouts/polyrhythm-v1-to-v3-crossing.md`.
 - **The Morpher's PITCH LAYOUT: DONE and INSTALLED 2026-09-13**, 135 copies moved, REAPER
   round trip 14/14 with REAPER in front (`docs/layouts/spectral-vowel-morpher.md`, BUILD
-  PROGRESS). NONE of it heard. **OWED NEXT:** `Drift amount unit` / `Ramp by unit` in the
-  other seventeen. `tools/jsfx_map.py impact` after every plugin edit.
+  PROGRESS). NONE of it heard. **OWED NEXT:** the amount units in the other seventeen, each
+  plugin's ONE layout also holding backlog "Decided 2026-09-13". `jsfx_map.py impact` per edit.
 - **Polyrhythm v3:** 59 sliders, per-voice pitch, 88 targets. `docs/layouts/polyrhythm-phase-v3-r22-r24.md`.
 - **The range sweep: passes 1 and 2 done** — 176 sliders widened, 0 narrowed,
   verified against all 641. dB and semitone ranges held for Rozaya's decision.
