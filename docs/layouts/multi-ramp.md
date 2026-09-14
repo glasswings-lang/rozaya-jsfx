@@ -42,7 +42,9 @@ engage and Ramp time unit are one each for the whole plugin (e.g. Passage slider
   target's lane, so "once per ramp" never meant "across every target": Claude's framing did.
   Every ramp setting -- engage, time unit, Rest mode (for Ramp), by, its unit, shape,
   duration, play/rest, start delay, counts from -- belongs to one ramp on one target, and
-  sits below both pickers. Today's `(all targets)` Ramp time unit and Ramp engage end.
+  sits below both pickers. Today's Ramp time unit and Ramp engage are KEPT and given to every
+  ramp on every target; nothing is removed. Rozaya, on a question that sounded like removal:
+  *"Stop trying to take out features"*. Word any such change as what each thing GAINS.
 - **Overlapping ramps on one target add together**, so each ramp always moves by its own
   amount. Offered against "the later ramp takes over from where the earlier one got to",
   with adding recommended; Rozaya, 2026-09-13: *"I'd go with adding as well"*.
