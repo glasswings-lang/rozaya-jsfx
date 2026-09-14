@@ -170,7 +170,10 @@ thing to ask for.
 ### Heartbeat's file name
 
 `src/heartbeat gen.jsfx` is the only filename in the suite with a space. Renaming needs its
-projects rewritten -- fold it into Heartbeat's own batch. (The waveform palette, Solo and
+projects rewritten -- fold it into Heartbeat's own batch (Rozaya, 2026-09-13: "We can wait for
+heartbeat's thing"). Counted 2026-09-13, backups aside: `finished/transformation.RPP`, Tensor's
+`transformation.RPP` and `tensor-heartbeat-pulse` (never loaded), the bridge test project.
+Suggested name `heartbeat_gen`, not chosen. (The waveform palette, Solo and
 Womb's breath-unit labels, listed beside it 2026-08-31, were checked done 2026-09-13.)
 
 ### Breath features propagate to every plugin with a breath
