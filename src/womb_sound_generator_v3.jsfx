@@ -57,7 +57,7 @@ slider1:70<0.001,1000,0.001>Heart rate
 slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Heart rate mode
 // RSA -- the breath pulling the heart rate up and down. A modifier of the rate
 // above, so it is numbered immediately after it.
-slider3:0<0,1000,0.001>Heart rate swing per breath (BPM)
+slider3:0<-1000,1000,0.001>Heart rate swing per breath (BPM, negative = slows on the in-breath)
 // The lub-dub gap. ONE slider serves every unit because typing works (FX box,
 // or Tab in the parameter list), so the position count is not a navigation
 // problem -- type it, then nudge by ear. The step is what decides which values
@@ -197,7 +197,7 @@ slider48:0<0,1000,0.001>Sigh interval (minutes, 0=off)
 // and hitting a target means dividing. The extra is spread across all four
 // segments in proportion, so the sigh keeps the breath's shape and simply takes
 // longer. 0 = a sigh is the same length as any other breath.
-slider49:4<0,1000,0.01>Sigh extra length (in breath units)
+slider49:4<-1000,1000,0.01>Sigh extra length (in breath units, negative = shorter)
 slider50:0.5<0.0,1.0,0.01>Breath stereo width
 slider51:0.5<0.0,1.0,0.01>Breath volume
 slider52:0<0,1,1{Off,Solo}>Breath solo
@@ -1438,9 +1438,9 @@ loop(N_TARGETS,
 // to its own phase. Drift target 6 wanders the baseline depth (slider3);
 // Speed Ramp target 6 (RSA depth) ramps it toward the configured target
 // over the duration. Both add as offsets.
-rsa_baseline_bpm = max(slider3 + target_drift_offset[1] + speed_ramp_rsa_offset, 0);
+rsa_baseline_bpm = slider3 + target_drift_offset[1] + speed_ramp_rsa_offset;   // signed: negative reverses the swing
 heart_with_breath_offset = 0;
-rsa_baseline_bpm > 0 ? (
+rsa_baseline_bpm != 0 ? (
   rsa_half = rsa_baseline_bpm * 0.5;
   breath_phase_pos_for_rsa = breath_state_pos / max(breath_state_len - 1, 1);
   breath_state == 0 ? heart_with_breath_offset = (breath_phase_pos_for_rsa - 0.5) * rsa_baseline_bpm :
@@ -1512,10 +1512,10 @@ effective_bot_sec    = max((slider29 + target_drift_offset[18] + speed_ramp_bot_
 // control says how much LONGER the sigh breath is, in breath units; spreading it
 // in proportion keeps the breath's shape and simply stretches it. Derived from
 // the EFFECTIVE lengths, so a sigh during drift stretches the drifted breath.
-sigh_extra_total = max(slider49 + wq(31), 0);
+sigh_extra_total = slider49 + wq(31);   // signed: negative makes the sigh breath shorter
 sigh_base_total  = max(effective_inhale_sec + effective_top_sec +
                        effective_exhale_sec + effective_bot_sec, 0.001);
-sigh_scale       = (sigh_base_total + sigh_extra_total) / sigh_base_total;
+sigh_scale       = max(sigh_base_total + sigh_extra_total, 0.1 * sigh_base_total) / sigh_base_total;   // never under a tenth of the breath
 inhale_len = max(floor(srate * effective_inhale_sec), 1);
 top_len    = max(floor(srate * effective_top_sec), 1);
 exhale_len = max(floor(srate * effective_exhale_sec), 1);

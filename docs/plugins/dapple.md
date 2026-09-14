@@ -78,7 +78,7 @@ semitones and it drifts in semitones.
 
 **Bubble length (ms)** `5–1000, default 120` — envelope decay; how long each event rings.
 
-**Rise %** `0–100, default 40` — how far each event's pitch sweeps upward as it fades. This is the chirp — the tonal voice needs some Rise to sound like a drop rather than a static beep.
+**Rise (%, negative = fall)** `-100 to +100, default 40` — how far each event's pitch sweeps upward as it fades. This is the chirp — the tonal voice needs some Rise to sound like a drop rather than a static beep. Below 0 the pitch sweeps downward instead, falling by the same musical distance the same amount would rise.
 
 **Stereo width %** `0–100, default 80` — 0 = mono, 100 = fully independent L/R streams.
 

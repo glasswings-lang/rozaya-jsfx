@@ -69,7 +69,7 @@ This used to be `Own rate / Host x`, where "Own rate" meant per second. It defau
 
 **Pitch spread (semitones)** `0–24, default 7` — random pitch variation per bubble. 0 = all land on the same transposition; up = shimmering variety.
 
-**Rise (semitones)** `0–36, default 12` — how far each bubble's pitch climbs over its life. This is the chirp. 0 = no rise (steady-pitch grains).
+**Rise (semitones, negative = fall)** `-36 to +36, default 12` — how far each bubble's pitch climbs over its life. This is the chirp. 0 = no rise (steady-pitch grains). Below 0 each bubble's pitch falls instead, by that many semitones.
 
 **Bubble length (ms)** `5–1000, default 150` — how long each bubble sounds (amplitude envelope); the full rise completes over this time. Long = swelling droplets; short = rapid plips.
 

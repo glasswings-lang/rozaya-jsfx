@@ -38,7 +38,7 @@ slider14:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
 slider15:440<20,2000,0.1>Tuning reference (Hz)
 slider16:3.0<-15.0,15.0,0.1>Stereo width (ms, neg = heart right)
 slider17:6.0<0.001,1000,0.001>Breath cycle (seconds)
-slider18:0.08<0.0,0.25,0.01>Breath HRV depth
+slider18:0.08<-0.25,0.25,0.01>Breath HRV depth (negative = reversed)
 slider19:0.02<0.0,0.08,0.005>Random HRV depth
 
 // Sit silent for N heartbeats after playback starts, then begin
@@ -931,7 +931,7 @@ loop(N_TARGETS,
 // for the per-sample consumption sites.
 effective_systole_ms = max(slider3  + speed_ramp_systole_offset  + target_drift_offset[1], 1);
 systole_samples      = floor(srate * effective_systole_ms * 0.001);
-breath_depth         = max(slider18 + speed_ramp_breath_offset   + target_drift_offset[14], 0);
+breath_depth         = slider18 + speed_ramp_breath_offset   + target_drift_offset[14];   // signed: negative reverses the swing
 rand_hrv_depth       = max(slider19 + speed_ramp_rand_hrv_offset + target_drift_offset[15], 0);
 // S1 and S2 volume (2, 3), 0-1; Play for and Rest for (16, 17), in beats. Each
 // is exactly its slider while drift and ramp leave it alone. The gate still

@@ -96,8 +96,8 @@ Both HRV systems modulate the cycle length in real time and operate additively.
 **Breath cycle (seconds)** `1.0-30.0 sec, default 12.0`
 The period of a sinusoidal breath modulation applied to heart rate, mimicking respiratory sinus arrhythmia — the natural tendency for heart rate to rise during inhale and fall during exhale. The modulation depth is set by Breath HRV Depth.
 
-**Breath HRV Depth** `0.0-0.25, default 0.08`
-How much the breath sine wave shifts the BPM. A value of 0.08 produces approximately ±8% variation around the base rate. At 0.25 the swing is ±25%. At 0.0 breath HRV is disabled.
+**Breath HRV Depth** `-0.25 to +0.25, default 0.08`
+How much the breath sine wave shifts the BPM. A value of 0.08 produces approximately ±8% variation around the base rate. At 0.25 the swing is ±25%. At 0.0 breath HRV is disabled. Below 0 the swing reverses: the heart slows where it would have sped up.
 
 **Random HRV Depth** `0.0-0.08, default 0.02`
 Adds a slowly wandering random offset to heart rate on top of the breath modulation. The random target updates approximately every 5 seconds and slews toward the new value over ~3 seconds, preventing the breath modulation from feeling too regular. At 0.0 random HRV is disabled.

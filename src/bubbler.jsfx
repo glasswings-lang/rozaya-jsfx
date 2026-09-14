@@ -53,7 +53,7 @@ slider8:0<-1000,1000,0.001>Fine tune
 slider9:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
 slider10:440<20,2000,0.1>Tuning reference (Hz)
 slider11:7<0,24,1>Pitch spread (semitones)
-slider12:12<0,36,1>Rise (semitones)
+slider12:12<-36,36,1>Rise (semitones, negative = fall)
 slider13:150<5,1000,1>Bubble length (ms)
 slider14:80<0,100,1>Stereo width (%)
 slider15:100<0,100,1>Dry/wet (%)
