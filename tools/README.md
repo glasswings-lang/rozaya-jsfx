@@ -532,7 +532,7 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
 ## Polyrhythm Phase v3 — the 2026-09-07 voices-behind-a-selector rebuild
 
 - **`polyv3_migrate_layout_20260907.py`** — 90 sliders to 56, applying the
-  layout authored in `docs/layouts/polyrhythm-phase-v3.md`. Most of it is a
+  layout authored in `docs/history/layouts/polyrhythm-phase-v3.md`. Most of it is a
   reorder, but **this is the first migration in the repo that REWRITES THE
   BLOB**: V2–V8's forty-two per-voice values leave the slider line entirely and
   become twelve `@serialize` banks, alongside four new drift/ramp play-rest
@@ -555,7 +555,7 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
   range before is reported separately from one this migration caused — mixing
   the two buries the real signal. 1176 checks, 0 failures.
 - **`polyv3_migrate_r22r24_20260910.py`** — 56 sliders to 59, applying
-  `docs/layouts/polyrhythm-phase-v3-r22-r24.md`: the visible voice's note index
+  `docs/history/layouts/polyrhythm-phase-v3-r22-r24.md`: the visible voice's note index
   gains 36 into Note name and Pitch value, Pitch mode is written Semitones and
   Fine tune unit Cents, and both target selectors are remapped from 24 targets to
   88. Slider line only; the plugin migrates a 2200024 blob itself. Skips a line
@@ -567,7 +567,7 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
 ## Polyrhythm Phase v1 → v3 — the 2026-09-10 crossing
 
 - **`polyv1_to_v3_crossing_20260910.py`** — applies
-  `docs/layouts/polyrhythm-v1-to-v3-crossing.md` to the files it is GIVEN (the
+  `docs/history/layouts/polyrhythm-v1-to-v3-crossing.md` to the files it is GIVEN (the
   scope is authored, never searched for): renames the `<JS>` line, writes a
   59-slider v3 line, and writes a native 2300088 blob, creating `<JS_SER>` where
   an instance had none. Each voice becomes its absolute MIDI note; a voice
@@ -584,7 +584,7 @@ REAPER restores by POSITION. Four tools came out of the 2026-09-02 diagnosis:
 
 ## Solo in every plugin with voices or bands — 2026-09-10
 
-`docs/layouts/solo-propagation-20260910.md`. Three slider-line migrations, each
+`docs/history/layouts/solo-propagation-20260910.md`. Three slider-line migrations, each
 applying that authored table to the files it is given:
 
 - **`melody_solo_migrate_20260910.py`** — 105 sliders to 113; a Vn Solo after each
@@ -659,7 +659,7 @@ AND edited can only be verified against real projects.
 
 ## The Sweeping Filter pitch blocks — 2026-09-10
 
-`docs/layouts/sweeping-filter-r22-r24.md`. 45 sliders to 54; 17 targets.
+`docs/history/layouts/sweeping-filter-r22-r24.md`. 45 sliders to 54; 17 targets.
 
 - **`swf_migrate_r22_20260910.py`** — reads the snapshot
   `_pre-swf-r22-20260910/`, writes the live projects. Which layout each file holds
@@ -680,7 +680,7 @@ AND edited can only be verified against real projects.
 
 ## Sweep Dwell's segments — 2026-09-10
 
-`docs/layouts/sweep-dwell.md`. Four times, three cycle controls and a picker
+`docs/history/layouts/sweep-dwell.md`. Four times, three cycle controls and a picker
 became a Segment selector with a length mode and value per segment.
 
 - **`sdf_migrate_segments_20260910.py`** — the installed 46-control line to 45,
@@ -701,7 +701,7 @@ became a Segment selector with a length mode and value per segment.
 
 ## Resonance Bank's pitch per band — 2026-09-11
 
-`docs/layouts/resonance-bank-r22-r24.md`. 28 sliders to 35; 5 targets to 10.
+`docs/history/layouts/resonance-bank-r22-r24.md`. 28 sliders to 35; 5 targets to 10.
 
 - **`resonance_bank_migrate_r22r24_20260911.py`** — slider line only; the plugin
   remaps its own old blob. Idempotent by an exact gate: slider 3 of 20 or more is
@@ -715,7 +715,7 @@ became a Segment selector with a length mode and value per segment.
 
 ## The small R24 batch — 2026-09-11
 
-`docs/layouts/r24-small-batch-20260911.md`. Veil, Bubbler, Dapple and Tremolo put
+`docs/history/layouts/r24-small-batch-20260911.md`. Veil, Bubbler, Dapple and Tremolo put
 their targets in control order; each plugin remaps its own old saves.
 
 - **`r24_batch_migrate_20260911.py`** — reads the snapshot, writes the live file,
@@ -730,7 +730,7 @@ their targets in control order; each plugin remaps its own old saves.
 
 ## Breath Generator's eighteen targets — 2026-09-11
 
-`docs/layouts/breath-gen-r24-20260911.md`. No index moves, so current copies need
+`docs/history/layouts/breath-gen-r24-20260911.md`. No index moves, so current copies need
 nothing written.
 
 - **`breathgen_tensor_migrate_20260911.py`** — Tensor's seven first-release lines
@@ -743,7 +743,7 @@ nothing written.
 
 ## Heartbeat's eighteen targets — 2026-09-11
 
-`docs/layouts/heartbeat-r24-20260911.md`. The plugin remaps an old four-target save.
+`docs/history/layouts/heartbeat-r24-20260911.md`. The plugin remaps an old four-target save.
 
 - **`heartbeat_r24_migrate_20260911.py`** — moves `transformation.RPP`'s `<JS_SER>`
   out of its `<JS>` block to where REAPER writes it (content unchanged), and
@@ -757,7 +757,7 @@ nothing written.
 
 ## Rhythm Track's sixteen targets and Drift movement — 2026-09-11
 
-`docs/layouts/rhythm-track-r24-20260911.md`. Drift movement inserted at 36.
+`docs/history/layouts/rhythm-track-r24-20260911.md`. Drift movement inserted at 36.
 
 - **`rhythm_r24_migrate_20260911.py`** — the bridge copy's line (36-39 to 37-40,
   selectors 1 to 2), and Tensor's two first-release lines by name with a new 2500016
@@ -770,7 +770,7 @@ nothing written.
 
 ## Womb's forty-nine targets — 2026-09-11
 
-`docs/layouts/womb-r24-20260911.md`. No slider moves; the plugin remaps old blobs.
+`docs/history/layouts/womb-r24-20260911.md`. No slider moves; the plugin remaps old blobs.
 
 - **`womb_r24_migrate_20260911.py`** — every line's two selectors remapped (two copies
   have unversioned blobs the plugin cannot remap from); `scattered`, never carried
@@ -786,7 +786,7 @@ nothing written.
 
 ## The Morpher's fifty-five targets — 2026-09-11
 
-`docs/layouts/spectral-vowel-morpher-r24-20260911.md`. No slider moves.
+`docs/history/layouts/spectral-vowel-morpher-r24-20260911.md`. No slider moves.
 
 - **`morpher_r24_migrate_20260911.py`** — the two selectors (35, 44) of all 123 lines,
   from the 24-target list to the 55. Snapshot in, live out.
@@ -806,7 +806,7 @@ plugin remaps its own. `passage_verify_20260911.py` measures it section by secti
 `saveformat` saves fresh instances with `jsfx_run --save-rpp` and reopens them, `savedlive`
 takes all 49 converted copies through one save, `scope` measures each control's kind for
 its name, `migrated` checks the projects on disk against the snapshot. The names were
-applied with `r25_rename_apply.py --list docs/layouts/passage-labels-20260913.md`.
+applied with `r25_rename_apply.py --list docs/history/layouts/passage-labels-20260913.md`.
 
 ## The Morpher's pitch layout — 2026-09-13
 
@@ -821,7 +821,7 @@ it converted), `pitch`, `layers`, `names`, `targets`, `blobs` (a real 24-target 
 drift and ramp on every target), `blobs55` (the same saved by the old build), `units`,
 `convert` (the unit conversions read out of a debug copy), `saveformat`, `savedlive`,
 `scope` (each control's kind, for its name) and `quick31` (every control read back by
-name against `409b1ba`). Names: `r25_rename_apply.py --list docs/layouts/morpher-labels-20260913.md`.
+name against `409b1ba`). Names: `r25_rename_apply.py --list docs/history/layouts/morpher-labels-20260913.md`.
 
 ## bridge_ui_test.py — what only REAPER can show
 
@@ -841,7 +841,7 @@ must be quoted in an RPP (`<JS "glasswings/heartbeat gen.jsfx" ""`).
 ## R25 — which kind a control is, measured and written into its name (2026-09-12)
 
 Rule and history: `docs/suite-consistency-plan.md` R25, `docs/history/R25.md`. The list:
-`docs/layouts/r25-labels-20260912.md` (260 rows, 18 plugins; Passage waits for its rebuild).
+`docs/history/layouts/r25-labels-20260912.md` (260 rows, 18 plugins; Passage waits for its rebuild).
 
 - **`selector_scope_probe.py`** — live in REAPER through the bridge, in claude test: set a
   control on option 0, switch the selector, read, set, switch back, read. PER / ALL / `?`.
@@ -917,9 +917,9 @@ does not re-run `@init` on a locate, so 3 is the check for REAPER's play path).
 ## Earlier 2026-09-10 migrations, indexed late
 
 - **`looper_migrate_pitchblock_20260910.py`** — Sustain Looper, 8 sliders to 30,
-  per `docs/layouts/sustain-looper.md`. Idempotent: skips a line storing slider 14.
+  per `docs/history/layouts/sustain-looper.md`. Idempotent: skips a line storing slider 14.
 - **`melody_migrate_r22r24_20260910.py`** — Melody Phase, 96 to 105, per
-  `docs/layouts/melody-phase-r22-r24.md`. Line only; the plugin remaps its own
+  `docs/history/layouts/melody-phase-r22-r24.md`. Line only; the plugin remaps its own
   blob from 28 targets to 55. Idempotent: skips a line storing anything above 96.
 - **The ysfx fork** that `jsfx_run` builds against (Joep Vanlier's, 256 sliders)
   is documented in `tools/jsfx_run/README.md`, with the build commands.
@@ -968,6 +968,6 @@ The rules that have held in this repo are the ones a script enforces.
 **When it says OVER, do not raise the number.** Delete something, or move it to
 the file where it belongs and leave a one-line pointer. One home per fact.
 
-`docs/session-log.md` is deliberately unbudgeted — it is append-only history and
+`docs/history/session-log.md` is deliberately unbudgeted — it is append-only history and
 capping it would mean rewriting what happened. It gets rotation instead; the
 note at the bottom of the script says how.

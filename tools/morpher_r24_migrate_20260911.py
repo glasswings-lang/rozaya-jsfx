@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The Morpher's fifty-five targets: every project line's two selectors.
 
-docs/layouts/spectral-vowel-morpher-r24-20260911.md. No slider moves and the plugin
+docs/history/layouts/spectral-vowel-morpher-r24-20260911.md. No slider moves and the plugin
 remaps its own blob; this remaps the LINE's Drift target (35) and Ramp target (44)
 from the 24-target list to the 55, in all 123 instances, so a line and its blob
 agree before the plugin ever loads them. A selector is floored, as the plugin reads

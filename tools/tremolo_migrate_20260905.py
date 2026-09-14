@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Migrate Full_Feature_Tremolo projects to the 2026-09-05 approved
-layout (docs/layouts/full-feature-tremolo.md, reading order approved by Rozaya).
+layout (docs/history/layouts/full-feature-tremolo.md, reading order approved by Rozaya).
 
 The permutation is AUTHORED, transcribed from that document's "The order"
 section. This script only APPLIES it.

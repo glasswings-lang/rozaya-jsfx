@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Sweep Dwell: the installed 46-control layout -> segments behind a selector (45),
-per docs/layouts/sweep-dwell.md.
+per docs/history/layouts/sweep-dwell.md.
 
 Reads the SNAPSHOT, writes the live project, so it is idempotent. Rewrites the
 slider line AND replaces the blob: the segments' lengths, shapes and pitches are

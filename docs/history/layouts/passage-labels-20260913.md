@@ -2,7 +2,7 @@
 
 **Status: APPLIED 2026-09-13 (`34160de`). A record, not a plan.**
 
-The renames stage of Passage's layout (`docs/layouts/spectral-vowel-passage.md`). Names
+The renames stage of Passage's layout (`docs/history/layouts/spectral-vowel-passage.md`). Names
 come from THE LAYOUT's table, settled with Rozaya 2026-09-11, with R25's kind added to
 every control behind a selector. Shared controls read as the Morpher's do where the table
 allows it.
@@ -22,7 +22,7 @@ The live probe (`tools/selector_scope_probe.py --only passage`) repeats it after
 - Rozaya's settled wording for Source fine tune and Target note is kept whole, with
   `per slot,` put in front of it.
 
-Applied by `tools/r25_rename_apply.py --list docs/layouts/passage-labels-20260913.md`
+Applied by `tools/r25_rename_apply.py --list docs/history/layouts/passage-labels-20260913.md`
 (exact old label on the exact slider, or refusal). A rename moves no saved value.
 
 | file | slider | old label | new label |

@@ -2,10 +2,10 @@
 
 **Status: APPLIED 2026-09-13 (`1582542`), measured (scope 28/28). A record, not a plan.**
 
-The renames stage of the Morpher's pitch layout (`docs/layouts/spectral-vowel-morpher.md`,
+The renames stage of the Morpher's pitch layout (`docs/history/layouts/spectral-vowel-morpher.md`,
 THE PITCH LAYOUT). Names come from that table, settled with Rozaya 2026-09-11, with R25's
 kind added to every control behind a selector. Shared controls read as Passage's do where
-the table allows it (`docs/layouts/passage-labels-20260913.md`).
+the table allows it (`docs/history/layouts/passage-labels-20260913.md`).
 
 **Where every kind comes from:** `tools/morpher_verify_20260913.py scope`, through jsfx_run
 (set on one option, switch, read, switch back, read), measured before these are applied.
@@ -22,7 +22,7 @@ The live probe (`tools/selector_scope_probe.py --only morpher`) repeats it after
   layout table's lower case was not a rename decision.
 - Capture now is an action, not a value, and is left as it is, as on Passage.
 
-Applied by `tools/r25_rename_apply.py --list docs/layouts/morpher-labels-20260913.md`
+Applied by `tools/r25_rename_apply.py --list docs/history/layouts/morpher-labels-20260913.md`
 (exact old label on the exact slider, or refusal). A rename moves no saved value.
 
 | file | slider | old label | new label |

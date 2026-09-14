@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resonance Bank: 28 sliders -> 35, per docs/layouts/resonance-bank-r22-r24.md.
+"""Resonance Bank: 28 sliders -> 35, per docs/history/layouts/resonance-bank-r22-r24.md.
 
 Slider line only; the plugin remaps an old blob (1016005 / 2016005 / 3016005)
 from 5 targets to 10 itself. New controls are written to what the old plugin

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The 2026-09-11 small R24 batch, measured. docs/layouts/r24-small-batch-20260911.md.
+"""The 2026-09-11 small R24 batch, measured. docs/history/layouts/r24-small-batch-20260911.md.
 
 current  every saved copy on the current layout: the pre-change build (403fe41)
          on its snapshot == the new build on the live file, bit for bit, not

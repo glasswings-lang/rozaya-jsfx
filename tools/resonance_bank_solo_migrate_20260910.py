@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resonance Bank: 27 sliders -> 28, per docs/layouts/solo-propagation-20260910.md.
+"""Resonance Bank: 27 sliders -> 28, per docs/history/layouts/solo-propagation-20260910.md.
 
 Slider line only. `Band solo` is inserted at 10, written Off; 10..27 move to
 11..28. The blob gains a band_solo bank under magic 3016005, and the plugin reads

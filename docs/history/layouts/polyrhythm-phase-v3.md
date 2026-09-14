@@ -32,7 +32,7 @@ and `tools/polyv3_verify_layout_20260907.py`; snapshot at
   stray nudge writes across all of them.
 
 **What is still owed:** an ear test of the rest. The v1 -> v3 crossing is DONE
-(2026-09-10, `docs/layouts/polyrhythm-v1-to-v3-crossing.md`). Per-voice Attack and Release were
+(2026-09-10, `docs/history/layouts/polyrhythm-v1-to-v3-crossing.md`). Per-voice Attack and Release were
 measured working on 2026-09-10, and Rozaya remembers them heard and passing.
 
 **Scale.** v3 has **8 instances across 5 projects**. v1 has **84 across 17** and is

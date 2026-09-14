@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Womb's forty-nine targets: the ten files, and why.
 
-docs/layouts/womb-r24-20260911.md. The plugin remaps an old eleven- or ten-target
+docs/history/layouts/womb-r24-20260911.md. The plugin remaps an old eleven- or ten-target
 blob itself, selectors included. The LINE's two selectors (72 Drift target, 81 Ramp
 target) are remapped here in every copy, because two copies carry an UNVERSIONED
 blob the plugin cannot remap from: to-sleep-within (Drift and Ramp on Inhale, 2)

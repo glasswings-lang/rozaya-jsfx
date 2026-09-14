@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shepard Tone: 89 sliders -> 97, per docs/layouts/solo-propagation-20260910.md.
+"""Shepard Tone: 89 sliders -> 97, per docs/history/layouts/solo-propagation-20260910.md.
 
 Slider line only; the blob format is unchanged (its magic moved 2300040 -> 2400040
 as the layout witness, and the plugin still reads the old one). Each voice block

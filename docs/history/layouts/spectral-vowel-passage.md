@@ -78,7 +78,7 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   units and play/rest). Also done since: a tempo change lands at once in every Beats count
   (slots, Start delay, Play for / Rest for, Ramp start delay), and a cold load analyses its
   captures at once, stopped. How each was measured, the faults found and the test traps:
-  `docs/session-log.md`, 2026-09-11/12. **Stage 9 DONE 2026-09-12:** the 22-target list
+  `docs/history/session-log.md`, 2026-09-11/12. **Stage 9 DONE 2026-09-12:** the 22-target list
   (stride 32, magic 7700007, target pickers remapped), the unit banks' plumbing without
   conversion, and Morph drift reaching the slot pick (it never had) -- session-log
   2026-09-12. Verify sections: `current allslots pitch grainhc timing transport driftramp
@@ -128,7 +128,7 @@ lines (pre-Overtone), filled with the defaults REAPER has always supplied.
   bit-identical; 96 kHz 1000 ms finite; level -19.96..-20.17 dB one piece, -20.16..-20.26 two;
   50 ms wobble 1.25-1.32 vs 1.03-1.28 dB; loudest 50 ms 3.13-4.03 vs 2.91-3.71 dB; processor
   16.03 s at 600 ms, 16.12 at 1000.
-- **ALL STAGES DONE 2026-09-13.** Renames (`docs/layouts/passage-labels-20260913.md`, kinds
+- **ALL STAGES DONE 2026-09-13.** Renames (`docs/history/layouts/passage-labels-20260913.md`, kinds
   measured), the plugin page, the live migration (49 instances, 11 projects, snapshot
   `_pre-passage-layout-20260913/`, `migrated` 49 of 49 bit-identical), installed, and tested
   in REAPER. **Nothing of it has been heard.**

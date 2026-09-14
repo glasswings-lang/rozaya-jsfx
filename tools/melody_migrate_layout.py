@@ -64,7 +64,7 @@ BACKUP_SUFFIX = ".pre-layout-bak"
 OLD_COUNT = 78
 NEW_COUNT = 80
 
-# OLD slider -> NEW slider. Authored in docs/layouts/melody-phase.md; this only
+# OLD slider -> NEW slider. Authored in docs/history/layouts/melody-phase.md; this only
 # applies it. Old 77 (Host ratio) is deleted and deliberately absent.
 OLD_TO_NEW = {
     2: 1, 1: 2, 3: 6, 78: 7, 4: 8, 5: 9, 6: 10, 9: 11,

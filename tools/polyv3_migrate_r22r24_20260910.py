@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Polyrhythm Phase v3: 56 sliders -> 59, per docs/layouts/polyrhythm-phase-v3-r22-r24.md.
+"""Polyrhythm Phase v3: 56 sliders -> 59, per docs/history/layouts/polyrhythm-phase-v3-r22-r24.md.
 
 Slider line only. The blob migrates itself inside the plugin (magic 2200024 read
 at 24 targets wide, remapped to 88, each voice's note + 36).

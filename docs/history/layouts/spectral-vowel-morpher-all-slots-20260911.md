@@ -6,7 +6,7 @@ instances bit-identical; All fills each slot exactly as an ordinary capture into
 Capture point on All == by hand on Slots 1 and 8, and moves Slots 4 and 5; passing
 through All keeps Slot 8's own point. **Not measured: the capture's CPU inside REAPER.**
 It runs the eight analyses a Capture average change already runs in one block. No slider moves. Passage gets the
-same feature inside its own single migration (`docs/layouts/spectral-vowel-passage.md`).
+same feature inside its own single migration (`docs/history/layouts/spectral-vowel-passage.md`).
 
 ## What Rozaya decided (quoted), and what is mine
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Spectral Vowel Morpher, the pitch layout: 51 sliders -> 64, in ONE migration.
-docs/layouts/spectral-vowel-morpher.md, "THE PITCH LAYOUT".
+docs/history/layouts/spectral-vowel-morpher.md, "THE PITCH LAYOUT".
 
 The slider line only. Old positions move by the AUTHORED map below (the same map
 tools/jsfx_renumber.py applied to the source); every new control is seeded to what

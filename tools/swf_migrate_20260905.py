@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Migrate full-feature-sweeping-filter projects to the 2026-09-05 approved
-layout (docs/layouts/sweeping-filter.md, reading order approved by Rozaya).
+layout (docs/history/layouts/sweeping-filter.md, reading order approved by Rozaya).
 
 The permutation is AUTHORED, transcribed from that document's "The order"
 section. This script only APPLIES it.

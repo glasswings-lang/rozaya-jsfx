@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Migrate every Sweeping Filter to the 54-control layout of
-docs/layouts/sweeping-filter-r22-r24.md: two pitch blocks, Tuning reference at
+docs/history/layouts/sweeping-filter-r22-r24.md: two pitch blocks, Tuning reference at
 11, and 17 drift/ramp targets.
 
 EVERY TABLE HERE IS AUTHORED, transcribed from that document. Which layout each

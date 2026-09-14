@@ -581,7 +581,7 @@ document, worse in the hand.
 > ~~`{Target default, Hz, Cents, Semitones, BPM, Seconds, dB, Percent}`~~
 
 **That option list is SUPERSEDED, 2026-09-11.** It lacked five units the suite uses.
-The list agreed for all nineteen plugins is in `docs/layouts/spectral-vowel-passage.md`,
+The list agreed for all nineteen plugins is in `docs/history/layouts/spectral-vowel-passage.md`,
 "The amount units": `{Target default, Hz, Semitones, Cents, Milliseconds, Seconds,
 Minutes, BPM, Beats, Cycles, dB, Percent, Degrees}`.
 
@@ -714,7 +714,7 @@ we should leave it as-is." Rozaya watches the context meter and will say when it
    savedlive` on src: save 14/14, savedlive 135/135 bit-identical, 0 failures. `jsfx_map
    impact`: no questions once file_mem() groups stopped counting as reorders.
 3. **DONE 2026-09-13.** Names: 14 applied and verified (only slider lines changed); `scope` 28/28,
-   `names` all pass, 0 failures. Was: `r25_rename_apply.py --list docs/layouts/morpher-labels-20260913.md --apply`, `scope`.
+   `names` all pass, 0 failures. Was: `r25_rename_apply.py --list docs/history/layouts/morpher-labels-20260913.md --apply`, `scope`.
    Dry run matched all 14. Backlog line 24 (amount-unit sweep) then marks the Morpher done.
 4. **DONE 2026-09-13.** Live write: 135 in 40 files, each read back; snapshot
    `_pre-morpher-pitch-layout-20260913` (40 files). `migrated`: 123/123 bit-identical to their

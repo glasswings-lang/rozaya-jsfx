@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The 2026-09-11 small R24 batch: the files that need writing, and why.
 
-docs/layouts/r24-small-batch-20260911.md. Bubbler, Dapple and Tremolo put their
+docs/history/layouts/r24-small-batch-20260911.md. Bubbler, Dapple and Tremolo put their
 targets in control order; the PLUGINS remap an old save themselves, so a copy on
 the current layout with nothing selected past target 0 needs no file change.
 What this writes:

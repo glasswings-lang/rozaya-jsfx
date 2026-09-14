@@ -527,7 +527,7 @@ and the last owed the six Drift and Ramp controls. Both landed together, in one
 migration, because a migration costs the same whether one thing changes or forty
 and every one is a fresh chance to disturb a saved project.
 
-64 sliders became 70. The full authored order lives in `docs/layouts/womb.md`.
+64 sliders became 70. The full authored order lives in `docs/history/layouts/womb.md`.
 The shape of it: three groups, one per layer, each reading the same way — what it
 is, how fast it goes, the shape of its movement, its filtering, its stereo, its
 level, its solo. Then master, transport, drift, ramp.

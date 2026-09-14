@@ -7,7 +7,7 @@ becomes
     **Drift up amount (per target)** `0 to 1000, default 0`
 and a bold name already holding parentheses takes the kind first inside them, the same
 way the labels did: **Drift period (per band and target, BPM / Hz ...)**. Prose mentions
-are left alone. The kind comes from docs/layouts/r25-labels-20260912.md for the page's
+are left alone. The kind comes from docs/history/layouts/r25-labels-20260912.md for the page's
 own plugin; an entry whose name matches no row for that plugin is REFUSED and reported,
 never guessed.
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tensor's seven Breath Generators: the first-release line to the current layout.
 
-docs/layouts/breath-gen-r24-20260911.md. Rozaya: "Yes, sync all the broken things".
+docs/history/layouts/breath-gen-r24-20260911.md. Rozaya: "Yes, sync all the broken things".
 
 Each was saved with 13 values and no blob -- Inhale, Top pause, Exhale, Bottom
 pause (seconds), Inhale and Exhale frequency (Hz), the four fades, Fade mode,

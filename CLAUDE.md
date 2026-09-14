@@ -77,7 +77,7 @@ and let them decide.
   that made the last one repairable.
 - **Author the whole layout before you migrate** -- `docs/layouts/<plugin>.md`
   first, one migration per plugin, not one per idea. Breaking this cost five
-  migrations in one day.
+  migrations in one day. Once installed, `git mv` it to `docs/history/layouts/`.
 - **Verify the output, never the run.** A clean exit is the weakest evidence
   there is. A script may APPLY an authored list; it may never INFER one.
 - **Do not fix an open bug you were not sent to fix**, and search the repo and
@@ -99,17 +99,17 @@ read what else is in the block** -- never trust a document over the source.
   reference you check, not a list of work.
 - `docs/backlog.md` -- what each plugin is owed. Not a queue you may start from.
 - `docs/jsfx-gotchas.md` -- read before editing a `.jsfx`.
-- `docs/working-practice.md` -- the incident behind every rule above. Read it
+- `docs/history/working-practice.md` -- the incident behind every rule above. Read it
   there before arguing with one, not instead of obeying it.
 - `docs/history/<RULE>.md` -- one rule's history: the shapes already tried and
-  killed. Read the one rule you are about to argue with. `docs/plan-history.md`
+  killed. Read the one rule you are about to argue with. `docs/history/plan-history.md`
   is the older general version of the same thing.
 - `docs/plugins/<plugin>.md` -- user-facing reference; update it whenever you
-  change a slider. `plan-history.md` and `session-log.md` are reasoning only rather than current facts. 
-  `ls docs/` rather than guessing at the rest.
+  change a slider (`tools/page_controls.py` checks it). **Everything in `docs/history/` is
+  reasoning, not current facts.** `ls docs/` rather than guessing at the rest.
 - **Instruction files hold instructions only.** This file and the rules plan say
   what to do. How it was learned goes in `docs/history/<RULE>.md`,
-  `docs/session-log.md` or `docs/working-practice.md`.
+  `docs/history/session-log.md` or `docs/history/working-practice.md`.
 - `tools/` -- indexed in `tools/README.md`. `jsfx_run` compiles and RUNS a plugin
   outside REAPER, so behaviour is measured here rather than predicted. Every
   `.RPP` migration builds on `rpp_sliders.py`.

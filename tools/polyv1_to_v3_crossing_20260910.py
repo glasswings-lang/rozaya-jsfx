@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Polyrhythm Phase v1 -> v3, per docs/layouts/polyrhythm-v1-to-v3-crossing.md.
+"""Polyrhythm Phase v1 -> v3, per docs/history/layouts/polyrhythm-v1-to-v3-crossing.md.
 
 Rewrites each `<JS .../polyrhythm_phase.jsfx` instance as a v3 instance: the JS
 line's filename, a 59-slider value line, and a native 2300088 `<JS_SER>` blob

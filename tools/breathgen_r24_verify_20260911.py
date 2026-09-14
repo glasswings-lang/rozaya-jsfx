@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Breath Generator's eighteen targets, measured. docs/layouts/breath-gen-r24-20260911.md.
+"""Breath Generator's eighteen targets, measured. docs/history/layouts/breath-gen-r24-20260911.md.
 
 current  Rozaya's four and the bridge copy: the pre-change build (f24f083) ==
          the new build, bit for bit, not silent.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Womb's forty-nine targets, measured. docs/layouts/womb-r24-20260911.md.
+"""Womb's forty-nine targets, measured. docs/history/layouts/womb-r24-20260911.md.
 
 Works on TEMP copies made by the migration's own convert(), so it can run before
 anything live is written; `applied` then checks the live files equal those copies.

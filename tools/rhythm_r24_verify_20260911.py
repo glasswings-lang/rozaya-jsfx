@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Rhythm Track's sixteen targets and Drift movement, measured.
-docs/layouts/rhythm-track-r24-20260911.md.
+docs/history/layouts/rhythm-track-r24-20260911.md.
 
 current   the bridge copy: the pre-change build (912d95f) on the snapshot == the
           new build on the migrated file, not silent; its selectors read Swing

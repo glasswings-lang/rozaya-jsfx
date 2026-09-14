@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Migrate Womb v3 projects to the 2026-09-06 authored layout.
 
-The permutation and every value rule below is AUTHORED in docs/layouts/womb.md.
+The permutation and every value rule below is AUTHORED in docs/history/layouts/womb.md.
 This script only APPLIES them, and refuses rather than guessing whenever an
 instance does not look like what the table describes.
 

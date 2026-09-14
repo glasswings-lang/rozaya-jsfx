@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Melody Phase: 96 sliders -> 105, per docs/layouts/melody-phase-r22-r24.md.
+"""Melody Phase: 96 sliders -> 105, per docs/history/layouts/melody-phase-r22-r24.md.
 
 Slider line only. The blob migrates itself inside the plugin (old magic read at
 28 targets wide, remapped to 55).

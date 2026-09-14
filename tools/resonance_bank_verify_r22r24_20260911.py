@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resonance Bank's 2026-09-11 build, measured. docs/layouts/resonance-bank-r22-r24.md.
+"""Resonance Bank's 2026-09-11 build, measured. docs/history/layouts/resonance-bank-r22-r24.md.
 
 1  projects   the pre-change build (a993f0f) on each snapshot project against
               the new build on that project migrated IN A TEMP COPY: bit-identical

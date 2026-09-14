@@ -11,4 +11,4 @@ again, set `S` to any temporary folder and put the two patch scripts in it.
 
 After applying for real, measure with `tools/morpher_verify_20260913.py` -- `units convert
 current` after stage 5, `saveformat savedlive` after stage 6. The order of everything left is
-in `docs/layouts/spectral-vowel-morpher.md`, "BUILD PROGRESS".
+in `docs/history/layouts/spectral-vowel-morpher.md`, "BUILD PROGRESS".

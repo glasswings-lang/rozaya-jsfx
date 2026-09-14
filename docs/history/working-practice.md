@@ -474,7 +474,7 @@ what matters here is that they are **decided**.
 
 ### Terminology that changed, and where the old words survive
 
-`docs/session-log.md` is **append-only and is not rewritten**, so it uses the
+`docs/history/session-log.md` is **append-only and is not rewritten**, so it uses the
 names that were current when each entry was written. Plugin pages can lag too.
 Three renames matter when reading any of them:
 

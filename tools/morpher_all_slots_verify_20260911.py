@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The Morpher's All slots, measured. docs/layouts/spectral-vowel-morpher-all-slots-20260911.md.
+"""The Morpher's All slots, measured. docs/history/layouts/spectral-vowel-morpher-all-slots-20260911.md.
 
 Renders run TEST COPIES with the per-load rand() scramble pinned (see
 morpher_r24_verify_20260911.py); the shipped plugin keeps its scramble.

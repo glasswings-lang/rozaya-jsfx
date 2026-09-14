@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Give Dapple the R22 pitch block, per docs/layouts/dapple.md.
+"""Give Dapple the R22 pitch block, per docs/history/layouts/dapple.md.
 
 `Pitch (Hz)` at slider 4 becomes six controls in the same place -- mode, note
 name, value, fine tune, fine tune unit, tuning reference -- and everything from

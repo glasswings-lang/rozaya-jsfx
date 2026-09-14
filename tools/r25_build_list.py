@@ -3,7 +3,7 @@
 
 The kind of every control -- per target, all targets, per band... -- comes only from the
 live measurement. This script turns those measurements into wording and writes the rows
-docs/layouts/r25-labels-20260912.md holds; a person reads the list before
+docs/history/layouts/r25-labels-20260912.md holds; a person reads the list before
 tools/r25_rename_apply.py applies it. Anything the measurement did not settle is listed
 under "Not renamed", never guessed.
 

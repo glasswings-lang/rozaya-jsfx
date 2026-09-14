@@ -78,7 +78,7 @@ BACKUP_SUFFIX = ".pre-layout-bak"
 OLD_COUNT = 38
 NEW_COUNT = 40
 
-# The authored permutation, from docs/layouts/spectral-vowel-morpher.md.
+# The authored permutation, from docs/history/layouts/spectral-vowel-morpher.md.
 # OLD slider id -> NEW slider id.  Kept as a literal table, deliberately: it has
 # to agree entry for entry with the declaration block in the plugin.
 OLD_TO_NEW = {

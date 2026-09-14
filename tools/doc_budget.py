@@ -29,18 +29,18 @@ ROOT = Path(__file__).resolve().parent.parent
 # contains plus modest headroom. Raising one to fit new text is the failure this
 # script exists to stop.
 #
-# Only files a session is expected to READ are budgeted. docs/session-log.md is
+# Only files a session is expected to READ are budgeted. docs/history/session-log.md is
 # deliberately absent: it is append-only history and capping it would mean
 # rewriting what happened. It gets rotation instead -- see the note at the
 # bottom of this file.
 BUDGETS = {
     "CLAUDE.md": (175, "loaded into every session; must stay skimmable"),
     "docs/current-state.md": (150, "describes NOW; delete what stopped being now"),
-    "docs/working-practice.md": (550, "the incidents behind the rules"),
+    "docs/history/working-practice.md": (550, "the incidents behind the rules"),
     "docs/jsfx-gotchas.md": (250, "read before editing any src/*.jsfx"),
     "docs/suite-consistency-plan.md": (1600, "the rules R1-R27; a rule does not mean the plugins obey it"),
     "docs/backlog.md": (650, "what is owed; NOT a list of work to start"),
-    "docs/plan-history.md": (700, "why the rules are what they are"),
+    "docs/history/plan-history.md": (700, "why the rules are what they are"),
     "docs/planned-features.md": (700, "designs NOT built; what a plugin has is tools/suite_status.py"),
 }
 
@@ -58,7 +58,9 @@ def main() -> int:
     rows = []
     worst = 0
     budgets = dict(BUDGETS)
-    for f in sorted((ROOT / "docs" / "history").glob("*.md")):
+    # R*.md only: session-log, plan-history, working-practice and layouts/ also live in
+    # docs/history/ since 2026-09-13, and are not one rule's history.
+    for f in sorted((ROOT / "docs" / "history").glob("R*.md")):
         budgets[f.relative_to(ROOT).as_posix()] = PER_RULE_HISTORY
     for rel, (budget, purpose) in sorted(budgets.items()):
         path = ROOT / rel
@@ -97,7 +99,7 @@ def main() -> int:
     return 1
 
 
-# On docs/session-log.md, which has no budget here:
+# On docs/history/session-log.md, which has no budget here:
 #
 # Append-only is correct for it -- you should not rewrite what happened. But
 # append-only with no rotation is unbounded growth, and it went from 475 lines

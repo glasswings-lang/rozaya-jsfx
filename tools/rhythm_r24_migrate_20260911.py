@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Rhythm Track's sixteen targets and Drift movement: the three files, and why.
 
-docs/layouts/rhythm-track-r24-20260911.md. The plugin remaps an old two-target
+docs/history/layouts/rhythm-track-r24-20260911.md. The plugin remaps an old two-target
 blob itself; the slider LINE cannot be, because Drift movement is inserted at 36.
 
   current  the bridge copy, on the 39-control layout: 1-35 stay, 36 becomes Drift

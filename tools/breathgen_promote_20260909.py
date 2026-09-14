@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Move the four live Breath Generator instances from the 32-slider layout to
-the 40-slider one (docs/layouts/breath-gen.md).
+the 40-slider one (docs/history/layouts/breath-gen.md).
 
 AUTHORED, NOT INFERRED. Every one of the four instances below has its forty
 values written out in full, read off the old slider line by hand. Nothing here

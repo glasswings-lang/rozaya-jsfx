@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Migrate Spectral Vowel Morpher projects to the 2026-09-06 unit-control layout.
 
-The permutation is AUTHORED in docs/layouts/spectral-vowel-morpher.md (section
+The permutation is AUTHORED in docs/history/layouts/spectral-vowel-morpher.md (section
 "Second layout change, 2026-09-06"). This script only APPLIES it, and refuses
 rather than guessing whenever an instance does not look like the layout the
 table describes.

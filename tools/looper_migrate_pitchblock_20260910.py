@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sustain Looper: 8 sliders -> 30, per docs/layouts/sustain-looper.md.
+"""Sustain Looper: 8 sliders -> 30, per docs/history/layouts/sustain-looper.md.
 
 Per instance: 1-4 unchanged; old 5 (Pitch, semitones) -> 7 with 8 = Semitones;
 old 6 (Output) -> 14; old 7 (Voices) -> 12; old 8 (Spread) -> 13. Everything

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Migrate melody_phase projects to the 2026-09-06 R20/R21 layout
-(docs/layouts/melody-phase-r20.md).
+(docs/history/layouts/melody-phase-r20.md).
 
 The permutation and the enum handling are AUTHORED, transcribed from that
 document's "The order" and "The migration" sections. This script only APPLIES

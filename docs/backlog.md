@@ -28,7 +28,7 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 - **`Drift amount unit` / `Ramp by unit` in the other seventeen.** Committed 2026-09-11,
   Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Built in Passage
   and the Morpher only; the other seventeen have neither (read from every slider list).
-  How: `docs/layouts/spectral-vowel-passage.md`, "The amount units".
+  How: `docs/history/layouts/spectral-vowel-passage.md`, "The amount units".
 - **R19, the pan mode order. Blocks a release.** Rozaya: *"I'm not gonna ship something
   like that on any plugin"*. Still in arrival order: Melody and Polyrhythm lead with
   Tremolo / Increment / Spread / Spread Reversed; Tremolo has no `Alternating (Flipped)`,
@@ -109,10 +109,10 @@ everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole 
   Note, Pitch (Hz / semitones / cents) and Fine tune. Rozaya, 2026-09-13: *"melody phase
   deliberately lacks a voice selecter, and the pitch work was described to me as done"*.
 - **The Shepards have no Hz / semitones / cents mode.** Star, 2026-09-10: *"a Shepard voice
-  is its note in every octave at once."* (`docs/layouts/shepards-r22-r24.md`.) And
+  is its note in every octave at once."* (`docs/history/layouts/shepards-r22-r24.md`.) And
   `Center Octave` does not retire: it centres the octave window `Octave Count` spans.
 - **The Morpher's layers carry no Source or Target note.** Rozaya: *"Nah, keep it as-is."*
-  (`docs/layouts/spectral-vowel-morpher.md`.)
+  (`docs/history/layouts/spectral-vowel-morpher.md`.)
 - **No unit locks, ever.** A unit is at most a default.
 - **Drift amounts stay in the target's own units, never "% of its range."** Rozaya,
   2026-08-28: *"I don't want to lose range. I don't want to have to abstract away things

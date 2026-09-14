@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Spectral Vowel Morpher's pitch layout, measured, stage by stage.
-docs/layouts/spectral-vowel-morpher.md, "THE PITCH LAYOUT".
+docs/history/layouts/spectral-vowel-morpher.md, "THE PITCH LAYOUT".
 
 Renders run TEST COPIES with the per-load rand() scramble pinned (as every Morpher and
 Passage tool does); the shipped plugin keeps its scramble.

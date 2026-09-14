@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Spectral Vowel Passage's 2026-09-11 layout, measured, stage by stage.
-docs/layouts/spectral-vowel-passage.md, "THE LAYOUT".
+docs/history/layouts/spectral-vowel-passage.md, "THE LAYOUT".
 
 Renders run TEST COPIES with the per-load rand() scramble pinned (as the Morpher's
 tools do); the shipped plugin keeps its scramble.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Heartbeat's eighteen targets: the two files that need writing, and why.
 
-docs/layouts/heartbeat-r24-20260911.md. The plugin remaps an old four-target save
+docs/history/layouts/heartbeat-r24-20260911.md. The plugin remaps an old four-target save
 itself, so a current copy needs no change for the targets. What this writes:
 
   finished/transformation.RPP  its <JS_SER> sits INSIDE the <JS> block, before the

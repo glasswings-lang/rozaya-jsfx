@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Spectral Vowel Passage, the 2026-09-11 layout: 38 sliders -> 63, in ONE migration.
-docs/layouts/spectral-vowel-passage.md, "THE LAYOUT".
+docs/history/layouts/spectral-vowel-passage.md, "THE LAYOUT".
 
 The slider line only. Old positions move by the AUTHORED map below (the same map
 tools/jsfx_renumber.py applied to the source); every new control is seeded to what
@@ -22,7 +22,7 @@ FX = "spectral_vowel_passage.jsfx"
 LIVE = "E:/reaper"
 N_OLD, N_NEW = 38, 63
 
-# old id -> new id, copied from the renumber stage (docs/layouts/spectral-vowel-passage.md).
+# old id -> new id, copied from the renumber stage (docs/history/layouts/spectral-vowel-passage.md).
 # 2026-09-12: Drift movement inserted at 50, so everything from 50 on moved up one.
 MAP = {1: 1, 2: 2, 3: 3, 4: 4, 5: 21, 6: 22, 7: 23, 8: 24, 9: 26, 10: 27, 11: 31, 12: 32,
        13: 37, 14: 29, 15: 13, 16: 14, 17: 15, 18: 9, 19: 28, 20: 17, 21: 16, 22: 36, 23: 34,

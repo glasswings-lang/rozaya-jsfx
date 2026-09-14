@@ -22,7 +22,7 @@ non-numeric order, with R17 buried inside "Where to pick this up" and R18 inside
 - **`docs/history/<RULE>.md`** — one rule's history, capped at 200 lines each:
   the shapes tried and killed for THAT rule. Started 2026-09-09 when Rozaya
   asked why there was one history file rather than one per rule.
-- **`docs/plan-history.md`** — the older general version of the same thing: cost
+- **`docs/history/plan-history.md`** — the older general version of the same thing: cost
   measurements, dated status notes, and superseded shapes not yet filed per rule.
 
 Every line of the old document is in one of these three files, verbatim. Nothing
@@ -292,7 +292,7 @@ Polyrhythm v1/v3, Shepard Scale, Shepard Tone, Stereo Phaser, Bubbler, Dapple, W
 **Do not build this shape.** Its `Sync to host` / `Host sync target` /
 `Every N beats` block is what Womb and Melody used to carry, and both have
 converted away from it. The full text, and the measurement that killed it,
-are in `docs/plan-history.md`. R20 below is the rule that replaced it.
+are in `docs/history/plan-history.md`. R20 below is the rule that replaced it.
 
 ## R12. A numeric range spans 0–1000, or −1000–1000 where the sign does something real
 

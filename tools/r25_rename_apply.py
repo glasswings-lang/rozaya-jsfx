@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Apply the AUTHORED R25 label list to src/ -- never infer one.
 
-The list lives in docs/layouts/r25-labels-20260912.md as table rows:
+The list lives in docs/history/layouts/r25-labels-20260912.md as table rows:
 
     | src/bubbler.jsfx | 37 | Ramp start delay (in ramp time units) | Ramp start delay (per target, in ramp time units) |
 

@@ -2,7 +2,7 @@
 """Migrate Polyrhythm Phase v3 projects to the 2026-09-07 authored layout.
 
 The permutation and every value rule below is AUTHORED in
-docs/layouts/polyrhythm-phase-v3.md. This script only APPLIES them, and refuses
+docs/history/layouts/polyrhythm-phase-v3.md. This script only APPLIES them, and refuses
 rather than guessing whenever an instance does not look like what the table
 describes.
 

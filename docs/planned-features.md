@@ -38,7 +38,7 @@ running, and a cursor move while stopped reaches it at once (play_position = cur
 follows) with NO @init. So the rule is buildable: keep memory through @init (ext_noinit),
 and re-land on any position jump, stopped or playing. Bypass then enable also re-runs @init;
 monitoring and mute toggles do not. The Morpher's and Passage's silent load (a real cause,
-FIXED 2026-09-12) is in `docs/session-log.md`, 2026-09-11/12. **Still unexplained:** a probe
+FIXED 2026-09-12) is in `docs/history/session-log.md`, 2026-09-11/12. **Still unexplained:** a probe
 freshly added while stopped got no blocks until the first play, in a just-made tab and a
 just-reopened project; after one play everything ran. Guess, untested: a freshly opened
 project runs nothing while stopped until the first play. Test by probing claude test right

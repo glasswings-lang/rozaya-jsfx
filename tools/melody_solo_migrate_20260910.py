@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Melody Phase: 105 sliders -> 113, per docs/layouts/solo-propagation-20260910.md.
+"""Melody Phase: 105 sliders -> 113, per docs/history/layouts/solo-propagation-20260910.md.
 
 Slider line only; the blob format is unchanged (magic 2500055 -> 2600055 as the
 layout witness, the old one still read). Each voice block grows from seven to

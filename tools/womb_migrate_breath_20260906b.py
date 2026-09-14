@@ -2,7 +2,7 @@
 """Migrate Womb v3 projects across the 2026-09-06 (evening) breath follow-up.
 
 VALUES ONLY -- no slider moves, no count change, still 70. Three controls change
-meaning, and every rule below is AUTHORED in docs/layouts/womb.md.
+meaning, and every rule below is AUTHORED in docs/history/layouts/womb.md.
 
   16  `Breaths per minute` -> `Set breath rate`, a ONE-SHOT that zeroes itself.
       A stored value is meaningless now, so it is zeroed. Safe, and measured:

@@ -1,7 +1,7 @@
 # Where the suite stands
 
 **Budget: 150 lines. Over it? This file describes NOW — delete what stopped
-being now.** Narrative belongs in `docs/session-log.md`, not here.
+being now.** Narrative belongs in `docs/history/session-log.md`, not here.
 
 **What a plugin HAS is never written here: `python tools/suite_status.py` reads it from the
 plugin files** (`--installed` for REAPER's copies; `controls NAME` for one plugin's every
@@ -53,7 +53,7 @@ per-cycle pan on Polyrhythm; Veil's layout and ramp; the Morpher's 2026-09-06
 migration (122 instances); the 2026-09-06 Womb rebuild (70 sliders, 9 projects);
 the 2026-09-07 Polyrhythm v3 migration (8 instances, 5 projects); Breath
 Generator's 40-slider layout, 2026-09-09 — *"it works end-to-end"*. The quotes
-and the how are in `docs/session-log.md`.
+and the how are in `docs/history/session-log.md`.
 
 **After any promotion the plugin must be re-read from disk.** Rozaya: *"You
 don't need to quit reaper, you just need to open a new project and then reopen

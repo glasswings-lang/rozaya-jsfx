@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Migrate Breath Generator projects to the 2026-09-08 layout (32 -> 40 sliders).
 
-Authored from docs/layouts/breath-gen.md. The map below is a LITERAL authored
+Authored from docs/history/layouts/breath-gen.md. The map below is a LITERAL authored
 table; nothing here infers a mapping from the file.
 
 Two things move, and they move together:

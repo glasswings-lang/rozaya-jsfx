@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The Morpher's fifty-five targets, measured. docs/layouts/spectral-vowel-morpher-r24-20260911.md.
+"""The Morpher's fifty-five targets, measured. docs/history/layouts/spectral-vowel-morpher-r24-20260911.md.
 
 THE PLUGIN SCRAMBLES rand() ON EVERY LOAD from time_precise(), so two renders of
 the same build on the same project never match (measured 2026-09-11). Every render
