@@ -722,6 +722,10 @@ dead.
 Rozaya, 2026-09-14: *"every thing with a mode gets the mode before the value.
 everything. I don't care what it is."*
 
+The mode says the unit, so a rate's name lists no units. The exception is a name
+that explains something its mode can't: the breath rate in Breath Generator and
+Womb says `per minute, or beats per breath`, and Rozaya said to leave both.
+
 - **In Host x, the rate value means EVERY N BEATS.** One cycle takes N beats of
   the project. Bigger is slower. It is a free number, so `0.333333` — every
   three beats — is as reachable as `4`.

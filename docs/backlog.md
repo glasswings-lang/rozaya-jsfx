@@ -40,6 +40,13 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 - **Put every mode before its value, in every plugin.** Most plugins still have the value
   first. Fix it inside each plugin's own planned migration, not as a separate pass. The
   rule is in the rules file, under "The four rules inside the order".
+- **Passage, in its next migration:** each unit picker moves above the timings it sets
+  (Slot timing unit above slot fade in, hold, fade out and gap after; Transport unit above
+  Start delay, Play for and Rest for), and those names lose their `seconds / Hz / beats`.
+  The fade shapes stay under the timings. Rozaya said yes to this.
+- **`suite_status.py controls` lists controls in file order, not REAPER's.** REAPER goes by
+  slider number. Where the two differ (Passage, Bubbler, Dapple) the list is misleading,
+  and Passage's page follows that wrong order.
 - **Womb's Breath High-pass: a better filter.** Still the Chamberlin SVF, which stops near
   7200 Hz of 20000. Rozaya, 2026-09-13: *"We need a better filter."* (TPT, as the sweeping
   filters have.) Agreed condition: measure every saved Womb copy old against new before
