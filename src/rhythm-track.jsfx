@@ -4,7 +4,7 @@ desc: Rhythm Track
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:120<0.001,1000,0.001>Tempo (BPM / sec / Hz / beats per cycle / per beat)
+slider1:120<0.001,1000,0.001>Tempo
 
 // --- Host tempo sync: the retired ratio picker ----------------------------
 //

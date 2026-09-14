@@ -76,7 +76,7 @@ moves the glissando, it doesn't transpose the tone.
 > cycle — two sweeps every beat, which is very fast. Set the mode first, then
 > the rate.
 
-**Rate Value (BPM / sec / Hz / beats per cycle)** `0.001-1000, default 0.5 BPM`
+**Rate value** `0.001-1000, default 0.5 BPM`
 The global sweep rate, in the units set by Rate Mode. Only used in Synced mode. At 0.5 BPM, one full sweep cycle takes two minutes — appropriate for slow ambient use.
 
 **Octave Count** `2-16, default 8`

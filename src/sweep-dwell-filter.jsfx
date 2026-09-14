@@ -22,7 +22,7 @@ slider1:1<0,4,1{All segments,High dwell,Fade down,Low dwell,Fade up}>Segment
 // one beat; BPM as long as one beat at that tempo; Hz as long as one cycle at
 // that speed. The two beat modes follow the live project tempo.
 slider2:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Length mode
-slider3:4<0.001,1000,0.001>Length (BPM / sec / Hz / beats / per beat)
+slider3:4<0.001,1000,0.001>Length
 slider4:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade shape
 // The dwells' pitch (R22), word for word the block the Sweeping Filter has.
 slider5:0<0,2,1{Hz,Semitones,Cents}>Pitch mode
@@ -45,7 +45,7 @@ slider16:0<0,15,1{Mono,Alternating,Alternating (Flipped),Distributed,Distributed
 slider17:1<0,1,0.01>Pan spread (0 = mono, 1 = full)
 slider18:5<0,1000,0.1>Pan glide (ms, 0 = instant)
 slider19:8<2,1000,1>Cycle steps (per-cycle modes)
-slider20:2<0.001,1000,0.001>Pan sweep rate (BPM / sec / Hz / beats per cycle)
+slider20:2<0.001,1000,0.001>Pan sweep rate
 slider21:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan sweep rate mode
 // Linked Sweep: how many dwell cycles one pan pass takes. It was a MULTIPLIER
 // with a picker that wrote into it; both retired 2026-09-10, as the Sweeping
@@ -56,7 +56,7 @@ slider23:1<0,1,0.01>Wet/dry mix
 // Pass-through before the effect arrives. It was locked to seconds; it now has
 // the five modes, default Seconds, and 0 is off in every mode.
 slider24:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Start delay mode
-slider25:0<0,1000,0.001>Start delay (BPM / sec / Hz / beats / per beat)
+slider25:0<0,1000,0.001>Start delay
 // Per-cycle Play/Rest gate: play N whole cycles, rest M, repeat. 0 in either is off.
 slider26:0<0,1000,1>Play for (cycles)
 slider27:0<0,1000,1>Rest for (cycles)

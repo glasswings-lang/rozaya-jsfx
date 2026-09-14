@@ -25,7 +25,7 @@ slider1:0<0,1,1{Drift,Independent}>Tremolo mode
 // `Every N beats` means beats per cycle; `N per beat` is its reciprocal. Both
 // are needed -- keeping only the slow half made eight cycles per beat into
 // typing 0.125, which is the arithmetic this suite exists to remove.
-slider2:60<0.001,1000,0.001>Rate value — all voices (BPM / sec / Hz / beats per cycle / per beat)
+slider2:60<0.001,1000,0.001>Rate value (all voices)
 slider3:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 slider4:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack shape
 slider5:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape

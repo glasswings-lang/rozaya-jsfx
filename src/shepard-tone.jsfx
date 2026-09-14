@@ -54,7 +54,7 @@ desc: Shepard Tone Generator
 // ===== GLOBAL CONTROLS =====
 // ===== GLOBAL CONTROLS =====
 slider1:0<0,1,1{Synced,Independent}>Drift mode
-slider2:0.5<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle / per beat)
+slider2:0.5<0.001,1000,0.001>Rate value
 slider3:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 slider4:8<2,16,1>Octave count
 slider5:3<0,8,1>Center octave

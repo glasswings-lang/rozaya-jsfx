@@ -4,7 +4,7 @@ desc: Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:2<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle / per beat)
+slider1:2<0.001,1000,0.001>Rate value
 // RATE MODE ORDER IS {BPM, Seconds, Hz, Host x} since 2026-09-04 -- the suite's
 // canonical order, shared with both Polyrhythms, Shepard Tone and the Morpher.
 // This plugin ran {Hz, Seconds, BPM, Host x}: the same four, a different order,

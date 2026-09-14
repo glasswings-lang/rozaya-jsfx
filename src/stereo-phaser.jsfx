@@ -29,7 +29,7 @@ desc: Stereo Phaser
 // 2026-09-04. Old projects are repaired IN THE PROJECT FILE by
 // tools/phaser_migrate_rate_triple.py -- there is no runtime self-repair, and
 // there deliberately isn't one (see the note above @serialize).
-slider1:0.3<0.001,1000,0.001>Rate (BPM / sec / Hz / beats per cycle / per beat)
+slider1:0.3<0.001,1000,0.001>Rate
 // Own Hz: free-running at Rate Hz -- the original behaviour.
 // Host x: Rate means BEATS PER CYCLE. 4 is one sweep every four beats; 3.7 is
 //         one every three and seven tenths, which a note-division grid cannot

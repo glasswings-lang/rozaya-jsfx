@@ -40,7 +40,7 @@ desc: Shepard Scale Generator
 
 // ===== GLOBAL CONTROLS =====
 // ===== GLOBAL CONTROLS =====
-slider1:120<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle / per beat)
+slider1:120<0.001,1000,0.001>Rate value
 slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 slider3:0<0,1,1{Asc,Desc}>Direction
 slider4:0<0,1,1{Skip,Rest}>Inactive notes

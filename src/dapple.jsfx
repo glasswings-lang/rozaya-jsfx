@@ -31,7 +31,7 @@ desc: Dapple
 // Resonant lowpass is the Cockos state-variable topology (standard JSFX);
 // noise is Park-Miller (MINSTD), one independent stream per channel.
 
-slider1:6<0.001,1000,0.001>Bubble rate (BPM / sec / Hz / beats per bubble / per beat)
+slider1:6<0.001,1000,0.001>Bubble rate
 slider3:70<0,100,1>Timing randomness (%)
 // --- Pitch (R22) ----------------------------------------------------------
 // Breath Generator's shipped block, dropped on unchanged. Rozaya, 2026-09-09:

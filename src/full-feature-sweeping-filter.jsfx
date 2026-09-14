@@ -21,7 +21,7 @@ slider9:0<-1000,1000,0.001>High fine tune
 slider10:2<0,2,1{Hz,Semitones,Cents}>High fine tune unit
 // ONE tuning reference, straight after both pitch blocks, in both filters.
 slider11:440<20,2000,0.1>Tuning reference (Hz)
-slider14:2<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle / per beat)
+slider14:2<0.001,1000,0.001>Rate value
 // RATE MODE ORDER IS {BPM, Seconds, Hz, Host x} since 2026-09-04 -- the suite's
 // canonical order, shared with both Polyrhythms, Shepard Tone and the Morpher.
 // This plugin ran {Hz, Seconds, BPM, Host x}: the same four, a different order,

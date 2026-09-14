@@ -37,6 +37,15 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   across every plugin with a Pan Mode, with the value remap for 0-3 in the same commit.
   Re-count stored values first -- "nothing is saved on 4+" expires the moment one is used.
   The proposed order is R19 in `docs/suite-consistency-plan.md`.
+- **Sweep Dwell puts two modes before their values.** Everywhere else a value comes first
+  and its mode follows (R7, R20). Here `Length mode` (slider 2) sits before `Length` (3),
+  and `Start delay mode` (24) before `Start delay` (25). Swapping them moves saved values,
+  so it needs a migration; it rides Sweep Dwell's next reorder. Found 2026-09-14.
+- **Rate value names carry no unit list**; the mode beside them says it. Rozaya, 2026-09-14:
+  *"the unit shit is for the unit mode."* Done that day wherever the mode sits beside the
+  value. Not touched, because each shares a unit switch that is not beside it: Passage's
+  slot durations and Start delay / Play for / Rest for (`seconds / Hz / beats`). Breath
+  Generator's and Womb's breath rate say `per minute`, which their unit switch does not.
 - **Womb's Breath High-pass: a better filter.** Still the Chamberlin SVF, which stops near
   7200 Hz of 20000. Rozaya, 2026-09-13: *"We need a better filter."* (TPT, as the sweeping
   filters have.) Agreed condition: measure every saved Womb copy old against new before

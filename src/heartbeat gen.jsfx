@@ -16,7 +16,7 @@ desc: Heartbeat Generator
 // that clamps permanently, which is why the plan puts range changes in the risky
 // row.) The step matches every other rate slider in the suite; you type the
 // number you want and nudge from there.
-slider1:70<0.001,1000,0.001>Heart rate (BPM / sec / Hz / beats per cycle / per beat)
+slider1:70<0.001,1000,0.001>Heart rate
 slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 slider3:120<50,1000,1>Systole (ms, S1->S2 gap)
 slider4:1.0<0.0,1.0,0.01>S1 volume

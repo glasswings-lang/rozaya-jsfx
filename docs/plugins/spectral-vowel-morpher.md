@@ -80,7 +80,7 @@ Crossfades across the captured slots. Pitch-preserving — each slot plays at it
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. One full pass takes one Auto-morph time, so each slot gets an equal share of it — same timing and same gentle crossfades as Sweep, just shuffled (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
-**Auto-morph time (BPM / sec / Hz / beats per cycle / per beat)** `0.01 to 1000, default 20`
+**Auto-morph time** `0.01 to 1000, default 20`
 How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Shuffle it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow motion. Its unit is **Rate Mode**, right below it (see the Rate Mode section).
 
 **Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`

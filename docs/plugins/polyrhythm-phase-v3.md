@@ -95,7 +95,7 @@ other — so nothing here forces you onto a note grid.
 
 **Host ratio** — *gone.* It was retired in 2026-09-02 and removed outright in the 2026-09-07 rebuild, along with every other slider that no longer had a job. With Rate Value in beats, *every 4 beats* is typing 4.
 
-**Rate Value — all voices** `0.001-1000, default 60`
+**Rate value (all voices)** `0.001-1000, default 60`
 The shared base tremolo rate, in the units set by Rate Mode. Each voice's own
 Drift / Rate is added to it. **Only visible in Drift mode** — in Independent
 mode there is no shared rate, because each voice's Drift / Rate *is* its rate.
