@@ -43,6 +43,14 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   installing, and say how big any difference is.
 - **Womb's page** (`docs/plugins/womb.md`) still says a sigh segment's length multiplies
   by `slider61`, which is Bloodflow Volume now. Owed a rewrite from the plugin.
+- **The plugin pages, a pass of their own.** `python tools/page_controls.py`, 2026-09-14: 206
+  findings (215 that morning). 95 are controls a page never mentions, mostly Drift and Ramp;
+  77 are pages quoting ranges from before the 2026-09-06 range sweep; 34 are old name styles,
+  changed option lists, retired controls and one default. The rules work does not reduce
+  these -- it only touches a page where a rule does -- so they need their own pass, ranges
+  first, then the missing controls one plugin at a time. Any rule work updates its pages in
+  the same commit so this does not grow. The commit gate on this check was proposed
+  2026-09-13 and not agreed.
 - **Heartbeat's batch**, when it comes:
   - the filename: `src/heartbeat gen.jsfx` is the only one with a space. Rozaya,
     2026-09-13: *"We can wait for heartbeat's thing"*. Projects that load it (backups
