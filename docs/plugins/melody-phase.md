@@ -203,13 +203,13 @@ How many positions the Distributed / Converging / Diverging walks step through b
 
 It matters more than it sounds: **at 2 positions every one of those modes collapses into Alternating** — a walk across two places is a flip. Eight gives Distributed a genuine sweep across the field and Converging a real closing-in. Alternating and the every-N modes ignore it, being two-sided by definition, and it hides for them.
 
-Use **Pan Spread %** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. Set **Pan Glide ms** to 0 for a hard switch, or leave it at 10 ms for a short sweep between sides.
-**Pan Glide ms** `0-100 ms, default 10`
+Use **Pan spread (%)** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. Set **Pan glide (ms)** to 0 for a hard switch, or leave it at 10 ms for a short sweep between sides.
+**Pan glide (ms)** `0-100 ms, default 10`
 How long the pan takes to travel between positions. **0 is an instant switch** — the sound cuts from one side to the other with no slide, which is what bilateral alternation is supposed to be. Anything above 0 sweeps instead. The default of 10 ms is what this plugin used to do with no way to change it; Full Feature Tremolo and both sweeping filters have had this control all along.
 
 
 
-**Pan Spread %** `0 – 100`
+**Pan spread (%)** `0 – 100`
 How wide the pan moves. 100 = full stereo. 0 = collapses to center (effectively defeats pan).
 
 **Pan base rate** `0.001 – 1000` (Tremolo / Increment modes only)
@@ -265,7 +265,7 @@ How long this voice's note actually sounds, in cycles. Controls *sound timing* �
 - **Note duration > Next voice in** → Vn's release continues while the next voice plays (overlap / phrasing).
 - **Note duration = 0** → Vn is a silent step (rest) of duration "Next voice in." Silent on entry and exit, no click.
 
-**Vn Gain dB** `-60 – 6`
+**Vn gain (dB)** `-60 – 6`
 Per-voice level.
 
 **Vn Active** `Off / On`

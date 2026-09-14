@@ -20,21 +20,21 @@ desc: Binaural Polyrhythm Oscillator v3 (note-based)
 // built, and this block is that document. Reading order (R19/R20): what the
 // plugin IS -> its rate (value, then mode) -> the shape of its movement ->
 // the voices -> stereo and pan -> transport -> drift -> ramp.
-slider1:0<0,1,1{Drift,Independent}>Tremolo Mode
+slider1:0<0,1,1{Drift,Independent}>Tremolo mode
 // The rate PAIR: value then mode, adjacent, five modes always in this order.
 // `Every N beats` means beats per cycle; `N per beat` is its reciprocal. Both
 // are needed -- keeping only the slow half made eight cycles per beat into
 // typing 0.125, which is the arithmetic this suite exists to remove.
-slider2:60<0.001,1000,0.001>Rate Value — all voices (BPM / sec / Hz / beats per cycle / per beat)
-slider3:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
-slider4:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
-slider5:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
+slider2:60<0.001,1000,0.001>Rate value — all voices (BPM / sec / Hz / beats per cycle / per beat)
+slider3:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
+slider4:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack shape
+slider5:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
 
 // ===== BASE PITCH =====
-slider6:440<20,2000,0.1>Tuning Reference Hz
+slider6:440<20,2000,0.1>Tuning reference (Hz)
 slider7:0<-12,12,1>Transpose (half steps)
 slider8:0<-4,4,1>Octave shift
-slider9:4<0,1000,0.001>Binaural Beat Hz (L/R offset)
+slider9:4<0,1000,0.001>Binaural beat (Hz, L/R offset)
 
 // ===== PULSE WIDTH (Waveform slot 13 only) =====
 // Duty cycle for the Pulse waveform: the fraction of each cycle the wave
@@ -45,7 +45,7 @@ slider9:4<0,1000,0.001>Binaural Beat Hz (L/R offset)
 // rather than identity. Shown whenever the visible Waveform is Pulse OR any
 // voice is using Pulse, so it can never be live and hidden at the same time.
 // Range stops short of 0/100 (which would be silence/DC).
-slider10:25<1,99,0.1>Pulse Width % (50 = square)
+slider10:25<1,99,0.1>Pulse width (%, 50 = square)
 
 // ===== CHARACTER (global post-effects) =====
 // Four sliders that adjust the character of WHATEVER waveform is selected.
@@ -107,10 +107,10 @@ slider19:0<-1000,1000,0.001>Fine tune
 slider20:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
 // Unit follows Rate Mode. In Drift mode this is an OFFSET from Rate Value; in
 // Independent mode it IS the voice's rate.
-slider21:0<-1000,1000,0.001>Drift / Rate — offset in Drift mode, this voice's own rate in Independent
+slider21:0<-1000,1000,0.001>Drift / rate — offset in Drift mode, this voice's own rate in Independent
 // Phase Offset unit follows Rate Mode: BPM = beats, Seconds = seconds,
 // Hz = cycles. Values wrap freely -- there is no clamping.
-slider22:0<-1000,1000,0.001>Phase Offset
+slider22:0<-1000,1000,0.001>Phase offset
 // Per-voice from this build on. Nearly free in the engine: the waveform chain
 // was already inside the per-voice loop and already indexed this voice's own
 // phase and gain -- only the waveform NUMBER was global.
@@ -123,10 +123,10 @@ slider23:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,
 // timbre controls stay global -- that is where refinement lives, and this is
 // where identity lives.
 slider24:-6<-60,0,0.01>Tremolo amount (dB, 0 = strongest)
-slider25:100<0,100,0.1>On Duration % of Cycle
-slider26:0<0,100,0.1>Attack % of Cycle
-slider27:100<0,100,0.1>Release % of Cycle
-slider28:-6<-60,6,0.01>Gain dB
+slider25:100<0,100,0.1>On duration (% of cycle)
+slider26:0<0,100,0.1>Attack (% of cycle)
+slider27:100<0,100,0.1>Release (% of cycle)
+slider28:-6<-60,6,0.01>Gain (dB)
 // Active bypasses this voice's oscillator entirely. On modern hardware that
 // makes no audible difference; on older machines it reduces CPU load. Gain at
 // -60 dB is effectively silent but still costs CPU.
@@ -139,9 +139,9 @@ slider29:1<0,1,1{Off,On}>Active (Off = no CPU cost)
 slider30:0<0,1,1{Off,On}>Solo this voice (heard even when Active is off)
 
 // ===== PAN =====
-slider31:0<0,1,1{Off,On}>Pan Enabled
-slider32:0<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan Mode
-slider33:100<0,100,0.1>Pan Spread %
+slider31:0<0,1,1{Off,On}>Pan enabled
+slider32:0<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
+slider33:100<0,100,0.1>Pan spread (%)
 // The pan's OWN complete rate pair. It does not borrow the main Rate Mode any
 // more -- that borrowing is exactly the gap R21 was written to close, and the
 // argument for a shared mode plus a target selector died on it. A plugin with
@@ -152,18 +152,18 @@ slider33:100<0,100,0.1>Pan Spread %
 // touched this control, so the migration writes each instance's actual Rate
 // Mode into it rather than relying on the default. A fresh instance has Rate
 // Mode 0 too, so the two agree.
-slider34:60<0.001,1000,0.001>Pan Base Rate
+slider34:60<0.001,1000,0.001>Pan base rate
 slider35:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan rate mode
-slider36:0<-1000,1000,0.001>Pan Increment per Voice
+slider36:0<-1000,1000,0.001>Pan increment per voice
 // How many positions the Distributed / Converging / Diverging walks step
 // through. A TEMPORAL pattern length, nothing to do with how many voices
 // exist. Shown for every per-cycle mode from Alternating up: the cycle index
 // wraps here, so an ODD value makes Alternating limp (0,1,2 gives -1,+1,-1)
 // and hiding the control would hide the cause.
-slider37:8<2,1000,1>Cycle Steps (per-cycle modes)
+slider37:8<2,1000,1>Cycle steps (per-cycle modes)
 // 0 is an instant switch and is a genuinely different result, not a nicety:
 // bilateral alternation is meant to be a cut, not a sweep.
-slider38:10<0,1000,0.1>Pan Glide ms (0=instant)
+slider38:10<0,1000,0.1>Pan glide (ms, 0=instant)
 
 // ===== DIRECTION & REVERSE =====
 // Forward            -- 8 voices, current behavior.
@@ -185,11 +185,11 @@ slider38:10<0,1000,0.1>Pan Glide ms (0=instant)
 //                       tremolo phase advances backward, so the asymmetric
 //                       envelope fades in where the forward layer fades out --
 //                       the pulsing cancels into a continuous drone.
-slider39:0<0,4,1{Forward,Reverse — permute,Reverse — time,Both — permute,Both — time}>Direction & Reverse
+slider39:0<0,4,1{Forward,Reverse — permute,Reverse — time,Both — permute,Both — time}>Direction & reverse
 // Added to every drift/rate value in the reverse layer (slots 8-15) in Both
 // modes, so the two layers no longer run at matched cadences. Hidden in
 // single-layer modes, where it would only duplicate the global Rate Value.
-slider40:0<-1000,1000,0.001>Reverse Drift Offset
+slider40:0<-1000,1000,0.001>Reverse drift offset
 
 // ===== TRANSPORT =====
 // Start delay: the plugin sits silent for this many units after playback
@@ -222,7 +222,7 @@ slider43:0<0,1000,1>Rest for (cycles)
 // Up/Down amount is in the target's natural unit: the rate's current unit for
 // the rate targets, Hz for Binaural Beat, dB for the Gain targets and Depth,
 // percent for On Duration / Attack / Release.
-slider44:0<0,87,1{Base Rate,Tuning reference,Transpose,Binaural Beat,Pulse width,Tone,Edge,Movement,Body,Pitch (all voices),V1 Pitch,V2 Pitch,V3 Pitch,V4 Pitch,V5 Pitch,V6 Pitch,V7 Pitch,V8 Pitch,Fine tune (all voices),V1 Fine tune,V2 Fine tune,V3 Fine tune,V4 Fine tune,V5 Fine tune,V6 Fine tune,V7 Fine tune,V8 Fine tune,Rate (all voices),V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Tremolo amount (all voices),V1 Tremolo amount,V2 Tremolo amount,V3 Tremolo amount,V4 Tremolo amount,V5 Tremolo amount,V6 Tremolo amount,V7 Tremolo amount,V8 Tremolo amount,On duration (all voices),V1 On duration,V2 On duration,V3 On duration,V4 On duration,V5 On duration,V6 On duration,V7 On duration,V8 On duration,Attack (all voices),V1 Attack,V2 Attack,V3 Attack,V4 Attack,V5 Attack,V6 Attack,V7 Attack,V8 Attack,Release (all voices),V1 Release,V2 Release,V3 Release,V4 Release,V5 Release,V6 Release,V7 Release,V8 Release,Gain (all voices),V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Pan spread,Pan base rate,Pan increment,Pan glide,Reverse drift offset,Play for,Rest for}>Drift target
+slider44:0<0,87,1{Rate value,Tuning reference,Transpose,Binaural beat,Pulse width,Tone,Edge,Movement,Body,Pitch (all voices),V1 pitch,V2 pitch,V3 pitch,V4 pitch,V5 pitch,V6 pitch,V7 pitch,V8 pitch,Fine tune (all voices),V1 fine tune,V2 fine tune,V3 fine tune,V4 fine tune,V5 fine tune,V6 fine tune,V7 fine tune,V8 fine tune,Rate (all voices),V1 rate,V2 rate,V3 rate,V4 rate,V5 rate,V6 rate,V7 rate,V8 rate,Tremolo amount (all voices),V1 tremolo amount,V2 tremolo amount,V3 tremolo amount,V4 tremolo amount,V5 tremolo amount,V6 tremolo amount,V7 tremolo amount,V8 tremolo amount,On duration (all voices),V1 on duration,V2 on duration,V3 on duration,V4 on duration,V5 on duration,V6 on duration,V7 on duration,V8 on duration,Attack (all voices),V1 attack,V2 attack,V3 attack,V4 attack,V5 attack,V6 attack,V7 attack,V8 attack,Release (all voices),V1 release,V2 release,V3 release,V4 release,V5 release,V6 release,V7 release,V8 release,Gain (all voices),V1 gain,V2 gain,V3 gain,V4 gain,V5 gain,V6 gain,V7 gain,V8 gain,Pan spread,Pan base rate,Pan increment per voice,Pan glide,Reverse drift offset,Play for,Rest for}>Drift target
 slider45:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider46:0<0,1000,0.01>Drift down amount (per target, units match target)
 slider47:8<0,1000,1>Drift period (per target, 0 = off)
@@ -250,7 +250,7 @@ slider51:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 // Base Rate (target 0) rides as a multiplicative RATIO so every voice scales
 // in proportional lockstep, preserving the slow beats between them. The other
 // 23 targets ride as additive offsets in their own units.
-slider52:0<0,87,1{Base Rate,Tuning reference,Transpose,Binaural Beat,Pulse width,Tone,Edge,Movement,Body,Pitch (all voices),V1 Pitch,V2 Pitch,V3 Pitch,V4 Pitch,V5 Pitch,V6 Pitch,V7 Pitch,V8 Pitch,Fine tune (all voices),V1 Fine tune,V2 Fine tune,V3 Fine tune,V4 Fine tune,V5 Fine tune,V6 Fine tune,V7 Fine tune,V8 Fine tune,Rate (all voices),V1 Rate,V2 Rate,V3 Rate,V4 Rate,V5 Rate,V6 Rate,V7 Rate,V8 Rate,Tremolo amount (all voices),V1 Tremolo amount,V2 Tremolo amount,V3 Tremolo amount,V4 Tremolo amount,V5 Tremolo amount,V6 Tremolo amount,V7 Tremolo amount,V8 Tremolo amount,On duration (all voices),V1 On duration,V2 On duration,V3 On duration,V4 On duration,V5 On duration,V6 On duration,V7 On duration,V8 On duration,Attack (all voices),V1 Attack,V2 Attack,V3 Attack,V4 Attack,V5 Attack,V6 Attack,V7 Attack,V8 Attack,Release (all voices),V1 Release,V2 Release,V3 Release,V4 Release,V5 Release,V6 Release,V7 Release,V8 Release,Gain (all voices),V1 Gain,V2 Gain,V3 Gain,V4 Gain,V5 Gain,V6 Gain,V7 Gain,V8 Gain,Pan spread,Pan base rate,Pan increment,Pan glide,Reverse drift offset,Play for,Rest for}>Ramp target
+slider52:0<0,87,1{Rate value,Tuning reference,Transpose,Binaural beat,Pulse width,Tone,Edge,Movement,Body,Pitch (all voices),V1 pitch,V2 pitch,V3 pitch,V4 pitch,V5 pitch,V6 pitch,V7 pitch,V8 pitch,Fine tune (all voices),V1 fine tune,V2 fine tune,V3 fine tune,V4 fine tune,V5 fine tune,V6 fine tune,V7 fine tune,V8 fine tune,Rate (all voices),V1 rate,V2 rate,V3 rate,V4 rate,V5 rate,V6 rate,V7 rate,V8 rate,Tremolo amount (all voices),V1 tremolo amount,V2 tremolo amount,V3 tremolo amount,V4 tremolo amount,V5 tremolo amount,V6 tremolo amount,V7 tremolo amount,V8 tremolo amount,On duration (all voices),V1 on duration,V2 on duration,V3 on duration,V4 on duration,V5 on duration,V6 on duration,V7 on duration,V8 on duration,Attack (all voices),V1 attack,V2 attack,V3 attack,V4 attack,V5 attack,V6 attack,V7 attack,V8 attack,Release (all voices),V1 release,V2 release,V3 release,V4 release,V5 release,V6 release,V7 release,V8 release,Gain (all voices),V1 gain,V2 gain,V3 gain,V4 gain,V5 gain,V6 gain,V7 gain,V8 gain,Pan spread,Pan base rate,Pan increment per voice,Pan glide,Reverse drift offset,Play for,Rest for}>Ramp target
 slider53:0<-1000,1000,0.001>Ramp by (per target, units match target)
 // What the duration and start delay are COUNTED IN. The DECLARED DEFAULT IS 2,
 // Minutes, and that is not a free choice: every saved instance has this control

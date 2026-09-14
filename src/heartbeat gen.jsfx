@@ -17,13 +17,13 @@ desc: Heartbeat Generator
 // row.) The step matches every other rate slider in the suite; you type the
 // number you want and nudge from there.
 slider1:70<0.001,1000,0.001>Heart rate (BPM / sec / Hz / beats per cycle / per beat)
-slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
-slider3:120<50,1000,1>Systole ms (S1->S2 gap)
-slider4:1.0<0.0,1.0,0.01>S1 Volume
-slider5:0.7<0.0,1.0,0.01>S2 Volume
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
+slider3:120<50,1000,1>Systole (ms, S1->S2 gap)
+slider4:1.0<0.0,1.0,0.01>S1 volume
+slider5:0.7<0.0,1.0,0.01>S2 volume
 slider6:0.3<0.0,1.0,0.01>Brightness
-slider7:60<10,1000,1>S1 Decay ms
-slider8:25<5,1000,1>S2 Decay ms
+slider7:60<10,1000,1>S1 decay (ms)
+slider8:25<5,1000,1>S2 decay (ms)
 // --- Pitch (R22) ----------------------------------------------------------
 // One block behind a target, exactly as Breath Generator ships it. The two
 // thump frequencies are real pitches -- tuning a heart to a note is a musical
@@ -36,10 +36,10 @@ slider12:45<0,20000,0.001>Pitch value (Hz / semitones / cents)
 slider13:0<-1000,1000,0.001>Fine tune
 slider14:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
 slider15:440<20,2000,0.1>Tuning reference (Hz)
-slider16:3.0<-15.0,15.0,0.1>Stereo Width ms (neg = heart right)
-slider17:6.0<0.001,1000,0.001>Breath Cycle Seconds
-slider18:0.08<0.0,0.25,0.01>Breath HRV Depth
-slider19:0.02<0.0,0.08,0.005>Random HRV Depth
+slider16:3.0<-15.0,15.0,0.1>Stereo width (ms, neg = heart right)
+slider17:6.0<0.001,1000,0.001>Breath cycle (seconds)
+slider18:0.08<0.0,0.25,0.01>Breath HRV depth
+slider19:0.02<0.0,0.08,0.005>Random HRV depth
 
 // Sit silent for N heartbeats after playback starts, then begin
 // normally. Beats are counted at the current BPM (slider1) so a delay
@@ -76,7 +76,7 @@ slider22:0<0,1000,1>Rest for (beats)
 // start-delay was stranded at slider34. Old IDs 17-20 + 28 are now unused;
 // Speed Ramp configs reset on this upgrade (magic already bumped). Declared
 // here for context; REAPER orders by ID so they appear grouped at 29-33.
-slider32:0<0,17,1{Heart rate,S1-S2 gap,S1 volume,S2 volume,Brightness,S1 decay,S2 decay,S1 pitch,S2 pitch,S1 fine tune,S2 fine tune,Tuning reference,Stereo width,Breath cycle,Breath HRV depth,Random HRV depth,Play for,Rest for}>Ramp target
+slider32:0<0,17,1{Heart rate,Systole,S1 volume,S2 volume,Brightness,S1 decay,S2 decay,S1 pitch,S2 pitch,S1 fine tune,S2 fine tune,Tuning reference,Stereo width,Breath cycle,Breath HRV depth,Random HRV depth,Play for,Rest for}>Ramp target
 slider33:0<-1000,1000,0.001>Ramp by (per target)
 // What the duration and start delay are counted in -- one unit for both, so they
 // always mean the same thing as each other. DEFAULT IS 2, Minutes, which is what
@@ -118,7 +118,7 @@ slider38:0<0,1,1{Off,On}>Ramp engage (all targets)
 // used the old block.
 // EIGHTEEN since 2026-09-11 (R24), in the order of the controls they reach. The
 // two HRV depths moved from 2 and 3 to 14 and 15; the plugin remaps an old save.
-slider23:0<0,17,1{Heart rate,S1-S2 gap,S1 volume,S2 volume,Brightness,S1 decay,S2 decay,S1 pitch,S2 pitch,S1 fine tune,S2 fine tune,Tuning reference,Stereo width,Breath cycle,Breath HRV depth,Random HRV depth,Play for,Rest for}>Drift target
+slider23:0<0,17,1{Heart rate,Systole,S1 volume,S2 volume,Brightness,S1 decay,S2 decay,S1 pitch,S2 pitch,S1 fine tune,S2 fine tune,Tuning reference,Stereo width,Breath cycle,Breath HRV depth,Random HRV depth,Play for,Rest for}>Drift target
 slider24:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider25:0<0,1000,0.01>Drift down amount (per target, units match target)
 slider26:8<0,1000,1>Drift period (per target, 0 = off)

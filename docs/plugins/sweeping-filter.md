@@ -183,16 +183,16 @@ Landing on 1 per beat only happens when *you* change the mode. Opening a saved p
 
 ### Sweep Shape
 
-**On Duration % of Cycle** `0-100%, default 50`
+**On duration (% of cycle)** `0-100%, default 50`
 The proportion of each cycle during which the LFO is in its active (non-minimum) state, including attack and release time. At 50%, the filter sweeps up and back during the first half of the cycle and sits at the low frequency for the second half. At 100%, the sweep never rests at the low frequency.
 
-**Depth %** `0-100%, default 100`
+**Depth (%)** `0-100%, default 100`
 How much of the frequency range the sweep covers. At 100%, the sweep moves fully between Frequency Low and Frequency High. At 50%, it sweeps only the inner half of that range, centered between the two values. At 0%, the filter stays fixed at the center frequency with no movement.
 
-**Attack % of Cycle** `0-100%, default 0`
+**Attack (% of cycle)** `0-100%, default 0`
 Proportion of the whole cycle spent in the attack ramp, where the cutoff rises from the low to the high frequency. At 0%, the filter opens instantly. *(Renamed 2026-09-14 from `Attack %`; the sound did not change. This page used to say it was a proportion of the on-time, which the code never did.)*
 
-**Release % of Cycle** `0-100%, default 0`
+**Release (% of cycle)** `0-100%, default 0`
 Proportion of the whole cycle spent in the release ramp, where the cutoff falls from high to low. At 0%, the filter closes instantly. If attack and release together are longer than the on-time, both are scaled down proportionally to fit it. *(Renamed 2026-09-14 from `Release %`; the sound did not change.)*
 
 **Attack Shape** `Linear / Cosine / Logarithmic / Exponential`
@@ -209,7 +209,7 @@ Curve applied to the release ramp. Same options as Attack Shape.
 
 ### Stereo
 
-**R Channel Phase Offset degrees** `-180–+180°, default 0`
+**R channel phase offset (degrees)** `-180–+180°, default 0`
 When Phase Mode is set to Offset from L, this controls the phase difference between the left and right channel LFOs. At 180°, the channels are in opposition — when the left filter is fully open the right is fully closed. At 0° both channels move in unison.
 
 **Phase Mode** `Independent L+R / Offset from L`
@@ -284,7 +284,7 @@ Pan sweeps in sync with the filter LFO at a speed multiplied by the Filter Speed
 **Pan Spread** `0.0-1.0, default 1.0`
 Scales the pan range. At 1.0 positions reach hard left and right. At 0.0 all modes produce center.
 
-**Pan Glide ms** `0-100 ms, default 5`
+**Pan glide (ms)** `0-100 ms, default 5`
 Smoothing time for pan position changes. Higher values trade sharpness for click-free transitions.
 
 **Cycle Steps (per-cycle modes)** `2-32, default 8`

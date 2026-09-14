@@ -36,7 +36,7 @@ slider1:0.3<0.001,1000,0.001>Rate (BPM / sec / Hz / beats per cycle / per beat)
 //         express and which is what this suite exists for. It is NOT a
 //         multiplier any more (R13-revised, 2026-09-02) -- a multiplier is a
 //         number you have to do arithmetic against the tempo to hear.
-slider2:2<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
+slider2:2<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 // RETIRED 2026-09-04 by R13-revised, and hidden. It existed only to spare you
 // arithmetic on a multiplier; "every 4 beats" is now typing 4 into Rate. The
 // slider is not deleted HERE only because this plugin has no reorder pending.
@@ -49,12 +49,12 @@ slider2:2<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
 // reorder pass.
 slider3:0<0,15,1{Custom,every 8 beats,every 4 beats,every 3 beats,every 2 beats,phi slow,2 per 3 beats,3 per 4 beats,1 per beat,4 per 3 beats,3 per 2 beats,phi fast,2 per beat,3 per beat,4 per beat,8 per beat}>Host ratio (retired)
 
-slider4:300<40,20000,1>Range Min Hz
-slider5:1500<40,20000,1>Range Max Hz
+slider4:300<40,20000,1>Range min (Hz)
+slider5:1500<40,20000,1>Range max (Hz)
 slider6:0.6<0,0.95,0.01>Feedback
 slider7:6<2,64,2>Stages
-slider8:90<0,180,1>Stereo Spread (degrees)
-slider9:0.5<0,1,0.01>Wet/Dry Mix
+slider8:90<0,180,1>Stereo spread (degrees)
+slider9:0.5<0,1,0.01>Wet/dry mix
 
 // --- Drift ---------------------------------------------------------------
 // Added 2026-09-05. This plugin, Bubbler and Dapple were built after the 2026-06
@@ -67,7 +67,7 @@ slider9:0.5<0,1,0.01>Wet/Dry Mix
 // sections, and adding or removing one mid-play makes a filter appear from
 // nowhere, which clicks. Same reasoning that keeps Voices off Sustain Looper's
 // list.
-slider10:0<0,5,1{Rate,Range min Hz,Range max Hz,Feedback,Stereo spread,Wet/dry mix}>Drift target
+slider10:0<0,5,1{Rate,Range min,Range max,Feedback,Stereo spread,Wet/dry mix}>Drift target
 // Amounts are PER TARGET, in the target's own unit -- except Rate, which is in
 // BPM in every rate mode, because that is the suite's settled rule: the plugin
 // converts, you never do.
@@ -80,7 +80,7 @@ slider16:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
 slider17:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // --- Ramp ----------------------------------------------------------------
-slider18:0<0,5,1{Rate,Range min Hz,Range max Hz,Feedback,Stereo spread,Wet/dry mix}>Ramp target
+slider18:0<0,5,1{Rate,Range min,Range max,Feedback,Stereo spread,Wet/dry mix}>Ramp target
 slider19:0<-1000,1000,0.001>Ramp by (per target, units match target)
 slider20:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 slider21:0<0,1000,0.01>Ramp duration (per target, in ramp time units)

@@ -101,7 +101,7 @@ Measured by `tools/tuning_ref_check.py`.
 **Resonance** `0.0-1.0, default 0.7`
 Resonance of the lowpass filter. Higher values add a pronounced peak at the cutoff frequency, accentuating the frequencies at each point in the sweep. Values approaching 1.0 can produce self-oscillation.
 
-**Wet/Dry Mix** `0.0-1.0, default 1.0`
+**Wet/dry mix** `0.0-1.0, default 1.0`
 Blend between the filtered signal and the unprocessed input. At 1.0 the output is fully filtered; at 0.0 the filter has no effect.
 
 ---
@@ -289,7 +289,7 @@ extending it, so Ramp duration goes on meaning "you arrive in about this long".
 > dwell length, Fade down length, Low dwell length, Fade up length, High dwell
 > frequency, High dwell fine tune, Low dwell frequency, Low dwell fine tune, Tuning
 > reference, Resonance, Stereo phase offset, Pan spread, Pan glide, Pan sweep rate,
-> Pan sweep every, Wet/dry. A length amount is in that segment's own length unit; a
+> Pan sweep every, Wet/dry mix. A length amount is in that segment's own length unit; a
 > frequency or fine tune in its own unit. Drift is now sliders 30–37 and Ramp
 > 38–45. The six-target text and slider numbers below are history.
 

@@ -22,9 +22,9 @@ At the low end of its stage range it's a normal musical phaser; pushed toward it
 
 **Rate (Hz, or beats per cycle in Host x)** `0.001–1000, default 0.3` — LFO speed. Slow for long sweeps, faster for vibrato-like motion. In **Host x** this number is **beats per cycle** instead of Hz — see Host tempo sync below.
 
-**Range Min Hz** `40–20000, default 300` — low endpoint of the sweep (where the notches sit at one extreme).
+**Range min (Hz)** `40–20000, default 300` — low endpoint of the sweep (where the notches sit at one extreme).
 
-**Range Max Hz** `40–20000, default 1500` — high endpoint. The notches sweep between Min and Max. (Min/Max auto-sort, so order doesn't matter.)
+**Range max (Hz)** `40–20000, default 1500` — high endpoint. The notches sweep between Min and Max. (Min/Max auto-sort, so order doesn't matter.)
 
 **Feedback** `0–0.95, default 0.6` — resonance around the allpass chain. This is the hollow "whoosh." Push toward 0.9 for the dramatic jet-sweep; 0 for a soft, notches-only phase.
 

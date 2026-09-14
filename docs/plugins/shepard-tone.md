@@ -85,10 +85,10 @@ The number of oscillator layers per voice and the width of the pitch window in o
 **Center Octave** `0-8, default 3`
 The octave at the center of the pitch window. All voices sweep through a range centered here. Lower values produce a deeper, more bass-heavy texture.
 
-**Fade In %** `0-100%, default 20`
+**Fade in (%)** `0-100%, default 20`
 The fraction of each sweep cycle spent fading in at the bottom of the pitch window. Lower values produce a sharper entry; higher values a longer crossfade.
 
-**Fade Out %** `0-100%, default 20`
+**Fade out (%)** `0-100%, default 20`
 The fraction of each sweep cycle spent fading out at the top of the pitch window. Fade In and Fade Out together determine how much of the window is at full volume.
 
 > If Fade In % + Fade Out % exceeds 100%, both are scaled down proportionally.
@@ -101,13 +101,13 @@ Duty cycle for the **Pulse** waveform — the fraction of each cycle the wave sp
 
 Only meaningful when Waveform is set to **Pulse**, and hidden from the parameter list entirely on every other waveform.
 
-**Binaural Beat Hz** `0-100 Hz, default 0`
+**Binaural beat (Hz)** `0-100 Hz, default 0`
 Offsets the right channel oscillator frequencies by this many Hz, adding a binaural beat across all voices and oscillators simultaneously.
 
 **Root Note** `C / C# / D / D# / E / F / F# / G / G# / A / A# / B, default C`
 The global tonic. Per-voice Note sliders are interpreted as offsets from this value. Setting Root Note to D and a voice Note to E produces F# (D + a major second).
 
-**Tuning Reference Hz** `20-2000 Hz, default 440`
+**Tuning reference (Hz)** `20-2000 Hz, default 440`
 The A4 reference frequency used to calculate all oscillator pitches. Changing it while playing retunes every voice at once.
 
 **Fine tune unit (for every voice)** `Hz / Semitones / Cents, default Cents`
@@ -152,7 +152,7 @@ Whether this voice sweeps upward or downward. Setting two voices to opposite dir
 **Vn Rate (in rate mode units; 0 = holds still)** `-1000–+1000, default 0`
 Independent mode only, and hidden in Synced mode. This voice's own sweep speed, in the units set by Rate Mode. At 0 or below the voice does not sweep at all: it holds as a steady chord of its note in every octave.
 
-**Vn Gain dB** `-60–+6 dB, default 0`
+**Vn gain (dB)** `-60–+6 dB, default 0`
 Per-voice output level, applied before the voice is summed into the mix.
 
 **Vn Pan** `-100–+100, default 0`

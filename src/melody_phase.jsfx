@@ -67,7 +67,7 @@ slider16:0<0,1,1{Off,On}>Legato glide
 slider17:0<0,1,1{Off,On}>Pan enabled
 slider18:2<0,15,1{Tremolo,Increment,Spread,Spread Reversed,Alternating,Alternating (Flipped),Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
 slider19:100<0,100,0.1>Pan spread (%)
-slider20:10<0,1000,0.1>Pan glide ms (0 = instant)
+slider20:10<0,1000,0.1>Pan glide (ms, 0 = instant)
 slider21:8<2,1000,1>Cycle steps (per-cycle modes)
 slider22:1<0.001,1000,0.001>Pan base rate (Tremolo / Increment modes)
 slider23:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Pan rate mode
@@ -78,70 +78,70 @@ slider26:0<0,5,1{Up,Down,Up-Down (repeat),Up-Down (no repeat),Down-Up (repeat),D
 slider27:1<0,1,1{Off,On}>Loop sequence
 
 // --- Voices, seven controls each ---
-slider28:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V1 Note
-slider29:60<0,20000,0.001>V1 Pitch (Hz / semitones / cents)
-slider30:0<-1000,1000,0.001>V1 Fine tune (in fine tune units)
-slider31:1<0.001,1000,0.001>V1 Next voice in (cycles)
-slider32:1<0,1000,0.001>V1 Note duration (cycles; 0 = silent)
-slider33:-6<-60,6,0.01>V1 Gain dB
-slider34:1<0,1,1{Off,On}>V1 Active
-slider35:0<0,1,1{Off,On}>V1 Solo (heard even when Active is off)
-slider36:62<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V2 Note
-slider37:62<0,20000,0.001>V2 Pitch (Hz / semitones / cents)
-slider38:0<-1000,1000,0.001>V2 Fine tune (in fine tune units)
-slider39:1<0.001,1000,0.001>V2 Next voice in (cycles)
-slider40:1<0,1000,0.001>V2 Note duration (cycles; 0 = silent)
-slider41:-6<-60,6,0.01>V2 Gain dB
-slider42:0<0,1,1{Off,On}>V2 Active
-slider43:0<0,1,1{Off,On}>V2 Solo (heard even when Active is off)
-slider44:64<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V3 Note
-slider45:64<0,20000,0.001>V3 Pitch (Hz / semitones / cents)
-slider46:0<-1000,1000,0.001>V3 Fine tune (in fine tune units)
-slider47:1<0.001,1000,0.001>V3 Next voice in (cycles)
-slider48:1<0,1000,0.001>V3 Note duration (cycles; 0 = silent)
-slider49:-6<-60,6,0.01>V3 Gain dB
-slider50:0<0,1,1{Off,On}>V3 Active
-slider51:0<0,1,1{Off,On}>V3 Solo (heard even when Active is off)
-slider52:65<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V4 Note
-slider53:65<0,20000,0.001>V4 Pitch (Hz / semitones / cents)
-slider54:0<-1000,1000,0.001>V4 Fine tune (in fine tune units)
-slider55:1<0.001,1000,0.001>V4 Next voice in (cycles)
-slider56:1<0,1000,0.001>V4 Note duration (cycles; 0 = silent)
-slider57:-6<-60,6,0.01>V4 Gain dB
-slider58:0<0,1,1{Off,On}>V4 Active
-slider59:0<0,1,1{Off,On}>V4 Solo (heard even when Active is off)
-slider60:67<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V5 Note
-slider61:67<0,20000,0.001>V5 Pitch (Hz / semitones / cents)
-slider62:0<-1000,1000,0.001>V5 Fine tune (in fine tune units)
-slider63:1<0.001,1000,0.001>V5 Next voice in (cycles)
-slider64:1<0,1000,0.001>V5 Note duration (cycles; 0 = silent)
-slider65:-6<-60,6,0.01>V5 Gain dB
-slider66:0<0,1,1{Off,On}>V5 Active
-slider67:0<0,1,1{Off,On}>V5 Solo (heard even when Active is off)
-slider68:69<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V6 Note
-slider69:69<0,20000,0.001>V6 Pitch (Hz / semitones / cents)
-slider70:0<-1000,1000,0.001>V6 Fine tune (in fine tune units)
-slider71:1<0.001,1000,0.001>V6 Next voice in (cycles)
-slider72:1<0,1000,0.001>V6 Note duration (cycles; 0 = silent)
-slider73:-6<-60,6,0.01>V6 Gain dB
-slider74:0<0,1,1{Off,On}>V6 Active
-slider75:0<0,1,1{Off,On}>V6 Solo (heard even when Active is off)
-slider76:71<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V7 Note
-slider77:71<0,20000,0.001>V7 Pitch (Hz / semitones / cents)
-slider78:0<-1000,1000,0.001>V7 Fine tune (in fine tune units)
-slider79:1<0.001,1000,0.001>V7 Next voice in (cycles)
-slider80:1<0,1000,0.001>V7 Note duration (cycles; 0 = silent)
-slider81:-6<-60,6,0.01>V7 Gain dB
-slider82:0<0,1,1{Off,On}>V7 Active
-slider83:0<0,1,1{Off,On}>V7 Solo (heard even when Active is off)
-slider84:72<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V8 Note
-slider85:72<0,20000,0.001>V8 Pitch (Hz / semitones / cents)
-slider86:0<-1000,1000,0.001>V8 Fine tune (in fine tune units)
-slider87:1<0.001,1000,0.001>V8 Next voice in (cycles)
-slider88:1<0,1000,0.001>V8 Note duration (cycles; 0 = silent)
-slider89:-6<-60,6,0.01>V8 Gain dB
-slider90:0<0,1,1{Off,On}>V8 Active
-slider91:0<0,1,1{Off,On}>V8 Solo (heard even when Active is off)
+slider28:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V1 note
+slider29:60<0,20000,0.001>V1 pitch (Hz / semitones / cents)
+slider30:0<-1000,1000,0.001>V1 fine tune (in fine tune units)
+slider31:1<0.001,1000,0.001>V1 next voice in (cycles)
+slider32:1<0,1000,0.001>V1 note duration (cycles; 0 = silent)
+slider33:-6<-60,6,0.01>V1 gain (dB)
+slider34:1<0,1,1{Off,On}>V1 active
+slider35:0<0,1,1{Off,On}>V1 solo (heard even when Active is off)
+slider36:62<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V2 note
+slider37:62<0,20000,0.001>V2 pitch (Hz / semitones / cents)
+slider38:0<-1000,1000,0.001>V2 fine tune (in fine tune units)
+slider39:1<0.001,1000,0.001>V2 next voice in (cycles)
+slider40:1<0,1000,0.001>V2 note duration (cycles; 0 = silent)
+slider41:-6<-60,6,0.01>V2 gain (dB)
+slider42:0<0,1,1{Off,On}>V2 active
+slider43:0<0,1,1{Off,On}>V2 solo (heard even when Active is off)
+slider44:64<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V3 note
+slider45:64<0,20000,0.001>V3 pitch (Hz / semitones / cents)
+slider46:0<-1000,1000,0.001>V3 fine tune (in fine tune units)
+slider47:1<0.001,1000,0.001>V3 next voice in (cycles)
+slider48:1<0,1000,0.001>V3 note duration (cycles; 0 = silent)
+slider49:-6<-60,6,0.01>V3 gain (dB)
+slider50:0<0,1,1{Off,On}>V3 active
+slider51:0<0,1,1{Off,On}>V3 solo (heard even when Active is off)
+slider52:65<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V4 note
+slider53:65<0,20000,0.001>V4 pitch (Hz / semitones / cents)
+slider54:0<-1000,1000,0.001>V4 fine tune (in fine tune units)
+slider55:1<0.001,1000,0.001>V4 next voice in (cycles)
+slider56:1<0,1000,0.001>V4 note duration (cycles; 0 = silent)
+slider57:-6<-60,6,0.01>V4 gain (dB)
+slider58:0<0,1,1{Off,On}>V4 active
+slider59:0<0,1,1{Off,On}>V4 solo (heard even when Active is off)
+slider60:67<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V5 note
+slider61:67<0,20000,0.001>V5 pitch (Hz / semitones / cents)
+slider62:0<-1000,1000,0.001>V5 fine tune (in fine tune units)
+slider63:1<0.001,1000,0.001>V5 next voice in (cycles)
+slider64:1<0,1000,0.001>V5 note duration (cycles; 0 = silent)
+slider65:-6<-60,6,0.01>V5 gain (dB)
+slider66:0<0,1,1{Off,On}>V5 active
+slider67:0<0,1,1{Off,On}>V5 solo (heard even when Active is off)
+slider68:69<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V6 note
+slider69:69<0,20000,0.001>V6 pitch (Hz / semitones / cents)
+slider70:0<-1000,1000,0.001>V6 fine tune (in fine tune units)
+slider71:1<0.001,1000,0.001>V6 next voice in (cycles)
+slider72:1<0,1000,0.001>V6 note duration (cycles; 0 = silent)
+slider73:-6<-60,6,0.01>V6 gain (dB)
+slider74:0<0,1,1{Off,On}>V6 active
+slider75:0<0,1,1{Off,On}>V6 solo (heard even when Active is off)
+slider76:71<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V7 note
+slider77:71<0,20000,0.001>V7 pitch (Hz / semitones / cents)
+slider78:0<-1000,1000,0.001>V7 fine tune (in fine tune units)
+slider79:1<0.001,1000,0.001>V7 next voice in (cycles)
+slider80:1<0,1000,0.001>V7 note duration (cycles; 0 = silent)
+slider81:-6<-60,6,0.01>V7 gain (dB)
+slider82:0<0,1,1{Off,On}>V7 active
+slider83:0<0,1,1{Off,On}>V7 solo (heard even when Active is off)
+slider84:72<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>V8 note
+slider85:72<0,20000,0.001>V8 pitch (Hz / semitones / cents)
+slider86:0<-1000,1000,0.001>V8 fine tune (in fine tune units)
+slider87:1<0.001,1000,0.001>V8 next voice in (cycles)
+slider88:1<0,1000,0.001>V8 note duration (cycles; 0 = silent)
+slider89:-6<-60,6,0.01>V8 gain (dB)
+slider90:0<0,1,1{Off,On}>V8 active
+slider91:0<0,1,1{Off,On}>V8 solo (heard even when Active is off)
 
 // --- Output ---
 slider92:-6<-60,0,0.01>Master gain (dB)
@@ -153,7 +153,7 @@ slider95:0<0,1000,1>Rest for (steps)
 slider96:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // --- Drift: 55 targets in the order of the controls they reach ---
-slider97:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment,V1 Pitch,V1 Fine tune,V1 Next voice in,V1 Note duration,V1 Gain,V2 Pitch,V2 Fine tune,V2 Next voice in,V2 Note duration,V2 Gain,V3 Pitch,V3 Fine tune,V3 Next voice in,V3 Note duration,V3 Gain,V4 Pitch,V4 Fine tune,V4 Next voice in,V4 Note duration,V4 Gain,V5 Pitch,V5 Fine tune,V5 Next voice in,V5 Note duration,V5 Gain,V6 Pitch,V6 Fine tune,V6 Next voice in,V6 Note duration,V6 Gain,V7 Pitch,V7 Fine tune,V7 Next voice in,V7 Note duration,V7 Gain,V8 Pitch,V8 Fine tune,V8 Next voice in,V8 Note duration,V8 Gain,Master gain,Play for,Rest for}>Drift target
+slider97:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment per voice,V1 pitch,V1 fine tune,V1 next voice in,V1 note duration,V1 gain,V2 pitch,V2 fine tune,V2 next voice in,V2 note duration,V2 gain,V3 pitch,V3 fine tune,V3 next voice in,V3 note duration,V3 gain,V4 pitch,V4 fine tune,V4 next voice in,V4 note duration,V4 gain,V5 pitch,V5 fine tune,V5 next voice in,V5 note duration,V5 gain,V6 pitch,V6 fine tune,V6 next voice in,V6 note duration,V6 gain,V7 pitch,V7 fine tune,V7 next voice in,V7 note duration,V7 gain,V8 pitch,V8 fine tune,V8 next voice in,V8 note duration,V8 gain,Master gain,Play for,Rest for}>Drift target
 slider98:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider99:0<0,1000,0.01>Drift down amount (per target, units match target)
 slider100:8<0,1000,1>Drift period (per target, 0 = off)
@@ -164,7 +164,7 @@ slider104:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
 slider105:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // --- Ramp: the same 55 targets ---
-slider106:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment,V1 Pitch,V1 Fine tune,V1 Next voice in,V1 Note duration,V1 Gain,V2 Pitch,V2 Fine tune,V2 Next voice in,V2 Note duration,V2 Gain,V3 Pitch,V3 Fine tune,V3 Next voice in,V3 Note duration,V3 Gain,V4 Pitch,V4 Fine tune,V4 Next voice in,V4 Note duration,V4 Gain,V5 Pitch,V5 Fine tune,V5 Next voice in,V5 Note duration,V5 Gain,V6 Pitch,V6 Fine tune,V6 Next voice in,V6 Note duration,V6 Gain,V7 Pitch,V7 Fine tune,V7 Next voice in,V7 Note duration,V7 Gain,V8 Pitch,V8 Fine tune,V8 Next voice in,V8 Note duration,V8 Gain,Master gain,Play for,Rest for}>Ramp target
+slider106:0<0,54,1{Rate value,Pulse width,Tuning reference,Transpose,Binaural beat,Attack,Release,Glide time,Pan spread,Pan glide,Pan base rate,Pan increment per voice,V1 pitch,V1 fine tune,V1 next voice in,V1 note duration,V1 gain,V2 pitch,V2 fine tune,V2 next voice in,V2 note duration,V2 gain,V3 pitch,V3 fine tune,V3 next voice in,V3 note duration,V3 gain,V4 pitch,V4 fine tune,V4 next voice in,V4 note duration,V4 gain,V5 pitch,V5 fine tune,V5 next voice in,V5 note duration,V5 gain,V6 pitch,V6 fine tune,V6 next voice in,V6 note duration,V6 gain,V7 pitch,V7 fine tune,V7 next voice in,V7 note duration,V7 gain,V8 pitch,V8 fine tune,V8 next voice in,V8 note duration,V8 gain,Master gain,Play for,Rest for}>Ramp target
 slider107:0<-1000,1000,0.001>Ramp by (per target, units match target)
 slider108:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 slider109:0<0,1000,0.1>Ramp duration (per target, in ramp time units)

@@ -27,7 +27,7 @@ slider1:120<0.001,1000,0.001>Tempo (BPM / sec / Hz / beats per cycle / per beat)
 // "Seconds" and "Hz" would be nonsense on it. Appended at the END of the
 // slider range per the never-renumber rule, even though it reads better
 // next to Tempo -- moving it would scramble every saved project.
-slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 slider3:4<1,1000,1>Beats per bar
 slider4:0<-1,1,0.01>Swing amount
 // --- Pitch (R22) ----------------------------------------------------------
@@ -85,7 +85,7 @@ slider22:0<0,1000,1>Rest for (beats)
 // SIXTEEN since 2026-09-11 (R24), in the order of the controls they reach. Beats
 // per bar is one on Rozaya's call: "Beats per bar belongs on there too." Swing
 // moved from 1 to 2; the plugin remaps an old save.
-slider23:0<0,15,1{Tempo,Beats per bar,Swing amount,Strong pitch,Weak pitch,Strong fine tune,Weak fine tune,Tuning reference,Tone resonance,Strong volume,Weak volume,Strong decay,Weak decay,Pan spread,Play for,Rest for}>Ramp target
+slider23:0<0,15,1{Tempo,Beats per bar,Swing amount,Strong pitch,Weak pitch,Strong fine tune,Weak fine tune,Tuning reference,Tone resonance,Strong beat volume,Weak beat volume,Strong beat decay,Weak beat decay,Pan spread,Play for,Rest for}>Ramp target
 slider24:0<-1000,1000,0.001>Ramp by (per target, units match target)
 // What the duration and start delay below are counted in -- one unit for both,
 // so they always mean the same thing as each other. DEFAULT IS 2, Minutes,
@@ -112,7 +112,7 @@ slider30:0<0,1000,0.1>Ramp start delay (per target, in ramp time units)
 // targets. For slow wall-clock feel, set a long period (~960 beats ≈ 8 min
 // at 120 BPM). (Drift IDs shifted +1 from the old 21-25 layout in the v2.14
 // reorg above — same reset story.)
-slider31:0<0,15,1{Tempo,Beats per bar,Swing amount,Strong pitch,Weak pitch,Strong fine tune,Weak fine tune,Tuning reference,Tone resonance,Strong volume,Weak volume,Strong decay,Weak decay,Pan spread,Play for,Rest for}>Drift target
+slider31:0<0,15,1{Tempo,Beats per bar,Swing amount,Strong pitch,Weak pitch,Strong fine tune,Weak fine tune,Tuning reference,Tone resonance,Strong beat volume,Weak beat volume,Strong beat decay,Weak beat decay,Pan spread,Play for,Rest for}>Drift target
 slider32:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider33:0<0,1000,0.01>Drift down amount (per target, units match target)
 slider34:8<0,1000,1>Drift period (per target, 0 = off)

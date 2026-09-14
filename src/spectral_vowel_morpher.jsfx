@@ -129,7 +129,7 @@ slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 // minutes everywhere in the suite and is not governed by Rate Mode anywhere.
 // Value then mode since 2026-09-13, as R20 puts every rate block. Rozaya: "Yes".
 slider8:20<0.01,1000,0.01>Auto-morph time (BPM / sec / Hz / beats per cycle / per beat)
-slider9:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
+slider9:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 
 // --- The sound of the morph. Everything from here to High cut shapes what the
 //     captured spectra become; all of it is global, across every slot. ---

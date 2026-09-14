@@ -19,9 +19,10 @@ INSTALLED = os.path.join(os.environ.get("APPDATA", ""), "REAPER", "Effects", "gl
 
 # block name -> label pattern (case-insensitive, matched from the start of the label)
 BLOCKS = [
-    ("start_delay",       r"(\w+: )?start delay(?! mode)"),
-    ("play_for",          r"(\w+: )?play for"),
-    ("rest_for",          r"(\w+: )?rest for"),
+    # "HB play for" (Womb's per-layer transport; "HB: Play for" until 2026-09-14), never Drift's or Ramp's own
+    ("start_delay",       r"(?!drift |ramp )(\w+:? )?start delay(?! mode)"),
+    ("play_for",          r"(?!drift |ramp )(\w+:? )?play for"),
+    ("rest_for",          r"(?!drift |ramp )(\w+:? )?rest for"),
     ("transport_unit",    r"transport unit|start delay mode"),
     ("rest_mode",         r"rest mode|lfo at rest|modulation at rest"),
     ("output_at_rest",    r"output at rest"),

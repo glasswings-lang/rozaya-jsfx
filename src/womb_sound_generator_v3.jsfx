@@ -99,8 +99,8 @@ slider7:30<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D
 slider8:45<0,20000,0.001>S1 pitch (Hz / semitones / cents)
 slider9:0<-1000,1000,0.001>S1 fine tune
 slider10:2<0,2,1{Hz,Semitones,Cents}>S1 fine tune unit
-slider11:60<10,1000,1>S1 Decay ms
-slider12:1.0<0.0,1.0,0.01>S1 Volume
+slider11:60<10,1000,1>S1 decay (ms)
+slider12:1.0<0.0,1.0,0.01>S1 volume
 // --- S2 pitch (R22) -------------------------------------------------
 // Replicated in place rather than pulled out behind one selector. Rozaya,
 // 2026-09-09: "womb is 3-layered. just replicate the block where it needs
@@ -110,12 +110,12 @@ slider14:47<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,
 slider15:120<0,20000,0.001>S2 pitch (Hz / semitones / cents)
 slider16:0<-1000,1000,0.001>S2 fine tune
 slider17:2<0,2,1{Hz,Semitones,Cents}>S2 fine tune unit
-slider18:25<5,1000,1>S2 Decay ms
-slider19:0.7<0.0,1.0,0.01>S2 Volume
+slider18:25<5,1000,1>S2 decay (ms)
+slider19:0.7<0.0,1.0,0.01>S2 volume
 slider20:0.3<0.0,1.0,0.01>Brightness
-slider21:3.0<-15.0,15.0,0.1>HB Stereo Width ms (neg = heart right)
-slider22:1.0<0.0,1.0,0.01>HB Master Volume
-slider23:0<0,1,1{Off,Solo}>Heartbeat Solo
+slider21:3.0<-15.0,15.0,0.1>HB stereo width (ms, neg = heart right)
+slider22:1.0<0.0,1.0,0.01>HB master volume
+slider23:0<0,1,1{Off,Solo}>Heartbeat solo
 
 // --- BREATH ----------------------------------------------------------------
 // SET BREATH RATE -- a one-shot SETUP action, not a live rate.
@@ -179,14 +179,14 @@ slider36:53<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,
 slider37:170<0,20000,0.001>Exhale pitch (Hz / semitones / cents)
 slider38:0<-1000,1000,0.001>Exhale fine tune
 slider39:2<0,2,1{Hz,Semitones,Cents}>Exhale fine tune unit
-slider40:0.3<0.0,1.0,0.01>Inhale Fade In
-slider41:0.2<0.0,1.0,0.01>Inhale Fade Out
-slider42:0.2<0.0,1.0,0.01>Exhale Fade In
-slider43:0.3<0.0,1.0,0.01>Exhale Fade Out
-slider44:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade Mode
-slider45:80<20,20000,1>Breath High-pass Hz
-slider46:500<50,4000,1>Breath Post-filter Hz
-slider47:1.5<0.5,8.0,0.1>Breath Post-filter Q
+slider40:0.3<0.0,1.0,0.01>Inhale fade in
+slider41:0.2<0.0,1.0,0.01>Inhale fade out
+slider42:0.2<0.0,1.0,0.01>Exhale fade in
+slider43:0.3<0.0,1.0,0.01>Exhale fade out
+slider44:2<1,4,1{Linear,Cosine,Exponential,Natural}>Fade mode
+slider45:80<20,20000,1>Breath high-pass (Hz)
+slider46:500<50,4000,1>Breath post-filter (Hz)
+slider47:1.5<0.5,8.0,0.1>Breath post-filter Q
 // Periodic deep breaths. When a sigh fires, the next breath's inhale stretches
 // by the depth multiplier (and reads as deeper, because the longer inhale
 // envelope rises higher under the same fade shape). 0 interval = no sighs.
@@ -198,9 +198,9 @@ slider48:0<0,1000,0.001>Sigh interval (minutes, 0=off)
 // segments in proportion, so the sigh keeps the breath's shape and simply takes
 // longer. 0 = a sigh is the same length as any other breath.
 slider49:4<0,1000,0.01>Sigh extra length (in breath units)
-slider50:0.5<0.0,1.0,0.01>Breath Stereo Width
-slider51:0.5<0.0,1.0,0.01>Breath Volume
-slider52:0<0,1,1{Off,Solo}>Breath Solo
+slider50:0.5<0.0,1.0,0.01>Breath stereo width
+slider51:0.5<0.0,1.0,0.01>Breath volume
+slider52:0<0,1,1{Off,Solo}>Breath solo
 
 // --- BLOODFLOW -------------------------------------------------------------
 // Bloodflow has no rate of its own -- it reads the heart's phase directly, one
@@ -237,29 +237,29 @@ slider53:0<-1000,1000,0.001>Bloodflow offset (wraps at one heartbeat)
 // the percentage because it is the one to reach for first; the offset's own
 // default is 0, so the unit changes nothing until it is moved.
 slider54:3<0,3,1{Milliseconds,Seconds,Beats,% of heartbeat}>Bloodflow offset unit
-slider55:0.15<0.005,0.5,0.005>Bloodflow Attack (proportion of cycle)
-slider56:0.85<0.05,0.95,0.01>Bloodflow Decay (proportion of cycle)
-slider57:0.1<0,1,0.01>Bloodflow Dicrotic Level
-slider58:250<20,2000,1>Bloodflow Filter Hz
-slider59:0.2<0.0,0.95,0.01>Bloodflow Resonance
-slider60:0.5<0.0,1.0,0.01>Bloodflow Stereo Width
-slider61:0.7<0.0,1.0,0.01>Bloodflow Volume
-slider62:0<0,1,1{Off,Solo}>Bloodflow Solo
+slider55:0.15<0.005,0.5,0.005>Bloodflow attack (proportion of cycle)
+slider56:0.85<0.05,0.95,0.01>Bloodflow decay (proportion of cycle)
+slider57:0.1<0,1,0.01>Bloodflow dicrotic level
+slider58:250<20,2000,1>Bloodflow filter (Hz)
+slider59:0.2<0.0,0.95,0.01>Bloodflow resonance
+slider60:0.5<0.0,1.0,0.01>Bloodflow stereo width
+slider61:0.7<0.0,1.0,0.01>Bloodflow volume
+slider62:0<0,1,1{Off,Solo}>Bloodflow solo
 
 // --- MASTER AND TRANSPORT --------------------------------------------------
 // ONE tuning reference for the whole plugin, per R22 -- not one per block.
 slider63:440<20,2000,0.1>Tuning reference (Hz)
-slider64:0<0,1,1{Normal,Flipped}>Master Stereo Flip
+slider64:0<0,1,1{Normal,Flipped}>Master stereo flip
 // Sit silent for this long after playback starts, then begin normally.
 slider65:0<0,1000,0.001>Start delay (beats)
 // Play/rest gates, per layer, independent. Each counts in its own layer's
 // natural unit, which is why they are not one shared pair.
-slider66:0<0,1000,1>HB: Play for (beats)
-slider67:0<0,1000,1>HB: Rest for (beats)
-slider68:0<0,1000,1>Breath: Play for (breaths)
-slider69:0<0,1000,1>Breath: Rest for (breaths)
-slider70:0<0,1000,1>Bloodflow: Play for (heartbeats)
-slider71:0<0,1000,1>Bloodflow: Rest for (heartbeats)
+slider66:0<0,1000,1>HB play for (beats)
+slider67:0<0,1000,1>HB rest for (beats)
+slider68:0<0,1000,1>Breath play for (breaths)
+slider69:0<0,1000,1>Breath rest for (breaths)
+slider70:0<0,1000,1>Bloodflow play for (heartbeats)
+slider71:0<0,1000,1>Bloodflow rest for (heartbeats)
 
 // --- DRIFT (nested-selector pattern, see header) ----------------------------
 // Pick a target, then the controls below hold THAT target's drift config.
@@ -268,7 +268,7 @@ slider71:0<0,1000,1>Bloodflow: Rest for (heartbeats)
 // FORTY-NINE since 2026-09-11 (R24), in the order of the controls they reach, each
 // named for its control -- Rozaya: "Yes, and yes." The plugin remaps an old save;
 // a project line's two selectors are remapped by tools/womb_r24_migrate_20260911.py.
-slider72:0<0,48,1{Heart rate,Heart rate swing per breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter Hz,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter Hz,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Drift target
+slider72:0<0,48,1{Heart rate,Heart rate swing per breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Drift target
 slider73:0<0,2000,0.01>Drift up amount (per target, units match target)
 slider74:0<0,2000,0.01>Drift down amount (per target, units match target)
 slider75:8<0,1000,1>Drift period (per target, in drift period units, 0 = off)
@@ -296,7 +296,7 @@ slider80:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 // `by` is a signed DELTA in the target's own units, not a destination -- 0
 // means no ramp, negative means decrease (slower heart, shorter inhale).
 // Each target is additive and independent.
-slider81:0<0,48,1{Heart rate,Heart rate swing per breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter Hz,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter Hz,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Ramp target
+slider81:0<0,48,1{Heart rate,Heart rate swing per breath,Systole,S1 pitch,S1 fine tune,S1 decay,S1 volume,S2 pitch,S2 fine tune,S2 decay,S2 volume,Brightness,HB stereo width,HB master volume,Breath rate,Inhale,Top pause,Exhale,Bottom pause,Inhale pitch,Inhale fine tune,Exhale pitch,Exhale fine tune,Inhale fade in,Inhale fade out,Exhale fade in,Exhale fade out,Breath high-pass,Breath post-filter,Breath post-filter Q,Sigh interval,Sigh extra length,Breath stereo width,Breath volume,Bloodflow offset,Bloodflow attack,Bloodflow decay,Bloodflow dicrotic level,Bloodflow filter,Bloodflow resonance,Bloodflow stereo width,Bloodflow volume,Tuning reference,HB play for,HB rest for,Breath play for,Breath rest for,Bloodflow play for,Bloodflow rest for}>Ramp target
 slider82:0<-2000,2000,0.001>Ramp by (per target)
 // Declared MINUTES, which is both the suite default and what the duration and
 // start delay already meant, so no saved instance changes meaning.

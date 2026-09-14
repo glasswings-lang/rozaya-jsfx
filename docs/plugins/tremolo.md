@@ -87,7 +87,7 @@ How Rate Value is interpreted.
 - **Seconds** — period of one full cycle.
 - **BPM** — cycles per minute.
 
-**On Duration % of Cycle** `0-100%, default 50`
+**On duration (% of cycle)** `0-100%, default 50`
 The proportion of each cycle during which the tremolo is in its active (non-silent) state — including attack and release time. At 50%, the signal is present for half the cycle and absent for the other half. At 100%, the tremolo never fully closes. At 0%, the output is silence.
 
 **Tremolo amount (dB, 0 = strongest)** `-60 to 0 dB, default -6`
@@ -100,10 +100,10 @@ where it is called `Amount (dB)`.
 *Renamed 2026-09-10 from `Depth dB`. The sound did not change. Until then this
 manual described it backwards, which is what the old name invited.*
 
-**Attack % of Cycle** `0-100%, default 0`
+**Attack (% of cycle)** `0-100%, default 0`
 Proportion of the whole cycle spent fading in from silence to full level. At 0%, the tremolo opens instantly at the start of each on-period. If attack and release together are longer than the on-time, both are scaled down proportionally to fit it. *(Renamed 2026-09-14 from `Attack %`; the sound did not change. This page used to say it was a proportion of the on-time, which the code never did.)*
 
-**Release % of Cycle** `0-100%, default 0`
+**Release (% of cycle)** `0-100%, default 0`
 Proportion of the whole cycle spent fading from full level back to silence. At 0%, the tremolo closes instantly at the end of each on-period. *(Renamed 2026-09-14 from `Release %`; the sound did not change.)*
 
 **Attack Shape** `Linear / Cosine / Logarithmic / Exponential`
@@ -213,7 +213,7 @@ Pan position sweeps in sync with the tremolo LFO, but at a speed multiplied by t
 **Pan Spread** `0.0-1.0, default 1.0`
 Scales the pan range. At 1.0, pan positions reach hard left and hard right. At 0.5, the maximum excursion is halfway to each side. At 0.0, all pan modes produce center regardless of their position calculations.
 
-**Pan Glide ms** `0-100 ms, default 5`
+**Pan glide (ms)** `0-100 ms, default 5`
 Smoothing time applied to pan position changes. At 0 ms, pan position jumps immediately to each new value — appropriate for hard-cut effects but can produce clicks on per-cycle modes at slow tempos. Higher values smooth the transition, trading sharpness for click-free movement.
 
 **Cycle Steps (per-cycle modes)** `2-32 steps, default 8`

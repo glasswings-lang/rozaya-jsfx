@@ -3,7 +3,7 @@
 **Budget: 1600 lines.** Run `python tools/doc_budget.py` before committing.
 
 **This file is a reference you check, not a list of work.** It holds the rules
-still open, R2–R27 (a rule that is done moves to `docs/history/<RULE>.md`), then the canonical layout (Part 2) and the migration strategy (Part 4). Look up
+still open (a rule that is done moves to `docs/history/<RULE>.md`), then the canonical layout (Part 2) and the migration strategy (Part 4). Look up
 the rule you need, obey it, and close the file. **A rule here does not mean the plugins
 obey it** -- R12 said 20000 while two plugins stopped at 96. Read the plugin.
 
@@ -35,10 +35,7 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R2** — A target string is its slider's label, derived mechanically
 - **R3** — Every target has a slider you can reach
-- **R4** — The unit goes in parentheses at the end of the name
-- **R5** — Names are sentence case throughout
 - **R6** — One phrasing for mode dependence, used where the meaning actually changes
 - **R7** — The rate controls sit together, always
 - **R8** — The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
@@ -91,16 +88,6 @@ A migration written before its layout is a migration you will write again.
 
 ## Part 1 — Naming rules
 
-## R2. A target string is its slider's label, derived mechanically
-
-> A target option string is the slider's label with its trailing parenthetical removed.
-
-`Heart rate (BPM)` → target `Heart rate`. `Sweep rate` → target `Sweep rate`.
-
-This is the rule that makes the whole thing **enforceable**: a linter can strip the
-parenthetical from every slider label and assert that every target option matches one.
-Without a mechanical rule this drifts again within two sweeps.
-
 ## R3. Every target has a slider you can reach
 
 A target list may not offer something the user cannot see or set. Two consequences:
@@ -113,31 +100,6 @@ A target list may not offer something the user cannot see or set. Two consequenc
   label minus parenthetical>` and the plugin page must say it is reached via the
   selector. This is the one legitimate case of a target with no dedicated slider. See
   Open Question 1.
-
-## R4. The unit goes in parentheses at the end of the name
-
-`Frequency low (Hz)`, not `Frequency Low Hz`. Currently the suite runs both forms, plus
-a mixed form (`Inhale Duration sec (shape only in Host x)` -- since fixed, see the
-2026-08-30 addendum). Four different spellings
-exist for a cutoff frequency in Hz across four plugins.
-
-Additional qualifiers go inside the same parenthetical after the unit:
-`High cut (Hz, 20000 = off)`.
-
-For **enum** sliders the unit belongs in the name and the options stay bare —
-`{-12,-24,-36}Slope (dB/oct)` — so NVDA does not re-read the unit on every arrow step.
-This is already the convention (2026-07-09); it stays.
-
-## R5. Names are sentence case throughout
-
-`Start delay`, not `Start Delay`. `Drift mode`, not `Drift Mode`.
-
-The suite currently uses Title Case for the transport block and sentence case for the
-drift/ramp blocks, which is why `Start Delay` and `Speed ramp start delay` sit in the
-same file. Sentence case is the newer convention and the larger block.
-
-**Note honestly: this is a source-consistency fix, not an accessibility one.** NVDA does
-not announce capitalisation. It matters for whoever reads the code, including us.
 
 ## R6. One phrasing for mode dependence, used where the meaning actually changes
 

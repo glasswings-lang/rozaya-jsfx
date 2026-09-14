@@ -53,88 +53,88 @@ desc: Shepard Tone Generator
 
 // ===== GLOBAL CONTROLS =====
 // ===== GLOBAL CONTROLS =====
-slider1:0<0,1,1{Synced,Independent}>Drift Mode
-slider2:0.5<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle / per beat)
-slider3:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
-slider4:8<2,16,1>Octave Count
-slider5:3<0,8,1>Center Octave
-slider6:20<0,100,0.1>Fade In %
-slider7:20<0,100,0.1>Fade Out %
+slider1:0<0,1,1{Synced,Independent}>Drift mode
+slider2:0.5<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle / per beat)
+slider3:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
+slider4:8<2,16,1>Octave count
+slider5:3<0,8,1>Center octave
+slider6:20<0,100,0.1>Fade in (%)
+slider7:20<0,100,0.1>Fade out (%)
 slider8:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
 slider9:25<1,99,0.1>Pulse width (%, 50 = square)
-slider10:0<0,1000,0.001>Binaural Beat Hz
-slider11:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note
-slider12:440<20,2000,0.1>Tuning Reference Hz
+slider10:0<0,1000,0.001>Binaural beat (Hz)
+slider11:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root note
+slider12:440<20,2000,0.1>Tuning reference (Hz)
 slider13:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit (for every voice)
 
 // ===== VOICES: Note, Fine tune, Direction, Rate, Gain, Pan, Active, Solo =====
 // Solo, 2026-09-10 (docs/layouts/solo-propagation-20260910.md): when any voice
 // is soloed only soloed voices sound, and a soloed voice sounds even with
 // Active off -- you solo something in order to hear it.
-slider14:9<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V1 Note
-slider15:0<-1000,1000,0.001>V1 Fine tune (in fine tune units)
-slider16:0<0,1,1{Asc,Desc}>V1 Direction
-slider17:0<-1000,1000,0.001>V1 Rate (in rate mode units; 0 = holds still)
-slider18:0<-60,6,0.01>V1 Gain dB
-slider19:0<-100,100,0.1>V1 Pan (neg=left, pos=right)
-slider20:1<0,1,1{Off,On}>V1 Active
-slider21:0<0,1,1{Off,On}>V1 Solo (heard even when Active is off)
-slider22:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V2 Note
-slider23:0<-1000,1000,0.001>V2 Fine tune (in fine tune units)
-slider24:0<0,1,1{Asc,Desc}>V2 Direction
-slider25:0<-1000,1000,0.001>V2 Rate (in rate mode units; 0 = holds still)
-slider26:0<-60,6,0.01>V2 Gain dB
-slider27:0<-100,100,0.1>V2 Pan (neg=left, pos=right)
-slider28:0<0,1,1{Off,On}>V2 Active
-slider29:0<0,1,1{Off,On}>V2 Solo (heard even when Active is off)
-slider30:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V3 Note
-slider31:0<-1000,1000,0.001>V3 Fine tune (in fine tune units)
-slider32:0<0,1,1{Asc,Desc}>V3 Direction
-slider33:0<-1000,1000,0.001>V3 Rate (in rate mode units; 0 = holds still)
-slider34:0<-60,6,0.01>V3 Gain dB
-slider35:0<-100,100,0.1>V3 Pan (neg=left, pos=right)
-slider36:0<0,1,1{Off,On}>V3 Active
-slider37:0<0,1,1{Off,On}>V3 Solo (heard even when Active is off)
-slider38:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V4 Note
-slider39:0<-1000,1000,0.001>V4 Fine tune (in fine tune units)
-slider40:0<0,1,1{Asc,Desc}>V4 Direction
-slider41:0<-1000,1000,0.001>V4 Rate (in rate mode units; 0 = holds still)
-slider42:0<-60,6,0.01>V4 Gain dB
-slider43:0<-100,100,0.1>V4 Pan (neg=left, pos=right)
-slider44:0<0,1,1{Off,On}>V4 Active
-slider45:0<0,1,1{Off,On}>V4 Solo (heard even when Active is off)
-slider46:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V5 Note
-slider47:0<-1000,1000,0.001>V5 Fine tune (in fine tune units)
-slider48:0<0,1,1{Asc,Desc}>V5 Direction
-slider49:0<-1000,1000,0.001>V5 Rate (in rate mode units; 0 = holds still)
-slider50:0<-60,6,0.01>V5 Gain dB
-slider51:0<-100,100,0.1>V5 Pan (neg=left, pos=right)
-slider52:0<0,1,1{Off,On}>V5 Active
-slider53:0<0,1,1{Off,On}>V5 Solo (heard even when Active is off)
-slider54:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V6 Note
-slider55:0<-1000,1000,0.001>V6 Fine tune (in fine tune units)
-slider56:0<0,1,1{Asc,Desc}>V6 Direction
-slider57:0<-1000,1000,0.001>V6 Rate (in rate mode units; 0 = holds still)
-slider58:0<-60,6,0.01>V6 Gain dB
-slider59:0<-100,100,0.1>V6 Pan (neg=left, pos=right)
-slider60:0<0,1,1{Off,On}>V6 Active
-slider61:0<0,1,1{Off,On}>V6 Solo (heard even when Active is off)
-slider62:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V7 Note
-slider63:0<-1000,1000,0.001>V7 Fine tune (in fine tune units)
-slider64:0<0,1,1{Asc,Desc}>V7 Direction
-slider65:0<-1000,1000,0.001>V7 Rate (in rate mode units; 0 = holds still)
-slider66:0<-60,6,0.01>V7 Gain dB
-slider67:0<-100,100,0.1>V7 Pan (neg=left, pos=right)
-slider68:0<0,1,1{Off,On}>V7 Active
-slider69:0<0,1,1{Off,On}>V7 Solo (heard even when Active is off)
-slider70:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V8 Note
-slider71:0<-1000,1000,0.001>V8 Fine tune (in fine tune units)
-slider72:0<0,1,1{Asc,Desc}>V8 Direction
-slider73:0<-1000,1000,0.001>V8 Rate (in rate mode units; 0 = holds still)
-slider74:0<-60,6,0.01>V8 Gain dB
-slider75:0<-100,100,0.1>V8 Pan (neg=left, pos=right)
-slider76:0<0,1,1{Off,On}>V8 Active
-slider77:0<0,1,1{Off,On}>V8 Solo (heard even when Active is off)
+slider14:9<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V1 note
+slider15:0<-1000,1000,0.001>V1 fine tune (in fine tune units)
+slider16:0<0,1,1{Asc,Desc}>V1 direction
+slider17:0<-1000,1000,0.001>V1 rate (in rate mode units; 0 = holds still)
+slider18:0<-60,6,0.01>V1 gain (dB)
+slider19:0<-100,100,0.1>V1 pan (neg=left, pos=right)
+slider20:1<0,1,1{Off,On}>V1 active
+slider21:0<0,1,1{Off,On}>V1 solo (heard even when Active is off)
+slider22:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V2 note
+slider23:0<-1000,1000,0.001>V2 fine tune (in fine tune units)
+slider24:0<0,1,1{Asc,Desc}>V2 direction
+slider25:0<-1000,1000,0.001>V2 rate (in rate mode units; 0 = holds still)
+slider26:0<-60,6,0.01>V2 gain (dB)
+slider27:0<-100,100,0.1>V2 pan (neg=left, pos=right)
+slider28:0<0,1,1{Off,On}>V2 active
+slider29:0<0,1,1{Off,On}>V2 solo (heard even when Active is off)
+slider30:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V3 note
+slider31:0<-1000,1000,0.001>V3 fine tune (in fine tune units)
+slider32:0<0,1,1{Asc,Desc}>V3 direction
+slider33:0<-1000,1000,0.001>V3 rate (in rate mode units; 0 = holds still)
+slider34:0<-60,6,0.01>V3 gain (dB)
+slider35:0<-100,100,0.1>V3 pan (neg=left, pos=right)
+slider36:0<0,1,1{Off,On}>V3 active
+slider37:0<0,1,1{Off,On}>V3 solo (heard even when Active is off)
+slider38:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V4 note
+slider39:0<-1000,1000,0.001>V4 fine tune (in fine tune units)
+slider40:0<0,1,1{Asc,Desc}>V4 direction
+slider41:0<-1000,1000,0.001>V4 rate (in rate mode units; 0 = holds still)
+slider42:0<-60,6,0.01>V4 gain (dB)
+slider43:0<-100,100,0.1>V4 pan (neg=left, pos=right)
+slider44:0<0,1,1{Off,On}>V4 active
+slider45:0<0,1,1{Off,On}>V4 solo (heard even when Active is off)
+slider46:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V5 note
+slider47:0<-1000,1000,0.001>V5 fine tune (in fine tune units)
+slider48:0<0,1,1{Asc,Desc}>V5 direction
+slider49:0<-1000,1000,0.001>V5 rate (in rate mode units; 0 = holds still)
+slider50:0<-60,6,0.01>V5 gain (dB)
+slider51:0<-100,100,0.1>V5 pan (neg=left, pos=right)
+slider52:0<0,1,1{Off,On}>V5 active
+slider53:0<0,1,1{Off,On}>V5 solo (heard even when Active is off)
+slider54:4<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V6 note
+slider55:0<-1000,1000,0.001>V6 fine tune (in fine tune units)
+slider56:0<0,1,1{Asc,Desc}>V6 direction
+slider57:0<-1000,1000,0.001>V6 rate (in rate mode units; 0 = holds still)
+slider58:0<-60,6,0.01>V6 gain (dB)
+slider59:0<-100,100,0.1>V6 pan (neg=left, pos=right)
+slider60:0<0,1,1{Off,On}>V6 active
+slider61:0<0,1,1{Off,On}>V6 solo (heard even when Active is off)
+slider62:7<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V7 note
+slider63:0<-1000,1000,0.001>V7 fine tune (in fine tune units)
+slider64:0<0,1,1{Asc,Desc}>V7 direction
+slider65:0<-1000,1000,0.001>V7 rate (in rate mode units; 0 = holds still)
+slider66:0<-60,6,0.01>V7 gain (dB)
+slider67:0<-100,100,0.1>V7 pan (neg=left, pos=right)
+slider68:0<0,1,1{Off,On}>V7 active
+slider69:0<0,1,1{Off,On}>V7 solo (heard even when Active is off)
+slider70:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>V8 note
+slider71:0<-1000,1000,0.001>V8 fine tune (in fine tune units)
+slider72:0<0,1,1{Asc,Desc}>V8 direction
+slider73:0<-1000,1000,0.001>V8 rate (in rate mode units; 0 = holds still)
+slider74:0<-60,6,0.01>V8 gain (dB)
+slider75:0<-100,100,0.1>V8 pan (neg=left, pos=right)
+slider76:0<0,1,1{Off,On}>V8 active
+slider77:0<0,1,1{Off,On}>V8 solo (heard even when Active is off)
 
 // ===== TRANSPORT =====
 slider78:0<0,1000,0.001>Start delay (in rate mode units)
@@ -143,7 +143,7 @@ slider80:0<0,1000,1>Rest for (cycles)
 slider81:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 // ===== DRIFT: 40 targets in control order =====
-slider82:0<0,39,1{Rate value,Fade in,Fade out,Pulse width,Binaural beat,Tuning reference,V1 Fine tune,V1 Rate,V1 Gain,V1 Pan,V2 Fine tune,V2 Rate,V2 Gain,V2 Pan,V3 Fine tune,V3 Rate,V3 Gain,V3 Pan,V4 Fine tune,V4 Rate,V4 Gain,V4 Pan,V5 Fine tune,V5 Rate,V5 Gain,V5 Pan,V6 Fine tune,V6 Rate,V6 Gain,V6 Pan,V7 Fine tune,V7 Rate,V7 Gain,V7 Pan,V8 Fine tune,V8 Rate,V8 Gain,V8 Pan,Play for,Rest for}>Drift target
+slider82:0<0,39,1{Rate value,Fade in,Fade out,Pulse width,Binaural beat,Tuning reference,V1 fine tune,V1 rate,V1 gain,V1 pan,V2 fine tune,V2 rate,V2 gain,V2 pan,V3 fine tune,V3 rate,V3 gain,V3 pan,V4 fine tune,V4 rate,V4 gain,V4 pan,V5 fine tune,V5 rate,V5 gain,V5 pan,V6 fine tune,V6 rate,V6 gain,V6 pan,V7 fine tune,V7 rate,V7 gain,V7 pan,V8 fine tune,V8 rate,V8 gain,V8 pan,Play for,Rest for}>Drift target
 slider83:0<0,1000,0.01>Drift up amount (per target, units match target)
 slider84:0<0,1000,0.01>Drift down amount (per target, units match target)
 slider85:8<0,1000,1>Drift period (per target, 0 = off)
@@ -153,7 +153,7 @@ slider88:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
 slider89:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 
 // ===== RAMP: the same 40 targets =====
-slider90:0<0,39,1{Rate value,Fade in,Fade out,Pulse width,Binaural beat,Tuning reference,V1 Fine tune,V1 Rate,V1 Gain,V1 Pan,V2 Fine tune,V2 Rate,V2 Gain,V2 Pan,V3 Fine tune,V3 Rate,V3 Gain,V3 Pan,V4 Fine tune,V4 Rate,V4 Gain,V4 Pan,V5 Fine tune,V5 Rate,V5 Gain,V5 Pan,V6 Fine tune,V6 Rate,V6 Gain,V6 Pan,V7 Fine tune,V7 Rate,V7 Gain,V7 Pan,V8 Fine tune,V8 Rate,V8 Gain,V8 Pan,Play for,Rest for}>Ramp target
+slider90:0<0,39,1{Rate value,Fade in,Fade out,Pulse width,Binaural beat,Tuning reference,V1 fine tune,V1 rate,V1 gain,V1 pan,V2 fine tune,V2 rate,V2 gain,V2 pan,V3 fine tune,V3 rate,V3 gain,V3 pan,V4 fine tune,V4 rate,V4 gain,V4 pan,V5 fine tune,V5 rate,V5 gain,V5 pan,V6 fine tune,V6 rate,V6 gain,V6 pan,V7 fine tune,V7 rate,V7 gain,V7 pan,V8 fine tune,V8 rate,V8 gain,V8 pan,Play for,Rest for}>Ramp target
 slider91:0<-1000,1000,0.001>Ramp by (per target, units match target)
 slider92:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 slider93:0<0,1000,0.1>Ramp duration (per target, in ramp time units)

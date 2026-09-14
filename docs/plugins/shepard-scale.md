@@ -38,15 +38,15 @@ Determines how notes with Active set to Off are handled.
 - **Skip** — inactive notes are skipped entirely; the sequencer advances to the next active note immediately.
 - **Rest** — inactive notes hold silence for their full beat duration before advancing.
 
-**Attack % of Note Length** `0-100%, default 10`
+**Attack (% of note length)** `0-100%, default 10`
 The fraction of each note's length spent fading the note in from silence. At 0% the note begins at full amplitude immediately. *(Renamed 2026-09-14 from `Attack %`; the sound did not change. This page used to say it was a fraction of the beat, which the code never did.)*
 
-**Release % of Note Length** `0-100%, default 10`
+**Release (% of note length)** `0-100%, default 10`
 The fraction of each note's length spent fading the note out. At 0% the note cuts off at the end of its length without fading. *(Renamed 2026-09-14 from `Release %`; the sound did not change.)*
 
 > If Attack % + Release % exceeds 100%, both are scaled down proportionally to fit.
 
-**Note Length %** `1-100%, default 100`
+**Note length (%)** `1-100%, default 100`
 The fraction of each beat during which the note is present. At 100% the note occupies the full beat. At 50% the note plays for the first half of the beat then falls silent for the second half.
 
 **Octave Count** `2-12, default 8`
@@ -63,10 +63,10 @@ Duty cycle for the **Pulse** waveform — the fraction of each cycle the wave sp
 
 Only meaningful when Waveform is set to **Pulse**, and hidden from the parameter list entirely on every other waveform.
 
-**Binaural Beat Hz** `0-100 Hz, default 0`
+**Binaural beat (Hz)** `0-100 Hz, default 0`
 Offsets the right channel oscillator frequencies by this many Hz, adding a binaural beat across all notes simultaneously.
 
-**Tuning Reference Hz** `20-2000 Hz, default 440`
+**Tuning reference (Hz)** `20-2000 Hz, default 440`
 The A4 reference frequency used to calculate all note pitches.
 
 **Fine tune unit (for every note)** `Hz / Semitones / Cents, default Cents`
@@ -81,7 +81,7 @@ Each of the twelve chromatic notes has four controls, together: Active, Gain, Pa
 **Active** `Off / On`
 Whether this note is part of the scale. When off, behavior depends on the Inactive Notes setting. The note's other controls are hidden while it is off.
 
-**Gain dB** `-60–+6 dB, default 0`
+**Gain (dB)** `-60–+6 dB, default 0`
 Volume of this note relative to the others. Allows individual notes to be emphasized or de-emphasized within the sequence.
 
 **Pan** `-100–+100, default 0`

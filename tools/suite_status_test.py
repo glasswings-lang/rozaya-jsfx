@@ -30,7 +30,8 @@ check("Veil's Ramp start delay is not counted as Start delay",
 check("the Morpher has Drift amount unit and Ramp by unit",
       has("spectral_vowel_morpher", "drift_amount_unit") and has("spectral_vowel_morpher", "ramp_by_unit"))
 check("Tremolo lacks Drift amount unit", not has("Full_Feature_Tremolo", "drift_amount_unit"))
-check("Womb's per-layer Play for counts (HB: Play for)", has("womb_sound_generator_v3", "play_for"))
+check("Womb's per-layer Play for counts (HB play for)", has("womb_sound_generator_v3", "play_for"))
+check("Veil's Drift play for is not counted as Play for", not has("veil", "play_for"))
 check("Resonance Bank's Drift period MODE counts as a period unit", has("resonance_bank", "drift_period_unit"))
 check("Melody has no control named Voice", not any(s["label"] == "Voice" for s in S["melody_phase"]))
 check("Heartbeat has a pitch block (Pitch target)", has("heartbeat gen", "pitch_block"))

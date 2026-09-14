@@ -33,7 +33,7 @@ Base heart rate in beats per minute. This sets the cycle length before HRV modul
 
 **The range widened from `20-200` in steps of 1 on 2026-09-04**, and it was forced rather than chosen: in Host x this number means *beats per cycle*, and a heart wants somewhere around half a beat to two beats per cycle — none of which the old range could reach. Nothing you have saved is disturbed. Widening a range cannot move a stored value; only narrowing one can, and that is not what happened here. The finer step is the suite's standard for rate sliders — type the number you want and nudge from there.
 
-**Systole ms (S1→S2 gap)** `50-400 ms, default 120`
+**Systole (ms, S1→S2 gap)** `50-400 ms, default 120`
 The delay between the S1 and S2 events within each cycle. Shorter values produce a tighter, faster lub-dub; longer values spread the sounds further apart. At very short values the sounds may overlap depending on decay settings.
 
 ---
@@ -43,7 +43,7 @@ The delay between the S1 and S2 events within each cycle. Shorter values produce
 **S1 Volume** `0.0-1.0, default 1.0`
 Output level for S1, applied after envelope shaping and independently of S2.
 
-**S1 Decay ms** `10-200 ms, default 60`
+**S1 decay (ms)** `10-200 ms, default 60`
 How quickly S1 fades after its attack peak. Longer values produce a sustained, resonant thud; shorter values a sharper knock.
 
 **Pitch** *(the block, new 2026-09-09)* — the two thump frequencies, now one set of
@@ -67,7 +67,7 @@ Base frequency of the S1 resonant filter. The near voice center is derived at ×
 **S2 Volume** `0.0-1.0, default 0.7`
 Output level for S2, independently of S1. S2 is typically quieter than S1 physiologically; the default reflects this.
 
-**S2 Decay ms** `5-100 ms, default 25`
+**S2 decay (ms)** `5-100 ms, default 25`
 How quickly S2 fades. S2 is naturally shorter-lived than S1. Values under 10 ms produce a sharp click; 20-40 ms gives a natural dub character.
 
 **S2 Frequency Hz** `60-300 Hz, default 80`
@@ -84,7 +84,7 @@ Controls the cutoff of the post-resonator lowpass applied to both voices. At 0.0
 
 ### Stereo / Binaural
 
-**Stereo Width ms (neg = heart right)** `-15.0–+15.0 ms, default 3.0`
+**Stereo width (ms, neg = heart right)** `-15.0–+15.0 ms, default 3.0`
 The inter-aural delay between the near and far voices, creating a sense of spatial depth and positioning. Positive values place the near (prominent) voice on the left, which is anatomically correct for a heart positioned on the left side of the chest. Negative values flip this. Larger magnitudes create a stronger binaural effect. Crossing zero resets all filter states and clears the delay buffer to prevent artifacts.
 
 ---
@@ -93,7 +93,7 @@ The inter-aural delay between the near and far voices, creating a sense of spati
 
 Both HRV systems modulate the cycle length in real time and operate additively.
 
-**Breath Cycle Seconds** `1.0-30.0 sec, default 12.0`
+**Breath cycle (seconds)** `1.0-30.0 sec, default 12.0`
 The period of a sinusoidal breath modulation applied to heart rate, mimicking respiratory sinus arrhythmia — the natural tendency for heart rate to rise during inhale and fall during exhale. The modulation depth is set by Breath HRV Depth.
 
 **Breath HRV Depth** `0.0-0.25, default 0.08`

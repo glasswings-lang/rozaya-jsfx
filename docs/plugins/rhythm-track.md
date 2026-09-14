@@ -236,7 +236,7 @@ arrive in about this long" however you set the staircase.
 
 In-plugin one-time morph over time, without automation envelopes. Ramp is nested-selector (same shape as Drift) and reaches the same **sixteen** targets. All ramp in parallel; the selector only chooses which one the `by` slider is currently editing.
 
-**Ramp target (slider 23)** `Tempo / Beats per bar / Swing amount / Strong pitch / Weak pitch / Strong fine tune / Weak fine tune / Tuning reference / Tone resonance / Strong volume / Weak volume / Strong decay / Weak decay / Pan spread / Play for / Rest for, default Tempo`
+**Ramp target (slider 23)** `Tempo / Beats per bar / Swing amount / Strong pitch / Weak pitch / Strong fine tune / Weak fine tune / Tuning reference / Tone resonance / Strong beat volume / Weak beat volume / Strong beat decay / Weak beat decay / Pan spread / Play for / Rest for, default Tempo`
 
 Sixteen since 2026-09-11, in the order of the controls they reach; it was Tempo and Swing amount. A pitch moves in that beat's Pitch mode, a fine tune in its Fine tune unit, the reference in Hz, a decay in seconds, and Beats per bar, Play for and Rest for in beats. Volumes and Pan spread stay within 0-1, Tone resonance within 0.5-8. Pitch, tone, volume, decay and Pan spread are read when a click fires.
 Picks which target the `by` amount applies to. Switching the selector saves slider 24 into the old target's memory slot, then loads the new target's stored `by`. This selector sits at the top of the Ramp block (above the controls it governs) — a v2.14 reorganization; see the migration note below.

@@ -106,7 +106,7 @@ thing that tripped Rozaya up was tabbing onto a rate control that named neither
 its unit nor its scope. Restored the same day, to the form four other plugins
 in the suite already use.
 
-**Binaural Beat Hz (L/R offset)** `0-100 Hz, default 4`
+**Binaural beat (Hz, L/R offset)** `0-100 Hz, default 4`
 The frequency difference between each voice's left and right oscillators. At 4 Hz, the left oscillator runs at the voice's base pitch and the right runs 4 Hz higher, creating a 4 Hz binaural beat when heard on headphones. This value is the same for all voices simultaneously.
 
 **Attack Shape** `Linear / Cosine / Logarithmic / Exponential`
@@ -128,7 +128,7 @@ Shifts every voice by whole octaves. Same purpose as Transpose, in bigger steps.
 The two stack: Transpose `+2` with Octave shift `-1` moves everything down an
 octave and back up two steps.
 
-**Tuning Reference Hz** `400-480 Hz, default 440`
+**Tuning reference (Hz)** `400-480 Hz, default 440`
 The reference pitch used to calculate all voice frequencies. At 440 Hz, A4 = 440 Hz and all other pitches follow standard equal temperament from that anchor. Adjusting this shifts all voices simultaneously without changing their relative intervals.
 
 
@@ -164,7 +164,7 @@ project, changes nothing.
 
 ---
 
-**Gain dB** `-60 to +6 dB, default -6 for every voice`
+**Gain (dB)** `-60 to +6 dB, default -6 for every voice`
 Per-voice output level, applied before the voice is summed. -60 dB is
 effectively silent. To cut a voice with no CPU cost, use **Active = Off**
 instead.
@@ -235,7 +235,7 @@ where it is called `Amount (dB)`.
 *Renamed 2026-09-10 from `Depth dB`. The sound did not change. Until then this
 manual described it backwards, which is what the old name invited.*
 
-**On Duration % of Cycle** `0-100%, default 100`
+**On duration (% of cycle)** `0-100%, default 100`
 The proportion of this voice's tremolo cycle during which it is in its active
 state (including attack and release). At 100% the tremolo never fully closes; at
 50% the voice is present for half its cycle.
@@ -245,10 +245,10 @@ the plugin made one kind of sound played in a pattern. A voice on for 90% of its
 cycle is a **pad**; one on for 10% is a **rhythm** — and now you can have both
 at once, a shallow near-continuous bed with a hard short blip ticking over it.
 
-**Attack % of Cycle** `0-100%, default 0`
+**Attack (% of cycle)** `0-100%, default 0`
 Proportion of the on-time spent fading up from silence.
 
-**Release % of Cycle** `0-100%, default 100`
+**Release (% of cycle)** `0-100%, default 100`
 Proportion of the on-time spent fading back down. The default of 100% with 0%
 attack gives a ramp-down envelope: the voice fades out across its whole on-time
 with no hold.
@@ -300,7 +300,7 @@ The oscillator waveform used by all voices simultaneously.
 - **Square** — the hard-edged classic: full up for the first half of each cycle, full down for the second. Odd harmonics only, hollow and reedy, and much brighter than anything above it in this list. Band-limited (PolyBLEP) at both edges so it stays clean rather than gritty at high pitches.
 - **Pulse** — the same shape, but you choose where the fall happens rather than taking the halfway point. See **Pulse width** below. At 50 it is identical to Square; move away from that and the tone thins toward a nasal, reedy buzz.
 
-**Pulse Width %** `1-99%, step 0.1, default 25`
+**Pulse width (%)** `1-99%, step 0.1, default 25`
 Duty cycle for the **Pulse** waveform — the fraction of each cycle the wave
 spends high before snapping low. 50% is a square wave and sounds identical to
 the Square slot. Narrower values get thinner and more nasal; wider values mirror
@@ -347,15 +347,15 @@ How many positions the Distributed / Converging / Diverging walks step through b
 
 It matters more than it sounds: **at 2 positions every one of those modes collapses into Alternating** — a walk across two places is a flip. Eight gives Distributed a genuine sweep across the field and Converging a real closing-in. Alternating and the every-N modes ignore it, being two-sided by definition, and it hides for them.
 
-Use **Pan Spread %** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. Set **Pan Glide ms** to 0 for a hard switch, or leave it at 10 ms for a short sweep between sides.
-**Pan Glide ms** `0-100 ms, default 10`
+Use **Pan spread (%)** for width — at 100% Alternating is hard left/right, around 30-50% it is a sway rather than a flip, which is usually what you want for long listening. Set **Pan glide (ms)** to 0 for a hard switch, or leave it at 10 ms for a short sweep between sides.
+**Pan glide (ms)** `0-100 ms, default 10`
 How long the pan takes to travel between positions. **0 is an instant switch** — the sound cuts from one side to the other with no slide, which is what bilateral alternation is supposed to be. Anything above 0 sweeps instead. The default of 10 ms is what this plugin used to do with no way to change it; Full Feature Tremolo and both sweeping filters have had this control all along.
 
 
 
 
 
-**Pan Spread %** `0-100%, default 100`
+**Pan spread (%)** `0-100%, default 100`
 Scales the width of pan movement (or for Spread / Spread Reversed, the maximum distance from center). At 100% panning reaches hard left and hard right. At 0% all voices remain centered regardless of mode.
 
 **Pan Base Rate** `0.001-1000, default 60`

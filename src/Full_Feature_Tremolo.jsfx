@@ -4,7 +4,7 @@ desc: Tremolo with Shaped Envelope, Stereo Phase, and Pan Modulation
 // This work is dedicated to the public domain under CC0 1.0 Universal.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-slider1:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle / per beat)
+slider1:2<0.001,1000,0.001>Rate value (BPM / sec / Hz / beats per cycle / per beat)
 // RATE MODE ORDER IS {BPM, Seconds, Hz, Host x} since 2026-09-04 -- the suite's
 // canonical order, shared with both Polyrhythms, Shepard Tone and the Morpher.
 // This plugin ran {Hz, Seconds, BPM, Host x}: the same four, a different order,
@@ -17,22 +17,22 @@ slider1:2<0.001,1000,0.001>Rate Value (BPM / sec / Hz / beats per cycle / per be
 // fallthrough is the thing that changes meaning silently in an enum reorder, so
 // there is none left. Saved projects are carried over by
 // tools/ratemode_migrate_order.py.
-slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate Mode
-slider3:50<0,100,0.1>On Duration % of Cycle
+slider2:0<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
+slider3:50<0,100,0.1>On duration (% of cycle)
 slider4:-6<-60,0,0.01>Tremolo amount (dB, 0 = strongest)
-slider5:0<0,100,0.1>Attack % of Cycle
-slider7:0<0,100,0.1>Release % of Cycle
-slider6:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack Shape
-slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release Shape
-slider9:0<-180,180,0.1>Stereo Phase Offset degrees
-slider10:0<0,1,1{Independent L+R,Offset from L}>Phase Mode
+slider5:0<0,100,0.1>Attack (% of cycle)
+slider7:0<0,100,0.1>Release (% of cycle)
+slider6:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Attack shape
+slider8:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Release shape
+slider9:0<-180,180,0.1>Stereo phase offset (degrees)
+slider10:0<0,1,1{Independent L+R,Offset from L}>Phase mode
 // ===== PAN BLOCK SLIDERS START =====
-slider11:0<0,1,1{Off,On}>Pan Enabled
-slider12:0<0,14,1{Mono,Alternating,Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan Mode
-slider13:1<0,1,0.01>Pan Spread (0=mono, 1=full)
-slider14:5<0,1000,0.1>Pan Glide ms (0=instant)
-slider15:8<2,1000,1>Cycle Steps (per-cycle modes)
-slider16:2<0.001,1000,0.001>Pan Sweep Rate
+slider11:0<0,1,1{Off,On}>Pan enabled
+slider12:0<0,14,1{Mono,Alternating,Distributed,Distributed (Flipped),Distributed (Ping-pong),Converging,Converging (Ping-pong),Diverging,Diverging (Ping-pong),Pan Sweep,Pan Sweep (Flipped),Linked Sweep,Alternating every 2,Alternating every 4,Alternating every 8}>Pan mode
+slider13:1<0,1,0.01>Pan spread (0=mono, 1=full)
+slider14:5<0,1000,0.1>Pan glide (ms, 0=instant)
+slider15:8<2,1000,1>Cycle steps (per-cycle modes)
+slider16:2<0.001,1000,0.001>Pan sweep rate
 // R20: the canonical four, in the canonical order, gaining Host x. This list
 // used to read {Hz, Seconds, BPM} -- BACKWARDS against the Rate Mode fifteen
 // places above it in this same plugin, so position one meant Hz here and BPM
