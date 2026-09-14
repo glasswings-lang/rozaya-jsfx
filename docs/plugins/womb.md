@@ -54,7 +54,7 @@ Sigh interval joined. Rozaya: *"Yes, and yes."*
 
 Heart: Heart rate, Heart rate swing per breath, Systole, S1 pitch, S1 fine tune, S1 decay,
 S1 volume, S2 pitch, S2 fine tune, S2 decay, S2 volume, Brightness, HB stereo width,
-HB master volume. Breath: Breath rate, Inhale, Top pause, Exhale, Bottom pause,
+HB master volume. Breath: Breath rate (all 4 parts together), Inhale, Top pause, Exhale, Bottom pause,
 Inhale pitch, Inhale fine tune, Exhale pitch, Exhale fine tune, the four fades,
 Breath high-pass, Breath post-filter Hz and Q, Sigh interval, Sigh extra length,
 Breath stereo width, Breath volume. Bloodflow: offset, attack, decay, dicrotic
@@ -65,7 +65,7 @@ Each amount is in its control's own unit and stays inside that control's range. 
 stereo width never crosses to the other side. A drifted Sigh interval or gate only
 runs while its own slider is above 0.
 
-**Breath rate counts the way Set breath rate does.** Breathing in Seconds, it is
+**Breath rate (all 4 parts together) counts the way Set breath rate does.** It stretches or squeezes inhale, top pause, exhale and bottom pause by the same amount, on top of where those four sliders sit; it was called just Breath rate until 2026-09-14. Breathing in Seconds, it is
 breaths per minute. In Beats it is **beats per breath**, so a positive amount makes
 the breath longer. Rozaya heard Set breath rate make a 12-beat breath against the
 metronome: *"if that's working, drift should tie onto that."* Until 2026-09-11 it
@@ -74,7 +74,7 @@ Beats, and its drift was converted to reach the same quickest and slowest breath
 
 **On `With the target`** a heart or bloodflow target (and Tuning reference) steps
 once per heartbeat, a breath target once per breath, and each segment on its own
-turn. Heart rate, Systole, the segments and Breath rate default to it; everything
+turn. Heart rate, Systole, the segments and Breath rate (all 4 parts together) default to it; everything
 else to `On a clock`. In Cycles, Heart rate swing per breath, the breath targets and Bloodflow
 offset count breath cycles, as they always did; the rest count heartbeats.
 
