@@ -452,9 +452,11 @@ See [`docs/spectral-vowel-morpher.md`](spectral-vowel-morpher.md) for deeper des
 ## The 2026-09-13 pitch layout — what it changed for a saved project
 
 Fifty-one controls became sixty-four, each in its logical place rather than added at the
-end, so every saved project needs its control line moved. `tools/morpher_migrate_20260913.py`
-does that, and the plugin moves its own saved captures and settings as it loads. Nothing
-you set should sound different; what changed is where things live and what they are called.
+end, so every saved project needed its control line moved. That is done: on 2026-09-13
+`tools/morpher_migrate_20260913.py` moved all 135 saved copies in 40 projects, and the plugin
+moves its own saved captures and settings as it loads. Nothing you set should sound
+different -- 123 copies were measured identical, and the 12 older ones in quick one were read
+back control by control. What changed is where things live and what they are called.
 
 - **New controls, all starting where your project already was:** Source note (None),
   Source fine tune and its unit, Target note, Transpose unit (Semitones), Fine tune and its

@@ -713,8 +713,14 @@ we should leave it as-is." Rozaya watches the context meter and will say when it
 3. **DONE 2026-09-13.** Names: 14 applied and verified (only slider lines changed); `scope` 28/28,
    `names` all pass, 0 failures. Was: `r25_rename_apply.py --list docs/layouts/morpher-labels-20260913.md --apply`, `scope`.
    Dry run matched all 14. Backlog line 24 (amount-unit sweep) then marks the Morpher done.
-4. Live write: `morpher_migrate_20260913.py write` (135 in 40 files, snapshot), then `migrated`.
-5. Install (back up the installed file, == `b4b8656`, to `C:/Users/solst/jsfx-backups/`), then
+4. **DONE 2026-09-13.** Live write: 135 in 40 files, each read back; snapshot
+   `_pre-morpher-pitch-layout-20260913` (40 files). `migrated`: 123/123 bit-identical to their
+   snapshots, quick one's 12 read back as authored and all sound. (`quick31` after the write
+   REFUSES by design -- it converts the old layout, which is no longer on disk.)
+   Was: `morpher_migrate_20260913.py write` (135 in 40 files, snapshot), then `migrated`.
+5. **Installed 2026-09-13** (`1582542`, cmp identical; the old file, sha1 == `b4b8656`, is
+   `C:/Users/solst/jsfx-backups/spectral_vowel_morpher.jsfx.pre-pitch-layout-20260913.bak`).
+   **REAPER round trip still owed.** Was: install (back up the installed file), then
    `morpher_reaper_roundtrip_20260913.py --check`, `--run` (claude test project only).
 6. Page: the "what it changed" section says the migration tool does it; say it is done.
 - **`quick one.RPP` (Dropbox): 12 copies on the 2026-08-11 layout (31 sliders, blob 7700002),
