@@ -623,6 +623,20 @@ Built 2026-09-11 when Passage did this and the other two did not. `--rev 45350c6
 fails Bubbler and Sustain Looper, so it can fail. Add the Morpher when its pitch
 block is built.
 
+## jsfx_map.py — work on one part of a plugin without reading all of it
+
+`map FILE` prints the sections, functions (with line ranges), the memory table and
+which arrays take values from `rand()`; it also lists what it could NOT place, so a
+short table is never taken as complete. `uses FILE NAME..` prints every line
+touching a name. **`impact OLD NEW`** (or `impact --git REV FILE`) is the one to run
+after an edit and before measuring: arrays the change treated alike, the family
+members it left out, and which of those take STARTING values from `rand()` -- a
+question to answer, not a verdict. Built 2026-09-13 because reading a 2,900-line
+plugin in pieces filled two sessions; `jsfx_map_test.py` holds it to the bug it
+exists for: stage 3 of the Morpher pitch layout (`ec2526f`) reordered five layer
+banks and not the layers' random phases, and the report must raise exactly those.
+Reads four allocation styles (`freemem`, fixed numbers, `db + 144`, `8192 + 13*SDB`).
+
 ## jsfx_renumber.py — renumber sliders from an authored map
 
 `apply FILE "55:11, 11-54:+1"` rewrites every `sliderN` token in one pass.
