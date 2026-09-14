@@ -92,6 +92,10 @@ one. Finish it, re: the audit."*
   (cycles, beats, breaths, steps; Seconds where it has no turn, as Veil), with Seconds and
   Beats offered. Nothing saved changes meaning. Rozaya: *"Yes. should have had that from
   the beginning."*
+  **The Morpher's** Start delay, Play for and Rest for still say `(sec, or beats in Host x)`;
+  no mode has been called Host x since R21 (beats when Rate mode is Every N beats or N per
+  beat). Left for its own Transport unit, which renames them. Rozaya, 2026-09-14: *"It can
+  wait for its own unit switch"*.
   **At rest:** anything with movement offers BOTH Walk through and Freeze in place (Rozaya:
   *"Walk *and* freez, those two things are not either/or"*). The `Output at rest` switch
   `{Pass-through, Silence}` goes in every plugin that works on incoming sound -- Tremolo, the

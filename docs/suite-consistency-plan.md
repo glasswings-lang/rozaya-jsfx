@@ -35,7 +35,6 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R6** — One phrasing for mode dependence, used where the meaning actually changes
 - **R7** — The rate controls sit together, always
 - **R8** — The step is the finest adjustment you would ever make; the range is the widest value you would ever reach
 - **R9** — Choose the unit that makes ordinary values whole numbers
@@ -86,17 +85,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
-## R6. One phrasing for mode dependence, used where the meaning actually changes
-
-Six phrasings are in use today (`(or multiplier in Host x)`, `(shape only in Host x)`,
-`(Host x only)`, `(Host x; writes …)`, `(Own BPM only; …)`, `(in Rate Mode units)`).
-
-New rule: annotate a slider **only where Rate Mode changes what it means**, not merely
-what it scales — and use one form, `(… in Host x)`. Womb's four breath durations
-genuinely become shape-only, so they keep an annotation. A rate slider that merely
-becomes a multiplier does not need one, because under R7 the Rate Mode slider is sitting
-right next to it saying so.
 
 ## R7. The rate controls sit together, always
 
