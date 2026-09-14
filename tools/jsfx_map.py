@@ -284,7 +284,10 @@ def impact(old, new):
             groups.append({"treatment": k[3:] + "()", "family": fam,
                            "treated": sorted(m for m in members if family(m) == fam),
                            "untreated": siblings})
-    untreated = {s for g in groups for s in g["untreated"]}
+    # Saving is not reordering: an array left out of a file_mem() group is a save-format
+    # question, never a rand() one (random phases are rebuilt at load, not saved). Stage 6 of
+    # the pitch layout raised its phases as a question until this (2026-09-13).
+    untreated = {s for g in groups if g["treatment"] not in ("file_mem()", "file_var()") for s in g["untreated"]}
     # 2. order-sensitive uses
     rc = rand_consumers(new)
     ser = set(new.section_lines("@serialize"))
