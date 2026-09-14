@@ -35,7 +35,6 @@ lives in the history; its slot below says so.
 
 ## The rules, in order
 
-- **R9** — Choose the unit that makes ordinary values whole numbers
 - **R10** — The value stays visible; a picker jumps to a value and gets out of the way
 - **R11** — One tempo-sync block — SUPERSEDED BY R20, 2026-09-04
 - **R12** — A numeric range spans 0–1000, or −1000–1000 where the sign does something real
@@ -83,24 +82,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
-## R9. Choose the unit that makes ordinary values whole numbers
-
-The suite already contains both halves of this lesson. `Stereo width` is `0..1` step
-`0.01` in Breath Generator and `0..100` step `1` in the spectral pair. Identical
-precision, a hundred positions either way — but one speaks in **0.35** and the other in
-**35**, and `docs/dyscalculia-accessibility-sweep.md` names decimals-without-magnitude as
-the actual barrier.
-
-Prefer whichever unit makes ordinary values whole numbers: percent over fraction, dB over
-linear gain, cents or semitones over frequency ratios. JSFX sliders are linear only, so
-the unit is the only lever available for making a wide span navigable.
-
-**This rule never removes range or precision, and must not be read as doing so.**
-`0..1` step `0.01` and `0..100` step `1` are the same control with the same hundred
-positions; only the notation differs. A change under R9 that costs resolution, or that
-replaces a real quantity with a proxy scale, is out of scope — see Open Question 2, where
-exactly that was proposed and rejected.
 
 ---
 

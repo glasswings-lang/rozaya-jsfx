@@ -78,9 +78,6 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   caps. Owed: clamp like REAPER, or check every set value against the declared range.
 - **The Morpher's R23 check.** The drift-stepping sweep (done 2026-09-09) lists the Morpher
   as cleared, and a later note says it was never re-checked. Read it before relying on either.
-- **The `0..1` inventory.** Sliders topping out at 1.0 or less split into dB and percent,
-  and nobody has listed which is which. current-state holds dB and semitone ranges for
-  Rozaya's decision.
 - **Drift period units under host sync** -- periods count heartbeats or breaths; should
   they be beats when synced? Not checked against the source on 2026-09-13.
 
@@ -119,6 +116,12 @@ one. Finish it, re: the audit."*
   does -- not locked to cents (no unit locks). Bubbler's `Pitch spread (semitones)` 0..24 and
   `Rise (semitones)` 0..36; Dapple's `Pitch spread (%)`; Sustain Looper's `Spread (%)`. Read
   what each percent is a percent OF before authoring: converting one is a value migration.
+
+- **No control counts in fractions of one (R9).** Every control whose range sits inside -1 to 1
+  changes unit: volumes become dB with -60 as off, and everything else becomes percent (pan
+  runs -100 to 100). Each one is a value migration. Rozaya, 2026-09-14: *"That'd be fine by
+  me"*, and on volumes: *"db, that's the only unit it makes sense in for volumes"*. On
+  2026-09-14 that was 45 controls in 12 plugins; find them by reading each plugin's ranges.
 
 **All of this rides the amount-unit sweep: one layout and one migration per plugin**, holding
 everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole layout").
