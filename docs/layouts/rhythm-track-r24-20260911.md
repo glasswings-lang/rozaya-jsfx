@@ -1,8 +1,9 @@
 # Rhythm Track — sixteen Drift and Ramp targets, and Drift movement, 2026-09-11
 
 One slider inserted (`Drift movement` at 36); the two target lists grow from 2 to
-16 and reorder. **Status: BUILT, MEASURED, INSTALLED 2026-09-11. Not heard. Not
-yet driven in real REAPER (`bridge_ui_test.py`).** Authored before any code. Snapshot
+16 and reorder. **Status: BUILT, MEASURED, INSTALLED 2026-09-11. Not heard. Driven
+in real REAPER the same afternoon (`7e88637`, `bridge_ui_test.py`, all 18 plugins: target
+names and Drift movement per target).** Authored before any code. Snapshot
 `_pre-rhythm-r24-20260911/`; previous build in
 `jsfx-backups/effects-folder-baks/pre-rhythm-r24-20260911/`.
 
