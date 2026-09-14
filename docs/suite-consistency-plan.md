@@ -1331,7 +1331,8 @@ Rozaya: *"They should all have the same things"*.
   plugin that only makes its own sound has nothing to pass: read its `@sample` to tell.
 - **`Rest mode (for Drift)` and `Rest mode (for Ramp)`, two switches, in every plugin with
   both** (19): *"Drift is its own thing. ramp is its own thing"*; *"all of them should get
-  both"*. A plugin's own-motion switch (LFO, walk) stays beside them. Ramp's is per ramp.
+  both"*. A plugin's own-motion switch (LFO, walk) stays too. Ramp's is per ramp. Each sits
+  IN the block it freezes (Rozaya: *"Otherwise we get slider scatter stuff"*), not in transport.
 - **Every pitch spread takes a value and a unit picker** `{Hz, Semitones, Cents}`.
 - It lands inside each plugin's one amount-unit migration (R26), never as a second pass.
 

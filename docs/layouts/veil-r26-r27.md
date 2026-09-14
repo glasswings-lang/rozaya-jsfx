@@ -53,9 +53,12 @@ ramp becomes Ramp 1, counting from play start, Linear, walking through rests.
 **Mine, unquoted, to walk through with Rozaya:** the ORDER inside Drift and Ramp. A per-ramp
 control has to sit below the Ramp selector and above the target selector, since the target
 selector does not change it; so time unit, engage and Rest mode (for Ramp) go there.
-`Rest mode (for Drift)` is put at the end of the Drift block to mirror it; R27 and Part 2's
-order put "what happens at rest" in the transport, so that is the other place it could go.
 Labels follow Passage's.
+
+**`Rest mode (for Drift)` at the end of the Drift block, decided.** Offered against the
+transport block, next to Play for / Rest for; Rozaya, 2026-09-14: *"I'd rather have it in the
+drift section. Otherwise we get slider scatter stuff"*. So each rest switch lives in the block
+it freezes, which Part 2's "what happens at rest" line in the transport does not yet say.
 
 ## What Rozaya decided for Veil
 
