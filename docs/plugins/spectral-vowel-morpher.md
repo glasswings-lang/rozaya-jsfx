@@ -106,7 +106,7 @@ For a capture that sits between two notes — say C4 a little flat. Like Source 
 **Target note (only with a Source note, in Semitones)** `C-1 to G9`
 Pick the note you want the capture to sound as. It writes the shift into Transpose value for you. Shown only while a Source note is set and Transpose unit is Semitones.
 
-**Transpose value (Hz / semitones / cents)** `-96 to +96, default 0` and **Transpose unit** `Hz / Semitones / Cents, default Semitones`
+**Transpose value (Hz / semitones / cents)** `-20000 to +20000, default 0` and **Transpose unit** `Hz / Semitones / Cents, default Semitones`
 How far to shift, in the unit you choose. Hz counts from the **Tuning reference**. (Named *Pitch (semitones)* until 2026-09-13; saved projects keep their number, in Semitones.) Drift and Ramp are applied on top and are **not** clipped back to the slider range, so modulation can carry the pitch beyond it.
 
 **Fine tune** `-1000 to 1000, default 0` and **Fine tune unit** `Hz / Semitones / Cents, default Cents`
@@ -193,7 +193,7 @@ Which layer you are setting. **All** reaches every layer at once — but only th
 **Layer active (per layer)** `Inactive / Active, default Active`
 Silences the selected layer **without losing its level**. −60 means "this layer is silent because that's the level I want"; Inactive means "silence it and give it back to me later." Costs nothing while off. Drift and Ramp move the *level*, never this switch.
 
-**Layer pitch value (Hz / semitones / cents, per layer)** `-96 to +96` and **Layer pitch unit (per layer)** `Hz / Semitones / Cents, default Semitones`
+**Layer pitch value (Hz / semitones / cents, per layer)** `-20000 to +20000` and **Layer pitch unit (per layer)** `Hz / Semitones / Cents, default Semitones`
 Where this layer sits, as an offset from Transpose, in the unit you choose. Hz counts from the Tuning reference. A Drift and Ramp target, for every layer.
 
 **Layer fine tune (per layer)** `-1000 to 1000, default 0` and **Layer fine tune unit (per layer)** `Hz / Semitones / Cents, default Cents`

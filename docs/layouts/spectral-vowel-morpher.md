@@ -720,7 +720,12 @@ we should leave it as-is." Rozaya watches the context meter and will say when it
    Was: `morpher_migrate_20260913.py write` (135 in 40 files, snapshot), then `migrated`.
 5. **Installed 2026-09-13** (`1582542`, cmp identical; the old file, sha1 == `b4b8656`, is
    `C:/Users/solst/jsfx-backups/spectral_vowel_morpher.jsfx.pre-pitch-layout-20260913.bak`).
-   **REAPER round trip still owed.** Was: install (back up the installed file), then
+   **REAPER round trip:** run 1 (from the Claude app) 6 false failures -- REAPER's audio was off
+   (`audiocloseinactive=1`), so no @block; the tool now refuses then. Run 2 (REAPER in front)
+   12/14: Layer 14 pitch 700 cents read 96 on original and copy -- slider 17 and 31 were declared
+   -96..96 against R12's -20000..20000 (jsfx_run never clamps, so no offline test saw it).
+   Widened (and Passage's slider 9); `layers pitch` 23/23. **Owed:** `migrated` on both,
+   reinstall both, run 3 with REAPER in front. Was: install (back up the installed file), then
    `morpher_reaper_roundtrip_20260913.py --check`, `--run` (claude test project only).
 6. Page: the "what it changed" section says the migration tool does it; say it is done.
 - **`quick one.RPP` (Dropbox): 12 copies on the 2026-08-11 layout (31 sliders, blob 7700002),
