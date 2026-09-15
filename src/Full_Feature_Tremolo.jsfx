@@ -602,19 +602,17 @@ slider_show(slider17, pan_enabled && (pan_mode == 9 || pan_mode == 10));
 slider_show(slider18, pan_enabled && pan_mode == 11);
 // ===== PAN BLOCK SLIDER READ END =====
 
-// Start Delay: convert to seconds based on Rate Mode. BPM beats and
-// Hz cycles are interpreted against Rate Value; Seconds is literal.
+// Start Delay: Seconds is literal; every other mode counts CYCLES of the rate,
+// as Bubbler, Melody, Polyrhythm and Shepard Tone do.
 start_delay_units = slider19;
-// NOTE: these branches used to be keyed as if the enum were {BPM,Seconds,Hz}
-// like Melody Phase / Polyrhythm. It is not -- this plugin's Rate Mode is
-// {Hz,Seconds,BPM}, so mode 0 is Hz and mode 2 is BPM. The old code gave Hz
-// the BPM formula and BPM the Hz one, making Start Delay 60x out in BOTH.
-// Fixed here while adding Host x. (Mode 3 = Host x takes the same form as Hz
-// because its nominal rate is also cycles-per-second; the live tempo is
-// applied to the counter via host_scale.)
+// The host modes are computed at a nominal 60 BPM and the counter runs at
+// host_scale. Every N beats is N beats per cycle, so the wait MULTIPLIES by N.
+// It used to share the Hz form and divide -- left from when mode 3 was a
+// multiplier -- so a delay of 2 at every 4 beats waited a quarter second.
 slider2 == 1 ? start_delay_sec = start_delay_units :
 slider2 == 0 ? start_delay_sec = start_delay_units * 60 / max(slider1, 0.001) :
-               start_delay_sec = start_delay_units / max(slider1, 0.001);   // 2 Hz, 3 Host x
+slider2 == 3 ? start_delay_sec = start_delay_units * max(slider1, 0.001) :
+               start_delay_sec = start_delay_units / max(slider1, 0.001);   // 2 Hz, 4 N per beat
 
 // Play/Rest gate: integer cycle counts. Both must be > 0 for the
 // gate to engage; 0 in either slider disables.

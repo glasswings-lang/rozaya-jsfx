@@ -232,7 +232,7 @@ Speed of the pan sweep relative to the tremolo rate, for Linked Sweep mode only.
 
 **Start Delay** `0–1000, default 0`
 
-Pass-through for N units after playback starts, then applies the tremolo + pan effect normally. Units match Rate Mode: BPM mode counts cycles of the tremolo Rate Value, Seconds is literal seconds, Hz mode counts cycles of Rate Value. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Phase counters and gain smoothing stay frozen during the delay so the tremolo begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
+Pass-through for N units after playback starts, then applies the tremolo + pan effect normally. Units match Rate Mode: Seconds is literal seconds, and every other mode (BPM, Hz, Every N beats, N per beat) counts cycles of the tremolo Rate Value. So at Every N beats with Rate Value 4, a Start Delay of 2 waits 8 beats. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Phase counters and gain smoothing stay frozen during the delay so the tremolo begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
 ### Play / Rest Gating (v2.1)
 

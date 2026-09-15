@@ -688,18 +688,17 @@ slider_show(slider31, pan_enabled && (pan_mode == 10 || pan_mode == 11));
 slider_show(slider32, pan_enabled && pan_mode == 12);
 // ===== PAN BLOCK SLIDER READ END =====
 
-// Start Delay: convert to seconds based on Rate Mode. BPM beats and
-// Hz cycles are interpreted against Rate Value; Seconds is literal.
+// Start Delay: Seconds is literal; every other mode counts CYCLES of the rate,
+// as Bubbler, Melody, Polyrhythm and Shepard Tone do.
 start_delay_units = slider34;
-// These branches were keyed as if Rate Mode were {BPM,Seconds,Hz} like Melody
-// Phase / Polyrhythm. It is {Hz,Seconds,BPM} here, so mode 0 is Hz and mode 2
-// is BPM -- Hz got the BPM formula and BPM the Hz one, putting Start Delay
-// 60x out in both. Same bug as Full Feature Tremolo, copied with the code.
-// (Mode 3 = Host x shares the Hz form: its nominal rate is also cycles per
-// second, with the live tempo applied to the counter via host_scale.)
+// The host modes are computed at a nominal 60 BPM and the counter runs at
+// host_scale. Every N beats is N beats per cycle, so the wait MULTIPLIES by N.
+// It used to share the Hz form and divide -- left from when mode 3 was a
+// multiplier -- so a delay of 2 at every 4 beats waited a quarter second.
 slider15 == 1 ? start_delay_sec = start_delay_units :
 slider15 == 0 ? start_delay_sec = start_delay_units * 60 / max(slider14, 0.001) :
-               start_delay_sec = start_delay_units / max(slider14, 0.001);   // 2 Hz, 3 Host x
+slider15 == 3 ? start_delay_sec = start_delay_units * max(slider14, 0.001) :
+               start_delay_sec = start_delay_units / max(slider14, 0.001);   // 2 Hz, 4 N per beat
 
 // Play/Rest gate: integer cycle counts. Both must be > 0 for the
 // gate to engage; 0 in either slider disables.
