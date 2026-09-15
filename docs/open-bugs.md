@@ -1,12 +1,42 @@
 # Open bugs
 
-**Entries 1 and 2 are CLOSED. Entry 3 is FIXED and waits only on Rozaya meeting
-the new name in REAPER.** A closed entry stays here for its reasoning and its
-burned theories, so they are not re-derived — read them before touching the
+**Entry 4 is OPEN. Entries 1 and 2 are CLOSED. Entry 3 is FIXED and waits only on
+Rozaya meeting the new name in REAPER.** A closed entry stays here for its reasoning
+and its burned theories, so they are not re-derived — read them before touching the
 plugin they name, then leave them alone.
 
 Things that are known-broken and NOT fixed. Newest first. A bug leaves this file
 only when it has been fixed *and* heard.
+
+---
+
+## 4. Tensor's `shepard.RPP` — 8 Shepard Tone instances hold a layout the plugin does not have — OPEN
+
+**Repair it after R20, from the snapshots, as its own job. Rozaya agreed that order.**
+**No Shepard Tone migration may run over `E:/tensor's-rpp-projects/shepard.RPP`
+until this is settled** -- the Voice selector layout R20 decided included.
+
+**Found by `tools/scan_slider_ranges.py "E:/tensor's-rpp-projects"`:** all 8 instances
+out of range against the installed plugin (`Rate mode` 1000, `Pulse width` 0,
+`Tuning reference` 4, `V2 direction` 4, `V4 active` 4, and more). Decoded by the
+81-slider layout from before Shepard Tone's pitch rebuild they still do not fit
+(`Root note` 440, `V1 active` 7), so the file is on neither layout cleanly.
+
+**How it probably happened, not proved.** The pitch rebuild's layout note says
+"zero projects use either, so no migration", but this file had 8. The Solo migration
+later the same day did rewrite this file, on the assumption it was already on the
+rebuilt layout, and the file was written again the next day (a Tremolo in it was
+migrated). The history also records one Solo run shifting this file twice and being
+restored and redone.
+
+**What to work from:** `E:/reaper/finished/backups/snapshots/_pre-solo-20260910/`,
+`_pre-swf-r22-20260910/` and `_pre-r24-batch-20260911/tensor/` each hold a copy taken
+before a step. Find which layout each copy is really on, decode by name, then migrate
+once, and verify by rendering old build on the snapshot against new build on the
+result.
+
+Tensor's two small May Shepard files (`tensor-shepard-ascending`, `tensor-three-layer-drift`)
+are all zeros and silent in any layout; that is already known and is not this bug.
 
 ---
 
