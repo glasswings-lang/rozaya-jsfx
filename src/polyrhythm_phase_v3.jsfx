@@ -63,9 +63,9 @@ slider10:25<1,99,0.1>Pulse width (%, 50 = square)
 // frequency, up to +6 dB. Useful for the Golden / Phi waves, which can sound
 // thin in the low end.
 slider11:0<-100,100,0.1>Tone (Warm <-> Bright)
-slider12:0<0,100,0.1>Edge
-slider13:0<0,100,0.1>Movement
-slider14:0<0,100,0.1>Body
+slider12:0<0,100,0.1>Edge (%)
+slider13:0<0,100,0.1>Movement (%)
+slider14:0<0,100,0.1>Body (%)
 
 // ===== THE VOICES, BEHIND ONE SELECTOR =====
 // 48 per-voice sliders became 12, then 15. Pick a voice, then the controls below
@@ -110,7 +110,7 @@ slider20:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
 slider21:0<-1000,1000,0.001>Drift / rate — offset in Drift mode, this voice's own rate in Independent
 // Phase Offset unit follows Rate Mode: BPM = beats, Seconds = seconds,
 // Hz = cycles. Values wrap freely -- there is no clamping.
-slider22:0<-1000,1000,0.001>Phase offset
+slider22:0<-1000,1000,0.001>Phase offset (in rate mode units)
 // Per-voice from this build on. Nearly free in the engine: the waveform chain
 // was already inside the per-voice loop and already indexed this voice's own
 // phase and gain -- only the waveform NUMBER was global.
@@ -189,7 +189,7 @@ slider39:0<0,4,1{Forward,Reverse — permute,Reverse — time,Both — permute,B
 // Added to every drift/rate value in the reverse layer (slots 8-15) in Both
 // modes, so the two layers no longer run at matched cadences. Hidden in
 // single-layer modes, where it would only duplicate the global Rate Value.
-slider40:0<-1000,1000,0.001>Reverse drift offset
+slider40:0<-1000,1000,0.001>Reverse drift offset (in rate mode units)
 
 // ===== TRANSPORT =====
 // Start delay: the plugin sits silent for this many units after playback

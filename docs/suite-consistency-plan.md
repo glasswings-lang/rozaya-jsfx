@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R17** — Every slider names its unit: "depth in what?" has an answer
 - **R18** — A new slider goes where it belongs; a new enum OPTION goes at the end of its list
 - **R19** — Pan modes run in one canonical order: still, then stepped, then continuous
 - **R20** — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere
@@ -74,48 +73,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## R17. Every slider names its unit: "depth in what?" has an answer
-
-Star, 2026-08-31: *"we've always gone — depth in what? x in what? what's the unit?"*
-
-This is sharper than R9 and it supersedes how R9 was being applied. Rewriting `0.25` as
-`25` makes the number easier to read and leaves it **just as unitless**. The reader's
-question was never "how many decimal places", it was **"twenty-five of WHAT?"**
-
-**The test:** ask "x of what?" out loud.
-
-- If the answer is a real quantity — BPM, Hz, dB, seconds, beats, semitones — **use that
-  quantity.** It is not a proportion, it is a measurement that somebody normalised.
-- If the answer is genuinely a proportion of a nameable thing, **name the thing in the
-  slider**: `Inhale fade in (% of inhale)`, `Bloodflow attack (% of cycle)`.
-- If the answer is *"of itself"* or *"of the maximum"* — the control is an abstraction
-  with nothing behind it, and that is the bug. Find the underlying quantity.
-
-**The worked example, and it is another propagation failure.** Heartbeat Generator has
-`Breath HRV Depth` at `0.0..0.25` and `Random HRV Depth` at `0.0..0.08`. Traced to its
-consumption:
-
-```
-cycle_len = cycle_len_base * (1.0 - breath_mod + rand_hrv)
-```
-
-They are fractions of the beat interval. **Womb already names this quantity properly** —
-`Heart rate swing per breath (BPM)` — so the same measurement is honest in one plugin
-and an unlabelled decimal in its sibling. Heartbeat's two become **BPM peak-to-peak**,
-matching Womb. The fraction-to-BPM relation is not linear across tempo, but Womb has
-worked in BPM and converted internally since v2, so the precedent is built and tested.
-
-**Others failing the test today:** `Brightness` (0..1 — of what? it scales a filter, so it
-has an underlying Hz or a mix), `Bloodflow Dicrotic Level`, `Bloodflow Resonance` (the
-filter sweep already learned this one — resonance is honestly expressed in dB of peak, see
-the 2026-08 filter recalibration), and both `Stereo Width` controls (a proportion of full
-decorrelation, so at minimum `% of full width`).
-
-**Note the pattern, since this is the fourth tonight**: the multiplier, the `Ramp` rename,
-the missing sigh, and now this — each is a good decision made in ONE plugin and never
-carried to its siblings. The suite's real failure mode is not bad decisions, it is
-**unpropagated good ones**.
 
 ## R18. A new slider goes where it belongs; a new enum OPTION goes at the end of its list
 

@@ -58,51 +58,51 @@ slider14:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit (for every note)
 // ===== NOTES, C through B: Active, Gain, Pan, Fine tune =====
 slider15:1<0,1,1{Off,On}>C active
 slider16:0<-60,24,0.01>C gain (dB)
-slider17:0<-100,100,0.1>C pan
+slider17:0<-100,100,0.1>C pan (%, neg = left, pos = right)
 slider18:0<-1000,1000,0.001>C fine tune (in fine tune units)
 slider19:1<0,1,1{Off,On}>C# active
 slider20:0<-60,24,0.01>C# gain (dB)
-slider21:0<-100,100,0.1>C# pan
+slider21:0<-100,100,0.1>C# pan (%, neg = left, pos = right)
 slider22:0<-1000,1000,0.001>C# fine tune (in fine tune units)
 slider23:1<0,1,1{Off,On}>D active
 slider24:0<-60,24,0.01>D gain (dB)
-slider25:0<-100,100,0.1>D pan
+slider25:0<-100,100,0.1>D pan (%, neg = left, pos = right)
 slider26:0<-1000,1000,0.001>D fine tune (in fine tune units)
 slider27:1<0,1,1{Off,On}>D# active
 slider28:0<-60,24,0.01>D# gain (dB)
-slider29:0<-100,100,0.1>D# pan
+slider29:0<-100,100,0.1>D# pan (%, neg = left, pos = right)
 slider30:0<-1000,1000,0.001>D# fine tune (in fine tune units)
 slider31:1<0,1,1{Off,On}>E active
 slider32:0<-60,24,0.01>E gain (dB)
-slider33:0<-100,100,0.1>E pan
+slider33:0<-100,100,0.1>E pan (%, neg = left, pos = right)
 slider34:0<-1000,1000,0.001>E fine tune (in fine tune units)
 slider35:1<0,1,1{Off,On}>F active
 slider36:0<-60,24,0.01>F gain (dB)
-slider37:0<-100,100,0.1>F pan
+slider37:0<-100,100,0.1>F pan (%, neg = left, pos = right)
 slider38:0<-1000,1000,0.001>F fine tune (in fine tune units)
 slider39:1<0,1,1{Off,On}>F# active
 slider40:0<-60,24,0.01>F# gain (dB)
-slider41:0<-100,100,0.1>F# pan
+slider41:0<-100,100,0.1>F# pan (%, neg = left, pos = right)
 slider42:0<-1000,1000,0.001>F# fine tune (in fine tune units)
 slider43:1<0,1,1{Off,On}>G active
 slider44:0<-60,24,0.01>G gain (dB)
-slider45:0<-100,100,0.1>G pan
+slider45:0<-100,100,0.1>G pan (%, neg = left, pos = right)
 slider46:0<-1000,1000,0.001>G fine tune (in fine tune units)
 slider47:1<0,1,1{Off,On}>G# active
 slider48:0<-60,24,0.01>G# gain (dB)
-slider49:0<-100,100,0.1>G# pan
+slider49:0<-100,100,0.1>G# pan (%, neg = left, pos = right)
 slider50:0<-1000,1000,0.001>G# fine tune (in fine tune units)
 slider51:1<0,1,1{Off,On}>A active
 slider52:0<-60,24,0.01>A gain (dB)
-slider53:0<-100,100,0.1>A pan
+slider53:0<-100,100,0.1>A pan (%, neg = left, pos = right)
 slider54:0<-1000,1000,0.001>A fine tune (in fine tune units)
 slider55:1<0,1,1{Off,On}>A# active
 slider56:0<-60,24,0.01>A# gain (dB)
-slider57:0<-100,100,0.1>A# pan
+slider57:0<-100,100,0.1>A# pan (%, neg = left, pos = right)
 slider58:0<-1000,1000,0.001>A# fine tune (in fine tune units)
 slider59:1<0,1,1{Off,On}>B active
 slider60:0<-60,24,0.01>B gain (dB)
-slider61:0<-100,100,0.1>B pan
+slider61:0<-100,100,0.1>B pan (%, neg = left, pos = right)
 slider62:0<-1000,1000,0.001>B fine tune (in fine tune units)
 
 // ===== TRANSPORT =====
