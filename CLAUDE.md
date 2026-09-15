@@ -84,8 +84,8 @@ and let them decide.
   `git log` before deciding something needs building. The recurring problem here
   is distribution, not design.
 
-**The rate block is settled** (R20/R21) -- read it before touching any rate
-control; five sessions each reached for a different shape. **No unit locks
+**The rate block is settled** (rules file Part 2, and R21) -- read it before
+touching any rate control; five sessions each reached a different shape. **No unit locks
 ever**; a unit is at most a default. **Never change what a control MEANS without
 saying so on the control itself.** **Before retiring any control, open it and
 read what else is in the block** -- never trust a document over the source.

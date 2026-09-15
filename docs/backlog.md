@@ -46,6 +46,22 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   filters). A sweep faster than one cycle means typing 0.5 or 0.25. Rozaya: *"the
   multiplier is the off-putter there"*. The rate modes solved the same thing with `Every N
   beats` and `N per beat`.
+- **The rate block, where it is not yet whole.** Every speed is a pair named `<name> mode`
+  then `<name> value` (`Heart rate mode`, `Bubble rate mode`, plain `Rate mode` where nothing
+  is more specific; today's names vary). Heartbeat, Rhythm Track and the Stereo Phaser lose
+  `Host ratio (retired)`: hidden and switched off, but in the parameter list. Heartbeat's
+  `Breath cycle (seconds)` becomes a Breath rate pair on the rate picker, 0 = no breath
+  sway. **Polyrhythm:** the rate mode moves under the Voice selector, per voice; in Drift a
+  voice reads `Rate value (all voices)` in its own unit; Permute swaps a voice's unit with
+  its speed; `Phase offset` gets a per-voice unit picker `{BPM, Seconds, Hz, Beats, N per
+  beat, Milliseconds, Cycles, Percent}` (it counts seconds, or beats on a beat unit, today,
+  whatever its name says); `Reverse drift offset` gets one `{Each voice's own unit, BPM,
+  Seconds, Hz, Every N beats, N per beat}`; Transport Cycles counts each voice's own pulses,
+  Start delay included. **Shepard Tone:** voices go behind a Voice selector, All first, with
+  every per-voice control under it, rate unit and fine tune unit included; synced voices
+  read the shared Rate value in their own unit; its Transport unit is `{Seconds, Beats}`.
+  Not over Tensor's `shepard.RPP` until open bug 4 is repaired. Saved projects land on what
+  they count today. Dapple's Start delay is read, not measured.
 - **Put every mode before its value, in every plugin.** Most plugins still have the value
   first. Fix it inside each plugin's own planned migration, not as a separate pass. The
   rule is in the rules file, under "The four rules inside the order".

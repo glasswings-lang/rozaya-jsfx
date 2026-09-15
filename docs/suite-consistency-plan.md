@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R20** — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere
 - **R21** — The host modes name their DIRECTION, and there are two
 - **R22** — THE PITCH BLOCK, settled with Rozaya 2026-09-08: a pitch value and a pitch mode, adjacent. Built.
 - **R23** — A drift steps on its target's own turn
@@ -72,71 +71,9 @@ A migration written before its layout is a migration you will write again.
 
 ---
 
-## R20 — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere (2026-09-04)
-
-**Supersedes R11 entirely and completes R13-revised.** Decided with Rozaya on
-2026-09-04 after five separate sessions had each reached for a different shape.
-If you are reading the suite for "how does tempo sync work here", stop at this
-section — everything below it is history and two of the shapes it describes are
-dead.
-
-## The rule, in full
-
-**Every rate in a plugin carries exactly two controls, adjacent, MODE FIRST:**
-
-```
-<Name> rate mode         {BPM, Seconds, Hz, Host x}   -- ALWAYS these four, ALWAYS this order
-<Name> rate value        free number
-```
-
-Rozaya, 2026-09-14: *"every thing with a mode gets the mode before the value.
-everything. I don't care what it is."*
-
-The mode says the unit, so a rate's name lists no units. The exception is a name
-that explains something its mode can't: the breath rate in Breath Generator and
-Womb says `per minute, or beats per breath`, and Rozaya said to leave both.
-
-- **In Host x, the rate value means EVERY N BEATS.** One cycle takes N beats of
-  the project. Bigger is slower. It is a free number, so `0.333333` — every
-  three beats — is as reachable as `4`.
-- **The mode list is identical everywhere.** Same four entries, same order, in
-  every plugin, for every rate. This is the whole point: the suite is navigated
-  by arrowing the parameter list one control at a time, so position 3 must not
-  mean Hz on one control and BPM on the one under it.
-- **A plugin with two rates has two of these pairs**, each complete and
-  self-contained. The pan gets its own rate value and its own rate mode. It does
-  not borrow the main rate's mode, and nothing points across at it.
-
-**What this replaces — each of these has been built at least once, and each is retired for good:**
-
-- No `Sync to host` switch. Host x is a rate mode; a second switch is a second
-  way to say the same thing.
-- No `Host sync target` selector. Each rate carries its own sync.
-- No separate `Every N beats` slider. The rate value IS that number in Host x.
-- No `Host ratio` picker, or any control whose job is to write a value into
-  another control. All seven were retired 2026-09-04 and they stay retired.
-- No multiplier, anywhere, in any mode.
-
-**Why the two dead shapes existed**, so nobody re-derives them, is in
-`docs/history/R20.md`.
-
-## The near-miss this rule must not repeat
-
-**BEFORE DELETING ANY CONTROL THIS RULE RETIRES, OPEN THE BLOCK AND READ IT.**
-On 2026-09-04 a plan document described Womb's `Every N beats` as a leftover and
-it is not — it is half of a working pair. Rozaya: *"host x is the rate mode.
-every N beats is getting the multiplier out of there. neither of them work
-alone."* R20 does retire it, but **by moving its number into the rate value,
-with a migration**, which is a different operation from deleting it. A retired
-`Host ratio` picker writes one slider and does nothing else; a working half of a
-pair does something the other half depends on. Those look identical from the
-slider list and completely different from inside.
-
----
-
 ## R21 — The host modes name their DIRECTION, and there are two (2026-09-05)
 
-**Extends R20; does not overturn it.** One rate value, one rate mode, same
+**Extends the rate block (Part 2); does not overturn it.** One rate value, one rate mode, same
 adjacency. What changes is that the mode enum gains a fifth entry and the fourth
 is renamed to say what it does.
 
@@ -610,7 +547,7 @@ and then approved:
 
 ```
 1. What the plugin IS          its identity — the sound, the frequencies, the voices
-2. Its rate                    rate mode, then rate value          (the R20 pair)
+2. Its rate                    rate mode, then rate value          (the rate pair)
 3. The shape of its movement   depth, on-duration, attack + its shape, release + its shape
 4. Stereo and pan
 5. Output level                wet/dry mix, output volume
@@ -638,9 +575,12 @@ plugin-wide but simpler, and you set it once and leave it.
   selector (`Attack shape`) is not a mode and goes AFTER its value. Rozaya,
   2026-09-14: *"They'd universally go afterward. except where there's durations
   and other stuff in the way. then they go under all that"*.
-- **A second rate carries its own complete pair** (R20). The pan gets its own
-  rate value and its own rate mode, inside the pan group. It never borrows the
-  main rate's mode and nothing points across at it.
+- **Every speed is a pair, `<name> mode` then `<name> value`,** and its mode offers
+  the same choices in the same order in every plugin (R21). A second speed -- the
+  pan's, a voice's -- carries its own complete pair, inside its own group: never the
+  main rate's mode, and nothing points across at it. No sync switch, no host-sync
+  target, no multiplier, and no control that writes a value into another. Retiring
+  one of those: open the block first, and move a working half's number, not delete it.
 - **Global output goes last before transport**, so it stops interrupting the pan
   group — which is exactly where the Sweeping Filter's `Wet/dry mix` sits today,
   at slider 15.
