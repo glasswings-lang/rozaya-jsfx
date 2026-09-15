@@ -81,8 +81,7 @@ This is for all plugins.
 
 - **A new ramp starts where the control is.** On a brand new ramp, Ramp from and Ramp to
   both start at the control's current value, so switching the ramp on changes nothing until
-  you set where it goes. This is what went wrong in June: Womb's ramp had its destination
-  start at 0, and switching it on took the heart to 0 BPM. Recommended; Rozaya: *"Yes."*
+  you set where it goes. Recommended; Rozaya: *"Yes."*
 
 ## Still to decide
 
