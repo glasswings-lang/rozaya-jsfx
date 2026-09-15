@@ -374,8 +374,11 @@ loop(16,
   osc_phase_l[i] = 0;
   osc_phase_r[i] = 0;
   trem_phase[i]  = 0;
-  gain_l[i]      = 1;
-  gain_r[i]      = 1;
+  // Silent, not full: the 3 ms smoother below brings each voice UP to its
+  // envelope. Starting at 1 made every play start a short full-level burst
+  // down to a pulse that begins quiet -- the thump Rozaya heard in REAPER.
+  gain_l[i]      = 0;
+  gain_r[i]      = 0;
   pan_smooth[i]  = 0;
   pan_cycle_index[i] = 0;
   pan_cycle_dir[i]   = 1;

@@ -93,6 +93,9 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - The 2026-09-06 drift/ramp sweep, Tremolo's Start delay, the ranges; R25 names (09-12).
 - Measured, not heard: Tuning reference works in all 14; Heartbeat and Womb no longer blow up
   above ~5 kHz.
+- **2026-09-15, measured:** Polyrhythm voices start silent, so no thump on play (Rozaya heard
+  the thump); Tremolo's and the Sweeping Filter's Start delay on Every N beats; Tensor's
+  `shepard.RPP` carried from the first release (open bug 4).
 
 `docs/host-sync-ear-test.md` is the highest-value thing waiting: five tests,
 fifteen minutes, three never heard on any plugin.
