@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R18** — A new slider goes where it belongs; a new enum OPTION goes at the end of its list
 - **R19** — Pan modes run in one canonical order: still, then stepped, then continuous
 - **R20** — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere
 - **R21** — The host modes name their DIRECTION, and there are two
@@ -73,48 +72,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## R18. A new slider goes where it belongs; a new enum OPTION goes at the end of its list
-
-Decided 2026-08-31 with Rozaya, correcting a rule I was about to apply past its purpose:
-*"the rule for appending to the end is if it's a new feature, not if it's an extension of
-a thing that should have been there all along... we're doing a big reorder of all the
-things. We shouldn't be pushing them one by one. That's kind of an embarrassment."*
-
-**Is append-at-the-end a real convention outside this repo?** Yes — and the reason it
-exists is the whole point. VST, AU and CLAP identify parameters by index or ID, and hosts
-save automation and preset state against those. Insert a parameter mid-list and every
-saved preset and automation lane silently points at the wrong control. VST3's stable
-parameter IDs exist specifically to escape this; CLAP has its own scheme for the same
-reason.
-
-**So the convention is a workaround for not being able to migrate saved state.** Where
-the state CAN be migrated — and this suite migrates it, deliberately, as the entire
-purpose of this document — the reason evaporates. Applying it during a reorder would bake
-the ordering problem into the release meant to fix it.
-
-**What protects a third party is the self-migration, not the append rule.** The plugin
-detects an old project on load from the blob's version magic and repairs the values in
-memory, on any machine, with nothing for anyone to run (Part 4). Someone with no old
-projects simply gets the clean layout. **That mechanism must be built and verified before
-any renumber ships** — it is the gate, and Rozaya's concern is exactly right: *"the last
-thing I want is for some motherfucker to be shipped a bullshit plugin and think it doesn't
-work and think the rest of them are like that."*
-
-**The one genuine exception, for a different reason.** An enum **option** is stored as an
-index *inside* a slider's value. Insert `Square` into the middle of the waveform list and
-every saved project's waveform changes character; insert a drift target and every
-per-target bank points at the wrong parameter. No slider-line migration fixes that
-cheaply, so **enum options always append** — waveforms at the end of the list, drift and
-ramp targets at the end of theirs.
-
-**The rule, then:**
-
-| thing | where it goes |
-|---|---|
-| a new slider | **its logical position** in the layout |
-| a new enum option (waveform, drift target, mode) | **the end of the list** |
-| an existing slider | wherever the authored layout puts it |
 
 ## R19 — Pan modes run in one canonical order: still, then stepped, then continuous (raised 2026-09-02)
 
@@ -452,8 +409,8 @@ already had was not in the list.
 
 **Widening the list is a MIGRATION, not a rename.** An enum option is an index
 stored inside a slider's value, so moving the bottom of the list from C2 to C1
-shifts every saved note by twelve semitones. This is the R18 append-never-insert
-rule at enum scale, and it is the one genuinely risky part of this job.
+shifts every saved note by twelve semitones. Like any move of a picker choice, it
+needs its migration in the same commit (CLAUDE.md).
 
 ## What falls out for free
 
@@ -586,34 +543,6 @@ I had it down as "one block, detune to cents" without checking whether it makes
 its own sound. It does not.
 
 Take those four out of the migration list until that discussion happens.
-
-## The one place R22 CONTRADICTS an existing rule, and the argument for it
-
-**R18 says enum OPTIONS always append. Widening the note list from C2–C6 to
-C0–C8 PREPENDS two octaves, which is an insert at the front.** An enum option is
-an index stored inside a slider's value, so every saved note would shift by 24
-semitones. This is the one part of R22 that is not merely new.
-
-**R18's own reasoning is why the exception is arguable here.** It says the
-append rule is *"a workaround for not being able to migrate saved state"*, and
-that the enum carve-out exists because *"no slider-line migration fixes that
-cheaply."* For the note list it does: adding 24 to one integer per voice is
-exact, provable and verifiable by name against a snapshot — it is arithmetic,
-not inference, which is the line `tools/` scripts already have to stay on.
-
-**But the gate R18 names is real and is NOT built.** What protects a third party
-is the plugin's own self-migration from the blob's version magic (Part 4), so it
-repairs an old project on any machine with nothing for anyone to run. That does
-not exist yet. Today the only projects are Rozaya's and a script reaches all of
-them — **and no release has shipped, by standing decision, precisely so that
-stays true.**
-
-**So: the note-list widening is allowed, and it is allowed for a reason that
-expires.** If a release ships before this lands, it stops being allowed and the
-self-migration has to be built first.
-
-
----
 
 ## R23 — A drift steps on its target's own turn (2026-09-09)
 
@@ -835,14 +764,8 @@ The trap: per-target drift and ramp configs are stored in memory banks **indexed
 target number**. So changing a target enum's *order* silently repoints every saved
 config at the wrong target.
 
-**Therefore: target enum order is frozen. Only the strings change.** New targets
-**append** to the end of the enum, never insert — the same rule as sliders, for the same
-reason.
-
-Where a target list's order disagrees with its sliders' order (Sweep Dwell lists High
-dwell, Fade down, Low dwell, Fade up against sliders 3, 5, 4, 7), **the slider numbering
-bends to match the enum**, not the reverse. Since we are renumbering anyway this is free,
-and it keeps the blob untouched.
+**So reordering a target list, or putting a new target where it belongs, needs a migration
+that moves each saved config with its target** (CLAUDE.md).
 
 ### The plugin migrates itself — the script is a convenience, not the safety net
 

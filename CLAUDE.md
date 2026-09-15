@@ -70,10 +70,10 @@ and let them decide.
 
 ## The four that cost the most when broken
 
-- **Never insert a slider mid-list without writing the migration in the same
-  commit.** REAPER restores by position, so an insert silently rewrites every
-  saved project above it -- eight plugins, two projects, three months of wrong
-  sound. Bump the `@serialize` magic in the same commit; that is the only thing
+- **A control or a picker choice goes where it belongs. Moving one means writing its
+  migration in the same commit.** REAPER restores by position, so a move silently
+  rewrites every saved project past it -- eight plugins, two projects, three months of
+  wrong sound. Bump the `@serialize` magic in the same commit; that is the only thing
   that made the last one repairable.
 - **Author the whole layout before you migrate** -- `docs/layouts/<plugin>.md`
   first, one migration per plugin, not one per idea. Breaking this cost five
