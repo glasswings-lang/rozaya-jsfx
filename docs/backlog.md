@@ -67,9 +67,20 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   number stays. Rozaya: *"It should cover them all I think"*. Today only the Morpher converts
   (its rate and transport times); Polyrhythm overwrites Rate value with 4 or 1 on entering
   a beat unit, and that goes; the other plugins leave the number alone.
+- **The pitch block, where it is not yet whole.** Blocks for the frequencies with none: the
+  Stereo Phaser's range and the Morpher's and Passage's low and high cuts as two blocks each;
+  Veil's cutoffs as one block behind a target picker, `All` first; Womb's breath high-pass,
+  breath post-filter and bloodflow filter in place beside their parts. That pairing is a
+  trial, Rozaya: *"We can try it; I won't know until I see it."* Melody's and Polyrhythm's
+  `Transpose` get a unit picker, starting on Semitones. Shepard Scale's notes go behind a
+  Note picker, `All` first, each note's active, gain, pan, fine tune unit and fine tune under
+  it. The note name works in every unit, both ways, in every block; so does `Target note` in
+  every Transpose unit once a Source note is set, and Bubbler's and Sustain Looper's names
+  say "only with a Source note". The two-way link was found by search in Breath Generator,
+  Polyrhythm and Sweep Dwell; check each other plugin when building.
 - **Put every mode before its value, in every plugin.** Most plugins still have the value
   first. Fix it inside each plugin's own planned migration, not as a separate pass. The
-  rule is in the rules file, under "The four rules inside the order".
+  rule is in the rules file, under "The rules inside the order".
 - **Passage, in its next migration:** each unit picker moves above the timings it sets
   (Slot timing unit above slot fade in, hold, fade out and gap after; Transport unit above
   Start delay, Play for and Rest for), and those names lose their `seconds / Hz / beats`.
@@ -142,10 +153,12 @@ one. Finish it, re: the audit."*
   2026-09-13). Rozaya: *"rest mode (for LFO) seems like it'd be clearer for the ones called the
   other thing."* Those three freeze only their LFOs (`in_frozen_rest` gates LFO phase alone),
   so the name is true of them. A label change, no position moves; goes in each one's layout.
-- **Every pitch spread takes a value and a unit picker** `{Hz, Semitones, Cents}`, as Fine tune
-  does -- not locked to cents (no unit locks). Bubbler's `Pitch spread (semitones)` 0..24 and
-  `Rise (semitones)` 0..36; Dapple's `Pitch spread (%)`; Sustain Looper's `Spread (%)`. Read
-  what each percent is a percent OF before authoring: converting one is a value migration.
+- **Every pitch spread takes a unit picker** `{Hz, Semitones, Cents}`, **and no Percent.**
+  Rozaya: *"Yes! Fuck those hidden limits"*. Bubbler's `Pitch spread (semitones)` 0..24 and
+  `Rise (semitones)` 0..36 get the picker. Dapple's `Pitch spread (%)` is a share of a hidden
+  3 octaves: 50% becomes 18 semitones. Sustain Looper's `Spread (%)` fans its copies from 3
+  cents at 0% to 25 at 100% and also sets a wander of up to 6 cents: it becomes the fan in
+  cents (50% is 14), wander kept in proportion. The hidden limits go. Both are value migrations.
 
 - **No control counts in fractions of one (R9).** Every control whose range sits inside -1 to 1
   changes unit: volumes become dB from -60 (off) to +24, and everything else becomes percent (pan

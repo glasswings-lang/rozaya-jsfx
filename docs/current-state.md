@@ -29,7 +29,6 @@ has been heard, and what Rozaya has said is next.
   `Rest mode (for Drift)` and `Rest mode (for Ramp)` (Rozaya's, 2026-09-13). Nothing built.
 - **Held for Rozaya's decision:** semitone ranges. dB volumes were decided 2026-09-14: -60 to
   +24 everywhere.
-- R22 opens with an attribution warning: parts of it were Claude's, cited back as settled.
 
 ## What has been heard, and what has not
 
