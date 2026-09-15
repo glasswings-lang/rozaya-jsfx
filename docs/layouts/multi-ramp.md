@@ -77,6 +77,13 @@ This is for all plugins.
   next ramp waits for the real end either way. Recommended; Rozaya: *"Count it yeah"*. The
   option's name mentions only play/rest, so hear it in REAPER with this in mind.
 
+## Decided, 2026-09-14
+
+- **A new ramp starts where the control is.** On a brand new ramp, Ramp from and Ramp to
+  both start at the control's current value, so switching the ramp on changes nothing until
+  you set where it goes. This is what went wrong in June: Womb's ramp had its destination
+  start at 0, and switching it on took the heart to 0 BPM. Recommended; Rozaya: *"Yes."*
+
 ## Still to decide
 
 - Where each new control sits in each plugin's list, per plugin layout doc.

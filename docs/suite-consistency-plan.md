@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R14** — Ramp states WHERE IT IS GOING, in the target's own unit
 - **R15** — The sigh gets its own four segments
 - **R16** — The feature is called `Ramp`, because it rides every target
 - **R17** — Every slider names its unit: "depth in what?" has an answer
@@ -77,34 +76,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## R14. Ramp states WHERE IT IS GOING, in the target's own unit
-
-Decided 2026-08-31 with Star. `Speed ramp by -35` requires knowing where the parameter
-is and adding. `Speed ramp to 35 BPM` is the end goal stated outright, with no arithmetic
-in it at all. For a control whose whole purpose is *"wind down over the next hour while I
-fall asleep"*, the destination **is** the thing already in mind; the delta is a conversion
-forced on the user to express it. Star, on why this matters more than it looks: *"it's
-more fucking adding than we can deal with sometimes because our cognitive lag is so bad."*
-
-**On first selecting a target, its destination seeds to where that parameter already
-is.** This is the part that makes the rule safe, and it is not optional — destination
-semantics were tried once before and failed without it (`docs/history/R14.md`). "Ramp to where I am" is no change, safely, and any
-move from there states a goal. Identical continuity trick to the one that makes entering
-Host x silent, which the suite has now implemented twice and trusts.
-
-Consequences:
-- The slider becomes `Speed ramp to`, in the **target's own unit** — which R12's
-  `-1000..1000` already accommodates for every target in the suite.
-- Seeding is per target and belongs in `@block` (it reads a bank), per the standing rule.
-- `Speed ramp engage` still gates whether the ramp advances; nothing about the
-  freeze/resume behaviour changes.
-
-**Naming note that generalises:** `by` only reads as a sentence *because a selector sits
-next to it finishing it* — "speed ramp by −35, target Heart rate." Anywhere there is no
-selector to complete the phrase, `by` dangles. This is why `Sigh by` was proposed and
-immediately failed the read-aloud test (*"sigh by... what. what?"*). **Test a slider name
-by saying it aloud with its value and nothing else.**
 
 ## R15. The sigh gets its own four segments
 
