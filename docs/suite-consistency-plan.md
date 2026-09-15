@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R21** — The host modes name their DIRECTION, and there are two
 - **R22** — THE PITCH BLOCK, settled with Rozaya 2026-09-08: a pitch value and a pitch mode, adjacent. Built.
 - **R23** — A drift steps on its target's own turn
 - **R24** — Every control that shapes the sound is a Drift and Ramp target
@@ -68,62 +67,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
----
-
-## R21 — The host modes name their DIRECTION, and there are two (2026-09-05)
-
-**Extends the rate block (Part 2); does not overturn it.** One rate value, one rate mode, same
-adjacency. What changes is that the mode enum gains a fifth entry and the fourth
-is renamed to say what it does.
-
-```
-BPM / Seconds / Hz / Every N beats / N per beat
-```
-
-- **`Every N beats`** is what `Host x` already was: one cycle takes N beats.
-  Renamed only — **index 3 does not move**, so the 10 instances stored on it are
-  untouched.
-- **`N per beat`** is new at index 4, appended, so nothing shifts. N cycles fit
-  in one beat.
-
-## Why, and it is a gap the retired pickers used to cover
-
-The pickers deleted on 2026-09-04 offered **both directions in words** — their
-list ran *"every 8 beats … 1 per beat … 8 per beat"*. Retiring them kept the slow
-half and silently dropped the fast one, so *eight cycles per beat* became
-`0.125`: three decimal places, and a reciprocal to work out. That is the exact
-arithmetic this suite exists to remove, and Rozaya found it by hitting it:
-*"Rate value should not have to be set to 0.5 to get 8 bubbles every beat."*
-
-**Neither direction is right on its own, because they are reciprocals.** Whichever
-way the number runs, one end is whole and the other is fractional. Polyrhythm
-lives at the slow end — *every 3 beats* against *every 5 beats* is how voices walk
-past each other — and Bubbler and Dapple live at the fast end. So the mode picks
-which end of your own music is arithmetic-free.
-
-**The sound is identical either way.** Both reach the same rates; only the typing
-differs. That is worth stating because it means this can never be judged by ear,
-only by use.
-
-## The conversion, per shape
-
-At 60 BPM one beat is one second, which is the nominal both host modes are
-computed against (never remember a tempo — `@init` wipes it on play).
-
-| mode | nominal cycles/sec | then |
-|---|---|---|
-| `Every N beats` (3) | `1 / N` | × `host_scale` (= tempo/60) |
-| `N per beat` (4) | `N` | × `host_scale` |
-
-So `N per beat` computes exactly like **Hz** does, and only the host_scale gate
-differs. Every `rate_mode == 3` gate that means "are we host-synced" becomes
-`>= 3`; the ones that mean "which conversion" stay exact.
-
-**Three shapes to apply it to:** a shared `rate_to_hz()` (both Polyrhythms,
-Shepard Tone), inline branch chains (most of the rest), and the Morpher, which
-CONVERTS the value on a mode switch and so needs its conversion table extended
-rather than a branch added.
 
 ---
 
@@ -574,9 +517,13 @@ plugin-wide but simpler, and you set it once and leave it.
   before `Drift period`. A shape
   selector (`Attack shape`) is not a mode and goes AFTER its value. Rozaya,
   2026-09-14: *"They'd universally go afterward. except where there's durations
-  and other stuff in the way. then they go under all that"*.
-- **Every speed is a pair, `<name> mode` then `<name> value`,** and its mode offers
-  the same choices in the same order in every plugin (R21). A second speed -- the
+  and other stuff in the way. then they go under all that"*. **Switching a mode or
+  unit keeps the thing the same and converts the number**, wherever that is exact;
+  where it is not (Cycles of a speed that may drift), the number stays.
+- **Every speed is a pair, `<name> mode` then `<name> value`,** and its mode is
+  always `{BPM, Seconds, Hz, Every N beats, N per beat}`, in that order, in every
+  plugin: `Every N beats` is one cycle per N beats, `N per beat` is N cycles in one
+  beat, so whole numbers work at both ends. A second speed -- the
   pan's, a voice's -- carries its own complete pair, inside its own group: never the
   main rate's mode, and nothing points across at it. No sync switch, no host-sync
   target, no multiplier, and no control that writes a value into another. Retiring
