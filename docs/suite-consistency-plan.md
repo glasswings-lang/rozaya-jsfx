@@ -578,7 +578,7 @@ absolutely be drift candidates."* Drift and Ramp exist to replace automation.
 - **Target options go in the order of the controls they reach**, never appended
   to save a migration. Star, 2026-09-10.
 - **A new sound-shaping control gets its target in the same change that adds it.**
-- Drift and Ramp share one target list. New targets append to it (R18).
+- Drift and Ramp share one target list. A new target goes where it belongs in it, with its migration.
 
 ## R25 — A control behind a selector says which kind it is (2026-09-12)
 
