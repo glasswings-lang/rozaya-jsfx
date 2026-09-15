@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R16** — The feature is called `Ramp`, because it rides every target
 - **R17** — Every slider names its unit: "depth in what?" has an answer
 - **R18** — A new slider goes where it belongs; a new enum OPTION goes at the end of its list
 - **R19** — Pan modes run in one canonical order: still, then stepped, then continuous
@@ -75,34 +74,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## R16. The feature is called `Ramp`, because it rides every target
-
-Star, 2026-08-31: *"It's not really speed anymore, is it."* Correct, and it has not been
-for a long time. The feature was born scaling a rate; it now rides **every** target on the
-drift list. Womb's ten include S1-S2 gap, RSA depth, the two breath filter frequencies and
-four segment durations. Sweep Dwell's include Resonance. Polyrhythm's include per-voice
-**Gain dB**. Calling all of that "speed" is a fossil of what it did in May.
-
-**And the decision is already made — it just never propagated.** `spectral_vowel_morpher`
-ships `Ramp target` / `Ramp by` / `Ramp duration` / `Ramp engage` / `Ramp start delay`
-today, renamed on exactly this reasoning ("honestly named for a value"). Every other
-plugin still says `Speed ramp`. This is the same failure mode as the multiplier: a good
-call made in one place, not carried across.
-
-**The block becomes**, combining with R14:
-
-```
-Ramp target      selector
-Ramp to          destination, in the target's own unit, seeded from where it is
-Ramp duration    minutes
-Ramp engage      Off / On
-Ramp start delay minutes
-```
-
-Renaming a slider is **free** (R-cost ladder, top row: REAPER restores by ID, never by
-name), so this is Phase 1 work and can ship ahead of any renumber. `Ramp to` needs R14's
-seeding and is Phase 2.
 
 ## R17. Every slider names its unit: "depth in what?" has an answer
 
