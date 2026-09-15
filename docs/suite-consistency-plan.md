@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R15** — The sigh gets its own four segments
 - **R16** — The feature is called `Ramp`, because it rides every target
 - **R17** — Every slider names its unit: "depth in what?" has an answer
 - **R18** — A new slider goes where it belongs; a new enum OPTION goes at the end of its list
@@ -76,42 +75,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## R15. The sigh gets its own four segments
-
-Star, 2026-08-31: *"we're trying to apply a very coarse control to a very dynamic thing.
-Because we have the four sections of the normal breath, we don't have the four sections of
-the sigh. And if you look at actual sighing, there is four sections. It's very distinct.
-It's not just a computery shift in the normal breath."*
-
-That is the correct diagnosis and it supersedes R13a's replacement. Scaling all four
-segments by one number preserves the proportions exactly and only stretches time — so what
-comes out is the same breath, slower. A sigh differs in **shape**, not size: a bigger
-inhale against a longer, more passive exhale and a longer settle after it. Different
-ratios, not a different tempo. No single multiplier or delta can express that, which is
-why every naming attempt for one felt wrong.
-
-**Replacement:** `Sigh depth multiplier` is deleted, and the sigh gets **Sigh inhale / Sigh
-top pause / Sigh exhale / Sigh bottom pause**, in the same units as the normal four
-(`sec / beats in Host x`), sitting immediately after `Sigh interval` in the breath group.
-Four plain numbers in a unit already learned. Net +3 sliders in that group.
-
-**Migration is exact and free.** Today's sigh is `normal x multiplier`, so seed the four
-sigh segments at the saved multiplier times the normal four. Every existing project sounds
-identical on load, and from then on the exhale can be pulled long without touching the
-inhale.
-
-**Still open, and it may SIMPLIFY this rather than extend it:** the classic augmented
-sigh is *biphasic* — an inhale, a brief catch, then a second inhale stacked on the first,
-before the long release. Four sections cannot express the stacked second inhale. But a
-catch is arguably an **inhale** feature rather than a sigh one, in which case a sigh is
-just its own four segments plus one deep inhale catch, and no fifth phase is needed. The
-same mechanism also produces the shuddering post-crying breath, which is the distress cue
-Womb currently has no way to make. Written up in `docs/planned-features.md` under
-**Breath catches**. Build the four segments, hear them, then try a catch — in that
-order. Also still true from R13a: there is **no amplitude component** — a
-real sigh is a bigger breath, not only a longer one, and `Sigh louder by (dB)` would make
-the feature honest.
 
 ## R16. The feature is called `Ramp`, because it rides every target
 

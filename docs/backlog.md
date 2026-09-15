@@ -125,8 +125,18 @@ one. Finish it, re: the audit."*
 
 **All of this rides the amount-unit sweep: one layout and one migration per plugin**, holding
 everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole layout").
-- **A sigh for Breath Generator**, matching Womb's (`Sigh interval`, `Sigh extra length`),
-  plus its drift and ramp targets. Its layout's "No sigh" was a Claude scope note, not a no.
+- **Breath and sigh, in Womb and Breath Generator.** A `Breath mode` picker, `{Breath, Sigh}`.
+  Every breath control below it belongs to whichever is picked: breath unit, set breath rate,
+  the four lengths, the inhale and exhale pitches and fine tunes, the four fades and fade
+  shape, the high-pass and post-filter with its Q, stereo width and volume. Shared: how often
+  a sigh comes, and breath solo. `Sigh extra length` goes; the migration sets each project's
+  sigh so it sounds as it does now. How often a sigh comes gets a unit picker,
+  `{Seconds, Minutes, Beats}`, default Minutes, in the slot `Sigh extra length` leaves (the
+  picker first, then the interval). Drift and ramp get a breath entry, a sigh entry and a both
+  entry for each of these. Breath Generator gets all of it, including a sigh. Rozaya:
+  *"breath mode (breath or sigh) aught to do it, then let the rest of the breath controls
+  touch each of those individually"*; on the unit, *"Just make it per thinggy"*; on the
+  targets, *"Yeah, I was going to ask for that anyway"*.
 - **Finish the hidden-limit audit**: the 104 controls it could not judge each need a setup
   that makes them audible.
 
