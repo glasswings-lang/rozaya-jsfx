@@ -29,14 +29,23 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Built in Passage
   and the Morpher only; the other seventeen have neither (read from every slider list).
   How: `docs/history/layouts/spectral-vowel-passage.md`, "The amount units".
-- **R19, the pan mode order. Blocks a release.** Rozaya: *"I'm not gonna ship something
-  like that on any plugin"*. Still in arrival order: Melody and Polyrhythm lead with
-  Tremolo / Increment / Spread / Spread Reversed; Tremolo has no `Alternating (Flipped)`,
-  the filters and Sweep Dwell do; Rhythm Track has six modes including `Accent L / Weak R`.
-  Decided 2026-09-02 (Rozaya: *"I say we bloody save it until phase 2"*): ONE reorder
-  across every plugin with a Pan Mode, with the value remap for 0-3 in the same commit.
-  Re-count stored values first -- "nothing is saved on 4+" expires the moment one is used.
-  The proposed order is R19 in `docs/suite-consistency-plan.md`.
+- **One Pan mode order in all six plugins that have one. Blocks a release.** Rozaya: *"I'm
+  not gonna ship something like that on any plugin"*. The order, each plugin showing the
+  choices it has: `Mono, Spread, Spread Reversed, Alternating, Alternating every 2,
+  Alternating every 4, Alternating every 8, Accent L / Weak R, Distributed, Distributed
+  (Ping-pong), Converging, Converging (Ping-pong), Diverging, Diverging (Ping-pong), Linked
+  Sweep, Tremolo, Sway, Increment, Pan Sweep`. Every plugin gets every choice except these:
+  Spread, Spread Reversed and Increment are Polyrhythm and Melody only; Tremolo is
+  Polyrhythm only; Sway is everywhere but those two. Melody's `Tremolo` goes (a saved one
+  becomes Increment with `Pan increment` 0). `Pan direction {Normal, Flipped}` sits right
+  after `Pan mode` everywhere and mirrors any choice; the three `(Flipped)` choices go (a
+  saved one becomes its partner with the switch on Flipped). The migration moves every
+  saved choice. A choice that needs a rate or an "every" its plugin lacks brings that
+  control, in the layout. Measure pan positions with `jsfx_run` before and after.
+- **`Pan sweep every (cycles)` counts only the slow way** (Linked Sweep, in Tremolo and both
+  filters). A sweep faster than one cycle means typing 0.5 or 0.25. Rozaya: *"the
+  multiplier is the off-putter there"*. The rate modes solved the same thing with `Every N
+  beats` and `N per beat`.
 - **Put every mode before its value, in every plugin.** Most plugins still have the value
   first. Fix it inside each plugin's own planned migration, not as a separate pass. The
   rule is in the rules file, under "The four rules inside the order".

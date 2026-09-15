@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R19** — Pan modes run in one canonical order: still, then stepped, then continuous
 - **R20** — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere
 - **R21** — The host modes name their DIRECTION, and there are two
 - **R22** — THE PITCH BLOCK, settled with Rozaya 2026-09-08: a pitch value and a pitch mode, adjacent. Built.
@@ -72,53 +71,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## R19 — Pan modes run in one canonical order: still, then stepped, then continuous (raised 2026-09-02)
-
-**Rozaya:** *"the types of panning are just kinda pell mell put in there, and
-that's confusing as shit. I'm not gonna ship something like that on any plugin
-... I don't wanna make a release like that. That's kind of embarrassing."*
-
-**Blocks a release. Does not block pushing to master.**
-
-## What the mess actually is
-
-Every plugin's Pan Mode list grew by appending, so each one is in the order its
-features happened to arrive rather than any order a person could reason about.
-
-- **Polyrhythm** now reads: Tremolo, Increment, Spread, Spread Reversed,
-  Alternating, Alternating (Flipped), Distributed, Distributed (Flipped),
-  Distributed (Ping-pong), Converging, Converging (Ping-pong), Diverging,
-  Diverging (Ping-pong), **Alternating every 2, every 4, every 8**. The three
-  extra Alternating variants are at 13-15, with the whole Distributed /
-  Converging / Diverging family sitting between them and the Alternating they
-  belong to. That was done on 2026-09-02 and it is the clearest example.
-- **Full Feature Tremolo** has no `Alternating (Flipped)`; both sweeping filters
-  do.
-- **rhythm-track** has a shorter list in a different order, plus `Accent L /
-  Weak R` which exists nowhere else.
-- The oscillator plugins lead with four modes (Tremolo / Increment / Spread /
-  Spread Reversed) that no effect plugin has.
-
-## Proposed order — group by WHAT THE PAN DOES
-
-Three groups, in this order, each plugin including only the members it has:
-
-1. **Still** — the pan does not move on its own.
-   `Mono` · `Spread` · `Spread Reversed` · `Accent L / Weak R`
-2. **Stepped** — the pan moves one position per cycle / note. Two-position
-   members first, then multi-position.
-   `Alternating` · `Alternating (Flipped)` · `Alternating every 2` ·
-   `Alternating every 4` · `Alternating every 8` · `Distributed` ·
-   `Distributed (Flipped)` · `Distributed (Ping-pong)` · `Converging` ·
-   `Converging (Ping-pong)` · `Diverging` · `Diverging (Ping-pong)`
-3. **Continuous** — the pan travels on a clock of its own.
-   `Tremolo` · `Increment` · `Pan Sweep` · `Pan Sweep (Flipped)` ·
-   `Linked Sweep`
-
-The grouping is the useful part: **still / stepped / continuous** is the
-distinction a listener actually hears, and it tells you immediately whether a
-mode can drift against the material (only group 3 can).
 
 ## R20 — THE RATE BLOCK, settled: a rate value and a rate mode, adjacent, everywhere (2026-09-04)
 

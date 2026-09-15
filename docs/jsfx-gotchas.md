@@ -200,7 +200,7 @@ Moved out of `CLAUDE.md` 2026-09-08, verbatim.
 - If it persists state, decide whether it's a runtime tunable (don't persist) or
   saved per-instance.
 - Give it a unit, sentence case, and a step size chosen from its range — the
-  naming rules are R1–R19 in the consistency plan, not free choices.
+  naming rules are in the consistency plan and CLAUDE.md, not free choices.
 - Document it on that plugin's page in `docs/plugins/`.
 - Run `python tools/jsfx_lint.py src/<plugin>.jsfx` before you believe it
   compiles. It takes one file per run and defaults to the Morpher if you forget
