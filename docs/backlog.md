@@ -60,7 +60,7 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   Start delay included. **Shepard Tone:** voices go behind a Voice selector, All first, with
   every per-voice control under it, rate unit and fine tune unit included; synced voices
   read the shared Rate value in their own unit; its Transport unit is `{Seconds, Beats}`.
-  Not over Tensor's `shepard.RPP` until open bug 4 is repaired. Saved projects land on what
+  Saved projects land on what
   they count today. Dapple's Start delay is read, not measured.
 - **Put every mode before its value, in every plugin.** Most plugins still have the value
   first. Fix it inside each plugin's own planned migration, not as a separate pass. The

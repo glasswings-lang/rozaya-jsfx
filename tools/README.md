@@ -823,6 +823,15 @@ drift and ramp on every target), `blobs55` (the same saved by the old build), `u
 `scope` (each control's kind, for its name) and `quick31` (every control read back by
 name against `409b1ba`). Names: `r25_rename_apply.py --list docs/history/layouts/morpher-labels-20260913.md`.
 
+## Tensor's shepard.RPP — first release to today, 2026-09-15
+
+`tensor_shepard_repair_20260915.py --out TRIAL [--apply]` carries the 8 Shepard Tone lines
+Tensor saved with the first release (`d19873f`, 58 sliders) onto today's 97, by an authored
+table, from the pre-Solo snapshot; only those 8 lines of the live file change. It refuses a
+count other than 8, a line of the wrong shape, and a voice in Independent. **Run once**:
+`--apply` refuses if `_pre-tensor-shepard-repair-20260915/` exists. How the layout was
+identified and what was measured: `docs/open-bugs.md`, entry 4.
+
 ## bridge_ui_test.py — what only REAPER can show
 
 Drives the real plugins in REAPER through `kin_bridge.lua`, in

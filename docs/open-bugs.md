@@ -1,6 +1,6 @@
 # Open bugs
 
-**Entry 4 is OPEN. Entries 1 and 2 are CLOSED. Entry 3 is FIXED and waits only on
+**Entry 4 is REPAIRED and waits only on a hearing. Entries 1 and 2 are CLOSED. Entry 3 is FIXED and waits only on
 Rozaya meeting the new name in REAPER.** A closed entry stays here for its reasoning
 and its burned theories, so they are not re-derived — read them before touching the
 plugin they name, then leave them alone.
@@ -10,11 +10,19 @@ only when it has been fixed *and* heard.
 
 ---
 
-## 4. Tensor's `shepard.RPP` — 8 Shepard Tone instances hold a layout the plugin does not have — OPEN
+## 4. Tensor's `shepard.RPP` — 8 Shepard Tone instances hold a layout the plugin does not have — REPAIRED, NOT HEARD
 
-**Repair it after R20, from the snapshots, as its own job. Rozaya agreed that order.**
-**No Shepard Tone migration may run over `E:/tensor's-rpp-projects/shepard.RPP`
-until this is settled** -- the Voice selector layout R20 decided included.
+**Repaired by `tools/tensor_shepard_repair_20260915.py`, run once.** The lines were saved
+by the FIRST RELEASE (`d19873f`, 58 sliders, 2026-04-09): scored against every layout in
+the plugin's history, only that one takes all 464 values in range. The script maps them by
+an authored table onto today's 97 sliders from the pre-Solo snapshot, and replaces only
+those 8 lines. The Synced detune became Fine tune in Cents; each voice's gain gained
+3.0103 dB because a centred voice is 3 dB quieter than the first release's pan-less output
+(Rozaya: *"Yes"*). **Measured:** today's build on the repaired file against the first
+release on the snapshot, all 8 instances, 8 s: same level, difference 154 dB below the
+sound. The live file is byte-identical to the verified trial; exactly 8 lines changed;
+`scan_slider_ranges.py` no longer lists it. The file before the repair:
+`backups/snapshots/_pre-tensor-shepard-repair-20260915/`.
 
 **Found by `tools/scan_slider_ranges.py "E:/tensor's-rpp-projects"`:** all 8 instances
 out of range against the installed plugin (`Rate mode` 1000, `Pulse width` 0,
