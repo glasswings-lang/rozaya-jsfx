@@ -33,20 +33,28 @@ has been heard, and what Rozaya has said is next.
   with Rozaya, built, moved, measured and installed before the next. Rozaya: *"I'm wondering
   if we should take this per-plugin rather than a giant sweep."* What each plugin gains:
   `docs/backlog.md`, "Decided 2026-09-13". `tools/jsfx_map.py impact` after every edit.
-- **Veil is BUILT and installed, 2026-09-15** -- the R26/R27 pass, first of the suite.
-  35 controls from 22: the filter is one block behind `Filter side {Both (keeps the gap),
-  Left, Right}` with the word at the FRONT, a transport it never had, `Output at rest`, two
-  rest switches, the amount units, 13 targets. `docs/history/layouts/veil.md`. NOT HEARD.
-  The one live project (the bridge test one) is migrated and renders bit-identical.
-- **The Stereo Phaser is BUILT and installed, 2026-09-16** -- 38 controls from 25, the
-  sweep as ONE block behind `Range end {Both (keeps the gap), Bottom, Top}`, and `Host
-  ratio` finally deleted. `docs/history/layouts/stereo-phaser.md`. NOT HEARD.
-  All four instances migrated; `strangeness.RPP` renders bit-identical before and after.
 - **Next plugin for R26/R27:** Rozaya's call which. `docs/backlog.md` says what each gains.
 - **Held for Rozaya's decision:** semitone ranges. dB volumes were decided 2026-09-14: -60 to
   +24 everywhere.
 
-## What has been heard, and what has not
+## Open at the end of 2026-09-16 (read first)
+
+- **Voice engine cost, Morpher AND Passage (shared).** Layers with any voice (Texture < 100) drop
+  out in REAPER: one sine per partial per voice per channel per layer per sample. Rozaya: *"this,
+  is fuckin useless"*. Test only, not installed: `tools/morpher_r26r27_checks/voice_skip_patch.py`
+  (skip the morph voice at 0 weight; ~2e-6 unexplained diff at slot crossings in Sweep; not timed).
+  The real fix proposed: one wavetable per voice. **Run renders at Idle priority, one at a time --
+  Rozaya works in REAPER meanwhile.** `jsfx_run --block-times` times each block.
+- **Remove the grain auto-gain** (`rms_smooth`, 0.07 target, in `gg_commit`/`gen_grain`), both
+  plugins. Rozaya: *"-24 db is -24db, it shouldn't be moved up by some overeager hardcoded thing"*.
+  Changes every project's level: say so on the control.
+- **Layers default to -6 dB and Inactive** instead of -60. Rozaya: *"If they're not active they
+  don't need to be that low, they're just... off."*
+- **Passage takes over from the Morpher** after those: `docs/backlog.md`, "Decided 2026-09-16".
+- Installed tonight and not heard: the Morpher's grain split (heard as A/B renders: *"I can't hear
+  a difference"*) and the work-list change. Still queued from before: Sweep Dwell's R26/R27 turn.
+
+
 
 Only "it has been heard" counts as done.
 
@@ -123,17 +131,8 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   `Drift movement mode`, with Play for / Rest for as targets that finally do something. Measured,
   not heard: every stretch holds the length it began with (28 of 28), all five live copies
   bit-identical and every control in place after `tools/drift_movement_migrate_veil_phaser_20260916.py`.
-- **The Stereo Phaser's whole R26/R27 layout, 2026-09-16.** Measured, not heard:
-  bit-identical to the old on defaults AND on the real `strangeness.RPP`, whose three
-  instances sweep 40-200 Hz and had no blob at all -- the migration writes them a fresh
-  one. Both ends stay independent, `Both` keeps the 1200 Hz span, per-target units
-  survive save and reopen, and Play for/Rest for with Silence alternates as asked.
-- **Veil's whole R26/R27 layout, 2026-09-15.** Measured, not heard: it renders
-  bit-identical to the old Veil on defaults AND on the migrated project once the drift
-  amounts are zero (the remaining difference is the drift's random start phase, which is
-  runtime and never saved). Both sides stay independent, `Both` keeps the 40 Hz gap, the
-  per-target amount units survive save and reopen, and Play for/Rest for with Silence
-  alternates as asked. `tools/veil_migrate_r26r27_20260915.py`.
+- **The Stereo Phaser's (09-16) and Veil's (09-15) whole R26/R27 layouts.** Measured, not heard:
+  bit-identical old vs new on defaults and on every live copy. `docs/history/layouts/`.
 - **2026-09-15, measured:** Polyrhythm voices start silent, so no thump on play (Rozaya heard
   the thump); Tremolo's and the Sweeping Filter's Start delay on Every N beats; Tensor's
   `shepard.RPP` carried from the first release (open bug 4).
