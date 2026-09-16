@@ -451,6 +451,7 @@ slider79:0<0,1000,0.01>Ramp start delay (in ramp time units)
 ext_noinit = 1;
 TWOPI = 6.283185307179586; PI = 3.141592653589793;
 NSLOTS = 8; MAXFFT = 32768; INRING = 65536;
+GG_STAGED = 1;   // 1: build each wash grain in pieces across the hop (2026-09-16)
 N_TARGETS = 107;  // Drift/Ramp targets, in CONTROL ORDER (2026-09-13, the pitch layout):
                  // 0 Morph, 1 Auto-morph time, 2 Texture, 3 Wash grain, 4 Spread, 5 Transpose,
                  // 6 Fine tune, 7 Tuning reference, 8 Stereo width, 9 Denoise, 10 Low cut,
@@ -1271,6 +1272,110 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, l
   ifft(fftwork, FFTSIZE);
 );
 
+// --- The wash grain, in four pieces (2026-09-16). One grain used to be built in ONE sample:
+//     the spectrum prep, both channels' layered builds and their inverse FFTs, and the overlap-add
+//     -- one heavy moment every hop, doubled by three layers, and a dropout when it overran the
+//     audio block. Rozaya: "I used to be able to fuck with more than 3 layers. Now at 3 it starts
+//     making it crackle". gen_grain() still runs all four at once (long grains, and any hop the
+//     pieces could not finish); @sample spreads them across the hop instead.
+function gg_prep() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw, lq2,
+                          npc, pk2, pst, pn, pw, bsb, bsa) (
+  // slot selection (vsi/vsj/vmfr) is computed once per sample in @sample so the
+  // wash and the harmonic voice always agree on which slot(s) they're playing.
+  si = vsi; sj = vsj; mfr = vmfr;
+  ni = slot_norm[si]; ni <= 0 ? ni = 1;
+  nj = slot_norm[sj]; nj <= 0 ? nj = 1;
+  bi = si*NBINS; bj = sj*NBINS;
+  i = 0;
+  loop(NBINS, mtmp[i] = (1-mfr)*(slotmag[bi+i]/ni) + mfr*(slotmag[bj+i]/nj); i += 1; );
+  sp = sp_mode == 0 ? floor(eff_spread_hz * FFTSIZE / srate) : 0;   // eff_ = base + Drift offset
+  // Spread's box blur as a RUNNING TOTAL, Passage's version (2026-09-12). The counted
+  // version re-added every neighbour for every bin, so its cost grew with the width --
+  // with Spread now reaching 1000 Hz that is about seven times Spread 150's work per
+  // grain. Entering bin i, add the neighbour that came into range and drop the one that
+  // left; the window is clipped at both ends and divided by its real width, as before.
+  i = 0;
+  sp > 0 ? (
+    sumv = 0; cnt = 0; j = 0;
+    loop(min(sp, NBINS - 1) + 1, sumv += mtmp[j]; cnt += 1; j += 1; );
+  );
+  loop(NBINS,
+    sp <= 0 ? ( curmag[i] = mtmp[i]; ) : (
+      curmag[i] = sumv / cnt;
+      bj2 = i + 1 + sp; bj2 < NBINS ? ( sumv += mtmp[bj2]; cnt += 1; );
+      bj2 = i - sp;     bj2 >= 0    ? ( sumv -= mtmp[bj2]; cnt -= 1; );
+    );
+    i += 1;
+  );
+  // Spread in Semitones or Cents (2026-09-16): each bin blurs from f / r to f * r, r = 2^(width/12),
+  // plus any fine tune in Hz on both sides -- a window that grows with frequency, so running
+  // sums (spc) give each bin its own mean in one pass.
+  sp_mode != 0 && (sp_semis > 0 || sp_extra_hz > 0) ? (
+    sp_r = pow(2, sp_semis / 12); sp_ex = sp_extra_hz * FFTSIZE / srate;
+    spc[0] = 0; i = 0; loop(NBINS, spc[i + 1] = spc[i] + mtmp[i]; i += 1; );
+    i = 0;
+    loop(NBINS,
+      sp_lo = max(0, min(i, floor(i / sp_r - sp_ex + 0.5)));
+      sp_hi = min(NBINS - 1, max(i, floor(i * sp_r + sp_ex + 0.5)));
+      curmag[i] = (spc[sp_hi + 1] - spc[sp_lo]) / (sp_hi - sp_lo + 1);
+      i += 1;
+    );
+  );
+  ot_wash = (ot_on && ot_bin > 0) ? 1 : 0;
+  pk = 0; i = 0; loop(NBINS, curmag[i] > pk ? pk = curmag[i]; i += 1; );
+  thr = denoise_amt * 0.01 * 0.1 * pk;
+  cutbin = floor(eff_lowcut_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
+  i = 0;
+  loop(NBINS,
+    i < cutbin ? ( curmag[i] = 0; ) : ( curmag[i] = max(0, curmag[i] - thr); );
+    i += 1;
+  );
+  // Overtone on the wash is NOT applied here any more. It used to be folded
+  // into curmag once, which made it one setting for the whole instrument --
+  // every layer reads this same array, so every layer got the same harmonic.
+  // It now happens inside build_spectrum, per layer, at the point each layer
+  // reads the spectrum, so `Layer overtone harmonic` reaches the wash as well
+  // as the voice. curmag stays the clean captured spectrum.
+  //
+  // The move also corrects the domain. The centre was computed as f0 x harmonic
+  // x pitch_ratio -- an OUTPUT bin -- and then used to index curmag, which is in
+  // SOURCE bins. With Pitch at 0 the two coincide and it was right; at any other
+  // Pitch the wash lifted harmonic n x pitch_ratio instead of harmonic n. Found
+  // by reading on 2026-09-01, NOT yet confirmed by ear.
+  // Per-grain derivations for the two things build_spectrum needs beyond curmag:
+  // where the High cut sits in output bins, and each layer's source-bin scale.
+  // Both are read from the per-sample globals as they stand at grain time --
+  // a grain is a snapshot, which is why Drift on either is smooth rather than
+  // stepped: the steps are one grain apart and the grains overlap four deep.
+  hcbin_hi  = hc_on ? hc_top * FFTSIZE / srate : NBINS + 1;
+  hcbin_lo  = hc_on ? hc_lo  * FFTSIZE / srate : NBINS + 1;
+  hcbin_inv = hc_on ? 1 / max(1, hcbin_hi - hcbin_lo) : 0;
+  lq2 = 0; loop(N_LAY_SLOTS, lpr[lq2] = pitch_ratio * layer_ratio[lq2]; lq2 += 1; );
+);
+function gg_buildL() local(i, sv) (
+  i = 0; loop(NBINS, phase[i] = rand(1)*TWOPI; i += 1; );
+  build_spectrum(0);
+  gg_rms = 0; i = 0; loop(W, sv = fftwork[2*i]; grainbuf[i] = sv; gg_rms += sv*sv; i += 1; );
+  gg_rms = sqrt(gg_rms / W);
+  gg_nlay = nlay_on; gg_bsb = bsum_base; gg_bsa = bsum_all; gg_W = W;
+);
+function gg_buildR() local(i) (
+  build_spectrum(1);
+  i = 0; loop(W, grainR[i] = fftwork[2*i]; i += 1; );
+);
+function gg_commit() local(i, rms, gnorm, aw) (
+  rms = gg_rms;
+  (gg_nlay && gg_bsb > 0 && gg_bsa > 0) ? ( rms = rms * sqrt(gg_bsb / gg_bsa); );
+  rms > 0.0000001 ? ( rms_smooth <= 0 ? rms_smooth = rms : rms_smooth += 0.02 * (rms - rms_smooth); );
+  gnorm = rms_smooth > 0.0000001 ? (0.07 / rms_smooth) : 0;
+  i = 0;
+  loop(W,
+    aw = accpos + i; aw >= ACCLEN ? aw -= ACCLEN;
+    accL[aw] += grainbuf[i] * gnorm * synwin[i];
+    accR[aw] += grainR[i]   * gnorm * synwin[i];
+    i += 1;
+  );
+);
 function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2, pk, thr, cutbin, sv, rms, gnorm, aw, lq2,
                           npc, pk2, pst, pn, pw, bsb, bsa) (
   // slot selection (vsi/vsj/vmfr) is computed once per sample in @sample so the
@@ -1345,31 +1450,7 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   hcbin_inv = hc_on ? 1 / max(1, hcbin_hi - hcbin_lo) : 0;
   lq2 = 0; loop(N_LAY_SLOTS, lpr[lq2] = pitch_ratio * layer_ratio[lq2]; lq2 += 1; );
   W <= FFTSIZE ? (
-  // --- A grain that fits one FFTSIZE piece: the original build, unchanged. ---
-  i = 0; loop(NBINS, phase[i] = rand(1)*TWOPI; i += 1; );
-  build_spectrum(0);
-  rms = 0; i = 0; loop(W, sv = fftwork[2*i]; grainbuf[i] = sv; rms += sv*sv; i += 1; );
-  rms = sqrt(rms / W);
-  // Take the layers back out of the level the auto-gain is measuring, so the
-  // base sits where it would with no layers at all and each layer arrives at
-  // exactly the dB it was given. Without this the auto-gain reads the fuller
-  // spectrum as "too loud" and quietly pulls everything down around it.
-  (nlay_on && bsum_base > 0 && bsum_all > 0) ? ( rms = rms * sqrt(bsum_base / bsum_all); );
-  // Slow auto-gain: smooth the grain RMS across grains so loudness is stable and
-  // does NOT pump per grain. With the sqrt-Hann constant-power window below,
-  // overlapping random-phase grains sum to steady power. Target ~0.07 grain RMS
-  // -> ~0.1 output RMS (-20 dBFS). Freeze the smoother on silent grains (empty
-  // slot) so switching back doesn't blip loud.
-  rms > 0.0000001 ? ( rms_smooth <= 0 ? rms_smooth = rms : rms_smooth += 0.02 * (rms - rms_smooth); );
-  gnorm = rms_smooth > 0.0000001 ? (0.07 / rms_smooth) : 0;
-  build_spectrum(1);
-  i = 0;
-  loop(W,
-    aw = accpos + i; aw >= ACCLEN ? aw -= ACCLEN;
-    accL[aw] += grainbuf[i]   * gnorm * synwin[i];
-    accR[aw] += fftwork[2*i]  * gnorm * synwin[i];
-    i += 1;
-  );
+  gg_buildL(); gg_buildR(); gg_commit();
   ) : (
   // --- A grain longer than FFTSIZE (2026-09-13): FFTSIZE pieces every half piece, each
   //     with fresh random phases, summed under pwin. The first piece is not faded in and
@@ -2623,7 +2704,21 @@ hopcount += 1;
 // (the "crackle on every slot, non-clipping" symptom). The accumulator still
 // drains via the read-and-clear above, so raising Texture off 0 fades the wash
 // back in cleanly over ~one grain. Output is bit-identical while muted.
-hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); );
+// Spread the grain across the hop (2026-09-16): prep, left, right, each a quarter-hop apart and so
+// in different audio blocks at any usual buffer size; the hop boundary only adds the grain in. A
+// piece is only used if all three ran for this hop and the grain length did not change since.
+gg_gap = floor(HOP / 4);
+gg_ok = GG_STAGED && have > 0 && wlevel > 0.0001 && W <= FFTSIZE && gg_gap >= 1;
+gg_ok ? (
+  hopcount == HOP - 3 * gg_gap ? ( gg_prep(); gg_stage = 1; );
+  hopcount == HOP - 2 * gg_gap && gg_stage == 1 ? ( gg_buildL(); gg_stage = 2; );
+  hopcount == HOP - gg_gap && gg_stage == 2 ? ( gg_buildR(); gg_stage = 3; );
+);
+hopcount >= HOP ? (
+  hopcount = 0;
+  (have > 0 && wlevel > 0.0001) ? ( (gg_ok && gg_stage == 3 && gg_W == W) ? gg_commit() : gen_grain(); );
+  gg_stage = 0;
+);
 
 // --- harmonic (voice) engine: TWO morph voices (vsi/vsj), each at its OWN
 // captured pitch, crossfaded by morph. Now STEREO: when Stereo width (->
