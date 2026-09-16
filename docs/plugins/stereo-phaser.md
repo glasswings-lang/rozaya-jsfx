@@ -92,7 +92,7 @@ falls back to it.
 **Drift up amount (in the Drift amount unit)** and **Drift down amount (in the
 Drift amount unit)** `0–20000, default 0` — how far it wanders each way.
 
-**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Cycles` and
+**Drift period unit** `Cycles / Seconds / Beats, default Cycles`, per target, and
 **Drift period (0 = off)** `0–1000, default 20` — how long one full wander takes.
 
 **Drift shape** `Sine / Triangle / Random, default Sine`
@@ -104,8 +104,8 @@ stands for the other, and repeats. Counted in drift periods, so no second unit.
 **Ramp by (in the Ramp by unit)** `-20000 to 20000, default 0` — the signed amount
 to ride to.
 
-**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default
-Minutes` and **Ramp duration (in ramp time units)** `0–1000, default 0` — how
+**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default
+Minutes`, per target, and **Ramp duration (in ramp time units)** `0–1000, default 0` — how
 long the ride takes.
 
 **Ramp play for (0 = smooth)** and **Ramp rest for (0 = smooth)** `0–1000, default

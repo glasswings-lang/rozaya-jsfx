@@ -32,6 +32,10 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   Morpher, never as a choice. **Resonance Bank already disagrees**: its `Drift period mode` is
   per band and target, one plugin in nineteen. And R26 makes `Drift amount unit` per target
   outright (*"No unit locks. ever."*), which leaves the period unit the odd one out.
+  **Done in Veil and the Stereo Phaser, 2026-09-16** -- both had been built the day before
+  WITHOUT it and were fixed on Rozaya's *"Do it pls :)"*. No slider moves, so no .RPP
+  migration: an older blob seeds every target's unit from the one shared slider value.
+  Owed by the other seventeen, in their turns.
   Per target would widen `@serialize` and needs a magic bump, so it belongs IN each plugin's
   R26 turn, not as a sweep. If it lands, the `(all targets)` mark comes off those two and
   only `Ramp engage` keeps it.
