@@ -166,7 +166,12 @@ plugin-wide but simpler, and you set it once and leave it.
 - **Every pitch is a block:** its unit `{Hz, Semitones, Cents}`, a note name, the
   value, then a fine tune unit and fine tune, with one `Tuning reference (Hz)` per
   plugin. The note name works in every unit, both ways. Every frequency that shapes
-  the sound has a block, filters included. A range's two ends are two blocks; two
+  the sound has a block, filters included. A range's two ends are two blocks **unless the GAP between them is the thing you
+  reach for** -- then they are one block behind a picker whose first option keeps the
+  gap, as the Stereo Phaser's sweep is (2026-09-16). Rozaya, on the older two-blocks
+  wording: *"I like your idea. I highly suspect the older one was me + claude on a me
+  tired day heh"* -- so treat two-blocks as the default, not as settled, and ask when a
+  range turns up. Two
   sides of one thing are one block behind a target picker, `All` first. Sound the
   plugin did not make takes `Source note`, `Target note` (every unit, once a source is
   set), transpose and fine tune. Spreads are `{Hz, Semitones, Cents}`, never a
