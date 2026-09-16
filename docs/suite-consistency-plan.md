@@ -71,8 +71,9 @@ A migration written before its layout is a migration you will write again.
 Rozaya: *"No unit locks. ever."* On doing it in every plugin: *"Yes, do it your way. I'd
 prefer that while we have room"*.
 
-- Every Drift block has `Drift amount unit (per target)` beside the amounts; every Ramp
-  block has `Ramp by unit (per target)` beside `Ramp by`. One option list for every plugin:
+- Every Drift block has `Drift amount unit` beside the amounts; every Ramp block has
+  `Ramp by unit` beside `Ramp by`. Both switch with the target and therefore carry NO
+  scope mark -- R25 was flipped on 2026-09-15 and only the shared ones say so. One option list for every plugin:
   `{Target default, Hz, Semitones, Cents, Milliseconds, Seconds, Minutes, BPM, Beats,
   Cycles, dB, Percent, Degrees}` (Rozaya: *"Yes"*).
 - `Target default` is what the amount meant before, so a migrated copy sounds the same. A
