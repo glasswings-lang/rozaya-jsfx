@@ -9,7 +9,7 @@ copies. Live files are never written by anything here yet.
 THE MAP IS AUTHORED (the layout doc's table, and the map tools/jsfx_renumber.py applied to
 src); nothing is inferred. Every new control is seeded to what reproduces the old sound.
 """
-import os, sys
+import math, os, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
@@ -50,6 +50,14 @@ def num(tok, dflt):
         return dflt
 
 
+def cut_note(hz, ref):
+    """The plugin's cut_note in Hz mode: 0 Off, else 1 + the nearest note number."""
+    if hz <= 0:
+        return 0
+    m = 69 + 12 * math.log(max(hz, 0.000001) / max(ref, 0.001)) / math.log(2)
+    return 1 + max(0, min(127, math.floor(m + 0.5)))
+
+
 def convert_line(line):
     """A 64-slider Morpher line -> the 79-slider one. Stages not yet built leave their new
     slots unset ('-'), which the plugin reads as its declared default."""
@@ -66,4 +74,18 @@ def convert_line(line):
         new[n] = str(t)
     # Stage 6: Spread is a pitch block; saved copies stay in Hz with no fine tune.
     new[21], new[23], new[24] = "0", "2", "0"
+    # Stage 7: Low cut and High cut are pitch blocks, in Hz as saved, with the note name that
+    # value shows (the plugin's cut_note at the saved Tuning reference, old slider 21). 0 is off
+    # for both now; High cut's old off was 20000.
+    ref = num(old.get(21), 440.0)
+    lc = num(old.get(24), 0.0)
+    hc = num(old.get(25), 20000.0)
+    if hc >= 20000:
+        hc = 0.0
+    new[27], new[30], new[31] = "0", "2", "0"
+    new[32], new[35], new[36] = "0", "2", "0"
+    new[29] = "%g" % lc if lc > 0 else "0"
+    new[34] = "%g" % hc if hc > 0 else "0"
+    new[28] = str(cut_note(lc, ref))
+    new[33] = str(cut_note(hc, ref))
     return render_line(line, new, n_sliders=N_NEW)

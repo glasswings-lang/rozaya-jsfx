@@ -179,7 +179,18 @@ slider20:440<20,2000,0.1>Tuning reference (Hz)
 // the code clamps, the slider should say so.
 slider25:50<0,100,1>Stereo width (%)
 slider26:0<0,100,0.1>Denoise (%, wash only)
-slider29:0<0,20000,1>Low cut (Hz)
+// --- Low cut and High cut, pitch blocks since 2026-09-16 (R27). 0 means OFF in every unit, and
+//     each note list starts on a dedicated Off -- Rozaya: "Feels like 0 could just be 0, then the
+//     first thing everything lands on is a dedicated off position". In Semitones the value is a
+//     note number (69 = A4 at the Tuning reference), in Cents that times 100. The note name and
+//     the value follow each other; switching the mode converts the value. A drift or ramp on a
+//     cut that is ON stops at the lowest real frequency rather than switching it off
+//     (Rozaya: "I like that re: the drift move"), and moves nothing while it is off.
+slider27:0<0,2,1{Hz,Semitones,Cents}>Low cut pitch mode
+slider28:0<0,128,1{Off,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Low cut note name
+slider29:0<0,20000,0.001>Low cut value (0 = off)
+slider30:2<0,2,1{Hz,Semitones,Cents}>Low cut fine tune unit
+slider31:0<-1000,1000,0.001>Low cut fine tune
 // --- High cut. The mirror of Low cut, and the thing that makes an octave-up
 //     Layer usable at all. Two deliberate differences from Low cut, both worth
 //     knowing before you reach for it:
@@ -190,8 +201,12 @@ slider29:0<0,20000,1>Low cut (Hz)
 //         its old placement so the saved projects sound exactly as they did.
 //       * it shapes the VOICE as well as the wash -- partials fade out as they
 //         cross it -- which makes the voice engine cheaper, not dearer.
-//     20000 means off, and off is bit-identical to this control not existing.
-slider34:20000<200,20000,10>High cut (Hz, 20000 = off)
+//     Off (0, since 2026-09-16; it was 20000) is bit-identical to this control not existing.
+slider32:0<0,2,1{Hz,Semitones,Cents}>High cut pitch mode
+slider33:0<0,128,1{Off,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>High cut note name
+slider34:0<0,20000,0.001>High cut value (0 = off)
+slider35:2<0,2,1{Hz,Semitones,Cents}>High cut fine tune unit
+slider36:0<-1000,1000,0.001>High cut fine tune
 
 // Overtone: bring one partial out far enough to be heard as a note of its own.
 // GLOBAL here, unlike Passage -- this plugin is a field you sit inside, with one
@@ -916,6 +931,23 @@ function mo_runit_sec(u) ( u == 0 ? auto_time : u == 1 ? 1 : u == 2 ? 60 : 60 / 
 // Cents amounts convert into each other; anything else takes the amount as it stands.
 function sp_amt(off, u, mode) ( u == 2 ? (mode == 2 ? off * 100 : off) : u == 3 ? (mode == 1 ? off / 100 : off) : off; );
 function sp_q(k, mode) ( sp_amt(target_drift_offset[k], target_drift_unit[k], mode) + sp_amt(ramp_offset_mem[k], ramp_by_unit[k], mode); );
+// The cut blocks (2026-09-16). A value in {0 Hz, 1 Semitones (a note number), 2 Cents} -> Hz.
+function cut_hz_of(mode, v) ( mode == 0 ? v : mode == 1 ? tuning_ref * pow(2, (v - 69) / 12) : tuning_ref * pow(2, (v / 100 - 69) / 12); );
+function cut_v_of(mode, hz) local(m) ( m = 69 + 12 * log(max(hz, 0.000001) / max(tuning_ref, 0.001)) / log(2); mode == 0 ? hz : mode == 1 ? m : m * 100; );
+// Switching the mode keeps the frequency; 0 stays 0 (off).
+function cut_conv(v, from, to) ( v <= 0 ? 0 : cut_v_of(to, cut_hz_of(from, v)); );
+// The note name a value shows: 0 Off, else 1 + the nearest note number.
+function cut_note(mode, v) local(m) (
+  v <= 0 ? 0 : ( m = mode == 1 ? v : mode == 2 ? v / 100 : 69 + 12 * log(max(v, 0.000001) / max(tuning_ref, 0.001)) / log(2);
+                 1 + max(0, min(127, floor(m + 0.5))); );
+);
+function cut_from_note(mode, n) ( n <= 0 ? 0 : mode == 0 ? tuning_ref * pow(2, (n - 1 - 69) / 12) : mode == 1 ? n - 1 : (n - 1) * 100; );
+// A drift or ramp amount on a cut, in its mode's unit. Hz is au_freq, exactly as before.
+function cut_amt(off, u, base, mode) local(f) (
+  u == 1 ? ( f = cut_hz_of(mode, base) + off; (f > 0 ? cut_v_of(mode, f) : 0) - base; ) :
+  u == 2 ? (mode == 2 ? off * 100 : off) : u == 3 ? (mode == 1 ? off / 100 : off) : off;
+);
+function cut_fine(hz, f, u) ( u == 0 ? hz + f : u == 1 ? hz * pow(2, f / 12) : hz * pow(2, f / 1200); );
 function au_back(nu, tt) ( nu == 3 ? tt * 1000 : nu == 1 ? (tt > 0.000001 ? 1 / tt : 0) : nu == 2 ? tt * max(tempo, 0.001) / 60 : tt; );
 function au_time(off, u, base, nu) local(b, tt, rate) (
   !(u == 1 || (u >= 4 && u <= 9)) || (u == 4 && nu == 3) || (u == 5 && nu == 0) || (u == 1 && nu == 1) || (u == 8 && nu == 2) ? off : (
@@ -956,6 +988,10 @@ function au_key(k, kind, base, nu) (
   kind == 2 ? au_freq(target_drift_offset[k], target_drift_unit[k], base, nu) + au_freq(ramp_offset_mem[k], ramp_by_unit[k], base, nu) :
   kind == 3 ? au_time(target_drift_offset[k], target_drift_unit[k], base, nu) + au_time(ramp_offset_mem[k], ramp_by_unit[k], base, nu) :
               au_rate(target_drift_offset[k], target_drift_unit[k], base, nu) + au_rate(ramp_offset_mem[k], ramp_by_unit[k], base, nu);
+);
+function cut_q(k, base, mode, floor) (
+  mode == 0 ? au_key(k, 2, base, floor) :
+  cut_amt(target_drift_offset[k], target_drift_unit[k], base, mode) + cut_amt(ramp_offset_mem[k], ramp_by_unit[k], base, mode);
 );
 // THE DRIFT LOOP RUNS THE OLD TWENTY-FOUR FIRST, IN THEIR OLD ORDER. Random drift
 // draws rand(), one stream, so two targets wrapping on one sample must draw in the
@@ -1595,7 +1631,22 @@ stereo_width  = slider25;
 // configured. Now one.
 voice_detune  = min(100, stereo_width) * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
 lowcut_hz     = slider29;
-hicut_hz      = slider34;                                    // base for High cut drift (20000 = off)
+hicut_hz      = slider34;                                    // base for High cut drift (0 = off since 2026-09-16)
+lc_mode = slider27; lc_funit = slider30; lc_fine = slider31;
+hc_mode = slider32; hc_funit = slider35; hc_fine = slider36;
+// The note name and the value follow each other, and a mode switch converts the value.
+// Trackers adopted in @block, like every other mirror here, so a restore is never an edit.
+cut_ui_inited ? (
+  slider27 != lc_last_mode ? ( slider29 = cut_conv(slider29, lc_last_mode, slider27); slider28 = cut_note(slider27, slider29); sliderchange(-1); ) :
+  slider28 != lc_last_note ? ( slider29 = cut_from_note(slider27, slider28); sliderchange(-1); ) :
+  slider29 != lc_last_val  ? ( slider28 = cut_note(slider27, slider29); sliderchange(-1); );
+  slider32 != hc_last_mode ? ( slider34 = cut_conv(slider34, hc_last_mode, slider32); slider33 = cut_note(slider32, slider34); sliderchange(-1); ) :
+  slider33 != hc_last_note ? ( slider34 = cut_from_note(slider32, slider33); sliderchange(-1); ) :
+  slider34 != hc_last_val  ? ( slider33 = cut_note(slider32, slider34); sliderchange(-1); );
+  lc_last_mode = slider27; lc_last_note = slider28; lc_last_val = slider29;
+  hc_last_mode = slider32; hc_last_note = slider33; hc_last_val = slider34;
+  lowcut_hz = slider29; hicut_hz = slider34;
+);
 denoise_amt   = slider26;
 denoise_base  = slider26;                                    // base for Denoise drift
 audition_mode = slider5;                                   // 0 focused slot, 1 morph
@@ -1725,6 +1776,11 @@ drift_restart_free = slider69;   // 0 = restart on play (sync), 1 = free-running
   lay_selv = max(0, min(N_LAY_SLOTS, floor(slider40 + 0.5)));
   last_lay_selv = lay_selv; last_lay_sel = lay_selv == 0 ? 0 : lay_selv - 1;
   lay_adopt(); lay_ui_inited = 1;
+);
+!cut_ui_inited ? (
+  lc_last_mode = slider27; lc_last_note = slider28; lc_last_val = slider29;
+  hc_last_mode = slider32; hc_last_note = slider33; hc_last_val = slider34;
+  cut_ui_inited = 1;
 );
 !pv_inited ? ( pv_last_tgt = slider15; pv_last_tval = slider17; pv_last_src = slider12; pv_last_sf = slider14; pv_last_sfu = slider13; pv_inited = 1; );
 // The Drift/Ramp mirror, adopted HERE and never in @slider (2026-09-11).
@@ -2215,7 +2271,17 @@ eff_stereo_width = max(0,  min(100, stereo_width + (mod_active[9] ? target_drift
 mod_active[9] ? ( voice_detune = eff_stereo_width * 0.01 * VOICE_DETUNE_MAX; );
 // Low cut reaches its slider's 20000 Hz (2026-09-13). It stopped at 500, the same leftover
 // as Spread's 150: the hidden-limit audit heard 500 and 20000 render bit-identical.
-eff_lowcut_hz    = max(0,  min(20000, lowcut_hz    + (mod_active[11] ? au_key(11, 2, lowcut_hz, 20) : 0)));
+// Low cut (11, fine tune 12). Off at 0. In Hz with no fine tune the old expression, except that
+// a drift stops one FFT bin up instead of at 0, so it cannot switch an ON cut off.
+lowcut_hz > 0 ? (
+  lc_v  = lowcut_hz + (mod_active[11] ? cut_q(11, lowcut_hz, lc_mode, 20) : 0);
+  lc_hz = lc_mode == 0 ? lc_v : cut_hz_of(lc_mode, lc_v);
+  lc_f  = lc_fine + (mod_active[12] ? sp_q(12, lc_funit) : 0);
+  lc_f != 0 ? lc_hz = cut_fine(lc_hz, lc_f, lc_funit);
+  eff_lowcut_hz = max(min(cut_hz_of(lc_mode, lowcut_hz), srate / FFTSIZE), min(20000, lc_hz));
+) : (
+  eff_lowcut_hz = 0;
+);
 mod_active[104] ? (   // Output level (dB) -- named Voice level until 2026-08
   eff_vdb = max(-60, min(24, voice_db_base + target_drift_offset[104] + ramp_offset_mem[104]));
   voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
@@ -2227,8 +2293,18 @@ mod_active[104] ? (   // Output level (dB) -- named Voice level until 2026-08
 //     Nyquist test compares against exactly srate*0.5, as it always did. The
 //     fade (the top fifth of the cut) is there because this is a Drift/Ramp
 //     target: a hard gate would step each partial off as the cut swept past it. ---
-eff_hicut_hz = max(200, min(20000, hicut_hz + (mod_active[13] ? au_key(13, 2, hicut_hz, 20) : 0)));
-hc_on = eff_hicut_hz < 19999.5 ? 1 : 0;
+// High cut (13, fine tune 14). Off at 0. On, it is the old expression in Hz with no fine tune: floored
+// at 200 Hz (or the cut's own frequency, if it was set lower by note), and reaching 20000 is off.
+hicut_hz > 0 ? (
+  hc_v  = hicut_hz + (mod_active[13] ? cut_q(13, hicut_hz, hc_mode, 20) : 0);
+  hc_hz = hc_mode == 0 ? hc_v : cut_hz_of(hc_mode, hc_v);
+  hc_f  = hc_fine + (mod_active[14] ? sp_q(14, hc_funit) : 0);
+  hc_f != 0 ? hc_hz = cut_fine(hc_hz, hc_f, hc_funit);
+  eff_hicut_hz = max(min(cut_hz_of(hc_mode, hicut_hz), 200), min(20000, hc_hz));
+  hc_on = eff_hicut_hz < 19999.5 ? 1 : 0;
+) : (
+  eff_hicut_hz = 20000; hc_on = 0;
+);
 hc_on ? (
   hc_top = eff_hicut_hz; hc_lo = eff_hicut_hz * 0.8;
   hc_inv = 1 / max(1, hc_top - hc_lo);

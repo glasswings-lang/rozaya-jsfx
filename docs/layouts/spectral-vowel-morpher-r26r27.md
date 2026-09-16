@@ -216,5 +216,13 @@ magic in Python, keyed on the magic. Survey helpers were in the session scratchp
   saved, and at Spread 150) and the bridge project bit-identical old vs new; a snapshot probe
   of curmag straight after the blur matched an independent numpy blur to ~4e-8 for 2 semitones,
   2 semitones + 40 Hz, breathing's own 100 Hz, and 100 Hz + 12 semitone fine tune (= 200 Hz).
-- Still to build: 7 cut blocks (0 = off, note list from Off, drift clamp);
+- **Stage 7, cut blocks, DONE:** 27-31 Low cut, 32-36 High cut; 0 = off in every unit, note list
+  {Off, C-1..G9}; note <-> value linked and a mode switch converts (trackers adopted in @block).
+  On: Hz with no fine tune is the old expression; a drift stops at one FFT bin (low) / 200 Hz
+  (high, as before) instead of switching off; High cut reaching 20000 is off, as before. Off: a
+  drift moves nothing (undoes 2026-09-13's "a cutoff at 0 still moves" -- CHECK the reseal
+  survey for any project drifting a cut from 0). Migration: Hz as saved, note from cut_note,
+  High cut 20000 -> 0. Measured: breathing and bridge bit-identical as saved, with cuts 150/3000
+  and 90/5000 + play/rest; 150 Hz <-> 50.37 st <-> 150; note A4 -> 440; 0 -> Off; drift limits.
+- Still to build:
   9 migration (reseal old blobs, transcode 7700087 -> 7700107 keyed on magic), verify, install.
