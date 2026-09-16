@@ -57,20 +57,21 @@ The morph
 The sound
 10  Texture (% wash)                               was 10
 11  Wash grain (ms)                                was 11  no longer a target
-12  Spread unit {Hz, Semitones, Cents}             NEW     saved copies: Hz
-13  Spread value                                   was 12
-14  Spread fine tune unit                          NEW
-15  Spread fine tune                               NEW     0
-Pitch
-16  Source note                                    was 13
-17  Source fine tune unit                          was 15  mode before value
-18  Source fine tune                               was 14  becomes a target
-19  Target note                                    was 16
-20  Transpose unit                                 was 18  mode before value
-21  Transpose value                                was 17
-22  Fine tune unit                                 was 20  mode before value
-23  Fine tune                                      was 19
-24  Tuning reference (Hz)                          was 21
+Pitch -- every name starts with `Pitch` (Rozaya: "it needs a pitch prefix anyway")
+12  Pitch source note                              was 13  renamed
+13  Pitch source fine tune unit                    was 15  mode before value, renamed
+14  Pitch source fine tune                         was 14  becomes a target, renamed
+15  Pitch target note                              was 16  renamed
+16  Pitch transpose unit                           was 18  mode before value, renamed
+17  Pitch transpose value                          was 17  renamed
+18  Pitch fine tune unit                           was 20  mode before value, renamed
+19  Pitch fine tune                                was 19  renamed
+20  Pitch tuning reference (Hz)                    was 21  renamed
+Spread -- AFTER pitch. Rozaya: "spread is what you do after you've set a pitch"
+21  Spread unit {Hz, Semitones, Cents}             NEW     saved copies: Hz
+22  Spread value                                   was 12
+23  Spread fine tune unit                          NEW
+24  Spread fine tune                               NEW     0
 25  Stereo width (%)                               was 22
 26  Denoise (%, wash only)                         was 23
 27  Low cut pitch mode {Hz, Semitones, Cents}      NEW     saved copies: Hz
