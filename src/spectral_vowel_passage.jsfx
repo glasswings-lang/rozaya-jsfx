@@ -527,6 +527,13 @@ target_drift_moves = freemem; freemem += DBANK;
 drift_step_len     = freemem; freemem += DBANK;   // RUNTIME: seconds of the leg that just began; 0 = no turn
 ser_scratch       = freemem; freemem += DBANK;   // @serialize's remap of an older save
 dr_order          = freemem; freemem += DBANK;   // the drift loop's visiting order, below
+// Per-sample work lists, rebuilt every block (2026-09-16, the Morpher's): @sample walked every
+// (slot, target) drift and ramp entry on every sample whether it moved or not; now only these.
+// Skipped entries did nothing when walked, so the output is the same, sample for sample.
+drift_list = freemem; freemem += DBANK;   // drifting entries, in dr_order's order (rand() order kept)
+ramp_list  = freemem; freemem += DBANK;   // entries with a ramp duration (they advance)
+rofs_list  = freemem; freemem += DBANK;   // entries with a ramp amount (their offset can be non-zero)
+dl_n = 0; rl_n = 0; ro_n = 0;
 // Drift + Ramp on one (slot, target), in the target's own unit.
 function mo_q(k) ( target_drift_offset[k] + ramp_offset_mem[k]; );
 // (The amount units' conversion is below pv_semis, which it calls: EEL2 needs a function
@@ -1889,6 +1896,15 @@ i = 0; loop(DBANK,
   mod_active[i] = (td_active[i] || ramp_by_mem[i] != 0) ? 1 : 0;
   i += 1;
 );
+// The work lists (see their allocation). An entry left off rofs_list has a ramp amount of 0, so
+// its offset is 0 -- written here once instead of every sample.
+dl_n = 0; rl_n = 0; ro_n = 0; i = 0;
+loop(DBANK,
+  wl_t = dr_order[i]; td_active[wl_t] ? ( drift_list[dl_n] = wl_t; dl_n += 1; );
+  ramp_dur_mem[i] > 0 ? ( ramp_list[rl_n] = i; rl_n += 1; );
+  ramp_by_mem[i] != 0 ? ( rofs_list[ro_n] = i; ro_n += 1; ) : ( ramp_offset_mem[i] = ramp_t_mem[i] * ramp_by_mem[i]; );
+  i += 1;
+);
 
 @sample
 inbuf[inpos] = (spl0 + spl1) * 0.5;
@@ -1928,8 +1944,8 @@ morph_frozen   = in_start_delay || (in_rest && morph_at_rest == 1);
 // patch using two drifts costs two drifts -- the extra iterations are a flag
 // read apiece.
 dk = 0;
-loop(DBANK,
-  di = dr_order[dk];   // the old fourteen first, in their old order (see dr_order)
+loop(dl_n,
+  di = drift_list[dk];   // the old fourteen first, in their old order (see dr_order)
   (td_active[di] && !mod_frozen) ? (   // the Start delay holds every drift where it is
     // Period in its unit, as seconds. Play/Rest windows are whole drift periods; the
     // counter ticks every sample, and while resting the phase holds where it stopped.
@@ -1974,8 +1990,9 @@ loop(DBANK,
 //     (frozen when not engaged), and folds into the effective values alongside
 //     the Drift offset below. ---
 (ramp_engaged && !ramp_frozen) ? (   // the Start delay holds every ride too
-  ri = 0;
-  loop(DBANK,
+  rk = 0;
+  loop(rl_n,
+    ri = ramp_list[rk];
     ramp_dur_mem[ri] > 0 ? (
       rdelay_samps = ramp_delay_mem[ri] * ramp_unit_sec * srate;
       ramp_delay_elapsed_mem[ri] < rdelay_samps ? (
@@ -1993,10 +2010,10 @@ loop(DBANK,
         );
       );
     );
-    ri += 1;
+    rk += 1;
   );
 );
-ri = 0; loop(DBANK, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; ri += 1; );
+rk = 0; loop(ro_n, ri = rofs_list[rk]; ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; rk += 1; );
 
 // Every auto-morph mode now walks slot to slot, holding each leg for the
 // linger of the slot it is LEAVING. Sweep and Glide used to slide a position
