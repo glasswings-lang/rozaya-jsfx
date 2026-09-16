@@ -157,6 +157,10 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 - **jsfx_run does not clamp to a slider's declared range; REAPER does.** 700 set into a
   -96..96 control stored 700 (measured 2026-09-13), so an offline test passed what REAPER
   caps. Owed: clamp like REAPER, or check every set value against the declared range.
+- **`Transport unit` may want a better name.** Rozaya, 2026-09-16, told it sets what Start
+  delay, Play for and Rest for count in: *"What the hell is a 'transport' unit."*, then, asked
+  what it should say, *"I'm... not actually sure."* Kept for now in Veil, the Phaser, Passage
+  and the Morpher's layout. A rename moves nothing; rename all at once when a name lands.
 - **Drift period units under host sync** -- periods count heartbeats or breaths; should
   they be beats when synced? Not checked against the source on 2026-09-13.
 
