@@ -72,7 +72,7 @@ slider3:71<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D
 slider4:500<0,20000,0.001>Filter cutoff (Hz / semitones / cents)
 slider5:2<0,2,1{Hz,Semitones,Cents}>Filter fine tune unit
 slider6:0<-1000,1000,0.001>Filter fine tune
-slider7:0.15<0,1,0.01>Filter resonance
+slider7:15<0,100,0.1>Filter resonance (%)
 slider8:440<20,2000,0.1>Tuning reference (Hz, all sides)
 // Slope is a character choice, not a continuous control, so it is not a drift or
 // ramp target. Shared across both channels.
@@ -300,8 +300,9 @@ function vl_amt(off, u, k) local(sd) (
   k <= 2 ? ( sd = k == 2 ? 1 : 0; vl_pitch(off, u, side_pmode[sd], side_cut[sd]); ) :
   // 3-5 the fine tunes: kept in that side's fine tune unit, counted from its cutoff.
   k <= 5 ? ( sd = k == 5 ? 1 : 0; vl_pitch(off, u, side_funit[sd], side_cut[sd]); ) :
-  // 6-8 resonance, a 0-1 fraction. Percent is the only unit that fits it.
-  k <= 8 ? ( u == 11 ? off / 100 : off ) :
+  // 6-8 resonance, in percent since 2026-09-16 (R9). Percent IS the target's own
+  // unit now, and no other unit fits it, so every choice passes straight through.
+  k <= 8 ? off :
   // 9 Tuning reference, in Hz: an interval is counted from the reference itself.
   k == 9 ? ( u == 2 ? slider8 * pow(2, off / 12) - slider8 :
              u == 3 ? slider8 * pow(2, off / 1200) - slider8 : off ) :
@@ -338,7 +339,7 @@ side_cfg_inited != 1 ? (
   side_cut[0]   = 480; side_cut[1]   = 520;
   side_funit[0] = 2;   side_funit[1] = 2;      // Cents
   side_fine[0]  = 0;   side_fine[1]  = 0;
-  side_res[0]   = 0.15; side_res[1]  = 0.15;
+  side_res[0]   = 15;  side_res[1]   = 15;    // percent
   side_cfg_inited = 1;
 );
 // The visible six start on the view the picker is showing, so the first @slider
@@ -477,8 +478,8 @@ last_side != vsel ? (
     );
     slider7 != side_seen[5] ? (
       vd  = slider7 - side_seen[5];
-      vm  = vl_try(side_res, 0, vd, 0, 1);
-      vm2 = vl_try(side_res, 1, vd, 0, 1);
+      vm  = vl_try(side_res, 0, vd, 0, 100);
+      vm2 = vl_try(side_res, 1, vd, 0, 100);
       vm  = abs(vm2) < abs(vm) ? vm2 : vm;
       side_res[0] += vm; side_res[1] += vm;
       slider7 = (side_res[0] + side_res[1]) * 0.5;
@@ -683,8 +684,16 @@ slider34 && !tr_ramp_hold ? (
 //     1 / (period_seconds * srate); offset (Hz) = shape * (up or down). ---
 i = 0;
 loop(N_TARGETS,
-  up    = drift_up_mem[i];
-  down  = drift_down_mem[i];
+  // R26: the amounts are typed in drift_unit_mem[i] and converted into the unit this
+  // target actually keeps. Target default passes straight through.
+  //
+  // MISSING from 2026-09-15 to 2026-09-16: Veil was rebuilt from scratch after a bad
+  // anchor truncated it, and the replay kept the ramp's conversion (in vq) but dropped
+  // this one, so the drift amount unit was saved and shown and did nothing. Found by
+  // an R9 test that set a drift in Percent; no live project had a non-default drift
+  // unit, so wiring it back changed no saved sound.
+  up    = vl_amt(drift_up_mem[i],   drift_unit_mem[i], i);
+  down  = vl_amt(drift_down_mem[i], drift_unit_mem[i], i);
   per   = drift_per_mem[i];
   shape = drift_shape_mem[i];
 
@@ -771,8 +780,10 @@ eff_r_cut = vl_hz(side_pmode[1], side_cut[1] + vq_all_cut + vq(2),
                   side_fine[1] + vq_all_fine + vq(5), side_funit[1]);
 eff_l_cut = max(20, min(eff_l_cut, srate * 0.45));
 eff_r_cut = max(20, min(eff_r_cut, srate * 0.45));
-eff_l_res = max(0, min(side_res[0] + vq_all_res + vq(7), 1));
-eff_r_res = max(0, min(side_res[1] + vq_all_res + vq(8), 1));
+// Resonance is counted in PERCENT everywhere a person sees it (R9); the filter
+// wants 0-1, so it is divided once, here.
+eff_l_res = max(0, min(side_res[0] + vq_all_res + vq(7), 100)) / 100;
+eff_r_res = max(0, min(side_res[1] + vq_all_res + vq(8), 100)) / 100;
 
 gL = tan($pi * min(eff_l_cut, srate*0.49) / srate);
 gR = tan($pi * min(eff_r_cut, srate*0.49) / srate);
@@ -849,11 +860,16 @@ spl1 = (in_R * out_gain_eff) * tr_mix + mono_in * tr_dry * (1 - tr_mix);
 // 3500013 since 2026-09-16: Drift period unit and Ramp time unit became per target.
 // A 3400013 save (2026-09-15) is the same layout minus those two banks, so it reads
 // at full width and seeds both from the one shared value its slider still holds.
-wv_magic = 3500000 + N_TARGETS;
+// 3600013 since 2026-09-16 (later still): resonance counts in percent (R9). A 3500013
+// save is the same layout with resonance as a fraction, so its resonance values are
+// scaled x100 after reading; 3400013 also lacks the per-target units.
+wv_magic = 3600000 + N_TARGETS;
 file_var(0, wv_magic);
-wv_new  = wv_magic == 3500000 + N_TARGETS;
-wv_prev = wv_magic == 3400000 + N_TARGETS;
-wv_full = wv_new || wv_prev;
+wv_new   = wv_magic == 3600000 + N_TARGETS;
+wv_prev2 = wv_magic == 3500000 + N_TARGETS;
+wv_prev  = wv_magic == 3400000 + N_TARGETS;
+wv_units = wv_new || wv_prev2;               // carries per-target period units
+wv_full  = wv_units || wv_prev;              // carries the side banks
 wv_n = wv_full ? N_TARGETS : wv_magic == 3300005 ? 5 : wv_magic == 3200004 ? 4 : 0;
 wv_old_to_new[0] = 1; wv_old_to_new[1] = 2; wv_old_to_new[2] = 7;
 wv_old_to_new[3] = 8; wv_old_to_new[4] = 10;
@@ -893,7 +909,7 @@ wv_n > 0 ? (
     file_mem(0, side_cut,   2); file_mem(0, side_funit, 2);
     file_mem(0, side_fine,  2); file_mem(0, side_res,   2);
     file_var(0, last_side);
-    wv_new ? (
+    wv_units ? (
       file_mem(0, drift_punit_mem, N_TARGETS);
       file_mem(0, ramp_tunit_mem,  N_TARGETS);
     );
@@ -911,10 +927,28 @@ wv_n > 0 ? (
   // -- no automation write.)
   // Older than 3500013: every target was using the ONE shared unit the slider
   // still holds, so give each target that unit and nothing changes sound.
-  !wv_new ? (
+  !wv_units ? (
     wv_i = 0;
     loop(N_TARGETS,
       drift_punit_mem[wv_i] = slider20; ramp_tunit_mem[wv_i] = slider29;
+      wv_i += 1;
+    );
+  );
+
+  // Older than 3600013: resonance was a 0-1 fraction. Scale every stored resonance
+  // x100 -- the side banks where the blob carried them, and the drift and ramp
+  // amounts aimed at targets 6, 7 and 8 (see below for why a drift and a ramp differ). (A blob without side banks left them on their
+  // @init defaults, which are percent already.)
+  !wv_new && wv_n > 0 ? (
+    wv_full ? ( side_res[0] *= 100; side_res[1] *= 100; );
+    wv_i = 6;
+    loop(3,
+      // A DRIFT amount is scaled whatever its unit: before 2026-09-16 the drift unit
+      // was never applied, so every stored drift amount was in the target's own old
+      // fraction. A RAMP's unit always was applied, so a ramp already typed as Percent
+      // already meant the same thing and is left.
+      drift_up_mem[wv_i] *= 100; drift_down_mem[wv_i] *= 100;
+      ramp_unit_mem[wv_i]  != 11 ? ( speed_ramp_by_mem[wv_i] *= 100; );
       wv_i += 1;
     );
   );
@@ -937,7 +971,7 @@ wv_n > 0 ? (
     slider24 = drift_rest_mem[last_target_select];
     slider16 = last_target_select; slider26 = last_speed_target;
     // and the six visible filter controls, for whichever side the picker is on.
-    wv_new ? (
+    (
       slider1 = last_side;
       last_side > 0 ? (
         slider2 = side_pmode[last_side-1]; slider3 = side_note[last_side-1];

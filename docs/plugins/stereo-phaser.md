@@ -47,7 +47,7 @@ end of the sweep. Bottom opens at 300 and Top at 1500, so Both opens showing 900
 **Tuning reference (Hz, all ends)** `20–2000, default 440` — what the note names
 are counted from. One for the plugin.
 
-**Feedback** `0–0.95, default 0.6` — resonance around the allpass chain. This is the hollow "whoosh." Push toward 0.9 for the dramatic jet-sweep; 0 for a soft, notches-only phase.
+**Feedback (%)** `0–95, default 60` — resonance around the allpass chain. This is the hollow "whoosh." Push toward 90 for the dramatic jet-sweep; 0 for a soft, notches-only phase.
 
 **Stages** `2–64 (even), default 6` — number of allpass stages. Each **2 stages adds one notch**. 4–6 is the classic musical phaser; the teens–20s thicken it; toward 64 it becomes a dense static "curtain" (dozens of notches) for sound design.
 
@@ -59,7 +59,7 @@ cycle, never a multiplier.
 
 **Stereo Spread (degrees)** `0–180, default 90` — LFO phase offset between channels. 0 = mono motion, 90 = wide swirl, 180 = fully counter-rotating.
 
-**Wet/Dry Mix** `0–1, default 0.5` — 0.5 gives the deepest notches; lower for subtler phasing.
+**Wet/dry mix (%)** `0–100, default 50` — 50 gives the deepest notches; lower for subtler phasing.
 
 ### Transport
 
@@ -124,10 +124,10 @@ in the block it freezes; drift and ramp are their own things.
 
 ## Usage Notes
 
-- **Classic phaser:** Stages 4–6, Feedback 0.5–0.7, Rate ~0.3 Hz, Spread 90°, Range ~300–1500 Hz.
+- **Classic phaser:** Stages 4–6, Feedback 50–70, Rate ~0.3 Hz, Spread 90°, Range ~300–1500 Hz.
 - **Sound-design curtain / "traffic":** Stages up in the 30s–60s, high Feedback — the notches get so dense they merge into a continuous swept resonant wash.
 - **Stacking for complex motion (Bi-Phase trick):** two instances in series with *different* Rates drift against each other and beat — richer, evolving motion a single phaser can't make.
-- **REAPER auto-mute warning.** One instance is safe at any setting. But **several identical copies on one track at very high Feedback** stay phase-locked (each LFO starts at the same point), so their resonant peaks line up and multiply in series — the level can spike hard enough that REAPER auto-mutes the track to protect your speakers. If that happens: drop Feedback (~0.5 is safe), **vary** the Rate/Range between the copies so they drift apart, or add a limiter after them.
+- **REAPER auto-mute warning.** One instance is safe at any setting. But **several identical copies on one track at very high Feedback** stay phase-locked (each LFO starts at the same point), so their resonant peaks line up and multiply in series — the level can spike hard enough that REAPER auto-mutes the track to protect your speakers. If that happens: drop Feedback (~50 is safe), **vary** the Rate/Range between the copies so they drift apart, or add a limiter after them.
 
 ---
 

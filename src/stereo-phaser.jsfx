@@ -47,7 +47,7 @@ slider4:900<0,20000,0.001>Range frequency (Hz / semitones / cents)
 slider5:2<0,2,1{Hz,Semitones,Cents}>Range fine tune unit
 slider6:0<-1000,1000,0.001>Range fine tune
 slider7:440<20,2000,0.1>Tuning reference (Hz, all ends)
-slider8:0.6<0,0.95,0.01>Feedback
+slider8:60<0,95,0.1>Feedback (%)
 // A structural count, so not a drift or ramp target (R24).
 slider9:6<2,64,2>Stages
 
@@ -61,7 +61,7 @@ slider11:0.3<0.001,1000,0.001>Rate value
 slider12:90<0,180,1>Stereo spread (degrees)
 
 // === OUTPUT =============================================================
-slider13:0.5<0,1,0.01>Wet/dry mix
+slider13:50<0,100,0.1>Wet/dry mix (%)
 
 // === TRANSPORT ==========================================================
 // New in this version. Cycles is the default because this plugin HAS a turn of
@@ -240,14 +240,14 @@ function sp_amt(off, u, k) local(e) (
   // 6 Tuning reference, in Hz: an interval counted from the reference itself.
   k == 6 ? ( u == 2 ? slider7 * pow(2, off / 12) - slider7 :
              u == 3 ? slider7 * pow(2, off / 1200) - slider7 : off ) :
-  // 7 Feedback, a 0-0.95 fraction. Percent is the only unit that fits it.
-  k == 7 ? ( u == 11 ? off / 100 : off ) :
+  // 7 Feedback, in percent since 2026-09-16 (R9): Percent is its own unit now.
+  k == 7 ? off :
   // 8 Rate value, in the Rate mode's unit.
   k == 8 ? sp_rate(off, u) :
   // 9 Stereo spread, in degrees.
   k == 9 ? off :
-  // 10 Wet/dry, a 0-1 fraction.
-  k == 10 ? ( u == 11 ? off / 100 : off ) :
+  // 10 Wet/dry, in percent since 2026-09-16 (R9).
+  k == 10 ? off :
   // 11-12 Play for and Rest for, kept in the Transport unit.
   ( u == 4 || u == 5 || u == 6 || u == 8 ? sp_time(off, u) : off )
 );
@@ -455,10 +455,10 @@ rate      = rate_mode == 4 ? max(tempo, 0.001) / 60 * max(slider11, 0.001) :
               slider11 / 60;
 rangeMin  = min(end_freq[0], end_freq[1]);
 rangeMax  = max(end_freq[0], end_freq[1]);
-fb        = slider8;
+fb        = slider8 / 100;
 stages    = slider9;
 spreadRad = slider12 * $pi / 180;
-wet       = slider13;
+wet       = slider13 / 100;
 dry       = 1 - wet;
 
 // LFO sweeps the allpass corner between the two range edges. Working in the
@@ -678,8 +678,14 @@ slider37 && !tr_ramp_hold ? (
 //     offset = shape * (up when the wave is positive, down when negative).
 i = 0;
 loop(N_TARGETS,
-  up    = drift_up_mem[i];
-  down  = drift_down_mem[i];
+  // R26: the amounts are typed in drift_unit_mem[i] and converted into the unit this
+  // target actually keeps. Target default passes straight through.
+  //
+  // MISSING from 2026-09-16 morning to afternoon: this plugin was built from Veil's
+  // rebuild, which had lost the line, so the drift amount unit was saved and shown and
+  // did nothing. No live project had a non-default drift unit (checked in every blob).
+  up    = sp_amt(drift_up_mem[i],   drift_unit_mem[i], i);
+  down  = sp_amt(drift_down_mem[i], drift_unit_mem[i], i);
   per   = drift_per_mem[i];
   shape = drift_shape_mem[i];
 
@@ -768,9 +774,11 @@ eff_max = sp_hz(end_pmode[1], end_freq[1] + sq_both + sq(2),
                 end_fine[1] + sq_bothf + sq(5), end_funit[1]);
 eff_min  = max(40, min(20000, eff_min));
 eff_max  = max(40, min(20000, eff_max));
-fb_s     = max(0,  min(0.95,  slider8 + sq(7)));
+// Feedback and Wet/dry are counted in PERCENT everywhere a person sees them (R9);
+// the chain wants fractions, so each is divided once, here.
+fb_s     = max(0,  min(95,    slider8 + sq(7))) / 100;
 spread_s = max(0,  min(180,   slider12 + sq(9))) * $pi / 180;
-wet_s    = max(0,  min(1,     slider13 + sq(10)));
+wet_s    = max(0,  min(100,   slider13 + sq(10))) / 100;
 dry_s    = 1 - wet_s;
 
 // Sweep window, in the stock's normalised-frequency domain (d = 2*fc/srate),
@@ -859,11 +867,16 @@ spl1 = (dry_s * spl1 + wet_s * x) * tr_mix + sp_in1 * tr_dry * (1 - tr_mix);
 // 3500013 since 2026-09-16 (later the same day): Drift period unit and Ramp time
 // unit became per target. A 3400013 save is the same layout minus those two banks,
 // so it reads at full width and seeds both from the value its slider still holds.
-sp_magic = 3500000 + N_TARGETS;
+// 3600013 since 2026-09-16 (later still): Feedback and Wet/dry count in percent (R9).
+// A 3500013 save is the same layout with them as fractions; 3400013 also lacks the
+// per-target period units.
+sp_magic = 3600000 + N_TARGETS;
 file_var(0, sp_magic);
-sp_new  = sp_magic == 3500000 + N_TARGETS;
-sp_prev = sp_magic == 3400000 + N_TARGETS;
-sp_full = sp_new || sp_prev;
+sp_new   = sp_magic == 3600000 + N_TARGETS;
+sp_prev2 = sp_magic == 3500000 + N_TARGETS;
+sp_prev  = sp_magic == 3400000 + N_TARGETS;
+sp_units = sp_new || sp_prev2;
+sp_full  = sp_units || sp_prev;
 sp_n = sp_full ? N_TARGETS : sp_magic == 3300006 ? 6 : 0;
 sp_old_to_new[0] = 8; sp_old_to_new[1] = 1; sp_old_to_new[2] = 2;
 sp_old_to_new[3] = 7; sp_old_to_new[4] = 9; sp_old_to_new[5] = 10;
@@ -903,7 +916,7 @@ sp_n > 0 ? (
     file_mem(0, end_freq,  2); file_mem(0, end_funit, 2);
     file_mem(0, end_fine,  2);
     file_var(0, last_end);
-    sp_new ? (
+    sp_units ? (
       file_mem(0, drift_punit_mem, N_TARGETS);
       file_mem(0, ramp_tunit_mem,  N_TARGETS);
     );
@@ -922,11 +935,24 @@ sp_n > 0 ? (
   // without WRITING AUTOMATION.
   // Older than 3500013: every target was using the ONE shared unit the slider
   // still holds, so give each target that unit and nothing changes sound.
-  !sp_new ? (
+  !sp_units ? (
     sp_i = 0;
     loop(N_TARGETS,
       drift_punit_mem[sp_i] = slider23; ramp_tunit_mem[sp_i] = slider32;
       sp_i += 1;
+    );
+  );
+
+  // Older than 3600013: Feedback (target 7) and Wet/dry (target 10) were fractions.
+  // Every DRIFT amount aimed at them is scaled x100 -- the drift unit was never applied
+  // before 2026-09-16, so all were in the old fraction -- and every RAMP amount not
+  // already typed as Percent, which was applied and already meant the same thing.
+  !sp_new && sp_n > 0 ? (
+    sp_k = 7;
+    loop(2,
+      drift_up_mem[sp_k] *= 100; drift_down_mem[sp_k] *= 100;
+      ramp_unit_mem[sp_k] != 11 ? ( speed_ramp_by_mem[sp_k] *= 100; );
+      sp_k = 10;
     );
   );
 

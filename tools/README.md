@@ -23,6 +23,7 @@ nothing installed; `loop_finder.py` needs two packages (noted below).
 | [`r25_scope_verify.py`](#r25_scope_verifypy) | re-measures every R25 scope label in the runner -- does this control really serve every target? |
 | [`veil_migrate_r26r27_20260915.py`](#the-r26r27-per-plugin-migrations) | Veil's 22-control layout to its 35-control one |
 | [`phaser_migrate_r26r27_20260916.py`](#the-r26r27-per-plugin-migrations) | the Stereo Phaser's 25 to its 38, blob included |
+| [`phaser_migrate_r9_20260916.py`](#the-r26r27-per-plugin-migrations) | the Stereo Phaser's Feedback and Wet/dry from fractions to percent, blob included |
 
 ## rate_calc.py
 
@@ -1032,6 +1033,13 @@ every transport play, so the target count changing changes which draw each targe
 the sweep's two ends became per-end banks and banks live in `@serialize`.
 `strangeness.RPP`'s three instances are pre-2026-09-05 saves with no blob at all and a
 40-200 Hz sweep, so carrying only the midpoint would have thrown their sound away.
+
+**A test that sets a value with `--set-after` only takes effect AFTER the first block.**
+On a plugin with feedback, one block at the wrong value is enough to make every sample
+after it differ, so a before/after comparison must load the value from the project file,
+not override it. Found twice on 2026-09-16, both times reading as a fault that was not
+there. And a `--save-rpp` from a copy with a different filename writes THAT name into the
+`<JS` line, so `--fx` has to name the copy or no project state loads at all.
 
 **Its idempotency check is the blob's magic, not the slider count.** Counting slots
 passed a second time on an already-migrated line -- those lines still hold `-` in the

@@ -108,6 +108,12 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - The 2026-09-06 drift/ramp sweep, Tremolo's Start delay, the ranges; R25 names (09-12).
 - Measured, not heard: Tuning reference works in all 14; Heartbeat and Womb no longer blow up
   above ~5 kHz.
+- **Veil and the Stereo Phaser, afternoon of 2026-09-16:** per-target period and time units;
+  R9 (Veil's resonance, the Phaser's feedback and mix now in percent); and the DRIFT amount
+  unit wired in, which had been saved and shown but never applied in either. Measured, not
+  heard: all three live instances bit-identical to before the day's changes, and a drift of
+  12 semitones on Veil's cutoff reaches the same octave level the ramp measured (0.482
+  against 0.479) where 12 in the default unit barely moves it.
 - **The Stereo Phaser's whole R26/R27 layout, 2026-09-16.** Measured, not heard:
   bit-identical to the old on defaults AND on the real `strangeness.RPP`, whose three
   instances sweep 40-200 Hz and had no blob at all -- the migration writes them a fresh

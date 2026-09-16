@@ -73,7 +73,7 @@ difference between them is the stereo width** — together = mono, apart = wide.
 
 **Filter fine tune** `-1000 to 1000, default 0`
 
-**Filter resonance** `0–1, default 0.15` — emphasis at that side's cutoff. Low = a
+**Filter resonance (%)** `0–100, default 15` — emphasis at that side's cutoff. Low = a
 plain soft muffle; higher = a resonant "throat" around the corner.
 
 **Tuning reference (Hz, all sides)** `20–2000, default 440` — what the note names
