@@ -159,6 +159,14 @@ slider36:0<0,100,0.1>Denoise (%, wash only)
 slider5:1<0,1,1{Focused slot,Morph}>Audition (all slots)
 slider6:0<0,100,0.1>Morph (% across captured slots)
 slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph (all slots)
+// --- Auto-morph timing (2026-09-16). Slot timings is the slot-to-slot walk, each slot playing out its own
+//     fade in, hold, fade out and gap; every saved copy lands here. Rate is the Morpher's continuous
+//     glide along the active slots at the rate below: Sweep and Glide once move a position along
+//     them in one pass of the rate's time, Shuffle crossfades between shuffled slots, each leg an
+//     equal share. Rozaya, on the continuous sweep: "Passage needs it."
+slider8:0<0,1,1{Slot timings,Rate}>Auto-morph timing (all slots)
+slider9:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Auto-morph rate mode (all slots)
+slider10:20<0.01,1000,0.01>Auto-morph rate value (all slots)
 slider63:0<0,1000,0.001>Start delay (in transport units, all slots)
 slider64:0<0,1000,0.001>Play for (in transport units, 0 = always, all slots)
 slider65:0<0,1000,0.001>Rest for (in transport units, 0 = always, all slots)
@@ -444,7 +452,7 @@ spc           = freemem; freemem += NBINS + 1;   // Spread in Semitones/Cents: r
 // --- The voice's wavetables (2026-09-16). Two positions (0 = A, the vsi voice; 1 = B, vsj), two
 //     tables each (the one playing and the one being faded to), each an ifft buffer of 2*WTN.
 //     Built by wt_build; see the voice engine in @sample.
-WTN = 8192; WT_XF = 256; WT_TICK = 32; wt_clock = 0;
+WTN = 8192; WT_FADELEN = 128; WT_TICKLEN = 16; wt_clock = 0;
 //     A voice p is layer k's position: p = k*2 (A) or k*2 + 1 (B); Layer 1 is k = 0.
 NLAY = 16; NVOI = 32;
 wt_tab   = freemem; freemem += NVOI*2;    // table addresses, [p*2 + q]
@@ -512,17 +520,17 @@ function wt_build(p, slot, f) local(q, b, hn, nrm, a, ps, re, im, fr, pb, lk, og
     hn += 1;
   );
   fft_ipermute(b, WTN); ifft(b, WTN);
-  wt_act[p] = q; wt_xf[p] = wt_slot[p] < 0 ? 0 : WT_XF; wt_wait[p] = WT_XF;
+  wt_act[p] = q; wt_xf[p] = wt_slot[p] < 0 ? 0 : WT_FADELEN; wt_wait[p] = WT_FADELEN;
   wt_slot[p] = slot; wt_otv[p] = wt_otver(lk); wt_cap[p] = lay_nharm[lk]; wt_hv[p] = harm_ver; wt_f[p] = f; wt_hct[p] = hc_on ? hc_top : 0;
   wt_nb[p] = fr > 0 ? floor(hc_bound / fr) : NHARM + 1;
 );
 // Rebuild position p's table when what it holds has changed: another slot, a capture, the Overtone
 // curve, the High cut, a partial crossing Nyquist, or -- only while the High cut is fading some
 // partial -- the pitch moving by more than a fifth of a cent's worth of ratio.
-// The full test runs on a slot change at once, otherwise every WT_TICK samples (tables rebuild at
-// most once per WT_XF anyway); wt_wait counts down in those ticks.
+// The full test runs on a slot change at once, otherwise every WT_TICKLEN samples (tables rebuild at
+// most once per WT_FADELEN anyway); wt_wait counts down in those ticks.
 function wt_check_full(p, slot, f) local(fr, nb) (
-  wt_clock == 0 ? wt_wait[p] -= WT_TICK;
+  wt_clock == 0 ? wt_wait[p] -= WT_TICKLEN;
   fr = f * (1 + voice_detune); nb = fr > 0 ? floor(hc_bound / fr) : NHARM + 1;
   (wt_slot[p] != slot || wt_otv[p] != wt_otver(floor(p / 2)) || wt_cap[p] != lay_nharm[floor(p / 2)] || wt_hv[p] != harm_ver || wt_hct[p] != (hc_on ? hc_top : 0) ||
    min(nb, NHARM + 1) != min(wt_nb[p], NHARM + 1) ||
@@ -548,7 +556,7 @@ function wt_read(p, ch, f) local(ph, x, i0, fr, t, v, m) (
   v = t[2*(i0 & m)] * (1 - fr) + t[2*((i0 + 1) & m)] * fr;
   wt_xf[p] > 0 ? (
     t = wt_tab[p*2 + 1 - wt_act[p]];
-    v = v + (t[2*(i0 & m)] * (1 - fr) + t[2*((i0 + 1) & m)] * fr - v) * wt_xf[p] / WT_XF;
+    v = v + (t[2*(i0 & m)] * (1 - fr) + t[2*((i0 + 1) & m)] * fr - v) * wt_xf[p] / WT_FADELEN;
   );
   ph += f / srate; ph >= 1 ? ph -= floor(ph);
   wt_ph[p*2 + ch] = ph;
@@ -867,7 +875,7 @@ ot_h_smooth = 0; ot_db_smooth = 24; ot_w_smooth = 1;
 ot_on_last = 0; ot_h_last = -1; ot_db_last = -1; ot_w_last = -1;
 ot_boost = 1; ot_norm = 1; ot_bin = 0; ot_binw = 1; ot_f0bin = 0;   // wash-side, until @sample sets them
 i = 0; loop(WA, window[i] = 0.5 - 0.5*cos(TWOPI*i/(WA-1)); i += 1; );   // analysis window (fixed)
-morph_phase = 0; eff_morph01 = 0; last_automode = -1; last_ps = 0;
+morph_phase = 0; eff_morph01 = 0; auto_time = 20; am_rate = 0; am_timing = 0; last_automode = -1; last_ps = 0;
 drift_was_playing = 0;   // Drift restart-on-play edge state
 cur_slot = 0; nxt_slot = 0; xfade = 0;             // Drift: direct crossfade cur_slot -> nxt_slot
 // Previous sample's morph pair, for the voice phase handover in @sample. -1 so
@@ -1614,10 +1622,11 @@ denoise_amt   = slider36;
 audition_mode = slider5;                                   // 0 focused slot, 1 morph
 morph01       = slider6 * 0.01;
 automorph_mode = slider7;
+am_timing = slider8; am_rmode = slider9; am_rval = max(0.01, slider10);
 fade_in_shape  = slider16;   // leg fade curves (global) -- shaped in @sample via apply_curve
 fade_out_shape = slider17;
-automorph_mode != last_automode ? (
-  last_automode = automorph_mode; morph_phase = 0;
+(automorph_mode + 10 * am_timing) != last_automode ? (
+  last_automode = automorph_mode + 10 * am_timing; morph_phase = 0;
   drift_primed = 0;   // force Drift to (re)build its shuffle bag on the next sample
   auto_primed = 0;    // and Sweep / Glide to restart their walk
 );
@@ -1953,6 +1962,14 @@ loop(n_active,
   pvk += 1;
 );
 pv_cyc = max(pv_cyc, 0.05);
+// Auto-morph rate as seconds for one pass (2026-09-16, the Morpher's conversion). In Rate a Cycle is that pass.
+auto_time = max(0.01,
+  am_rmode == 0 ? 60 / max(am_rval, 0.001) :
+  am_rmode == 1 ? am_rval :
+  am_rmode == 2 ? 1 / max(am_rval, 0.001) :
+  am_rmode == 3 ? am_rval * 60 / max(tempo, 0.001) :
+                  (60 / max(tempo, 0.001)) / am_rval);
+(automorph_mode > 0.5 && am_timing == 1) ? pv_cyc = auto_time;
 drift_unit_sec = slider72 == 0 ? pv_cyc : slider72 == 1 ? 1 : 60 / max(tempo, 0.001);
 ramp_unit_sec  = slider83 == 0 ? pv_cyc : slider83 == 1 ? 1 : slider83 == 2 ? 60 : 60 / max(tempo, 0.001);
 
@@ -2163,7 +2180,36 @@ rk = 0; loop(ro_n, ri = rofs_list[rk]; ramp_offset_mem[ri] = ramp_t_mem[ri] * ra
 // along the slot line at a fixed rate, which structurally could not give two
 // steps different lengths; Shuffle already worked this way, so this unifies
 // them rather than adding a third behaviour.
-(automorph_mode > 0.5 && !morph_frozen) ? (   // Start delay, or a rest on Freeze in place, holds the walk
+am_rate = automorph_mode > 0.5 && am_timing == 1;
+am_rate ? (
+  // Rate (2026-09-16), the Morpher's continuous walk over the ACTIVE slots. Frozen, everything holds.
+  !morph_frozen ? (
+    automorph_mode == 1 ? (
+      morph_phase += 1 / (srate * auto_time);
+      morph_phase >= 2 ? morph_phase -= 2;
+      eff_morph01 = morph_phase <= 1 ? morph_phase : 2 - morph_phase;
+    ) : automorph_mode == 2 ? (
+      morph_phase += 1 / (srate * auto_time);
+      morph_phase > 1 ? morph_phase = 1;
+      eff_morph01 = morph_phase;
+    ) : (
+      n_active < 2 ? ( cur_slot = n_active < 1 ? 0 : active_slots[0]; nxt_slot = cur_slot; xfade = 0; ) : (
+        drift_primed != 1 ? (
+          last_slot = -1; shuffle_bag(); bag_pos = 0;
+          cur_slot = driftbag[bag_pos]; bag_pos += 1;
+          nxt_slot = driftbag[bag_pos]; bag_pos += 1;
+          xfade = 0; drift_primed = 1;
+        );
+        xfade += 1 / max(1, auto_time * srate / n_active);
+        xfade >= 1 ? (
+          cur_slot = nxt_slot; xfade = 0;
+          bag_pos >= n_active ? ( last_slot = cur_slot; shuffle_bag(); bag_pos = 0; );
+          nxt_slot = driftbag[bag_pos]; bag_pos += 1;
+        );
+      );
+    );
+  );
+) : (automorph_mode > 0.5 && !morph_frozen) ? (   // Start delay, or a rest on Freeze in place, holds the walk
   // Degenerate cases: no active slots at all -> silent pair; one active ->
   // that one solo. The n_active < 2 branch was previously "n_used < 2", but
   // with mute the effective count is n_active.
@@ -2322,6 +2368,18 @@ audition_mode < 0.5 ? (
   // envelope must NOT apply here -- you're monitoring one slot at full, even if
   // an auto-morph leg is still ticking underneath -- so force out_env open.
   vsi = cap_slot; vsj = cap_slot; vmfr = 0; out_env = 1;
+) : am_rate ? (
+  // Rate: Shuffle is a direct crossfade; Sweep and Glide a position along the active slots. No leg
+  // envelope -- the rate has no fades or gaps of its own.
+  automorph_mode == 3 ? ( vsi = cur_slot; vsj = nxt_slot; vmfr = xfade; ) : (
+    vna = max(1, n_active);
+    vmp = eff_morph01 * (vna - 1);
+    vai = floor(vmp); vmfr = vmp - vai;
+    vai >= vna - 1 ? ( vai = vna - 1; vmfr = 0; );
+    vsi = n_active < 1 ? 0 : active_slots[vai];
+    vsj = (n_active < 1 || vai >= vna - 1) ? vsi : active_slots[vai + 1];
+  );
+  out_env = 1;
 ) : automorph_mode > 0.5 ? (
   // Every auto mode: a DIRECT crossfade between the two slots of the current
   // leg, never a position on the slot line. One leg is one crossfade whichever
@@ -2685,7 +2743,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
   // blended ratio here is what made pitched slots glide across the crossfade.
   fA = slot_f0[vsi] * pitch_ratio_A; normA = slot_hnorm[vsi]; normA <= 0 ? normA = 1;
   fB = slot_f0[vsj] * pitch_ratio_B; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1;
-  wt_clock += 1; wt_clock >= WT_TICK ? wt_clock = 0;
+  wt_clock += 1; wt_clock >= WT_TICKLEN ? wt_clock = 0;
   // One wavetable per voice (2026-09-16): see wt_build. Same partials, same phases, same
   // detuned right channel; the sine bank below this comment's old place ran 64 sines per channel.
   // Layer 1 is the original: its ratio and gain (1 and 1 unless moved, which multiply exactly).
