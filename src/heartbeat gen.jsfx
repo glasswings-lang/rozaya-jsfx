@@ -137,7 +137,7 @@ slider27:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // advances it continuously, drawing the whole curve.
 //
 // DEFAULTS REPRODUCE WHAT drift_is_stepped() HARDCODED, so nothing saved moves.
-slider28:0<0,1,1{With the target,On a clock}>Drift movement
+slider28:0<0,1,1{With the target,On a clock}>Drift movement mode
 slider29:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Drift play/rest, per target, counted in PERIODS. Both must be above zero or
 // the gate is off, which is what 0 means. While resting the phase does not

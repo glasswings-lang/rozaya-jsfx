@@ -191,7 +191,7 @@ def drive(state_path):
         # Matched with its R25 kind taken off: an exact "Drift movement" would find nothing
         # after the rename and skip these checks without failing (found 2026-09-12).
         from r25_names import base as r25_base
-        mp = next((p for p, n in names.items() if r25_base(n) == "Drift movement"), None)
+        mp = next((p for p, n in names.items() if r25_base(n) == "Drift movement mode"), None)
         for sel_name, amount_frac in (("Drift target", (0.3, 0.6)), ("Ramp target", (0.65, 0.8))):
             sp = next((p for p, n in names.items() if n == sel_name), None)
             if sp is None:

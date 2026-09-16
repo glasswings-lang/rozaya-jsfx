@@ -172,7 +172,7 @@ slider29:0<0,2,1{Breaths,Seconds,Beats}>Drift period unit (all targets)
 // DEFAULTS PRESERVE TODAY'S BEHAVIOUR EXACTLY: the rate and the four segments
 // default to `With the target`, the two pitch targets to `On a clock`. That is
 // what drift_is_stepped() hardcoded before this control existed.
-slider30:0<0,1,1{With the target,On a clock}>Drift movement
+slider30:0<0,1,1{With the target,On a clock}>Drift movement mode
 slider31:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Counted in PERIODS. Both must be above zero or the gate is off. While resting
 // the phase does not advance, so the offset FREEZES where it stopped rather

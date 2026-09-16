@@ -153,7 +153,7 @@ Switching the selector saves the current values of sliders 73-80 to the previous
 
 ### Whose turn it is (2026-09-09)
 
-**It is a switch now, not a rule (2026-09-09).** `Drift movement`, sitting with
+**It is a switch now, not a rule (2026-09-09).** `Drift movement mode`, sitting with
 the period controls, is per target: `With the target` or `On a clock`. Rozaya:
 it *"should have been a switch from the very beginning"* -- both are ordinary
 artistic choices and neither is the plugin's to make. The defaults below are

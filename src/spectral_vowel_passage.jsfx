@@ -157,7 +157,7 @@ slider49:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // such a drift on that slot's own legs, by each leg's length in the period unit, and holds
 // it between them; `On a clock` runs it all the time. Every other target is read all the
 // time, so its turn is every sample and the two are the same. Rozaya: "Um. yes?"
-slider50:0<0,1,1{With the target,On a clock}>Drift movement
+slider50:0<0,1,1{With the target,On a clock}>Drift movement mode
 slider51:0<0,2,1{Sine,Triangle,Random}>Drift shape
 slider52:0<0,1000,0.01>Drift play for (periods, 0 = always)
 slider53:0<0,1000,0.01>Drift rest for (periods, 0 = always)

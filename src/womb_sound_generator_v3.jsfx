@@ -286,7 +286,7 @@ slider76:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // advances it continuously, drawing the whole curve.
 //
 // DEFAULTS REPRODUCE WHAT drift_is_stepped() HARDCODED, so nothing saved moves.
-slider77:0<0,1,1{With the target,On a clock}>Drift movement
+slider77:0<0,1,1{With the target,On a clock}>Drift movement mode
 slider78:0<0,2,1{Sine,Triangle,Random}>Drift shape
 slider79:0<0,1000,0.01>Drift play for (periods, 0 = always)
 slider80:0<0,1000,0.01>Drift rest for (periods, 0 = always)

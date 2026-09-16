@@ -24,7 +24,7 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
   having it *on there*?"* Removing it renumbers both pickers, so the migration moves every
   saved selection past it. Checked 2026-09-16: Play for and Rest for ARE per-occurrence
   targets -- @block recomputes pr_play_sec/pr_rest_sec (lines ~1697) against a running
-  pr_accum, so a drift cuts the stretch being heard. So the Morpher DOES get `Drift movement
+  pr_accum, so a drift cuts the stretch being heard. So the Morpher DOES get `Drift movement mode
   {With the target, On a clock}` per target, for those two. Rozaya: *"the other sounds like
   a gap"*.
 
@@ -115,7 +115,7 @@ Drift
 61  Drift down amount                              was 48
 62  Drift period unit (per target)                 was 51  mode before value, loses (all targets)
 63  Drift period                                   was 50
-64  Drift movement                                 NEW     With the target
+64  Drift movement mode                            NEW     With the target (renamed suite-wide, Rozaya)
 65  Drift shape                                    was 52
 66  Drift play for                                 was 53
 67  Drift rest for                                 was 54
@@ -156,7 +156,7 @@ harmonics (all layers) + 16 -- 107. Confirm the four fine tunes with Rozaya.
 - Every mode in front of its value (Transpose, Fine tune, Source fine tune, Layer pitch,
   Layer fine tune, both amount units, Auto-morph time and Rate mode).
 - Low cut and High cut as pitch blocks.
-- **Drift movement on Wash grain, measured 2026-09-16, not yet decided.** Each grain is
+- **Drift movement mode on Wash grain, measured 2026-09-16, not yet decided.** Each grain is
   written whole (`gen_grain`), but the hop moves mid-hop. Probe: test copies summing the
   synthesis window alone into a third accumulator (overlap evenness, independent of the
   audio), `breathing.RPP`, Texture 100. Drift off: 1.9% typical wobble. Gentle sine drift

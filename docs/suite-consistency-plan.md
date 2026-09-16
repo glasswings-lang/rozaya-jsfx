@@ -215,7 +215,7 @@ plugin-wide but simpler, and you set it once and leave it.
   ONCE PER OCCURRENCE (a breath's length, a note's duration, a segment's length, a pulse's
   on-duration) steps once per occurrence and its period counts occurrences; a target read
   continuously drifts continuously, on a clock. Where a plugin has both kinds,
-  `Drift movement {With the target, On a clock}` decides, per target -- on Bubbler and
+  `Drift movement mode {With the target, On a clock}` decides, per target -- on Bubbler and
   Dapple, Rozaya: *"The stepping was deliberately live"*. Seconds and Beats on a stepped
   target run only while the target's own thing happens: *"stop mid-cycle, freeze the clock
   mid-whatever unit, then pick up on the next cycle from wherever the clock was last."*

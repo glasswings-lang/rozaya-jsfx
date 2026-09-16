@@ -128,7 +128,7 @@ slider35:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // `With the target` advances the drift one whole step per beat (heard or silent),
 // and Beats per bar one step per bar. `On a clock` draws the whole curve, and a
 // click catches it wherever it is. Default On a clock: what both old targets did.
-slider36:1<0,1,1{With the target,On a clock}>Drift movement
+slider36:1<0,1,1{With the target,On a clock}>Drift movement mode
 slider37:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Drift play/rest, per target, counted in PERIODS. Both must be above zero or
 // the gate is off, which is what 0 means. While resting the phase does not

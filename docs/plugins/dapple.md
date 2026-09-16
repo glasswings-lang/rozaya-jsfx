@@ -166,7 +166,7 @@ Before this they were sampled out of a wander that never stopped spinning:
 almost all the motion was thrown away, the period did not count what it said,
 and the targets were not independent of each other. Rozaya found it, 2026-09-09.
 
-**It is a switch now, not a rule (2026-09-09).** `Drift movement`, next to the
+**It is a switch now, not a rule (2026-09-09).** `Drift movement mode`, next to the
 period controls, is per target: `With the target` or `On a clock`. Rozaya: it
 *"should have been a switch from the very beginning"*.
 

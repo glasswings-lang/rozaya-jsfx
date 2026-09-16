@@ -52,7 +52,7 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   reason to drift a start-only control"*.
   Structural counts stay out. Re-check with `python tools/r24_target_audit.py`; what was
   measured and what is still open is in `docs/history/R24.md`.
-- **`Drift movement (per target)` in the seven that lack it, and `Cycles` counting the
+- **`Drift movement mode (per target)` in the seven that lack it, and `Cycles` counting the
   target's own cycles.** R23, closed 2026-09-15 with nothing built; Rozaya: *"Fold it in
   yeah"* -- it lands in each plugin's own amount-unit turn (R26/R27), never as a sweep.
   Owed by: Tremolo, the Sweeping Filter, Sweep Dwell, Polyrhythm v3, Shepard Scale,
@@ -253,7 +253,7 @@ everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole 
   2026-08-12; `tools/lock_test.py`.
 - **JSFX stays the format.** Plain source that runs, no toolchain, CC0-compatible, and the
   flat slider list is what makes the plugins reachable through OSARA.
-- **Bubbler and Dapple step live on purpose**, behind `Drift movement` (Rozaya: *"The
+- **Bubbler and Dapple step live on purpose**, behind `Drift movement mode` (Rozaya: *"The
   stepping was deliberately live"*). The seven that still owe R23 are in Open above -- an
   entry here once called them cleared, and that was wrong (checked 2026-09-16).
 

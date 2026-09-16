@@ -268,7 +268,7 @@ clock and **Beats** follows the project tempo.
 
 **`With the target` in Seconds or Beats (2026-09-10).** The first unit counts turns. In Seconds or Beats the drift's clock runs in that unit only while the target's own thing is happening — an inhale during inhales, a pause during that pause, the breath rate through the whole breath — and freezes in between, picking up where it stopped at the next turn. Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next cycle from wherever the clock was last."* Until then those two units were silently ignored for such a target. So eight Seconds on an inhale is eight seconds of actual inhaling.
 
-**Drift movement (per target)** `{With the target, On a clock}` *(new 2026-09-09)*
+**Drift movement mode (per target)** `{With the target, On a clock}` *(new 2026-09-09)*
 Whether this target's drift moves in step with its own thing, or runs continuously
 underneath it. `With the target` advances the drift exactly one step each time that
 target happens — an inhale's drift moves on each inhale — so it is deterministic,

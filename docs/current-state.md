@@ -90,7 +90,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   (Breath Generator's is heard). Resonance Bank's width units per band with it.
 - **Shepard Tone and Scale, 2026-09-10:** Tone's voice split into Rate and Fine tune,
   Scale's fine tunes with their notes, pitch acting live, full targets.
-- **`Drift movement`, 2026-09-09:** Breath Gen, Bubbler, Dapple, Womb, Heartbeat, Melody.
+- **`Drift movement mode`, 2026-09-09:** Breath Gen, Bubbler, Dapple, Womb, Heartbeat, Melody.
   Owed: an open-and-play (Bubbler's could not be shown by the runner), and a Breath Gen
   pitch target on `With the target`. Seconds/Beats on such a drift (09-10) too.
 - **R24, targets in control order, 2026-09-11:** Veil, Bubbler, Dapple, Tremolo, Breath Gen,
@@ -116,7 +116,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   against 0.479) where 12 in the default unit barely moves it.
 - **Veil and the Stereo Phaser, evening of 2026-09-16:** the effect now waits out Start
   delay (it only held drift and ramp); `Drift rest mode` / `Ramp rest mode` renamed; and
-  `Drift movement`, with Play for / Rest for as targets that finally do something. Measured,
+  `Drift movement mode`, with Play for / Rest for as targets that finally do something. Measured,
   not heard: every stretch holds the length it began with (28 of 28), all five live copies
   bit-identical and every control in place after `tools/drift_movement_migrate_veil_phaser_20260916.py`.
 - **The Stereo Phaser's whole R26/R27 layout, 2026-09-16.** Measured, not heard:

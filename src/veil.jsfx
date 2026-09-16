@@ -109,7 +109,7 @@ slider21:20<0,1000,0.001>Drift period (0 = off)
 // early or late (On a clock). They are this plugin's only such targets, so the switch
 // is shown only while the Drift target is one of them. Rozaya: "the other sounds like
 // a gap".
-slider22:0<0,1,1{With the target,On a clock}>Drift movement
+slider22:0<0,1,1{With the target,On a clock}>Drift movement mode
 slider23:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Drift Play/Rest. The drift wanders for `play` periods, then FREEZES where it
 // stands for `rest` periods, then wanders on. Counted in drift periods, so there

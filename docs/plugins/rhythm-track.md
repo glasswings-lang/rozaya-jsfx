@@ -324,7 +324,7 @@ How far below the baseline the drift wanders at its trough. Independent from Up 
 **Drift period (slider 34, beats)** `0–1000, default 8, 0 = off`
 How many beats one full drift wave takes for this target. Short = jittery, long = barely-perceptible wander. Period scales with Ramp's tempo offset so the wave-per-beat relationship stays constant under wind-down.
 
-**Drift movement (slider 36)** `With the target / On a clock, default On a clock`, per target. Added 2026-09-11, inserted beside the period, not appended; Rozaya: *"it should get the switch."* **On a clock** draws the whole wave continuously, and each click catches it wherever it is; it is what Tempo and Swing always did. **With the target** moves the drift one whole step per beat, heard or silent, so a period of 8 is eight beats; for Beats per bar it is one step per bar. In Seconds or Beats the wave runs in that unit.
+**Drift movement mode (slider 36)** `With the target / On a clock, default On a clock`, per target. Added 2026-09-11, inserted beside the period, not appended; Rozaya: *"it should get the switch."* **On a clock** draws the whole wave continuously, and each click catches it wherever it is; it is what Tempo and Swing always did. **With the target** moves the drift one whole step per beat, heard or silent, so a period of 8 is eight beats; for Beats per bar it is one step per bar. In Seconds or Beats the wave runs in that unit.
 
 **Drift shape (slider 37)** `Sine / Triangle / Random, default Sine`
 Wander waveform. Sine = smooth, Triangle = linear ramps with turnarounds, Random = value-noise interpolating smoothly between fresh random targets at each period boundary.

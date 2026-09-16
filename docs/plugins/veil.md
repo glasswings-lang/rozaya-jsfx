@@ -147,7 +147,7 @@ whatever unit **Drift period unit** is set to (below). **Give Left and Right
 cutoffs *different* periods** (say 20 and 31) and the width itself breathes — the
 signature Veil move.
 
-**Drift movement** `With the target / On a clock, default With the target`, per target,
+**Drift movement mode** `With the target / On a clock, default With the target`, per target,
 shown only while the Drift target is Play for or Rest for. With the target, a play or rest
 stretch takes its length when it begins and keeps it; On a clock, a drift can end the
 stretch you are hearing early or late.

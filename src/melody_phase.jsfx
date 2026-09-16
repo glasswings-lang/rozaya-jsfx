@@ -158,7 +158,7 @@ slider98:0<0,20000,0.01>Drift up amount (units match target)
 slider99:0<0,20000,0.01>Drift down amount (units match target)
 slider100:8<0,1000,0.001>Drift period (0 = off)
 slider101:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
-slider102:0<0,1,1{With the target,On a clock}>Drift movement
+slider102:0<0,1,1{With the target,On a clock}>Drift movement mode
 slider103:0<0,2,1{Sine,Triangle,Random}>Drift shape
 slider104:0<0,1000,0.01>Drift play for (periods, 0 = always)
 slider105:0<0,1000,0.01>Drift rest for (periods, 0 = always)
