@@ -20,6 +20,9 @@ has been heard, and what Rozaya has said is next.
 
 ## What is next
 
+- **The rules pass, one rule at a time, in order: R23 is next.** R19 to R22 are off the
+  list; each left one backlog entry and nothing built. Tell Rozaya what a rule says in
+  plain words, check the plugins by reading or running them, one question at a time.
 - **The amount units (R26) with R27's same things, ONE PLUGIN AT A TIME** -- each planned
   with Rozaya, built, moved, measured and installed before the next. Rozaya: *"I'm wondering
   if we should take this per-plugin rather than a giant sweep."* What each plugin gains:
