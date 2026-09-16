@@ -1,4 +1,4 @@
-# Passage takes over from the Morpher -- being talked through, NOT built
+# Passage takes over from the Morpher -- AGREED, NOT built
 
 Started 2026-09-16. Decisions land here as Rozaya makes them, quoted; everything unquoted is
 Claude's proposal. The whole order is authored here before any migration (CLAUDE.md).
@@ -17,7 +17,11 @@ Passage today: 63 controls, magic 7700008, 10 projects (49 copies at the 09-13 i
 - **The voice engine cost is fixed inside this build**, not left for later: 16 layers on the
   per-partial sine engine would drop out as the Morpher's do.
 
-## Proposed, not yet agreed
+## Agreed 2026-09-16 with the whole order below
+
+Rozaya, on the full draft with these two points: *"It seems OK to me, tbh. I liked what I saw
+in morfer so..."*
+
 
 - **`Auto-morph timing {Slot timings, Rate}`** under Auto-morph. Slot timings = today's
   slot-to-slot walk (saved copies land here, nothing changes). Rate = the Morpher's glide
@@ -29,7 +33,7 @@ Passage today: 63 controls, magic 7700008, 10 projects (49 copies at the 09-13 i
 - Everything else below is the Morpher's agreed shape copied, with Passage's per-slot
   sections kept.
 
-## The full order (proposal)
+## The full order, AGREED 2026-09-16
 
 `was` is today's Passage slider id. P = per slot, G = global.
 
