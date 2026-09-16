@@ -172,6 +172,8 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   absolutely do belong in passage. Hell, the only reason passage existed was to give finer control
   over slots, but I see no reason that can't be done by hand with beats and such, or durations."*
   Whether Auto-morph's continuous sweep is still wanted, or per-slot durations cover it: asked.
+  **Layers are global, not per slot** (Rozaya, 2026-09-16: *"the per slot layering doesn't really
+  make sense to me ... I would just have it be global"*; thickening one slot is done with All slots).
   Order agreed-in-principle: first the shared engine faults (both plugins run the per-partial sine
   voice engine and the grain auto-gain), then this. The Morpher is in 39 projects (135 copies);
   `tools/morpher_to_passage.py` already carries a project across by label.
