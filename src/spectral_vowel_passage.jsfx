@@ -116,7 +116,7 @@ slider60:0<-60,24,0.01>Input level (dry, dB, all slots)
 // wash, so it has always scaled both. PER SLOT here, unlike the Morpher's --
 // the morph crossfades it along with the spectra. Relabelled, not re-scoped:
 // the behaviour is right, the name described half of it.
-slider61:0<-60,24,0.01>Output level (dB)
+slider61:0<-60,24,0.01>Output level (dB, the wash is no longer auto-boosted)
 slider20:50<0,100,1>Texture (% wash)
 slider21:150<5,1000,1>Wash grain (ms)
 // --- Spread, a pitch block since 2026-09-16 (the Morpher's shape, per slot here). Rozaya, on the
@@ -910,7 +910,7 @@ cap_dirty = 0; settle = 0;   // debounce for Capture-point re-analysis
 // capture-then-play flow nothing re-derives at all. Starts stale on load
 // (@serialize restores the raw audio but not the analysis derived from it).
 analysis_valid = 0;
-rms_smooth = 0;   // slow auto-gain state (stable loudness, no per-grain pump)
+WASH_GAIN = pow(10, 47 / 20);   // the wash's one fixed gain: the saved copies' median auto-gain, 2026-09-16
 cap_point01 = 0;  // analysis position in the grab (slider3); 0 = earliest
 texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
 i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hph[i]; hphBR[i] = hphB[i]; i += 1; );
@@ -1263,15 +1263,12 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   // Was NBINS unconditionally -- another cost that ignored grain size.
   i = 0; loop(GBINS, phase[i] = rand(1)*TWOPI; i += 1; );
   build_spectrum(0);
-  rms = 0; i = 0; loop(W, sv = fftwork[2*i]; grainbuf[i] = sv; rms += sv*sv; i += 1; );
-  rms = sqrt(rms / W);
-  // Slow auto-gain: smooth the grain RMS across grains so loudness is stable and
-  // does NOT pump per grain. With the sqrt-Hann constant-power window below,
-  // overlapping random-phase grains sum to steady power. Target ~0.07 grain RMS
-  // -> ~0.1 output RMS (-20 dBFS). Freeze the smoother on silent grains (empty
-  // slot) so switching back doesn't blip loud.
-  rms > 0.0000001 ? ( rms_smooth <= 0 ? rms_smooth = rms : rms_smooth += 0.02 * (rms - rms_smooth); );
-  gnorm = rms_smooth > 0.0000001 ? (0.07 / rms_smooth) : 0;
+  i = 0; loop(W, grainbuf[i] = fftwork[2*i]; i += 1; );
+  // One fixed wash gain (2026-09-16). This was a slow auto-gain that pulled every grain to the same
+  // loudness -- a hidden +38 to +65 dB on the saved copies, which undid every level set on the wash.
+  // Rozaya: "-24 db is -24db, it shouldn't be moved up by some overeager hardcoded thing". The
+  // migration set each saved slot's Output level to keep what was heard.
+  gnorm = WASH_GAIN;
   build_spectrum(1);
   i = 0;
   loop(W,
@@ -1308,10 +1305,7 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
     );
     pk2 += 1;
   );
-  rms = 0; i = 0; loop(W, sv = grainbuf[i]; rms += sv*sv; i += 1; );
-  rms = sqrt(rms / W);
-  rms > 0.0000001 ? ( rms_smooth <= 0 ? rms_smooth = rms : rms_smooth += 0.02 * (rms - rms_smooth); );
-  gnorm = rms_smooth > 0.0000001 ? (0.07 / rms_smooth) : 0;
+  gnorm = WASH_GAIN;   // fixed, as above
   i = 0;
   loop(W,
     aw = accpos + i; aw >= ACCLEN ? aw -= ACCLEN;

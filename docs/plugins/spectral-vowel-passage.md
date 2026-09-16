@@ -41,6 +41,14 @@
 > is gone: heard at Wash grain 5 with Wash at 100, 2026-08-12 — see the note under
 > **Wash grain**.)
 >
+>
+> **4. Since 2026-09-16 Passage has everything the Morpher has.** Sixteen layers, the
+> Morpher's continuous Auto-morph at a rate, Spread and both cuts as pitch blocks, and 111
+> Drift and Ramp targets. Rozaya: *"the closer morfer gets to where I'd want it to be, the
+> more like passage it is than not."* The voice is also much lighter to run (one prepared
+> wave per voice instead of 64 tones), and **the wash no longer boosts itself**: see
+> **Output level**.
+>
 > Controls are also grouped by what they belong to rather than by when they were
 > added, so everything owned by the selected slot — **Capture point**, **Capture
 > average**, the timing controls, and every sound setting above — is reached
@@ -135,22 +143,22 @@ re-analyzed, so every capture you already have — in this project or any older 
 
 ### The pitch block — *per slot*
 
-Eight controls set a slot's pitch, built the way Bubbler's are. Every slot has its own, and nothing sounds different until you change one.
+Eight controls set a slot's pitch, built the way Bubbler's are. Every slot has its own, and nothing sounds different until you change one. Every name starts with **Pitch** (since 2026-09-16), and each unit picker sits before the value it sets.
 
-**Source note (where zero is, per slot)** `None, C-1 … G9, default None`
-Which note the capture already is. It changes nothing on its own: it tells **Target note** where zero is, so you can then transpose by note name. Moving it later re-reads Target note and leaves the sound alone.
+**Pitch source note (where zero is)** `None, C-1 … G9, default None`
+Which note the capture already is. It changes nothing on its own: it tells **Pitch target note** where zero is, so you can then transpose by note name. Moving it later re-reads the target note and leaves the sound alone.
 
-**Source fine tune (per slot, only with a Source note, in Semitones)** `-1000 to 1000, default 0`, with **Source fine tune unit** `Hz / Semitones / Cents, default Cents`
-For a capture that sits between two notes. It acts only while a Source note is set and **Transpose unit** is Semitones, which is what its name says. In Hz it counts from the source note's own frequency.
+**Pitch source fine tune unit** `Hz / Semitones / Cents, default Cents`, then **Pitch source fine tune (only with a Pitch source note, in Semitones)** `-1000 to 1000, default 0`
+For a capture that sits between two notes. It acts only while a Pitch source note is set and **Pitch transpose mode** is Semitones, which is what its name says. In Hz it counts from the source note's own frequency. It is a Drift and Ramp target: a drift on it moves what the target note lands on, so the sound moves the opposite way to the drift.
 
-**Target note (per slot, only with a Source note, in Semitones)** `C-1 … G9`
-The note you want to hear. Picking one sets **Transpose value** to the distance from the source note; moving Transpose value shows the nearest note here. It is hidden unless a Source note is set and Transpose unit is Semitones.
+**Pitch target note (only with a Pitch source note, in Semitones)** `C-1 … G9`
+The note you want to hear. Picking one sets **Pitch transpose value** to the distance from the source note; moving the value shows the nearest note here.
 
-**Transpose value (Hz / semitones / cents, per slot)** `-20000 to +20000, default 0`, with **Transpose unit** `Hz / Semitones / Cents, default Semitones`
-How far to shift the slot. In Semitones and Cents it is an interval. In Hz it counts from the **Tuning reference**, so with the reference at 440, a value of 440 is one octave up. *(This was "Pitch (semitones)". A saved project's number is unchanged and still means semitones.)*
+**Pitch transpose mode** `Hz / Semitones / Cents, default Semitones`, then **Pitch transpose value (Hz / semitones / cents)** `-20000 to +20000, default 0`
+How far to shift the slot. In Semitones and Cents it is an interval. In Hz it counts from the **Tuning reference**, so with the reference at 440, a value of 440 is one octave up.
 
-**Fine tune (per slot)** `-1000 to 1000, default 0`, with **Fine tune unit** `Hz / Semitones / Cents, default Cents`
-Added on top of Transpose value.
+**Pitch fine tune unit** `Hz / Semitones / Cents, default Cents`, then **Pitch fine tune** `-1000 to 1000, default 0`
+Added on top of the transpose value.
 
 Drift and Ramp are applied ON TOP of Transpose value and are **not** clipped back to the
 slider range, so modulation can carry the pitch beyond it. (The range was -96 to +96 until
@@ -191,8 +199,8 @@ running-sum optimisation is mathematically equivalent to the original, and
 verified numerically. That is a real perf win. But it does not touch the
 short-grain crackle.
 
-**Spread (Hz, per slot)** `0 to 1000, default 0`
-Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed. It reaches the full 1000; it used to stop at 150 whatever the control said.
+**Spread pitch mode** `Hz / Semitones / Cents, default Hz`, **Spread value (Hz / semitones / cents)** `0 to 1000, default 0`, **Spread fine tune unit** `Hz / Semitones / Cents, default Cents` and **Spread fine tune** `-1000 to 1000, default 0` — *per slot*
+Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed. In **Hz** the blur is one fixed width everywhere, so it swallows the gaps between low harmonics and barely touches high ones; that is what every saved project uses, and with no fine tune it is exactly the blur it always was. In **Semitones** or **Cents** each frequency blurs by that interval either side, evenly across the range. A fine tune in Hz then widens both sides by that many Hz. No note name: it is a width, not a note. Spread and Spread fine tune are both Drift and Ramp targets.
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
@@ -201,13 +209,13 @@ Spectral subtraction on the wash — raise to thin toward the strongest partials
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
-**Low cut (Hz, per slot)** `0 to 20000, default 0`
-Removes low rumble from the resynth. It reaches the full 20000; it used to stop at 500.
+**Low cut pitch mode** `Hz / Semitones / Cents, default Hz`, **Low cut note name** `Off, C-1 … G9`, **Low cut value (0 = off)** `0 to 20000`, **Low cut fine tune unit** `default Cents` and **Low cut fine tune** `-1000 to 1000, default 0` — *per slot*
+Removes low rumble from the wash. **0 is off in every unit**, and the note list starts on a dedicated **Off**. In Semitones the value is a note number (69 is A4 at the Tuning reference), in Cents that times 100. The note name and the value follow each other, and switching the mode converts the value so the cut stays where it was. A drift or ramp on a cut that is on stops at the lowest real frequency instead of switching it off, and moves nothing while it is off. The cut and its fine tune are both Drift and Ramp targets.
 
-*Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
+**High cut pitch mode**, **High cut note name**, **High cut value (0 = off)**, **High cut fine tune unit** and **High cut fine tune** — the same block as Low cut, default off — *per slot*
+Removes the top of both engines. Its off was 20000 until 2026-09-16; every saved project's 20000 became 0, so it is still off. A drift on a cut that is on stops at 200 Hz or the cut's own frequency, whichever is lower.
 
-**High cut (Hz, 20000 = off, per slot)** `200 to 20000, default 20000`
-Removes the top of the resynth, the partner of Low cut. At 20000 it is off, which is where every older project starts.
+*Per slot.* Both cuts belong to whichever **Capture slot** is selected; the morph crossfades them between slots.
 
 ### Overtone — one voice, two notes
 
@@ -331,7 +339,7 @@ and they save with the project. In Seconds every value is the seconds you hear �
 arithmetic, no allowance for a fade bleeding in from a neighbour, nothing about
 one slot's timing living on another slot.
 
-**Slot fade in (seconds / Hz / beats, per slot)** `0 to 1000, default 1`
+**Slot fade in (in slot timing units)** `0 to 1000, default 1`
 How long this slot takes to rise from silence when it arrives. You hear it at
 the very start of a pass, and any time a slot arrives *out of silence* — after a
 **gap**, or after the previous slot faded out with its crossfade **Off**. When
@@ -339,14 +347,14 @@ the previous slot **crossfades into** this one instead, the crossfade has alread
 raised it to full, so its own fade-in is skipped (nothing fades in twice, and the
 boundary stays click-safe either way). Fade in 2 = a two-second rise.
 
-**Slot hold (seconds / Hz / beats, per slot)** `0 to 1000, default 4`
+**Slot hold (in slot timing units)** `0 to 1000, default 4`
 How long the slot stays up at full, alone, once it has arrived. **The number you
 type is the number of seconds.** Hold 4 on every slot and each holds four
 seconds; hold 4 on one and 8 on another and their holds differ, which is what an
 uneven cycle (like a real breath) needs. Hold 0 means no steady part — the slot
 rises and immediately begins to fall.
 
-**Slot fade out (seconds / Hz / beats, per slot)** `0 to 1000, default 1`
+**Slot fade out (in slot timing units)** `0 to 1000, default 1`
 How long the slot takes to fall at the end of its hold. What the fall *is*
 depends on the crossfade toggle below:
 
@@ -360,7 +368,7 @@ Fade out 0 is a hard edge — an instant switch to the next slot with crossfade 
 or a hard cut to silence with it off (which can click on sharp-edged captures;
 soft-edged captures like breath cut cleanly).
 
-**Slot gap after (seconds / Hz / beats, per slot)** `0 to 1000, default 0`
+**Slot gap after (in slot timing units)** `0 to 1000, default 0`
 Seconds of silence after this slot, before the next one begins. **This is how you
 place silence now** — the quiet lives between the slots, where it is, so you no
 longer capture a silent slot to make a pause. Four seconds of quiet means typing
@@ -370,7 +378,7 @@ The gap only does something when **crossfade into next is Off** — a crossfade
 leaves no room for silence in the middle, because the two slots are overlapping.
 With crossfade on, the gap is ignored.
 
-**Slot timing unit (per slot)** `Seconds / Hz / Beats, default Seconds`
+**Slot timing unit (per slot)** `Seconds / Hz / Beats, default Seconds` — sits above the four timings it sets (since 2026-09-16)
 What this slot's fade in, hold, fade out and gap are counted in. **Seconds** is what they always were, and every older project is in Seconds. **Hz** makes each one last one cycle of that rate, so a bigger number is shorter; 0 still means none. **Beats** follow the project tempo, and a tempo change lands at once, partway through a hold or a fade.
 
 **Slot crossfade into next (per slot)** `Off / On, default On`
@@ -442,10 +450,10 @@ Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phas
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
-**Output level (dB, per slot)** `-60 to +24, default 0`
-The level of everything this slot *makes* — both the voice and the wash. Not the voice engine's own level, despite what it was called until now: it sits after the voice/wash crossfade, so it moves the pair together. Per slot like the rest of the capture settings, so the morph crossfades it along with the spectra. The dry input is the one thing it doesn't touch; that has its own **Input level**.
+**Output level (dB, the wash is no longer auto-boosted)** `-60 to +24, default 0` — *per slot*
+The level of everything this slot *makes* — both the voice and the wash, after the voice/wash crossfade. The dry input is the one thing it doesn't touch; that has its own **Input level**.
 
-*(Renamed from “Voice level”. Same slider, same behaviour, same saved values — the name was simply describing one part of what it did.)*
+**Since 2026-09-16 the number is the whole story.** Until then the wash ran through a hidden auto-gain that pulled every grain to one loudness: on the saved projects it added between about 38 and 65 dB, steadily, whatever you set. In the Morpher it also undid Layer 1's level and pushed the other layers up to match. Rozaya: *"-24 db is -24db, it shouldn't be moved up by some overeager hardcoded thing."* Now the wash has one fixed gain, and a capture's wash is as loud as its sound is full. **Saved projects were moved to sound as loud as they did**: each captured slot's Output level was raised or lowered by what the auto-gain had been giving it, measured slot by slot (Rozaya: *"I say you can try to make them sound the same."*).
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
@@ -481,11 +489,45 @@ How sharp the resonance is. **1** is the classic narrow whistle. Higher values
 let neighbouring partials come along, which is broader, more vowel-like and less
 synthetic — closer to the softer end of overtone technique.
 
+### Layers — *whole plugin*
+
+Extra copies of the whole morph — voice and wash both — at their own pitch, locked to the same morph position, so an octave stack stays consonant however the slots move. Each layer's pitch is an offset from **each slot's own pitch**, so the stack moves with every slot. The layers are one set for the whole plugin, not per slot. Rozaya: *"the per slot layering doesn't really make sense to me ... I would just have it be global."* To thicken one thin slot, use a layer and that slot's own settings.
+
+**Layer** `All, Layer 1 to Layer 16, default Layer 1`
+Which layer the controls below show. **Layer 1 is the original sound**, and moves like any layer. **All** shows Layer 1 and sends any control you move to all sixteen; only the control you actually move goes across.
+
+**Where each layer starts.** Layer 1 is Active at 0 dB, pitch 0 — so a saved project sounds as it did. Layers 2–16 start **Inactive at −6 dB** (Rozaya: *"If they're not active they don't need to be that low, they're just... off."*), on the Morpher's pitches: Layers 2–7 at −48, −36, −24, −12, −7 and −5 semitones, Layers 8–13 at +5, +7, +12, +24, +36 and +48, Layers 14–16 at −12, +12 and −24.
+
+**Layer active** `Inactive / Active` — switches a layer on or off and keeps its level for when you switch it back.
+
+**Layer pitch mode** `Hz / Semitones / Cents, default Semitones`, then **Layer pitch value (Hz / semitones / cents)** `-20000 to +20000`, then **Layer fine tune unit** `default Cents` and **Layer fine tune** `-1000 to 1000, default 0`
+The layer's distance from each slot's pitch. In Hz it counts from the Tuning reference, as Pitch transpose does.
+
+**Layer level (dB, -60 = off)** `-60 to +24` — a real level: −24 dB is 24 dB down, in the voice and the wash (see **Output level**).
+
+**Layer solo** `Off / Solo` — any layer soloed silences every layer that isn't, the original included. Solo overrides Active.
+
+**Layer harmonics (0 = full)** `0 to 64, default 0` — keeps only the layer's first partials: thinner, and lighter to run.
+
+**Layer overtone harmonic (-1 = follow the global)** `-1 to 64, default -1` — gives this layer its own overtone harmonic, with the slots' Overtone lift and the plugin's Overtone width. It acts while the slots' overtone is on.
+
+Every layer's pitch, fine tune, level, harmonics and overtone harmonic is a Drift and Ramp target, each with an **(all layers)** entry that reaches all sixteen.
+
+**Cost.** Each audible layer is two more voices (and a second read of the wash spectrum). A layer that is Inactive or at −60 costs nothing. Measured in the test runner on nightfall, all voice: one voice about 5 ms per 11.6 ms block, all sixteen layers about 12 ms.
+
+### The morph
+
 **Morph (% across captured slots)** `0 to 100, default 0`
 Crossfades across the captured slots. Pitch-preserving in both engines — each slot is sounded at its own pitch, so there is no portamento glide however far apart two slots are tuned.
 
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. Every mode is timed the same way: each step lasts the full leg of the slot it is leaving — its fade in, hold, fade out, and any gap — so a pass is however long its slots' legs add up to, just a different order (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
+
+**Auto-morph timing** `Slot timings / Rate, default Slot timings`
+**Slot timings** is the walk described above: each step lasts the leg of the slot it is leaving. **Rate** is the Morpher's continuous motion: **Sweep** and **Glide once** move smoothly along your unmuted slots in one pass of the rate's time, and **Shuffle** crossfades between shuffled slots, each taking an equal share. Rate has no fades or gaps of its own. In Rate, a **Cycle** (in the drift and ramp units) is one pass. Rozaya, on bringing it back: *"Passage needs it."* Every saved project is on Slot timings.
+
+**Auto-morph rate mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`, then **Auto-morph rate value** `0.01 to 1000, default 20`
+How long one pass takes in Rate, counted in the unit chosen: passes per minute, seconds per pass, passes per second, beats per pass, or passes per beat. Auto-morph rate is a Drift and Ramp target.
 
 **Fixed: a click at slot changes.** Up to and including the build shipped
 2026-07-25, every step from one slot to the next put a small click in the voice
@@ -514,17 +556,16 @@ The source passed straight through. −60 = silent.
 
 The Morpher's transport controls, counted in Passage's own unit. All of them start at 0 or off, so a project from before they existed plays as it did.
 
-**Start delay (seconds / Hz / beats)** `0 to 1000, default 0`
+**Transport unit** `Seconds / Hz / Beats, default Seconds` — sits above the three it sets (since 2026-09-16)
+
+**Start delay (in transport units)** `0 to 1000, default 0`
 How long after you press play before Passage begins. Until then it behaves as if resting: **Output at rest** decides whether the dry input still passes, every drift and ride holds still, and the walk through the slots waits.
 
-**Play for** / **Rest for (seconds / Hz / beats, 0 = always)** `0 to 1000, default 0`
-Play for this long, rest for this long, over and over. Both must be above 0 to switch it on. Both are Drift and Ramp targets, so the rhythm of play and rest can itself wander or slowly change.
+**Play for** / **Rest for (in transport units, 0 = always)** `0 to 1000, default 0`
+Play for this long, rest for this long, over and over. Both must be above 0 to switch it on. Both are Drift and Ramp targets, so the rhythm of play and rest can itself wander or slowly change. On **With the target** (their default) a stretch keeps the length it began with; **On a clock** reads it live.
 
-**Transport unit** `Seconds / Hz / Beats, default Seconds`
-What the three above are counted in. In Hz each lasts one cycle of that rate. Beats follow the project tempo, and a tempo change lands at once, partway through a delay or a rest.
-
-**Rest mode** `Walk through / Freeze in place, default Walk through`
-During a rest, whether the walk through the slots carries on unheard or waits where it is.
+**Auto-morph rest mode** `Walk through / Freeze in place, default Walk through`
+During a rest, whether the walk through the slots carries on unheard or waits where it is. (Named *Rest mode* until 2026-09-16.) Drift and Ramp have their own: **Drift rest mode** and **Ramp rest mode**, both Walk through by default.
 
 **Output at rest** `Pass-through / Silence, default Pass-through`
 During a rest (and the Start delay), **Pass-through** keeps the dry input and silences Passage's own sound; **Silence** mutes both. The engines keep running underneath, so Passage fades back in over about a grain rather than snapping on.
@@ -533,12 +574,12 @@ During a rest (and the Start delay), **Pass-through** keeps the dry input and si
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** `Transpose / Fine tune / Texture / Wash grain / Spread / Denoise / Low cut / High cut / Overtone harmonic / Overtone lift / Slot fade in / Slot hold / Slot fade out / Slot gap after / Stereo width / Output level / Tuning reference / Overtone width / Morph / Input level / Play for / Rest for, default Transpose`
-Which parameter the Drift controls below are editing. The list is in the order the controls sit in the plugin. *(It had fourteen entries in another order until 2026-09-12; a saved project's drifts moved with their targets.)*
+**Drift target** — a hundred and eleven, in the order of the controls they reach (2026-09-16; it was twenty-two): `Morph / Auto-morph rate / Slot fade in / Slot hold / Slot fade out / Slot gap after / Texture / Pitch source fine tune / Pitch transpose / Pitch fine tune / Tuning reference / Spread / Spread fine tune / Stereo width / Denoise / Low cut / Low cut fine tune / High cut / High cut fine tune / Overtone harmonic / Overtone lift / Overtone width / Layer pitch (all layers) / Layer 1-16 pitch / Layer fine tune (all layers) / Layer 1-16 fine tune / Layer level (all layers) / Layer 1-16 level / Layer harmonics (all layers) / Layer 1-16 harmonics / Layer overtone harmonic (all layers) / Layer 1-16 overtone harmonic / Input level / Output level / Play for / Rest for`, default Morph
+Which parameter the Drift controls below are editing. A saved project's drifts moved with their targets. **Wash grain is no longer a target** (a fast drift on it made the wash wobble in loudness whatever the timing; no saved project drifted it). An **(all layers)** entry shows Layer 1's settings and a setting you move reaches all sixteen.
 
 **Drift is per slot, like everything else here.** The Drift controls show the settings for *the selected Capture slot's* selected target — so slot 1's Texture can wander slowly while slot 4's barely moves, and each has its own period and shape. That is why their names say *per slot and target*. Two selectors reach it: **Capture slot** picks which slot, **Drift target** picks which parameter of it. On **All**, a Drift setting you move reaches that target in all eight slots. Everything you configure keeps running in the background regardless of what's on screen.
 
-**Six targets belong to the whole plugin and ignore the slot selector: Tuning reference, Overtone width, Morph, Input level, Play for and Rest for.** Morph decides *which slot is playing*, so a per-slot Morph drift would be circular; the others are one setting for the whole plugin already. They show the same Drift settings whatever slot you have selected.
+**The whole-plugin targets ignore the slot selector: Morph, Auto-morph rate, Tuning reference, Overtone width, every layer target, Input level, Play for and Rest for.** Morph decides *which slot is playing*, so a per-slot Morph drift would be circular; the others are one setting for the whole plugin already. They show the same Drift settings whatever slot you have selected.
 
 **During a morph, the drift crossfades along with the value it modifies.** If slot 3's Low cut is wandering one way and slot 4's another, moving between them blends the two — the wander doesn't jump when the slot changes. **Pitch is the exception, and deliberately**: pitch is never blended between slots (averaging two frequencies is a glide, not a blend), so each slot is voiced at its own pitch with its own drift on top.
 
@@ -555,17 +596,19 @@ What the two amounts are counted in. **Target default** is the target's own unit
 - **Semitones and Cents on a frequency move it by an interval.** On a Low cut or High cut at 0, or a Tuning reference, they count from 20 Hz; on a Spread at 0, from the smallest step Spread can make. So an interval on a control that is switched off still moves it, starting from nothing you can hear.
 - **Hz and BPM on a length move the rate that length is one cycle of**, the way a slot timing in Hz reads.
 
-**Drift period** `0 to 1000, default 30, 0 = off` — *per slot and target*, in the **Drift period unit** `Cycles / Seconds / Beats, default Seconds` — *all targets*
+**Drift period unit** `Cycles / Seconds / Beats, default Seconds` — *per slot and target since 2026-09-16* (a saved project's one unit started every target), then **Drift period** `0 to 1000, default 30, 0 = off` — *per slot and target*
 How long one full wander takes. 30 seconds is a gentle sway; a few minutes is barely-there evolution. **Beats** follow the project tempo, and a tempo change lands at once, partway through a wander. **A Cycle is one walk through your active slots' legs** — every unmuted slot's fade in, hold, fade out and gap added up — so a drift in Cycles keeps time with the passage itself.
 
 **Drift movement mode** `With the target / On a clock` — *per slot and target*
-Only the four slot timings tell these apart. A slot timing is read once, when its slot's leg begins. **With the target** (their default) moves the drift on at each of that slot's own legs, by that leg's length, and holds it in between, so each hold or fade follows on from the last one of the same slot. **On a clock** lets the drift run all the time, and a leg takes whatever it has reached when the leg begins. For every other target the two are the same. A project saved before this control existed is set On a clock everywhere, which is how it has always played.
+Only the four slot timings, and Play for and Rest for, tell these apart. A slot timing is read once, when its slot's leg begins. **With the target** (their default) moves the drift on at each of that slot's own legs, by that leg's length, and holds it in between, so each hold or fade follows on from the last one of the same slot. **On a clock** lets the drift run all the time, and a leg takes whatever it has reached when the leg begins. For every other target the two are the same. A project saved before this control existed is set On a clock everywhere, which is how it has always played.
 
 **Drift shape (per slot and target)** `Sine / Triangle / Random, default Sine`
 The path of the wander. Sine = smooth continuous sway; Triangle = straight ramps up and down with turnarounds; Random = drifts smoothly toward a new random spot each period (still smooth, just unpredictable in direction).
 
 **Drift play for** / **Drift rest for** `0 to 1000 periods, default 0` — *per slot and target*
 Let a drift move for some periods, then hold still for some. Both must be above 0 to switch it on.
+
+**Drift rest mode** `Walk through / Freeze in place, default Walk through` — whether a transport rest holds the drifts.
 
 **Drift restart (all targets)** `Restart on play / Free-running, default Restart on play`
 What the transport does to the drift — this is the choice between *synced* and *continuous*.
@@ -580,8 +623,8 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** — the same 22 targets as Drift, default Transpose
-Which parameter the Ramp controls below are editing. Like Drift, they are *per slot and target*: Capture slot picks the slot, Ramp target the parameter, and the six whole-plugin targets ignore the slot. On **All**, a Ramp setting you move reaches that target in all eight slots.
+**Ramp target** — the same 111 targets as Drift, default Morph
+Which parameter the Ramp controls below are editing. Like Drift, they are *per slot and target*: Capture slot picks the slot, Ramp target the parameter, and the whole-plugin targets ignore the slot. On **All**, a Ramp setting you move reaches that target in all eight slots.
 
 **Ramp by** `-20000 to +20000, in the Ramp by unit, default 0` — *per slot and target*
 How far to move the parameter, and which direction. Negative goes down, positive up. **0 means this target doesn't ramp**, so arming Ramp with everything at 0 safely does nothing.
@@ -589,7 +632,7 @@ How far to move the parameter, and which direction. Negative goes down, positive
 **Ramp by unit** — the same list as Drift amount unit, default Target default — *per slot and target*
 What Ramp by is counted in, with the same rules: Target default is the target's own unit, and a unit that cannot fit acts as Target default.
 
-**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes` — *all targets*
+**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes` — *per slot and target since 2026-09-16*
 What Ramp duration and Ramp start delay are counted in. A Cycle is one walk through your active slots' legs; Beats follow the tempo, and a tempo change lands at once.
 
 **Ramp duration** `0 to 1000, in ramp time units, default 0` — *per slot and target*
@@ -597,6 +640,8 @@ How long the ride takes. 0 = this target doesn't ramp. Set it to 20 in Minutes a
 
 **Ramp play for** / **Ramp rest for** `0 to 1000, in ramp time units, default 0 = smooth` — *per slot and target*
 Make the ride go in steps: move for a while, hold for a while. Both must be above 0. The rests come out of the duration, so a stepped ride arrives when a smooth one would.
+
+**Ramp rest mode** `Walk through / Freeze in place, default Walk through` — whether a transport rest holds the rides.
 
 **Ramp engage** `Off / On, default Off` — *all targets*
 Arms every configured target at once. While On, each rides its own duration from where it is; flip Off and they freeze in place (flip back On and they resume). The ride starts fresh from the current values each time the transport begins playing. You can aim several targets at once (Texture *and* Output level *and* Low cut, each over its own time) and one Engage winds them all down together.
@@ -668,29 +713,9 @@ neighbour; the control is on the slot you're hearing. (Also check **Fade in shap
 is on **Cosine**, not Linear — the eased curve softens an arrival on its own, and a
 straight-line ramp is the most likely thing making a fade-in feel abrupt.)
 
-### The auto-gain needs extra time coming out of silence
+### Coming out of silence
 
-If you hear a slight bloom, level spike, or the audio "arriving louder
-than it should" when a slot fades in out of a gap (or a silent slot), that is
-the plugin's slow auto-gain smoother catching up. During silence, the auto-gain
-sits at whatever amplification it had before the quiet began (it can't measure
-loudness from a signal that has none, so it freezes). The moment audio starts
-fading back in, the amplification is still cranked up from before, and the fresh
-audio gets multiplied by it before the smoother has time to catch back down.
-
-The fix is one of:
-
-- **Give the arriving slot about a second more fade-in.** The extra time gives
-  the auto-gain room to settle before the audio is fully in. (Adding to the gap
-  ahead of it doesn't help — nothing is playing to settle the gain during silence;
-  it's the *rise* that needs to be longer.)
-- **Match the level of the slots around the quiet more carefully** — the bloom
-  is worst when the arriving slot is much quieter than the peak-time auto-gain
-  expected. Louder captures on either side smooth this.
-
-In practice, a second more fade-in is the simple fix and it barely changes the
-cycle timing at all — a good default reflex whenever you hear a fade-in that
-feels too eager.
+Until 2026-09-16 the wash's auto-gain could bloom as a slot faded in out of a gap, because it froze at its old boost through the silence. That auto-gain is gone (see **Output level**), so there is nothing to catch up.
 
 ## The per-slot rule (and what it means for every parameter, not just silence)
 
@@ -737,16 +762,17 @@ Every control's name says which it is. The plain list:
 
 **Per slot** (each slot carries its own):
 - Capture point, Capture average
-- The pitch block: Source note, Source fine tune and its unit, Target note, Transpose value and its unit, Fine tune and its unit
-- Texture, Wash grain, Spread, Denoise, Low cut, High cut, Overtone harmonic, Overtone lift, Stereo width, Output level
+- The pitch block: Pitch source note, Pitch source fine tune and its unit, Pitch target note, Pitch transpose mode and value, Pitch fine tune and its unit
+- Texture, Wash grain, the Spread block, Denoise, the Low cut and High cut blocks, Overtone harmonic, Overtone lift, Stereo width, Output level
 - The timing: Slot fade in, Slot hold, Slot fade out, Slot gap after, Slot timing unit, Slot crossfade into next, Slot mute
 - The Drift and Ramp settings of every per-slot target
 
 **Whole plugin** (one setting):
-- Tuning reference, Fade in shape, Fade out shape, Overtone width, Morph, Auto-morph, Audition, Input level
-- The transport: Start delay, Play for, Rest for, Transport unit, Rest mode, Output at rest
-- Drift period unit, Drift restart, Ramp time unit, Ramp engage
-- The Drift and Ramp settings of the six whole-plugin targets
+- Tuning reference, Fade in shape, Fade out shape, Overtone width, Morph, Auto-morph and its timing and rate, Audition, Input level
+- The layers: all ten layer controls
+- The transport: Transport unit, Start delay, Play for, Rest for, Auto-morph rest mode, Output at rest
+- Drift rest mode, Drift restart, Ramp rest mode, Ramp engage
+- The Drift and Ramp settings of the whole-plugin targets
 
 *(Wash grain was the most common surprise here, because it used to be global. It is per slot now.)*
 
