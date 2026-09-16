@@ -288,12 +288,18 @@ slider51:0<-60,24,0.01>Output level (dB, everything but the dry input)
 //     not being able to migrate saved state and this suite migrates it (R18).
 //     Everything from Drift target up moved +5; tools/morpher_migrate_transport.py
 //     carries the projects across.
-slider53:0<0,1000,0.001>Start delay (sec, or beats in Host x)
+//     2026-09-16 (R27): the three times have their OWN `Transport unit` now, above them,
+//     {Seconds, Hz, Beats} as Passage's; Auto-morph rate mode no longer governs them. A
+//     migrated copy lands on what it counted before: Beats where the rate mode was Every N
+//     beats or N per beat, else Seconds. Switching the unit converts the numbers, so a
+//     time keeps its length (Seconds <-> Hz is 1/v, Beats counts at the project tempo).
+slider52:0<0,2,1{Seconds,Hz,Beats}>Transport unit
+slider53:0<0,1000,0.001>Start delay (in transport units)
 
 //     Play/Rest: run for a while, go quiet for a while, repeat. 0 in EITHER
 //     one disables the gate, so a half-set pair never silently mutes anything.
-slider54:0<0,1000,0.001>Play for (sec, or beats in Host x, 0 = always)
-slider55:0<0,1000,0.001>Rest for (sec, or beats in Host x, 0 = always)
+slider54:0<0,1000,0.001>Play for (in transport units, 0 = always)
+slider55:0<0,1000,0.001>Rest for (in transport units, 0 = always)
 
 //     What the morph walk does while resting. Walk through keeps Auto-morph
 //     advancing silently, so you rejoin wherever it has got to; Freeze in place
@@ -753,7 +759,7 @@ pr_accum            = 0;
 // Derived in @block from the sliders; seeded here so the first @sample before
 // the first @block reads something sane rather than an implicit zero.
 start_delay_sec = 0; pr_play_sec = 0; pr_rest_sec = 0; pr_enabled = 0;
-morph_at_rest = 0; out_at_rest = 0; tr_k = 1; drift_per_k = 1;
+morph_at_rest = 0; out_at_rest = 0; drift_per_k = 1; tu_inited = 0;
 // Seconds-per-unit factors, seeded to the DECLARED defaults of their unit
 // controls (Drift period unit = Seconds, Ramp time unit = Minutes) so the
 // very first block cannot read a zero and stall a period. @block overwrites
@@ -853,6 +859,9 @@ function au_freq(off, u, base, floor) local(b) (
 // Auto-morph traversal, as in the period units (au_cyc, set per block).
 au_cyc = 20;
 function au_sec(nu, v) ( nu == 3 ? v / 1000 : nu == 1 ? (v > 0.000001 ? 1 / v : 0) : nu == 2 ? v * 60 / max(tempo, 0.001) : v; );
+// Transport unit {0 Seconds, 1 Hz, 2 Beats} <-> seconds (2026-09-16).
+function mo_tsec(u, v) ( u == 1 ? (v > 0.000001 ? 1 / v : 0) : u == 2 ? v * (60 / max(tempo, 0.001)) : v; );
+function mo_tback(u, t) ( u == 1 ? (t > 0.000001 ? 1 / t : 0) : u == 2 ? t / (60 / max(tempo, 0.001)) : t; );
 function au_back(nu, tt) ( nu == 3 ? tt * 1000 : nu == 1 ? (tt > 0.000001 ? 1 / tt : 0) : nu == 2 ? tt * max(tempo, 0.001) / 60 : tt; );
 function au_time(off, u, base, nu) local(b, tt, rate) (
   !(u == 1 || (u >= 4 && u <= 9)) || (u == 4 && nu == 3) || (u == 5 && nu == 0) || (u == 1 && nu == 1) || (u == 8 && nu == 2) ? off : (
@@ -1357,26 +1366,8 @@ time_mode_inited && last_time_mode != slider8 ? (
                 slider8 == 3 ? tm_secs / tm_beat_sec :
                                tm_beat_sec / max(tm_secs, 0.001);
   slider9     = min(1000, max(0.01, slider9));
-  // The transport times and Drift period are DURATIONS and cannot be in BPM or
-  // Hz -- a start delay of "4 Hz" is not a thing. They read as seconds, or as
-  // beats in Host x, which is the same shape the suite uses for every control
-  // whose meaning changes only under sync. So their conversion depends on
-  // whether we crossed the Host x boundary, not on which of the other three.
-  // >= 3: the durations read as BEATS in either host mode -- a start delay is a
-  // length of time, and 'per beat' is not a length, so both sync modes use the
-  // same beats reading.
-  tr_from     = last_time_mode >= 3 ? tm_beat_sec : 1;
-  tr_to       = slider8        >= 3 ? tm_beat_sec : 1;
-  sync_k      = tr_from / tr_to;
-  // The transport times, added 2026-09-04, convert on the same flip and for the
-  // same reason: the number on screen keeps meaning the same LENGTH OF TIME, and
-  // only the unit you type in changes. Their floor is 0 rather than 0.01 because
-  // 0 is the OFF value for all three and must survive a flip untouched -- a
-  // conversion that turned "no start delay" into a small one would be exactly
-  // the silent value change this suite forbids.
-  slider53 = slider53 > 0 ? min(1000, max(0.001, slider53 * sync_k)) : 0;
-  slider54 = slider54 > 0 ? min(1000, max(0.001, slider54 * sync_k)) : 0;
-  slider55 = slider55 > 0 ? min(1000, max(0.001, slider55 * sync_k)) : 0;
+  // The transport times are NOT converted here any more: they follow their own Transport
+  // unit (2026-09-16), and a Rate mode flip leaves them alone.
   // Drift period is NO LONGER converted here. It has its own unit control
   // (slider62) since 2026-09-06, so Rate Mode has nothing to say about it: the
   // number means whatever `Drift period unit` says and Rate Mode leaves it
@@ -1386,6 +1377,18 @@ time_mode_inited && last_time_mode != slider8 ? (
   // control silently rewriting another that now names its own unit on itself.
   sliderchange(-1);
   last_time_mode = slider8;
+);
+
+// --- Transport unit (slider52): convert Start delay, Play for and Rest for when it moves, so
+//     each keeps its LENGTH. Through seconds: Seconds v, Hz 1/v, Beats v beats at the tempo.
+//     Gated on an @block-adopted tracker, as the Rate mode block is, so a restore is never read
+//     as an edit. 0 stays 0: it is OFF for all three.
+tu_inited && last_tunit != slider52 ? (
+  slider53 = slider53 > 0 ? min(1000, max(0.001, mo_tback(slider52, mo_tsec(last_tunit, slider53)))) : 0;
+  slider54 = slider54 > 0 ? min(1000, max(0.001, mo_tback(slider52, mo_tsec(last_tunit, slider54)))) : 0;
+  slider55 = slider55 > 0 ? min(1000, max(0.001, mo_tback(slider52, mo_tsec(last_tunit, slider55)))) : 0;
+  sliderchange(-1);
+  last_tunit = slider52;
 );
 
 // All slots, 2026-09-11 (docs/layouts/spectral-vowel-morpher-all-slots-20260911.md):
@@ -1626,6 +1629,7 @@ drift_restart_free = slider69;   // 0 = restart on play (sync), 1 = free-running
 // instance is configured, so this adopts a settled value whatever order the
 // restore paths ran in.
 !time_mode_inited ? ( last_time_mode = slider8; time_mode_inited = 1; );
+!tu_inited ? ( last_tunit = slider52; tu_inited = 1; );
 !lay_ui_inited ? (
   lay_selv = max(0, min(N_LAY_SLOTS, floor(slider40 + 0.5)));
   last_lay_selv = lay_selv; last_lay_sel = lay_selv == 0 ? 0 : lay_selv - 1;
@@ -1690,13 +1694,14 @@ auto_time = max(0.01,
 // not a length -- a start delay of "8 per beat" is meaningless -- so mode 4 takes
 // the same beats-to-seconds factor mode 3 does. This said `== 3` and so silently
 // treated a mode-4 instance's durations as raw seconds. (R21 sweep, 2026-09-06.)
-tr_k            = time_mode >= 3 ? 60 / max(tempo, 0.001) : 1;
-start_delay_sec = slider53 * tr_k;
+// Since 2026-09-16 the three follow Transport unit (slider52) instead: mo_tsec gives Beats as
+// v * (60 / tempo), the very product this used, so a migrated copy counts identically.
+start_delay_sec = mo_tsec(slider52, slider53);
 // Play for and Rest for (targets 53, 54) while driven; the gate still switches on
 // only when both SLIDERS are above zero, which is what this always tested.
-pr_play_sec     = (mod_active[85] ? max(0.001, slider54 + au_key(85, 3, slider54, time_mode >= 3 ? 2 : 0)) : slider54) * tr_k;
-pr_rest_sec     = (mod_active[86] ? max(0.001, slider55 + au_key(86, 3, slider55, time_mode >= 3 ? 2 : 0)) : slider55) * tr_k;
-pr_enabled      = slider54 * tr_k > 0 && slider55 * tr_k > 0;
+pr_play_sec     = mo_tsec(slider52, mod_active[85] ? max(0.001, slider54 + au_key(85, 3, slider54, slider52)) : slider54);
+pr_rest_sec     = mo_tsec(slider52, mod_active[86] ? max(0.001, slider55 + au_key(86, 3, slider55, slider52)) : slider55);
+pr_enabled      = mo_tsec(slider52, slider54) > 0 && mo_tsec(slider52, slider55) > 0;
 morph_at_rest   = slider56;   // 0 walk through, 1 freeze in place
 out_at_rest     = slider57;   // 0 pass-through, 1 silence
 // --- Drift period unit (slider62) and Ramp time unit (slider73). Each is one

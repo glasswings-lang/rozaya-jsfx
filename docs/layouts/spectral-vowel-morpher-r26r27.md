@@ -189,6 +189,13 @@ magic in Python, keyed on the magic. Survey helpers were in the session scratchp
   46:58, 49:59, 47:60, 48:61, 51:62, 50:63, 52:65, 53:66, 54:67, 55:69, 56:70, 58:71, 57:72,
   59:73, 60:74, 61:75, 62:76, 63:78, 64:79`. Verify PASS on pinned copies (text, declarations,
   28 continuous and 36 selectors bit-identical).
-- Stage 2 names; 3 Transport unit; 4 rest switches; 5 per-target units, Drift movement mode,
+- **Stage 2, names, DONE** (labels only).
+- **Stage 3, Transport unit, DONE:** slider52 {Seconds, Hz, Beats}; Rate mode no longer touches
+  the three times; switching the unit converts them (checked: 2 s -> 4 beats at 120, -> 0.5 Hz,
+  0 stays 0). Migration seed: 2 where old slider9 >= 3, else 0. Old pinned build on
+  breathing.RPP vs new pinned build on `convert_line`: bit-identical as saved, with play/rest
+  in seconds, and under Every N beats at 97 BPM. Checks: tools/morpher_r26r27_checks/
+  (stage_check.py needs a scratch dir holding pin/old and pin/new copies, `_tp` pinned).
+- Stage 4 rest switches; 5 per-target units, Drift movement mode,
   target list 87 -> 107 and blob 7700107; 6 Spread block; 7 cut blocks; 8 new targets wired;
   9 migration, verify, install.
