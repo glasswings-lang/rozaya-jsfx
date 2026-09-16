@@ -189,7 +189,22 @@ Pre-build copy for comparisons: keep one pinned outside the repo (`git show 48e3
   wt_take). `engine_compare.py`: nightfall, all voice, widths 50 and 0, -117 dB from the sine
   engine; block time roughly halved.
 - **Stage 5b, DONE:** drift/ramp work lists; bit-identical with drifts and a ramp set after load.
-- Still to build, in this order: 6 layers (global) on the wavetable engine, voice and wash;
-  7 Auto-morph timing + rate; 8 targets 111, per-target units, movement mode; 9 grain auto-gain
-  removed (a level change: say so on a control) and layer defaults; 10 migration, verify,
-  install, plugin page.
+- **Stage 6, DONE:** sixteen global layers (voice: own wavetable pair each; wash: the grain spectrum
+  read again at each ratio; per-layer overtone via curmag_pre). Layer 1 = original.
+- **Stage 5 FIX:** WT_XF and wt_xf are ONE EEL variable (case-insensitive): tables never rebuilt.
+  Renamed WT_FADELEN/WT_TICKLEN; `engine_stress.py` exercises rebuilds (focus steps, overtone
+  drift, high cut with pitch drift). CHECK EVERY NEW NAME FOR A CASE-ONLY TWIN.
+- **Stage 7, DONE** (landed inside 4cb1a07): Auto-morph timing {Slot timings, Rate} + rate pair.
+- **Stage 8, DONE:** 111 targets, stride 128, t111_remap for 7700008 saves, per-target units
+  (units_seed), tg_glob, (all layers) entries with their own change memory (lay_dr_last -- ps_last
+  is re-adopted by the slot block every pass). Every live copy through stages 1-8: wash
+  bit-identical, voice -117 dB.
+- **Stage 9, DONE:** auto-gain removed, WASH_GAIN +47 dB. `wash_gain_survey.py` measured every
+  captured slot (scratchpad wash_gain.json; echoing infinity slot 3 needs +36 and is capped at +24,
+  but that copy auditions Slot 2).
+- **Stage 10:** `verify_live.py --out DIR --survey JSON` builds migrated copies (reseal through a
+  throwaway plugin that adds the Output level offsets) and measures them; then
+  `passage_migrate_takeover_20260916.py apply DIR`. Page updated (page_controls: 1 finding, the
+  Auto-morph option spelling the Morpher's page shares).
+- **Owed after install:** the Morpher -> Passage carry-over (`tools/morpher_to_passage.py`) must turn
+  wash layer levels into what was heard (relative to Layer 1) and add the boost offsets.
