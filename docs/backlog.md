@@ -32,7 +32,10 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   picker for drift, and ramp, for that matter."* Gains a target: Melody `Octave shift`,
   Polyrhythm v3 `Octave shift`, Shepard Scale `Centre octave`, Shepard Tone `Centre
   octave`, the Morpher `Layer harmonics` (per layer, so `(all layers)` + 16 like its
-  siblings). Gains `Play for` and `Rest for` as targets: the Sweeping Filter, Sweep Dwell.
+  siblings), and `Source fine tune` on the Morpher and Passage. Gains `Play for` and
+  `Rest for` as targets: the Sweeping Filter, Sweep Dwell. STAY OUT, decided 2026-09-15:
+  Polyrhythm's `Phase offset` and the Sweeping Filter's `LFO start phase` -- *"There's no
+  reason to drift a start-only control"*.
   Structural counts stay out. Re-check with `python tools/r24_target_audit.py`; what was
   measured and what is still open is in `docs/history/R24.md`.
 - **`Drift movement (per target)` in the seven that lack it, and `Cycles` counting the
