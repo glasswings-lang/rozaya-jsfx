@@ -24,6 +24,14 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
 - Every mode in front of its value (Transpose, Fine tune, Source fine tune, Layer pitch,
   Layer fine tune, both amount units, Auto-morph time and Rate mode).
 - Low cut and High cut as pitch blocks.
-- Open questions: whether Drift movement is owed at all (each wash grain is written whole
-  when it starts, `gen_grain`, so a drift cannot reshape a grain being heard; only HOP moves
-  mid-hop), and whether `Spread` (a spectral blur in Hz) counts as a pitch spread under R27.
+- Whether `Spread` (a spectral blur in Hz) counts as a pitch spread under R27.
+- **Drift movement on Wash grain, measured 2026-09-16, not yet decided.** Each grain is
+  written whole (`gen_grain`), but the hop moves mid-hop. Probe: test copies summing the
+  synthesis window alone into a third accumulator (overlap evenness, independent of the
+  audio), `breathing.RPP`, Texture 100. Drift off: 1.9% typical wobble. Gentle sine drift
+  (+-50 ms, 10 s): 2.2% now, 2.0% latched -- nothing. Fast random drift (+-250 ms, 0.5 s):
+  16.2% now vs 12.1% latched; 10 ms stretches over 30% off, 262 now vs 89 latched, worst
+  bump +90% either way. Latching helps, but the wobble under a fast grain drift remains
+  in both: grains of different lengths overlapping is uneven whatever the timing.
+  jsfx_run note: the Morpher ignores drift edits until @block adopts the mirror -- set the
+  selector with `--set-after`, then `--stage`, then the values, or the drift never runs.
