@@ -128,8 +128,8 @@ slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 // ever stored it, and Ramp duration -- the control it was added for -- is in
 // minutes everywhere in the suite and is not governed by Rate Mode anywhere.
 // Value then mode since 2026-09-13, as R20 puts every rate block. Rozaya: "Yes".
-slider9:20<0.01,1000,0.01>Auto-morph time
-slider8:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
+slider9:20<0.01,1000,0.01>Auto-morph rate value
+slider8:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Auto-morph rate mode
 
 // --- The sound of the morph. Everything from here to High cut shapes what the
 //     captured spectra become; all of it is global, across every slot. ---
@@ -138,14 +138,14 @@ slider11:150<5,1000,1>Wash grain (ms)
 slider22:0<0,1000,0.1>Spread (Hz)
 // --- The pitch block, 2026-09-13 (docs/layouts/spectral-vowel-morpher.md, THE PITCH LAYOUT):
 //     Bubbler's and Passage's, for the whole plugin rather than per slot.
-slider12:0<0,128,1{None,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Source note (where zero is)
-slider14:0<-1000,1000,0.001>Source fine tune (only with a Source note, in Semitones)
-slider13:2<0,2,1{Hz,Semitones,Cents}>Source fine tune unit
-slider15:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Target note (only with a Source note, in Semitones)
-slider17:0<-20000,20000,0.001>Transpose value (Hz / semitones / cents)
-slider16:1<0,2,1{Hz,Semitones,Cents}>Transpose unit
-slider19:0<-1000,1000,0.001>Fine tune
-slider18:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
+slider12:0<0,128,1{None,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Pitch source note (where zero is)
+slider14:0<-1000,1000,0.001>Pitch source fine tune (only with a Pitch source note, in Semitones)
+slider13:2<0,2,1{Hz,Semitones,Cents}>Pitch source fine tune unit
+slider15:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Pitch target note (only with a Pitch source note, in Semitones)
+slider17:0<-20000,20000,0.001>Pitch transpose value (Hz / semitones / cents)
+slider16:1<0,2,1{Hz,Semitones,Cents}>Pitch transpose mode
+slider19:0<-1000,1000,0.001>Pitch fine tune
+slider18:2<0,2,1{Hz,Semitones,Cents}>Pitch fine tune unit
 slider20:440<20,2000,0.1>Tuning reference (Hz)
 // 0..100, and NOT wider -- settled by ear 2026-09-06.
 //
@@ -232,7 +232,7 @@ slider41:1<0,1,1{Inactive,Active}>Layer active
 slider46:0<-60,24,0.01>Layer level (dB, -60 = off)
 slider47:0<0,1,1{Off,Solo}>Layer solo
 slider43:0<-20000,20000,0.001>Layer pitch value (Hz / semitones / cents)
-slider42:1<0,2,1{Hz,Semitones,Cents}>Layer pitch unit
+slider42:1<0,2,1{Hz,Semitones,Cents}>Layer pitch mode
 slider45:0<-1000,1000,0.001>Layer fine tune
 slider44:2<0,2,1{Hz,Semitones,Cents}>Layer fine tune unit
 // CPU control, not a tone control. Every layer is its own set of oscillators --
@@ -314,7 +314,7 @@ slider55:0<0,1000,0.001>Rest for (sec, or beats in Host x, 0 = always)
 //     suite. This froze them too. It now governs the morph walk only, which is
 //     this plugin's actual equivalent of an LFO: the thing that moves the sound
 //     on a clock of its own. Drift has its own play/rest if you want it to hold.
-slider56:0<0,1,1{Walk through,Freeze in place}>Rest mode
+slider56:0<0,1,1{Walk through,Freeze in place}>Auto-morph rest mode
 
 //     What comes OUT while resting. Pass-through leaves the dry input alone and
 //     mutes only what this plugin adds -- the right default for an effect, and
