@@ -106,9 +106,9 @@ New in the 2026-09-15 layout; Veil had none before.
 **Transport unit** `Seconds / Beats, default Seconds` — one unit for the three
 below. Veil counts in seconds because it has no turn of its own.
 
-**Start delay (in transport units)** `0–1000, default 0` — hold everything still
-this long after play. It holds the drift AND the ramp, which is what a start
-delay is for.
+**Start delay (in transport units)** `0–1000, default 0` — the effect waits this long
+after play: the sound passes through untouched until the delay ends, and drift and
+ramp wait too.
 
 **Play for (in transport units, 0 = always)** and **Rest for (in transport units,
 0 = always)** `0–1000, default 0` — the

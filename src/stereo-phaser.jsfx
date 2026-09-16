@@ -834,7 +834,10 @@ fbL = x;
 // pass: Pass-through hands the dry signal on untouched, Silence mutes. Crossfaded
 // over 3 ms either way so neither edge clicks.
 tr_smooth = exp(-1 / (srate * 0.003));
-tr_mix = tr_mix * tr_smooth + (tr_at_rest ? 0 : 1) * (1 - tr_smooth);
+// A start delay waits with the effect OFF: the sound passes through untouched until
+// the delay ends, as in Tremolo and Sweep Dwell. Rozaya, 2026-09-16: "The effect
+// should of course wait." (Until then it only held drift and ramp.)
+tr_mix = tr_mix * tr_smooth + ((tr_at_rest || !tr_started) ? 0 : 1) * (1 - tr_smooth);
 tr_dry = (tr_at_rest && slider18 == 1) ? 0 : 1;
 sp_in0 = spl0;
 spl0 = (dry_s * spl0 + wet_s * x) * tr_mix + sp_in0 * tr_dry * (1 - tr_mix);
