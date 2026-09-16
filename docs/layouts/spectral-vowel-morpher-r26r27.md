@@ -17,6 +17,14 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
   defaulting to Walk through (today's behaviour). Named after Rozaya's pattern, and renamed to match in Veil and the Stereo Phaser the same
   day. Rozaya: *"Yes"*.
 
+- **Wash grain leaves the Drift and Ramp target lists.** It stays a plain control. Measured
+  below: a fast grain drift makes the wash wobble in loudness whatever the timing. Read
+  2026-09-16, first Morpher per project: no project drifts or ramps it (27 on 300, six on
+  150, two 400, two 600, one 200). Rozaya: *"if drift is going to fuck shit up, why bother
+  having it *on there*?"* Removing it renumbers both pickers, so the migration moves every
+  saved selection past it. With it gone, Drift movement has no grain to act on; check Play
+  for / Rest for as targets before settling that the Morpher needs no switch.
+
 ## Still to talk through
 
 - Drift period unit and Ramp time unit per target.
