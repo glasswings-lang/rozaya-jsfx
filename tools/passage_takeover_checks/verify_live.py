@@ -65,6 +65,19 @@ def instance_lines(path):
     return out
 
 
+def loaded_line(plug, rpp, inst):
+    """The slider line the ORIGINAL plugin holds once the project has loaded. A slot's saved banks
+    overwrite what the saved line says (memory.RPP: the line says Overtone harmonic 3, the plugin
+    shows 0), so the saved line is not the reference; what the original shows is."""
+    out = os.path.join(work, "loaded.RPP")
+    if os.path.exists(out):
+        os.remove(out)
+    subprocess.run([mig.EXE, plug, "--rpp", rpp, "--fx", mig.FX, "--instance", str(inst), "--seconds", "0.05",
+                    "--quiet", "--save-rpp", out], capture_output=True)
+    L = open(out, encoding="utf-8").read().split("\n")
+    return L[[i for i, l in enumerate(L) if "<JS" in l and "<JS_SER" not in l][0] + 1]
+
+
 def controls_ok(old_line, new_line, offs):
     """Every old control in its new slot, with the three changes the migration makes on purpose."""
     o, n = parse_line(old_line), parse_line(new_line)
@@ -105,7 +118,7 @@ def main():
             manifest["instances"] += 1
             offs = {int(s) - 1: v for s, v in note["offsets_db"].items()}
             fmt = int(round(new_i[k - 1][1][0]))
-            bad = controls_ok(old_i[k - 1][0], new_i[k - 1][0], offs)
+            bad = controls_ok(loaded_line(OLD_PIN, path, k), new_i[k - 1][0], offs)
             a = render(OLD_PIN, path, k, os.path.join(work, "o.csv"))
             b = render(NEW_PIN, migrated, k, os.path.join(work, "n.csv"))
             if a == b and len(a) > 100:
