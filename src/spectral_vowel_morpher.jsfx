@@ -654,6 +654,14 @@ target_drift_punit = freemem; freemem += 128;   // {0 Cycles, 1 Seconds, 2 Beats
 ramp_tunit         = freemem; freemem += 128;   // {0 Cycles, 1 Seconds, 2 Minutes, 3 Beats}
 drift_moves        = freemem; freemem += 128;   // {0 With the target, 1 On a clock}
 lay_nh_eff         = freemem; freemem += 32;    // each layer's harmonics with drift and ramp
+// Per-sample work lists, rebuilt every block (2026-09-16). @sample used to walk all 107 drift and
+// ramp targets on every sample whether anything moved or not; now it walks only these. Skipped
+// entries did nothing when walked, so the output is the same, sample for sample.
+drift_list = freemem; freemem += 128;   // drifting targets, in mo_order's order (rand() order kept)
+ramp_list  = freemem; freemem += 128;   // targets with a ramp duration (they advance)
+rofs_list  = freemem; freemem += 128;   // targets with a ramp amount (their offset can be non-zero)
+lh_list    = freemem; freemem += 32;    // layers whose harmonics are driven
+dl_n = 0; rl_n = 0; ro_n = 0; lh_n = 0;
 // The thirteen ladder layers' intervals, as Layers 1-13 start. Layer 1, the Original, is 0.
 function lay_seed_ladder() (
   lay_semi[0] = 0;
@@ -2064,6 +2072,20 @@ dvi = 0; loop(N_TARGETS,
   mod_active[dvi] = (td_active[dvi] || ramp_by_mem[dvi] != 0) ? 1 : 0;
   dvi += 1;
 );
+// The work lists (see their allocation). A target left off rofs_list has a ramp amount of 0, so
+// its offset is 0 -- written here once instead of every sample.
+dl_n = 0; rl_n = 0; ro_n = 0; lh_n = 0; dvi = 0;
+loop(N_TARGETS,
+  wl_t = mo_order[dvi]; td_active[wl_t] ? ( drift_list[dl_n] = wl_t; dl_n += 1; );
+  ramp_dur_mem[dvi] > 0 ? ( ramp_list[rl_n] = dvi; rl_n += 1; );
+  ramp_by_mem[dvi] != 0 ? ( rofs_list[ro_n] = dvi; ro_n += 1; ) : ( ramp_offset_mem[dvi] = ramp_t_mem[dvi] * ramp_by_mem[dvi]; );
+  dvi += 1;
+);
+dvi = 0;
+loop(N_LAY_SLOTS,
+  mod_active[LH_T0+dvi] ? ( lh_list[lh_n] = dvi; lh_n += 1; ) : ( lay_nh_eff[dvi] = lay_nharm[dvi]; );
+  dvi += 1;
+);
 
 @sample
 inbuf[inpos] = (spl0 + spl1) * 0.5;
@@ -2121,8 +2143,8 @@ morph_frozen   = in_start_delay || (in_rest && morph_at_rest == 1); // the walk
 //     suite. Offset is asymmetric: positive half scales by `up`, negative by
 //     `down`. Runs before every consumer below so grain/voice/output all agree. ---
 mo_k = 0;
-loop(N_TARGETS,
-  di = mo_order[mo_k];   // the old twenty-four first, in their old order -- see @init
+loop(dl_n,
+  di = drift_list[mo_k];   // the old twenty-four first, in their old order -- see @init
   td_active[di] ? (
     // The bank holds the slider's own unit, like every other per-target bank,
     // so convert to seconds here, where the live tempo is available and
@@ -2179,8 +2201,9 @@ loop(N_TARGETS,
 // ride -- that matches the siblings. Engage is unchanged and still the
 // user's own freeze/resume switch; this is the transport's.
 ramp_engaged && !ramp_frozen ? (
-  ri = 0;
-  loop(N_TARGETS,
+  rk = 0;
+  loop(rl_n,
+    ri = ramp_list[rk];
     ramp_dur_mem[ri] > 0 ? (
       ramp_unit_sec = mo_runit_sec(ramp_tunit[ri]);
       rdelay_samps = ramp_delay_mem[ri] * ramp_unit_sec * srate;
@@ -2210,10 +2233,10 @@ ramp_engaged && !ramp_frozen ? (
         );
       );
     );
-    ri += 1;
+    rk += 1;
   );
 );
-ri = 0; loop(N_TARGETS, ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; ri += 1; );
+rk = 0; loop(ro_n, ri = rofs_list[rk]; ramp_offset_mem[ri] = ramp_t_mem[ri] * ramp_by_mem[ri]; rk += 1; );
 
 // Effective (base + Drift wander + Ramp ride) values, clamped to each param's
 // real range. A derived global (hlevel/wlevel, pitch_ratio, voice_gain,
@@ -2340,10 +2363,11 @@ loop(N_LAY_SLOTS,
 base_gain = layer_gain[LAY_ORIG];
 // Layer harmonics with drift and ramp (targets LH_T0+k, 2026-09-16): a whole count, 0..64,
 // rounded; 0 still means uncapped. Exactly the stored count while nothing drives it.
-lz = 0;
-loop(N_LAY_SLOTS,
-  lay_nh_eff[lz] = mod_active[LH_T0+lz] ? max(0, min(64, floor(lay_nharm[lz] + mo_q(LH_T0+lz) + 0.5))) : lay_nharm[lz];
-  lz += 1;
+lk = 0;
+loop(lh_n,
+  lz = lh_list[lk];
+  lay_nh_eff[lz] = max(0, min(64, floor(lay_nharm[lz] + mo_q(LH_T0+lz) + 0.5)));
+  lk += 1;
 );
 
 // morph_frozen, not mod_frozen -- the walk is what "Rest mode" governs.

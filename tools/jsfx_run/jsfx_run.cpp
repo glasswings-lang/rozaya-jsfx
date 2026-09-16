@@ -13,6 +13,8 @@
 //
 // Public domain (CC0), like the rest of this suite.
 
+#include <chrono>
+#include <algorithm>
 #include "ysfx.h"
 #include <cstdio>
 #include <cstdlib>
@@ -62,6 +64,7 @@ static void usage()
         "  --set-after N=V     same, but applied AFTER init and the first block --\n"
         "                      this is what moving a control by hand looks like.\n"
         "  --rms MS            print an RMS envelope every MS ms, default 50\n"
+        "  --block-times FILE  time every block (ms) to FILE, and print the slowest\n"
         "  --csv FILE          dump every output sample as time,L,R\n"
         "  --save-rpp FILE     after the run, SAVE the plugin as a host does (the\n"
         "                      slider line and @serialize's blob) into a one-instance\n"
@@ -242,6 +245,7 @@ int main(int argc, char **argv)
     const char *path = argv[1];
     double sr = 44100.0, seconds = 10.0, rms_ms = 50.0;
     uint32_t block = 512;
+    const char *block_times = nullptr;   // 2026-09-16: per-block cost, for dropouts an average hides
     // What to feed the plugin. Silence is what this tool always did, and it is
     // what makes every effect plugin untestable -- see --input in the usage.
     int in_mode = 0;              // 0 silence, 1 noise, 2 sine
@@ -285,6 +289,7 @@ int main(int argc, char **argv)
         else if (a == "--input-db") in_db = std::strtod(next(), nullptr);
         else if (a == "--seconds") seconds = std::strtod(next(), nullptr);
         else if (a == "--rms") rms_ms = std::strtod(next(), nullptr);
+        else if (a == "--block-times") block_times = next();
         else if (a == "--csv") csv = next();
         else if (a == "--save-rpp") save_rpp = next();
         else if (a == "--rpp") rpp = next();
@@ -438,6 +443,7 @@ int main(int argc, char **argv)
     uint32_t inwin = 0, done = 0;
     size_t stage_i = 0;
 
+    std::vector<double> bt_ms; std::vector<double> bt_at;
     while (done < total) {
         uint32_t n = block;
         if (done + n > total) n = total - done;
@@ -477,7 +483,12 @@ int main(int argc, char **argv)
             push_time(done / sr);
         }
 
+        auto bt0 = std::chrono::steady_clock::now();
         ysfx_process_float(fx, ins, outs, 2, 2, n);
+        if (block_times) {
+            bt_ms.push_back(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - bt0).count());
+            bt_at.push_back(done / sr);
+        }
 
         // The block played at the tempo it was told; advance the position by it.
         // Stopped, the position does not move -- which is exactly what REAPER does.
@@ -508,6 +519,15 @@ int main(int argc, char **argv)
             }
         }
         done += n;
+    }
+    if (block_times && !bt_ms.empty()) {
+        FILE *bf = std::fopen(block_times, "w");
+        if (bf) { std::fprintf(bf, "seconds,ms\n"); for (size_t i = 0; i < bt_ms.size(); ++i) std::fprintf(bf, "%.4f,%.4f\n", bt_at[i], bt_ms[i]); std::fclose(bf); }
+        std::vector<double> sorted = bt_ms; std::sort(sorted.begin(), sorted.end());
+        double sum = 0; size_t imax = 0;
+        for (size_t i = 0; i < bt_ms.size(); ++i) { sum += bt_ms[i]; if (bt_ms[i] > bt_ms[imax]) imax = i; }
+        std::printf("block times: %zu blocks, mean %.3f ms, 99th %.3f ms, slowest %.3f ms at %.2f s (a block of %u is %.2f ms of audio)\n",
+                    bt_ms.size(), sum / bt_ms.size(), sorted[(size_t)(sorted.size() * 0.99)], bt_ms[imax], bt_at[imax], block, block * 1000.0 / sr);
     }
 
     if (cf) std::fclose(cf);
