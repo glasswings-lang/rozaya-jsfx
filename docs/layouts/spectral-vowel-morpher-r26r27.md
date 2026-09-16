@@ -62,13 +62,13 @@ Pitch -- every name starts with `Pitch` (Rozaya: "it needs a pitch prefix anyway
 13  Pitch source fine tune unit                    was 15  mode before value, renamed
 14  Pitch source fine tune                         was 14  becomes a target, renamed
 15  Pitch target note                              was 16  renamed
-16  Pitch transpose unit                           was 18  mode before value, renamed
+16  Pitch transpose mode                           was 18  mode before value, renamed
 17  Pitch transpose value                          was 17  renamed
 18  Pitch fine tune unit                           was 20  mode before value, renamed
 19  Pitch fine tune                                was 19  renamed
 20  Tuning reference (Hz)                          was 21  stays plain, as suite-wide (Rozaya)
 Spread -- AFTER pitch. Rozaya: "spread is what you do after you've set a pitch"
-21  Spread unit {Hz, Semitones, Cents}             NEW     saved copies: Hz
+21  Spread pitch mode {Hz, Semitones, Cents}       NEW     saved copies: Hz (name: confirm)
 22  Spread value                                   was 12
 23  Spread fine tune unit                          NEW
 24  Spread fine tune                               NEW     0
@@ -90,7 +90,7 @@ Spread -- AFTER pitch. Rozaya: "spread is what you do after you've set a pitch"
 Layers
 40  Layer                                          was 29
 41  Layer active                                   was 30
-42  Layer pitch unit                               was 32  mode before value
+42  Layer pitch mode                               was 32  mode before value, renamed
 43  Layer pitch value                              was 31
 44  Layer fine tune unit                           was 34  mode before value
 45  Layer fine tune                                was 33
@@ -99,8 +99,8 @@ Layers
 48  Layer harmonics                                was 37  becomes a target (All + 16)
 49  Layer overtone harmonic                        was 38
 Levels
-50  Input level (dry, dB)                          was 39
-51  Output level (dB, ...)                         was 40
+50  Input level (dry, dB)                          was 39  global, measured 2026-09-16
+51  Output level (dB, ...)                         was 40  global, measured 2026-09-16
 Transport
 52  Transport unit {Seconds, Hz, Beats}            NEW     from Rate mode
 53  Start delay (in transport units)               was 41
@@ -140,6 +140,10 @@ dedicated off position"*. (Asked because the note names stop at G9, ~12.5 kHz, s
 cut's old off at 20000 Hz could not be reached by note.) A drift or ramp cannot carry a cut
 across 0 into off by accident: clamp the effective value at the lowest real frequency when
 the base value is on. CHECK THAT CLAMP WHEN BUILDING.
+
+A value's Hz/semitones/cents picker is a `pitch mode`, as Veil's and the Phaser's are (fine
+tune pickers stay `fine tune unit`). Rozaya: *"yeah. I think it should."* The drift clamp
+on the cuts: *"I like that re: the drift move."*
 
 Targets (Drift and Ramp share one list, control order): today's 87, minus Wash grain, plus
 Source fine tune, Spread fine tune, Low cut fine tune, High cut fine tune, and Layer
