@@ -52,7 +52,7 @@ desc: Spectral Vowel Passage - voice<->wash capture instrument, paced per slot
 //     build; running it twice does the same as running it once. ---
 slider1:1<0,8,1{All,Slot 1,Slot 2,Slot 3,Slot 4,Slot 5,Slot 6,Slot 7,Slot 8}>Capture slot
 slider2:0<0,1,1{Off,Capture now}>Capture now
-slider3:0<0,100,1>Capture point (%, per slot: earliest .. at press)
+slider3:0<0,100,1>Capture point (%, earliest .. at press)
 // --- Capture average: how many analysis frames the WASH spectrum is averaged
 //     over, sitting with the other two capture-analysis controls because it is
 //     one of them -- it changes how the grab is READ, not how it sounds later.
@@ -73,7 +73,7 @@ slider3:0<0,100,1>Capture point (%, per slot: earliest .. at press)
 //     rather than something applied automatically -- turn it up until the wobble
 //     goes, no further. Voice (harmonic) analysis is untouched: it resynthesises
 //     exact harmonics with continuous phase and has no per-bin scatter to freeze.
-slider4:1<1,6,1>Capture average (frames, per slot, 1 = one frame)
+slider4:1<1,6,1>Capture average (frames, 1 = one frame)
 // --- The SLOT-TIMING cluster (sliders 5-10). All PER SLOT, edited for whichever
 //     Capture slot is selected, and laid out in the order a slot lives its
 //     life: fade in, hold, fade out, the gap of silence after it, whether it
@@ -87,19 +87,19 @@ slider4:1<1,6,1>Capture average (frames, per slot, 1 = one frame)
 // its fade-out, and the gap is unused; with crossfade OFF the slot fades in,
 // holds, fades out to silence, then the gap of silence plays before the next
 // fades in.
-slider21:1<0,1000,0.1>Slot fade in (seconds / Hz / beats, per slot)
-slider22:4<0,1000,0.1>Slot hold (seconds / Hz / beats, per slot)
-slider23:1<0,1000,0.1>Slot fade out (seconds / Hz / beats, per slot)
-slider24:0<0,1000,0.1>Slot gap after (seconds / Hz / beats, per slot)
-slider25:0<0,2,1{Seconds,Hz,Beats}>Slot timing unit (per slot)
+slider21:1<0,1000,0.1>Slot fade in (seconds / Hz / beats)
+slider22:4<0,1000,0.1>Slot hold (seconds / Hz / beats)
+slider23:1<0,1000,0.1>Slot fade out (seconds / Hz / beats)
+slider24:0<0,1000,0.1>Slot gap after (seconds / Hz / beats)
+slider25:0<0,2,1{Seconds,Hz,Beats}>Slot timing unit
 // Crossfade into next: On = the fades overlap, so this slot hands over by
 // blending into the next (the classic morph -- what happens today). Off = this
 // slot fades out, the gap of silence plays, then the next fades in.
-slider26:1<0,1,1{Off,On}>Slot crossfade into next (per slot)
+slider26:1<0,1,1{Off,On}>Slot crossfade into next
 // --- Slot mute: PER SLOT. When On, the slot is skipped in Sweep / Glide /
 //     Shuffle -- the morph moves directly to the next unmuted slot. Focused
 //     mode ignores mute (it always plays the slot you point at). ---
-slider27:0<0,1,1{Off,On}>Slot mute (per slot, skipped in the morph)
+slider27:0<0,1,1{Off,On}>Slot mute (skipped in the morph)
 // --- Fade CURVE (shape) for the leg fades. GLOBAL -- one setting for ALL
 //     slots, sat here with the timing cluster it shapes (the per-slot fade
 //     TIMES are 4 and 6 above; this is the curve those fades follow). Same
@@ -116,23 +116,23 @@ slider37:0<-60,24,0.01>Input level (dry, dB)
 // wash, so it has always scaled both. PER SLOT here, unlike the Morpher's --
 // the morph crossfades it along with the spectra. Relabelled, not re-scoped:
 // the behaviour is right, the name described half of it.
-slider29:0<-60,24,0.01>Output level (dB, per slot)
-slider13:50<0,100,1>Texture (% wash, per slot)
-slider14:150<5,1000,1>Wash grain (ms, per slot)
-slider15:0<0,1000,0.1>Spread (Hz, per slot)
-slider5:0<0,128,1{None,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Source note (where zero is, per slot)
-slider6:0<-1000,1000,0.001>Source fine tune (per slot, only with a Source note, in Semitones)
-slider7:2<0,2,1{Hz,Semitones,Cents}>Source fine tune unit (per slot)
-slider8:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Target note (per slot, only with a Source note, in Semitones)
-slider9:0<-20000,20000,0.001>Transpose value (Hz / semitones / cents, per slot)
-slider10:1<0,2,1{Hz,Semitones,Cents}>Transpose unit (per slot)
-slider11:0<-1000,1000,0.001>Fine tune (per slot)
-slider12:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit (per slot)
+slider29:0<-60,24,0.01>Output level (dB)
+slider13:50<0,100,1>Texture (% wash)
+slider14:150<5,1000,1>Wash grain (ms)
+slider15:0<0,1000,0.1>Spread (Hz)
+slider5:0<0,128,1{None,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Source note (where zero is)
+slider6:0<-1000,1000,0.001>Source fine tune (only with a Source note, in Semitones)
+slider7:2<0,2,1{Hz,Semitones,Cents}>Source fine tune unit
+slider8:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Target note (only with a Source note, in Semitones)
+slider9:0<-20000,20000,0.001>Transpose value (Hz / semitones / cents)
+slider10:1<0,2,1{Hz,Semitones,Cents}>Transpose unit
+slider11:0<-1000,1000,0.001>Fine tune
+slider12:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
 slider30:440<20,2000,0.1>Tuning reference (Hz)
-slider28:50<0,100,1>Stereo width (%, per slot)
-slider17:0<0,20000,1>Low cut (Hz, per slot)
-slider18:20000<200,20000,10>High cut (Hz, 20000 = off, per slot)
-slider16:0<0,100,0.1>Denoise (%, wash only, per slot)
+slider28:50<0,100,1>Stereo width (%)
+slider17:0<0,20000,1>Low cut (Hz)
+slider18:20000<200,20000,10>High cut (Hz, 20000 = off)
+slider16:0<0,100,0.1>Denoise (%, wash only)
 slider36:1<0,1,1{Focused slot,Morph}>Audition
 slider34:0<0,100,0.1>Morph (% across captured slots)
 slider35:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
@@ -147,20 +147,20 @@ slider43:0<0,1,1{Pass-through,Silence}>Output at rest
 //     All targets drift in parallel; the selector only chooses which one the
 //     amount/period/shape sliders are editing. ---
 slider44:0<0,21,1{Transpose,Fine tune,Texture,Wash grain,Spread,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Slot fade in,Slot hold,Slot fade out,Slot gap after,Stereo width,Output level,Tuning reference,Overtone width,Morph,Input level,Play for,Rest for}>Drift target
-slider45:0<0,20000,0.01>Drift up amount (per slot and target, in the Drift amount unit)
-slider46:0<0,20000,0.01>Drift down amount (per slot and target, in the Drift amount unit)
-slider47:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (per slot and target, Target default where it cannot fit)
-slider48:30<0,1000,0.001>Drift period (per slot and target, in drift period units, 0 = off)
+slider45:0<0,20000,0.01>Drift up amount (in the Drift amount unit)
+slider46:0<0,20000,0.01>Drift down amount (in the Drift amount unit)
+slider47:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (Target default where it cannot fit)
+slider48:30<0,1000,0.001>Drift period (in drift period units, 0 = off)
 slider49:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
 // WHETHER A DRIFT MOVES WITH ITS OWN THING, OR ON A CLOCK (2026-09-12, Bubbler's control).
 // The four slot timings are read once, when their slot's leg begins. `With the target` steps
 // such a drift on that slot's own legs, by each leg's length in the period unit, and holds
 // it between them; `On a clock` runs it all the time. Every other target is read all the
 // time, so its turn is every sample and the two are the same. Rozaya: "Um. yes?"
-slider50:0<0,1,1{With the target,On a clock}>Drift movement (per slot and target)
-slider51:0<0,2,1{Sine,Triangle,Random}>Drift shape (per slot and target)
-slider52:0<0,1000,0.01>Drift play for (per slot and target, periods, 0 = always)
-slider53:0<0,1000,0.01>Drift rest for (per slot and target, periods, 0 = always)
+slider50:0<0,1,1{With the target,On a clock}>Drift movement
+slider51:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider52:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider53:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
 // drift ignores the transport and evolves continuously (loop under/over an
@@ -172,13 +172,13 @@ slider54:0<0,1,1{Restart on play,Free-running}>Drift restart (all targets)
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
 slider55:0<0,21,1{Transpose,Fine tune,Texture,Wash grain,Spread,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Slot fade in,Slot hold,Slot fade out,Slot gap after,Stereo width,Output level,Tuning reference,Overtone width,Morph,Input level,Play for,Rest for}>Ramp target
-slider56:0<-20000,20000,0.001>Ramp by (per slot and target, in the Ramp by unit)
-slider57:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (per slot and target, Target default where it cannot fit)
+slider56:0<-20000,20000,0.001>Ramp by (in the Ramp by unit)
+slider57:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (Target default where it cannot fit)
 slider58:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
-slider59:0<0,1000,0.01>Ramp duration (per slot and target, in ramp time units)
-slider60:0<0,1000,0.01>Ramp play for (per slot and target, 0 = smooth)
-slider61:0<0,1000,0.01>Ramp rest for (per slot and target, 0 = smooth)
-slider63:0<0,1000,0.01>Ramp start delay (per slot and target, in ramp time units)
+slider59:0<0,1000,0.01>Ramp duration (in ramp time units)
+slider60:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider61:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider63:0<0,1000,0.01>Ramp start delay (in ramp time units)
 slider62:0<0,1,1{Off,On}>Ramp engage (all targets)
 // --- Overtone: bring ONE partial of the voice out far enough to be heard as a
 //     note of its own, the way overtone / throat singing does. Appended at the
@@ -210,8 +210,8 @@ slider62:0<0,1,1{Off,On}>Ramp engage (all targets)
 //     means everywhere else in this plugin. Both engines read the same smoothed
 //     controls and the same blended fundamental, so they stay in step through a
 //     Texture blend instead of describing two different overtones.
-slider19:0<0,64,1>Overtone harmonic (per slot, 0 = off, 1 = fundamental)
-slider20:24<0,48,0.01>Overtone lift (per slot, dB the chosen harmonic rises by)
+slider19:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
+slider20:24<0,48,0.01>Overtone lift (dB the chosen harmonic rises by)
 slider33:1<0.5,4,0.1>Overtone width (all slots, harmonics either side)
 
 @init

@@ -150,11 +150,11 @@ Nested-selector pattern matching Womb v3. Pick one of 18 targets — the same li
 **Ramp target** `eighteen targets, default Heart rate`
 Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. Every target ramps regardless of which one is selected.
 
-**Ramp duration (per target, slider 35)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (all targets, slider 38)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
+**Ramp duration (slider 35)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (all targets, slider 38)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage. Only transport play resets the ramps.
 
-**Ramp by (per target, slider 33)** `-20000 to +20000, step 0.01, default 0`
+**Ramp by (slider 33)** `-20000 to +20000, step 0.01, default 0`
 Signed delta in the selected target's natural unit. **0** = no change. Examples:
 - Heart rate target, by -35: heart ramps from 70 → 35 BPM over the duration.
 
@@ -167,7 +167,7 @@ This matters more here than elsewhere: HRV figures are real quantities you'd rea
 
 Slider range is intentionally wide (-400 to +400) to span every target's natural range. Step is 0.01 to give fine control on the HRV targets (which have natural step 0.005-0.01). For BPM/ms targets you'd type a coarser value (e.g. -35 for BPM); for HRV targets you'd type something like 0.05.
 
-**Ramp start delay (per target, slider 39)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Part of the contiguous 29–33 block. Saved/loaded per target by the selector, like `by` and duration.
+**Ramp start delay (slider 39)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Part of the contiguous 29–33 block. Saved/loaded per target by the selector, like `by` and duration.
 
 A small ~100 ms smoother sits between the BPM slider and the audio, so manual BPM tweaks don't click. This is always on.
 

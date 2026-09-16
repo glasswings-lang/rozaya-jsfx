@@ -45,7 +45,7 @@ slider2:0<0,1,1{Off,Capture now}>Capture now
 // (2026-09-11). Moving either re-analyses the captured sound -- a full FFT and pitch
 // detection per slot -- which is heavy and lands as a click; a drift would do that
 // over and over. Rozaya agreed, asking that the reason be written down.
-slider3:0<0,100,1>Capture point (%, per slot: earliest .. at press)
+slider3:0<0,100,1>Capture point (%, earliest .. at press)
 // Capture average: how many analysis frames the WASH spectrum is averaged over.
 // GLOBAL here, unlike Passage -- for the same reason Overtone below is. It first
 // landed per slot only because it was ported wholesale from Passage, where per
@@ -222,19 +222,19 @@ slider29:1<0,16,1{All,Layer 1,Layer 2,Layer 3,Layer 4,Layer 5,Layer 6,Layer 7,La
 // Sits directly under the selector, ahead of the level: "is this layer in
 // play" is the first question you ask about a layer, and it is a binary you
 // can hear the answer to instantly.
-slider30:1<0,1,1{Inactive,Active}>Layer active (per layer)
+slider30:1<0,1,1{Inactive,Active}>Layer active
 // Defaults to 0, NOT -60, because the Layer selector defaults to the Original
 // and this slider is stamped straight into whatever layer that selects. At -60
 // it muted the Original on load -- on a fresh instance, and on every pre-layers
 // project too, where REAPER supplies this slider's declared default because the
 // saved line has no value for it. Two defaults that have to agree: the level
 // slider's default is the default-selected layer's level.
-slider35:0<-60,24,0.01>Layer level (dB, per layer, -60 = off)
-slider36:0<0,1,1{Off,Solo}>Layer solo (per layer)
-slider31:0<-20000,20000,0.001>Layer pitch value (Hz / semitones / cents, per layer)
-slider32:1<0,2,1{Hz,Semitones,Cents}>Layer pitch unit (per layer)
-slider33:0<-1000,1000,0.001>Layer fine tune (per layer)
-slider34:2<0,2,1{Hz,Semitones,Cents}>Layer fine tune unit (per layer)
+slider35:0<-60,24,0.01>Layer level (dB, -60 = off)
+slider36:0<0,1,1{Off,Solo}>Layer solo
+slider31:0<-20000,20000,0.001>Layer pitch value (Hz / semitones / cents)
+slider32:1<0,2,1{Hz,Semitones,Cents}>Layer pitch unit
+slider33:0<-1000,1000,0.001>Layer fine tune
+slider34:2<0,2,1{Hz,Semitones,Cents}>Layer fine tune unit
 // CPU control, not a tone control. Every layer is its own set of oscillators --
 // nothing about them can be shared with the main voice or with each other, so
 // cost is layers x harmonics. A background layer rarely needs the same harmonic
@@ -246,7 +246,7 @@ slider34:2<0,2,1{Hz,Semitones,Cents}>Layer fine tune unit (per layer)
 // NOT a Drift or Ramp target, deliberately (2026-09-11): because it is a CPU cap, a
 // drift on it would make the processing load rise and fall with the wave. Rozaya
 // agreed, asking that the reason be written down.
-slider37:0<0,64,1>Layer harmonics (per layer, 0 = full)
+slider37:0<0,64,1>Layer harmonics (0 = full)
 // Per-layer overtone harmonic. The global Overtone harmonic above is folded into
 // the shared magnitude array, so one setting applied to every layer at once, by
 // harmonic INDEX -- with Overtone harmonic 8 the lift lands at 8*f0 in the
@@ -258,7 +258,7 @@ slider37:0<0,64,1>Layer harmonics (per layer, 0 = full)
 // that goes per layer. Lift and width stay global.
 // -1 = follow the global, and is the default, so every layer behaves exactly as
 // it did before this slider existed until you say otherwise.
-slider38:-1<-1,64,1>Layer overtone harmonic (per layer, -1 = follow the global)
+slider38:-1<-1,64,1>Layer overtone harmonic (-1 = follow the global)
 
 // --- Levels. Both are global and both belong at the end of the sound section,
 //     after everything they scale. ---
@@ -330,10 +330,10 @@ slider45:0<0,1,1{Pass-through,Silence}>Output at rest
 // with an "all layers" entry for each layer control (R24, Polyrhythm's model). The plugin
 // remaps an old save; tools/morpher_migrate_20260913.py remaps a project line's selectors.
 slider46:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Drift target
-slider47:0<0,20000,0.01>Drift up amount (per target, in the Drift amount unit)
-slider48:0<0,20000,0.01>Drift down amount (per target, in the Drift amount unit)
-slider49:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (per target, Target default where it cannot fit)
-slider50:30<0,1000,0.001>Drift period (per target, in drift period units, 0 = off)
+slider47:0<0,20000,0.01>Drift up amount (in the Drift amount unit)
+slider48:0<0,20000,0.01>Drift down amount (in the Drift amount unit)
+slider49:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (Target default where it cannot fit)
+slider50:30<0,1000,0.001>Drift period (in drift period units, 0 = off)
 // Drift period unit. Same three options as everywhere else in the suite, but it
 // declares SECONDS rather than the usual Cycles, for two reasons that agree:
 // every one of the 122 instances in the library means seconds today (a declared
@@ -343,7 +343,7 @@ slider50:30<0,1000,0.001>Drift period (per target, in drift period units, 0 = of
 // own rate control. A fresh instance defaulting to Cycles would have a drift
 // that never advanced the first time it was switched on.
 slider51:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
-slider52:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
+slider52:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // --- Drift play/rest. Ported from Veil, the reference implementation, which
 //     has been heard. Makes the wander move in bursts with holds between
 //     instead of running evenly forever. PER TARGET, like the amounts it gates.
@@ -354,8 +354,8 @@ slider52:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 //     the trough, x.0 and x.5 at neutral. So an awkward fraction rotates the
 //     park point, and a whole number parks at no-change EVERY time, which is
 //     nearly inaudible. Confirmed by simulating the loop, not by reading it.
-slider53:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
-slider54:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
+slider53:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider54:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
@@ -369,8 +369,8 @@ slider55:0<0,1,1{Restart on play,Free-running}>Drift restart (all targets)
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
 slider56:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Ramp target
-slider57:0<-20000,20000,0.001>Ramp by (per target, in the Ramp by unit)
-slider58:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (per target, Target default where it cannot fit)
+slider57:0<-20000,20000,0.001>Ramp by (in the Ramp by unit)
+slider58:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (Target default where it cannot fit)
 // Ramp time unit -- the unit for Ramp duration, Ramp play/rest and Ramp start
 // delay, all four together. Default MINUTES (index 2), which is the suite
 // default AND exactly what these four already meant, so no saved instance
@@ -389,7 +389,7 @@ slider59:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 // 0..1000, widened 2026-09-06. `half-music-half-wind.RPP` has 120 typed into
 // this on two instances -- a two-hour ramp, above the one hour the control
 // used to offer.
-slider60:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
+slider60:0<0,1000,0.01>Ramp duration (in ramp time units)
 // Ramp play/rest turns the smooth ride into a STAIRCASE -- "ramp on one side,
 // stairs on the other" (Rozaya, 2026-09-04). Windows are whole RAMP TIME
 // UNITS, matching Ramp duration. The rests come OUT of the duration
@@ -397,10 +397,10 @@ slider60:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
 // while moving it moves faster, by exactly (play+rest)/play, so a stepped ride
 // and a smooth one of the same length make the same journey in the same time --
 // crossing each other on the way, and landing on the destination together.
-slider61:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
-slider62:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider61:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider62:0<0,1000,0.01>Ramp rest for (0 = smooth)
 slider63:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider64:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
+slider64:0<0,1000,0.01>Ramp start delay (in ramp time units)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all

@@ -223,15 +223,15 @@ slider43:0<0,1000,0.001>Rest for (cycles)
 // the rate targets, Hz for Binaural Beat, dB for the Gain targets and Depth,
 // percent for On Duration / Attack / Release.
 slider44:0<0,87,1{Rate value,Tuning reference,Transpose,Binaural beat,Pulse width,Tone,Edge,Movement,Body,Pitch (all voices),V1 pitch,V2 pitch,V3 pitch,V4 pitch,V5 pitch,V6 pitch,V7 pitch,V8 pitch,Fine tune (all voices),V1 fine tune,V2 fine tune,V3 fine tune,V4 fine tune,V5 fine tune,V6 fine tune,V7 fine tune,V8 fine tune,Rate (all voices),V1 rate,V2 rate,V3 rate,V4 rate,V5 rate,V6 rate,V7 rate,V8 rate,Tremolo amount (all voices),V1 tremolo amount,V2 tremolo amount,V3 tremolo amount,V4 tremolo amount,V5 tremolo amount,V6 tremolo amount,V7 tremolo amount,V8 tremolo amount,On duration (all voices),V1 on duration,V2 on duration,V3 on duration,V4 on duration,V5 on duration,V6 on duration,V7 on duration,V8 on duration,Attack (all voices),V1 attack,V2 attack,V3 attack,V4 attack,V5 attack,V6 attack,V7 attack,V8 attack,Release (all voices),V1 release,V2 release,V3 release,V4 release,V5 release,V6 release,V7 release,V8 release,Gain (all voices),V1 gain,V2 gain,V3 gain,V4 gain,V5 gain,V6 gain,V7 gain,V8 gain,Pan spread,Pan base rate,Pan increment per voice,Pan glide,Reverse drift offset,Play for,Rest for}>Drift target
-slider45:0<0,20000,0.01>Drift up amount (per target, units match target)
-slider46:0<0,20000,0.01>Drift down amount (per target, units match target)
-slider47:8<0,1000,0.001>Drift period (per target, 0 = off)
+slider45:0<0,20000,0.01>Drift up amount (units match target)
+slider46:0<0,20000,0.01>Drift down amount (units match target)
+slider47:8<0,1000,0.001>Drift period (0 = off)
 // What the period is COUNTED IN. Cycles is this plugin's native count and the
 // default -- a period of 8 means eight tremolo cycles, and it follows the rate
 // for free. Seconds is wall clock. Beats converts at the LIVE project tempo,
 // so the wander follows the host rather than the rhythm.
 slider48:0<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
-slider49:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
+slider49:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // Drift play/rest, per target, counted in PERIODS. Both must be above zero for
 // the gate to engage. While resting the drift phase does not advance at all,
 // so the offset FREEZES where it stopped rather than returning to centre --
@@ -239,8 +239,8 @@ slider49:0<0,2,1{Sine,Triangle,Random}>Drift shape (per target)
 // trough, x.0 and x.5 neutral. So a whole number parks at no-change every time
 // and is nearly inaudible; an awkward fraction is the interesting one, because
 // each freeze lands further round the wave than the last.
-slider50:0<0,1000,0.01>Drift play for (per target, periods, 0 = always)
-slider51:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
+slider50:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider51:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // ===== RAMP =====
 // A one-time slow RIDE of a parameter. Pick a target, where to take it and
@@ -251,25 +251,25 @@ slider51:0<0,1000,0.01>Drift rest for (per target, periods, 0 = always)
 // in proportional lockstep, preserving the slow beats between them. The other
 // 23 targets ride as additive offsets in their own units.
 slider52:0<0,87,1{Rate value,Tuning reference,Transpose,Binaural beat,Pulse width,Tone,Edge,Movement,Body,Pitch (all voices),V1 pitch,V2 pitch,V3 pitch,V4 pitch,V5 pitch,V6 pitch,V7 pitch,V8 pitch,Fine tune (all voices),V1 fine tune,V2 fine tune,V3 fine tune,V4 fine tune,V5 fine tune,V6 fine tune,V7 fine tune,V8 fine tune,Rate (all voices),V1 rate,V2 rate,V3 rate,V4 rate,V5 rate,V6 rate,V7 rate,V8 rate,Tremolo amount (all voices),V1 tremolo amount,V2 tremolo amount,V3 tremolo amount,V4 tremolo amount,V5 tremolo amount,V6 tremolo amount,V7 tremolo amount,V8 tremolo amount,On duration (all voices),V1 on duration,V2 on duration,V3 on duration,V4 on duration,V5 on duration,V6 on duration,V7 on duration,V8 on duration,Attack (all voices),V1 attack,V2 attack,V3 attack,V4 attack,V5 attack,V6 attack,V7 attack,V8 attack,Release (all voices),V1 release,V2 release,V3 release,V4 release,V5 release,V6 release,V7 release,V8 release,Gain (all voices),V1 gain,V2 gain,V3 gain,V4 gain,V5 gain,V6 gain,V7 gain,V8 gain,Pan spread,Pan base rate,Pan increment per voice,Pan glide,Reverse drift offset,Play for,Rest for}>Ramp target
-slider53:0<-20000,20000,0.001>Ramp by (per target, units match target)
+slider53:0<-20000,20000,0.001>Ramp by (units match target)
 // What the duration and start delay are COUNTED IN. The DECLARED DEFAULT IS 2,
 // Minutes, and that is not a free choice: every saved instance has this control
 // unset, so the default is the live value all of them run on, and putting
 // Cycles at index 0 would silently rewrite a thirty-minute ramp into a
 // two-second one.
 slider54:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
-slider55:0<0,1000,0.01>Ramp duration (per target, in ramp time units)
+slider55:0<0,1000,0.01>Ramp duration (in ramp time units)
 // Ramp play/rest, per target: the ramp advances for `play`, holds for `rest`,
 // and repeats, so it climbs as a staircase rather than a smooth glide. The
 // holds come OUT of the duration rather than extending it -- the advancing
 // step is scaled by (play+rest)/play -- so Ramp duration goes on meaning "you
 // arrive in about this long". Both zero is the smooth ramp.
-slider56:0<0,1000,0.01>Ramp play for (per target, 0 = smooth)
-slider57:0<0,1000,0.01>Ramp rest for (per target, 0 = smooth)
+slider56:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider57:0<0,1000,0.01>Ramp rest for (0 = smooth)
 // Engage is a freeze/resume gate, NOT a restart edge; only transport play
 // resets the ramp clocks.
 slider58:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider59:0<0,1000,0.01>Ramp start delay (per target, in ramp time units)
+slider59:0<0,1000,0.01>Ramp start delay (in ramp time units)
 
 
 @init
