@@ -75,13 +75,13 @@ Spread -- AFTER pitch. Rozaya: "spread is what you do after you've set a pitch"
 25  Stereo width (%)                               was 22
 26  Denoise (%, wash only)                         was 23
 27  Low cut pitch mode {Hz, Semitones, Cents}      NEW     saved copies: Hz
-28  Low cut note name                              NEW
-29  Low cut value                                  was 24  (off: ASK)
+28  Low cut note name {Off, C-1 .. G9}             NEW
+29  Low cut value (0 = off, in any unit)          was 24
 30  Low cut fine tune unit                         NEW
 31  Low cut fine tune                              NEW
 32  High cut pitch mode                            NEW     saved copies: Hz
-33  High cut note name                             NEW
-34  High cut value                                 was 25  (off: ASK)
+33  High cut note name {Off, C-1 .. G9}            NEW
+34  High cut value (0 = off, in any unit)         was 25  saved 20000 (today's off) -> 0; range 0..20000
 35  High cut fine tune unit                        NEW
 36  High cut fine tune                             NEW
 37  Overtone harmonic                              was 26
@@ -133,6 +133,13 @@ Ramp
 78  Ramp engage (all targets)                      was 63
 79  Ramp start delay                               was 64
 ```
+
+Both cuts: 0 means off in every unit, and each note name list starts on a dedicated Off.
+Rozaya: *"Feels like 0 could just be 0, then the first thing everything lands on is a
+dedicated off position"*. (Asked because the note names stop at G9, ~12.5 kHz, so High
+cut's old off at 20000 Hz could not be reached by note.) A drift or ramp cannot carry a cut
+across 0 into off by accident: clamp the effective value at the lowest real frequency when
+the base value is on. CHECK THAT CLAMP WHEN BUILDING.
 
 Targets (Drift and Ramp share one list, control order): today's 87, minus Wash grain, plus
 Source fine tune, Spread fine tune, Low cut fine tune, High cut fine tune, and Layer
