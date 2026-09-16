@@ -66,7 +66,7 @@ Pitch -- every name starts with `Pitch` (Rozaya: "it needs a pitch prefix anyway
 17  Pitch transpose value                          was 17  renamed
 18  Pitch fine tune unit                           was 20  mode before value, renamed
 19  Pitch fine tune                                was 19  renamed
-20  Pitch tuning reference (Hz)                    was 21  renamed
+20  Tuning reference (Hz)                          was 21  stays plain, as suite-wide (Rozaya)
 Spread -- AFTER pitch. Rozaya: "spread is what you do after you've set a pitch"
 21  Spread unit {Hz, Semitones, Cents}             NEW     saved copies: Hz
 22  Spread value                                   was 12
