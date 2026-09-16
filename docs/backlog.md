@@ -25,6 +25,15 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 
 ## Open — checked against the plugins 2026-09-13
 
+- **`Drift movement (per target)` in the seven that lack it, and `Cycles` counting the
+  target's own cycles.** R23, closed 2026-09-15 with nothing built; Rozaya: *"Fold it in
+  yeah"* -- it lands in each plugin's own amount-unit turn (R26/R27), never as a sweep.
+  Owed by: Tremolo, the Sweeping Filter, Sweep Dwell, Polyrhythm v3, Shepard Scale,
+  Shepard Tone, the Morpher (grain length). Each recomputes an envelope or segment value
+  from a running phase every sample instead of latching it when the occurrence begins.
+  Veil, Resonance Bank and the Stereo Phaser owe nothing; Sustain Looper is deliberately
+  live. Separately, Polyrhythm and Shepard Tone count the MASTER rate's cycles for
+  per-voice targets. What was read, and the misreading to avoid: `docs/history/R23.md`.
 - **`Drift amount unit` / `Ramp by unit` in the other seventeen.** Committed 2026-09-11,
   Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Built in Passage
   and the Morpher only; the other seventeen have neither (read from every slider list).

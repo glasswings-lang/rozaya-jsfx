@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R23** — A drift steps on its target's own turn
 - **R24** — Every control that shapes the sound is a Drift and Ramp target
 - **R25** — A control behind a selector says which kind it is
 - **R26** — No unit locks: every Drift and Ramp amount names its unit
@@ -66,23 +65,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
----
-
-## R23 — A drift steps on its target's own turn (2026-09-09)
-
-Rozaya, on drift sampled from a free-running clock: *"you don't get to say drift this thing
-every two cycles and drift this thing every four. it's being fucked."*
-
-- A target read ONCE PER OCCURRENCE (a breath's length, a note's duration, a bubble's birth)
-  steps once per occurrence, and its period counts occurrences. A target read continuously
-  drifts continuously, on a clock. *(This wording is Claude's.)*
-- Where a plugin has both kinds, `Drift movement {With the target, On a clock}` decides, per
-  target. On Bubbler and Dapple, Rozaya: *"The stepping was deliberately live"*.
-- Seconds and Beats on a stepped target run only while the target's own thing happens.
-  Rozaya: *"stop mid-cycle, freeze the clock mid-whatever unit, then pick up on the next
-  cycle from wherever the clock was last."*
-- Classify a target by READING where the plugin reads it, never by its name.
 
 ---
 
@@ -230,6 +212,18 @@ plugin-wide but simpler, and you set it once and leave it.
   set), transpose and fine tune. Spreads are `{Hz, Semitones, Cents}`, never a
   percent of a hidden limit. A Shepard voice is its note in every octave at once, so
   the Shepards take notes and fine tunes only.
+- **A drift steps on its target's own turn.** Rozaya: *"you don't get to say drift this
+  thing every two cycles and drift this thing every four. it's being fucked."* A target read
+  ONCE PER OCCURRENCE (a breath's length, a note's duration, a segment's length, a pulse's
+  on-duration) steps once per occurrence and its period counts occurrences; a target read
+  continuously drifts continuously, on a clock. Where a plugin has both kinds,
+  `Drift movement {With the target, On a clock}` decides, per target -- on Bubbler and
+  Dapple, Rozaya: *"The stepping was deliberately live"*. Seconds and Beats on a stepped
+  target run only while the target's own thing happens: *"stop mid-cycle, freeze the clock
+  mid-whatever unit, then pick up on the next cycle from wherever the clock was last."*
+  Where a plugin has several speeds, `Cycles` counts THAT target's cycles, never the master
+  rate's. **Classify a target by READING where the plugin reads it, never by its name** --
+  a value recomputed every sample is not thereby continuous; see `docs/history/R23.md`.
 - **Global output goes last before transport**, so it stops interrupting the pan
   group — which is exactly where the Sweeping Filter's `Wet/dry mix` sits today,
   at slider 15.
