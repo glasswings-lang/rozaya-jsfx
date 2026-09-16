@@ -242,6 +242,27 @@ slider47:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
 slider48:24<0,48,0.01>Overtone lift (dB the chosen harmonic rises by)
 slider49:1<0.5,4,0.1>Overtone width (all slots, harmonics either side)
 
+// --- Layers (2026-09-16, the Morpher's, GLOBAL here). Rozaya: "the per slot layering doesn't really
+//     make sense to me ... I would just have it be global". Each layer is the whole morph -- voice and
+//     wash -- again at its own pitch from each slot's own pitch, so the stack moves as one. Layer 1 is
+//     the original and moves like any layer. All at 0: only a control actually moved reaches all
+//     sixteen. The level and active defaults are Layer 1's, because the selector opens on Layer 1;
+//     Layers 2-16 start Inactive at -6 dB (Rozaya: "If they're not active they don't need to be that
+//     low, they're just... off.").
+slider50:1<0,16,1{All,Layer 1,Layer 2,Layer 3,Layer 4,Layer 5,Layer 6,Layer 7,Layer 8,Layer 9,Layer 10,Layer 11,Layer 12,Layer 13,Layer 14,Layer 15,Layer 16}>Layer
+slider51:1<0,1,1{Inactive,Active}>Layer active
+slider52:1<0,2,1{Hz,Semitones,Cents}>Layer pitch mode
+slider53:0<-20000,20000,0.001>Layer pitch value (Hz / semitones / cents)
+slider54:2<0,2,1{Hz,Semitones,Cents}>Layer fine tune unit
+slider55:0<-1000,1000,0.001>Layer fine tune
+slider56:0<-60,24,0.01>Layer level (dB, -60 = off)
+slider57:0<0,1,1{Off,Solo}>Layer solo
+// A CPU and colour control: a layer keeps only its first N partials (0 = all).
+slider58:0<0,64,1>Layer harmonics (0 = full)
+// -1 follows the slots' Overtone harmonic; any other number is this layer's own, with the slots'
+// lift and the global width.
+slider59:-1<-1,64,1>Layer overtone harmonic (-1 = follow the global)
+
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
 // memory) survive transport stop/play -- the whole point of a capture-based
@@ -424,21 +445,40 @@ spc           = freemem; freemem += NBINS + 1;   // Spread in Semitones/Cents: r
 //     tables each (the one playing and the one being faded to), each an ifft buffer of 2*WTN.
 //     Built by wt_build; see the voice engine in @sample.
 WTN = 8192; WT_XF = 256;
-wt_tab   = freemem; freemem += 4;         // table addresses, [p*2 + q]
-wt_tab[0] = freemem; freemem += 2*WTN; wt_tab[1] = freemem; freemem += 2*WTN;
-wt_tab[2] = freemem; freemem += 2*WTN; wt_tab[3] = freemem; freemem += 2*WTN;
-wt_phi   = freemem; freemem += 2*NHARM;   // each phase bank's partial start phases, [bank*NHARM + n-1]
-wt_ph    = freemem; freemem += 4;         // running phase in cycles, [p*2 + channel]
-wt_act   = freemem; freemem += 2;         // which of the two tables is playing
-wt_xf    = freemem; freemem += 2;         // samples left in the fade from the other table
-wt_wait  = freemem; freemem += 2;         // samples before the next build may start
-wt_bank  = freemem; freemem += 2;         // which start-phase bank the voice's partials use
-wt_slot  = freemem; freemem += 2;         // what the playing table was built from ...
-wt_otv   = freemem; freemem += 2;
-wt_hv    = freemem; freemem += 2;
-wt_nb    = freemem; freemem += 2;
-wt_f     = freemem; freemem += 2;
-wt_hct   = freemem; freemem += 2;
+//     A voice p is layer k's position: p = k*2 (A) or k*2 + 1 (B); Layer 1 is k = 0.
+NLAY = 16; NVOI = 32;
+wt_tab   = freemem; freemem += NVOI*2;    // table addresses, [p*2 + q]
+wti = 0; loop(NVOI*2, wt_tab[wti] = freemem; freemem += 2*WTN; wti += 1; );
+wt_phi   = freemem; freemem += NVOI*NHARM;   // each phase bank's partial start phases, [bank*NHARM + n-1]
+wt_ph    = freemem; freemem += NVOI*2;    // running phase in cycles, [p*2 + channel]
+wt_act   = freemem; freemem += NVOI;      // which of the two tables is playing
+wt_xf    = freemem; freemem += NVOI;      // samples left in the fade from the other table
+wt_wait  = freemem; freemem += NVOI;      // samples before the next build may start
+wt_bank  = freemem; freemem += NVOI;      // which start-phase bank the voice's partials use
+wt_slot  = freemem; freemem += NVOI;      // what the playing table was built from ...
+wt_otv   = freemem; freemem += NVOI;
+wt_hv    = freemem; freemem += NVOI;
+wt_nb    = freemem; freemem += NVOI;
+wt_f     = freemem; freemem += NVOI;
+wt_hct   = freemem; freemem += NVOI;
+wt_cap   = freemem; freemem += NVOI;
+// The layer banks (config, saved from 7700009) and what @block derives from them.
+lay_active  = freemem; freemem += NLAY;
+lay_semi    = freemem; freemem += NLAY;   // pitch value, in lay_punit
+lay_punit   = freemem; freemem += NLAY;
+lay_fine    = freemem; freemem += NLAY;
+lay_funit   = freemem; freemem += NLAY;
+lay_db      = freemem; freemem += NLAY;
+lay_solo    = freemem; freemem += NLAY;
+lay_nharm   = freemem; freemem += NLAY;
+lay_ot_harm = freemem; freemem += NLAY;
+layer_ratio = freemem; freemem += NLAY;
+layer_gain  = freemem; freemem += NLAY;
+lay_ot_gain = freemem; freemem += NLAY*NHARM;   // a layer's own Overtone curve, when it has one
+lay_ot_norm = freemem; freemem += NLAY;
+lay_otv     = freemem; freemem += NLAY;          // bumped when that curve changes
+lay_ui_last = freemem; freemem += 16;            // the nine visible layer controls, last seen
+curmag_pre  = freemem; freemem += NBINS;         // the wash before the slots' overtone, for a layer with its own
 // Per-slot timing unit (2026-09-11), for fade in, hold, fade out and gap: Rozaya's
 // {Seconds, Hz, Beats}. In Hz a timing lasts one cycle; 0 still means none (mine --
 // settled: Rozaya kept it). In Beats a tempo change lands at once, mid-leg (@sample).
@@ -452,15 +492,19 @@ function hc_g(f) ( f > hc_lo ? (hc_top - f) * hc_inv : 1; );
 // partials are exactly the sine engine's: magnitude / the slot's peak, the Overtone curve, the High
 // cut's fade, each at its start phase; a partial is left out once its right-channel copy (the higher
 // of the two) would reach hc_bound. JSFX's ifft does not scale, so each bin holds half the amplitude.
-function wt_build(p, slot, f) local(q, b, hn, nrm, a, ps, re, im, fr, pb) (
+// The version of the Overtone curve voice positions of layer lk read: its own, or the slots'.
+function wt_otver(lk) ( (lay_ot_harm[lk] >= 0 && ot_on) ? 1000000 + lay_otv[lk] * 2 + lk * 0.001 : ot_ver; );
+function wt_build(p, slot, f) local(q, b, hn, nrm, a, ps, re, im, fr, pb, lk, og, cap) (
   q = 1 - wt_act[p]; b = wt_tab[p*2 + q]; pb = wt_bank[p] * NHARM;
+  lk = floor(p / 2); cap = lay_nharm[lk]; cap <= 0 ? cap = NHARM;
+  og = (lay_ot_harm[lk] >= 0 && ot_on) ? lay_ot_gain + lk*NHARM : ot_gain;
   memset(b, 0, 2*WTN);
   nrm = slot_hnorm[slot]; nrm <= 0 ? nrm = 1;
   fr = f * (1 + voice_detune);
   hn = 1;
   loop(NHARM,
-    hn * fr < hc_bound ? (
-      a = slot_harm[slot*NHARM + hn - 1] / nrm * ot_gain[hn - 1] * hc_g(hn * f) * 0.5;
+    (hn * fr < hc_bound && hn <= cap) ? (
+      a = slot_harm[slot*NHARM + hn - 1] / nrm * og[hn - 1] * hc_g(hn * f) * 0.5;
       ps = wt_phi[pb + hn - 1] - PI * 0.5;
       re = a * cos(ps); im = a * sin(ps);
       b[2*hn] = re; b[2*hn + 1] = im; b[2*(WTN - hn)] = re; b[2*(WTN - hn) + 1] = -im;
@@ -469,7 +513,7 @@ function wt_build(p, slot, f) local(q, b, hn, nrm, a, ps, re, im, fr, pb) (
   );
   fft_ipermute(b, WTN); ifft(b, WTN);
   wt_act[p] = q; wt_xf[p] = wt_slot[p] < 0 ? 0 : WT_XF; wt_wait[p] = WT_XF;
-  wt_slot[p] = slot; wt_otv[p] = ot_ver; wt_hv[p] = harm_ver; wt_f[p] = f; wt_hct[p] = hc_on ? hc_top : 0;
+  wt_slot[p] = slot; wt_otv[p] = wt_otver(lk); wt_cap[p] = lay_nharm[lk]; wt_hv[p] = harm_ver; wt_f[p] = f; wt_hct[p] = hc_on ? hc_top : 0;
   wt_nb[p] = fr > 0 ? floor(hc_bound / fr) : NHARM + 1;
 );
 // Rebuild position p's table when what it holds has changed: another slot, a capture, the Overtone
@@ -478,7 +522,7 @@ function wt_build(p, slot, f) local(q, b, hn, nrm, a, ps, re, im, fr, pb) (
 function wt_check(p, slot, f) local(fr, nb) (
   wt_wait[p] > 0 ? wt_wait[p] -= 1;
   fr = f * (1 + voice_detune); nb = fr > 0 ? floor(hc_bound / fr) : NHARM + 1;
-  (wt_slot[p] != slot || wt_otv[p] != ot_ver || wt_hv[p] != harm_ver || wt_hct[p] != (hc_on ? hc_top : 0) ||
+  (wt_slot[p] != slot || wt_otv[p] != wt_otver(floor(p / 2)) || wt_cap[p] != lay_nharm[floor(p / 2)] || wt_hv[p] != harm_ver || wt_hct[p] != (hc_on ? hc_top : 0) ||
    min(nb, NHARM + 1) != min(wt_nb[p], NHARM + 1) ||
    (hc_on && NHARM * f > hc_lo && abs(f - wt_f[p]) > 0.0001 * wt_f[p])) && (wt_wait[p] <= 0 || wt_slot[p] < 0) ? wt_build(p, slot, f);
 );
@@ -488,7 +532,7 @@ function wt_check(p, slot, f) local(fr, nb) (
 function wt_take(p, o) (
   wt_ph[p*2] = wt_ph[o*2]; wt_ph[p*2 + 1] = wt_ph[o*2 + 1]; wt_bank[p] = wt_bank[o];
   memcpy(wt_tab[p*2 + wt_act[p]], wt_tab[o*2 + wt_act[o]], 2*WTN); wt_xf[p] = 0;
-  wt_slot[p] = wt_slot[o]; wt_otv[p] = wt_otv[o]; wt_hv[p] = wt_hv[o]; wt_nb[p] = wt_nb[o]; wt_f[p] = wt_f[o]; wt_hct[p] = wt_hct[o];
+  wt_slot[p] = wt_slot[o]; wt_otv[p] = wt_otv[o]; wt_cap[p] = wt_cap[o]; wt_hv[p] = wt_hv[o]; wt_nb[p] = wt_nb[o]; wt_f[p] = wt_f[o]; wt_hct[p] = wt_hct[o];
 );
 function wt_read(p, ch, f) local(ph, x, i0, fr, t, v, m) (
   m = WTN - 1;
@@ -534,6 +578,8 @@ drift_list = freemem; freemem += DBANK;   // drifting entries, in dr_order's ord
 ramp_list  = freemem; freemem += DBANK;   // entries with a ramp duration (they advance)
 rofs_list  = freemem; freemem += DBANK;   // entries with a ramp amount (their offset can be non-zero)
 dl_n = 0; rl_n = 0; ro_n = 0;
+nlay_on = 0; base_gain = 1; lay_ot_any = 0; lay_ui_inited = 0; last_lay_selv = 1;
+i = 0; loop(16, layer_ratio[i] = 1; layer_gain[i] = i == 0; i += 1; );
 // Drift + Ramp on one (slot, target), in the target's own unit.
 function mo_q(k) ( target_drift_offset[k] + ramp_offset_mem[k]; );
 // (The amount units' conversion is below pv_semis, which it calls: EEL2 needs a function
@@ -688,6 +734,19 @@ function cut_slot_hz(sl, tgt, v, mode, funit, fine, bottom) local(cv, hz) (
 function dmodc(dmt, kind, bank, nu) (
   au_key(sb_i*DSTRIDE + dmt, kind, bank[sb_i], nu) * (1 - sb_f) + au_key(sb_j*DSTRIDE + dmt, kind, bank[sb_j], nu) * sb_f;
 );
+function lay_adopt() (
+  lay_ui_last[0] = slider51; lay_ui_last[1] = slider52; lay_ui_last[2] = slider53; lay_ui_last[3] = slider54;
+  lay_ui_last[4] = slider55; lay_ui_last[5] = slider56; lay_ui_last[6] = slider57; lay_ui_last[7] = slider58;
+  lay_ui_last[8] = slider59;
+);
+// A layer control moved: write the shown layer, or all sixteen on All.
+function lay_put(k, v, bank) local(lp) (
+  v != lay_ui_last[k] ? (
+    lay_selv == 0 ? ( lp = 0; loop(NLAY, bank[lp] = v; lp += 1; ); ) : ( bank[lay_sel] = v; );
+    lay_ui_last[k] = v;
+    k == 8 ? lay_ot_dirty = 1;
+  );
+);
 function ps_all(k, raw, v, bank) local(pa) (
   raw != ps_last[k] ? ( pa = 0; loop(NSLOTS, bank[pa] = v; pa += 1; ); ps_last[k] = raw; );
 );
@@ -722,6 +781,13 @@ slots_inited == 0 ? (
   i = 0; loop(NSLOTS, slot_grain[i] = 150; slot_hicut[i] = 0; slot_tmunit[i] = 0;
   slot_spmode[i] = 0; slot_spfunit[i] = 2; slot_spfine[i] = 0; slot_lcmode[i] = 0; slot_lcfunit[i] = 2; slot_lcfine[i] = 0;
   slot_hcmode[i] = 0; slot_hcfunit[i] = 2; slot_hcfine[i] = 0; i += 1; );   // Wash grain's default; cuts off
+  // Layers: Layer 1 is the original, on at 0 dB; the rest off at -6 dB, on the Morpher's pitches.
+  i = 0; loop(NLAY, lay_active[i] = i == 0; lay_db[i] = i == 0 ? 0 : -6; lay_punit[i] = 1; lay_fine[i] = 0; lay_funit[i] = 2;
+                    lay_solo[i] = 0; lay_nharm[i] = 0; lay_ot_harm[i] = -1; lay_otv[i] = 0; lay_ot_norm[i] = 1; i += 1; );
+  lay_semi[0] = 0;
+  lay_semi[1] = -48; lay_semi[2] = -36; lay_semi[3] = -24; lay_semi[4] = -12; lay_semi[5] = -7; lay_semi[6] = -5;
+  lay_semi[7] = 5;   lay_semi[8] = 7;   lay_semi[9] = 12;  lay_semi[10] = 24; lay_semi[11] = 36; lay_semi[12] = 48;
+  lay_semi[13] = -12; lay_semi[14] = 12; lay_semi[15] = -24;
   i = 0; loop(NBINS, doff[i] = rand(1)*2 - 1; i += 1; );
   // have / n_used live in this ONE-TIME guard so captures survive transport
   // play (@init re-runs on every play; if these were reset there, a capture
@@ -772,8 +838,10 @@ texture = 0.5; hlevel = 0.707; wlevel = 0.707;   // voice<->wash crossfade
 i = 0; loop(NHARM, hph[i] = rand(1)*TWOPI; hphB[i] = rand(1)*TWOPI; hphR[i] = hph[i]; hphBR[i] = hphB[i]; i += 1; );
 // The wavetable voice (2026-09-16) starts from those same phases: bank 0 is A's, bank 1 is B's.
 i = 0; loop(NHARM, wt_phi[i] = hph[i]; wt_phi[NHARM + i] = hphB[i]; i += 1; );
-i = 0; loop(2, wt_ph[i*2] = 0; wt_ph[i*2+1] = 0; wt_act[i] = 0; wt_xf[i] = 0; wt_wait[i] = 0;
-               wt_bank[i] = i; wt_slot[i] = -1; i += 1; );
+// Layers 2-16: fixed scattered phases (a hash, not rand(), so no random stream moves).
+i = NHARM*2; loop((NVOI - 2)*NHARM, wtq = sin(i * 12.9898 + 78.233) * 43758.5453; wt_phi[i] = (wtq - floor(wtq)) * TWOPI; i += 1; );
+i = 0; loop(NVOI, wt_ph[i*2] = 0; wt_ph[i*2+1] = 0; wt_act[i] = 0; wt_xf[i] = 0; wt_wait[i] = 0;
+                  wt_bank[i] = i; wt_slot[i] = -1; wt_cap[i] = 0; i += 1; );
 voice_detune = 0;   // right-channel voice detune amount (from Stereo width)
 // Overtone: gains start flat (feature off), and the smoothers start settled so
 // the first sample does not glide up from nowhere. ~30 ms takes the step out of
@@ -941,7 +1009,17 @@ function capture(slot) (
   (slot + 1) > n_used ? n_used = slot + 1;
 );
 
-function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir) (
+// A layer with its own Overtone harmonic, on the wash: the pre-overtone spectrum at srcb, lifted
+// around that layer's harmonic with the slots' lift and width and normalised by its own curve.
+function wash_own_ot(lk, srcb) local(b0, fr, m, lb, od, ow) (
+  b0 = floor(srcb); fr = srcb - b0; m = curmag_pre[b0]*(1-fr) + curmag_pre[b0+1]*fr;
+  lb = ot_f0mix * lay_ot_harm[lk] * ot_bpf;
+  (lay_ot_harm[lk] > 0 && srcb > ot_f0bin && abs(srcb - lb) < ot_binw) ? (
+    od = abs(srcb - lb) / ot_binw; ow = 0.5 + 0.5*wtsin(od*PI + PI*0.5);
+    m * (1 + (ot_boost - 1)*ow) * lay_ot_norm[lk];
+  ) : m * lay_ot_norm[lk];
+);
+function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir, lq, lm, od, ow, lb) (
   woff = eff_stereo_width * 0.01 * PI;   // eff_ = base + Drift offset (set per-sample)
   // Build a Hermitian-symmetric spectrum so ifft() returns a REAL signal:
   // fill bins 0..N/2 from the magnitude data, mirror them as conjugates.
@@ -951,8 +1029,26 @@ function build_spectrum(useR) local(i, srcb, b0, fr, m, ph, woff, re, im, mir) (
     // same frequency is read whatever size the synthesis FFT currently is.
     // No pitch term: transposition is applied per slot in gen_grain, before the
     // two spectra are blended. GR only maps grain grid -> analysis grid.
-    srcb = i * GR;
+    srcb = i * GR / layer_ratio[0];   // Layer 1 moves like any layer; exactly i * GR at ratio 1
     (srcb >= 0 && srcb < NBINS - 1) ? ( b0 = floor(srcb); fr = srcb - b0; m = (curmag[b0]*(1-fr) + curmag[b0+1]*fr) * GINV; ) : ( m = 0; );
+    lay_ot_pre && lay_ot_harm[0] >= 0 ? m = wash_own_ot(0, srcb) * GINV;
+    m *= base_gain;
+    // Layers 2-16 on the wash: the same spectrum read again at each layer's ratio and summed in,
+    // sharing this bin's random phase (a phase-randomised bed is noise wherever two land).
+    nlay_on ? (
+      lq = 1;
+      loop(NLAY - 1,
+        layer_gain[lq] > 0.0001 ? (
+          srcb = i * GR / layer_ratio[lq];
+          (srcb >= 0 && srcb < NBINS - 1) ? (
+            lay_ot_pre && lay_ot_harm[lq] >= 0 ? ( lm = wash_own_ot(lq, srcb); ) : (
+              b0 = floor(srcb); fr = srcb - b0; lm = curmag[b0]*(1-fr) + curmag[b0+1]*fr; );
+            m += layer_gain[lq] * lm * GINV;
+          );
+        );
+        lq += 1;
+      );
+    );
     // High cut, after each slot's transposition: i is an absolute output frequency.
     hc_on ? ( i >= hcg_hi ? ( m = 0; ) : ( i > hcg_lo ? ( m *= (hcg_hi - i) * hcg_inv; ); ); );
     ph = phase[i] + (useR ? woff*doff[i] : 0);
@@ -1063,9 +1159,11 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   // SAME smoothed controls the voice uses, so the two engines stay in step
   // through a Texture blend rather than describing different overtones.
   ot_wash = (ot_on && ot_bin > 0) ? 1 : 0;
+  lay_ot_pre = ot_wash && lay_ot_any && nlay_on;
   i = 0;
   loop(NBINS,
     i < cutbin ? ( curmag[i] = 0; ) : ( curmag[i] = max(0, curmag[i] - thr); );
+    lay_ot_pre ? curmag_pre[i] = curmag[i];
     ot_wash ? (
       // Bins under the fundamental's own peak are never lifted, mirroring harmonic
       // 1 in the voice: it is the drone the overtone sings over. They still take
@@ -1650,11 +1748,43 @@ ot_width     = max(0.5, min(4, slider49));
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
 drift_restart_free = slider79;   // 0 = restart on play (sync), 1 = free-running
+// --- Layers (2026-09-16), the Morpher's model: the selector is a view, every edit is written as it
+//     happens, only a control actually moved is written, and on All it reaches all sixteen. Nothing
+//     is written until @block or @serialize has adopted what is on screen.
+lay_selv = max(0, min(NLAY, floor(slider50 + 0.5)));
+lay_sel  = lay_selv == 0 ? 0 : lay_selv - 1;
+lay_ui_inited ? (
+  last_lay_selv != lay_selv ? (
+    slider51 = lay_active[lay_sel]; slider52 = lay_punit[lay_sel]; slider53 = lay_semi[lay_sel];
+    slider54 = lay_funit[lay_sel];  slider55 = lay_fine[lay_sel];  slider56 = lay_db[lay_sel];
+    slider57 = lay_solo[lay_sel];   slider58 = lay_nharm[lay_sel]; slider59 = lay_ot_harm[lay_sel];
+    sliderchange(-1);
+    lay_adopt(); last_lay_selv = lay_selv;
+  ) : (
+    lay_put(0, slider51, lay_active); lay_put(1, slider52, lay_punit); lay_put(2, slider53, lay_semi);
+    lay_put(3, slider54, lay_funit);  lay_put(4, slider55, lay_fine);  lay_put(5, slider56, lay_db);
+    lay_put(6, slider57, lay_solo);   lay_put(7, slider58, lay_nharm); lay_put(8, slider59, lay_ot_harm);
+  );
+);
 
 @block
 // All slots: adopt what is on screen once the instance is configured, so the first
 // change-detected pass on All compares against real values, not defaults.
 !ps_inited ? ( ps_adopt(); ps_inited = 1; );
+!lay_ui_inited ? ( last_lay_selv = max(0, min(NLAY, floor(slider50 + 0.5))); lay_adopt(); lay_ui_inited = 1; );
+// Layers (2026-09-16): derived from the banks, so here and not in @slider. Solo overrides Active, as in
+// the Morpher: any layer soloed silences every layer that is not, the original included.
+lay_any_solo = 0; lz = 0; loop(NLAY, lay_solo[lz] >= 0.5 ? lay_any_solo = 1; lz += 1; );
+nlay_on = 0; lay_ot_any = 0; lz = 0;
+loop(NLAY,
+  layer_ratio[lz] = pow(2.0, (pv_semis(lay_punit[lz], lay_semi[lz]) + pv_semis(lay_funit[lz], lay_fine[lz])) / 12);
+  lay_aud = lay_any_solo ? (lay_solo[lz] >= 0.5) : (lay_active[lz] >= 0.5);
+  layer_gain[lz] = (lay_aud < 0.5 || lay_db[lz] <= -60) ? 0 : pow(10, lay_db[lz] / 20);
+  (lz > 0 && layer_gain[lz] > 0.0001) ? ( nlay_on = 1; lay_ot_harm[lz] >= 0 ? lay_ot_any = 1; );
+  lz += 1;
+);
+lay_ot_harm[0] >= 0 && layer_gain[0] > 0.0001 ? lay_ot_any = 1;
+base_gain = layer_gain[0];
 // Per-slot Wash grain (2026-09-11). A project saved before it existed played every slot
 // at its one Wash grain, so loading a save older than 7700008 seeds all eight from that
 // value; a 7700008 save holds each slot's own and seeds nothing. The
@@ -2226,11 +2356,11 @@ audition_mode < 0.5 ? (
 (vsi != last_vsi || vsj != last_vsj) ? (
   (vsi == last_vsj && vsi != last_vsi) ? (
     vcp = 0; loop(NHARM, hph[vcp]  = hphB[vcp]; hphR[vcp]  = hphBR[vcp]; vcp += 1; );
-    wt_take(0, 1);
+    wtk = 0; loop(NLAY, wt_take(wtk*2, wtk*2 + 1); wtk += 1; );
   ) : (
     (vsj == last_vsi && vsj != last_vsj) ? (
       vcp = 0; loop(NHARM, hphB[vcp] = hph[vcp];  hphBR[vcp] = hphR[vcp];  vcp += 1; );
-      wt_take(1, 0);
+      wtk = 0; loop(NLAY, wt_take(wtk*2 + 1, wtk*2); wtk += 1; );
     );
   );
   last_vsi = vsi; last_vsj = vsj;
@@ -2421,7 +2551,8 @@ abs(ot_depth_db - ot_db_smooth) < 0.0005 ? ot_db_smooth = ot_depth_db : ot_db_sm
 ot_w_eff = mod_active[17] ? max(0.5, min(4, ot_width + mo_q(17))) : ot_width;   // Overtone width (17)
 abs(ot_w_eff - ot_w_smooth)  < 0.0005 ? ot_w_smooth  = ot_w_eff  : ot_w_smooth  += (ot_w_eff  - ot_w_smooth)  * ot_coeff;
 ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
-(ot_on != ot_on_last || (ot_on && (ot_h_smooth != ot_h_last || ot_db_smooth != ot_db_last || ot_w_smooth != ot_w_last))) ? (
+(ot_on != ot_on_last || lay_ot_dirty || (ot_on && (ot_h_smooth != ot_h_last || ot_db_smooth != ot_db_last || ot_w_smooth != ot_w_last))) ? (
+  lay_ot_dirty = 0;
   ot_on ? (
     // --- A resonance is a PEAK. The chosen partial is LIFTED above where it sat;
     //     the others are left alone. The first build of this did the opposite --
@@ -2465,6 +2596,32 @@ ot_on = (ot_h_smooth >= 0.5 && ot_db_smooth > 0.01) ? 1 : 0;
     // Folded into the curve, so the voice loop needs no knowledge of any of this.
     oi = 0; loop(NHARM, ot_gain[oi] = ot_gain[oi] * ot_norm; oi += 1; );
     ot_boost = otg;                            // the wash rebuilds the window itself
+    // A layer with its own Overtone harmonic (2026-09-16, the Morpher's): the same curve and power
+    // normalisation, centred on its harmonic. Lift and width are the slots'.
+    lok = 0;
+    loop(NLAY,
+      lay_ot_harm[lok] >= 0 ? (
+        lobo = lok*NHARM;
+        oi = 0; loop(NHARM, lay_ot_gain[lobo+oi] = 1; oi += 1; );
+        lay_ot_harm[lok] > 0 ? (
+          olo = max(1, ceil(lay_ot_harm[lok] - otw));
+          ohi = min(NHARM, floor(lay_ot_harm[lok] + otw));
+          oi = olo;
+          loop(max(0, ohi - olo + 1),
+            od = abs(oi - lay_ot_harm[lok]) / otw;
+            ow = od >= 1 ? 0 : (0.5 + 0.5*wtsin(od*PI + PI*0.5));
+            lay_ot_gain[lobo+oi-1] = 1 + (otg - 1)*ow;
+            oi += 1;
+          );
+          lay_ot_gain[lobo] = 1;
+        );
+        opw = 0; oi = 0; loop(NHARM, opw += lay_ot_gain[lobo+oi]*lay_ot_gain[lobo+oi]; oi += 1; );
+        lay_ot_norm[lok] = opw > 0 ? sqrt(NHARM / opw) : 1;
+        oi = 0; loop(NHARM, lay_ot_gain[lobo+oi] = lay_ot_gain[lobo+oi] * lay_ot_norm[lok]; oi += 1; );
+        lay_otv[lok] += 1;
+      );
+      lok += 1;
+    );
   ) : (
     oi = 0; loop(NHARM, ot_gain[oi] = 1; oi += 1; );
     ot_boost = 1; ot_norm = 1;
@@ -2517,19 +2674,42 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
   fB = slot_f0[vsj] * pitch_ratio_B; normB = slot_hnorm[vsj]; normB <= 0 ? normB = 1;
   // One wavetable per voice (2026-09-16): see wt_build. Same partials, same phases, same
   // detuned right channel; the sine bank below this comment's old place ran 64 sines per channel.
-  wt_check(0, vsi, fA); wt_check(1, vsj, fB);
+  // Layer 1 is the original: its ratio and gain (1 and 1 unless moved, which multiply exactly).
+  fAo = fA * layer_ratio[0]; fBo = fB * layer_ratio[0];
+  wt_check(0, vsi, fAo); wt_check(1, vsj, fBo);
   voice_detune > 0 ? (
-    fAL = fA*(1-voice_detune); fAR = fA*(1+voice_detune);
-    fBL = fB*(1-voice_detune); fBR = fB*(1+voice_detune);
+    fAL = fAo*(1-voice_detune); fAR = fAo*(1+voice_detune);
+    fBL = fBo*(1-voice_detune); fBR = fBo*(1+voice_detune);
     vvAL = wt_read(0, 0, fAL); vvAR = wt_read(0, 1, fAR);
     vvBL = wt_read(1, 0, fBL); vvBR = wt_read(1, 1, fBR);
-    hVL = ((1-vmfr)*vvAL + vmfr*vvBL) * 0.08;   // ~match the wash's ~0.1 RMS
-    hVR = ((1-vmfr)*vvAR + vmfr*vvBR) * 0.08;
+    hVL = base_gain * ((1-vmfr)*vvAL + vmfr*vvBL) * 0.08;   // ~match the wash's ~0.1 RMS
+    hVR = base_gain * ((1-vmfr)*vvAR + vmfr*vvBR) * 0.08;
   ) : (
     // Mono (Stereo width 0): one table read per voice, L = R.
-    vvA = wt_read(0, 0, fA); vvB = wt_read(1, 0, fB);
-    hVL = ((1-vmfr)*vvA + vmfr*vvB) * 0.08;
+    vvA = wt_read(0, 0, fAo); vvB = wt_read(1, 0, fBo);
+    hVL = base_gain * ((1-vmfr)*vvA + vmfr*vvB) * 0.08;
     hVR = hVL;
+  );
+  // Layers 2-16: the same two voices at each layer's ratio, gated on the layer's gain, so a layer
+  // that is off costs nothing. Each has its own tables and phases.
+  nlay_on ? (
+    lyk = 1;
+    loop(NLAY - 1,
+      lyg = layer_gain[lyk];
+      lyg > 0.0001 ? (
+        lyfa = fA * layer_ratio[lyk]; lyfb = fB * layer_ratio[lyk];
+        wt_check(lyk*2, vsi, lyfa); wt_check(lyk*2 + 1, vsj, lyfb);
+        voice_detune > 0 ? (
+          hVL += lyg * ((1-vmfr)*wt_read(lyk*2, 0, lyfa*(1-voice_detune)) + vmfr*wt_read(lyk*2 + 1, 0, lyfb*(1-voice_detune))) * 0.08;
+          hVR += lyg * ((1-vmfr)*wt_read(lyk*2, 1, lyfa*(1+voice_detune)) + vmfr*wt_read(lyk*2 + 1, 1, lyfb*(1+voice_detune))) * 0.08;
+        ) : (
+          lyv = lyg * ((1-vmfr)*wt_read(lyk*2, 0, lyfa) + vmfr*wt_read(lyk*2 + 1, 0, lyfb)) * 0.08;
+          hVL += lyv; hVR += lyv;
+        );
+        wt_xf[lyk*2] > 0 ? wt_xf[lyk*2] -= 1; wt_xf[lyk*2 + 1] > 0 ? wt_xf[lyk*2 + 1] -= 1;
+      );
+      lyk += 1;
+    );
   );
   wt_xf[0] > 0 ? wt_xf[0] -= 1; wt_xf[1] > 0 ? wt_xf[1] -= 1;
 ) : ( hVL = 0; hVR = 0; );
@@ -2896,6 +3076,9 @@ file_var(0, ser_magic);
     file_mem(0, slot_spmode, NSLOTS); file_mem(0, slot_spfunit, NSLOTS); file_mem(0, slot_spfine, NSLOTS);
     file_mem(0, slot_lcmode, NSLOTS); file_mem(0, slot_lcfunit, NSLOTS); file_mem(0, slot_lcfine, NSLOTS);
     file_mem(0, slot_hcmode, NSLOTS); file_mem(0, slot_hcfunit, NSLOTS); file_mem(0, slot_hcfine, NSLOTS);
+    file_mem(0, lay_active, NLAY); file_mem(0, lay_semi, NLAY); file_mem(0, lay_punit, NLAY); file_mem(0, lay_fine, NLAY);
+    file_mem(0, lay_funit, NLAY);  file_mem(0, lay_db, NLAY);   file_mem(0, lay_solo, NLAY);  file_mem(0, lay_nharm, NLAY);
+    file_mem(0, lay_ot_harm, NLAY);
   ) : file_avail(0) >= 0 ? (
     hco = 0; loop(NSLOTS, slot_hicut[hco] >= 19999.5 ? slot_hicut[hco] = 0; hco += 1; );
   );
@@ -2989,6 +3172,11 @@ file_var(0, ser_magic);
       slider42 = slot_hcmode[cps]; slider45 = slot_hcfunit[cps]; slider46 = slot_hcfine[cps];
     );
     tuning_ref = slider30 >= 20 ? slider30 : 440;
+    dlay = max(0, min(NLAY, floor(slider50 + 0.5))); dlay = dlay == 0 ? 0 : dlay - 1;
+    slider51 = lay_active[dlay]; slider52 = lay_punit[dlay]; slider53 = lay_semi[dlay]; slider54 = lay_funit[dlay];
+    slider55 = lay_fine[dlay]; slider56 = lay_db[dlay]; slider57 = lay_solo[dlay]; slider58 = lay_nharm[dlay];
+    slider59 = lay_ot_harm[dlay];
+    lay_adopt(); lay_ui_inited = 1; last_lay_selv = max(0, min(NLAY, floor(slider50 + 0.5))); lay_ot_dirty = 1;
     slider38 = cut_note(slider37, slider39); slider43 = cut_note(slider42, slider44);
 
     sliderchange(-1);
