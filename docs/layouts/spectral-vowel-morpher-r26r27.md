@@ -37,6 +37,105 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
   gen_grain's running-total blur). No note name: *"We don't need note names in there cause we're not setting them by that,
   it's just semitones worth of width."* So: Spread unit, Spread value, fine tune unit, fine tune.
 
+## The full order, DRAFT 2026-09-16 -- being walked through with Rozaya
+
+64 -> 79 controls. `was` is today's slider id. Nothing here is built.
+
+```
+Capture
+ 1  Capture slot                                   was 1
+ 2  Capture now                                    was 2
+ 3  Capture point (%, earliest .. at press)        was 3
+ 4  Capture average (frames, all slots, ...)       was 4
+The morph
+ 5  Audition                                       was 5
+ 6  Morph (% across captured slots)                was 6
+ 7  Auto-morph                                     was 7
+ 8  Rate mode                  (name: ASK)         was 9   mode before value
+ 9  Auto-morph time            (name: ASK)         was 8
+The sound
+10  Texture (% wash)                               was 10
+11  Wash grain (ms)                                was 11  no longer a target
+12  Spread unit {Hz, Semitones, Cents}             NEW     saved copies: Hz
+13  Spread value                                   was 12
+14  Spread fine tune unit                          NEW
+15  Spread fine tune                               NEW     0
+Pitch
+16  Source note                                    was 13
+17  Source fine tune unit                          was 15  mode before value
+18  Source fine tune                               was 14  becomes a target
+19  Target note                                    was 16
+20  Transpose unit                                 was 18  mode before value
+21  Transpose value                                was 17
+22  Fine tune unit                                 was 20  mode before value
+23  Fine tune                                      was 19
+24  Tuning reference (Hz)                          was 21
+25  Stereo width (%)                               was 22
+26  Denoise (%, wash only)                         was 23
+27  Low cut pitch mode {Hz, Semitones, Cents}      NEW     saved copies: Hz
+28  Low cut note name                              NEW
+29  Low cut value                                  was 24  (off: ASK)
+30  Low cut fine tune unit                         NEW
+31  Low cut fine tune                              NEW
+32  High cut pitch mode                            NEW     saved copies: Hz
+33  High cut note name                             NEW
+34  High cut value                                 was 25  (off: ASK)
+35  High cut fine tune unit                        NEW
+36  High cut fine tune                             NEW
+37  Overtone harmonic                              was 26
+38  Overtone lift                                  was 27
+39  Overtone width                                 was 28
+Layers
+40  Layer                                          was 29
+41  Layer active                                   was 30
+42  Layer pitch unit                               was 32  mode before value
+43  Layer pitch value                              was 31
+44  Layer fine tune unit                           was 34  mode before value
+45  Layer fine tune                                was 33
+46  Layer level                                    was 35
+47  Layer solo                                     was 36
+48  Layer harmonics                                was 37  becomes a target (All + 16)
+49  Layer overtone harmonic                        was 38
+Levels
+50  Input level (dry, dB)                          was 39
+51  Output level (dB, ...)                         was 40
+Transport
+52  Transport unit {Seconds, Hz, Beats}            NEW     from Rate mode
+53  Start delay (in transport units)               was 41
+54  Play for (in transport units, 0 = always)      was 42
+55  Rest for (in transport units, 0 = always)      was 43
+56  Auto-morph rest mode                           was 44  renamed
+57  Output at rest                                 was 45
+Drift
+58  Drift target                                   was 46
+59  Drift amount unit                              was 49  mode before value
+60  Drift up amount                                was 47
+61  Drift down amount                              was 48
+62  Drift period unit (per target)                 was 51  mode before value, loses (all targets)
+63  Drift period                                   was 50
+64  Drift movement                                 NEW     With the target
+65  Drift shape                                    was 52
+66  Drift play for                                 was 53
+67  Drift rest for                                 was 54
+68  Drift rest mode                                NEW     Walk through
+69  Drift restart (all targets)                    was 55
+Ramp
+70  Ramp target                                    was 56
+71  Ramp by unit                                   was 58  mode before value
+72  Ramp by                                        was 57
+73  Ramp time unit (per target)                    was 59  loses (all targets)
+74  Ramp duration                                  was 60
+75  Ramp play for                                  was 61
+76  Ramp rest for                                  was 62
+77  Ramp rest mode                                 NEW     Walk through
+78  Ramp engage (all targets)                      was 63
+79  Ramp start delay                               was 64
+```
+
+Targets (Drift and Ramp share one list, control order): today's 87, minus Wash grain, plus
+Source fine tune, Spread fine tune, Low cut fine tune, High cut fine tune, and Layer
+harmonics (all layers) + 16 -- 107. Confirm the four fine tunes with Rozaya.
+
 ## Still to talk through
 
 - Drift period unit and Ramp time unit per target.
