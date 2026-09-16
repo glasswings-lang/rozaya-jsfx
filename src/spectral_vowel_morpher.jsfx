@@ -362,6 +362,10 @@ slider65:0<0,2,1{Sine,Triangle,Random}>Drift shape
 //     nearly inaudible. Confirmed by simulating the loop, not by reading it.
 slider66:0<0,1000,0.01>Drift play for (periods, 0 = always)
 slider67:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+// R27, 2026-09-16: a transport rest freezes the drift only if this says so. Sits IN the block
+// it freezes (Rozaya: "Otherwise we get slider scatter stuff"). Walk through is what every
+// saved copy did.
+slider68:0<0,1,1{Walk through,Freeze in place}>Drift rest mode
 
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
@@ -405,6 +409,8 @@ slider74:0<0,1000,0.01>Ramp duration (in ramp time units)
 // crossing each other on the way, and landing on the destination together.
 slider75:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider76:0<0,1000,0.01>Ramp rest for (0 = smooth)
+// R27, 2026-09-16, as Drift rest mode, for the ramps.
+slider77:0<0,1,1{Walk through,Freeze in place}>Ramp rest mode
 slider78:0<0,1,1{Off,On}>Ramp engage (all targets)
 slider79:0<0,1000,0.01>Ramp start delay (in ramp time units)
 
@@ -765,7 +771,7 @@ morph_at_rest = 0; out_at_rest = 0; drift_per_k = 1; tu_inited = 0;
 // very first block cannot read a zero and stall a period. @block overwrites
 // both every block thereafter.
 drift_unit_sec = 1; ramp_unit_sec = 60;
-in_rest = 0; in_start_delay = 0; mod_frozen = 0; morph_frozen = 0;
+in_rest = 0; in_start_delay = 0; mod_frozen = 0; ramp_frozen = 0; morph_frozen = 0;
 // Scramble the RNG per load: EEL rand() otherwise replays the SAME sequence
 // every session, so Drift would wander the identical path each time you open the
 // project. Advance it a sub-second-time-dependent number of steps so each load
@@ -1960,11 +1966,12 @@ start_delay_elapsed < start_delay_sec ? (
 // matches the sweeping filters, where the delay skips the whole engine: the
 // delay means "the piece has not begun yet", and arriving mid-wander defeats it.
 //
-// A REST holds only the MORPH WALK, and only on Freeze in place. Drift and Ramp
-// keep running through a rest, which is what every sibling does -- their "LFO at
-// rest" freezes the LFO and nothing else.
+// A REST holds each moving thing only if its own switch says Freeze in place: the morph
+// walk on Auto-morph rest mode, the drifts on Drift rest mode, the ramps on Ramp rest mode
+// (R27, 2026-09-16; before that a rest held only the walk, which Walk through reproduces).
 in_start_delay = start_delay_elapsed < start_delay_sec;
-mod_frozen     = in_start_delay;                                    // Drift, Ramp
+mod_frozen     = in_start_delay || (in_rest && slider68 == 1);      // Drift (Drift rest mode, 2026-09-16)
+ramp_frozen    = in_start_delay || (in_rest && slider77 == 1);      // Ramp (Ramp rest mode)
 morph_frozen   = in_start_delay || (in_rest && morph_at_rest == 1); // the walk
 
 // --- Drift: advance each CONFIGURED target and compute its current offset.
@@ -2030,7 +2037,7 @@ loop(N_TARGETS,
 // mod_frozen holds every ride during the Start delay. A REST does not stop a
 // ride -- that matches the siblings. Engage is unchanged and still the
 // user's own freeze/resume switch; this is the transport's.
-ramp_engaged && !mod_frozen ? (
+ramp_engaged && !ramp_frozen ? (
   ri = 0;
   loop(N_TARGETS,
     ramp_dur_mem[ri] > 0 ? (

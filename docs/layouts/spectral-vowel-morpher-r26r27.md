@@ -196,6 +196,10 @@ magic in Python, keyed on the magic. Survey helpers were in the session scratchp
   breathing.RPP vs new pinned build on `convert_line`: bit-identical as saved, with play/rest
   in seconds, and under Every N beats at 97 BPM. Checks: tools/morpher_r26r27_checks/
   (stage_check.py needs a scratch dir holding pin/old and pin/new copies, `_tp` pinned).
+- **Stage 4, Drift rest mode (68) and Ramp rest mode (77), DONE:** global, Walk through by
+  default. Unset slots read as Walk through, so no seed. Bit-identical on breathing.RPP as
+  saved and with play/rest; a probe showed drift and ramp offsets frozen through every rest on
+  Freeze in place and moving on Walk through.
 - Stage 4 rest switches; 5 per-target units, Drift movement mode,
   target list 87 -> 107 and blob 7700107; 6 Spread block; 7 cut blocks; 8 new targets wired;
   9 migration, verify, install.
