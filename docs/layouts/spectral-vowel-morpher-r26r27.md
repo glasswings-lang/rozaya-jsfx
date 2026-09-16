@@ -39,7 +39,8 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
 
 ## The full order, DRAFT 2026-09-16 -- being walked through with Rozaya
 
-64 -> 79 controls. `was` is today's slider id. Nothing here is built.
+64 -> 79 controls. Rate pair renamed on Rozaya's *"we can try it, it can't hurt. renames are
+free if it turns out I hate it."* `was` is today's slider id. Nothing here is built.
 
 ```
 Capture
@@ -51,8 +52,8 @@ The morph
  5  Audition                                       was 5
  6  Morph (% across captured slots)                was 6
  7  Auto-morph                                     was 7
- 8  Rate mode                  (name: ASK)         was 9   mode before value
- 9  Auto-morph time            (name: ASK)         was 8
+ 8  Auto-morph rate mode                           was 9   mode before value, renamed
+ 9  Auto-morph rate value                          was 8   renamed
 The sound
 10  Texture (% wash)                               was 10
 11  Wash grain (ms)                                was 11  no longer a target
