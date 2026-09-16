@@ -80,40 +80,40 @@ Crossfades across the captured slots. Pitch-preserving — each slot plays at it
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. One full pass takes one Auto-morph time, so each slot gets an equal share of it — same timing and same gentle crossfades as Sweep, just shuffled (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
-**Auto-morph time** `0.01 to 1000, default 20`
-How fast the motion moves. For Sweep/Glide it's the duration of one pass; for Shuffle it's the duration of one full pass through *all* your slots (each slot gets an equal fraction). Lower it for quick wandering, raise it for a long, slow motion. Its unit is **Rate Mode**, right below it (see the Rate Mode section).
+**Auto-morph rate mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`
+What Auto-morph rate value is counted in. In front of its value since 2026-09-16, as every mode in the suite is. (Named *Rate mode* until then.)
 
-**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`
-What Auto-morph time is counted in. *(Below its value since 2026-09-13, the way every rate block in the suite reads: the number, then its unit.)*
+**Auto-morph rate value** `0.01 to 1000, default 20`
+How fast the motion moves. For Sweep/Glide it's one pass; for Shuffle it's one full pass through *all* your slots (each slot gets an equal share). In Seconds, lower it for quick wandering, raise it for a long slow motion. (Named *Auto-morph time* until 2026-09-16.)
 
 **Texture (% wash)** `0 to 100, default 50`
 Crossfades 0 = Voice (harmonic, keeps the vowel) to 100 = Wash (spectral, breathy bed). The middle layers both — vowel plus air.
 
 **Wash grain (ms)** `5 to 1000, default 150`
-The wash's grain length: short = rougher and grainier, long = glassier and smoother. Affects only the wash; cheap and safe to automate.
-
-**Spread (Hz)** `0 to 1000, default 0`
-Blurs the spectrum across frequency — diffuses a narrow capture into a wider noise bed.
+The wash's grain length: short = rougher and grainier, long = glassier and smoother. Affects only the wash; cheap and safe to automate by hand. **Not a Drift or Ramp target since 2026-09-16:** a fast drift on it made the wash wobble in loudness whatever the timing, and no saved project drove it.
 
 **The pitch block** — added 2026-09-13, the same controls Passage and Bubbler have, here for the whole plugin. Transposes both engines, tape-style (formants move with pitch), so one capture covers a range of "body sizes." Every layer's pitch is an offset from this, so the whole stack moves together.
 
-**Source note (where zero is)** `None, C-1 to G9, default None`
+**Pitch source note (where zero is)** `None, C-1 to G9, default None`
 Tell the plugin what note your capture already is, and you can then pick the note you want by name in **Target note**. It never changes the sound on its own — it only says what 0 semitones means. At **None** nothing is measured from it.
 
-**Source fine tune (only with a Source note, in Semitones)** `-1000 to 1000, default 0` and **Source fine tune unit** `Hz / Semitones / Cents, default Cents`
-For a capture that sits between two notes — say C4 a little flat. Like Source note it changes nothing you hear; it corrects what Target note counts from. It only acts while a Source note is set and Transpose unit is Semitones, which its name says.
+**Pitch source fine tune unit** `Hz / Semitones / Cents, default Cents` then **Pitch source fine tune (only with a Pitch source note, in Semitones)** `-1000 to 1000, default 0`
+For a capture that sits between two notes — say C4 a little flat. It corrects what Pitch target note counts from. Set by hand it changes nothing you hear; as a **Drift or Ramp target** (since 2026-09-16) it moves the pitch the OPPOSITE way to the drift, and only while a Pitch source note is set and Pitch transpose mode is Semitones.
 
-**Target note (only with a Source note, in Semitones)** `C-1 to G9`
-Pick the note you want the capture to sound as. It writes the shift into Transpose value for you. Shown only while a Source note is set and Transpose unit is Semitones.
+**Pitch target note (only with a Pitch source note, in Semitones)** `C-1 to G9`
+Pick the note you want the capture to sound as. It writes the shift into Transpose value for you. Shown only while a Pitch source note is set and Pitch transpose mode is Semitones.
 
-**Transpose value (Hz / semitones / cents)** `-20000 to +20000, default 0` and **Transpose unit** `Hz / Semitones / Cents, default Semitones`
+**Pitch transpose mode** `Hz / Semitones / Cents, default Semitones` then **Pitch transpose value (Hz / semitones / cents)** `-20000 to +20000, default 0`
 How far to shift, in the unit you choose. Hz counts from the **Tuning reference**. (Named *Pitch (semitones)* until 2026-09-13; saved projects keep their number, in Semitones.) Drift and Ramp are applied on top and are **not** clipped back to the slider range, so modulation can carry the pitch beyond it.
 
-**Fine tune** `-1000 to 1000, default 0` and **Fine tune unit** `Hz / Semitones / Cents, default Cents`
+**Pitch fine tune unit** `Hz / Semitones / Cents, default Cents` then **Pitch fine tune** `-1000 to 1000, default 0`
 A small correction added to Transpose, in its own unit.
 
 **Tuning reference (Hz)** `20 to 2000, default 440`
 What A4 is, for every value in Hz. Heard only where something is in Hz.
+
+**Spread pitch mode** `Hz / Semitones / Cents, default Hz`, **Spread value (Hz / semitones / cents)** `0 to 1000, default 0`, **Spread fine tune unit** `default Cents` and **Spread fine tune** `-1000 to 1000, default 0`
+Blurs the spectrum across frequency — each frequency's loudness is averaged with its neighbours, so harmonic peaks smear into humps and the gaps between them fill in: breathier, airier, less clearly pitched. Wash only. **In Hz** the blur is one fixed width everywhere (it swallows the gaps between low harmonics and barely touches high ones) — exactly the Spread it always was. **In Semitones or Cents** each frequency blurs that interval either side, so it is even across the range. A fine tune in Hz widens both sides by that many Hz; in Semitones or Cents it scales or adds to the width. After the pitch block since 2026-09-16 — Rozaya: *"spread is what you do after you've set a pitch"*.
 
 **Stereo width (%)** `0 to 100, default 50`
 Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phase (mono-safe). In the voice it runs a slightly-detuned copy on the right channel (up to ~14 cents at 100), so the two sides beat slowly against each other — real width plus a shimmer that softens the robotic edge of the pure harmonics. At 0 the voice is exactly mono (unchanged from older projects). The detuned voice is only computed when the voice is actually audible (Texture below full wash), so living on the wash costs nothing.
@@ -121,10 +121,12 @@ Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phas
 **Denoise (%, wash only)** `0 to 100, default 0`
 Spectral subtraction on the wash — raise to thin toward the strongest partials (more tonal, more gated). The voice engine never reads it, which its name now says (it was *Denoise (%)*, same control, same values).
 
-**Low cut (Hz)** `0 to 20000, default 0`
+**Low cut pitch mode** `Hz / Semitones / Cents, default Hz`, **Low cut note name** `Off, C-1 to G9`, **Low cut value (0 = off)** `0 to 20000`, **Low cut fine tune unit** and **Low cut fine tune**
+A pitch block since 2026-09-16. **0 means off in every unit**, and the note list starts on a dedicated Off. In Semitones the value is a note number (69 = A4); in Cents, that times 100. The note name and the value follow each other, and switching the mode keeps the frequency. A drift on a cut that is on stops just above 0 rather than switching it off, and moves nothing while it is off.
 Removes low rumble from the resynth. It is applied to the captured spectrum *before* the pitch shift, so it **moves with Pitch** — pitch a capture down an octave and its low cut comes down with it. That is how it has always behaved and it is left alone so existing projects sound the same; High cut, below, deliberately works the other way.
 
-**High cut (Hz)** `200 to 20000, default 20000 (off)`
+**High cut pitch mode**, **High cut note name**, **High cut value (0 = off)**, **High cut fine tune unit** and **High cut fine tune** — the same block as Low cut, default off
+Off was 20000 until 2026-09-16; saved projects on 20000 were moved to 0. On, it still stops at 200 Hz under a drift, and reaching 20000 still counts as off.
 The top end of the same pair — takes the fizz and hiss off the resynth. Two things make it more than a mirror of Low cut, and both matter if you use Layers:
 
 - It sits at an **absolute** frequency, applied *after* the pitch shift. It stays where you set it while Pitch and any Layers transpose underneath it. That is what lets an octave-up Layer be tamed at all; a cut that slid up with the layer would follow the fizz instead of catching it.
@@ -193,10 +195,10 @@ Which layer you are setting. **All** reaches every layer at once — but only th
 **Layer active (per layer)** `Inactive / Active, default Active`
 Silences the selected layer **without losing its level**. −60 means "this layer is silent because that's the level I want"; Inactive means "silence it and give it back to me later." Costs nothing while off. Drift and Ramp move the *level*, never this switch.
 
-**Layer pitch value (Hz / semitones / cents, per layer)** `-20000 to +20000` and **Layer pitch unit (per layer)** `Hz / Semitones / Cents, default Semitones`
-Where this layer sits, as an offset from Transpose, in the unit you choose. Hz counts from the Tuning reference. A Drift and Ramp target, for every layer.
+**Layer pitch mode (per layer)** `Hz / Semitones / Cents, default Semitones` then **Layer pitch value (Hz / semitones / cents, per layer)** `-20000 to +20000`
+Where this layer sits, as an offset from Pitch transpose, in the unit you choose. Hz counts from the Tuning reference. A Drift and Ramp target, for every layer.
 
-**Layer fine tune (per layer)** `-1000 to 1000, default 0` and **Layer fine tune unit (per layer)** `Hz / Semitones / Cents, default Cents`
+**Layer fine tune unit (per layer)** `Hz / Semitones / Cents, default Cents` then **Layer fine tune (per layer)** `-1000 to 1000, default 0`
 A small offset on top of the layer's pitch — a few cents for a slow beating unison. Also a Drift and Ramp target.
 
 **Layer level (dB, per layer, -60 = off)** `-60 to +24`
@@ -206,7 +208,7 @@ How loud the selected layer sits. **The number you set is the number you get**: 
 Audition one layer alone; solo more than one to hear those together. Solo **overrides Inactive**. While soloing, the wash's per-grain auto-gain lifts a quiet layer to a listening level, so solo is not for judging balance.
 
 **Layer harmonics (per layer, 0 = full)** `0 to 64, default 0`
-Caps how many partials this layer synthesises on the voice engine. 0 is uncapped. A CPU control, not a tone control — which is why it is not a Drift target.
+Caps how many partials this layer synthesises on the voice engine. 0 is uncapped. **A Drift and Ramp target since 2026-09-16** (all layers, and each of the sixteen), moving in whole partials — Rozaya, on the whole-step controls: *"I think they should be in the picker for drift, and ramp, for that matter."* A drift up from 0 caps a layer that was uncapped, so start from a count if you want it to thin and thicken.
 
 **Layer overtone harmonic (per layer, -1 = follow the global)** `-1 to 64, default -1`
 Which harmonic **this** layer lifts, when you want it to differ from the global **Overtone harmonic** — overtone on the lead, none on the drone. Lift and width stay global.
@@ -227,90 +229,44 @@ The master level for everything the plugin *makes* — the voice, the wash, and 
 
 *(Renamed from “Voice level”. Same slider, same behaviour, same saved values — the name was simply describing one part of what it did.)*
 
-### Rate Mode
+### Auto-morph rate mode
 
-**Rate Mode** `BPM / Seconds / Hz / Every N beats / N per beat` (default Seconds)
-
-The two host modes are reciprocals of each other: *Every N beats* means one
-morph takes that many beats, *N per beat* means that many morphs fit in a beat.
-Pick whichever puts whole numbers at the end of the range you are working in.
-*(Extended 2026-09-05; `Host x` was the old name for `Every N beats`.)*
-The suite's own four, same as Polyrhythm and Shepard Tone. It sets what
-**Auto-morph time** is measured in: cycles per minute, seconds per cycle, cycles
-per second, or beats per cycle when locked to the project.
-
-Changing it converts the value, so nothing changes audibly at the moment you
-change it — only the unit you type in. The conversion goes via seconds rather
-than pairing units off, because BPM and Hz invert the number while Seconds does
-not; round-tripped through all four at 140 BPM it returns exactly where it
-started.
-
-**Start delay, Play for and Rest for are durations**, so they are in seconds —
-or beats when Rate Mode is one of the two host modes. A start delay cannot be
-"4 Hz". That split follows the suite, which annotates a control only where sync
-actually changes its meaning.
-
-**Drift period used to be in that list and no longer is.** Since 2026-09-06 it
-has its own **Drift period unit** control, so Rate Mode has nothing to say about
-it — the number means whatever that control says. Ramp times work the same way,
-through **Ramp time unit**.
-
-**This was an on/off switch called `Sync to host` until 2026-09-04**, then briefly
-an invented `{Seconds, Minutes, Beats}` list of mine. Rozaya, on the first:
-*"bpm/seconds/hz/whatever belongs in a rate mode like everything else in the
-suite."* On the second: *"look to how the rest of the suite handles this too.
-these things don't exist in isolation."* Both right. Your projects were migrated
-so every existing instance still reads its Auto-morph time in seconds — without
-that they would have read it as BPM, turning a twenty-second morph into a
-three-second one.
-
-It is also **always visible** now. It used to hide unless Auto-morph was on,
-back when that was the only thing it governed — a mode that sets five controls'
-units cannot be one you can't see.
+**Auto-morph rate mode** `BPM / Seconds / Hz / Every N beats / N per beat` (default Seconds) sets what
+**Auto-morph rate value** is counted in: cycles per minute, seconds per cycle, cycles per second,
+beats per cycle, or cycles per beat. Changing it converts the value, so nothing changes audibly at
+the moment you change it. Since 2026-09-16 it governs only that value: Start delay, Play for and
+Rest for have their own **Transport unit**, and the drift and ramp times their own units, per target.
 
 ---
 
 ### Transport (Start delay and Play/Rest)
 
-Added 2026-09-04. The Morpher had neither, while every generator in the suite
-did — and so did nothing else in the spectral family. All three times follow
-**Rate Mode** above: off they are seconds, on they are beats, exactly the way
-Auto-morph time already worked. Flipping that switch **converts** the values at
-the current tempo, so nothing changes audibly at the moment you flip it; only
-the unit you type in does.
+**Transport unit** `Seconds / Hz / Beats, default Seconds`
+What the three times below count in, the same three as Passage. Switching it **converts** them, so
+each keeps its length (2 seconds becomes 4 beats at 120 BPM, or 0.5 Hz; 0 stays 0). Added
+2026-09-16; before that they followed the rate mode, and a saved project landed on what it counted
+then: Beats where the rate mode was one of the two beat modes, else Seconds.
 
-**Start delay (sec / min / beats by Rate Mode)** `0 to 1000, default 0`
-Sit silent for this long after playback starts, then come in normally. The
-modulation holds still during the delay — Drift, Ramp and Auto-morph all wait —
-so the piece begins at the start of its wander rather than part-way through.
-Re-arms every time you press play. 0 disables it.
+**Start delay (in transport units)** `0 to 1000, default 0`
+Sit silent for this long after playback starts, then come in. Drift, Ramp and Auto-morph all wait,
+so the piece begins at the start of its wander. Re-arms every time you press play. 0 disables it.
 
-**Play for / Rest for (sec / min / beats by Rate Mode)** `0 to 1000, default 0`
-Play for a while, go quiet for a while, repeat forever. **0 in either one
-disables the gate**, so a half-set pair never silently mutes anything.
+**Play for (in transport units, 0 = always)** and **Rest for (in transport units, 0 = always)** `0 to 1000, default 0`
+Play for a while, go quiet for a while, repeat. **0 in either one disables the gate.** Both are Drift
+and Ramp targets; see **Drift movement mode** for how a drift on them treats a stretch in progress.
 
-**Rest mode** `Walk through / Freeze in place, default Walk through`
-What the morph walk does while resting. **Walk through** keeps Auto-morph
-advancing silently, so you rejoin wherever it has got to — the texture has moved
-on while you weren't hearing it. **Freeze in place** stops it and resumes exactly
-where it stopped. Short rests barely tell the two apart; long ones do.
-
-**Drift and Ramp keep running through a rest**, and that is deliberate — it is
-what every other plugin in the suite does. Drift has its own play/rest if you
-want it to hold too. (This control was briefly called *Modulation at rest*, then *Rest mode*, and
-briefly froze Drift and Ramp as well; both were wrong. "Modulation" is a word
-that appears as a control name nowhere else in the suite, and freezing more than
-the walk gave it a wider job than the *LFO at rest* control it was copied from.)
+**Auto-morph rest mode** `Walk through / Freeze in place, default Walk through`
+What the morph walk does while resting. **Walk through** keeps Auto-morph advancing silently;
+**Freeze in place** stops it and resumes where it stopped. (Named *Rest mode* until 2026-09-16.
+Rozaya: *"auto-morf rest mode"*.) Drift and Ramp have their own, inside their blocks:
+**Drift rest mode** and **Ramp rest mode**.
 
 **Output at rest** `Pass-through / Silence, default Pass-through`
-What comes out while resting. **Pass-through** mutes only what this plugin adds
-and leaves the dry input alone, so a rest is a hole in the texture rather than a
-hole in the track — the right default for an effect sitting on someone's audio.
-**Silence** mutes everything, dry included.
+What comes out while resting. **Pass-through** mutes only what this plugin adds and leaves the dry
+input alone; **Silence** mutes everything, dry included.
 
-The input is still analysed throughout a rest, deliberately. A gate says "don't
-be heard", never "stop listening" — otherwise the first grain after a rest would
-be built from whatever was in the buffer when the rest began.
+The input is still analysed throughout a rest, deliberately, so the first grain after a rest is
+built from fresh sound.
 
 ---
 
@@ -318,11 +274,11 @@ be built from whatever was in the buffer when the rest began.
 
 Drift makes a parameter **wander on its own** — the suite's stand-in for drawing an automation envelope, so you get slow evolving motion without a mouse or an automation lane. Pick a target, set how far it wanders up and down and how long a full wander takes, and it moves by itself while the transport rolls. **Every target drifts at once** — the selector only chooses which one the four sliders below are editing right now; the others keep drifting with whatever you last set them to.
 
-**Drift target** — eighty-seven, in the order of the controls they reach (2026-09-13; it was fifty-five): `Morph / Auto-morph time / Texture / Wash grain / Spread / Transpose / Fine tune / Tuning reference / Stereo width / Denoise / Low cut / High cut / Overtone harmonic / Overtone lift / Overtone width / Layer pitch (all layers) / Layer 1-16 pitch / Layer fine tune (all layers) / Layer 1-16 fine tune / Layer level (all layers) / Layer 1-16 level / Layer overtone harmonic (all layers) / Layer 1-16 overtone harmonic / Input level / Output level / Play for / Rest for`, default Morph. A saved project keeps what it had selected, under its new name (*Pitch* is Transpose, *1 octave up level* is Layer 10 level, *Custom 1 pitch* is Layer 14 pitch).
+**Drift target** — a hundred and seven, in the order of the controls they reach (2026-09-16; it was eighty-seven): `Morph / Auto-morph rate / Texture / Pitch source fine tune / Pitch transpose / Pitch fine tune / Tuning reference / Spread / Spread fine tune / Stereo width / Denoise / Low cut / Low cut fine tune / High cut / High cut fine tune / Overtone harmonic / Overtone lift / Overtone width / Layer pitch (all layers) / Layer 1-16 pitch / Layer fine tune (all layers) / Layer 1-16 fine tune / Layer level (all layers) / Layer 1-16 level / Layer harmonics (all layers) / Layer 1-16 harmonics / Layer overtone harmonic (all layers) / Layer 1-16 overtone harmonic / Input level / Output level / Play for / Rest for`, default Morph. A saved project keeps what it had selected; one parked on Wash grain lands on Morph.
 
-The four **"all layers"** entries work like Polyrhythm's "all voices": choosing one shows Layer 1's settings, and editing it writes the same setting into all sixteen. **Morph** moves the Morph slider's own position, so it acts while Auto-morph is Off. A **layer overtone harmonic** drift moves only a layer that has its own harmonic; a layer following the global one keeps following.
+The five **"all layers"** entries work like Polyrhythm's "all voices": choosing one shows Layer 1's settings, and editing it writes the same setting into all sixteen. **Morph** moves the Morph slider's own position, so it acts while Auto-morph is Off. A **layer overtone harmonic** drift moves only a layer that has its own harmonic.
 
-**Not targets, deliberately**, and Rozaya asked that the reason be written here. **Layer harmonics** is a cap on processing cost, so a drift on it would make the CPU load rise and fall with the wave. **Capture point** and **Capture average** re-analyse the captured sound every time they move, which is heavy and lands as a click. Source note, Source fine tune and Target note are note pickers, as on Passage.
+**Not targets, deliberately.** **Wash grain** (since 2026-09-16): a fast drift on it made the wash wobble in loudness whatever the timing. Rozaya: *"if drift is going to fuck shit up, why bother having it *on there*?"* **Capture point** and **Capture average** re-analyse the captured sound every time they move, which is heavy and lands as a click. **Pitch source note** and **Pitch target note** are note pickers.
 
 Which parameter the Drift controls below are editing. Switch it and they show *that* target's settings; anything you set on another target keeps running in the background.
 
@@ -330,14 +286,21 @@ Which parameter the Drift controls below are editing. Switch it and they show *t
 How far it wanders above (up) and below (down) the parameter's current value, in the unit **Drift amount unit** names — on Target default, that parameter's own units: Texture in its 0–100, Transpose in its unit, Low cut in Hz, and so on. Separate up and down let the wander sit off-centre (that's what makes it feel alive rather than mechanical); set them equal for symmetric drift. Both at 0 means this target isn't drifting.
 
 **Drift amount unit (per target, Target default where it cannot fit)** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default`
-Which unit the two amounts are in, for this target. **Target default** is the target's own unit, and it is what every saved project had. Pick **Cents** on a pitch and a drift of 50 is a quarter tone whatever Transpose is set in; pick **Semitones** on Low cut and it moves by an interval, counted from 20 Hz when the cut is at 0. A unit that makes no sense for the target — dB on a pitch — acts as Target default, as its name says. The same list as Passage's, and it will be the whole suite's. *(Added 2026-09-13. Rozaya: "No unit locks. ever.")*
+Which unit the two amounts are in, for this target. **Target default** is the target's own unit, and it is what every saved project had. Pick **Cents** on a pitch and a drift of 50 is a quarter tone whatever Transpose is set in; pick **Semitones** on Low cut and it moves by an interval. A cut at 0 is off, and a drift does not move it. A unit that makes no sense for the target — dB on a pitch — acts as Target default, as its name says. The same list as Passage's, and it will be the whole suite's. *(Added 2026-09-13. Rozaya: "No unit locks. ever.")*
 
 **Drift period (per target)** `0 to 1000, default 30, 0 = off`
 How long one full wander takes, counted in whatever **Drift period unit** says.
 30 seconds is a gentle sway; a few minutes is barely-there evolution.
 
-**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Seconds`
-What the period above is counted in. **Seconds** is wall-clock. **Beats** follows
+**Drift movement mode (per target)** `With the target / On a clock, default With the target`
+Shown only while the target is Play for or Rest for. **With the target**, a play or rest stretch
+takes its length when it begins and keeps it to the end; the next one reads the drift fresh. **On a
+clock**, the length is re-read constantly, so a drift can end the stretch you are hearing early.
+(Added 2026-09-16; renamed suite-wide from *Drift movement* on Rozaya's *"drift movement mode, maybe?"*)
+
+**Drift period unit (per target since 2026-09-16)** `Cycles / Seconds / Beats, default Seconds`
+What the period is counted in, for this target, so one target can wander in beats while another
+wanders in seconds. It sits in front of Drift period in the list. **Seconds** is wall-clock. **Beats** follows
 the project tempo. **Cycles** counts whole Auto-morph passes — so the drift keeps
 step with the morph however you set its speed.
 
@@ -351,7 +314,7 @@ meaning exactly what it already meant.
 **Drift shape (per target)** `Sine / Triangle / Random, default Sine`
 The path of the wander. Sine = smooth continuous sway; Triangle = straight ramps up and down with turnarounds; Random = drifts smoothly toward a new random spot each period (still smooth, just unpredictable in direction).
 
-**Drift play for (periods)** / **Drift rest for (per target, periods)** `0 to 64, default 0 (off)`
+**Drift play for (periods)** / **Drift rest for (per target, periods)** `0 to 1000, default 0 (off)`
 Makes the drift move in bursts with holds between, instead of wandering evenly
 forever. Play for 2 and rest for 2 and the parameter drifts for two periods,
 freezes exactly where it stopped for two, then carries on. Both must be above 0
@@ -369,6 +332,9 @@ cycles crest, neutral, trough, neutral before repeating; `1.2` gives five
 positions including two partial ones at different depths. Confirmed by simulating
 the code, not by reading it.
 
+**Drift rest mode** `Walk through / Freeze in place, default Walk through`
+Whether a transport rest freezes every drift where it stands (Freeze in place) or lets them wander on silently (Walk through, what every older project did). Added 2026-09-16.
+
 **Drift restart (all targets)** `Restart on play / Free-running, default Restart on play`
 What the transport does to the drift — this is the choice between *synced* and *continuous*.
 - **Restart on play** snaps every drift back to the start of its cycle the moment you press play from a stop. Run the plugin on several tracks with the **same period and Sine/Triangle shape**, and they all reset *together* — so their drifts stay in step instead of wandering out of phase and clashing (e.g. Pitch drifts pulling against each other). This is the mode for locking multiple tracks together.
@@ -382,7 +348,7 @@ Ramp is a **one-time slow ride** of a parameter — you set where to move it and
 
 Like Drift, every target rides in parallel; the selector chooses which one the sliders are editing. Ramp and Drift stack on the same parameter (base value + Drift wander + Ramp ride).
 
-**Ramp target** — the same eighty-seven as Drift target, default Morph (see there, including what is not on the list and why).
+**Ramp target** — the same hundred and seven as Drift target, default Morph (see there, including what is not on the list and why).
 Which parameter the Ramp sliders below are editing (same targets as Drift).
 
 **Ramp by (per target, in the Ramp by unit)** `-20000 to +20000, default 0`
@@ -391,7 +357,7 @@ How far to move the parameter, and which direction — in the unit **Ramp by uni
 **Ramp by unit (per target, Target default where it cannot fit)** `the same thirteen units as Drift amount unit, default Target default`
 Which unit Ramp by is in, for this target — ride a layer up 700 cents, or Wash grain by half a second. A unit that cannot fit acts as Target default.
 
-**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes`
+**Ramp time unit (per target since 2026-09-16)** `Cycles / Seconds / Minutes / Beats, default Minutes`
 What Ramp duration, Ramp play/rest and Ramp start delay are all counted in —
 one control for the four of them. Minutes is what they have always meant, so
 nothing you have saved changes.
@@ -416,6 +382,9 @@ Leave one smooth and give the other play 2 / rest 2. The stepped one falls
 behind during each hold, then overtakes during each climb, so the two keep
 crossing each other on the way up and land in the same place. That's the sound
 this exists for. (Heard first on Veil, 2026-09-04.)
+
+**Ramp rest mode** `Walk through / Freeze in place, default Walk through`
+Whether a transport rest freezes every ramp where it stands. Added 2026-09-16.
 
 **Ramp engage (all targets)** `Off / On, default Off`
 Arms every configured target at once. While On, each rides its own duration from where it is; flip Off and they freeze in place (flip back On and they resume). The ride starts fresh from the current values each time the transport begins playing. You can aim several targets at once (Texture *and* Output level *and* Low cut, each over its own time) and one Engage winds them all down together.
