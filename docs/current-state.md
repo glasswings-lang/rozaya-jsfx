@@ -20,12 +20,8 @@ has been heard, and what Rozaya has said is next.
 
 ## What is next
 
-- **R25 is mid-flight: Passage is the only piece left.** Which of its controls are shared
-  across slots wants `tools/selector_scope_probe.py` live in REAPER -- measured, not read
-  off `ps_adopt`. Everything else in R25 is built (`docs/history/R25.md`). Then R26.
-- **The rules pass, one rule at a time, in order: R25 is next.** R19 to R24 are off the
-  list; each left one backlog entry and nothing built. Tell Rozaya what a rule says in
-  plain words, check the plugins by reading or running them, one question at a time.
+- **The rules pass is finished at R25.** R19 to R25 are off the list. R26 and R27 are the
+  two that remain and they are BUILD work, taken per plugin below -- not another reading pass.
 - **The amount units (R26) with R27's same things, ONE PLUGIN AT A TIME** -- each planned
   with Rozaya, built, moved, measured and installed before the next. Rozaya: *"I'm wondering
   if we should take this per-plugin rather than a giant sweep."* What each plugin gains:

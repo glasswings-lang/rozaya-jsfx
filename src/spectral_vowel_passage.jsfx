@@ -110,7 +110,7 @@ slider27:0<0,1,1{Off,On}>Slot mute (skipped in the morph)
 //     by these. Global on purpose -- a house style, not a per-moment knob. ---
 slider31:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade in shape (all slots)
 slider32:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade out shape (all slots)
-slider37:0<-60,24,0.01>Input level (dry, dB)
+slider37:0<-60,24,0.01>Input level (dry, dB, all slots)
 // Named "Voice level" since this plugin was born, and wrong the whole time: it
 // is applied to voutL/voutR, the equal-power crossfade of the voice AND the
 // wash, so it has always scaled both. PER SLOT here, unlike the Morpher's --
@@ -128,20 +128,20 @@ slider9:0<-20000,20000,0.001>Transpose value (Hz / semitones / cents)
 slider10:1<0,2,1{Hz,Semitones,Cents}>Transpose unit
 slider11:0<-1000,1000,0.001>Fine tune
 slider12:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
-slider30:440<20,2000,0.1>Tuning reference (Hz)
+slider30:440<20,2000,0.1>Tuning reference (Hz, all slots)
 slider28:50<0,100,1>Stereo width (%)
 slider17:0<0,20000,1>Low cut (Hz)
 slider18:20000<200,20000,10>High cut (Hz, 20000 = off)
 slider16:0<0,100,0.1>Denoise (%, wash only)
-slider36:1<0,1,1{Focused slot,Morph}>Audition
+slider36:1<0,1,1{Focused slot,Morph}>Audition (all slots)
 slider34:0<0,100,0.1>Morph (% across captured slots)
-slider35:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
-slider38:0<0,1000,0.001>Start delay (seconds / Hz / beats)
-slider39:0<0,1000,0.001>Play for (seconds / Hz / beats, 0 = always)
-slider40:0<0,1000,0.001>Rest for (seconds / Hz / beats, 0 = always)
-slider41:0<0,2,1{Seconds,Hz,Beats}>Transport unit
-slider42:0<0,1,1{Walk through,Freeze in place}>Rest mode
-slider43:0<0,1,1{Pass-through,Silence}>Output at rest
+slider35:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph (all slots)
+slider38:0<0,1000,0.001>Start delay (seconds / Hz / beats, all slots)
+slider39:0<0,1000,0.001>Play for (seconds / Hz / beats, 0 = always, all slots)
+slider40:0<0,1000,0.001>Rest for (seconds / Hz / beats, 0 = always, all slots)
+slider41:0<0,2,1{Seconds,Hz,Beats}>Transport unit (all slots)
+slider42:0<0,1,1{Walk through,Freeze in place}>Rest mode (all slots)
+slider43:0<0,1,1{Pass-through,Silence}>Output at rest (all slots)
 // --- Drift: suite-wide automation replacement (nested-selector pattern).
 //     Pick a target; it wanders by up/down amounts over a wall-clock period.
 //     All targets drift in parallel; the selector only chooses which one the

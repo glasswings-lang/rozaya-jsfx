@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R25** — A control behind a selector says which kind it is
 - **R26** — No unit locks: every Drift and Ramp amount names its unit
 - **R27** — Every plugin has the same things
 
@@ -64,26 +63,6 @@ A migration written before its layout is a migration you will write again.
 ---
 
 ## Part 1 — Naming rules
-
----
-
-## R25 — A control behind a selector says which kind it is (2026-09-12)
-
-Rozaya, finding Ramp start delay switched with the Ramp target: *"if it's gonna do that,
-can't it at least say that's what it's doing?"* Then: *"anything would do at this point,
-just don't forget to put this snag in the damn thing in case names come up as another
-problem"*. History: `docs/history/R25.md`.
-
-- **Every control in a block with a selector ends its name with which kind it is:**
-  `(per target)` when its value switches with the selector, `(all targets)` when one value
-  serves every option. A slot, band, layer, voice or segment selector says so the same way
-  (`(per slot)`, `(per slot and target)`), and a unit already in parentheses joins it:
-  `Ramp start delay (per target, in ramp time units)`.
-- **Measure which kind it is; never read it off a label or a comment.** Set it on one
-  option, switch, read it back: `tools/selector_scope_probe.py`, live in REAPER.
-- **A rename moves no value** (REAPER restores by position), so it needs no migration --
-  but the plugin's page in `docs/plugins/` changes with it.
-- **A new control added to such a block is named this way in the same change.**
 
 ---
 
@@ -192,6 +171,24 @@ plugin-wide but simpler, and you set it once and leave it.
   set), transpose and fine tune. Spreads are `{Hz, Semitones, Cents}`, never a
   percent of a hidden limit. A Shepard voice is its note in every octave at once, so
   the Shepards take notes and fine tunes only.
+- **A control behind a selector says which kind it is -- and only the SHARED ones say so.**
+  Rozaya, 2026-09-15: *"instead of cluttering up the majority of controls, we can just mark
+  the ones that effect a whole of a plugin's output ... non-global things can safely be
+  assumed to be non-global because we've not put that mark there. Less to read."* So a
+  control that is one value for every option of its selector ends its name with what the
+  "all" is -- `(all targets)`, `(all voices)`, `(all bands)`, `(all slots)` -- and a control
+  that switches with the selector says nothing. Never `(global)`: it lies about a drift
+  control that is shared across targets but touches nothing else.
+  **Where the shared controls outnumber the switching ones, put the group's word at the
+  FRONT instead** (`Voice gain`, `Segment length`, `Pitch note name`, `Layer level`) --
+  Rozaya: *"you can first-letter nav through the p list"* -- which also ends the block, so
+  nothing after it needs a mark. **Measure which kind it is; never read it off a label or a
+  comment** (`tools/selector_scope_probe.py`, or a declaration the code makes in more than
+  one place and agrees with itself). Do not stack redundant scopes: *"once you're drifting
+  or ramping something, you don't need that kind of redundency."* **A rename moves no value,
+  so it needs no migration** -- but the plugin's page in `docs/plugins/` changes with it, and
+  a new control in such a block is named this way in the same change. History:
+  `docs/history/R25.md`.
 - **Every control that shapes the sound is a Drift and Ramp target.** Star, 2026-09-10:
   *"all the targets ... that directly affect your sound should absolutely be drift
   candidates."* A target is any control that changes what you hear -- pitch, fine tune,
