@@ -150,19 +150,14 @@ signature Veil move.
 **Drift shape** `Sine / Triangle / Random, default Sine` — Sine = smooth wander,
 Triangle = linear ramps, Random = smooth wander to unpredictable targets.
 
-**Drift period unit (all targets)** `Seconds / Beats, default Seconds` — whether Drift period is
-wall-clock seconds or beats at the project tempo. This one switch covers all four
-drift targets; there's no per-target unit. On **Beats** the wander follows the host,
+**Drift period unit** `Seconds / Beats, default Seconds` — whether Drift period is
+wall-clock seconds or beats at the project tempo, **for the selected target** —
+each target keeps its own, since 2026-09-16. On **Beats** the wander follows the host,
 so a tempo change carries the breathing with it — and two Veils at 20 and 31 beats
 keep their relationship through the change, which is the whole point of the pair.
 
-Note the unit slider sits at the *end* of the parameter list rather than next to
-Drift period. REAPER orders controls by slider number and moving an existing one
-would scramble saved projects, so new controls always land at the end.
-
-Nothing else in Veil follows the tempo, deliberately. The cutoffs are pitch, and
-Ramp duration / start delay are wall-clock on purpose — a wind-down is how
-long until you're asleep, not a musical length.
+It sits directly before Drift period, the way every mode and unit in the suite
+sits before the value it qualifies.
 
 **Rest mode (for Drift)** `Walk through / Freeze in place, default Walk through`
 — what the drift does during a transport rest. Drift and ramp each have their
@@ -233,6 +228,11 @@ holds do nothing.
 
 #### Ramp time unit
 
+**Per target** since 2026-09-16, so one target can ramp over minutes while another
+steps in beats. Until then it was one unit for every ramp, which nobody had chosen:
+it came across in a port. Rozaya, 2026-09-15: *"after all the work we did to make
+things per-target in ramp, why?"*
+
 **Minutes** is wall-clock and remains the **default**, so every existing project
 is bit-identical. **Seconds** is the same clock at a scale that suits a short
 ramp — added 2026-09-05, because a thirty-second ramp used to mean typing `0.5`
@@ -248,9 +248,8 @@ Beats, never bars: bars would need the time signature, so the same number would
 mean different things in different meters and would shift under you if the meter
 changed. Beats is what REAPER actually counts.
 
-The four sliders it governs deliberately do not name the unit. A screen reader
-re-reads a parameter's name on every arrow step, and a name that is wrong half
-the time is worse than a short one.
+The time controls it governs say `(in ramp time units)` rather than naming a unit,
+because the unit is whichever one the selected target is using.
 
 #### Ramp play for / Ramp rest for
 
