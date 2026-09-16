@@ -26,9 +26,12 @@ has been heard, and what Rozaya has said is next.
   with Rozaya, built, moved, measured and installed before the next. Rozaya: *"I'm wondering
   if we should take this per-plugin rather than a giant sweep."* What each plugin gains:
   `docs/backlog.md`, "Decided 2026-09-13". `tools/jsfx_map.py impact` after every edit.
-- **Veil is first:** `docs/layouts/veil-r26-r27.md`, PROPOSED. Its Transport unit takes
-  Drift's units, `{Seconds, Beats}` (Rozaya's). Walk-or-freeze is TWO switches on Veil,
-  `Rest mode (for Drift)` and `Rest mode (for Ramp)` (Rozaya's, 2026-09-13). Nothing built.
+- **Veil is BUILT and installed, 2026-09-15** -- the R26/R27 pass, first of the suite.
+  35 controls from 22: the filter is one block behind `Filter side {Both (keeps the gap),
+  Left, Right}` with the word at the FRONT, a transport it never had, `Output at rest`, two
+  rest switches, the amount units, 13 targets. `docs/history/layouts/veil.md`. NOT HEARD.
+  The one live project (the bridge test one) is migrated and renders bit-identical.
+- **Next plugin for R26/R27:** Rozaya's call which. `docs/backlog.md` says what each gains.
 - **Held for Rozaya's decision:** semitone ranges. dB volumes were decided 2026-09-14: -60 to
   +24 everywhere.
 
@@ -94,6 +97,12 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - The 2026-09-06 drift/ramp sweep, Tremolo's Start delay, the ranges; R25 names (09-12).
 - Measured, not heard: Tuning reference works in all 14; Heartbeat and Womb no longer blow up
   above ~5 kHz.
+- **Veil's whole R26/R27 layout, 2026-09-15.** Measured, not heard: it renders
+  bit-identical to the old Veil on defaults AND on the migrated project once the drift
+  amounts are zero (the remaining difference is the drift's random start phase, which is
+  runtime and never saved). Both sides stay independent, `Both` keeps the 40 Hz gap, the
+  per-target amount units survive save and reopen, and Play for/Rest for with Silence
+  alternates as asked. `tools/veil_migrate_r26r27_20260915.py`.
 - **2026-09-15, measured:** Polyrhythm voices start silent, so no thump on play (Rozaya heard
   the thump); Tremolo's and the Sweeping Filter's Start delay on Every N beats; Tensor's
   `shepard.RPP` carried from the first release (open bug 4).

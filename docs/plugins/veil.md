@@ -49,18 +49,37 @@ Veil when you want a *still, deep, wide muffle* (that can then breathe). They al
 
 ## Parameters
 
-**Left cutoff (Hz)** `100–2000, default 480` — the Left channel's muffle point.
+**Filter side** `Both (keeps the gap) / Left / Right, default Both (keeps the gap)` — which side
+the six controls below are editing. Both sides are always live; this only chooses
+the view.
 
-**Right cutoff (Hz)** `100–2000, default 520` — the Right channel's muffle point.
-The **difference between the two cutoffs is the stereo width** — together = mono,
-apart = wide.
+**`Both` is not the usual `All`.** Everywhere else in the suite, a picker on All
+writes the same value to every option. Veil's stereo width IS the gap between the
+two cutoffs and it has no other stereo mechanism, so that would take it mono on
+the first nudge. Instead Both shows the midpoint and applies your CHANGE to both
+sides, holding the offset — nudge it up 20 and 480/520 become 500/540. At the end
+of the range it stops rather than letting the two squeeze together.
 
-**Left resonance** `0–1, default 0.15` — emphasis at the Left cutoff. Low = a
+**Filter pitch mode** `Hz / Semitones / Cents, default Hz`
+
+**Filter note name** `C-1 to G9, default B4` — a real control in every mode, and
+it reads back from the value both ways.
+
+**Filter cutoff (Hz / semitones / cents)** `0–20000, default 500` — the muffle
+point for the selected side. Left opens at 480 and Right at 520, and **the
+difference between them is the stereo width** — together = mono, apart = wide.
+
+**Filter fine tune unit** `Hz / Semitones / Cents, default Cents`
+
+**Filter fine tune** `-1000 to 1000, default 0`
+
+**Filter resonance** `0–1, default 0.15` — emphasis at that side's cutoff. Low = a
 plain soft muffle; higher = a resonant "throat" around the corner.
 
-**Right resonance** `0–1, default 0.15` — same, for the Right channel.
+**Tuning reference (Hz, all sides)** `20–2000, default 440` — what the note names
+are counted from. One for the plugin.
 
-**Slope (dB/oct)** `−12 / −24 / −36 / −48 / −60 / −72, default −12` — how many
+**Slope (dB/oct, all sides)** `−12 / −24 / −36 / −48 / −60 / −72, default −12` — how many
 lowpass stages cascade (1–6 two-pole sections). Steeper = more muffled, closer to
 the womb's real deep rolloff. −12 is closest to a plain stock lowpass; −72 is a
 wall — past the corner almost nothing survives.
@@ -80,6 +99,26 @@ Two things hold true at every slope, which is not automatic and took some care:
 
 **Output (dB)** `-60 to +24, default 0` — level trim.
 
+### Transport
+
+New in the 2026-09-15 layout; Veil had none before.
+
+**Transport unit** `Seconds / Beats, default Seconds` — one unit for the three
+below. Veil counts in seconds because it has no turn of its own.
+
+**Start delay (in transport units)** `0–1000, default 0` — hold everything still
+this long after play. It holds the drift AND the ramp, which is what a start
+delay is for.
+
+**Play for (in transport units, 0 = always)** and **Rest for (in transport units,
+0 = always)** `0–1000, default 0` — the
+plugin works for one, rests for the other, and repeats. Both must be above zero
+or the gate is off, which is what Veil always did.
+
+**Output at rest** `Pass-through / Silence, default Pass-through` — what you hear
+during a rest. Crossfaded over 3 ms either way, so neither edge clicks.
+
+
 ### Drift (nested selector)
 
 A slow, perpetual wander on any of the four moving parameters — this is what makes
@@ -87,21 +126,28 @@ Veil feel *alive* rather than a static EQ. Pick a target, set how far it wanders
 and it wanders forever. **All targets drift in parallel**; the selector just picks
 which one the amount/period/shape sliders are editing right now.
 
-**Drift target** `Left cutoff / Right cutoff / Left resonance / Right resonance / Output` —
+**Drift amount unit** `Target default / Hz / Semitones / Cents / Milliseconds /
+Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target
+default` — what the two amounts below are typed in, for the selected target.
+`Target default` is what the amount always meant, so nothing you have set changes.
+A unit that cannot fit its target falls back to that rather than inventing a
+meaning — Veil has no rate, so Cycles, BPM and Degrees fall back here.
+
+**Drift target** `Cutoff (all sides) / Left cutoff / Right cutoff / Fine tune (all sides) / Left fine tune / Right fine tune / Resonance (all sides) / Left resonance / Right resonance / Tuning reference / Output / Play for / Rest for` —
 which parameter you're configuring. *(Output joined 2026-09-11; its amount is in dB.)*
 
-**Drift up amount / Drift down amount (per target)** `units match target` — how far it wanders
+**Drift up amount / Drift down amount** `units match target` — how far it wanders
 above / below the base value. Separate up and down let the wander sit off-centre.
 The amount is in the **target's own unit**: Hz for a cutoff (use the big end of
 the range), 0–1 for a resonance (use the small end). You tune it *by ear* — nudge
 until the wander feels right.
 
-**Drift period (per target)** `0–600, default 20, 0 = off` — how long one full wander cycle takes, in
+**Drift period** `0–1000, default 20, 0 = off` — how long one full wander cycle takes, in
 whatever unit **Drift period unit** is set to (below). **Give Left and Right
 cutoffs *different* periods** (say 20 and 31) and the width itself breathes — the
 signature Veil move.
 
-**Drift shape (per target)** `Sine / Triangle / Random, default Sine` — Sine = smooth wander,
+**Drift shape** `Sine / Triangle / Random, default Sine` — Sine = smooth wander,
 Triangle = linear ramps, Random = smooth wander to unpredictable targets.
 
 **Drift period unit (all targets)** `Seconds / Beats, default Seconds` — whether Drift period is
@@ -118,26 +164,37 @@ Nothing else in Veil follows the tempo, deliberately. The cutoffs are pitch, and
 Ramp duration / start delay are wall-clock on purpose — a wind-down is how
 long until you're asleep, not a musical length.
 
+**Rest mode (for Drift)** `Walk through / Freeze in place, default Walk through`
+— what the drift does during a transport rest. Drift and ramp each have their
+own, because they are their own things.
+
 ### Ramp (nested selector)
 
 A **one-time** signed ride on a parameter over N minutes — for a slow, hands-off
 change while you settle. Unlike Drift (which repeats forever), the Ramp moves once
 and holds. All targets ramp in parallel on their own clocks.
 
-**Ramp target** `Left / Right cutoff / resonance, Output` — which parameter rides.
+**Ramp by unit** `the same thirteen, default Target default` — what `Ramp by` is
+typed in, for the selected target.
 
-**Ramp by (per target)** `units match target` — the signed amount to move by. **Positive
+**Ramp target** `Cutoff (all sides) / Left cutoff / Right cutoff / Fine tune (all sides) / Left fine tune / Right fine tune / Resonance (all sides) / Left resonance / Right resonance / Tuning reference / Output / Play for / Rest for` — which parameter rides.
+
+**Ramp by** `units match target` — the signed amount to move by. **Positive
 on both cutoffs = the voice slowly CLEARING** (the muffle opening, as if the baby
 were growing); negative = deepening / darkening.
 
-**Ramp duration (per target, in ramp time units)** `0–60, default 0` — how long the ride takes.
+**Ramp duration (in ramp time units)** `0–1000, default 0` — how long the ride takes.
 `0` = off.
+
+**Rest mode (for Ramp)** `Walk through / Freeze in place, default Walk through` —
+what the ramp does during a transport rest. It sits here, in the block it
+freezes, rather than up in transport.
 
 **Ramp engage (all targets)** `Off / On, default Off` — a freeze/resume gate. While On the
 ramp advances; flip Off and it freezes where it is; back On and it resumes (it does
 *not* restart). Only pressing transport Play restarts a ramp from the beginning.
 
-**Ramp start delay (per target, in ramp time units)** `0–60, default 0` — wait this long after
+**Ramp start delay (in ramp time units)** `0–1000, default 0` — wait this long after
 engaging before the ride begins. "Let me settle first, then start clearing."
 
 
