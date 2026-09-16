@@ -68,7 +68,7 @@ Pitch -- every name starts with `Pitch` (Rozaya: "it needs a pitch prefix anyway
 19  Pitch fine tune                                was 19  renamed
 20  Tuning reference (Hz)                          was 21  stays plain, as suite-wide (Rozaya)
 Spread -- AFTER pitch. Rozaya: "spread is what you do after you've set a pitch"
-21  Spread pitch mode {Hz, Semitones, Cents}       NEW     saved copies: Hz (name: confirm)
+21  Spread pitch mode {Hz, Semitones, Cents}       NEW     saved copies: Hz (Rozaya: "Go for that too")
 22  Spread value                                   was 12
 23  Spread fine tune unit                          NEW
 24  Spread fine tune                               NEW     0
