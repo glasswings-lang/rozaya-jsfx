@@ -23,7 +23,7 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 
 ---
 
-## Open — checked against the plugins 2026-09-13
+## Open — checked against the plugins 2026-09-16
 
 - **`Drift period unit` and `Ramp time unit` are shared across targets, and nobody decided
   that.** Rozaya, 2026-09-15: *"after all the work we did to make things per-target in ramp,
@@ -61,9 +61,10 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   Veil, Resonance Bank and the Stereo Phaser owe nothing; Sustain Looper is deliberately
   live. Separately, Polyrhythm and Shepard Tone count the MASTER rate's cycles for
   per-voice targets. What was read, and the misreading to avoid: `docs/history/R23.md`.
-- **`Drift amount unit` / `Ramp by unit` in the other seventeen.** Committed 2026-09-11,
-  Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Built in Passage
-  and the Morpher only; the other seventeen have neither (read from every slider list).
+- **`Drift amount unit` / `Ramp by unit` in the other fifteen.** Committed 2026-09-11,
+  Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Built in Passage,
+  the Morpher, Veil and the Stereo Phaser; the other fifteen have neither (read from every
+  slider list, 2026-09-16).
   How: `docs/history/layouts/spectral-vowel-passage.md`, "The amount units".
 - **One Pan mode order in all six plugins that have one. Blocks a release.** Rozaya: *"I'm
   not gonna ship something like that on any plugin"*. The order, each plugin showing the
@@ -84,8 +85,8 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   beats` and `N per beat`.
 - **The rate block, where it is not yet whole.** Every speed is a pair named `<name> mode`
   then `<name> value` (`Heart rate mode`, `Bubble rate mode`, plain `Rate mode` where nothing
-  is more specific; today's names vary). Heartbeat, Rhythm Track and the Stereo Phaser lose
-  `Host ratio (retired)`: hidden and switched off, but in the parameter list. Heartbeat's
+  is more specific; today's names vary). Heartbeat and Rhythm Track lose
+  `Host ratio (retired)` (the Stereo Phaser's went 2026-09-16): hidden and switched off, but in the parameter list. Heartbeat's
   `Breath cycle (seconds)` becomes a Breath rate pair on the rate picker, 0 = no breath
   sway. **Polyrhythm:** the rate mode moves under the Voice selector, per voice; in Drift a
   voice reads `Rate value (all voices)` in its own unit; Permute swaps a voice's unit with
@@ -104,8 +105,8 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   (its rate and transport times); Polyrhythm overwrites Rate value with 4 or 1 on entering
   a beat unit, and that goes; the other plugins leave the number alone.
 - **The pitch block, where it is not yet whole.** Blocks for the frequencies with none: the
-  Stereo Phaser's range and the Morpher's and Passage's low and high cuts as two blocks each;
-  Veil's cutoffs as one block behind a target picker, `All` first; Womb's breath high-pass,
+  Morpher's and Passage's low and high cuts as two blocks each (the Stereo Phaser's range and
+  Veil's cutoffs are built, 2026-09-15/16); Womb's breath high-pass,
   breath post-filter and bloodflow filter in place beside their parts. That pairing is a
   trial, Rozaya: *"We can try it; I won't know until I see it."* Melody's and Polyrhythm's
   `Transpose` get a unit picker, starting on Semitones. Shepard Scale's notes go behind a
@@ -127,8 +128,8 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   installing, and say how big any difference is.
 - **Womb's page** (`docs/plugins/womb.md`) still says a sigh segment's length multiplies
   by `slider61`, which is Bloodflow Volume now. Owed a rewrite from the plugin.
-- **The plugin pages, a pass of their own.** `python tools/page_controls.py`, 2026-09-14: 206
-  findings (215 that morning). 95 are controls a page never mentions, mostly Drift and Ramp;
+- **The plugin pages, a pass of their own.** `python tools/page_controls.py`: 168 findings on
+  2026-09-16 (206 on 09-14; the breakdown below is from 09-14). 95 are controls a page never mentions, mostly Drift and Ramp;
   77 are pages quoting ranges from before the 2026-09-06 range sweep; 34 are old name styles,
   changed option lists, retired controls and one default. The rules work does not reduce
   these -- it only touches a page where a rule does -- so they need their own pass, ranges
@@ -153,8 +154,6 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 - **jsfx_run does not clamp to a slider's declared range; REAPER does.** 700 set into a
   -96..96 control stored 700 (measured 2026-09-13), so an offline test passed what REAPER
   caps. Owed: clamp like REAPER, or check every set value against the declared range.
-- **The Morpher's R23 check.** The drift-stepping sweep (done 2026-09-09) lists the Morpher
-  as cleared, and a later note says it was never re-checked. Read it before relying on either.
 - **Drift period units under host sync** -- periods count heartbeats or breaths; should
   they be beats when synced? Not checked against the source on 2026-09-13.
 
@@ -164,7 +163,7 @@ Rozaya, asked all three: *"Yes, and yes, re: sustain looper, breath generater, a
 one. Finish it, re: the audit."*
 
 - **Start delay, Play for and Rest for in every plugin.** Missing for the whole plugin in
-  Sustain Looper, Veil, Stereo Phaser and Resonance Bank (read ignoring capitals, 2026-09-13).
+  Sustain Looper and Resonance Bank (read 2026-09-16; Veil and the Stereo Phaser have them now).
   What they DO have is `Drift play for / rest for`, `Ramp play for / rest for` and `Ramp start
   delay` -- per target, a different thing. Rozaya, on whether every plugin should have the same
   things: *"They should all have the same things"*, then *"Yes both"* (the spreads below, and
@@ -181,8 +180,7 @@ one. Finish it, re: the audit."*
   *"Walk *and* freez, those two things are not either/or"*). The `Output at rest` switch
   `{Pass-through, Silence}` goes in every plugin that works on incoming sound -- Tremolo, the
   Sweeping Filter, Sweep Dwell, Veil, Stereo Phaser, Resonance Bank, Bubbler, Dapple, the
-  Morpher, Passage (read in each @sample 2026-09-13); Veil, Stereo Phaser and Resonance Bank
-  lack it today. The nine that make their own sound have nothing to pass. Rozaya: *"Feels
+  Morpher, Passage (read in each @sample 2026-09-13); Resonance Bank lacks it today (Veil and the Stereo Phaser gained it 2026-09-15/16). The nine that make their own sound have nothing to pass. Rozaya: *"Feels
   like you'd want that as a switch. passthrough or silence."*
   **The walk-or-freeze switch's name.** Today it is `Rest mode` in the Morpher, Passage, Melody
   and both Shepards, and `LFO at rest` in Tremolo, the Sweeping Filter and Sweep Dwell (read
@@ -200,7 +198,8 @@ one. Finish it, re: the audit."*
   changes unit: volumes become dB from -60 (off) to +24, and everything else becomes percent (pan
   runs -100 to 100). Each one is a value migration. Rozaya, 2026-09-14: *"That'd be fine by
   me"*, and on volumes: *"db, that's the only unit it makes sense in for volumes"*. On
-  2026-09-14 that was 45 controls in 12 plugins; find them by reading each plugin's ranges.
+  2026-09-14 that was 45 controls in 12 plugins, before Veil's and the Phaser's were done; find
+  them by reading each plugin's ranges.
 
 **All of this rides the amount-unit sweep: one layout and one migration per plugin**, holding
 everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole layout").
@@ -247,9 +246,7 @@ everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole 
   2026-08-12; `tools/lock_test.py`.
 - **JSFX stays the format.** Plain source that runs, no toolchain, CC0-compatible, and the
   flat slider list is what makes the plugins reachable through OSARA.
-- **Drift steps on the target's own turn (R23): swept 2026-09-09.** Bubbler and Dapple step
-  deliberately, behind `Drift movement` (Rozaya: *"The stepping was deliberately live"*).
-  Cleared, do not "fix": Tremolo, both Shepards, Sweep Dwell, Sweeping Filter, Polyrhythm
-  v3, Veil, Stereo Phaser, Resonance Bank. Seconds and Beats on a stepped target were
-  decided and built 2026-09-10.
+- **Bubbler and Dapple step live on purpose**, behind `Drift movement` (Rozaya: *"The
+  stepping was deliberately live"*). The seven that still owe R23 are in Open above -- an
+  entry here once called them cleared, and that was wrong (checked 2026-09-16).
 
