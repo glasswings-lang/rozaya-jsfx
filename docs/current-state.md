@@ -39,18 +39,12 @@ has been heard, and what Rozaya has said is next.
 
 ## Open at the end of 2026-09-16 (read first)
 
-- **Voice engine cost, Morpher AND Passage (shared).** Layers with any voice (Texture < 100) drop
-  out in REAPER: one sine per partial per voice per channel per layer per sample. Rozaya: *"this,
-  is fuckin useless"*. Test only, not installed: `tools/morpher_r26r27_checks/voice_skip_patch.py`
-  (skip the morph voice at 0 weight; ~2e-6 unexplained diff at slot crossings in Sweep; not timed).
-  The real fix proposed: one wavetable per voice. **Run renders at Idle priority, one at a time --
-  Rozaya works in REAPER meanwhile.** `jsfx_run --block-times` times each block.
-- **Remove the grain auto-gain** (`rms_smooth`, 0.07 target, in `gg_commit`/`gen_grain`), both
-  plugins. Rozaya: *"-24 db is -24db, it shouldn't be moved up by some overeager hardcoded thing"*.
-  Changes every project's level: say so on the control.
-- **Layers default to -6 dB and Inactive** instead of -60. Rozaya: *"If they're not active they
-  don't need to be that low, they're just... off."*
-- **Passage takes over from the Morpher** after those: `docs/backlog.md`, "Decided 2026-09-16".
+- **Passage took over from the Morpher, built, migrated and installed (evening 2026-09-16).** Voice
+  engine now one wavetable per voice (fixed in Passage only; the Morpher still has the old engine and
+  its auto-gain). Grain auto-gain removed from Passage, saved levels kept via Output level. Layers
+  global, -6 dB Inactive. Record: `docs/layouts/spectral-vowel-passage-takeover.md`. **Owed next:**
+  carry the Morpher's projects into Passage (`tools/morpher_to_passage.py`), turning its wash layer
+  levels into what was heard -- Rozaya wants them to sound the same.
 - Installed tonight and not heard: the Morpher's grain split (heard as A/B renders: *"I can't hear
   a difference"*) and the work-list change. Still queued from before: Sweep Dwell's R26/R27 turn.
 
@@ -122,6 +116,10 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   heard: all three live instances bit-identical to before the day's changes, and a drift of
   12 semitones on Veil's cutoff reaches the same octave level the ramp measured (0.482
   against 0.479) where 12 in the default unit barely moves it.
+- **Passage's takeover build, evening 2026-09-16:** 63 -> 89 controls, 16 layers, Auto-morph Rate,
+  111 targets, wavetable voice, no wash auto-gain. Measured, not heard: 49 copies in 11 projects, wash
+  within 0.1 dB of their old loudness, voice -117 dB, every control in place. Snapshot:
+  `E:/reaper/finished/backups/snapshots/passage-takeover-20260916`.
 - **The Morpher's whole R26/R27 layout, night of 2026-09-16:** 64 -> 79 controls, 107 targets,
   Transport unit, the rest switches, per-target units, Drift movement mode, Spread and both cuts
   as pitch blocks, blob 7700107. `docs/history/layouts/spectral-vowel-morpher-r26r27.md`.
