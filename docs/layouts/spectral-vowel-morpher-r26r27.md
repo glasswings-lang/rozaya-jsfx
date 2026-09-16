@@ -31,7 +31,8 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
   should have a spread unit, and it should encorperate the usual pitch block."* Saved
   projects land on Hz with their numbers, so nothing changes sound. Semitones/Cents mean a
   blur reaching that interval either side of each frequency (a per-bin width -- new code in
-  gen_grain's running-total blur). Asked: does a note name belong on a width.
+  gen_grain's running-total blur). No note name: *"We don't need note names in there cause we're not setting them by that,
+  it's just semitones worth of width."* So: Spread unit, Spread value, fine tune unit, fine tune.
 
 ## Still to talk through
 
