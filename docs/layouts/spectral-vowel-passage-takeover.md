@@ -152,3 +152,21 @@ Play for, Rest for. Wash grain leaves (the Morpher's measured reason applies to 
 - How a global target (layers, Auto-morph rate) drifts under Passage's per-slot drift keying.
 - The cut clamp (a drift must not carry an on cut into off), as in the Morpher.
 - `tools/morpher_to_passage.py` must carry layers once they exist.
+
+## Build progress (a handoff: read this first if picking the build up)
+
+Same method as the Morpher (`docs/history/layouts/spectral-vowel-morpher-r26r27.md`): stages
+in src, each measured; live projects migrated ONCE at the end; nothing installed until then.
+Pre-build copy for comparisons: keep one pinned outside the repo (`git show 48e3771:src/...`).
+
+- **Stage 1, renumber, DONE:** map `1-4:+0, 36:5, 34:6, 35:7, 25:11, 21:12, 22:13, 23:14,
+  24:15, 31:16, 32:17, 26:18, 27:19, 13:20, 14:21, 5:22, 7:23, 6:24, 8:25, 10:26, 9:27, 12:28,
+  11:29, 30:30, 15:32, 28:35, 16:36, 17:39, 18:44, 19:47, 20:48, 33:49, 37:60, 29:61, 41:62,
+  38:63, 39:64, 40:65, 42:66, 43:67, 44:68, 47:69, 45:70, 46:71, 49:72, 48:73, 50:74, 51:75,
+  52:76, 53:77, 54:79, 55:80, 57:81, 56:82, 58:83, 59:84, 60:85, 61:86, 62:88, 63:89`.
+  Verify PASS (text, declarations, 28 continuous + 35 selectors bit-identical).
+- **Stage 2, names, DONE** (labels only).
+- Still to build, in this order: 3 Drift/Ramp rest mode; 4 Spread block; 5 cut blocks;
+  6 layers (global); 7 Auto-morph timing + rate; 8 targets 111, per-target units, movement
+  mode, new blob magic; 9 voice engine (one wavetable per voice) and grain auto-gain removed
+  (a level change: say so on a control); 10 migration, verify, install, plugin page.
