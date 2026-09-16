@@ -164,6 +164,18 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 - **Drift period units under host sync** -- periods count heartbeats or breaths; should
   they be beats when synced? Not checked against the source on 2026-09-13.
 
+## Decided 2026-09-16, not built: Passage takes over from the Morpher
+
+- **The Morpher's layers (and what else it has that Passage lacks) move into Passage.** Rozaya,
+  after capturing to all slots and finding the Morpher's pitch is one setting for every slot: *"the
+  closer morfer gets to where I'd want it to be, the more like passage it is than not"*, then *"They
+  absolutely do belong in passage. Hell, the only reason passage existed was to give finer control
+  over slots, but I see no reason that can't be done by hand with beats and such, or durations."*
+  Whether Auto-morph's continuous sweep is still wanted, or per-slot durations cover it: asked.
+  Order agreed-in-principle: first the shared engine faults (both plugins run the per-partial sine
+  voice engine and the grain auto-gain), then this. The Morpher is in 39 projects (135 copies);
+  `tools/morpher_to_passage.py` already carries a project across by label.
+
 ## Decided 2026-09-13, not built
 
 Rozaya, asked all three: *"Yes, and yes, re: sustain looper, breath generater, and the other
