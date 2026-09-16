@@ -406,6 +406,7 @@ tg_glob = freemem; freemem += DSTRIDE;   // 1 = a whole-plugin target, held in s
 tg_used = freemem; freemem += DSTRIDE;   // 1 = a target a 22-target save could hold
 target_drift_punit = freemem; freemem += DBANK;   // CONFIG: Drift period unit, per (slot, target), since 2026-09-16
 ramp_tunit         = freemem; freemem += DBANK;   // CONFIG: Ramp time unit, likewise
+lay_dr_last = freemem; freemem += 64;
 lay_nh_eff = freemem; freemem += 16; lay_ot_eff = freemem; freemem += 16; lay_ot_last = freemem; freemem += 16;
 target_drift_up     = freemem; freemem += DBANK;  // CONFIG: up amount   (survives transport)
 target_drift_down   = freemem; freemem += DBANK;  // CONFIG: down amount
@@ -814,8 +815,17 @@ function ps_all(k, raw, v, bank) local(pa) (
   raw != ps_last[k] ? ( pa = 0; loop(NSLOTS, bank[pa] = v; pa += 1; ); ps_last[k] = raw; );
 );
 // An (all layers) entry: a Drift or Ramp setting moved reaches that family's sixteen layer targets.
+// Its own change-detection memory (lay_dr_last), NOT ps_last: the slot block adopts ps_last from the
+// screen on every pass before this runs, which would make every edit look unmoved.
 function lay_all_key(k, raw, tgt, bank) local(la) (
-  raw != ps_last[k] ? ( la = 1; loop(16, bank[tgt + la] = raw; la += 1; ); ps_last[k] = raw; );
+  raw != lay_dr_last[k] ? ( la = 1; loop(16, bank[tgt + la] = raw; la += 1; ); lay_dr_last[k] = raw; );
+);
+function lay_dr_adopt() (
+  lay_dr_last[20] = slider70; lay_dr_last[21] = slider71; lay_dr_last[22] = slider73; lay_dr_last[23] = slider75;
+  lay_dr_last[27] = slider76; lay_dr_last[28] = slider77; lay_dr_last[42] = slider69; lay_dr_last[31] = slider74;
+  lay_dr_last[53] = slider72;
+  lay_dr_last[24] = slider82; lay_dr_last[25] = slider84; lay_dr_last[26] = slider89; lay_dr_last[29] = slider85;
+  lay_dr_last[30] = slider86; lay_dr_last[43] = slider81; lay_dr_last[54] = slider83;
 );
 function ps_all_key(k, raw, tgt, bank) local(pa) (
   raw != ps_last[k] ? ( pa = 0; loop(NSLOTS, bank[pa*DSTRIDE + tgt] = raw; pa += 1; ); ps_last[k] = raw; );
@@ -1733,7 +1743,7 @@ last_drift_key != dkey ? (
   slider_automate(slider69);
   slider_automate(slider74);
   last_drift_key = dkey;
-  ps_adopt();
+  ps_adopt(); lay_dr_adopt();
 ) : (
   // On All, a Drift setting moved reaches its target in every slot. The
   // whole-plugin targets are pinned to slot 0 already.
@@ -1811,7 +1821,7 @@ last_ramp_key != rkey ? (
   slider_automate(slider86);
   slider_automate(slider81);
   last_ramp_key = rkey;
-  ps_adopt();
+  ps_adopt(); lay_dr_adopt();
 ) : (
   tg_is_all(rsel_target) ? (
     ps_inited ? (
@@ -1874,7 +1884,7 @@ lay_ui_inited ? (
 @block
 // All slots: adopt what is on screen once the instance is configured, so the first
 // change-detected pass on All compares against real values, not defaults.
-!ps_inited ? ( ps_adopt(); ps_inited = 1; );
+!ps_inited ? ( ps_adopt(); lay_dr_adopt(); ps_inited = 1; );
 !lay_ui_inited ? ( last_lay_selv = max(0, min(NLAY, floor(slider50 + 0.5))); lay_adopt(); lay_ui_inited = 1; );
 // Layers (2026-09-16): derived from the banks, so here and not in @slider. Solo overrides Active, as in
 // the Morpher: any layer soloed silences every layer that is not, the original included.
@@ -3385,6 +3395,6 @@ file_var(0, ser_magic);
     slider38 = cut_note(slider37, slider39); slider43 = cut_note(slider42, slider44);
 
     sliderchange(-1);
-    ps_adopt(); ps_inited = 1;   // All slots: what is on screen now is what change-detection compares against
+    ps_adopt(); lay_dr_adopt(); ps_inited = 1;   // All slots: what is on screen now is what change-detection compares against
   );
 );
