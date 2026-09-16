@@ -66,8 +66,8 @@ slider15:0<-1,1,0.01>Pan (-1=L, 0=center, +1=R)
 slider16:0<0,3,1{1 (-6 dB/oct),2 (-12 dB/oct),4 (-24 dB/oct),8 (-48 dB/oct)}>Order (parallel mode only)
 slider17:0<0,1,1{Off,Solo}>Band solo
 
-slider18:0.5<0,1,0.01>Wet/dry mix
-slider19:0.5<0,1,0.01>Output volume
+slider18:0.5<0,1,0.01>Wet/dry mix (all bands)
+slider19:0.5<0,1,0.01>Output volume (all bands)
 
 slider20:2<0,9,1{Input gain,Tuning reference,Frequency,Fine tune,Width up,Width down,Gain,Pan,Wet/dry mix,Output volume}>Drift target
 slider21:0<0,20000,0.01>Drift up amount (units match target)

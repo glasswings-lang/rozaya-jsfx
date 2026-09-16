@@ -147,16 +147,16 @@ Which beat's pitch the controls below are editing. On **All** you see the strong
 **Pitch mode** `{Hz, Semitones, Cents}, default Hz`
 What the pitch value means.
 
-**Note name** `C-1 to G9, default A5`
+**Pitch note name** `C-1 to G9, default A5`
 The pitch said as a note. It works both ways: pick a note, or type into Pitch value, and the other follows. Only shown in Semitones.
 
 **Pitch value (Hz / semitones / cents)** `0-20000, default 880`
 The center frequency the beat's resonant bandpass is tuned to, which gives the tick its pitched character. Higher is brighter and more cutting; lower is deeper and more thuddy. The strong beat starts at 880 Hz and the weak beat at 440 Hz, an octave below, so the accent stands out.
 
-**Fine tune** `-1000 to 1000, default 0`
+**Pitch fine tune** `-1000 to 1000, default 0`
 A small offset on top of the pitch, in the Fine tune unit.
 
-**Fine tune unit** `{Hz, Semitones, Cents}, default Cents`
+**Pitch fine tune unit** `{Hz, Semitones, Cents}, default Cents`
 What the fine tune is counted in.
 
 **Tuning reference (Hz)** `20-2000, default 440`

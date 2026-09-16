@@ -84,7 +84,7 @@ What `Pitch value` means. It comes FIRST, before the value, because it decides
 whether the note readout means anything -- the one place in the suite where mode
 precedes value, and deliberately so.
 
-**Note name** `C-1 to G9, default G5 (inhale) / D5 (exhale)`
+**Pitch note name** `C-1 to G9, default G5 (inhale) / D5 (exhale)`
 The same pitch said as a note. It works **both ways**: pick C4 or type 60 into
 `Pitch value`, whichever costs you less, and the other follows. Only meaningful
 in `Semitones` mode, where semitones and note positions are the same axis.
@@ -94,11 +94,11 @@ in `Semitones` mode, where semitones and note positions are the same axis.
 in `Semitones` it is the MIDI note number, so 60 is middle C; in `Cents` it is
 that same axis times 100.
 
-**Fine tune** `-1000 to 1000, default 0`
+**Pitch fine tune** `-1000 to 1000, default 0`
 The **one** fine tune, in the unit below. There is exactly one, so nudging by ear
 never turns into two controls doing the same job.
 
-**Fine tune unit** `{Hz, Semitones, Cents}, default Cents`
+**Pitch fine tune unit** `{Hz, Semitones, Cents}, default Cents`
 
 **Tuning reference (Hz)** `20-2000, default 440`
 What A4 is worth. One per plugin.

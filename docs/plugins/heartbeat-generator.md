@@ -51,9 +51,9 @@ controls behind a target rather than two separate sliders.
 
 - **Pitch target** `{All, S1, S2}` — which thump you are editing. `All` writes to both.
 - **Pitch mode** `{Hz, Semitones, Cents}, default Hz` — what the value means.
-- **Note name** — a real control both ways; only visible in Semitones.
+- **Pitch note name** — a real control both ways; only visible in Semitones.
 - **Pitch value (Hz / semitones / cents)** — the pitch. S1 defaults to 45, S2 to 120.
-- **Fine tune** / **Fine tune unit** `default Cents` — the one fine tune.
+- **Pitch fine tune** / **Pitch fine tune unit** `default Cents` — the one fine tune.
 - **Tuning reference (Hz)** `default 440`.
 
 Tuning a heart to a note is a musical act, not a category error — Rozaya:
