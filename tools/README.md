@@ -21,6 +21,8 @@ nothing installed; `loop_finder.py` needs two packages (noted below).
 | [`passage_set_capture_average.py`](#passage_set_capture_averagepy) | turning Capture average up across a whole folder of projects |
 | [`r24_target_audit.py`](#r24_target_auditpy) | every control in every plugin beside that plugin's Drift target list, so the two can be compared by reading |
 | [`r25_scope_verify.py`](#r25_scope_verifypy) | re-measures every R25 scope label in the runner -- does this control really serve every target? |
+| [`veil_migrate_r26r27_20260915.py`](#the-r26r27-per-plugin-migrations) | Veil's 22-control layout to its 35-control one |
+| [`phaser_migrate_r26r27_20260916.py`](#the-r26r27-per-plugin-migrations) | the Stereo Phaser's 25 to its 38, blob included |
 
 ## rate_calc.py
 
@@ -1013,3 +1015,26 @@ no other line means anything. Exits non-zero on any disagreement.
 of work. Rozaya, 2026-09-15: *"Are those verified though? this was during the time that
 thing was being crammed in and crammed in."* A claim that can only be checked by one live
 session in REAPER is a claim nobody will check again -- this makes it a minute's work.
+
+## The R26/R27 per-plugin migrations
+
+One per plugin, dated, and each one APPLIES an authored map -- old slider position to
+new, one line per control. None of them infers anything. Dry run by default; `--apply`
+writes. The layout each follows is in `docs/history/layouts/`.
+
+**Both check the same thing before being called done:** the old plugin on the old project
+and the new plugin on the migrated one must render bit-identical, with the drift amounts
+at zero. With a drift running they will NOT match, and that is not a fault -- a drift's
+starting phase is seeded from `rand()` per target, is never serialized, and is redrawn on
+every transport play, so the target count changing changes which draw each target gets.
+
+**`phaser_migrate_r26r27_20260916.py` writes a BLOB as well as a slider line**, because
+the sweep's two ends became per-end banks and banks live in `@serialize`.
+`strangeness.RPP`'s three instances are pre-2026-09-05 saves with no blob at all and a
+40-200 Hz sweep, so carrying only the midpoint would have thrown their sound away.
+
+**Its idempotency check is the blob's magic, not the slider count.** Counting slots
+passed a second time on an already-migrated line -- those lines still hold `-` in the
+high slots -- and a second run would have read the new slot 4 as if it were an old
+sweep end. Caught 2026-09-16 by re-running the dry run after applying, which is worth
+doing every time.

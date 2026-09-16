@@ -31,6 +31,10 @@ has been heard, and what Rozaya has said is next.
   Left, Right}` with the word at the FRONT, a transport it never had, `Output at rest`, two
   rest switches, the amount units, 13 targets. `docs/history/layouts/veil.md`. NOT HEARD.
   The one live project (the bridge test one) is migrated and renders bit-identical.
+- **The Stereo Phaser is BUILT and installed, 2026-09-16** -- 38 controls from 25, the
+  sweep as ONE block behind `Range end {Both (keeps the gap), Bottom, Top}`, and `Host
+  ratio` finally deleted. `docs/history/layouts/stereo-phaser.md`. NOT HEARD.
+  All four instances migrated; `strangeness.RPP` renders bit-identical before and after.
 - **Next plugin for R26/R27:** Rozaya's call which. `docs/backlog.md` says what each gains.
 - **Held for Rozaya's decision:** semitone ranges. dB volumes were decided 2026-09-14: -60 to
   +24 everywhere.
@@ -97,6 +101,11 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - The 2026-09-06 drift/ramp sweep, Tremolo's Start delay, the ranges; R25 names (09-12).
 - Measured, not heard: Tuning reference works in all 14; Heartbeat and Womb no longer blow up
   above ~5 kHz.
+- **The Stereo Phaser's whole R26/R27 layout, 2026-09-16.** Measured, not heard:
+  bit-identical to the old on defaults AND on the real `strangeness.RPP`, whose three
+  instances sweep 40-200 Hz and had no blob at all -- the migration writes them a fresh
+  one. Both ends stay independent, `Both` keeps the 1200 Hz span, per-target units
+  survive save and reopen, and Play for/Rest for with Silence alternates as asked.
 - **Veil's whole R26/R27 layout, 2026-09-15.** Measured, not heard: it renders
   bit-identical to the old Veil on defaults AND on the migrated project once the drift
   amounts are zero (the remaining difference is the drift's random start phase, which is

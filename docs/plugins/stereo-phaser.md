@@ -20,19 +20,107 @@ At the low end of its stage range it's a normal musical phaser; pushed toward it
 
 ## Parameters
 
-**Rate (Hz, or beats per cycle in Host x)** `0.001–1000, default 0.3` — LFO speed. Slow for long sweeps, faster for vibrato-like motion. In **Host x** this number is **beats per cycle** instead of Hz — see Host tempo sync below.
+**Range end** `Both (keeps the gap) / Bottom / Top, default Both (keeps the gap)` —
+which end of the sweep the five controls below are editing. Both ends are always
+live; this only chooses the view.
 
-**Range min (Hz)** `40–20000, default 300` — low endpoint of the sweep (where the notches sit at one extreme).
+**`Both` is not the usual `All`.** Everywhere else in the suite, a picker on All
+writes the same value to every option. The gap between the two ends IS the
+sweep — how far the notches travel — so instead Both shows the midpoint and
+applies your CHANGE to both ends, holding the span. Nudge it up 100 and 300/1500
+become 400/1600: the whole sweep slides, the width stays. At the end of the range
+it stops rather than letting the two squeeze together.
 
-**Range max (Hz)** `40–20000, default 1500` — high endpoint. The notches sweep between Min and Max. (Min/Max auto-sort, so order doesn't matter.)
+**Range pitch mode** `Hz / Semitones / Cents, default Hz`
+
+**Range note name** `C-1 to G9` — a real control in every mode, and it reads back
+from the value both ways.
+
+**Range frequency (Hz / semitones / cents)** `0–20000, default 900` — the selected
+end of the sweep. Bottom opens at 300 and Top at 1500, so Both opens showing 900.
+(The two auto-sort, so which is higher does not matter.)
+
+**Range fine tune unit** `Hz / Semitones / Cents, default Cents`
+
+**Range fine tune** `-1000 to 1000, default 0`
+
+**Tuning reference (Hz, all ends)** `20–2000, default 440` — what the note names
+are counted from. One for the plugin.
 
 **Feedback** `0–0.95, default 0.6` — resonance around the allpass chain. This is the hollow "whoosh." Push toward 0.9 for the dramatic jet-sweep; 0 for a soft, notches-only phase.
 
 **Stages** `2–64 (even), default 6` — number of allpass stages. Each **2 stages adds one notch**. 4–6 is the classic musical phaser; the teens–20s thicken it; toward 64 it becomes a dense static "curtain" (dozens of notches) for sound design.
 
+**Rate mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Hz` —
+the mode comes before the value it qualifies. The beat modes mean beats per
+cycle, never a multiplier.
+
+**Rate value** `0.001–1000, default 0.3` — LFO speed, in whatever the mode says.
+
 **Stereo Spread (degrees)** `0–180, default 90` — LFO phase offset between channels. 0 = mono motion, 90 = wide swirl, 180 = fully counter-rotating.
 
 **Wet/Dry Mix** `0–1, default 0.5` — 0.5 gives the deepest notches; lower for subtler phasing.
+
+### Transport
+
+New in the 2026-09-16 layout; the Phaser had none before.
+
+**Transport unit** `Cycles / Seconds / Beats, default Cycles` — one unit for the
+three below. Cycles, because this plugin has a turn of its own to count.
+
+**Start delay (in transport units)** `0–1000, default 0` — hold everything still
+this long after play. It holds the drift AND the ramp.
+
+**Play for (in transport units, 0 = always)** and **Rest for (in transport units,
+0 = always)** `0–1000, default 0` — works for one, rests for the other, repeats.
+Both must be above zero or the gate is off, which is what it always did.
+
+**Output at rest** `Pass-through / Silence, default Pass-through` — what you hear
+during a rest. Crossfaded over 3 ms either way, so neither edge clicks.
+
+### Drift and Ramp
+
+**Drift amount unit** and **Ramp by unit** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default` — what the
+amounts are typed in, for the selected target. `Target default` is what the amount
+always meant, so nothing already set changes; a unit that cannot fit its target
+falls back to it.
+
+**Drift target** `Range frequency (both ends), Bottom frequency, Top frequency, Range fine tune (both ends), Bottom fine tune, Top fine tune, Tuning reference, Feedback, Rate value, Stereo spread, Wet/dry mix, Play for, Rest for` — which control the drift moves. Drift and Ramp share one list.
+
+**Ramp target** `Range frequency (both ends), Bottom frequency, Top frequency, Range fine tune (both ends), Bottom fine tune, Top fine tune, Tuning reference, Feedback, Rate value, Stereo spread, Wet/dry mix, Play for, Rest for`
+
+**Drift up amount (in the Drift amount unit)** and **Drift down amount (in the
+Drift amount unit)** `0–20000, default 0` — how far it wanders each way.
+
+**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Cycles` and
+**Drift period (0 = off)** `0–1000, default 20` — how long one full wander takes.
+
+**Drift shape** `Sine / Triangle / Random, default Sine`
+
+**Drift play for (periods, 0 = always)** and **Drift rest for (periods, 0 =
+always)** `0–1000, default 0` — the drift wanders for one, freezes where it
+stands for the other, and repeats. Counted in drift periods, so no second unit.
+
+**Ramp by (in the Ramp by unit)** `-20000 to 20000, default 0` — the signed amount
+to ride to.
+
+**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default
+Minutes` and **Ramp duration (in ramp time units)** `0–1000, default 0` — how
+long the ride takes.
+
+**Ramp play for (0 = smooth)** and **Ramp rest for (0 = smooth)** `0–1000, default
+0` — the staircase: the ramp advances for one, holds for the other. The holds
+come OUT of the duration, they do not extend it.
+
+**Ramp engage (all targets)** `Off / On, default Off` — one switch arms every
+configured target.
+
+**Ramp start delay (in ramp time units)** `0–1000, default 0` — wait this long
+after engage before THIS target moves, so targets can be staggered.
+
+**Rest mode (for Drift)** and **Rest mode (for Ramp)** `Walk through / Freeze in
+place, default Walk through` — what each does during a transport rest. Each sits
+in the block it freezes; drift and ramp are their own things.
 
 ## Usage Notes
 
