@@ -79,5 +79,156 @@ def convert_line(line):
     return render_line(line, new, n_sliders=N_NEW)
 
 
+# --- Building migrated copies and writing them (2026-09-16) ---------------------------------------------
+# Each instance is re-saved THROUGH THE NEW PLUGIN: its slider line converted, its old blob read by
+# the new @serialize (which carries every bank into the new layout), and -- in a throwaway copy of
+# the plugin only -- each captured slot's Output level raised by what the removed auto-gain gave it,
+# less the new fixed gain. tools/passage_takeover_checks/verify_live.py measures the result.
+import base64, hashlib, json, re, shutil, struct, subprocess
+
+EXE = os.path.join(ROOT, "tools", "jsfx_run", "build", "Release", "jsfx_run.exe")
+FX = "spectral_vowel_passage"
+PRE_COMMIT = "48e3771"            # the last commit before this build began
+NEW_MAGIC = 7700009
+LIVE = "E:/reaper"
+SNAP = "E:/reaper/finished/backups/snapshots/passage-takeover-20260916"
+
+
+def unpack(b64):
+    raw = base64.b64decode(b64)
+    return list(struct.unpack("<%df" % (len(raw) // 4), raw))
+
+
+def heads(lines):
+    return [i for i, l in enumerate(lines) if "<JS" in l and FX in l and "<JS_SER" not in l]
+
+
+def blob_span(lines, sl):
+    j = sl + 1
+    while j < len(lines) and j < sl + 4 and "<JS_SER" not in lines[j]:
+        j += 1
+    if j >= len(lines) or "<JS_SER" not in lines[j]:
+        return None
+    a = j + 1
+    b = a
+    while lines[b].strip() != ">":
+        b += 1
+    return a, b
+
+
+def files():
+    out = []
+    for top, dirs, names in os.walk(LIVE):
+        if "backup" in top.lower():
+            continue
+        for n in names:
+            if n.lower().endswith(".rpp"):
+                pth = os.path.join(top, n).replace(os.sep, "/")
+                if FX in open(pth, encoding="utf-8", errors="replace").read():
+                    out.append(pth)
+    return sorted(out)
+
+
+def wash_gain_db(src):
+    m = re.search(r"WASH_GAIN = pow\(10, ([0-9.]+) / 20\);", src)
+    if not m:
+        raise SystemExit("could not read WASH_GAIN from the plugin")
+    return float(m.group(1))
+
+
+def offsets_for(survey, path, inst, gain_db):
+    """dB for each captured slot's Output level: the slot's measured auto-gain minus the fixed gain.
+    Slots with no wash (Texture 0) are left alone."""
+    slots = survey.get(os.path.basename(path), {}).get(str(inst))
+    if slots is None:
+        raise SystemExit("REFUSED: %s instance %d was not measured" % (path, inst))
+    return {int(k) - 1: v["boost_db"] - gain_db for k, v in slots.items() if v.get("boost_db") is not None}
+
+
+def migration_plugin(src, offs, work, tag):
+    """A throwaway copy of the new plugin that adds this instance's offsets as an older save loads."""
+    anchor = "  // TRACK-DUPLICATE FIX"
+    if src.count(anchor) != 1:
+        raise SystemExit("cannot find the @serialize anchor")
+    nl = "\r\n" if "\r\n" in src else "\n"
+    code = "".join("    slot_voicedb[%d] > -60 ? slot_voicedb[%d] = min(24, slot_voicedb[%d] + %.4f);%s" % (k, k, k, v, nl)
+                   for k, v in sorted(offs.items()))
+    inj = "  (file_avail(0) >= 0 && ser_magic < 7700009) ? (" + nl + (code or "    0;" + nl) + "  );" + nl
+    pth = os.path.join(work, "mig_" + tag, FX + ".jsfx")
+    os.makedirs(os.path.dirname(pth), exist_ok=True)
+    open(pth, "w", encoding="utf-8", newline="").write(src.replace(anchor, inj + anchor))
+    return pth
+
+
+def convert_file(path, survey, work):
+    """The whole migrated text, and a note per instance. Live files are only read."""
+    src = open(os.path.join(ROOT, "src", FX + ".jsfx"), encoding="utf-8", newline="").read()
+    gain = wash_gain_db(src)
+    L = open(path, encoding="utf-8", errors="replace", newline="").read().split("\n")
+    notes = []
+    for n, h in reversed(list(enumerate(heads(L), start=1))):
+        sl = h + 1
+        span = blob_span(L, sl)
+        if span is None:
+            raise SystemExit("REFUSED %s instance %d: no blob" % (path, n))
+        a, b = span
+        magic = int(round(unpack("".join(x.strip() for x in L[a:b]))[0]))
+        if magic >= NEW_MAGIC:
+            raise SystemExit("REFUSED %s instance %d: already %d -- has this run?" % (path, n, magic))
+        offs = offsets_for(survey, path, n, gain)
+        T = list(L)
+        T[sl] = convert_line(T[sl])
+        tag = "%s_%d" % (os.path.basename(path)[:-4].replace(" ", "_"), n)
+        tmp_rpp = os.path.join(work, tag + "_in.RPP")
+        open(tmp_rpp, "w", encoding="utf-8", newline="").write("\n".join(T))
+        plug = migration_plugin(src, offs, work, tag)
+        saved = os.path.join(work, tag + "_saved.RPP")
+        if os.path.exists(saved):
+            os.remove(saved)
+        subprocess.run([EXE, plug, "--rpp", tmp_rpp, "--fx", FX, "--instance", str(n), "--seconds", "0.05",
+                        "--quiet", "--save-rpp", saved], capture_output=True)
+        S = open(saved, encoding="utf-8").read().split("\n")
+        sh = [i for i, l in enumerate(S) if "<JS" in l and "<JS_SER" not in l][0]
+        sa, sb = blob_span(S, sh + 1)
+        new_blob = "".join(x.strip() for x in S[sa:sb])
+        if int(round(unpack(new_blob)[0])) != NEW_MAGIC:
+            raise SystemExit("REFUSED %s instance %d: the saved blob is not %d" % (path, n, NEW_MAGIC))
+        cr = "\r" if L[sl].endswith("\r") else ""
+        L[sl] = L[sl][:len(L[sl]) - len(L[sl].lstrip())] + S[sh + 1].strip() + cr
+        indent = L[a][:len(L[a]) - len(L[a].lstrip())]
+        width = max(16, len(L[a].strip()))
+        cr = "\r" if L[a].endswith("\r") else ""
+        L[a:b] = [indent + new_blob[q:q + width] + cr for q in range(0, len(new_blob), width)]
+        notes.append({"instance": n, "old_magic": magic, "offsets_db": {str(k + 1): round(v, 2) for k, v in offs.items()}})
+    return "\n".join(L), list(reversed(notes))
+
+
+def apply(out_dir):
+    """Write the VERIFIED copies over the live files. Refuses unless the check passed every instance,
+    every live file is byte-identical to what was checked, and no snapshot exists yet."""
+    man = json.load(open(os.path.join(out_dir, "manifest.json")))
+    if man.get("fails") != 0 or not man.get("files"):
+        raise SystemExit("REFUSED: the check did not pass every instance")
+    if os.path.exists(SNAP):
+        raise SystemExit("REFUSED: %s exists -- has this already run?" % SNAP)
+    for f in man["files"]:
+        if hashlib.sha1(open(f["live"], "rb").read()).hexdigest() != f["live_sha1"]:
+            raise SystemExit("REFUSED: %s changed since it was checked" % f["live"])
+    os.makedirs(SNAP)
+    for i, f in enumerate(man["files"]):
+        rel = f["live"].replace(":", "").replace("/", "__")
+        shutil.copy2(f["live"], os.path.join(SNAP, "%02d_%s" % (i, rel)))
+    for f in man["files"]:
+        data = open(f["migrated"], "rb").read()
+        open(f["live"], "wb").write(data)
+        if open(f["live"], "rb").read() != data:
+            raise SystemExit("WRITE MISMATCH %s -- restore from %s" % (f["live"], SNAP))
+    print("%d files, %d instances migrated; originals in %s" % (len(man["files"]), man["instances"], SNAP))
+
+
 if __name__ == "__main__":
-    sys.exit("stage build: nothing to apply yet")
+    if len(sys.argv) == 3 and sys.argv[1] == "apply":
+        apply(sys.argv[2])
+    else:
+        print(__doc__)
+        print("usage: python tools/passage_migrate_takeover_20260916.py apply VERIFIED_DIR")
