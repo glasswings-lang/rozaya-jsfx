@@ -117,8 +117,7 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
 - **The Morpher's whole R26/R27 layout, night of 2026-09-16:** 64 -> 79 controls, 107 targets,
   Transport unit, the rest switches, per-target units, Drift movement mode, Spread and both cuts
   as pitch blocks, blob 7700107. `docs/history/layouts/spectral-vowel-morpher-r26r27.md`.
-  Measured, not heard: all 135 live copies (40 files) bit-identical old vs new with every control
-  in place, before writing; snapshot `E:/reaper/finished/backups/snapshots/morpher-r26r27-20260916`.
+  Measured, not heard: all 135 live copies bit-identical old vs new, every control in place.
 - **Veil and the Stereo Phaser, evening of 2026-09-16:** the effect now waits out Start
   delay (it only held drift and ramp); `Drift rest mode` / `Ramp rest mode` renamed; and
   `Drift movement mode`, with Play for / Rest for as targets that finally do something. Measured,
