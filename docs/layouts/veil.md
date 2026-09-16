@@ -25,13 +25,32 @@ So the migration is nearly free, which is exactly why Veil is the plugin to lear
   each sitting IN the block it freezes — *"Otherwise we get slider scatter stuff"*.
 - Transport unit offers `{Seconds, Beats}`, because Veil has no turn of its own to count.
 
+## The one place Veil refuses the suite convention
+
+Everywhere else a picker on `All` writes the SAME value to every option (Polyrhythm's
+`voice_write`: *"on All, it is all eight -- which is the whole point of All"*).
+
+**Veil's stereo width IS the gap between the two cutoffs.** 480 left, 520 right, and no
+other stereo mechanism in the plugin. A normal `All` would set both sides equal on the
+first nudge and Veil would go mono -- silently, and for good in that project. (Not by
+accident: these pickers only write when a control actually moves, so parking on All is
+safe. The first deliberate nudge is what does it.)
+
+So option 0 is `Both (keeps the gap)` and it applies the CHANGE to both sides, holding the
+offset. Rozaya, 2026-09-15: *"I'd go with the 'both, keeps the gap' option."* It shows the
+midpoint of the two sides; moving it shifts both by the same amount, and the shift is
+clamped so that neither side runs off the end of its range and squeezes the gap.
+
+**The option says so in its own name**, because the rule is never to change what a control
+MEANS without saying so on the control itself.
+
 ## The order — 35 controls, up from 22
 
 New controls are marked NEW. Everything else exists today and moves.
 
 ```
 THE FILTER                      (the group's word is at the FRONT: tap F to reach it)
- 1  Filter side                 NEW   {All, Left, Right}
+ 1  Filter side                 NEW   {Both (keeps the gap), Left, Right}
  2  Filter pitch mode           NEW   {Hz, Semitones, Cents}
  3  Filter note name            NEW   C-1 .. G9
  4  Filter cutoff                     was Left cutoff / Right cutoff
