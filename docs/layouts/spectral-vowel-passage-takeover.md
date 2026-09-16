@@ -33,6 +33,20 @@ in morfer so..."*
 - Everything else below is the Morpher's agreed shape copied, with Passage's per-slot
   sections kept.
 
+## The wash's hidden boost goes, and saved projects keep their loudness (decided 2026-09-16)
+
+Measured first: Passage's grain auto-gain adds a steady, per-capture boost of +37.6 to +65.3 dB
+across the 23 wash copies (median +47.2). In the Morpher it also normalised the wash to Layer 1:
+breathing.RPP, Layer 1 at -24 dB changed the level by -0.1 dB, and Layer 1 -24 with Layer 10 -12
+came out +16 dB (Layer 10 heard 12 dB ABOVE Layer 1). The voice end was never affected.
+Rozaya, on keeping saved work as it sounds: *"I say you can try to make them sound the same.
+they're finished and won't be re-rendered, or are at least very unlikely to be re-rendered."* And on
+the Morpher: *"the morfer's do [have layers], and in morfer I used it. so if we do migrate these, we
+have to account for it anyway."*
+So: one fixed wash gain replaces the auto-gain; the migration sets each slot's Output level to hold
+each saved copy's measured loudness; the Morpher -> Passage carry-over must turn its wash layer
+levels into what was heard (each layer relative to Layer 1) and account for the boost too.
+
 ## The full order, AGREED 2026-09-16
 
 `was` is today's Passage slider id. P = per slot, G = global.
