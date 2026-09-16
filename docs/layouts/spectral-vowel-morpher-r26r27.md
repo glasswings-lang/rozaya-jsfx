@@ -25,6 +25,14 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
   saved selection past it. With it gone, Drift movement has no grain to act on; check Play
   for / Rest for as targets before settling that the Morpher needs no switch.
 
+- **Spread gets a unit and the pitch block.** Told that in Hz the blur is one fixed width
+  everywhere (it swallows the gaps between low harmonics and barely touches high ones) and
+  that in Semitones it would blur evenly across the range; Rozaya: *"For that reason alone we
+  should have a spread unit, and it should encorperate the usual pitch block."* Saved
+  projects land on Hz with their numbers, so nothing changes sound. Semitones/Cents mean a
+  blur reaching that interval either side of each frequency (a per-bin width -- new code in
+  gen_grain's running-total blur). Asked: does a note name belong on a width.
+
 ## Still to talk through
 
 - Drift period unit and Ramp time unit per target.
@@ -32,7 +40,6 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
 - Every mode in front of its value (Transpose, Fine tune, Source fine tune, Layer pitch,
   Layer fine tune, both amount units, Auto-morph time and Rate mode).
 - Low cut and High cut as pitch blocks.
-- Whether `Spread` (a spectral blur in Hz) counts as a pitch spread under R27.
 - **Drift movement on Wash grain, measured 2026-09-16, not yet decided.** Each grain is
   written whole (`gen_grain`), but the hop moves mid-hop. Probe: test copies summing the
   synthesis window alone into a third accumulator (overlap evenness, independent of the
