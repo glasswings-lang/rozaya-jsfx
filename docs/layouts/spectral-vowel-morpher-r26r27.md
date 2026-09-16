@@ -168,3 +168,27 @@ harmonics (all layers) + 16 -- 107. Rozaya, on the new fine tunes as targets: *"
   in both: grains of different lengths overlapping is uneven whatever the timing.
   jsfx_run note: the Morpher ignores drift edits until @block adopts the mirror -- set the
   selector with `--set-after`, then `--stage`, then the values, or the drift never runs.
+
+## Build progress (a handoff: read this first if picking the build up)
+
+Plan: stages in src, measured each time; the 39 live projects (123 instances, plus
+`C:/Users/solst/Dropbox/quick one.RPP`) are migrated ONCE at the end; nothing installed until then.
+
+**Found 2026-09-16:** 122 of 123 live instances hold OLD blobs (7700001 x27, 7700002 x70,
+7700005 x2, 7700008 x20, 7700010 x3); only the bridge test project has 7700087. The plugin
+converts them on load. So the migration first RESEALS each instance through the pre-build
+Morpher (jsfx_run --save-rpp, render-compared with `_tp = time_precise();` pinned to 0.25,
+silence in, as tools/morpher_verify_20260913.py does), then transcodes 7700087 -> the new
+magic in Python, keyed on the magic. Survey helpers were in the session scratchpad
+(morpher_blob.py: parse87); rebuild them into the tool.
+
+- **Stage 1, renumber, DONE:** `tools/jsfx_renumber.py` map (old:new)
+  `1-7:+0, 9:8, 8:9, 10:10, 11:11, 13:12, 15:13, 14:14, 16:15, 18:16, 17:17, 20:18, 19:19,
+  21:20, 12:22, 22:25, 23:26, 24:29, 25:34, 26:37, 27:38, 28:39, 29:40, 30:41, 32:42, 31:43,
+  34:44, 33:45, 35:46, 36:47, 37:48, 38:49, 39:50, 40:51, 41:53, 42:54, 43:55, 44:56, 45:57,
+  46:58, 49:59, 47:60, 48:61, 51:62, 50:63, 52:65, 53:66, 54:67, 55:69, 56:70, 58:71, 57:72,
+  59:73, 60:74, 61:75, 62:76, 63:78, 64:79`. Verify PASS on pinned copies (text, declarations,
+  28 continuous and 36 selectors bit-identical).
+- Stage 2 names; 3 Transport unit; 4 rest switches; 5 per-target units, Drift movement mode,
+  target list 87 -> 107 and blob 7700107; 6 Spread block; 7 cut blocks; 8 new targets wired;
+  9 migration, verify, install.

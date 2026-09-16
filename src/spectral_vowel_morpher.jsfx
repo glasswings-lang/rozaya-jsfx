@@ -128,25 +128,25 @@ slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph
 // ever stored it, and Ramp duration -- the control it was added for -- is in
 // minutes everywhere in the suite and is not governed by Rate Mode anywhere.
 // Value then mode since 2026-09-13, as R20 puts every rate block. Rozaya: "Yes".
-slider8:20<0.01,1000,0.01>Auto-morph time
-slider9:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
+slider9:20<0.01,1000,0.01>Auto-morph time
+slider8:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Rate mode
 
 // --- The sound of the morph. Everything from here to High cut shapes what the
 //     captured spectra become; all of it is global, across every slot. ---
 slider10:50<0,100,1>Texture (% wash)
 slider11:150<5,1000,1>Wash grain (ms)
-slider12:0<0,1000,0.1>Spread (Hz)
+slider22:0<0,1000,0.1>Spread (Hz)
 // --- The pitch block, 2026-09-13 (docs/layouts/spectral-vowel-morpher.md, THE PITCH LAYOUT):
 //     Bubbler's and Passage's, for the whole plugin rather than per slot.
-slider13:0<0,128,1{None,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Source note (where zero is)
+slider12:0<0,128,1{None,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Source note (where zero is)
 slider14:0<-1000,1000,0.001>Source fine tune (only with a Source note, in Semitones)
-slider15:2<0,2,1{Hz,Semitones,Cents}>Source fine tune unit
-slider16:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Target note (only with a Source note, in Semitones)
+slider13:2<0,2,1{Hz,Semitones,Cents}>Source fine tune unit
+slider15:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Target note (only with a Source note, in Semitones)
 slider17:0<-20000,20000,0.001>Transpose value (Hz / semitones / cents)
-slider18:1<0,2,1{Hz,Semitones,Cents}>Transpose unit
+slider16:1<0,2,1{Hz,Semitones,Cents}>Transpose unit
 slider19:0<-1000,1000,0.001>Fine tune
-slider20:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
-slider21:440<20,2000,0.1>Tuning reference (Hz)
+slider18:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
+slider20:440<20,2000,0.1>Tuning reference (Hz)
 // 0..100, and NOT wider -- settled by ear 2026-09-06.
 //
 // It was briefly widened to 0..400 because `nothing to fear.RPP` stores 300 here
@@ -168,9 +168,9 @@ slider21:440<20,2000,0.1>Tuning reference (Hz)
 // delivers is as misleading as one that stops too early. Widening is not
 // automatically right -- the range should match what the code honours, and where
 // the code clamps, the slider should say so.
-slider22:50<0,100,1>Stereo width (%)
-slider23:0<0,100,0.1>Denoise (%, wash only)
-slider24:0<0,20000,1>Low cut (Hz)
+slider25:50<0,100,1>Stereo width (%)
+slider26:0<0,100,0.1>Denoise (%, wash only)
+slider29:0<0,20000,1>Low cut (Hz)
 // --- High cut. The mirror of Low cut, and the thing that makes an octave-up
 //     Layer usable at all. Two deliberate differences from Low cut, both worth
 //     knowing before you reach for it:
@@ -182,7 +182,7 @@ slider24:0<0,20000,1>Low cut (Hz)
 //       * it shapes the VOICE as well as the wash -- partials fade out as they
 //         cross it -- which makes the voice engine cheaper, not dearer.
 //     20000 means off, and off is bit-identical to this control not existing.
-slider25:20000<200,20000,10>High cut (Hz, 20000 = off)
+slider34:20000<200,20000,10>High cut (Hz, 20000 = off)
 
 // Overtone: bring one partial out far enough to be heard as a note of its own.
 // GLOBAL here, unlike Passage -- this plugin is a field you sit inside, with one
@@ -191,9 +191,9 @@ slider25:20000<200,20000,10>High cut (Hz, 20000 = off)
 // output never gets louder. Harmonic 1 is exempt at any depth -- it is the drone.
 // The HARMONIC is also a per-layer choice (see Layer overtone harmonic); lift and
 // width stay global, because they are character and character can be uniform.
-slider26:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
-slider27:24<0,48,0.01>Overtone lift (dB the chosen harmonic rises by)
-slider28:1<0.5,4,0.1>Overtone width (harmonics either side)
+slider37:0<0,64,1>Overtone harmonic (0 = off, 1 = fundamental)
+slider38:24<0,48,0.01>Overtone lift (dB the chosen harmonic rises by)
+slider39:1<0.5,4,0.1>Overtone width (harmonics either side)
 
 // --- Layers: extra copies of the WHOLE morph -- voice and wash both -- at a
 //     fixed interval from the main pitch, locked to the same morph position.
@@ -211,7 +211,7 @@ slider28:1<0.5,4,0.1>Overtone width (harmonics either side)
 //     Transpose, so the stack still transposes as one.
 //     All at 0, Polyrhythm v3's model: only a control actually moved reaches all sixteen.
 //
-slider29:1<0,16,1{All,Layer 1,Layer 2,Layer 3,Layer 4,Layer 5,Layer 6,Layer 7,Layer 8,Layer 9,Layer 10,Layer 11,Layer 12,Layer 13,Layer 14,Layer 15,Layer 16}>Layer
+slider40:1<0,16,1{All,Layer 1,Layer 2,Layer 3,Layer 4,Layer 5,Layer 6,Layer 7,Layer 8,Layer 9,Layer 10,Layer 11,Layer 12,Layer 13,Layer 14,Layer 15,Layer 16}>Layer
 // Active/Inactive, per layer, and NOT the same thing as a level of -60.
 // -60 is "this layer is silent because that is the level I want"; Inactive is
 // "silence this layer and give it back to me later" -- the level you tuned is
@@ -222,19 +222,19 @@ slider29:1<0,16,1{All,Layer 1,Layer 2,Layer 3,Layer 4,Layer 5,Layer 6,Layer 7,La
 // Sits directly under the selector, ahead of the level: "is this layer in
 // play" is the first question you ask about a layer, and it is a binary you
 // can hear the answer to instantly.
-slider30:1<0,1,1{Inactive,Active}>Layer active
+slider41:1<0,1,1{Inactive,Active}>Layer active
 // Defaults to 0, NOT -60, because the Layer selector defaults to the Original
 // and this slider is stamped straight into whatever layer that selects. At -60
 // it muted the Original on load -- on a fresh instance, and on every pre-layers
 // project too, where REAPER supplies this slider's declared default because the
 // saved line has no value for it. Two defaults that have to agree: the level
 // slider's default is the default-selected layer's level.
-slider35:0<-60,24,0.01>Layer level (dB, -60 = off)
-slider36:0<0,1,1{Off,Solo}>Layer solo
-slider31:0<-20000,20000,0.001>Layer pitch value (Hz / semitones / cents)
-slider32:1<0,2,1{Hz,Semitones,Cents}>Layer pitch unit
-slider33:0<-1000,1000,0.001>Layer fine tune
-slider34:2<0,2,1{Hz,Semitones,Cents}>Layer fine tune unit
+slider46:0<-60,24,0.01>Layer level (dB, -60 = off)
+slider47:0<0,1,1{Off,Solo}>Layer solo
+slider43:0<-20000,20000,0.001>Layer pitch value (Hz / semitones / cents)
+slider42:1<0,2,1{Hz,Semitones,Cents}>Layer pitch unit
+slider45:0<-1000,1000,0.001>Layer fine tune
+slider44:2<0,2,1{Hz,Semitones,Cents}>Layer fine tune unit
 // CPU control, not a tone control. Every layer is its own set of oscillators --
 // nothing about them can be shared with the main voice or with each other, so
 // cost is layers x harmonics. A background layer rarely needs the same harmonic
@@ -246,7 +246,7 @@ slider34:2<0,2,1{Hz,Semitones,Cents}>Layer fine tune unit
 // NOT a Drift or Ramp target, deliberately (2026-09-11): because it is a CPU cap, a
 // drift on it would make the processing load rise and fall with the wave. Rozaya
 // agreed, asking that the reason be written down.
-slider37:0<0,64,1>Layer harmonics (0 = full)
+slider48:0<0,64,1>Layer harmonics (0 = full)
 // Per-layer overtone harmonic. The global Overtone harmonic above is folded into
 // the shared magnitude array, so one setting applied to every layer at once, by
 // harmonic INDEX -- with Overtone harmonic 8 the lift lands at 8*f0 in the
@@ -258,18 +258,18 @@ slider37:0<0,64,1>Layer harmonics (0 = full)
 // that goes per layer. Lift and width stay global.
 // -1 = follow the global, and is the default, so every layer behaves exactly as
 // it did before this slider existed until you say otherwise.
-slider38:-1<-1,64,1>Layer overtone harmonic (-1 = follow the global)
+slider49:-1<-1,64,1>Layer overtone harmonic (-1 = follow the global)
 
 // --- Levels. Both are global and both belong at the end of the sound section,
 //     after everything they scale. ---
-slider39:0<-60,24,0.01>Input level (dry, dB)
+slider50:0<-60,24,0.01>Input level (dry, dB)
 // Named "Voice level" since this plugin was born, and wrong the whole time: it
 // is applied to voutL/voutR, which is the equal-power crossfade of the voice
 // AND the wash, after every layer has been summed into both. So it has always
 // scaled the wash too, and now it scales all sixteen layers as well. The only
 // thing it does not touch is the dry input, which has its own Input level.
 // Relabelled rather than re-scoped -- the behaviour is right, the name was not.
-slider40:0<-60,24,0.01>Output level (dB, everything but the dry input)
+slider51:0<-60,24,0.01>Output level (dB, everything but the dry input)
 
 // --- TRANSPORT (canonical block B) -----------------------------------------
 //     Start delay, then the Play/Rest gate. Added 2026-09-04: the Morpher had
@@ -288,12 +288,12 @@ slider40:0<-60,24,0.01>Output level (dB, everything but the dry input)
 //     not being able to migrate saved state and this suite migrates it (R18).
 //     Everything from Drift target up moved +5; tools/morpher_migrate_transport.py
 //     carries the projects across.
-slider41:0<0,1000,0.001>Start delay (sec, or beats in Host x)
+slider53:0<0,1000,0.001>Start delay (sec, or beats in Host x)
 
 //     Play/Rest: run for a while, go quiet for a while, repeat. 0 in EITHER
 //     one disables the gate, so a half-set pair never silently mutes anything.
-slider42:0<0,1000,0.001>Play for (sec, or beats in Host x, 0 = always)
-slider43:0<0,1000,0.001>Rest for (sec, or beats in Host x, 0 = always)
+slider54:0<0,1000,0.001>Play for (sec, or beats in Host x, 0 = always)
+slider55:0<0,1000,0.001>Rest for (sec, or beats in Host x, 0 = always)
 
 //     What the morph walk does while resting. Walk through keeps Auto-morph
 //     advancing silently, so you rejoin wherever it has got to; Freeze in place
@@ -314,13 +314,13 @@ slider43:0<0,1000,0.001>Rest for (sec, or beats in Host x, 0 = always)
 //     suite. This froze them too. It now governs the morph walk only, which is
 //     this plugin's actual equivalent of an LFO: the thing that moves the sound
 //     on a clock of its own. Drift has its own play/rest if you want it to hold.
-slider44:0<0,1,1{Walk through,Freeze in place}>Rest mode
+slider56:0<0,1,1{Walk through,Freeze in place}>Rest mode
 
 //     What comes OUT while resting. Pass-through leaves the dry input alone and
 //     mutes only what this plugin adds -- the right default for an effect, and
 //     it means a rest is a hole in the texture rather than a hole in the track.
 //     Silence mutes everything.
-slider45:0<0,1,1{Pass-through,Silence}>Output at rest
+slider57:0<0,1,1{Pass-through,Silence}>Output at rest
 
 // --- Drift: suite-wide automation replacement (nested-selector pattern).
 //     Pick a target; it wanders by up/down amounts over a wall-clock period.
@@ -329,11 +329,11 @@ slider45:0<0,1,1{Pass-through,Silence}>Output at rest
 // EIGHTY-SEVEN since 2026-09-13 (the pitch layout), in the order of the controls they reach,
 // with an "all layers" entry for each layer control (R24, Polyrhythm's model). The plugin
 // remaps an old save; tools/morpher_migrate_20260913.py remaps a project line's selectors.
-slider46:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Drift target
-slider47:0<0,20000,0.01>Drift up amount (in the Drift amount unit)
-slider48:0<0,20000,0.01>Drift down amount (in the Drift amount unit)
-slider49:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (Target default where it cannot fit)
-slider50:30<0,1000,0.001>Drift period (in drift period units, 0 = off)
+slider58:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Drift target
+slider60:0<0,20000,0.01>Drift up amount (in the Drift amount unit)
+slider61:0<0,20000,0.01>Drift down amount (in the Drift amount unit)
+slider59:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Drift amount unit (Target default where it cannot fit)
+slider63:30<0,1000,0.001>Drift period (in drift period units, 0 = off)
 // Drift period unit. Same three options as everywhere else in the suite, but it
 // declares SECONDS rather than the usual Cycles, for two reasons that agree:
 // every one of the 122 instances in the library means seconds today (a declared
@@ -342,8 +342,8 @@ slider50:30<0,1000,0.001>Drift period (in drift period units, 0 = off)
 // one Auto-morph traversal, and Auto-morph defaults to Off, which also hides its
 // own rate control. A fresh instance defaulting to Cycles would have a drift
 // that never advanced the first time it was switched on.
-slider51:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
-slider52:0<0,2,1{Sine,Triangle,Random}>Drift shape
+slider62:1<0,2,1{Cycles,Seconds,Beats}>Drift period unit (all targets)
+slider65:0<0,2,1{Sine,Triangle,Random}>Drift shape
 // --- Drift play/rest. Ported from Veil, the reference implementation, which
 //     has been heard. Makes the wander move in bursts with holds between
 //     instead of running evenly forever. PER TARGET, like the amounts it gates.
@@ -354,23 +354,23 @@ slider52:0<0,2,1{Sine,Triangle,Random}>Drift shape
 //     the trough, x.0 and x.5 at neutral. So an awkward fraction rotates the
 //     park point, and a whole number parks at no-change EVERY time, which is
 //     nearly inaudible. Confirmed by simulating the loop, not by reading it.
-slider53:0<0,1000,0.01>Drift play for (periods, 0 = always)
-slider54:0<0,1000,0.01>Drift rest for (periods, 0 = always)
+slider66:0<0,1000,0.01>Drift play for (periods, 0 = always)
+slider67:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 
 // Restart on play = drift jumps to the start of its cycle when the transport
 // begins (so multiple tracks reset together and stay in sync). Free-running =
 // drift ignores the transport and evolves continuously (loop under/over an
 // unbroken drift). A loop repeat is never a restart in either mode.
-slider55:0<0,1,1{Restart on play,Free-running}>Drift restart (all targets)
+slider69:0<0,1,1{Restart on play,Free-running}>Drift restart (all targets)
 
 // --- Ramp: the suite's "Speed Ramp" under an honest name (this plugin has no
 //     speed to ramp). A one-time slow RIDE of a parameter: pick a target, how
 //     far to move it (signed) and over how long, arm Engage, and it glides there
 //     once and holds. Nested-selector like Drift; all targets ride in parallel
 //     off one Engage; composes with Drift (base + drift wander + ramp ride). ---
-slider56:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Ramp target
-slider57:0<-20000,20000,0.001>Ramp by (in the Ramp by unit)
-slider58:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (Target default where it cannot fit)
+slider70:0<0,86,1{Morph,Auto-morph time,Texture,Wash grain,Spread,Transpose,Fine tune,Tuning reference,Stereo width,Denoise,Low cut,High cut,Overtone harmonic,Overtone lift,Overtone width,Layer pitch (all layers),Layer 1 pitch,Layer 2 pitch,Layer 3 pitch,Layer 4 pitch,Layer 5 pitch,Layer 6 pitch,Layer 7 pitch,Layer 8 pitch,Layer 9 pitch,Layer 10 pitch,Layer 11 pitch,Layer 12 pitch,Layer 13 pitch,Layer 14 pitch,Layer 15 pitch,Layer 16 pitch,Layer fine tune (all layers),Layer 1 fine tune,Layer 2 fine tune,Layer 3 fine tune,Layer 4 fine tune,Layer 5 fine tune,Layer 6 fine tune,Layer 7 fine tune,Layer 8 fine tune,Layer 9 fine tune,Layer 10 fine tune,Layer 11 fine tune,Layer 12 fine tune,Layer 13 fine tune,Layer 14 fine tune,Layer 15 fine tune,Layer 16 fine tune,Layer level (all layers),Layer 1 level,Layer 2 level,Layer 3 level,Layer 4 level,Layer 5 level,Layer 6 level,Layer 7 level,Layer 8 level,Layer 9 level,Layer 10 level,Layer 11 level,Layer 12 level,Layer 13 level,Layer 14 level,Layer 15 level,Layer 16 level,Layer overtone harmonic (all layers),Layer 1 overtone harmonic,Layer 2 overtone harmonic,Layer 3 overtone harmonic,Layer 4 overtone harmonic,Layer 5 overtone harmonic,Layer 6 overtone harmonic,Layer 7 overtone harmonic,Layer 8 overtone harmonic,Layer 9 overtone harmonic,Layer 10 overtone harmonic,Layer 11 overtone harmonic,Layer 12 overtone harmonic,Layer 13 overtone harmonic,Layer 14 overtone harmonic,Layer 15 overtone harmonic,Layer 16 overtone harmonic,Input level,Output level,Play for,Rest for}>Ramp target
+slider72:0<-20000,20000,0.001>Ramp by (in the Ramp by unit)
+slider71:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit (Target default where it cannot fit)
 // Ramp time unit -- the unit for Ramp duration, Ramp play/rest and Ramp start
 // delay, all four together. Default MINUTES (index 2), which is the suite
 // default AND exactly what these four already meant, so no saved instance
@@ -385,11 +385,11 @@ slider58:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes
 // every other plugin in the suite does it. Beats are reachable now, and a beat
 // count too large for the range is one you can see rather than one applied
 // behind you.
-slider59:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
+slider73:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit (all targets)
 // 0..1000, widened 2026-09-06. `half-music-half-wind.RPP` has 120 typed into
 // this on two instances -- a two-hour ramp, above the one hour the control
 // used to offer.
-slider60:0<0,1000,0.01>Ramp duration (in ramp time units)
+slider74:0<0,1000,0.01>Ramp duration (in ramp time units)
 // Ramp play/rest turns the smooth ride into a STAIRCASE -- "ramp on one side,
 // stairs on the other" (Rozaya, 2026-09-04). Windows are whole RAMP TIME
 // UNITS, matching Ramp duration. The rests come OUT of the duration
@@ -397,10 +397,10 @@ slider60:0<0,1000,0.01>Ramp duration (in ramp time units)
 // while moving it moves faster, by exactly (play+rest)/play, so a stepped ride
 // and a smooth one of the same length make the same journey in the same time --
 // crossing each other on the way, and landing on the destination together.
-slider61:0<0,1000,0.01>Ramp play for (0 = smooth)
-slider62:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider63:0<0,1,1{Off,On}>Ramp engage (all targets)
-slider64:0<0,1000,0.01>Ramp start delay (in ramp time units)
+slider75:0<0,1000,0.01>Ramp play for (0 = smooth)
+slider76:0<0,1000,0.01>Ramp rest for (0 = smooth)
+slider78:0<0,1,1{Off,On}>Ramp engage (all targets)
+slider79:0<0,1000,0.01>Ramp start delay (in ramp time units)
 
 @init
 // ext_noinit = 1: @init runs ONLY on plugin load, so captured slots (and all
@@ -923,9 +923,9 @@ function lay_put(c, v, bank) local(lp) (
   );
 );
 function lay_adopt() (
-  lay_ui_last[0] = slider30; lay_ui_last[1] = slider31; lay_ui_last[2] = slider32;
-  lay_ui_last[3] = slider33; lay_ui_last[4] = slider34; lay_ui_last[5] = slider35;
-  lay_ui_last[6] = slider36; lay_ui_last[7] = slider37; lay_ui_last[8] = slider38;
+  lay_ui_last[0] = slider41; lay_ui_last[1] = slider43; lay_ui_last[2] = slider42;
+  lay_ui_last[3] = slider45; lay_ui_last[4] = slider44; lay_ui_last[5] = slider46;
+  lay_ui_last[6] = slider47; lay_ui_last[7] = slider48; lay_ui_last[8] = slider49;
 );
 lpi = 0; loop(N_LAY_SLOTS, lay_ot_eff[lpi] = -2; lpi += 1;);
 
@@ -1337,7 +1337,7 @@ function shuffle_bag() local(i, j, t) (
 //     being a single ratio: whatever we were in, turn it into seconds; then
 //     turn seconds into whatever we are going to. One table, no pairwise cases,
 //     and adding a fourth unit later needs one line rather than n-squared.
-time_mode_inited && last_time_mode != slider9 ? (
+time_mode_inited && last_time_mode != slider8 ? (
   // Auto-morph time is a PERIOD, so each mode is "seconds per unit of it":
   //   BPM (0)      v cycles a minute -> 60/v seconds, so it INVERTS
   //   Seconds (1)  v seconds, identity
@@ -1346,17 +1346,17 @@ time_mode_inited && last_time_mode != slider9 ? (
   // The inverting pair cannot be expressed as a single ratio, so the conversion
   // goes to seconds and back rather than pairing units off.
   tm_beat_sec = 60 / max(tempo, 0.001);
-  tm_secs     = last_time_mode == 0 ? 60 / max(slider8, 0.001) :
-                last_time_mode == 1 ? slider8 :
-                last_time_mode == 2 ? 1 / max(slider8, 0.001) :
-                last_time_mode == 3 ? slider8 * tm_beat_sec :
-                                      tm_beat_sec / max(slider8, 0.001);
-  slider8     = slider9 == 0 ? 60 / max(tm_secs, 0.001) :
-                slider9 == 1 ? tm_secs :
-                slider9 == 2 ? 1 / max(tm_secs, 0.001) :
-                slider9 == 3 ? tm_secs / tm_beat_sec :
+  tm_secs     = last_time_mode == 0 ? 60 / max(slider9, 0.001) :
+                last_time_mode == 1 ? slider9 :
+                last_time_mode == 2 ? 1 / max(slider9, 0.001) :
+                last_time_mode == 3 ? slider9 * tm_beat_sec :
+                                      tm_beat_sec / max(slider9, 0.001);
+  slider9     = slider8 == 0 ? 60 / max(tm_secs, 0.001) :
+                slider8 == 1 ? tm_secs :
+                slider8 == 2 ? 1 / max(tm_secs, 0.001) :
+                slider8 == 3 ? tm_secs / tm_beat_sec :
                                tm_beat_sec / max(tm_secs, 0.001);
-  slider8     = min(1000, max(0.01, slider8));
+  slider9     = min(1000, max(0.01, slider9));
   // The transport times and Drift period are DURATIONS and cannot be in BPM or
   // Hz -- a start delay of "4 Hz" is not a thing. They read as seconds, or as
   // beats in Host x, which is the same shape the suite uses for every control
@@ -1366,7 +1366,7 @@ time_mode_inited && last_time_mode != slider9 ? (
   // length of time, and 'per beat' is not a length, so both sync modes use the
   // same beats reading.
   tr_from     = last_time_mode >= 3 ? tm_beat_sec : 1;
-  tr_to       = slider9        >= 3 ? tm_beat_sec : 1;
+  tr_to       = slider8        >= 3 ? tm_beat_sec : 1;
   sync_k      = tr_from / tr_to;
   // The transport times, added 2026-09-04, convert on the same flip and for the
   // same reason: the number on screen keeps meaning the same LENGTH OF TIME, and
@@ -1374,18 +1374,18 @@ time_mode_inited && last_time_mode != slider9 ? (
   // 0 is the OFF value for all three and must survive a flip untouched -- a
   // conversion that turned "no start delay" into a small one would be exactly
   // the silent value change this suite forbids.
-  slider41 = slider41 > 0 ? min(1000, max(0.001, slider41 * sync_k)) : 0;
-  slider42 = slider42 > 0 ? min(1000, max(0.001, slider42 * sync_k)) : 0;
-  slider43 = slider43 > 0 ? min(1000, max(0.001, slider43 * sync_k)) : 0;
+  slider53 = slider53 > 0 ? min(1000, max(0.001, slider53 * sync_k)) : 0;
+  slider54 = slider54 > 0 ? min(1000, max(0.001, slider54 * sync_k)) : 0;
+  slider55 = slider55 > 0 ? min(1000, max(0.001, slider55 * sync_k)) : 0;
   // Drift period is NO LONGER converted here. It has its own unit control
-  // (slider51) since 2026-09-06, so Rate Mode has nothing to say about it: the
+  // (slider62) since 2026-09-06, so Rate Mode has nothing to say about it: the
   // number means whatever `Drift period unit` says and Rate Mode leaves it
   // alone. Removing the conversion is safe on real data -- every one of the 122
   // instances in the library is on Rate Mode = Seconds, so this line has never
   // once fired -- and keeping it would have been the forbidden thing: one
   // control silently rewriting another that now names its own unit on itself.
   sliderchange(-1);
-  last_time_mode = slider9;
+  last_time_mode = slider8;
 );
 
 // All slots, 2026-09-11 (docs/layouts/spectral-vowel-morpher-all-slots-20260911.md):
@@ -1428,9 +1428,9 @@ cap_point01   = slider3 * 0.01;
 cap_avg       = max(1, min(CAPAVG_MAX, slider4));
 sca2 = 0; loop(NSLOTS, slot_capavg[sca2] = cap_avg; sca2 += 1; );
 // Overtone is GLOBAL in this plugin -- see the slider block.
-ot_harm_base  = max(0, min(NHARM, slider26));
-ot_depth_base = max(0, min(48, slider27));    // bases for Drift/Ramp targets 11 and 12
-ot_width_base = max(0.5, min(4, slider28));
+ot_harm_base  = max(0, min(NHARM, slider37));
+ot_depth_base = max(0, min(48, slider38));    // bases for Drift/Ramp targets 11 and 12
+ot_width_base = max(0.5, min(4, slider39));
 ot_depth_db   = ot_depth_base;
 ot_width      = ot_width_base;
 // --- Layers (2026-09-13): All, then Layer 1-16; Layer 1 is the Original. Every layer
@@ -1439,70 +1439,70 @@ ot_width      = ot_width_base;
 //     written as it happens, only a control actually moved is written, and on All it
 //     reaches all sixteen. Nothing is written until @block or @serialize has adopted what
 //     is on screen. ---
-lay_selv = max(0, min(N_LAY_SLOTS, floor(slider29 + 0.5)));   // 0 = All, 1-16 = Layer 1-16
+lay_selv = max(0, min(N_LAY_SLOTS, floor(slider40 + 0.5)));   // 0 = All, 1-16 = Layer 1-16
 lay_all  = lay_selv == 0;
 lay_sel  = lay_all ? 0 : lay_selv - 1;                         // All shows Layer 1
 lay_ui_inited ? (
   last_lay_selv != lay_selv ? (
-    slider30 = lay_active[lay_sel];  slider_automate(slider30);
-    slider31 = lay_semi[lay_sel];    slider_automate(slider31);
-    slider32 = lay_punit[lay_sel];   slider_automate(slider32);
-    slider33 = lay_fine[lay_sel];    slider_automate(slider33);
-    slider34 = lay_funit[lay_sel];   slider_automate(slider34);
-    slider35 = lay_db_base[lay_sel]; slider_automate(slider35);
-    slider36 = lay_solo[lay_sel];    slider_automate(slider36);
-    slider37 = lay_nharm[lay_sel];   slider_automate(slider37);
-    slider38 = lay_ot_harm[lay_sel]; slider_automate(slider38);
+    slider41 = lay_active[lay_sel];  slider_automate(slider41);
+    slider43 = lay_semi[lay_sel];    slider_automate(slider43);
+    slider42 = lay_punit[lay_sel];   slider_automate(slider42);
+    slider45 = lay_fine[lay_sel];    slider_automate(slider45);
+    slider44 = lay_funit[lay_sel];   slider_automate(slider44);
+    slider46 = lay_db_base[lay_sel]; slider_automate(slider46);
+    slider47 = lay_solo[lay_sel];    slider_automate(slider47);
+    slider48 = lay_nharm[lay_sel];   slider_automate(slider48);
+    slider49 = lay_ot_harm[lay_sel]; slider_automate(slider49);
     lay_adopt();
     last_lay_sel = lay_sel; last_lay_selv = lay_selv;
   ) : (
-    lay_put(0, slider30, lay_active);
-    lay_put(1, slider31, lay_semi);
-    lay_put(2, slider32, lay_punit);
-    lay_put(3, slider33, lay_fine);
-    lay_put(4, slider34, lay_funit);
-    lay_put(5, slider35, lay_db_base);
-    lay_put(6, slider36, lay_solo);
-    lay_put(7, slider37, lay_nharm);
-    lay_put(8, slider38, lay_ot_harm);
+    lay_put(0, slider41, lay_active);
+    lay_put(1, slider43, lay_semi);
+    lay_put(2, slider42, lay_punit);
+    lay_put(3, slider45, lay_fine);
+    lay_put(4, slider44, lay_funit);
+    lay_put(5, slider46, lay_db_base);
+    lay_put(6, slider47, lay_solo);
+    lay_put(7, slider48, lay_nharm);
+    lay_put(8, slider49, lay_ot_harm);
   );
 );
 // Layer ratios and gains are DERIVED from the banks, so they are computed in
 // @block, not here -- see the note there. Deriving them in @slider is what
 // broke restore: @slider and @serialize have no guaranteed relative order.
-dry_gain      = slider39 <= -60 ? 0 : pow(10, slider39/20);   // -60 = true silence
-dry_db_base   = slider39;                                    // base for Input level drift
-voice_db_base = slider40;                                    // base for Voice level drift
-voice_gain    = slider40 <= -60 ? 0 : pow(10, slider40/20);
+dry_gain      = slider50 <= -60 ? 0 : pow(10, slider50/20);   // -60 = true silence
+dry_db_base   = slider50;                                    // base for Input level drift
+voice_db_base = slider51;                                    // base for Voice level drift
+voice_gain    = slider51 <= -60 ? 0 : pow(10, slider51/20);
 texture       = slider10 * 0.01;                              // 0 voice .. 1 wash
 hlevel        = cos(texture * PI * 0.5);                     // equal-power crossfade
 wlevel        = sin(texture * PI * 0.5);
 grain_ms        = slider11;
-spread_hz     = slider12;
+spread_hz     = slider22;
 // --- The pitch block. Tuning reference is heard only where a value is in Hz.
-tuning_base = slider21 >= 20 ? slider21 : 440; tuning_ref = tuning_base;
+tuning_base = slider20 >= 20 ? slider20 : 440; tuning_ref = tuning_base;
 // Source note and Target note mirror Transpose value -- Bubbler's design -- only while a
 // Source note is set and Transpose is in Semitones. Source note and its fine tune never
 // change the sound: moving them re-reads the Target note (Rozaya: "The source note is just
 // to tell the targget what 0 semitones is though"). Picking a Target note writes the shift.
 // Nothing fires until @block has adopted the trackers.
-(pv_inited && slider13 > 0 && slider18 == 1) ? (
-  pv_src = (slider13 - 1) + pv_src_semis(slider13, slider15, slider14);
-  slider16 != pv_last_tgt ? (
-    slider17 = slider16 - pv_src; slider_automate(slider17);
-  ) : (slider17 != pv_last_tval || slider13 != pv_last_src || slider14 != pv_last_sf || slider15 != pv_last_sfu) ? (
-    slider16 = max(0, min(127, floor(slider17 + pv_src + 0.5))); slider_automate(slider16);
+(pv_inited && slider12 > 0 && slider16 == 1) ? (
+  pv_src = (slider12 - 1) + pv_src_semis(slider12, slider13, slider14);
+  slider15 != pv_last_tgt ? (
+    slider17 = slider15 - pv_src; slider_automate(slider17);
+  ) : (slider17 != pv_last_tval || slider12 != pv_last_src || slider14 != pv_last_sf || slider13 != pv_last_sfu) ? (
+    slider15 = max(0, min(127, floor(slider17 + pv_src + 0.5))); slider_automate(slider15);
   );
 );
-slider_show(slider16, slider13 > 0 && slider18 == 1);
-pv_last_tgt = slider16; pv_last_tval = slider17; pv_last_src = slider13; pv_last_sf = slider14; pv_last_sfu = slider15;
+slider_show(slider15, slider12 > 0 && slider16 == 1);
+pv_last_tgt = slider15; pv_last_tval = slider17; pv_last_src = slider12; pv_last_sf = slider14; pv_last_sfu = slider13;
 pitch_semi    = slider17;                                    // Transpose value, base for its drift
-pitch_unit    = slider18;
+pitch_unit    = slider16;
 pitch_fine    = slider19;
-pitch_funit   = slider20;
+pitch_funit   = slider18;
 // At Semitones with no fine tune this is the same number it always was.
 pitch_ratio   = pow(2.0, (pv_semis(pitch_unit, pitch_semi) + pv_semis(pitch_funit, pitch_fine))/12);
-stereo_width  = slider22;
+stereo_width  = slider25;
 // Clamped to 100 to match `eff_stereo_width` in @sample. These are the two
 // consumers of Stereo width, and until 2026-09-06 only ONE of them clamped:
 // the wash saturated at 100 while the voice detune scaled on past it -- but
@@ -1511,18 +1511,18 @@ stereo_width  = slider22;
 // different behaviours depending on the texture and on whether drift was
 // configured. Now one.
 voice_detune  = min(100, stereo_width) * 0.01 * VOICE_DETUNE_MAX;   // voice width via detuned L/R unison
-lowcut_hz     = slider24;
-hicut_hz      = slider25;                                    // base for High cut drift (20000 = off)
-denoise_amt   = slider23;
-denoise_base  = slider23;                                    // base for Denoise drift
+lowcut_hz     = slider29;
+hicut_hz      = slider34;                                    // base for High cut drift (20000 = off)
+denoise_amt   = slider26;
+denoise_base  = slider26;                                    // base for Denoise drift
 audition_mode = slider5;                                   // 0 focused slot, 1 morph
 morph01       = slider6 * 0.01;
 automorph_mode = slider7;
 // Auto-morph time. The RAW slider is read here; the seconds it actually means
 // are derived in @block, because under sync it follows the project tempo and a
 // tempo change does not re-run @slider.
-time_mode     = slider9;        // 0 BPM, 1 Seconds, 2 Hz, 3 Host x
-auto_time_raw = max(0.01, slider8);
+time_mode     = slider8;        // 0 BPM, 1 Seconds, 2 Hz, 3 Host x
+auto_time_raw = max(0.01, slider9);
 automorph_mode != last_automode ? (
   last_automode = automorph_mode; morph_phase = 0;
   drift_primed = 0;   // force Drift to (re)build its shuffle bag on the next sample
@@ -1532,8 +1532,8 @@ automorph_mode != last_automode ? (
 // whether Start delay, Play for, Rest for and Drift period read as seconds or
 // beats, so hiding it would leave five controls whose unit is set by a mode
 // you cannot see -- which is the exact failure R10 exists to stop.
-slider_show(slider9, 1);
-slider_show(slider8, automorph_mode > 0.5);
+slider_show(slider8, 1);
+slider_show(slider9, automorph_mode > 0.5);
 
 // --- Drift target selector save/restore (nested-selector pattern, matching the
 //     rest of the suite). Switching the target saves the four amount/period/shape
@@ -1545,36 +1545,36 @@ slider_show(slider8, automorph_mode > 0.5);
 // writes into sixteen targets, so a wholesale capture on a stray @slider pass would
 // flatten them. No save-on-switch step -- every edit is written as it happens.
 // Nothing is written until @block has adopted the mirror.
-sel_target = slider46;
+sel_target = slider58;
 drift_ui_inited ? (
   last_target_select != sel_target ? (
     dts = mo_read_slot(sel_target);
-    slider47 = target_drift_up[dts];
-    slider48 = target_drift_down[dts];
-    slider50 = target_drift_per[dts];
-    slider52 = target_drift_shape[dts];
-    slider53 = target_drift_play[dts];
-    slider54 = target_drift_rest[dts];
-    slider49 = target_drift_unit[dts];
-    slider_automate(slider49);
-    slider_automate(slider47);
-    slider_automate(slider48);
-    slider_automate(slider50);
-    slider_automate(slider52);
-    slider_automate(slider53);
-    slider_automate(slider54);
-    dui_last[0] = slider47; dui_last[1] = slider48; dui_last[2] = slider50;
-    dui_last[3] = slider52; dui_last[4] = slider53; dui_last[5] = slider54;
-    dui_last[11] = slider49;
+    slider60 = target_drift_up[dts];
+    slider61 = target_drift_down[dts];
+    slider63 = target_drift_per[dts];
+    slider65 = target_drift_shape[dts];
+    slider66 = target_drift_play[dts];
+    slider67 = target_drift_rest[dts];
+    slider59 = target_drift_unit[dts];
+    slider_automate(slider59);
+    slider_automate(slider60);
+    slider_automate(slider61);
+    slider_automate(slider63);
+    slider_automate(slider65);
+    slider_automate(slider66);
+    slider_automate(slider67);
+    dui_last[0] = slider60; dui_last[1] = slider61; dui_last[2] = slider63;
+    dui_last[3] = slider65; dui_last[4] = slider66; dui_last[5] = slider67;
+    dui_last[11] = slider59;
     last_target_select = sel_target;
   ) : (
-    mo_capture(sel_target, target_drift_up,    slider47, 0);
-    mo_capture(sel_target, target_drift_down,  slider48, 1);
-    mo_capture(sel_target, target_drift_per,   slider50, 2);
-    mo_capture(sel_target, target_drift_shape, slider52, 3);
-    mo_capture(sel_target, target_drift_play,  slider53, 4);
-    mo_capture(sel_target, target_drift_rest,  slider54, 5);
-    mo_capture(sel_target, target_drift_unit,  slider49, 11);
+    mo_capture(sel_target, target_drift_up,    slider60, 0);
+    mo_capture(sel_target, target_drift_down,  slider61, 1);
+    mo_capture(sel_target, target_drift_per,   slider63, 2);
+    mo_capture(sel_target, target_drift_shape, slider65, 3);
+    mo_capture(sel_target, target_drift_play,  slider66, 4);
+    mo_capture(sel_target, target_drift_rest,  slider67, 5);
+    mo_capture(sel_target, target_drift_unit,  slider59, 11);
   );
 );
 // Per-target "is this target being driven at all?" flag — lets @sample skip the
@@ -1583,62 +1583,62 @@ drift_ui_inited ? (
 // --- Ramp target selector save/restore (nested-selector, mirrors Drift).
 //     Ramp target selects; `by`, duration and start delay are per target.
 //     Ramp engage is GLOBAL. All targets ride in parallel from @sample. ---
-rsel_target = slider56;
+rsel_target = slider70;
 drift_ui_inited ? (
   last_ramp_target != rsel_target ? (
     rts = mo_read_slot(rsel_target);
-    slider57 = ramp_by_mem[rts];
-    slider60 = ramp_dur_mem[rts];
-    slider64 = ramp_delay_mem[rts];
-    slider61 = ramp_play_mem[rts];
-    slider62 = ramp_rest_mem[rts];
-    slider58 = ramp_by_unit[rts];
-    slider_automate(slider58);
-    slider_automate(slider57);
-    slider_automate(slider60);
-    slider_automate(slider64);
-    slider_automate(slider61);
-    slider_automate(slider62);
-    dui_last[6] = slider57; dui_last[7] = slider60; dui_last[8] = slider64;
-    dui_last[9] = slider61; dui_last[10] = slider62;
-    dui_last[12] = slider58;
+    slider72 = ramp_by_mem[rts];
+    slider74 = ramp_dur_mem[rts];
+    slider79 = ramp_delay_mem[rts];
+    slider75 = ramp_play_mem[rts];
+    slider76 = ramp_rest_mem[rts];
+    slider71 = ramp_by_unit[rts];
+    slider_automate(slider71);
+    slider_automate(slider72);
+    slider_automate(slider74);
+    slider_automate(slider79);
+    slider_automate(slider75);
+    slider_automate(slider76);
+    dui_last[6] = slider72; dui_last[7] = slider74; dui_last[8] = slider79;
+    dui_last[9] = slider75; dui_last[10] = slider76;
+    dui_last[12] = slider71;
     last_ramp_target = rsel_target;
   ) : (
-    mo_capture(rsel_target, ramp_by_mem,    slider57, 6);
-    mo_capture(rsel_target, ramp_dur_mem,   slider60, 7);
-    mo_capture(rsel_target, ramp_delay_mem, slider64, 8);
-    mo_capture(rsel_target, ramp_play_mem,  slider61, 9);
-    mo_capture(rsel_target, ramp_rest_mem,  slider62, 10);
-    mo_capture(rsel_target, ramp_by_unit,   slider58, 12);
+    mo_capture(rsel_target, ramp_by_mem,    slider72, 6);
+    mo_capture(rsel_target, ramp_dur_mem,   slider74, 7);
+    mo_capture(rsel_target, ramp_delay_mem, slider79, 8);
+    mo_capture(rsel_target, ramp_play_mem,  slider75, 9);
+    mo_capture(rsel_target, ramp_rest_mem,  slider76, 10);
+    mo_capture(rsel_target, ramp_by_unit,   slider71, 12);
   );
 );
-ramp_engaged = slider63;
+ramp_engaged = slider78;
 
 // td_active / mod_active are derived from the drift and ramp banks, so they are
 // computed in @block too, for exactly the same reason.
 // eff_ defaults = base (so the first @sample and any inactive target read base).
 eff_spread_hz = spread_hz; eff_lowcut_hz = lowcut_hz; eff_stereo_width = stereo_width;
-drift_restart_free = slider55;   // 0 = restart on play (sync), 1 = free-running
+drift_restart_free = slider69;   // 0 = restart on play (sync), 1 = free-running
 
 @block
 // Adopt the Sync-to-host tracker here rather than in @slider -- see the note
 // on the conversion block in @slider for why. @block cannot run before the
 // instance is configured, so this adopts a settled value whatever order the
 // restore paths ran in.
-!time_mode_inited ? ( last_time_mode = slider9; time_mode_inited = 1; );
+!time_mode_inited ? ( last_time_mode = slider8; time_mode_inited = 1; );
 !lay_ui_inited ? (
-  lay_selv = max(0, min(N_LAY_SLOTS, floor(slider29 + 0.5)));
+  lay_selv = max(0, min(N_LAY_SLOTS, floor(slider40 + 0.5)));
   last_lay_selv = lay_selv; last_lay_sel = lay_selv == 0 ? 0 : lay_selv - 1;
   lay_adopt(); lay_ui_inited = 1;
 );
-!pv_inited ? ( pv_last_tgt = slider16; pv_last_tval = slider17; pv_last_src = slider13; pv_last_sf = slider14; pv_last_sfu = slider15; pv_inited = 1; );
+!pv_inited ? ( pv_last_tgt = slider15; pv_last_tval = slider17; pv_last_src = slider12; pv_last_sf = slider14; pv_last_sfu = slider13; pv_inited = 1; );
 // The Drift/Ramp mirror, adopted HERE and never in @slider (2026-09-11).
 !drift_ui_inited ? (
-  dui_last[0] = slider47; dui_last[1] = slider48; dui_last[2] = slider50;
-  dui_last[3] = slider52; dui_last[4] = slider53; dui_last[5] = slider54;
-  dui_last[6] = slider57; dui_last[7] = slider60; dui_last[8] = slider64;
-  dui_last[9] = slider61; dui_last[10] = slider62;
-  dui_last[11] = slider49; dui_last[12] = slider58;
+  dui_last[0] = slider60; dui_last[1] = slider61; dui_last[2] = slider63;
+  dui_last[3] = slider65; dui_last[4] = slider66; dui_last[5] = slider67;
+  dui_last[6] = slider72; dui_last[7] = slider74; dui_last[8] = slider79;
+  dui_last[9] = slider75; dui_last[10] = slider76;
+  dui_last[11] = slider59; dui_last[12] = slider71;
   drift_ui_inited = 1;
 );
 // Auto-morph time in SECONDS, derived every block. Under sync the slider is a
@@ -1691,15 +1691,15 @@ auto_time = max(0.01,
 // the same beats-to-seconds factor mode 3 does. This said `== 3` and so silently
 // treated a mode-4 instance's durations as raw seconds. (R21 sweep, 2026-09-06.)
 tr_k            = time_mode >= 3 ? 60 / max(tempo, 0.001) : 1;
-start_delay_sec = slider41 * tr_k;
+start_delay_sec = slider53 * tr_k;
 // Play for and Rest for (targets 53, 54) while driven; the gate still switches on
 // only when both SLIDERS are above zero, which is what this always tested.
-pr_play_sec     = (mod_active[85] ? max(0.001, slider42 + au_key(85, 3, slider42, time_mode >= 3 ? 2 : 0)) : slider42) * tr_k;
-pr_rest_sec     = (mod_active[86] ? max(0.001, slider43 + au_key(86, 3, slider43, time_mode >= 3 ? 2 : 0)) : slider43) * tr_k;
-pr_enabled      = slider42 * tr_k > 0 && slider43 * tr_k > 0;
-morph_at_rest   = slider44;   // 0 walk through, 1 freeze in place
-out_at_rest     = slider45;   // 0 pass-through, 1 silence
-// --- Drift period unit (slider51) and Ramp time unit (slider59). Each is one
+pr_play_sec     = (mod_active[85] ? max(0.001, slider54 + au_key(85, 3, slider54, time_mode >= 3 ? 2 : 0)) : slider54) * tr_k;
+pr_rest_sec     = (mod_active[86] ? max(0.001, slider55 + au_key(86, 3, slider55, time_mode >= 3 ? 2 : 0)) : slider55) * tr_k;
+pr_enabled      = slider54 * tr_k > 0 && slider55 * tr_k > 0;
+morph_at_rest   = slider56;   // 0 walk through, 1 freeze in place
+out_at_rest     = slider57;   // 0 pass-through, 1 silence
+// --- Drift period unit (slider62) and Ramp time unit (slider73). Each is one
 //     factor: SECONDS PER UNIT, so a stored value times its factor is seconds.
 //     Derived here, per block, and NOT in @slider, for the same reason auto_time
 //     is: Beats reads the live tempo, and Cycles reads auto_time, and neither
@@ -1714,12 +1714,12 @@ out_at_rest     = slider45;   // 0 pass-through, 1 silence
 //     Switching a unit REINTERPRETS the number rather than converting it, which
 //     is how the whole suite behaves: the user moved a visible control that
 //     names the unit on itself, so nothing is silent about it.
-drift_unit_sec  = slider51 == 0 ? auto_time :
-                  slider51 == 1 ? 1 :
+drift_unit_sec  = slider62 == 0 ? auto_time :
+                  slider62 == 1 ? 1 :
                                   60 / max(tempo, 0.001);
-ramp_unit_sec   = slider59 == 0 ? auto_time :
-                  slider59 == 1 ? 1 :
-                  slider59 == 2 ? 60 :
+ramp_unit_sec   = slider73 == 0 ? auto_time :
+                  slider73 == 1 ? 1 :
+                  slider73 == 2 ? 60 :
                                   60 / max(tempo, 0.001);
 // Drift period is a SECONDS value everywhere it is consumed. It used to follow
 // Rate Mode; it follows its own unit control now.
@@ -2534,7 +2534,7 @@ hopcount >= HOP ? ( hopcount = 0; (have > 0 && wlevel > 0.0001) ? gen_grain(); )
       (lyk != LAY_ORIG && lyg > 0.0001) ? (
         lybo = lyk*NHARM;
         lyfa = fA*layer_ratio[lyk]; lyfb = fB*layer_ratio[lyk];
-        // Layer harmonics (slider37, per layer, 0 = uncapped): a plain count,
+        // Layer harmonics (slider48, per layer, 0 = uncapped): a plain count,
         // never above what the source actually has (nharm_used). A layer with
         // no cap set costs exactly what it always cost -- this is opt-in only.
         lynh = lay_nharm[lyk] > 0 ? min(nharm_used, lay_nharm[lyk]) : nharm_used;
@@ -2877,8 +2877,8 @@ file_var(0, ser_magic);
   //     Every per-layer bank and the layer range of every per-target bank get
   //     the same treatment, because target LAY_T0+i has always meant layer i.
   //
-  //     THE SLIDER LINE CANNOT BE FIXED FROM HERE. slider29, slider46 and
-  //     slider56 hold indices into these lists and live in the project file --
+  //     THE SLIDER LINE CANNOT BE FIXED FROM HERE. slider40, slider58 and
+  //     slider70 hold indices into these lists and live in the project file --
   //     run tools/morpher_migrate_layer_order.py over the project folders.
   // Gated on the blob actually HAVING layer banks (7700004 was the first), not
   // merely on being old. A 7700001/7700002 blob predates layers entirely, so
@@ -2980,26 +2980,26 @@ file_var(0, ser_magic);
     dts = mo_read_slot(last_target_select);
     rts = mo_read_slot(last_ramp_target);
     // The selectors themselves, so a remapped old save shows the target it had.
-    slider46 = last_target_select;
-    slider56 = last_ramp_target;
-    slider47 = target_drift_up[dts];
-    slider48 = target_drift_down[dts];
-    slider50 = target_drift_per[dts];
-    slider52 = target_drift_shape[dts];
-    slider57 = ramp_by_mem[rts];
-    slider60 = ramp_dur_mem[rts];
-    slider64 = ramp_delay_mem[rts];
-    slider53 = target_drift_play[dts];
-    slider54 = target_drift_rest[dts];
-    slider61 = ramp_play_mem[rts];
-    slider62 = ramp_rest_mem[rts];
-    slider49 = target_drift_unit[dts];
-    slider58 = ramp_by_unit[rts];
-    dui_last[11] = slider49; dui_last[12] = slider58;
-    dui_last[0] = slider47; dui_last[1] = slider48; dui_last[2] = slider50;
-    dui_last[3] = slider52; dui_last[4] = slider53; dui_last[5] = slider54;
-    dui_last[6] = slider57; dui_last[7] = slider60; dui_last[8] = slider64;
-    dui_last[9] = slider61; dui_last[10] = slider62;
+    slider58 = last_target_select;
+    slider70 = last_ramp_target;
+    slider60 = target_drift_up[dts];
+    slider61 = target_drift_down[dts];
+    slider63 = target_drift_per[dts];
+    slider65 = target_drift_shape[dts];
+    slider72 = ramp_by_mem[rts];
+    slider74 = ramp_dur_mem[rts];
+    slider79 = ramp_delay_mem[rts];
+    slider66 = target_drift_play[dts];
+    slider67 = target_drift_rest[dts];
+    slider75 = ramp_play_mem[rts];
+    slider76 = ramp_rest_mem[rts];
+    slider59 = target_drift_unit[dts];
+    slider71 = ramp_by_unit[rts];
+    dui_last[11] = slider59; dui_last[12] = slider71;
+    dui_last[0] = slider60; dui_last[1] = slider61; dui_last[2] = slider63;
+    dui_last[3] = slider65; dui_last[4] = slider66; dui_last[5] = slider67;
+    dui_last[6] = slider72; dui_last[7] = slider74; dui_last[8] = slider79;
+    dui_last[9] = slider75; dui_last[10] = slider76;
     // Per-slot Capture point: force slider3 to the restored slot's stored point,
     // and sync last_cap_slot so the first @slider doesn't mistake load for a
     // slot-switch (which would save the visible point into the wrong slot).
@@ -3028,7 +3028,7 @@ file_var(0, ser_magic);
     // wrong layer's values over the right one's. This is the section that runs
     // on a track DUPLICATE, where @init may not run at all -- without it the
     // selected layer is the one that silently zeroes.
-    // Index off the BLOB's own last_lay_sel, NEVER off slider29 -- this is the
+    // Index off the BLOB's own last_lay_sel, NEVER off slider40 -- this is the
     // whole point of doing it here. Reading the slider assumes REAPER has
     // already restored the slider line, and the two restore paths have no
     // guaranteed order: if the slider is still at its default the visible
@@ -3044,16 +3044,16 @@ file_var(0, ser_magic);
     last_lay_sel = max(0, min(N_LAY_SLOTS-1, last_lay_sel | 0));
     lay_selv = ser_new ? max(0, min(N_LAY_SLOTS, ser_lay_selv | 0)) : last_lay_sel + 1;
     last_lay_sel = lay_selv == 0 ? 0 : lay_selv - 1; last_lay_selv = lay_selv;
-    slider29 = lay_selv;
-    slider30 = lay_active[last_lay_sel];
-    slider31 = lay_semi[last_lay_sel];
-    slider32 = lay_punit[last_lay_sel];
-    slider33 = lay_fine[last_lay_sel];
-    slider34 = lay_funit[last_lay_sel];
-    slider35 = lay_db_base[last_lay_sel];
-    slider36 = lay_solo[last_lay_sel];
-    slider37 = lay_nharm[last_lay_sel];
-    slider38 = lay_ot_harm[last_lay_sel];
+    slider40 = lay_selv;
+    slider41 = lay_active[last_lay_sel];
+    slider43 = lay_semi[last_lay_sel];
+    slider42 = lay_punit[last_lay_sel];
+    slider45 = lay_fine[last_lay_sel];
+    slider44 = lay_funit[last_lay_sel];
+    slider46 = lay_db_base[last_lay_sel];
+    slider47 = lay_solo[last_lay_sel];
+    slider48 = lay_nharm[last_lay_sel];
+    slider49 = lay_ot_harm[last_lay_sel];
     lay_adopt(); lay_ui_inited = 1;
     sliderchange(-1);
   );
