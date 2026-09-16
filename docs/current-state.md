@@ -22,6 +22,13 @@ has been heard, and what Rozaya has said is next.
 
 - **The rules pass is finished at R25.** R19 to R25 are off the list. R26 and R27 are the
   two that remain and they are BUILD work, taken per plugin below -- not another reading pass.
+- **Before each plugin's R26/R27 turn, grep `docs/backlog.md` for the plugin's name AND
+  for "each plugin's" -- `suite_status.py`'s `lacks:` line does not know about suite-wide
+  items agreed to ride along.** On 2026-09-16 Veil and the Phaser were both built without
+  the per-target `Drift period unit` / `Ramp time unit` that Rozaya had agreed belonged in
+  each turn (*"Good."*), because the build started from `lacks:`. The ride-alongs today:
+  per-target period and time units; R23's `Drift movement` where owed; R24's missing
+  targets; R25 naming on anything new.
 - **The amount units (R26) with R27's same things, ONE PLUGIN AT A TIME** -- each planned
   with Rozaya, built, moved, measured and installed before the next. Rozaya: *"I'm wondering
   if we should take this per-plugin rather than a giant sweep."* What each plugin gains:
