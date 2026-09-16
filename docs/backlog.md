@@ -58,8 +58,11 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   Owed by: Tremolo, the Sweeping Filter, Sweep Dwell, Polyrhythm v3, Shepard Scale,
   Shepard Tone, the Morpher (grain length). Each recomputes an envelope or segment value
   from a running phase every sample instead of latching it when the occurrence begins.
-  Veil, Resonance Bank and the Stereo Phaser owe nothing; Sustain Looper is deliberately
-  live. Separately, Polyrhythm and Shepard Tone count the MASTER rate's cycles for
+  Resonance Bank owes nothing; Sustain Looper is deliberately live. Veil and the Stereo
+  Phaser got it 2026-09-16 for Play for / Rest for, which turned out to be targets NOTHING
+  READ (bit-identical with a large drift). **In each plugin's turn, measure that its Play
+  for / Rest for targets change the sound** -- only Veil, the Phaser and the Morpher have
+  been checked (the Morpher reads them, every block, so it owes the switch). Separately, Polyrhythm and Shepard Tone count the MASTER rate's cycles for
   per-voice targets. What was read, and the misreading to avoid: `docs/history/R23.md`.
 - **`Drift amount unit` / `Ramp by unit` in the other fifteen.** Committed 2026-09-11,
   Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Built in Passage,

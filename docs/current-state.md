@@ -114,6 +114,11 @@ heard, reverted and never explained (`_broken-breathgen-20260908-forensics/`).
   heard: all three live instances bit-identical to before the day's changes, and a drift of
   12 semitones on Veil's cutoff reaches the same octave level the ramp measured (0.482
   against 0.479) where 12 in the default unit barely moves it.
+- **Veil and the Stereo Phaser, evening of 2026-09-16:** the effect now waits out Start
+  delay (it only held drift and ramp); `Drift rest mode` / `Ramp rest mode` renamed; and
+  `Drift movement`, with Play for / Rest for as targets that finally do something. Measured,
+  not heard: every stretch holds the length it began with (28 of 28), all five live copies
+  bit-identical and every control in place after `tools/drift_movement_migrate_veil_phaser_20260916.py`.
 - **The Stereo Phaser's whole R26/R27 layout, 2026-09-16.** Measured, not heard:
   bit-identical to the old on defaults AND on the real `strangeness.RPP`, whose three
   instances sweep 40-200 Hz and had no blob at all -- the migration writes them a fresh

@@ -96,6 +96,11 @@ Drift amount unit)** `0–20000, default 0` — how far it wanders each way.
 **Drift period unit** `Cycles / Seconds / Beats, default Cycles`, per target, and
 **Drift period (0 = off)** `0–1000, default 20` — how long one full wander takes.
 
+**Drift movement** `With the target / On a clock, default With the target`, per target,
+shown only while the Drift target is Play for or Rest for. With the target, a play or rest
+stretch takes its length when it begins and keeps it; On a clock, a drift can end the
+stretch you are hearing early or late.
+
 **Drift shape** `Sine / Triangle / Random, default Sine`
 
 **Drift play for (periods, 0 = always)** and **Drift rest for (periods, 0 =

@@ -24,6 +24,7 @@ nothing installed; `loop_finder.py` needs two packages (noted below).
 | [`veil_migrate_r26r27_20260915.py`](#the-r26r27-per-plugin-migrations) | Veil's 22-control layout to its 35-control one |
 | [`phaser_migrate_r26r27_20260916.py`](#the-r26r27-per-plugin-migrations) | the Stereo Phaser's 25 to its 38, blob included |
 | [`phaser_migrate_r9_20260916.py`](#the-r26r27-per-plugin-migrations) | the Stereo Phaser's Feedback and Wet/dry from fractions to percent, blob included |
+| [`drift_movement_migrate_veil_phaser_20260916.py`](#the-r26r27-per-plugin-migrations) | Veil's and the Phaser's new `Drift movement` slot, blob 3600013 -> 3700013 |
 
 ## rate_calc.py
 
