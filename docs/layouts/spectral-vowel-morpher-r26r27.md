@@ -22,8 +22,11 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
   2026-09-16, first Morpher per project: no project drifts or ramps it (27 on 300, six on
   150, two 400, two 600, one 200). Rozaya: *"if drift is going to fuck shit up, why bother
   having it *on there*?"* Removing it renumbers both pickers, so the migration moves every
-  saved selection past it. With it gone, Drift movement has no grain to act on; check Play
-  for / Rest for as targets before settling that the Morpher needs no switch.
+  saved selection past it. Checked 2026-09-16: Play for and Rest for ARE per-occurrence
+  targets -- @block recomputes pr_play_sec/pr_rest_sec (lines ~1697) against a running
+  pr_accum, so a drift cuts the stretch being heard. So the Morpher DOES get `Drift movement
+  {With the target, On a clock}` per target, for those two. Rozaya: *"the other sounds like
+  a gap"*.
 
 - **Spread gets a unit and the pitch block.** Told that in Hz the blur is one fixed width
   everywhere (it swallows the gaps between low harmonics and barely touches high ones) and
