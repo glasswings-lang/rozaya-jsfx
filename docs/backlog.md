@@ -25,6 +25,16 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 
 ## Open — checked against the plugins 2026-09-13
 
+- **`Drift period unit` and `Ramp time unit` are shared across targets, and nobody decided
+  that.** Rozaya, 2026-09-15: *"after all the work we did to make things per-target in ramp,
+  why?"* There is no reason in the record. `docs/history/session-log.md` stage 8 states it
+  flatly -- *"Units global, play/rest per (slot, target)"* -- as a fact of the port from the
+  Morpher, never as a choice. **Resonance Bank already disagrees**: its `Drift period mode` is
+  per band and target, one plugin in nineteen. And R26 makes `Drift amount unit` per target
+  outright (*"No unit locks. ever."*), which leaves the period unit the odd one out.
+  Per target would widen `@serialize` and needs a magic bump, so it belongs IN each plugin's
+  R26 turn, not as a sweep. If it lands, the `(all targets)` mark comes off those two and
+  only `Ramp engage` keeps it.
 - **Seven targets R24 is owed, and Play for / Rest for in two.** R24, closed 2026-09-15
   with nothing built; it lands in each plugin's own amount-unit turn (R26/R27), because
   inserting a target in control order renumbers the picker and rewrites every saved
