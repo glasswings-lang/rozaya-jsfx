@@ -95,26 +95,26 @@ slider15:0<0,8,1{All,Voice 1,Voice 2,Voice 3,Voice 4,Voice 5,Voice 6,Voice 7,Voi
 // Rozaya: "breath gen handled this nicely". Mode FIRST, because it decides
 // whether the note name below means anything. Each voice has its own mode and
 // its own fine tune unit -- "that would apply to the 'all' option too."
-slider16:1<0,2,1{Hz,Semitones,Cents}>Pitch mode
+slider16:1<0,2,1{Hz,Semitones,Cents}>Voice pitch mode
 // A real control both ways: pick C4 or type 60 into the value, and the other
 // follows. Hidden outside Semitones, where it would be lying.
-slider17:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Note name
+slider17:60<0,127,1{C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Voice note name
 // THE pitch, not an offset: Hz is the frequency, Semitones the MIDI note (60 =
 // middle C), Cents that times 100. Transpose and Octave shift move every voice.
-slider18:60<0,20000,0.001>Pitch value (Hz / semitones / cents)
+slider18:60<0,20000,0.001>Voice pitch value (Hz / semitones / cents)
 // The ONE fine tune, in its own unit. Saved voices were cents, and stay so.
-slider19:0<-1000,1000,0.001>Fine tune
-slider20:2<0,2,1{Hz,Semitones,Cents}>Fine tune unit
+slider19:0<-1000,1000,0.001>Voice fine tune
+slider20:2<0,2,1{Hz,Semitones,Cents}>Voice fine tune unit
 // Unit follows Rate Mode. In Drift mode this is an OFFSET from Rate Value; in
 // Independent mode it IS the voice's rate.
-slider21:0<-1000,1000,0.001>Drift / rate — offset in Drift mode, this voice's own rate in Independent
+slider21:0<-1000,1000,0.001>Voice drift / rate — offset in Drift mode, this voice's own rate in Independent
 // Phase Offset unit follows Rate Mode: BPM = beats, Seconds = seconds,
 // Hz = cycles. Values wrap freely -- there is no clamping.
-slider22:0<-1000,1000,0.001>Phase offset (in rate mode units)
+slider22:0<-1000,1000,0.001>Voice phase offset (in rate mode units)
 // Per-voice from this build on. Nearly free in the engine: the waveform chain
 // was already inside the per-voice loop and already indexed this voice's own
 // phase and gain -- only the waveform NUMBER was global.
-slider23:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Waveform
+slider23:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,Half-sine,Phi-cascade,Phi Triangle,Phi Sine,Square,Pulse}>Voice waveform
 // The tremolo SHAPE, per voice. Until this build the voices differed in pitch,
 // rate and phase but shared one envelope, so the plugin made one kind of sound
 // played in a pattern. On Duration is the big one: a voice on for 90% of its
@@ -122,21 +122,21 @@ slider23:0<0,13,1{Sine,Triangle,Saw,Golden TS,Golden SG,Golden GS,Bell,Wavefold,
 // other together. The two envelope CURVES (Attack/Release Shape) and the four
 // timbre controls stay global -- that is where refinement lives, and this is
 // where identity lives.
-slider24:-6<-60,0,0.01>Tremolo amount (dB, 0 = strongest)
-slider25:100<0,100,0.1>On duration (% of cycle)
-slider26:0<0,100,0.1>Attack (% of cycle)
-slider27:100<0,100,0.1>Release (% of cycle)
-slider28:-6<-60,24,0.01>Gain (dB)
+slider24:-6<-60,0,0.01>Voice tremolo amount (dB, 0 = strongest)
+slider25:100<0,100,0.1>Voice on duration (% of cycle)
+slider26:0<0,100,0.1>Voice attack (% of cycle)
+slider27:100<0,100,0.1>Voice release (% of cycle)
+slider28:-6<-60,24,0.01>Voice gain (dB)
 // Active bypasses this voice's oscillator entirely. On modern hardware that
 // makes no audible difference; on older machines it reduces CPU load. Gain at
 // -60 dB is effectively silent but still costs CPU.
-slider29:1<0,1,1{Off,On}>Active (Off = no CPU cost)
+slider29:1<0,1,1{Off,On}>Voice active (Off = no CPU cost)
 // Solo. When ANY voice is soloed, only soloed voices sound -- and the level
 // normalizer counts the soloed set, so soloing does not change the loudness of
 // what is left. Step the selector through the voices with this on and the one
 // that is wrong announces itself; until now the only way to hear one voice
 // alone was switching seven others off and back on again.
-slider30:0<0,1,1{Off,On}>Solo this voice (heard even when Active is off)
+slider30:0<0,1,1{Off,On}>Voice solo (heard even when Active is off)
 
 // ===== PAN =====
 slider31:0<0,1,1{Off,On}>Pan enabled

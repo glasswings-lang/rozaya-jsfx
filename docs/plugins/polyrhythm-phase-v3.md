@@ -164,7 +164,7 @@ project, changes nothing.
 
 ---
 
-**Gain (dB)** `-60 to +6 dB, default -6 for every voice`
+**Voice gain (dB)** `-60 to +6 dB, default -6 for every voice`
 Per-voice output level, applied before the voice is summed. -60 dB is
 effectively silent. To cut a voice with no CPU cost, use **Active = Off**
 instead.
@@ -175,32 +175,32 @@ Five controls, and each voice has all five. Set them on **All** to change every
 voice at once. The left oscillator runs at the voice's pitch; the right runs at
 that pitch plus the Binaural Beat Hz offset.
 
-**Pitch mode** `Hz / Semitones / Cents, default Semitones`
+**Voice pitch mode** `Hz / Semitones / Cents, default Semitones`
 What this voice's Pitch value means. It comes first because it decides whether
 the note name below means anything. Switching it does not convert the number:
 60 in Semitones is middle C, and 60 in Hz is a low hum.
 
-**Note name** `C-1 to G9, default C4`
+**Voice note name** `C-1 to G9, default C4`
 This voice's pitch, said as a note. It works both ways: pick `A4` here, or type
 `69` into Pitch value, and the other follows. Only shown in Semitones, where the
 names and the numbers are the same thing. *Until 2026-09-10 the list ran C2 to
 C6; every saved voice kept its note.*
 
-**Pitch value (Hz / semitones / cents)** `0 to 20000, default 60`
+**Voice pitch value (Hz / semitones / cents)** `0 to 20000, default 60`
 The pitch itself, not an offset from anything. In **Hz** it is the frequency. In
 **Semitones** it is the MIDI note number, so 60 is middle C and 69 is A4. In
 **Cents** it is that number times 100, so 6950 is a quarter tone above A4.
 **Transpose** and **Octave shift** move every voice on top of this, in any mode.
 
-**Fine tune** `-1000 to +1000, default 0`
+**Voice fine tune** `-1000 to +1000, default 0`
 The one fine tune, in the unit below. Two voices on the same note with one a few
 cents off will beat slowly against each other.
 
-**Fine tune unit** `Hz / Semitones / Cents, default Cents`
+**Voice fine tune unit** `Hz / Semitones / Cents, default Cents`
 What Fine tune counts in, for this voice. In Cents, `+100` is exactly one note
 step. Saved voices were in cents, and still are.
 
-**Drift / Rate — offset in Drift mode, this voice's own rate in Independent** `-1000 to +1000, default 0`
+**Voice drift / rate — offset in Drift mode, this voice's own rate in Independent** `-1000 to +1000, default 0`
 
 *The label spells both meanings out because the control genuinely has two, and
 a control whose meaning is gated by a switch has to say so on itself.*
@@ -215,17 +215,17 @@ means a longer gap.
 Rate Mode selects — Rate Value is ignored entirely. Here 0 does mean effectively
 stopped, in every mode.
 
-**Phase Offset** `-1000 to +1000, default 0`
+**Voice phase offset** `-1000 to +1000, default 0`
 When this voice becomes audible within its tremolo cycle, in the units set by
 Rate Mode (BPM = beats, Seconds = seconds, Hz = cycles). Offset 0 fires the
 voice immediately at playback start. Values wrap freely.
 
-**Waveform** *(per-voice since 2026-09-07)*
+**Voice waveform** *(per-voice since 2026-09-07)*
 This voice's waveform, from the fourteen-slot palette described below. It used
 to be one setting for the whole plugin. Set it on **All** to change every voice
 at once.
 
-**Tremolo amount (dB, 0 = strongest)** `-60 to 0 dB, default -6`
+**Voice tremolo amount (dB, 0 = strongest)** `-60 to 0 dB, default -6`
 How strongly this voice pulses. **0 dB is the strongest pulse:** the voice dips
 to silence at the bottom of each cycle. **-60 dB is no pulse at all:** it holds
 steady. The default of -6 is a gentle swell that never goes quiet. This is the
@@ -235,7 +235,7 @@ where it is called `Amount (dB)`.
 *Renamed 2026-09-10 from `Depth dB`. The sound did not change. Until then this
 manual described it backwards, which is what the old name invited.*
 
-**On duration (% of cycle)** `0-100%, default 100`
+**Voice on duration (% of cycle)** `0-100%, default 100`
 The proportion of this voice's tremolo cycle during which it is in its active
 state (including attack and release). At 100% the tremolo never fully closes; at
 50% the voice is present for half its cycle.
@@ -245,10 +245,10 @@ the plugin made one kind of sound played in a pattern. A voice on for 90% of its
 cycle is a **pad**; one on for 10% is a **rhythm** — and now you can have both
 at once, a shallow near-continuous bed with a hard short blip ticking over it.
 
-**Attack (% of cycle)** `0-100%, default 0`
+**Voice attack (% of cycle)** `0-100%, default 0`
 Proportion of the on-time spent fading up from silence.
 
-**Release (% of cycle)** `0-100%, default 100`
+**Voice release (% of cycle)** `0-100%, default 100`
 Proportion of the on-time spent fading back down. The default of 100% with 0%
 attack gives a ramp-down envelope: the voice fades out across its whole on-time
 with no hold.
@@ -256,11 +256,11 @@ with no hold.
 > If Attack % + Release % exceeds 100% of the on-time, both are scaled down
 > proportionally so their sum fits.
 
-**Active** `Off / On, default On for V1 only`
+**Voice active** `Off / On, default On for V1 only`
 Enables or disables the voice. Off bypasses its oscillator entirely — no CPU
 cost — and excludes it from the level normalisation count.
 
-**Solo this voice** `Off / On, default Off` *(new 2026-09-07)*
+**Voice solo** `Off / On, default Off` *(new 2026-09-07)*
 When **any** voice is soloed, only soloed voices sound. Step the Voice selector
 through with this switched on and the voice that is wrong announces itself;
 before this, hearing one voice alone meant switching seven others off and back
@@ -280,7 +280,7 @@ the suite with a Solo.
 
 ### Waveform
 
-**Waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine / Square / Pulse`
+**Voice waveform** `Sine / Triangle / Saw / Golden TS / Golden SG / Golden GS / Bell / Wavefold / Half-sine / Phi-cascade / Phi Triangle / Phi Sine / Square / Pulse`
 The oscillator waveform used by all voices simultaneously.
 
 > **A note on the Golden / Phi family.** Polyrhythm Phase shipped with three "Golden" waveforms whose audible behavior didn't match the names a strict reading would expect — slot 3 ("Golden TS") was a phi-warped sine, not a phi-warped triangle; slot 4 ("Golden SG") added an extra sine pre-warp before the phi-warp. Those sounds are preserved here as Golden TS / SG for back-compat with existing projects. The two **Phi Triangle / Phi Sine** slots at the end of the list are the strict-reading versions (phi-warp into triangle, and phi-warp into clean sine with no pre-warp) — pick those if you want the cleaner interpretations.
@@ -534,7 +534,7 @@ What some of them do:
 
 - **Rate value** — uniform Hz delta to every voice; preserves inter-voice rate relationships (the whole pattern breathes together).
 - **V1–V8 Rate** — wanders each voice's own rate independently. Voices drift against each other. In Both modes the reverse-layer slot 8+k follows V(k+1)'s drift.
-- **V1–V8 Pitch** and **Fine tune** — wander that voice's pitch, in that voice's own Pitch mode and Fine tune unit.
+- **V1–V8 Pitch** and **V1–V8 Fine tune** — wander that voice's pitch, in that voice's own Pitch mode and Fine tune unit.
 - **Pan Base Rate** / **Pan Increment** — wander the Increment-mode pan controls. Only affect Increment pan mode.
 - **Binaural Beat** — wanders the L/R frequency offset (the beat frequency itself drifts), applied uniformly to all voices' R channel.
 - **V1–V8 Gain** — wanders each voice's level (dB) per-sample, so voices swell and recede independently.

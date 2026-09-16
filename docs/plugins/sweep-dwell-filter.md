@@ -70,16 +70,16 @@ which part of the cycle the controls under it belong to:
 
 Under it, for whichever segment is picked:
 
-- **Length mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`
-  and **Length** — how long the segment lasts. Seconds is that many seconds. Every
+- **Segment length mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`
+  and **Segment length** — how long the segment lasts. Seconds is that many seconds. Every
   N beats is that many beats. N per beat fits that many into one beat, so 2 is half
   a beat. BPM is as long as one beat at that tempo; Hz as long as one cycle at that
   speed. The beat modes follow the project tempo live.
-- **Fade shape** `Linear / Cosine / Logarithmic / Exponential` — the two fades only.
+- **Segment fade shape** `Linear / Cosine / Logarithmic / Exponential` — the two fades only.
   Linear is a constant rate; Cosine an S-curve; Logarithmic drops fast then
   lingers; Exponential holds then closes sharply.
-- **Pitch mode**, **Note name**, **Frequency (Hz / semitones / cents)**, **Fine
-  tune**, **Fine tune unit** — the two dwells only, the same five controls as the
+- **Segment pitch mode**, **Segment note name**, **Segment frequency (Hz /
+  semitones / cents)**, **Segment fine tune**, **Segment fine tune unit** — the two dwells only, the same five controls as the
   Sweeping Filter. Note name shows in Semitones and is the same number as the
   frequency. If Low ends up above High, the two are swapped.
 
@@ -108,7 +108,7 @@ Blend between the filtered signal and the unprocessed input. At 1.0 the output i
 
 ### Syncing to the project
 
-Put every segment's Length mode on **Every N beats** or **N per beat** (All
+Put every segment's Segment length mode on **Every N beats** or **N per beat** (All
 segments does it in one move) and the cycle is a fixed number of beats.
 
 #### The cycle is positioned from the project, not from when you pressed play
