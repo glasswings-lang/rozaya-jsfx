@@ -20,6 +20,7 @@ nothing installed; `loop_finder.py` needs two packages (noted below).
 | [`passage_inject.py`](#passage_injectpy) | putting a WAV back *into* a capture slot |
 | [`passage_set_capture_average.py`](#passage_set_capture_averagepy) | turning Capture average up across a whole folder of projects |
 | [`r24_target_audit.py`](#r24_target_auditpy) | every control in every plugin beside that plugin's Drift target list, so the two can be compared by reading |
+| [`r25_scope_verify.py`](#r25_scope_verifypy) | re-measures every R25 scope label in the runner -- does this control really serve every target? |
 
 ## rate_calc.py
 
@@ -994,3 +995,21 @@ match. **It classifies nothing** -- R24 asks whether a control shapes the sound,
 a judgement, so this only puts the two lists side by side for a person to read. Names are
 matched with the R25 `(per target)` suffix stripped, so a near-miss shows as `--` and has
 to be checked against the plugin's own target list before it counts as a finding.
+
+## r25_scope_verify.py
+
+```
+python tools/r25_scope_verify.py
+```
+
+Re-measures what every R25 label claims, outside REAPER. For each control it puts the
+target picker on option 1, sets the control to a non-default value, steps a block, moves
+the picker back to option 0 and reads the control: a value that survived serves every
+target, a value that reverted switches with the picker. `Drift period` is measured
+alongside as the CONTROL CASE and must come back per-target, or the method is broken and
+no other line means anything. Exits non-zero on any disagreement.
+
+**Why it exists.** The R25 labels were measured live on 2026-09-12, during a crowded run
+of work. Rozaya, 2026-09-15: *"Are those verified though? this was during the time that
+thing was being crammed in and crammed in."* A claim that can only be checked by one live
+session in REAPER is a claim nobody will check again -- this makes it a minute's work.
