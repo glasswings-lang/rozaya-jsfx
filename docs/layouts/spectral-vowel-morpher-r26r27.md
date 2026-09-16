@@ -200,6 +200,15 @@ magic in Python, keyed on the magic. Survey helpers were in the session scratchp
   default. Unset slots read as Walk through, so no seed. Bit-identical on breathing.RPP as
   saved and with play/rest; a probe showed drift and ramp offsets frozen through every rest on
   Freeze in place and moving on Walk through.
-- Stage 4 rest switches; 5 per-target units, Drift movement mode,
-  target list 87 -> 107 and blob 7700107; 6 Spread block; 7 cut blocks; 8 new targets wired;
-  9 migration, verify, install.
+- **Stage 5, DONE:** 107 targets (t107_o2n; Wash grain dropped, a picker on it lands on Morph),
+  drift loop order carried so rand() draws as before; per-target Drift period unit, Ramp time
+  unit, Drift movement mode (latches Play for / Rest for per stretch); Layer harmonics (LH_T0)
+  and Pitch source fine tune wired; blob 7700107 appends the three banks, an older blob remaps
+  87 -> 107 and seeds units from sliders 62/73. convert_line remaps pickers 58/70. Measured:
+  breathing (blob 7700001) and the bridge test project (7700087, 24 drifts incl. Random)
+  bit-identical as saved and with play/rest; a 7700107 save reopens bit-identical with every
+  control equal; per-target units stay per target; movement mode 11/11 held; harmonics drift
+  0..10; source fine tune +-50 cents moves pitch only with a source note. NOT YET READ BY
+  ANYTHING: targets 8, 12, 14 (Spread / cut fine tunes) -- stages 6 and 7 wire them.
+- Still to build: 6 Spread block; 7 cut blocks (0 = off, note list from Off, drift clamp);
+  9 migration (reseal old blobs, transcode 7700087 -> 7700107 keyed on magic), verify, install.

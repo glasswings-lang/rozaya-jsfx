@@ -27,6 +27,22 @@ MAP = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 9: 8, 8: 9, 10: 10, 11: 11, 13:
 assert len(MAP) == N_OLD and len(set(MAP.values())) == N_OLD
 
 
+# The 87-target list -> the 107 (Wash grain, 3, has no place; a picker parked there lands on
+# Morph). Must agree with t107_o2n in the plugin.
+def _t107(o):
+    if o <= 2: return o
+    if o == 3: return None
+    if o == 4: return 7
+    if o <= 7: return o - 1
+    if o <= 10: return o + 1
+    if o == 11: return 13
+    if o <= 65: return o + 3
+    return o + 20
+T107 = {o: _t107(o) for o in range(87)}
+T107 = {o: (n if n is not None else 0) for o, n in T107.items()}
+assert sorted(n for o, n in T107.items() if o != 3) == sorted(set(n for o, n in T107.items() if o != 3))
+
+
 def num(tok, dflt):
     try:
         return float(tok)
@@ -44,4 +60,8 @@ def convert_line(line):
     # Stage 3: Transport unit. The three times counted beats when the old Rate mode (slider 9)
     # was Every N beats (3) or N per beat (4), else seconds.
     new[52] = "2" if num(old.get(9), 1) >= 3 else "0"
+    # Stage 5: the Drift and Ramp target pickers (old 46, 56 -> 58, 70) move to the 107 list.
+    for o, n in ((46, 58), (56, 70)):
+        t = T107.get(int(num(old.get(o), 0)), 0)
+        new[n] = str(t)
     return render_line(line, new, n_sliders=N_NEW)
