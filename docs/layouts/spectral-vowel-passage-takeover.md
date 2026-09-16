@@ -166,7 +166,16 @@ Pre-build copy for comparisons: keep one pinned outside the repo (`git show 48e3
   52:76, 53:77, 54:79, 55:80, 57:81, 56:82, 58:83, 59:84, 60:85, 61:86, 62:88, 63:89`.
   Verify PASS (text, declarations, 28 continuous + 35 selectors bit-identical).
 - **Stage 2, names, DONE** (labels only).
-- Still to build, in this order: 3 Drift/Ramp rest mode; 4 Spread block; 5 cut blocks;
-  6 layers (global); 7 Auto-morph timing + rate; 8 targets 111, per-target units, movement
-  mode, new blob magic; 9 voice engine (one wavetable per voice) and grain auto-gain removed
-  (a level change: say so on a control); 10 migration, verify, install, plugin page.
+- **Stage 3, DONE:** Drift rest mode (78), Ramp rest mode (87), Walk through by default.
+- **Stage 4, DONE:** Spread (31-34), Low cut (37-41), High cut (42-46) as per-slot pitch blocks,
+  the Morpher's functions; blob 7700009 appends nine per-slot banks; an older blob's High cut 20000
+  becomes 0 in the plugin, and `convert_line` does the same on the slider line and sets the note
+  names. Checks: `tools/passage_takeover_checks/stage4.py` (every live instance, old vs new).
+- **Stage 5, DONE:** the voice is one wavetable per voice position (wt_build / wt_check / wt_read /
+  wt_take). `engine_compare.py`: nightfall, all voice, widths 50 and 0, -117 dB from the sine
+  engine; block time roughly halved.
+- **Stage 5b, DONE:** drift/ramp work lists; bit-identical with drifts and a ramp set after load.
+- Still to build, in this order: 6 layers (global) on the wavetable engine, voice and wash;
+  7 Auto-morph timing + rate; 8 targets 111, per-target units, movement mode; 9 grain auto-gain
+  removed (a level change: say so on a control) and layer defaults; 10 migration, verify,
+  install, plugin page.
