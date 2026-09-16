@@ -37,7 +37,7 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
   gen_grain's running-total blur). No note name: *"We don't need note names in there cause we're not setting them by that,
   it's just semitones worth of width."* So: Spread unit, Spread value, fine tune unit, fine tune.
 
-## The full order, DRAFT 2026-09-16 -- being walked through with Rozaya
+## The full order, AGREED 2026-09-16
 
 64 -> 79 controls. Rate pair renamed on Rozaya's *"we can try it, it can't hurt. renames are
 free if it turns out I hate it."* `was` is today's slider id. Nothing here is built.
@@ -147,7 +147,9 @@ on the cuts: *"I like that re: the drift move."*
 
 Targets (Drift and Ramp share one list, control order): today's 87, minus Wash grain, plus
 Source fine tune, Spread fine tune, Low cut fine tune, High cut fine tune, and Layer
-harmonics (all layers) + 16 -- 107. Confirm the four fine tunes with Rozaya.
+harmonics (all layers) + 16 -- 107. Rozaya, on the new fine tunes as targets: *"Yeah it is"*.
+
+**The whole order was walked through with Rozaya on 2026-09-16 and is agreed.**
 
 ## Still to talk through
 
