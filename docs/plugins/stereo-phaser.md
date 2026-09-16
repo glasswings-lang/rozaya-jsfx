@@ -119,7 +119,7 @@ configured target.
 **Ramp start delay (in ramp time units)** `0–1000, default 0` — wait this long
 after engage before THIS target moves, so targets can be staggered.
 
-**Rest mode (for Drift)** and **Rest mode (for Ramp)** `Walk through / Freeze in
+**Drift rest mode** and **Ramp rest mode** `Walk through / Freeze in
 place, default Walk through` — what each does during a transport rest. Each sits
 in the block it freezes; drift and ramp are their own things.
 

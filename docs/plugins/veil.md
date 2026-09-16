@@ -159,7 +159,7 @@ keep their relationship through the change, which is the whole point of the pair
 It sits directly before Drift period, the way every mode and unit in the suite
 sits before the value it qualifies.
 
-**Rest mode (for Drift)** `Walk through / Freeze in place, default Walk through`
+**Drift rest mode** `Walk through / Freeze in place, default Walk through`
 — what the drift does during a transport rest. Drift and ramp each have their
 own, because they are their own things.
 
@@ -181,7 +181,7 @@ were growing); negative = deepening / darkening.
 **Ramp duration (in ramp time units)** `0–1000, default 0` — how long the ride takes.
 `0` = off.
 
-**Rest mode (for Ramp)** `Walk through / Freeze in place, default Walk through` —
+**Ramp rest mode** `Walk through / Freeze in place, default Walk through` —
 what the ramp does during a transport rest. It sits here, in the block it
 freezes, rather than up in transport.
 

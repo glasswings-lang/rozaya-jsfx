@@ -113,7 +113,7 @@ slider23:0<0,1000,0.01>Drift play for (periods, 0 = always)
 slider24:0<0,1000,0.01>Drift rest for (periods, 0 = always)
 // R27: the rest switch sits IN the block it freezes. Rozaya, 2026-09-13:
 // "Otherwise we get slider scatter stuff."
-slider25:0<0,1,1{Walk through,Freeze in place}>Rest mode (for Drift)
+slider25:0<0,1,1{Walk through,Freeze in place}>Drift rest mode
 
 // --- Ramp (nested selector; signed delta) ---
 slider26:0<0,12,1{Cutoff (all sides),Left cutoff,Right cutoff,Fine tune (all sides),Left fine tune,Right fine tune,Resonance (all sides),Left resonance,Right resonance,Tuning reference,Output,Play for,Rest for}>Ramp target
@@ -128,7 +128,7 @@ slider30:0<0,1000,0.01>Ramp duration (in ramp time units)
 // `rest`, and repeats. The rests come OUT of the duration, they do NOT extend it.
 slider31:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider32:0<0,1000,0.01>Ramp rest for (0 = smooth)
-slider33:0<0,1,1{Walk through,Freeze in place}>Rest mode (for Ramp)
+slider33:0<0,1,1{Walk through,Freeze in place}>Ramp rest mode
 slider34:0<0,1,1{Off,On}>Ramp engage (all targets)
 slider35:0<0,1000,0.01>Ramp start delay (in ramp time units)
 
@@ -724,7 +724,7 @@ loop(N_TARGETS,
     // version of this comment claimed 2.5 was the crest, and 2.5 is a zero
     // crossing. (Random shape was the one that already worked, since at
     // phase 0 it reads the previous random target rather than zero.)
-    // A start delay, or a transport rest with Rest mode (for Drift) on Freeze in
+    // A start delay, or a transport rest with Drift rest mode on Freeze in
     // place, holds every target's drift as surely as its own rest does.
     d_frozen = tr_drift_hold ||
                pr_frozen(drift_pr_accum_mem, drift_pr_resting_mem, i,

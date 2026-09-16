@@ -11,9 +11,14 @@ order is authored here before any migration (CLAUDE.md). 39 projects load the Mo
   is Every N beats or N per beat, else Seconds), so nothing changes sound. Rozaya: *"That
   idea sounds like a good one yeah"*.
 
+- **The existing `Rest mode` becomes `Auto-morph rest mode`**, in place. It still freezes
+  only the morph walk. Offered `Rest mode (for Auto-morph)`; Rozaya: *"auto-morf rest mode"*.
+  Plus `Drift rest mode` and `Ramp rest mode` inside their blocks, both
+  defaulting to Walk through (today's behaviour). Named after Rozaya's pattern, and renamed to match in Veil and the Stereo Phaser the same
+  day. Rozaya: *"Yes"*.
+
 ## Still to talk through
 
-- The two rest switches, and what the existing `Rest mode` (the morph walk) is called.
 - Drift period unit and Ramp time unit per target.
 - Layer harmonics and Source fine tune as drift/ramp targets.
 - Every mode in front of its value (Transpose, Fine tune, Source fine tune, Layer pitch,
