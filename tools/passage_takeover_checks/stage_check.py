@@ -34,7 +34,12 @@ def same(tag, o, n, inst, extra=()):
     import numpy as np
     a = open(f'{S}/{tag}_o.csv', 'rb').read(); b = open(f'{S}/{tag}_n.csv', 'rb').read()
     x = np.loadtxt(f'{S}/{tag}_n.csv', delimiter=',', skiprows=1, usecols=(2,))
-    print(f"{'PASS' if a == b and len(a) > 100 else 'FAIL'} {tag}: old vs new {'bit-identical' if a == b else 'DIFFERENT'} (sounding: {np.abs(x).max() > 0}, peak {np.abs(x).max():.4f})", flush=True)
+    extra_note = ''
+    if a != b:
+        y = np.loadtxt(f'{S}/{tag}_o.csv', delimiter=',', skiprows=1, usecols=(2,))
+        n = min(len(x), len(y)); d = x[:n] - y[:n]; ry = np.sqrt((y[:n] ** 2).mean())
+        extra_note = f", difference {20 * np.log10(np.sqrt((d ** 2).mean()) / max(ry, 1e-12) + 1e-30):.1f} dB below the signal"
+    print(f"{'PASS' if a == b and len(a) > 100 else 'FAIL'} {tag}: old vs new {'bit-identical' if a == b else 'DIFFERENT'} (sounding: {np.abs(x).max() > 0}, peak {np.abs(x).max():.4f}{extra_note})", flush=True)
     return a == b
 def count(rpp):
     return sum(1 for l in open(rpp, encoding='utf-8', errors='replace') if '<JS' in l and 'spectral_vowel_passage' in l)

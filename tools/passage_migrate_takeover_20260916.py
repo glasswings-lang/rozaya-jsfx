@@ -43,6 +43,13 @@ def num(tok, dflt):
         return dflt
 
 
+# Stage 8: the 22-target list -> the 111 (Wash grain, 3, left the list; a picker parked there lands
+# on Morph). Must agree with t111_o2n in the plugin.
+T111 = {0: 8, 1: 9, 2: 6, 3: 0, 4: 11, 5: 14, 6: 15, 7: 17, 8: 19, 9: 20, 10: 2, 11: 3, 12: 4, 13: 5,
+        14: 13, 15: 108, 16: 10, 17: 21, 18: 0, 19: 107, 20: 109, 21: 110}
+assert len(T111) == 22
+
+
 def cut_note(hz, ref):
     """The plugin's cut_note in Hz mode: 0 Off, else 1 + the nearest note number."""
     if hz <= 0:
@@ -65,6 +72,10 @@ def convert_line(line):
         new[38] = str(cut_note(num(new[39], 0), ref))
     if new.get(44) is not None:
         new[43] = str(cut_note(num(new[44], 0), ref))
+    # Stage 8: the Drift and Ramp target pickers.
+    for sl in (68, 80):
+        if new.get(sl) is not None:
+            new[sl] = str(T111[int(round(num(new[sl], 0)))])
     return render_line(line, new, n_sliders=N_NEW)
 
 
