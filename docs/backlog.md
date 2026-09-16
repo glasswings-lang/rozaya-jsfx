@@ -25,6 +25,16 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 
 ## Open — checked against the plugins 2026-09-13
 
+- **Seven targets R24 is owed, and Play for / Rest for in two.** R24, closed 2026-09-15
+  with nothing built; it lands in each plugin's own amount-unit turn (R26/R27), because
+  inserting a target in control order renumbers the picker and rewrites every saved
+  selection. Rozaya, on the whole-step controls: *"Yeah, I think they should be in the
+  picker for drift, and ramp, for that matter."* Gains a target: Melody `Octave shift`,
+  Polyrhythm v3 `Octave shift`, Shepard Scale `Centre octave`, Shepard Tone `Centre
+  octave`, the Morpher `Layer harmonics` (per layer, so `(all layers)` + 16 like its
+  siblings). Gains `Play for` and `Rest for` as targets: the Sweeping Filter, Sweep Dwell.
+  Structural counts stay out. Re-check with `python tools/r24_target_audit.py`; what was
+  measured and what is still open is in `docs/history/R24.md`.
 - **`Drift movement (per target)` in the seven that lack it, and `Cycles` counting the
   target's own cycles.** R23, closed 2026-09-15 with nothing built; Rozaya: *"Fold it in
   yeah"* -- it lands in each plugin's own amount-unit turn (R26/R27), never as a sweep.

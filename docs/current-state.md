@@ -20,7 +20,7 @@ has been heard, and what Rozaya has said is next.
 
 ## What is next
 
-- **The rules pass, one rule at a time, in order: R24 is next.** R19 to R23 are off the
+- **The rules pass, one rule at a time, in order: R25 is next.** R19 to R24 are off the
   list; each left one backlog entry and nothing built. Tell Rozaya what a rule says in
   plain words, check the plugins by reading or running them, one question at a time.
 - **The amount units (R26) with R27's same things, ONE PLUGIN AT A TIME** -- each planned

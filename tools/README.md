@@ -19,6 +19,7 @@ nothing installed; `loop_finder.py` needs two packages (noted below).
 | [`passage_captures.py`](#passage_capturespy) | reading and extracting the captures stored inside a project |
 | [`passage_inject.py`](#passage_injectpy) | putting a WAV back *into* a capture slot |
 | [`passage_set_capture_average.py`](#passage_set_capture_averagepy) | turning Capture average up across a whole folder of projects |
+| [`r24_target_audit.py`](#r24_target_auditpy) | every control in every plugin beside that plugin's Drift target list, so the two can be compared by reading |
 
 ## rate_calc.py
 
@@ -980,3 +981,16 @@ the file where it belongs and leave a one-line pointer. One home per fact.
 `docs/history/session-log.md` is deliberately unbudgeted — it is append-only history and
 capping it would mean rewriting what happened. It gets rotation instead; the
 note at the bottom of the script says how.
+
+## r24_target_audit.py
+
+```
+python tools/r24_target_audit.py
+```
+
+Prints, for each plugin, every slider marked `target` or `--` according to whether a
+Drift target option carries that name, and flags any target option with no slider to
+match. **It classifies nothing** -- R24 asks whether a control shapes the sound, which is
+a judgement, so this only puts the two lists side by side for a person to read. Names are
+matched with the R25 `(per target)` suffix stripped, so a near-miss shows as `--` and has
+to be checked against the plugin's own target list before it counts as a finding.

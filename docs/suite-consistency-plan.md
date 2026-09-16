@@ -34,7 +34,6 @@ was rewritten in the split.
 
 ## The rules, in order
 
-- **R24** — Every control that shapes the sound is a Drift and Ramp target
 - **R25** — A control behind a selector says which kind it is
 - **R26** — No unit locks: every Drift and Ramp amount names its unit
 - **R27** — Every plugin has the same things
@@ -67,25 +66,6 @@ A migration written before its layout is a migration you will write again.
 ## Part 1 — Naming rules
 
 ---
-
-## R24 — Every control that shapes the sound is a Drift and Ramp target
-
-Star, 2026-09-10: *"all the targets ... that directly affect your sound should
-absolutely be drift candidates."* Drift and Ramp exist to replace automation.
-
-- **A target:** any continuous control that changes what you hear — pitch, fine
-  tune, tuning reference, gain, output, pan spread and glide, binaural beat,
-  glide time, pulse width, filter frequencies, resonance, mix.
-- **Not a target:** modes, unit selectors, shape pickers, on/off switches, and
-  structural counts such as sequence length -- **except Rhythm Track's Beats per
-  bar**, Rozaya 2026-09-11: *"Beats per bar belongs on there too."*
-- **Play for and Rest for ARE targets; Start delay is not.** Star, 2026-09-10:
-  *"play for and rest for though I absolutely can. that's the featheriest timing
-  trick I can think of"*.
-- **Target options go in the order of the controls they reach**, never appended
-  to save a migration. Star, 2026-09-10.
-- **A new sound-shaping control gets its target in the same change that adds it.**
-- Drift and Ramp share one target list. A new target goes where it belongs in it, with its migration.
 
 ## R25 — A control behind a selector says which kind it is (2026-09-12)
 
@@ -212,6 +192,21 @@ plugin-wide but simpler, and you set it once and leave it.
   set), transpose and fine tune. Spreads are `{Hz, Semitones, Cents}`, never a
   percent of a hidden limit. A Shepard voice is its note in every octave at once, so
   the Shepards take notes and fine tunes only.
+- **Every control that shapes the sound is a Drift and Ramp target.** Star, 2026-09-10:
+  *"all the targets ... that directly affect your sound should absolutely be drift
+  candidates."* A target is any control that changes what you hear -- pitch, fine tune,
+  tuning reference, gain, output, pan spread and glide, binaural beat, glide time, pulse
+  width, filter frequencies, resonance, mix -- **including one that moves in whole steps**
+  (an octave shift, a centre octave, a harmonic count). Rozaya, 2026-09-15: *"Yeah, I think
+  they should be in the picker for drift, and ramp, for that matter."* Not a target: modes,
+  unit selectors, shape pickers, on/off switches, and structural counts such as sequence
+  length, octave count, phaser stages or ensemble voices -- **except Rhythm Track's Beats
+  per bar**, Rozaya 2026-09-11: *"Beats per bar belongs on there too."* **Play for and Rest
+  for ARE targets; Start delay is not** -- Star: *"play for and rest for though I absolutely
+  can. that's the featheriest timing trick I can think of"*. Drift and Ramp share ONE list,
+  and **target options go in the order of the controls they reach**, never appended to save
+  a migration. A new sound-shaping control gets its target in the same change that adds it.
+  Check a plugin with `python tools/r24_target_audit.py`; history in `docs/history/R24.md`.
 - **A drift steps on its target's own turn.** Rozaya: *"you don't get to say drift this
   thing every two cycles and drift this thing every four. it's being fucked."* A target read
   ONCE PER OCCURRENCE (a breath's length, a note's duration, a segment's length, a pulse's
