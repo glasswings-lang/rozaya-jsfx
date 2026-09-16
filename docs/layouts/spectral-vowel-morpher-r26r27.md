@@ -210,5 +210,11 @@ magic in Python, keyed on the magic. Survey helpers were in the session scratchp
   control equal; per-target units stay per target; movement mode 11/11 held; harmonics drift
   0..10; source fine tune +-50 cents moves pitch only with a source note. NOT YET READ BY
   ANYTHING: targets 8, 12, 14 (Spread / cut fine tunes) -- stages 6 and 7 wire them.
-- Still to build: 6 Spread block; 7 cut blocks (0 = off, note list from Off, drift clamp);
+- **Stage 6, Spread block, DONE:** 21 mode, 22 value, 23 fine unit, 24 fine; targets 7 and 8
+  wired (sp_q). Hz with fine 0 runs the old expression. Semitones/Cents: per-bin window
+  f/r..f*r via running sums (spc), an Hz fine tune widens both sides. Measured: breathing (as
+  saved, and at Spread 150) and the bridge project bit-identical old vs new; a snapshot probe
+  of curmag straight after the blur matched an independent numpy blur to ~4e-8 for 2 semitones,
+  2 semitones + 40 Hz, breathing's own 100 Hz, and 100 Hz + 12 semitone fine tune (= 200 Hz).
+- Still to build: 7 cut blocks (0 = off, note list from Off, drift clamp);
   9 migration (reseal old blobs, transcode 7700087 -> 7700107 keyed on magic), verify, install.

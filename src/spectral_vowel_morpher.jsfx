@@ -135,7 +135,16 @@ slider8:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Auto-morph rate mode
 //     captured spectra become; all of it is global, across every slot. ---
 slider10:50<0,100,1>Texture (% wash)
 slider11:150<5,1000,1>Wash grain (ms)
-slider22:0<0,1000,0.1>Spread (Hz)
+// --- Spread, a pitch block since 2026-09-16 (R27). Rozaya, told that in Hz the blur is one
+//     fixed width everywhere and in Semitones it would blur evenly across the range: "For that
+//     reason alone we should have a spread unit, and it should encorperate the usual pitch block."
+//     No note name: "it's just semitones worth of width." Hz with no fine tune is exactly the
+//     blur it always was. In Semitones or Cents each frequency blurs that interval either side;
+//     a fine tune in Hz then widens both sides by that many Hz.
+slider21:0<0,2,1{Hz,Semitones,Cents}>Spread pitch mode
+slider22:0<0,1000,0.1>Spread value (Hz / semitones / cents)
+slider23:2<0,2,1{Hz,Semitones,Cents}>Spread fine tune unit
+slider24:0<-1000,1000,0.001>Spread fine tune
 // --- The pitch block, 2026-09-13 (docs/layouts/spectral-vowel-morpher.md, THE PITCH LAYOUT):
 //     Bubbler's and Passage's, for the whole plugin rather than per slot.
 slider12:0<0,128,1{None,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,G#8,A8,A#8,B8,C9,C#9,D9,D#9,E9,F9,F#9,G9}>Pitch source note (where zero is)
@@ -512,6 +521,7 @@ synwin    = freemem; freemem += GMAX;          // sqrt-Hann synthesis grain (len
 accL      = freemem; freemem += ACCLEN;        // overlap-add accumulator L
 accR      = freemem; freemem += ACCLEN;        // overlap-add accumulator R
 mtmp      = freemem; freemem += NBINS;
+spc       = freemem; freemem += NBINS + 1;   // Spread in Semitones/Cents: running sums of mtmp
 curmag    = freemem; freemem += NBINS;
 phase     = freemem; freemem += NBINS;
 doff      = freemem; freemem += NBINS;         // per-bin stereo decorrelation offsets
@@ -902,6 +912,10 @@ function mo_tsec(u, v) ( u == 1 ? (v > 0.000001 ? 1 / v : 0) : u == 2 ? v * (60 
 function mo_tback(u, t) ( u == 1 ? (t > 0.000001 ? 1 / t : 0) : u == 2 ? t / (60 / max(tempo, 0.001)) : t; );
 function mo_dunit_sec(u) ( u == 0 ? auto_time : u == 1 ? 1 : 60 / max(tempo, 0.001); );
 function mo_runit_sec(u) ( u == 0 ? auto_time : u == 1 ? 1 : u == 2 ? 60 : 60 / max(tempo, 0.001); );
+// Spread (7) and Spread fine tune (8) in a width unit {0 Hz, 1 Semitones, 2 Cents}: Semitones and
+// Cents amounts convert into each other; anything else takes the amount as it stands.
+function sp_amt(off, u, mode) ( u == 2 ? (mode == 2 ? off * 100 : off) : u == 3 ? (mode == 1 ? off / 100 : off) : off; );
+function sp_q(k, mode) ( sp_amt(target_drift_offset[k], target_drift_unit[k], mode) + sp_amt(ramp_offset_mem[k], ramp_by_unit[k], mode); );
 function au_back(nu, tt) ( nu == 3 ? tt * 1000 : nu == 1 ? (tt > 0.000001 ? 1 / tt : 0) : nu == 2 ? tt * max(tempo, 0.001) / 60 : tt; );
 function au_time(off, u, base, nu) local(b, tt, rate) (
   !(u == 1 || (u >= 4 && u <= 9)) || (u == 4 && nu == 3) || (u == 5 && nu == 0) || (u == 1 && nu == 1) || (u == 8 && nu == 2) ? off : (
@@ -1223,7 +1237,7 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
   bi = si*NBINS; bj = sj*NBINS;
   i = 0;
   loop(NBINS, mtmp[i] = (1-mfr)*(slotmag[bi+i]/ni) + mfr*(slotmag[bj+i]/nj); i += 1; );
-  sp = floor(eff_spread_hz * FFTSIZE / srate);   // eff_ = base + Drift offset
+  sp = sp_mode == 0 ? floor(eff_spread_hz * FFTSIZE / srate) : 0;   // eff_ = base + Drift offset
   // Spread's box blur as a RUNNING TOTAL, Passage's version (2026-09-12). The counted
   // version re-added every neighbour for every bin, so its cost grew with the width --
   // with Spread now reaching 1000 Hz that is about seven times Spread 150's work per
@@ -1241,6 +1255,20 @@ function gen_grain() local(i, j, si, sj, mfr, ni, nj, bi, bj, sp, sumv, cnt, bj2
       bj2 = i - sp;     bj2 >= 0    ? ( sumv -= mtmp[bj2]; cnt -= 1; );
     );
     i += 1;
+  );
+  // Spread in Semitones or Cents (2026-09-16): each bin blurs from f / r to f * r, r = 2^(width/12),
+  // plus any fine tune in Hz on both sides -- a window that grows with frequency, so running
+  // sums (spc) give each bin its own mean in one pass.
+  sp_mode != 0 && (sp_semis > 0 || sp_extra_hz > 0) ? (
+    sp_r = pow(2, sp_semis / 12); sp_ex = sp_extra_hz * FFTSIZE / srate;
+    spc[0] = 0; i = 0; loop(NBINS, spc[i + 1] = spc[i] + mtmp[i]; i += 1; );
+    i = 0;
+    loop(NBINS,
+      sp_lo = max(0, min(i, floor(i / sp_r - sp_ex + 0.5)));
+      sp_hi = min(NBINS - 1, max(i, floor(i * sp_r + sp_ex + 0.5)));
+      curmag[i] = (spc[sp_hi + 1] - spc[sp_lo]) / (sp_hi - sp_lo + 1);
+      i += 1;
+    );
   );
   ot_wash = (ot_on && ot_bin > 0) ? 1 : 0;
   pk = 0; i = 0; loop(NBINS, curmag[i] > pk ? pk = curmag[i]; i += 1; );
@@ -1532,7 +1560,8 @@ texture       = slider10 * 0.01;                              // 0 voice .. 1 wa
 hlevel        = cos(texture * PI * 0.5);                     // equal-power crossfade
 wlevel        = sin(texture * PI * 0.5);
 grain_ms        = slider11;
-spread_hz     = slider22;
+spread_hz     = slider22;   // Spread value, in Spread pitch mode's unit
+spread_mode   = slider21; spread_funit = slider23; spread_fine = slider24;
 // --- The pitch block. Tuning reference is heard only where a value is in Hz.
 tuning_base = slider20 >= 20 ? slider20 : 440; tuning_ref = tuning_base;
 // Source note and Target note mirror Transpose value -- Bubbler's design -- only while a
@@ -2144,7 +2173,24 @@ mod_active[2] ? (   // Texture: internal 0..1, offset is in 0-100 Texture units
 // Spread reaches its slider's 1000 Hz (2026-09-12). It stopped at 150, a limit the range
 // sweep widened the slider past and left here. Rozaya: "That should have been lifted with
 // the slider extention, so... go for it". No saved copy sat above 150 (123 read).
-eff_spread_hz    = max(0,  min(1000, spread_hz    + (mod_active[7] ? au_key(7, 2, spread_hz, srate / FFTSIZE) : 0)));
+sp_mode = spread_mode;
+eff_spread_fine = spread_fine + (mod_active[8] ? sp_q(8, spread_funit) : 0);
+sp_mode == 0 ? (
+  // Hz: the blur it always was, and exactly the old expression while the fine tune is 0.
+  eff_spread_hz    = max(0,  min(1000, spread_hz    + (mod_active[7] ? au_key(7, 2, spread_hz, srate / FFTSIZE) : 0)));
+  eff_spread_fine != 0 ? (
+    eff_spread_hz = spread_funit == 0 ? max(0, eff_spread_hz + eff_spread_fine) :
+                    spread_funit == 1 ? eff_spread_hz * pow(2, eff_spread_fine / 12) :
+                                        eff_spread_hz * pow(2, eff_spread_fine / 1200);
+  );
+  sp_semis = 0; sp_extra_hz = 0;
+) : (
+  sp_semis = max(0, spread_hz + (mod_active[7] ? sp_q(7, sp_mode) : 0));
+  sp_mode == 2 ? sp_semis /= 100;
+  sp_extra_hz = 0;
+  spread_funit == 0 ? ( sp_extra_hz = max(0, eff_spread_fine); ) : ( sp_semis += spread_funit == 1 ? eff_spread_fine : eff_spread_fine / 100; );
+  sp_semis = max(0, min(48, sp_semis));
+);
 // Tuning reference (7) first: it is what an Hz value counts from.
 tuning_ref = mod_active[6] ? max(20, min(2000, tuning_base + au_key(6, 2, tuning_base, 20))) : tuning_base;
 (mod_active[3] || mod_active[4] || mod_active[5] || mod_active[6]) ? (   // Source fine tune, Transpose, Fine tune, Tuning reference

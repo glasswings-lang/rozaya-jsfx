@@ -64,4 +64,6 @@ def convert_line(line):
     for o, n in ((46, 58), (56, 70)):
         t = T107.get(int(num(old.get(o), 0)), 0)
         new[n] = str(t)
+    # Stage 6: Spread is a pitch block; saved copies stay in Hz with no fine tune.
+    new[21], new[23], new[24] = "0", "2", "0"
     return render_line(line, new, n_sliders=N_NEW)
