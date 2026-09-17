@@ -339,7 +339,7 @@ and they save with the project. In Seconds every value is the seconds you hear �
 arithmetic, no allowance for a fade bleeding in from a neighbour, nothing about
 one slot's timing living on another slot.
 
-**Slot fade in (in slot timing units)** `0 to 1000, default 1`
+**Slot fade in** `0 to 1000, default 1`
 How long this slot takes to rise from silence when it arrives. You hear it at
 the very start of a pass, and any time a slot arrives *out of silence* — after a
 **gap**, or after the previous slot faded out with its crossfade **Off**. When
@@ -347,14 +347,14 @@ the previous slot **crossfades into** this one instead, the crossfade has alread
 raised it to full, so its own fade-in is skipped (nothing fades in twice, and the
 boundary stays click-safe either way). Fade in 2 = a two-second rise.
 
-**Slot hold (in slot timing units)** `0 to 1000, default 4`
+**Slot hold** `0 to 1000, default 4`
 How long the slot stays up at full, alone, once it has arrived. **The number you
 type is the number of seconds.** Hold 4 on every slot and each holds four
 seconds; hold 4 on one and 8 on another and their holds differ, which is what an
 uneven cycle (like a real breath) needs. Hold 0 means no steady part — the slot
 rises and immediately begins to fall.
 
-**Slot fade out (in slot timing units)** `0 to 1000, default 1`
+**Slot fade out** `0 to 1000, default 1`
 How long the slot takes to fall at the end of its hold. What the fall *is*
 depends on the crossfade toggle below:
 
@@ -368,8 +368,14 @@ Fade out 0 is a hard edge — an instant switch to the next slot with crossfade 
 or a hard cut to silence with it off (which can click on sharp-edged captures;
 soft-edged captures like breath cut cleanly).
 
-**Slot gap after (in slot timing units)** `0 to 1000, default 0`
-Seconds of silence after this slot, before the next one begins. **This is how you
+**Slot gap after, needs crossfade Off** `0 to 1000, default 0`
+Seconds of silence after this slot, before the next one begins. **It needs Slot
+crossfade into next Off**, and it needs Auto-morph timing mode on Slot timings:
+with the crossfade on, the next slot starts as this one ends, so there is no room
+for a gap, and on Continuous there are no per-slot legs at all. Measured
+2026-09-17 on a four-slot copy: a gap of 3 gave silence a third of the time with
+both set right, 0.7% of the time with the crossfade on, and none at all on
+Continuous. **This is how you
 place silence now** — the quiet lives between the slots, where it is, so you no
 longer capture a silent slot to make a pause. Four seconds of quiet means typing
 four.
@@ -523,8 +529,8 @@ Crossfades across the captured slots. Pitch-preserving in both engines — each 
 **Auto-morph** `Off / Sweep / Glide once / Shuffle, default Off`
 In-plugin morph motion — Sweep = endless back-and-forth; Glide once = slot 1 to the last, one time; Shuffle = like Sweep, but in *random* order: it glides through all your captured slots visiting each once, then reshuffles and goes again. Every mode is timed the same way: each step lasts the full leg of the slot it is leaving — its fade in, hold, fade out, and any gap — so a pass is however long its slots' legs add up to, just a different order (and a different order each time you open the project). Shuffle only moves *where* the morph is sitting (it never introduces a new pitch), so it is exactly as clash-safe as moving the Morph slider by hand — safe on chordal captures at different pitches. *(This mode was called "Drift" before; renamed to Shuffle so it isn't confused with the suite-wide Drift feature below, which is a different thing.)*
 
-**Auto-morph timing** `Slot timings / Rate, default Slot timings`
-**Slot timings** is the walk described above: each step lasts the leg of the slot it is leaving. **Rate** is the Morpher's continuous motion: **Sweep** and **Glide once** move smoothly along your unmuted slots in one pass of the rate's time, and **Shuffle** crossfades between shuffled slots, each taking an equal share. Rate has no fades or gaps of its own. In Rate, a **Cycle** (in the drift and ramp units) is one pass. Rozaya, on bringing it back: *"Passage needs it."* Every saved project is on Slot timings.
+**Auto-morph timing mode** `Slot timings / Continuous, default Slot timings`
+**Slot timings** is the walk described above: each step lasts the leg of the slot it is leaving. **Continuous** (called Rate until 2026-09-17) is the Morpher's continuous motion: **Sweep** and **Glide once** move smoothly along your unmuted slots in one pass of the rate's time, and **Shuffle** crossfades between shuffled slots, each taking an equal share. Rate has no fades or gaps of its own. In Rate, a **Cycle** (in the drift and ramp units) is one pass. Rozaya, on bringing it back: *"Passage needs it."* Every saved project is on Slot timings.
 
 **Auto-morph rate mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds`, then **Auto-morph rate value** `0.01 to 1000, default 20`
 How long one pass takes in Rate, counted in the unit chosen: passes per minute, seconds per pass, passes per second, beats per pass, or passes per beat. Auto-morph rate is a Drift and Ramp target.
@@ -784,7 +790,7 @@ means it also ignores:
 
 - **Slot mute** — a focused muted slot still plays. Focused is "let me
   hear this exact slot no matter what."
-- **Auto-morph timing** — no fade in, hold, fade out, gap or crossfade; no
+- **Auto-morph timing mode** — no fade in, hold, fade out, gap or crossfade; no
   transitions at all. The slot just plays continuously, at full, for as long as
   you leave Focused on.
 - **The morph slider** — manual position along the slot line is

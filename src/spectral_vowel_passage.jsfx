@@ -87,10 +87,14 @@ slider4:1<1,6,1>Capture average (frames, 1 = one frame)
 // its fade-out, and the gap is unused; with crossfade OFF the slot fades in,
 // holds, fades out to silence, then the gap of silence plays before the next
 // fades in.
-slider12:1<0,1000,0.1>Slot fade in (in slot timing units)
-slider13:4<0,1000,0.1>Slot hold (in slot timing units)
-slider14:1<0,1000,0.1>Slot fade out (in slot timing units)
-slider15:0<0,1000,0.1>Slot gap after (in slot timing units)
+slider12:1<0,1000,0.1>Slot fade in
+slider13:4<0,1000,0.1>Slot hold
+slider14:1<0,1000,0.1>Slot fade out
+// The gap needs crossfade Off: with the crossfade on, the next slot starts as this one ends, so
+// there is no space for a gap to sit in. Said on the control itself 2026-09-17, after Rozaya set
+// one on All slots and heard nothing: *"all slots does fuck all"*. The braces of an option list
+// are not spoken, and most synths run the whole line together, so this reads as a sentence.
+slider15:0<0,1000,0.1>Slot gap after, needs crossfade Off
 slider11:0<0,2,1{Seconds,Hz,Beats}>Slot timing unit
 // Crossfade into next: On = the fades overlap, so this slot hands over by
 // blending into the next (the classic morph -- what happens today). Off = this
@@ -164,7 +168,10 @@ slider7:0<0,3,1{Off,Sweep (back+forth),Glide once,Shuffle (random)}>Auto-morph (
 //     glide along the active slots at the rate below: Sweep and Glide once move a position along
 //     them in one pass of the rate's time, Shuffle crossfades between shuffled slots, each leg an
 //     equal share. Rozaya, on the continuous sweep: "Passage needs it."
-slider8:0<0,1,1{Slot timings,Rate}>Auto-morph timing (all slots)
+// On Continuous the walk has no per-slot legs, so the four slot timings and the crossfade switch
+// do nothing at all -- which is why a gap typed on All slots was silent (every project carried
+// over from the Morpher landed here). The choice says so in a word rather than in brackets.
+slider8:0<0,1,1{Slot timings,Continuous}>Auto-morph timing mode
 slider9:1<0,4,1{BPM,Seconds,Hz,Every N beats,N per beat}>Auto-morph rate mode (all slots)
 slider10:20<0.01,1000,0.01>Auto-morph rate value (all slots)
 slider63:0<0,1000,0.001>Start delay (in transport units, all slots)
