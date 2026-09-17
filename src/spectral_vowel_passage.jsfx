@@ -500,6 +500,19 @@ curmag_pre  = freemem; freemem += NBINS;         // the wash before the slots' o
 // settled: Rozaya kept it). In Beats a tempo change lands at once, mid-leg (@sample).
 slot_tmunit   = freemem; freemem += NSLOTS;
 function tm_sec(u, v) ( u == 1 ? (v > 0.000001 ? 1 / v : 0) : u == 2 ? v * 60 / max(tempo, 1) : v );
+// Switching a unit keeps the LENGTH and converts the number (Rozaya: "It should cover them all I think"),
+// through seconds at the current tempo. 0 stays 0: it means off. Cycles are not a fixed length, so a
+// switch to or from Cycles leaves the number as it is.
+function tm_back(u, s) ( u == 1 ? (s > 0.000001 ? 1 / s : 0) : u == 2 ? s * max(tempo, 1) / 60 : s );
+function tm_conv(v, a, b) ( v > 0 && a != b ? min(1000, max(0.001, tm_back(b, tm_sec(a, v)))) : v );
+function pu_sec(u) ( u == 1 ? 1 : 60 / max(tempo, 1) );                         // Drift period {Cycles, Seconds, Beats}
+function pu_conv(v, a, b) ( v > 0 && a != b && a > 0 && b > 0 ? min(1000, max(0.001, v * pu_sec(a) / pu_sec(b))) : v );
+function rtu_sec(u) ( u == 1 ? 1 : u == 2 ? 60 : 60 / max(tempo, 1) );         // Ramp time {Cycles, Seconds, Minutes, Beats}
+function ru_conv(v, a, b) ( v > 0 && a != b && a > 0 && b > 0 ? min(1000, max(0.001, v * rtu_sec(a) / rtu_sec(b))) : v );
+function am_sec(m, v) ( m == 0 ? 60 / max(v, 0.001) : m == 1 ? v : m == 2 ? 1 / max(v, 0.001) :
+                        m == 3 ? v * 60 / max(tempo, 1) : 60 / max(tempo, 1) / max(v, 0.001) );
+function am_back(m, s) ( m == 0 ? 60 / max(s, 0.001) : m == 1 ? s : m == 2 ? 1 / max(s, 0.001) :
+                         m == 3 ? s * max(tempo, 1) / 60 : 60 / max(tempo, 1) / max(s, 0.001) );
 grain_seed = 0; units_seed = 0; pr_len_set = 0; pr_play_lat = 0; pr_rest_lat = 0;
 hc_on = 0; hc_top = srate*0.5; hc_lo = 1000000000; hc_inv = 0; hc_bound = srate*0.5;   // EEL2 has no scientific notation
 // A partial's High cut gain: 1 below the fade, falling to 0 at the cut.
@@ -849,6 +862,9 @@ function ps_adopt() (
   hc_last_mode = slider42; hc_last_note = slider43; hc_last_val = slider44;
   pv_last_tgt = slider25; pv_last_tval = slider27; pv_last_src = slider22; pv_last_sf = slider24; pv_last_sfu = slider23;
 );
+// The unit switches' memories, adopted only on load: NOT in ps_adopt, which every live edit calls
+// before the switches are compared, so a switch would be forgotten before it was seen.
+function unit_adopt() ( st_last_unit = slider11; am_last_rmode = slider9; tr_last_unit = slider62; dp_last_unit = slider72; rt_last_unit = slider83; );
 i = 0; loop(WTBL+1, sintab[i] = sin(TWOPI*i/WTBL); i += 1; );
 // captured slots persist across transport play (one-time init)
 slots_inited == 0 ? (
@@ -1502,6 +1518,23 @@ tuning_base = slider30 >= 20 ? slider30 : 440; tuning_ref = tuning_base;
   slider42 != hc_last_mode ? ( slider44 = cut_conv(slider44, hc_last_mode, slider42); slider43 = cut_note(slider42, slider44); sliderchange(-1); ) :
   slider43 != hc_last_note ? ( slider44 = cut_from_note(slider42, slider43); sliderchange(-1); ) :
   slider44 != hc_last_val  ? ( slider43 = cut_note(slider42, slider44); sliderchange(-1); );
+  // Slot timing unit: fade in, hold, fade out and gap after keep their lengths. On All each slot
+  // converts from its OWN unit, and the moved-value memory takes the result so no slot is overwritten.
+  slider11 != st_last_unit ? (
+    cap_all ? (
+      cv_s = 0; loop(NSLOTS,
+        cv_a = slot_tmunit[cv_s];
+        slot_fadein[cv_s] = tm_conv(slot_fadein[cv_s], cv_a, slider11); slot_linger[cv_s] = tm_conv(slot_linger[cv_s], cv_a, slider11);
+        slot_xfade[cv_s]  = tm_conv(slot_xfade[cv_s],  cv_a, slider11); slot_gap[cv_s]    = tm_conv(slot_gap[cv_s],    cv_a, slider11);
+        cv_s += 1; );
+      slider12 = slot_fadein[0]; slider13 = slot_linger[0]; slider14 = slot_xfade[0]; slider15 = slot_gap[0];
+      ps_last[4] = slider12; ps_last[5] = slider13; ps_last[6] = slider14; ps_last[7] = slider15;
+    ) : (
+      slider12 = tm_conv(slider12, st_last_unit, slider11); slider13 = tm_conv(slider13, st_last_unit, slider11);
+      slider14 = tm_conv(slider14, st_last_unit, slider11); slider15 = tm_conv(slider15, st_last_unit, slider11);
+    );
+    sliderchange(-1);
+  );
 );
 slider_show(slider25, slider22 > 0 && slider26 == 1);
 // The first @slider after a load is NOT a slot switch, however it looks. A
@@ -1646,6 +1679,16 @@ slider_show(slider25, slider22 > 0 && slider26 == 1);
 pv_last_tgt = slider25; pv_last_tval = slider27; pv_last_src = slider22; pv_last_sf = slider24; pv_last_sfu = slider23;
 lc_last_mode = slider37; lc_last_note = slider38; lc_last_val = slider39;
 hc_last_mode = slider42; hc_last_note = slider43; hc_last_val = slider44;
+st_last_unit = slider11;
+// Auto-morph rate mode keeps the speed; Transport unit keeps Start delay, Play for and Rest for.
+ps_inited ? (
+  slider9 != am_last_rmode ? ( slider10 = min(1000, max(0.01, am_back(slider9, am_sec(am_last_rmode, slider10)))); sliderchange(-1); );
+  slider62 != tr_last_unit ? (
+    slider63 = tm_conv(slider63, tr_last_unit, slider62); slider64 = tm_conv(slider64, tr_last_unit, slider62);
+    slider65 = tm_conv(slider65, tr_last_unit, slider62); sliderchange(-1);
+  );
+);
+am_last_rmode = slider9; tr_last_unit = slider62;
 cap_point01   = slider3 * 0.01;
 cap_avg       = max(1, min(CAPAVG_MAX, slider4));
 dry_db_base   = slider60;                                    // base for Input level drift
@@ -1700,6 +1743,18 @@ sel_target = slider68;
 dsel_slot = tg_glob[sel_target] ? 0 : cap_slot;
 dkey      = dsel_slot*DSTRIDE + sel_target;
 dread     = tg_is_all(sel_target) ? dkey + 1 : dkey;   // an (all layers) entry shows Layer 1's and writes all sixteen
+// Drift period unit keeps the period's length (Seconds and Beats; Cycles leaves the number). Each bank
+// entry an All edit reaches converts from its own unit.
+(ps_inited && last_drift_key == dkey && slider72 != dp_last_unit) ? (
+  tg_is_all(sel_target) ? (
+    cv_s = 1; loop(16, cv_k = dkey + cv_s; target_drift_per[cv_k] = pu_conv(target_drift_per[cv_k], target_drift_punit[cv_k], slider72); cv_s += 1; );
+    slider73 = target_drift_per[dread]; lay_dr_last[22] = slider73;
+  ) : (cap_all && !tg_glob[sel_target]) ? (
+    cv_s = 0; loop(NSLOTS, cv_k = cv_s*DSTRIDE + sel_target; target_drift_per[cv_k] = pu_conv(target_drift_per[cv_k], target_drift_punit[cv_k], slider72); cv_s += 1; );
+    slider73 = target_drift_per[dkey]; ps_last[22] = slider73;
+  ) : ( slider73 = pu_conv(slider73, dp_last_unit, slider72); );
+  sliderchange(-1);
+);
 sel_up     = slider70;
 sel_down   = slider71;
 sel_per    = slider73;
@@ -1786,6 +1841,19 @@ rsel_target = slider80;
 rsel_slot = tg_glob[rsel_target] ? 0 : cap_slot;
 rkey      = rsel_slot*DSTRIDE + rsel_target;
 rread     = tg_is_all(rsel_target) ? rkey + 1 : rkey;
+// Ramp time unit keeps Ramp duration and Ramp start delay (Seconds, Minutes, Beats; Cycles leaves them).
+(ps_inited && last_ramp_key == rkey && slider83 != rt_last_unit) ? (
+  tg_is_all(rsel_target) ? (
+    cv_s = 1; loop(16, cv_k = rkey + cv_s;
+      ramp_dur_mem[cv_k] = ru_conv(ramp_dur_mem[cv_k], ramp_tunit[cv_k], slider83); ramp_delay_mem[cv_k] = ru_conv(ramp_delay_mem[cv_k], ramp_tunit[cv_k], slider83); cv_s += 1; );
+    slider84 = ramp_dur_mem[rread]; slider89 = ramp_delay_mem[rread]; lay_dr_last[25] = slider84; lay_dr_last[26] = slider89;
+  ) : (cap_all && !tg_glob[rsel_target]) ? (
+    cv_s = 0; loop(NSLOTS, cv_k = cv_s*DSTRIDE + rsel_target;
+      ramp_dur_mem[cv_k] = ru_conv(ramp_dur_mem[cv_k], ramp_tunit[cv_k], slider83); ramp_delay_mem[cv_k] = ru_conv(ramp_delay_mem[cv_k], ramp_tunit[cv_k], slider83); cv_s += 1; );
+    slider84 = ramp_dur_mem[rkey]; slider89 = ramp_delay_mem[rkey]; ps_last[25] = slider84; ps_last[26] = slider89;
+  ) : ( slider84 = ru_conv(slider84, rt_last_unit, slider83); slider89 = ru_conv(slider89, rt_last_unit, slider83); );
+  sliderchange(-1);
+);
 rsel_by     = slider82;
 rsel_dur    = slider84;
 rsel_delay  = slider89;
@@ -1845,6 +1913,7 @@ last_ramp_key != rkey ? (
   ramp_by_unit[rkey] = rsel_unit;
 );
 );
+dp_last_unit = slider72; rt_last_unit = slider83;
 ramp_engaged = slider88;
 // Overtone harmonic and depth are PER SLOT (banked above); only width is
 // global -- a singer has one throat, and how sharply it resonates is their
@@ -1878,7 +1947,7 @@ lay_ui_inited ? (
 @block
 // All slots: adopt what is on screen once the instance is configured, so the first
 // change-detected pass on All compares against real values, not defaults.
-!ps_inited ? ( ps_adopt(); lay_dr_adopt(); ps_inited = 1; );
+!ps_inited ? ( ps_adopt(); lay_dr_adopt(); unit_adopt(); ps_inited = 1; );
 !lay_ui_inited ? ( last_lay_selv = max(0, min(NLAY, floor(slider50 + 0.5))); lay_adopt(); lay_ui_inited = 1; );
 // Layers (2026-09-16): derived from the banks, so here and not in @slider. Solo overrides Active, as in
 // the Morpher: any layer soloed silences every layer that is not, the original included.
@@ -3389,6 +3458,6 @@ file_var(0, ser_magic);
     slider38 = cut_note(slider37, slider39); slider43 = cut_note(slider42, slider44);
 
     sliderchange(-1);
-    ps_adopt(); lay_dr_adopt(); ps_inited = 1;   // All slots: what is on screen now is what change-detection compares against
+    ps_adopt(); lay_dr_adopt(); unit_adopt(); ps_inited = 1;   // All slots: what is on screen now is what change-detection compares against
   );
 );

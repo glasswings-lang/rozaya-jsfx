@@ -104,8 +104,8 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   they count today. Dapple's Start delay is read, not measured.
 - **Switching any mode or unit picker keeps the thing the same and converts the number**,
   wherever that conversion is exact; where it is not (Cycles of a speed that may drift), the
-  number stays. Rozaya: *"It should cover them all I think"*. Today only the Morpher converts
-  (its rate and transport times); Polyrhythm overwrites Rate value with 4 or 1 on entering
+  number stays. Rozaya: *"It should cover them all I think"*. Passage converts all of its unit
+  switches (2026-09-16); the Morpher its rate and transport times; Polyrhythm overwrites Rate value with 4 or 1 on entering
   a beat unit, and that goes; the other plugins leave the number alone.
 - **The pitch block, where it is not yet whole.** Blocks for the frequencies with none: the
   Morpher's and Passage's low and high cuts as two blocks each (the Stereo Phaser's range and
