@@ -118,9 +118,6 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   every Transpose unit once a Source note is set, and Bubbler's and Sustain Looper's names
   say "only with a Source note". The two-way link was found by search in Breath Generator,
   Polyrhythm and Sweep Dwell; check each other plugin when building.
-- **Put every mode before its value, in every plugin.** Most plugins still have the value
-  first. Fix it inside each plugin's own planned migration, not as a separate pass. The
-  rule is in the rules file, under "The rules inside the order".
 - **Womb's Breath High-pass: a better filter.** Still the Chamberlin SVF, which stops near
   7200 Hz of 20000. Rozaya, 2026-09-13: *"We need a better filter."* (TPT, as the sweeping
   filters have.) Agreed condition: measure every saved Womb copy old against new before

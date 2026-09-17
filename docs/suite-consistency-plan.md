@@ -146,10 +146,10 @@ plugin-wide but simpler, and you set it once and leave it.
   per-band or per-slot group is whole and contiguous, and its own rate, gain,
   timing and toggles sit inside it. This is what replaced the old block
   structure: the grouping follows the *thing*, not an abstract category.
-- **A mode or unit comes immediately BEFORE the value it qualifies.** Rozaya,
-  2026-09-14: *"every thing with a mode gets the mode before the value.
-  everything. I don't care what it is."* So `Drift period unit` goes directly
-  before `Drift period`. A shape
+- **Controls stay where they are; no mode or unit moves for order's sake.** Rozaya, 2026-09-16,
+  dropping the older mode-before-value rule: *"it can stay. stay as it is, ffs I didn't mean
+  everything to be shuffled around in everything I ever use"*. A unit under its timings marks
+  the end of a block by screen reader. A new control goes where it disturbs least. A shape
   selector (`Attack shape`) is not a mode and goes AFTER its value. Rozaya,
   2026-09-14: *"They'd universally go afterward. except where there's durations
   and other stuff in the way. then they go under all that"*. **Switching a mode or
