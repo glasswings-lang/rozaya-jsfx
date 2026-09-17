@@ -63,6 +63,16 @@ has been heard, and what Rozaya has said is next.
   spot"*, then *"That sounds right yeah"*), so Sweep Dwell's blob is 2610018 and its two copies
   were migrated again from the snapshot. Record:
   `docs/history/layouts/sweeping-filter-r26r27-20260917.md`. **Not heard.**
+- **Womb's mechanical half, 2026-09-17.** Rozaya: *"Start with the half that doesn't need a giant
+  design convo lol"* -- so breath-and-sigh and breath catches are untouched and still planned.
+  88 -> 103 controls, blob 2700049: the Breath high-pass is the TPT one-pole (it used to stop near
+  7200 Hz of 20000), three frequencies gained pitch blocks, the note names work in every unit, R9's
+  five volumes are dB and eleven more controls are percents, Start delay gained a Transport unit,
+  and the drift/ramp amount units and per-target period and time units landed. The two R27 rest
+  switches were deliberately left out: Womb has no plugin-wide rest to freeze. Installed; all 10
+  saved copies (the tenth is `scattered.rpp`, lowercase, missed by every earlier count) come back
+  within 0.01 dB. Snapshot `womb-mechanical-20260917`. Record:
+  `docs/history/layouts/womb-mechanical-half-20260917.md`. **Not heard.**
 - Installed tonight and not heard: the Morpher's grain split (heard as A/B renders: *"I can't hear
   a difference"*) and the work-list change. Still queued from before: Sweep Dwell's R26/R27 turn.
 

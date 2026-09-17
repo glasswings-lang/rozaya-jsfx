@@ -24,7 +24,7 @@ The audio architecture (heartbeat sound generation, breath filters, bloodflow en
 |---|---|---|
 | Drift targets | Heart rate + Breath rate (2 total) | Heart rate + S1-S2 gap + Inhale + Top pause + Exhale + Bottom pause + RSA depth + Breaths/min + Inhale Freq + Exhale Freq (10 total, v2.14) |
 | Drift sliders | 6 (Heart up/down/period + Breath up/down/period) + 1 shape = 7 | 5 (target + up + down + period + shape) |
-| Sighs | none | Yes (interval + depth multiplier, multiplier scales ALL four segments) |
+| Sighs | none | Yes (interval + extra length, which lengthens the breath's four parts) |
 | Heart-with-breath baseline | slider 56 | slider 59 (moved to make room for the new drift block) |
 | Drift configs persist across save/load | n/a (per-slider) | Yes (via `@serialize`; all 10 targets' configs preserved) |
 | Ramp shape | one scope (scales all 3 layers together via a multiplier) | **nested-selector pattern: pick which target to ramp, set a signed amount.** Every target is additive — each ramp affects only its own parameter. |
@@ -100,7 +100,7 @@ Freq follow the value's own unit.
 
 Sliders 1-47: identical to [Womb Sound Generator v2](#womb-sound-generator-v2). See that section for full descriptions of BPM, the three layer Volume / Solo sliders, heartbeat sound parameters (Systole ms, S1/S2 Frequency Hz, Decay ms, Brightness, Stereo Width ms), breath sound parameters (Inhale/Top Pause/Exhale/Bottom Pause durations, Frequencies, Fade In/Out, Stereo Width, Post-filter), bloodflow parameters (Filter Hz, Dicrotic Level, Resonance, Attack, Decay, Stereo Width), Start Delay, and per-layer Play/Rest gates.
 
-**Layout as it is now** (checked against the plugin 2026-09-13): sliders 1-23 are the heartbeat, 24-52 the breath, 53-62 bloodflow, 63-71 the master controls and transport, 72-80 the Drift block, 81-88 the Ramp block. Heart rate swing per breath is slider 3, beside the heart rate it modifies; the Sigh pair is 48-49, inside the breath group; Set breath rate is 24, at the head of the breath group with its unit beside it.
+**Layout as it is now** (checked against the plugin 2026-09-17): sliders 1-23 are the heartbeat, 24-60 the breath, 61-74 bloodflow, 75-84 the master controls and transport, 85-94 the Drift block, 95-103 the Ramp block. Heart rate swing per breath is slider 3, beside the heart rate it modifies; the Sigh pair is 48-49, inside the breath group; Set breath rate is 24, at the head of the breath group with its unit beside it.
 
 ### Play and rest, per layer (sliders 66-71)
 
@@ -608,3 +608,85 @@ width would turn everything after the first bank into garbage.
 
 **None of this has been heard.** Nothing should sound different for any saved
 project, and that claim rests on the verifier rather than on ears.
+
+## The controls this page had not written up
+
+Written from the plugin on 2026-09-17, when the mechanical half of Womb's turn landed. Everything
+here is a control you already had, except where it says otherwise.
+
+### Heartbeat
+
+**S1 fine tune unit** `Hz / Semitones / Cents, default Cents` and **S2 fine tune unit** `Hz / Semitones / Cents, default Cents`
+What each sound's fine tune counts in. Switching one keeps the pitch and converts the number.
+
+**Heartbeat solo** `Off / Solo, default Off`
+Hears the heartbeat alone, leaving the breath and the bloodflow silent.
+
+### Breath
+
+**Inhale pitch mode** `Hz / Semitones / Cents, default Hz`, **Inhale note name** `C-1 … G9`, **Inhale fine tune unit** `Hz / Semitones / Cents, default Cents`
+**Exhale pitch mode** `Hz / Semitones / Cents, default Hz`, **Exhale note name** `C-1 … G9`, **Exhale fine tune unit** `Hz / Semitones / Cents, default Cents`
+The two halves of the breath each have a full pitch block. Since 2026-09-17 the note name works in
+every unit, both ways: moving the name writes the value, moving the value renames it, and switching
+the unit converts the value.
+
+**Inhale fade in (%)** `0-100, default 30`, **Inhale fade out (%)** `0-100, default 20`,
+**Exhale fade in (%)** `0-100, default 20`, **Exhale fade out (%)** `0-100, default 30`
+How much of each half is spent arriving and leaving. Percents since 2026-09-17; they were 0.0-1.0
+and saved projects were multiplied by 100.
+
+**Fade mode** `Linear / Cosine / Exponential / Natural, default Cosine`
+The shape all four fades follow.
+
+**Breath high-pass pitch mode** `Hz / Semitones / Cents, default Hz`, **Breath high-pass note name** `C-1 … G9`,
+**Breath high-pass fine tune** `-1000-1000, default 0`, **Breath high-pass fine tune unit** `Hz / Semitones / Cents, default Cents`
+**Breath post-filter pitch mode** `Hz / Semitones / Cents, default Hz`, **Breath post-filter note name** `C-1 … G9`,
+**Breath post-filter fine tune** `-1000-1000, default 0`, **Breath post-filter fine tune unit** `Hz / Semitones / Cents, default Cents`
+New on 2026-09-17: each breath filter frequency is a pitch block now, beside the part it belongs to,
+so it can be set by note as well as in Hz.
+
+**Breath post-filter Q** `0.5-8.0, default 1.5`
+How sharply the post-filter resonates around its frequency.
+
+**Breath solo** `Off / Solo, default Off`
+Hears the breath alone.
+
+### Bloodflow
+
+**Bloodflow attack (% of cycle)** `0.5-50, default 15` and **Bloodflow decay (% of cycle)** `5-95, default 85`
+The pulse's rise and fall, as shares of one heartbeat. Percents since 2026-09-17.
+
+**Bloodflow dicrotic level (%)** `0-100, default 10`
+The second, smaller bump in the pulse -- the dicrotic notch. A percent since 2026-09-17.
+
+**Bloodflow filter pitch mode** `Hz / Semitones / Cents, default Hz`, **Bloodflow filter note name** `C-1 … G9`,
+**Bloodflow filter (Hz / semitones / cents)** `20-2000, default 250`,
+**Bloodflow filter fine tune** `-1000-1000, default 0`, **Bloodflow filter fine tune unit** `Hz / Semitones / Cents, default Cents`
+The bloodflow's own filter, a pitch block since 2026-09-17.
+
+**Bloodflow resonance (%)** `0-95, default 20`, **Bloodflow stereo width (%)** `0-100, default 50`
+Percents since 2026-09-17.
+
+**Bloodflow volume (dB, -60 = off)** `-60-24, default -3.1`
+In dB since 2026-09-17, with -60 meaning silence. It was a 0.0-1.0 gain, and saved projects were
+converted so they sound the same.
+
+**Bloodflow solo** `Off / Solo, default Off`
+Hears the bloodflow alone.
+
+### Master and transport
+
+**Master stereo flip** `Normal / Flipped, default Normal`
+Swaps the finished mix left for right.
+
+**Transport unit** `Seconds / Beats, default Beats`
+What Start delay counts in. New on 2026-09-17; it was locked to beats, which is where every saved
+copy landed. The three Play for / Rest for pairs below it each count their own part's own pulse.
+
+### Drift and Ramp
+
+**Drift amount unit** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default` and **Ramp by unit** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default`
+Per target: the unit an amount is typed in. New on 2026-09-17. `Target default` is what an amount
+meant before, so a migrated copy sounds the same, and a unit that cannot fit its target falls back
+to that. `Drift period unit` and `Ramp time unit` are per target too now, and switching either
+keeps the length and converts the number.

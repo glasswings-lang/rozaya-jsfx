@@ -690,6 +690,10 @@ AND edited can only be verified against real projects.
 `docs/history/layouts/sweep-dwell.md`. Four times, three cycle controls and a picker
 became a Segment selector with a length mode and value per segment.
 
+- **`womb_migrate_mechanical_20260917.py`** — Womb's mechanical half: 88 controls to 103, R9's dB
+  and percents, three new pitch blocks, and six saved blob formats normalised to 2700049 (including
+  the unversioned one the plugin skips, carried across as the old build actually read it). Checks:
+  `womb_checks/unit_switches.py` and `womb_checks/verify_live.py`, which takes `--old PATH`.
 - **`swf_migrate_r26r27_20260917.py`** — the Sweeping Filter's whole turn: 54 controls to 62 and
   blob 2300017 (or either six-target ancestor) to 2400019. Its checks are
   `sweeping_filter_checks/unit_switches.py`, `.../sound_checks.py` and `.../verify_live.py`,
