@@ -17,6 +17,13 @@ Passage today: 63 controls, magic 7700008, 10 projects (49 copies at the 09-13 i
 - **The voice engine cost is fixed inside this build**, not left for later: 16 layers on the
   per-partial sine engine would drop out as the Morpher's do.
 
+## Unit pickers stay below their timings (decided 2026-09-16, reverses the earlier yes)
+
+Slot timing unit and Transport unit stay where they are, under the timings they set; nothing moves.
+Rozaya: *"I... don't like that design. Things can stay as they are. Maybe it's me craving familiar, but
+it seems like the only real division/marker between blocks"*. The picker closing a block is how a block
+ends by screen reader.
+
 ## Agreed 2026-09-16 with the whole order below
 
 Rozaya, on the full draft with these two points: *"It seems OK to me, tbh. I liked what I saw
