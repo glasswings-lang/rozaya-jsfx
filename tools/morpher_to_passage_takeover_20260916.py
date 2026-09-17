@@ -123,9 +123,18 @@ def read_morpher(probe, rpp, inst, work, tag):
     capavg = x[p:p + NSLOTS]; p += NSLOTS
     banks = [x[p + b * M_TARGETS:p + (b + 1) * M_TARGETS] for b in range(len(M_BANKS))]; p += len(M_BANKS) * M_TARGETS
     layers = [x[p + b * NLAY:p + (b + 1) * NLAY] for b in range(len(M_LAYER))]; p += len(M_LAYER) * NLAY
-    boosts = []
+    # The control line the Morpher SHOWS once loaded. Not the saved line: the Morpher restores some
+    # controls from its blob (the Layer selector, and the layer and drift controls that follow the
+    # selectors), so the saved line can name Layer 1 while the Morpher shows Layer 5 (wall.RPP).
+    saved = os.path.join(work, tag + "_mloaded.RPP")
+    if os.path.exists(saved):
+        os.remove(saved)
+    subprocess.run([EXE, probe, "--rpp", rpp, "--fx", "spectral_vowel_morpher", "--instance", str(inst), "--seconds", "0.05",
+                    "--quiet", "--save-rpp", saved], capture_output=True)
+    S = open(saved, encoding="utf-8").read().split("\n")
+    loaded = S[[i for i, l in enumerate(S) if "<JS" in l and "<JS_SER" not in l][0] + 1]
     return {"n_used": n_used, "raw": raw, "cappoint": cappoint, "capavg": capavg, "banks": banks, "layers": layers,
-            "boost_db": boosts}
+            "loaded_line": loaded}
 
 
 def passage_line(m_line, rebase_db):
@@ -292,7 +301,7 @@ def convert_file(path, work, probe, reader_plug, log=print, level_plug=None, pas
         tag = "%s_%d" % (re.sub(r"[^A-Za-z0-9]+", "_", os.path.basename(path)[:-4]), n)
         md = read_morpher(probe, path, n, work, tag)
         rebase = rebase_for(md)
-        pline = passage_line(L[sl], rebase)
+        pline = passage_line(md["loaded_line"], rebase)
 
         def reseal(offs, suffix):
             """A one-copy temp project pointed at the reader, saved through it: a 7700009 Passage state."""
