@@ -66,10 +66,12 @@ Rozaya, offered that or keeping the typed numbers: *"Yeah, go for the first."*
   `E:/reaper/finished/backups/snapshots/morpher-to-passage-20260916`). Passage installed with +48.
   wall's 3 copies and claude-testing002-bridge make no sound of their own in either plugin (same output
   with noise in), so their check was blind but they match.
-- HELD, still a Morpher: breathing.RPP (all 3 copies; copy 1 failed). Copy 1's slot 2 needs +30.8 dB.
-  Each slot alone matches, but Passage blends Output level in dB across the whole blend, so between
-  slot 1 (+3.1) and slot 2 it swells ~11 dB over any slot (Morpher steady -20, Passage up to -9). Raising
-  the capture instead does not work: the wash peak-normalises each slot (slot_norm). Rozaya to decide.
+- breathing.RPP carried last. Copy 1's slot 2 was an empty capture (digital silence) used as a pause
+  before Passage had slot wait time; the Morpher's auto-gain had filled it with 22 kHz rounding noise
+  and fought the fade, and the carry's +30.8 dB lift made Passage swell ~11 dB mid-blend. Rozaya: *"let's
+  go with the real wait time"*. Now Slot timings: slot 2 muted, slots 1 and 3 crossfade Off, fade in
+  30 s / hold 0 / fade out 30 s / gap 0 (the Morpher's Sweep over 60 s), no lift. Peaks -20 dB as the
+  Morpher did, silence between. Copies 2-3 as checked. Backup 41_..._breathing.RPP in the snapshot.
 - Found and fixed: build controls from the Morpher's LOADED line, not the saved one (wall.RPP: the
   Layer selector lives in the blob).
 - DECIDED after the first full check (136 copies, 122 passed, every control in place): Output level

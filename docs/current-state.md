@@ -42,8 +42,8 @@ has been heard, and what Rozaya has said is next.
 - **Passage took over from the Morpher, built, migrated and installed (evening 2026-09-16).** Voice
   engine now one wavetable per voice (fixed in Passage only; the Morpher still has the old engine and
   its auto-gain). Grain auto-gain removed from Passage, saved levels kept via Output level. Layers
-  global, -6 dB Inactive. Record: `docs/layouts/spectral-vowel-passage-takeover.md`. Morpher projects
-  carried into Passage 2026-09-16 except breathing.RPP, held on a swell question (layout doc, handoff).
+  global, -6 dB Inactive. Record: `docs/layouts/spectral-vowel-passage-takeover.md`. Every Morpher
+  project carried into Passage 2026-09-16 (breathing copy 1 by hand onto slot wait time; layout doc).
 - Installed tonight and not heard: the Morpher's grain split (heard as A/B renders: *"I can't hear
   a difference"*) and the work-list change. Still queued from before: Sweep Dwell's R26/R27 turn.
 
