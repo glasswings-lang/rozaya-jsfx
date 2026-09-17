@@ -690,6 +690,14 @@ AND edited can only be verified against real projects.
 `docs/history/layouts/sweep-dwell.md`. Four times, three cycle controls and a picker
 became a Segment selector with a length mode and value per segment.
 
+- **`sdf_migrate_r26r27_20260917.py`** — Sweep Dwell's whole turn: 45 controls to 52 and
+  blob 2500016 to 2600018. Three percents (R9), the pan order with `Pan direction`, one
+  `Transport unit`, and the new per-target banks seeded to what the plugin did.
+  `sweep_dwell_checks/unit_switches.py` (every unit switch converts, every selector
+  switch does not), `sweep_dwell_checks/sound_checks.py` (each new control changes the
+  sound; every pan choice moves and `Pan direction` mirrors it) and
+  `sweep_dwell_checks/verify_live.py` (both saved copies, old build against new,
+  bit-identical) are its checks.
 - **`sdf_migrate_segments_20260910.py`** — the installed 46-control line to 45,
   and a NEW blob (2500016) carrying the segment banks, since those are no longer
   sliders. Tensor's two instances are skipped: they point at
