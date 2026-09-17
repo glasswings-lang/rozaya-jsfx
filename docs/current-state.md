@@ -44,6 +44,13 @@ has been heard, and what Rozaya has said is next.
   its auto-gain). Grain auto-gain removed from Passage, saved levels kept via Output level. Layers
   global, -6 dB Inactive. Record: `docs/layouts/spectral-vowel-passage-takeover.md`. Every Morpher
   project carried into Passage 2026-09-16 (breathing copy 1 by hand onto slot wait time; layout doc).
+- **Sweep Dwell's whole turn, 2026-09-17** (Rozaya checked every backlog item against the plugin in
+  REAPER first: *"just go for it"*). 45 -> 52 controls: per-target drift/ramp units, amount units,
+  movement mode, both rest modes, Play for / Rest for as targets, one Transport unit, unit switches
+  that convert, the note name in every unit, three percents (R9), the shared pan order with
+  `Pan direction` + Accent L / Weak R + Sway, and `Pan sweep every` mode. Installed; both saved
+  copies render bit-identical (snapshot `sweep-dwell-r26r27-20260917`). Page at 0 findings.
+  Record: `docs/history/layouts/sweep-dwell-filter-r26r27-20260917.md`. **Not heard.**
 - Installed tonight and not heard: the Morpher's grain split (heard as A/B renders: *"I can't hear
   a difference"*) and the work-list change. Still queued from before: Sweep Dwell's R26/R27 turn.
 

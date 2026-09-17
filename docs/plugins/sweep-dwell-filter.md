@@ -98,11 +98,12 @@ Measured by `tools/tuning_ref_check.py`.
 > host-synced cycle is simply four lengths in Every N beats. surges.RPP opened in
 > Seconds and renders bit-identically over 60 s.
 
-**Resonance** `0.0-1.0, default 0.7`
+**Resonance (%)** `0-100, default 70`
+A percent since 2026-09-17; it was 0.0-1.0, and saved projects were multiplied by 100.
 Resonance of the lowpass filter. Higher values add a pronounced peak at the cutoff frequency, accentuating the frequencies at each point in the sweep. Values approaching 1.0 can produce self-oscillation.
 
-**Wet/dry mix** `0.0-1.0, default 1.0`
-Blend between the filtered signal and the unprocessed input. At 1.0 the output is fully filtered; at 0.0 the filter has no effect.
+**Wet/dry mix (%)** `0-100, default 100`
+Blend between the filtered signal and the unprocessed input. At 100 the output is fully filtered; at 0 the filter has no effect. A percent since 2026-09-17.
 
 ---
 
@@ -128,7 +129,7 @@ Any segment in BPM, Seconds or Hz, and the cycle starts from zero on play.
 
 ### Stereo
 
-**Stereo Phase Offset degrees** `-180–+180°, default 0`
+**Stereo phase offset (degrees)** `-180-180, default 0`
 When Phase Mode is Offset from L, this controls the phase difference between the left and right LFOs. At 180° the channels are in opposition — when the left filter is at its high cutoff the right is at its low cutoff. At 0° both channels move identically.
 
 **Phase Mode** `Independent L+R / Offset from L`
@@ -187,14 +188,20 @@ Pan position updates once per LFO cycle. **Cycle Steps** controls the sequence l
 
 #### Pan Parameters
 
-**Pan Spread** `0.0-1.0, default 1.0`
-Scales the pan range. At 0.0 all modes produce center.
+**Pan direction** `Normal / Flipped, default Normal`
+Mirrors whichever choice is showing, left for right. It replaced the three `(Flipped)` choices on 2026-09-17; a saved one became its partner with this on Flipped.
 
-**Pan Glide ms** `0-100 ms, default 5`
+**Pan spread (%, 0 = mono)** `0-100, default 100`
+Scales the pan range. At 0 every choice sits in the centre. A percent since 2026-09-17.
+
+**Pan glide (ms, 0 = instant)** `0-1000, default 5`
 Smoothing time for pan position changes.
 
-**Cycle Steps (per-cycle modes)** `2-32, default 8`
+**Cycle steps (per-cycle modes)** `2-1000, default 8`
 Sequence length for per-cycle modes.
+
+**Pan sweep every mode** `Every N cycles / N per cycle, default Every N cycles` and **Pan sweep every (in its own mode)** `0.001-1000, default 1`
+Linked Sweep's pace. `Every N cycles` is one pan pass every N dwell cycles; `N per cycle` is N passes inside one cycle, so a fast pass is a whole number instead of 0.25.
 
 **Pan Sweep Rate** `0.001-1000, default 2`
 Rate for Pan Sweep and Pan Sweep (Flipped) modes.
@@ -228,16 +235,18 @@ Most of the pan modes follow the tempo for free once every segment counts in bea
 
 ### Start Delay
 
-**Start delay mode** `BPM / Seconds / Hz / Every N beats / N per beat, default Seconds` and **Start delay** `0–1000, default 0` (sliders 24–25)
+**Transport unit** `Cycles / Seconds / Beats, default Cycles` and **Start delay (in transport units)** `0-1000, default 0`
 
-It was locked to seconds until 2026-09-10; it now takes the same five modes as a segment length, and 0 is off in every mode. Pass-through for that long after playback starts, then applies the sweep-dwell filter + pan effect normally. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Sweep state and filter buffers stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
+One unit covers Start delay, Play for and Rest for, as it does across the suite (2026-09-17); it replaced this control's own mode picker. Cycles are this plugin's dwell cycles, which is what Play for and Rest for have always counted. 0 is off in every unit, and switching the unit keeps the length and converts the number. Pass-through for that long after playback starts, then applies the sweep-dwell filter + pan effect normally. The dry signal flows through unchanged during the delay — silencing the output would mute the dry track too, which is rarely what you want for an effect. Sweep state and filter buffers stay frozen during the delay so the sweep begins cleanly at delay-end. Re-arms on every transport stop/start. 0 disables the delay.
 
 ### Play / Rest Gating (v2.1)
 
-**Play for (cycles)** `0–1000, default 0`
-**Rest for (cycles)** `0–1000, default 0`
-**LFO at rest** `Walk through / Freeze in place, default Walk through`
+**Play for (in transport units, 0 = always)** `0-1000, default 0`
+**Rest for (in transport units, 0 = always)** `0-1000, default 0`
+**Rest mode (LFO)** `Walk through / Freeze in place, default Walk through`
 **Output at rest** `Pass-through / Silence, default Pass-through`
+
+Both lengths are read when their stretch begins, so a drift on them lands between stretches; `Drift movement mode` set to `On a clock` reads them live instead.
 
 A cyclic gate over the filter + pan effect. The effect is applied normally for **Play for** cycles, then enters its rest period for **Rest for** cycles, then resumes — the pattern repeats forever.
 
@@ -271,7 +280,8 @@ The two sliders are orthogonal — all four combinations work and produce distin
 > here, which is exactly the inconsistency the suite sweep exists to remove — a
 > thing learned on one plugin should be true of all of them.
 
-**Ramp time unit (all targets)** `Cycles / Seconds / Minutes / Beats, default Minutes`
+**Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+Per target since 2026-09-17, and switching it keeps the duration and start delay, converting their numbers.
 What the duration and start delay are counted in — one unit for both, so they
 always mean the same thing as each other. **Minutes** is the default and is what
 this block always did. **Seconds** is there so a thirty-second ramp can be typed
@@ -295,17 +305,23 @@ extending it, so Ramp duration goes on meaning "you arrive in about this long".
 
 Nested-selector pattern matching Womb v3 / breath_gen. Pick a target and set a signed `by` amount. All targets ramp in parallel; the selector just changes which one you're editing.
 
-**Ramp target (slider 38)** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
-The 6-option selector (matches Drift). Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 6 targets ramp regardless of which one is selected. The `by` (slider 39) is in seconds for the dwell targets, the Pan Sweep Rate's own unit for that target, and a 0–1 fraction for Resonance.
+**Ramp target** `High dwell length / … / Rest for, default High dwell length`
+The 18-option selector (matches Drift). Play for and Rest for joined it on 2026-09-17, appended, so no saved choice moved.
 
-**Ramp duration (slider 41)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (all targets, slider 44)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
+**Ramp by unit** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default`
+Per target: the unit the `by` amount is typed in. `Target default` is what an amount meant before 2026-09-17, so a migrated copy sounds the same, and a unit that cannot fit its target falls back to that.
+
+**Ramp rest mode (all targets)** `Walk through / Freeze in place, default Walk through`
+What every ramp does while the plugin is in a transport rest: carry on, or hold where it stands. Switching saves the current target's `by` + duration + start delay to its memory slot and loads the new target's saved values. All 6 targets ramp regardless of which one is selected. The `by` (slider 39) is in seconds for the dwell targets, the Pan Sweep Rate's own unit for that target, and a 0–1 fraction for Resonance.
+
+**Ramp duration (in ramp time units)** `0-1000, default 0` — **per-target** (v2.14): how long the *selected* dwell target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp engage (all targets, slider 44)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own start delay.
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off all freeze and resume on re-engage. As of v2.14 each target has its own duration + start delay (previously shared) — different dwell phases can ramp on different timelines from one engage.
 
 **Ramp by (slider 39)** `-20000 to +20000 seconds, step 0.001, default 0`
 Signed delta in seconds for the selected dwell phase. **0** = no change. **Negative** = shorten that phase (shorter cycle if that's High/Low dwell; quicker fade if that's a fade phase). **Positive** = lengthen. Example: target High dwell with `by +4` stretches high dwell from 4 sec → 8 sec over the duration; combined with target Low dwell with `by +2`, both phases ramp together as a coordinated wind-down.
 
-**Ramp start delay (slider 45)** `0–60 minutes, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. It is slider 45 now; it first lived at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
+**Ramp start delay (in ramp time units)** `0-1000, default 0` — **per-target** (v2.14): wait this many minutes after engage before *this* target begins moving (stagger targets by giving them different delays). Saved/loaded per target by the selector, like `by` and duration. It is slider 45 now; it first lived at slider 37 (after the drift block) because slider 29 was claimed by the `by` amount.
 
 **Transport behavior:** speed_ramp_t resets to 0 on every transport play edge. The existing ~3 ms cutoff smoother absorbs any per-sample step changes, so manual dwell-slider tweaks remain click-free.
 
@@ -315,7 +331,8 @@ Signed delta in seconds for the selected dwell phase. **0** = no change. **Negat
 
 > **Added 2026-09-06**, for the same reason as the Ramp controls above.
 
-**Drift period unit (all targets)** `Cycles / Seconds / Beats, default Cycles`
+**Drift period unit** `Cycles / Seconds / Beats, default Cycles`
+Per target since 2026-09-17. Switching between Seconds and Beats keeps the period's length and converts the number; Cycles is not a fixed length, so to or from it the number stays.
 What the period above is counted in. **Cycles** counts this plugin's own cycles —
 exactly what the control did before this unit existed, and it follows the rate
 for free. **Seconds** is wall clock. **Beats** counts the project tempo, so the
@@ -323,7 +340,7 @@ wander follows the host rather than the plugin, and it follows a live tempo
 change. The period is measured against the rate *before* drift touches it, so
 drifting a rate cannot modulate its own drift period.
 
-**Drift play for (per target)** `0–64 periods, default 0` · **Drift rest for (per target)** `0–64 periods, default 0`
+**Drift play for (periods, 0 = always)** `0-1000, default 0` · **Drift rest for (periods, 0 = always)** `0-1000, default 0`
 Makes the drift come and go instead of wandering forever. It drifts for `play`
 periods, then **freezes exactly where it stopped** for `rest` periods, then
 carries on. Both must be above zero or the gate is off entirely — which is what
@@ -344,7 +361,17 @@ Same pattern as Womb v3's drift and the rest of the v2.9 sweep. Switching the **
 
 The four dwell-phase targets are the same set as the Ramp targets and use the same selector indices, so you can configure a coordinated drift + ramp on the same dwell phase. Drift on a dwell phase is **additive in seconds** (like the Ramp `by`) — drift each phase independently and the pattern's shape itself wanders, not just its overall pace.
 
-**Drift target** `High dwell / Fade down / Low dwell / Fade up / Pan Sweep Rate / Resonance, default High dwell`
+**Drift target** `High dwell length / … / Rest for, default High dwell length`
+The eighteen, in control order: the four segment lengths, the two dwell frequencies and their fine tunes, Tuning reference, Resonance, Stereo phase offset, Pan spread, Pan glide, Pan sweep rate, Pan sweep every, Wet/dry mix, and Play for and Rest for (2026-09-17).
+
+**Drift amount unit** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default`
+Per target: the unit the up and down amounts are typed in, the same list the Ramp has.
+
+**Drift movement mode** `With the target / On a clock, default With the target`
+Per target, and only shown for the values read ONCE per occurrence: the four lengths (read when their cycle begins) and Play for / Rest for (read when their stretch begins). `With the target` latches the drift at that moment, so a step lands between occurrences; `On a clock` reads it live, which can stretch the one being heard. Saved copies were set to `On a clock`, which is how the plugin always read them.
+
+**Drift rest mode (all targets)** `Walk through / Freeze in place, default Walk through`
+What every drift does while the plugin is in a transport rest.
 Picks which target's drift configuration sliders 31-34 reflect. Switching the selector saves and loads automatically — no live edits are lost.
 
 **Drift up amount (per target)** `0 to 20000, default 0` (units match target)
