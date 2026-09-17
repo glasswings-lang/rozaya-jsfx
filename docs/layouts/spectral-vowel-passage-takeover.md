@@ -61,8 +61,15 @@ Rozaya, offered that or keeping the typed numbers: *"Yeah, go for the first."*
 - Tool: `tools/morpher_to_passage_takeover_20260916.py` (dump through a Morpher probe, carry blob 7799001,
   reseal through a throwaway Passage reader, Output level per slot = Morpher level - Passage level, both
   measured with the slot heard alone). Check: `tools/passage_takeover_checks/verify_morpher_carry.py
-  --out DIR --part I/4` x4 in parallel, then `--merge 4`, then `... apply DIR` in the tool. NOTHING
-  WRITTEN YET. Output was running in the scratchpad `carry/` folder (log0-3.txt).
+  --out DIR --part I/4` x4 in parallel, then `--merge 4`, then `... apply DIR` in the tool.
+- APPLIED 2026-09-16: 40 files, 133 copies (second check: 135 of 136 passed; originals in
+  `E:/reaper/finished/backups/snapshots/morpher-to-passage-20260916`). Passage installed with +48.
+  wall's 3 copies and claude-testing002-bridge make no sound of their own in either plugin (same output
+  with noise in), so their check was blind but they match.
+- HELD, still a Morpher: breathing.RPP (all 3 copies; copy 1 failed). Copy 1's slot 2 needs +30.8 dB.
+  Each slot alone matches, but Passage blends Output level in dB across the whole blend, so between
+  slot 1 (+3.1) and slot 2 it swells ~11 dB over any slot (Morpher steady -20, Passage up to -9). Raising
+  the capture instead does not work: the wash peak-normalises each slot (slot_norm). Rozaya to decide.
 - Found and fixed: build controls from the Morpher's LOADED line, not the saved one (wall.RPP: the
   Layer selector lives in the blob).
 - DECIDED after the first full check (136 copies, 122 passed, every control in place): Output level
