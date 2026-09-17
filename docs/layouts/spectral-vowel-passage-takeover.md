@@ -52,7 +52,9 @@ levels into what was heard (each layer relative to Layer 1) and account for the 
 Measured: 136 Morpher copies in 41 projects; 135 all wash, 111 Shuffle, 19 with layers on (9 of those
 with Layer 1 silent), 7 drifting, 1 Random drift on a target that becomes per slot (revery).
 Rozaya, on replacing the Morpher inside the projects rather than writing copies: *"replace them."*
-How the layer levels should read afterwards: asked again, in plainer words.
+Layer levels read what was HEARD: Layer 1 at 0 dB, each other layer relative to it, Output level
+carrying the rest; a copy that would need a layer above +24 keeps its typed numbers and is named.
+Rozaya, offered that or keeping the typed numbers: *"Yeah, go for the first."*
 
 ## The full order, AGREED 2026-09-16
 
