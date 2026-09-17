@@ -47,6 +47,13 @@ So: one fixed wash gain replaces the auto-gain; the migration sets each slot's O
 each saved copy's measured loudness; the Morpher -> Passage carry-over must turn its wash layer
 levels into what was heard (each layer relative to Layer 1) and account for the boost too.
 
+## The Morpher carry-over (started 2026-09-16)
+
+Measured: 136 Morpher copies in 41 projects; 135 all wash, 111 Shuffle, 19 with layers on (9 of those
+with Layer 1 silent), 7 drifting, 1 Random drift on a target that becomes per slot (revery).
+Rozaya, on replacing the Morpher inside the projects rather than writing copies: *"replace them."*
+How the layer levels should read afterwards: asked again, in plainer words.
+
 ## The full order, AGREED 2026-09-16
 
 `was` is today's Passage slider id. P = per slot, G = global.
