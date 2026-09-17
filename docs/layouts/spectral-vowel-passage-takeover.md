@@ -65,12 +65,10 @@ Rozaya, offered that or keeping the typed numbers: *"Yeah, go for the first."*
   WRITTEN YET. Output was running in the scratchpad `carry/` folder (log0-3.txt).
 - Found and fixed: build controls from the Morpher's LOADED line, not the saved one (wall.RPP: the
   Layer selector lives in the blob).
-- OPEN, Rozaya's call, bring with the full list: (1) slots whose capture is so quiet the Morpher's boost
-  raised it past what Output level +24 can match (breathing copy 1 slot 2 needs +31; held copy 1 needs
-  +21..+39 on every slot, 10-15 dB short). Options: widen Output level above +24, raise WASH_GAIN
-  (would re-level the 23 Passage wash copies already migrated), or accept quieter. (2) Sweep/Shuffle
-  copies play 0.7-2.4 dB quieter overall with every slot matched: the Morpher's auto-gain filled the dip
-  mid-crossfade (is-that-all copies 5-6 at -2.3/-2.4 fail the 2 dB check).
+- DECIDED after the first full check (136 copies, 122 passed, every control in place): Output level
+  widens to +48 so the quiet captures (breathing copy 1, held copy 1) can match, and the ~2 dB
+  crossfade dip in 12 Sweep/Shuffle copies is accepted (check tolerance 3 dB). Rozaya: *"Widen it, and
+  honestly, it *shouldn't* matter. if it does end up mattering I can just readjust later"*.
 - After: revery's Random drift on a per-slot target (each slot now has its own random path) -- measure
   and tell Rozaya. Page for the Morpher retirement; current-state.
 

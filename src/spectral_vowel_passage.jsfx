@@ -116,7 +116,7 @@ slider60:0<-60,24,0.01>Input level (dry, dB, all slots)
 // wash, so it has always scaled both. PER SLOT here, unlike the Morpher's --
 // the morph crossfades it along with the spectra. Relabelled, not re-scoped:
 // the behaviour is right, the name described half of it.
-slider61:0<-60,24,0.01>Output level (dB, the wash is no longer auto-boosted)
+slider61:0<-60,48,0.01>Output level (dB, the wash is no longer auto-boosted)
 slider20:50<0,100,1>Texture (% wash)
 slider21:150<5,1000,1>Wash grain (ms)
 // --- Spread, a pitch block since 2026-09-16 (the Morpher's shape, per slot here). Rozaya, on the
@@ -2681,7 +2681,7 @@ hc_on ? (
                 + cut_slot_hz(sb_j, T_LOWCUT, slot_lowcut[sb_j], slot_lcmode[sb_j], slot_lcfunit[sb_j], slot_lcfine[sb_j], srate / FFTSIZE) * sb_f;
 );
 
-eff_vdb = max(-60, min(24, sblend(slot_voicedb, sb_i, sb_j, sb_f)
+eff_vdb = max(-60, min(48, sblend(slot_voicedb, sb_i, sb_j, sb_f)
                            + dmod(T_OUTPUT)));
 voice_gain = eff_vdb <= -60 ? 0 : pow(10, eff_vdb/20);
 

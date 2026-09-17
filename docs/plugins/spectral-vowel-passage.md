@@ -450,7 +450,7 @@ Spreads the stereo image of *both* engines. In the wash it decorrelates L/R phas
 
 *Per slot.* Belongs to whichever **Capture slot** is selected; the morph crossfades it between slots along with the sound itself.
 
-**Output level (dB, the wash is no longer auto-boosted)** `-60 to +24, default 0` — *per slot*
+**Output level (dB, the wash is no longer auto-boosted)** `-60 to +48, default 0` — *per slot*
 The level of everything this slot *makes* — both the voice and the wash, after the voice/wash crossfade. The dry input is the one thing it doesn't touch; that has its own **Input level**.
 
 **Since 2026-09-16 the number is the whole story.** Until then the wash ran through a hidden auto-gain that pulled every grain to one loudness: on the saved projects it added between about 38 and 65 dB, steadily, whatever you set. In the Morpher it also undid Layer 1's level and pushed the other layers up to match. Rozaya: *"-24 db is -24db, it shouldn't be moved up by some overeager hardcoded thing."* Now the wash has one fixed gain, and a capture's wash is as loud as its sound is full. **Saved projects were moved to sound as loud as they did**: each captured slot's Output level was raised or lowered by what the auto-gain had been giving it, measured slot by slot (Rozaya: *"I say you can try to make them sound the same."*).

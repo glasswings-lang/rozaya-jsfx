@@ -8,7 +8,7 @@ For each file tools/morpher_migrate_r26r27_20260916.files() finds, the carried t
               against Passage auditioning the same slot of the carried copy, 3.5 s each, level from 1 s
               in: within 1 dB. This is
               what the Output level offsets and the layer rebase have to get right.
-  as saved    12 s of each as saved: overall level within 2 dB. The two walk the slots in different
+  as saved    12 s of each as saved: overall level within 3 dB (Rozaya accepted the crossfade dip below). The two walk the slots in different
               random orders, so only the overall level is comparable, and the Morpher's auto-gain filled
               in the dip halfway through a crossfade that Passage now lets through (back-to-life: each
               slot within 0.3 dB, as saved 0.7-1.5 dB quieter).
@@ -111,7 +111,7 @@ def controls(m_line, p_line, note):
             want = float(mc.t_m2p(int(round(want))))
         elif mk == 51:   # Output level, the shown slot's offset
             off = note["offsets_db"].get(str(shown_slot + 1))
-            want = want if (want <= -60 or off is None) else min(24.0, want + off)
+            want = want if (want <= -60 or off is None) else min(48.0, want + off)
         elif mk == 46 and note["rebased_from_db"] is not None:   # Layer level, rebased
             shown_layer = int(round(pm.num(o.get(40), 1)))
             want = 0.0 if shown_layer <= 1 else (want if want <= -60 else want - note["rebased_from_db"])
@@ -168,7 +168,7 @@ def main():
             okm = render(M_PIN, path, "spectral_vowel_morpher", k, 12, os.path.join(work, "ma.csv"))
             okp = render(P_PIN, migrated, "spectral_vowel_passage", pinst, 12, os.path.join(work, "pa.csv"))
             saved_d = db(rms_csv(os.path.join(work, "ma.csv"), 2, 12), rms_csv(os.path.join(work, "pa.csv"), 2, 12)) if okm and okp else 99
-            ok = blob_ok and not bad and worst_slot <= 1.0 and abs(saved_d) <= 2.0
+            ok = blob_ok and not bad and worst_slot <= 1.0 and abs(saved_d) <= 3.0
             manifest["fails"] += 0 if ok else 1
             print("%s %s copy %d: each slot %s dB; as saved %+.2f dB; controls %s; blob %s" % (
                 "PASS" if ok else "FAIL", os.path.basename(path), k, " ".join(slot_notes) or "(none captured)", saved_d,

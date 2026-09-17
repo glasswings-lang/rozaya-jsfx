@@ -214,7 +214,7 @@ def carry_reader(src):
              40: "slot_lcfunit[cs] = cr_sl[%d]", 41: "slot_lcfine[cs] = cr_sl[%d]", 42: "slot_hcmode[cs] = cr_sl[%d]",
              44: "slot_hicut[cs] = cr_sl[%d]", 45: "slot_hcfunit[cs] = cr_sl[%d]", 46: "slot_hcfine[cs] = cr_sl[%d]",
              47: "slot_ot_harm[cs] = cr_sl[%d]", 48: "slot_ot_depth[cs] = cr_sl[%d]",
-             61: "slot_voicedb[cs] = cr_sl[%d] <= -60 ? -60 : min(24, cr_sl[%d] + cr_off[cs])"}
+             61: "slot_voicedb[cs] = cr_sl[%d] <= -60 ? -60 : min(48, cr_sl[%d] + cr_off[cs])"}
     for j, k in enumerate(PER_SLOT_SLIDERS):
         expr = names[k]
         fill.append("      " + (expr % (j, j) if expr.count("%d") == 2 else expr % j) + ";")
