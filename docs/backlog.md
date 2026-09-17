@@ -32,9 +32,9 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   Morpher, never as a choice. **Resonance Bank already disagrees**: its `Drift period mode` is
   per band and target, one plugin in nineteen. And R26 makes `Drift amount unit` per target
   outright (*"No unit locks. ever."*), which leaves the period unit the odd one out.
-  **Done in Veil and the Stereo Phaser, 2026-09-16**, and in Sweep Dwell 2026-09-17 -- the first
-  two had been built the day before WITHOUT it and were fixed on Rozaya's *"Do it pls :)"*.
-  Owed by the other sixteen, in their turns.
+  **Done in Veil and the Stereo Phaser, 2026-09-16**, and in Sweep Dwell and the Sweeping Filter
+  2026-09-17 -- the first two had been built the day before WITHOUT it and were fixed on Rozaya's
+  *"Do it pls :)"*. Owed by the other fifteen, in their turns.
   Per target would widen `@serialize` and needs a magic bump, so it belongs IN each plugin's
   R26 turn, not as a sweep. If it lands, the `(all targets)` mark comes off those two and
   only `Ramp engage` keeps it.
@@ -46,7 +46,7 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   Polyrhythm v3 `Octave shift`, Shepard Scale `Centre octave`, Shepard Tone `Centre
   octave`, the Morpher `Layer harmonics` (per layer, so `(all layers)` + 16 like its
   siblings), and `Source fine tune` on the Morpher and Passage. Gains `Play for` and
-  `Rest for` as targets: the Sweeping Filter (Sweep Dwell got them 2026-09-17). STAY OUT, decided 2026-09-15:
+  `Rest for` as targets: nobody left -- Sweep Dwell and the Sweeping Filter got them 2026-09-17. STAY OUT, decided 2026-09-15:
   Polyrhythm's `Phase offset` and the Sweeping Filter's `LFO start phase` -- *"There's no
   reason to drift a start-only control"*.
   Structural counts stay out. Re-check with `python tools/r24_target_audit.py`; what was
@@ -54,9 +54,10 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
 - **`Drift movement mode (per target)` in the seven that lack it, and `Cycles` counting the
   target's own cycles.** R23, closed 2026-09-15 with nothing built; Rozaya: *"Fold it in
   yeah"* -- it lands in each plugin's own amount-unit turn (R26/R27), never as a sweep.
-  Owed by: Tremolo, the Sweeping Filter, Polyrhythm v3, Shepard Scale,
-  Shepard Tone, the Morpher (grain length). Sweep Dwell got it 2026-09-17: its four segment
-  lengths latch when their cycle begins, and Play for / Rest for when their stretch does. Each recomputes an envelope or segment value
+  Owed by: Tremolo, Polyrhythm v3, Shepard Scale, Shepard Tone, the Morpher (grain length).
+  Sweep Dwell and the Sweeping Filter got it 2026-09-17: Sweep Dwell's four segment lengths latch
+  when their cycle begins, the Sweeping Filter's On duration, Depth, Attack and Release likewise,
+  and Play for / Rest for when their stretch does. Each recomputes an envelope or segment value
   from a running phase every sample instead of latching it when the occurrence begins.
   Resonance Bank owes nothing; Sustain Looper is deliberately live. Veil and the Stereo
   Phaser got it 2026-09-16 for Play for / Rest for, which turned out to be targets NOTHING
@@ -66,17 +67,17 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   per-voice targets. What was read, and the misreading to avoid: `docs/history/R23.md`.
 - **`Drift amount unit` / `Ramp by unit` in the other fifteen.** Committed 2026-09-11,
   Rozaya: *"Yes, do it your way. I'd prefer that while we have room"*. Built in Passage,
-  the Morpher, Veil, the Stereo Phaser and Sweep Dwell; the other fourteen have neither
-  (read from every slider list, 2026-09-16).
+  the Morpher, Veil, the Stereo Phaser, Sweep Dwell and the Sweeping Filter; the other thirteen
+  have neither (read from every slider list, 2026-09-16).
   How: `docs/history/layouts/spectral-vowel-passage.md`, "The amount units".
 - **One Pan mode order in all six plugins that have one. Blocks a release.** Rozaya: *"I'm
   not gonna ship something like that on any plugin"*. The order, each plugin showing the
   choices it has: `Mono, Spread, Spread Reversed, Alternating, Alternating every 2,
   Alternating every 4, Alternating every 8, Accent L / Weak R, Distributed, Distributed
   (Ping-pong), Converging, Converging (Ping-pong), Diverging, Diverging (Ping-pong), Linked
-  Sweep, Tremolo, Sway, Increment, Pan Sweep`. **Sweep Dwell has it, 2026-09-17** -- the first
-  one done, so read its list and its migration before doing another. Every plugin gets every
-  choice except these:
+  Sweep, Tremolo, Sway, Increment, Pan Sweep`. **Sweep Dwell and the Sweeping Filter have it,
+  2026-09-17** -- read either one's list and migration before doing another. Every plugin gets
+  every choice except these:
   Spread, Spread Reversed and Increment are Polyrhythm and Melody only; Tremolo is
   Polyrhythm only; Sway is everywhere but those two. Melody's `Tremolo` goes (a saved one
   becomes Increment with `Pan increment` 0). `Pan direction {Normal, Flipped}` sits right
@@ -84,8 +85,8 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   saved one becomes its partner with the switch on Flipped). The migration moves every
   saved choice. A choice that needs a rate or an "every" its plugin lacks brings that
   control, in the layout. Measure pan positions with `jsfx_run` before and after.
-- **`Pan sweep every (cycles)` counts only the slow way** (Linked Sweep, in Tremolo and the
-  Sweeping Filter; Sweep Dwell got its `Every N cycles / N per cycle` picker 2026-09-17). A sweep faster than one cycle means typing 0.5 or 0.25. Rozaya: *"the
+- **`Pan sweep every (cycles)` counts only the slow way** (Linked Sweep, in Tremolo; Sweep Dwell
+  and the Sweeping Filter got the `Every N cycles / N per cycle` picker 2026-09-17). A sweep faster than one cycle means typing 0.5 or 0.25. Rozaya: *"the
   multiplier is the off-putter there"*. The rate modes solved the same thing with `Every N
   beats` and `N per beat`.
 - **The rate block, where it is not yet whole.** Every speed is a pair named `<name> mode`
@@ -126,8 +127,9 @@ Anything on the not-heard list in current-state is BLOCKED, not pending.
   installing, and say how big any difference is.
 - **Womb's page** (`docs/plugins/womb.md`) still says a sigh segment's length multiplies
   by `slider61`, which is Bloodflow Volume now. Owed a rewrite from the plugin.
-- **The plugin pages, a pass of their own.** `python tools/page_controls.py`: 156 findings on
-  2026-09-17 (Sweep Dwell's 10 went with its turn, and its page is at 0); 168 on 09-16 (206 on 09-14; the breakdown below is from 09-14). 95 are controls a page never mentions, mostly Drift and Ramp;
+- **The plugin pages, a pass of their own.** `python tools/page_controls.py`: 141 findings on
+  2026-09-17 (Sweep Dwell's and the Sweeping Filter's went with their turns; both pages are at 0);
+  168 on 09-16 (206 on 09-14; the breakdown below is from 09-14). 95 are controls a page never mentions, mostly Drift and Ramp;
   77 are pages quoting ranges from before the 2026-09-06 range sweep; 34 are old name styles,
   changed option lists, retired controls and one default. The rules work does not reduce
   these -- it only touches a page where a rule does -- so they need their own pass, ranges
@@ -199,8 +201,8 @@ one. Finish it, re: the audit."*
   Morpher, Passage (read in each @sample 2026-09-13); Resonance Bank lacks it today (Veil and the Stereo Phaser gained it 2026-09-15/16). The nine that make their own sound have nothing to pass. Rozaya: *"Feels
   like you'd want that as a switch. passthrough or silence."*
   **The walk-or-freeze switch's name.** Today it is `Rest mode` in the Morpher, Passage, Melody
-  and both Shepards, `Rest mode (LFO)` in Sweep Dwell (2026-09-17), and `LFO at rest` in
-  Tremolo and the Sweeping Filter (read 2026-09-13). Rozaya: *"rest mode (for LFO) seems like it'd be clearer for the ones called the
+  and both Shepards, `Rest mode (LFO)` in Sweep Dwell and the Sweeping Filter (2026-09-17), and
+  `LFO at rest` in Tremolo (read 2026-09-13). Rozaya: *"rest mode (for LFO) seems like it'd be clearer for the ones called the
   other thing."* Those three freeze only their LFOs (`in_frozen_rest` gates LFO phase alone),
   so the name is true of them. A label change, no position moves; goes in each one's layout.
 - **Every pitch spread takes a unit picker** `{Hz, Semitones, Cents}`, **and no Percent.**
@@ -214,9 +216,9 @@ one. Finish it, re: the audit."*
   changes unit: volumes become dB from -60 (off) to +24, and everything else becomes percent (pan
   runs -100 to 100). Each one is a value migration. Rozaya, 2026-09-14: *"That'd be fine by
   me"*, and on volumes: *"db, that's the only unit it makes sense in for volumes"*. On
-  2026-09-14 that was 45 controls in 12 plugins, before Veil's, the Phaser's and Sweep Dwell's
-  three (Resonance, Pan spread, Wet/dry mix, 2026-09-17) were done; find them by reading each
-  plugin's ranges.
+  2026-09-14 that was 45 controls in 12 plugins, before Veil's, the Phaser's and then Sweep
+  Dwell's and the Sweeping Filter's three each (Resonance, Pan spread, Wet/dry mix, 2026-09-17);
+  find them by reading each plugin's ranges.
 
 **All of this rides the amount-unit sweep: one layout and one migration per plugin**, holding
 everything that plugin gains, never a second pass (CLAUDE.md, "Author the whole layout").

@@ -92,8 +92,10 @@ slider43:0<0,17,1{High dwell length,Fade down length,Low dwell length,Fade up le
 slider44:0<-20000,20000,0.001>Ramp by (in the Ramp by unit)
 slider45:0<0,12,1{Target default,Hz,Semitones,Cents,Milliseconds,Seconds,Minutes,BPM,Beats,Cycles,dB,Percent,Degrees}>Ramp by unit
 // Default Minutes, which is what this block always counted in.
-slider46:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
-slider47:0<0,1000,0.01>Ramp duration (in ramp time units)
+slider46:0<0,1000,0.01>Ramp duration (in ramp time units)
+// MOVED under the duration 2026-09-17, the same day the Sweeping Filter's moved. Rozaya, on its
+// old spot above the number it counts: "in a weird spot", and on this one: "That sounds right yeah."
+slider47:2<0,3,1{Cycles,Seconds,Minutes,Beats}>Ramp time unit
 slider48:0<0,1000,0.01>Ramp play for (0 = smooth)
 slider49:0<0,1000,0.01>Ramp rest for (0 = smooth)
 slider50:0<0,1,1{Walk through,Freeze in place}>Ramp rest mode (all targets)
@@ -620,40 +622,40 @@ rest_output_mode = slider31;
 sel_speed_target = slider43;
 // Ramp time unit: keep the duration and the start delay, convert their numbers. Cycles
 // are not a fixed length, so to or from Cycles the numbers stay. Before the save below.
-(sdf_units_inited && last_speed_target == sel_speed_target && slider46 != sd_last_rtunit) ? (
-  slider47 = sdf_ruconv(slider47, sd_last_rtunit, slider46);
-  slider52 = sdf_ruconv(slider52, sd_last_rtunit, slider46);
+(sdf_units_inited && last_speed_target == sel_speed_target && slider47 != sd_last_rtunit) ? (
+  slider46 = sdf_ruconv(slider46, sd_last_rtunit, slider47);
+  slider52 = sdf_ruconv(slider52, sd_last_rtunit, slider47);
   sliderchange(-1);
 );
 last_speed_target != sel_speed_target ? (
   speed_ramp_by_mem[last_speed_target]    = slider44;
-  speed_ramp_dur_mem[last_speed_target]   = slider47;
+  speed_ramp_dur_mem[last_speed_target]   = slider46;
   speed_ramp_delay_mem[last_speed_target] = slider52;
   sr_play_mem[last_speed_target]          = slider48;
   sr_rest_mem[last_speed_target]          = slider49;
   ramp_unit_mem[last_speed_target]        = slider45;
-  ramp_tunit_mem[last_speed_target]       = slider46;
+  ramp_tunit_mem[last_speed_target]       = slider47;
   slider44 = speed_ramp_by_mem[sel_speed_target];
-  slider47 = speed_ramp_dur_mem[sel_speed_target];
+  slider46 = speed_ramp_dur_mem[sel_speed_target];
   slider52 = speed_ramp_delay_mem[sel_speed_target];
   slider48 = sr_play_mem[sel_speed_target];
   slider49 = sr_rest_mem[sel_speed_target];
   slider45 = ramp_unit_mem[sel_speed_target];
-  slider46 = ramp_tunit_mem[sel_speed_target];
-  slider_automate(slider44); slider_automate(slider47); slider_automate(slider52);
+  slider47 = ramp_tunit_mem[sel_speed_target];
+  slider_automate(slider44); slider_automate(slider46); slider_automate(slider52);
   slider_automate(slider48); slider_automate(slider49);
-  slider_automate(slider45); slider_automate(slider46);
+  slider_automate(slider45); slider_automate(slider47);
   last_speed_target = sel_speed_target;
 ) : (
   speed_ramp_by_mem[sel_speed_target]    = slider44;
-  speed_ramp_dur_mem[sel_speed_target]   = slider47;
+  speed_ramp_dur_mem[sel_speed_target]   = slider46;
   speed_ramp_delay_mem[sel_speed_target] = slider52;
   sr_play_mem[sel_speed_target]          = slider48;
   sr_rest_mem[sel_speed_target]          = slider49;
   ramp_unit_mem[sel_speed_target]        = slider45;
-  ramp_tunit_mem[sel_speed_target]       = slider46;
+  ramp_tunit_mem[sel_speed_target]       = slider47;
 );
-sd_last_rtunit = slider46;
+sd_last_rtunit = slider47;
 
 // Drift target selector save/restore. Since 2026-09-17 the amount unit, the period unit
 // and the movement mode are per target too.
@@ -716,7 +718,7 @@ slider_show(slider38, sel_target <= 3 || sel_target >= 16);
 // would adopt defaults and then read the project's real units as switches.
 !sdf_units_inited ? (
   sd_last_prmode = slider22; sd_last_tunit = slider26;
-  sd_last_dpunit = slider37; sd_last_rtunit = slider46;
+  sd_last_dpunit = slider37; sd_last_rtunit = slider47;
   sdf_units_inited = 1;
 );
 filt_stages = min(FILT_MAXSTAGES, slider12 + 1);
@@ -1101,13 +1103,13 @@ pan_enabled ? (
 );  // close start-delay else branch
 
 @serialize
-// 2600018 (2026-09-17): 18 targets (Play for, Rest for), and the units, movement mode
+// 2610018 (2026-09-17): 18 targets (Play for, Rest for), and the units, movement mode
 // and the two rest switches. 2500016 is NOT read -- the slider layout changed underneath
 // it, so its numbers no longer line up with anything; tools/sdf_migrate_r26r27_20260917.py
 // writes this format for every saved copy, so nothing reaches here in an old format.
-sdf_magic = 2600000 + N_TARGETS;
+sdf_magic = 2610000 + N_TARGETS;   // 2610018: Ramp time unit moved under Ramp duration
 file_var(0, sdf_magic);
-sdf_magic == 2600000 + N_TARGETS ? (
+sdf_magic == 2610000 + N_TARGETS ? (
   file_mem(0, target_drift_up,    N_TARGETS);
   file_mem(0, target_drift_down,  N_TARGETS);
   file_mem(0, target_drift_per,   N_TARGETS);
@@ -1140,12 +1142,12 @@ sdf_magic == 2600000 + N_TARGETS ? (
   // banks and refresh the mirrors, so the next @slider pass sees no edits.
   file_avail(0) >= 0 ? (
     slider44 = speed_ramp_by_mem[last_speed_target];
-    slider47 = speed_ramp_dur_mem[last_speed_target];
+    slider46 = speed_ramp_dur_mem[last_speed_target];
     slider52 = speed_ramp_delay_mem[last_speed_target];
     slider48 = sr_play_mem[last_speed_target];
     slider49 = sr_rest_mem[last_speed_target];
     slider45 = ramp_unit_mem[last_speed_target];
-    slider46 = ramp_tunit_mem[last_speed_target];
+    slider47 = ramp_tunit_mem[last_speed_target];
     slider33 = target_drift_up[last_target_select];
     slider34 = target_drift_down[last_target_select];
     slider36 = target_drift_per[last_target_select];
@@ -1156,7 +1158,7 @@ sdf_magic == 2600000 + N_TARGETS ? (
     slider37 = drift_punit_mem[last_target_select];
     slider38 = drift_moves_mem[last_target_select];
     slider_show(slider38, last_target_select <= 3 || last_target_select >= 16);
-    sd_last_dpunit = slider37; sd_last_rtunit = slider46;
+    sd_last_dpunit = slider37; sd_last_rtunit = slider47;
     sd_last_prmode = slider22; sd_last_tunit = slider26;
     sdf_units_inited = 1;
     slider1 = last_seg_sel;

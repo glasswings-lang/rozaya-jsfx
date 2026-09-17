@@ -690,6 +690,10 @@ AND edited can only be verified against real projects.
 `docs/history/layouts/sweep-dwell.md`. Four times, three cycle controls and a picker
 became a Segment selector with a length mode and value per segment.
 
+- **`swf_migrate_r26r27_20260917.py`** — the Sweeping Filter's whole turn: 54 controls to 62 and
+  blob 2300017 (or either six-target ancestor) to 2400019. Its checks are
+  `sweeping_filter_checks/unit_switches.py`, `.../sound_checks.py` and `.../verify_live.py`,
+  which takes `--old PATH` to measure against a build that is not the last commit's.
 - **`sdf_migrate_r26r27_20260917.py`** — Sweep Dwell's whole turn: 45 controls to 52 and
   blob 2500016 to 2600018. Three percents (R9), the pan order with `Pan direction`, one
   `Transport unit`, and the new per-target banks seeded to what the plugin did.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sweep Dwell's migration, measured on every live copy BEFORE anything is written.
+"""the Sweeping Filter's migration, measured on every live copy BEFORE anything is written.
 
 The migrated text is built into --out (live files are only READ). Then, per copy:
 
@@ -9,10 +9,10 @@ The migrated text is built into --out (live files are only READ). Then, per copy
   controls  every old control's value in its new slot, with the four changes the migration
             makes on purpose (the three percents, the pan choice and its direction, the
             transport unit, the per-target banks).
-  format    the migrated blob is 2610018, and the plugin loads it without losing anything:
+  format    the migrated blob is 2600018, and the plugin loads it without losing anything:
             the values it SHOWS after loading are the ones the migration wrote.
 
-    python tools/sweep_dwell_checks/verify_live.py --out DIR
+    python tools/sweeping_filter_checks/verify_live.py --out DIR
 """
 import ctypes
 import hashlib
@@ -28,22 +28,18 @@ ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-import sdf_migrate_r26r27_20260917 as mig
+import swf_migrate_r26r27_20260917 as mig
 from rpp_sliders import parse_line
 
 EXE = os.path.join(ROOT, "tools", "jsfx_run", "build", "Release", "jsfx_run.exe")
-FX = "sweep-dwell-filter"
+FX = "full-feature-sweeping-filter"
 OUT = sys.argv[sys.argv.index("--out") + 1]
 os.makedirs(OUT, exist_ok=True)
 work = tempfile.mkdtemp(dir=OUT)
 
-# The build to measure against: --old PATH, or the last commit's copy.
-if "--old" in sys.argv:
-    OLD = sys.argv[sys.argv.index("--old") + 1]
-else:
-    OLD = os.path.join(work, "old.jsfx")
-    open(OLD, "wb").write(subprocess.run(["git", "show", "HEAD:src/%s.jsfx" % FX], cwd=ROOT,
-                                         capture_output=True).stdout)
+OLD = os.path.join(work, "old.jsfx")
+open(OLD, "wb").write(subprocess.run(["git", "show", "HEAD:src/%s.jsfx" % FX], cwd=ROOT,
+                                     capture_output=True).stdout)
 NEW = os.path.join(ROOT, "src", "%s.jsfx" % FX)
 
 
@@ -81,22 +77,21 @@ def controls(old_line, new_line, ob):
         want, got = mig.num(o, oid) * 100, mig.num(n, nid)
         if abs(want - got) > 0.002:
             bad.append(("percent", oid, nid, want, got))
-    mode, flip = mig.PAN[int(round(mig.num(o, 16)))]
-    if int(round(mig.num(n, 16))) != mode or int(round(mig.num(n, 17))) != flip:
-        bad.append(("pan", 16, 16, (mode, flip), (mig.num(n, 16), mig.num(n, 17))))
-    cyc = sum(mig.len_secs(int(ob["lmode"][s]), ob["len"][s]) for s in range(mig.N_SEG))
-    unit, delay, play, rest = mig.transport_unit(mig.num(o, 25), mig.num(o, 24),
-                                                 mig.num(o, 26), mig.num(o, 27), cyc)
-    for nid, want in ((26, unit), (27, delay), (28, play), (29, rest)):
+    mode, flip = mig.PAN[int(round(mig.num(o, 26)))]
+    if int(round(mig.num(n, 26))) != mode or int(round(mig.num(n, 27))) != flip:
+        bad.append(("pan", 26, 26, (mode, flip), (mig.num(n, 26), mig.num(n, 27))))
+    unit, delay, play, rest = mig.transport_unit(mig.num(o, 34), mig.num(o, 15), mig.num(o, 14),
+                                                 mig.num(o, 35), mig.num(o, 36))
+    for nid, want in ((36, unit), (37, delay), (38, play), (39, rest)):
         if abs(mig.num(n, nid) - want) > 0.002:
             bad.append(("transport", None, nid, want, mig.num(n, nid)))
     # The per-target units the migration seeded: what the plugin shows for the shown target.
-    if abs(mig.num(n, 37) - mig.num(o, 34)) > 0.002:
-        bad.append(("drift period unit", 34, 37, mig.num(o, 34), mig.num(n, 37)))
-    if abs(mig.num(n, 47) - mig.num(o, 40)) > 0.002:
-        bad.append(("ramp time unit", 40, 47, mig.num(o, 40), mig.num(n, 47)))
-    if int(round(mig.num(n, 38))) != 1:
-        bad.append(("movement mode", None, 38, 1, mig.num(n, 38)))
+    if abs(mig.num(n, 47) - mig.num(o, 43)) > 0.002:
+        bad.append(("drift period unit", 43, 47, mig.num(o, 43), mig.num(n, 47)))
+    if abs(mig.num(n, 57) - mig.num(o, 49)) > 0.002:
+        bad.append(("ramp time unit", 49, 57, mig.num(o, 49), mig.num(n, 57)))
+    if int(round(mig.num(n, 48))) != 1:
+        bad.append(("movement mode", None, 48, 1, mig.num(n, 48)))
     return bad
 
 
@@ -110,7 +105,8 @@ def main():
         heads = [i for i, l in enumerate(src) if re.search(r"<JS\s+glasswings/%s\.jsfx" % FX, l)]
         for k in range(1, count + 1):
             manifest["copies"] += 1
-            ob = mig.read_old(mig.blob_span(src, heads[k - 1] + 2)[2])
+            sp = mig.blob_span(src, heads[k - 1] + 2)
+            ob = mig.read_old(sp[2], path) if sp else None
             bad = controls(loaded_line(OLD, path, k), loaded_line(NEW, migrated, k), ob)
             ml = open(migrated, encoding="utf-8").read().split("\n")
             mh = [i for i, l in enumerate(ml) if re.search(r"<JS\s+glasswings/%s\.jsfx" % FX, l)]

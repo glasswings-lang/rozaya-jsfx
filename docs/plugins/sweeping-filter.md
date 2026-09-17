@@ -84,10 +84,11 @@ The pitch of A4 for both ends, in Semitones and Cents modes. It does nothing in 
 mode. Measured by `tools/tuning_ref_check.py`: 880 on a note renders identically
 to 440 an octave up.
 
-**Resonance** `0.0-1.0, default 0.7`
+**Resonance (%)** `0-100, default 70`
+A percent since 2026-09-17 (it was 0.0-1.0; saved projects were multiplied by 100).
 Resonance of the lowpass filter. Higher values add a pronounced peak at the cutoff frequency, making the sweep more tonally distinctive. Values above 0.9 can produce self-oscillation on some material.
 
-**Wet/Dry Mix** `0.0-1.0, default 1.0`
+**Wet/dry mix (%)** `0-100, default 100`
 Blend between the filtered signal (wet) and the original unprocessed signal (dry). At 1.0 the output is fully filtered. At 0.0 the filter has no effect. At 0.5 both are equally present.
 
 ---
@@ -281,23 +282,23 @@ Pan sweeps in sync with the filter LFO at a speed multiplied by the Filter Speed
 
 #### Pan Parameters
 
-**Pan Spread** `0.0-1.0, default 1.0`
-Scales the pan range. At 1.0 positions reach hard left and right. At 0.0 all modes produce center.
+**Pan direction** `Normal / Flipped, default Normal`
+Mirrors whichever choice is showing, left for right. It replaced the three `(Flipped)` choices on 2026-09-17; a saved one became its partner with this on Flipped.
 
-**Pan glide (ms)** `0-100 ms, default 5`
+**Pan spread (%, 0 = mono)** `0-100, default 100`
+Scales the pan range. At 100 positions reach hard left and right; at 0 every choice sits in the centre. A percent since 2026-09-17.
+
+**Pan glide (ms, 0=instant)** `0-1000, default 5`
 Smoothing time for pan position changes. Higher values trade sharpness for click-free transitions.
 
-**Cycle Steps (per-cycle modes)** `2-32, default 8`
+**Cycle steps (per-cycle modes)** `2-1000, default 8`
 Number of steps in the pan sequence for per-cycle modes. Hidden for continuous modes.
 
-**Pan Sweep Rate** `0.001-1000, default 2`
-Rate of continuous pan sweep for Pan Sweep and Pan Sweep (Flipped) modes.
+**Pan sweep rate** `0.001-1000, default 2` and **Pan sweep rate mode** `BPM / Seconds / Hz / Every N beats / N per beat, default BPM`
+The speed of Pan Sweep and Sway. Switching the mode keeps the speed and converts the number (2026-09-17).
 
-**Pan Sweep Rate Unit** `Hz / Seconds / BPM`
-Unit for Pan Sweep Rate.
-
-**Filter Speed Multiplier (Linked Sweep)** `0.125-8×, default 1×`
-Speed of pan sweep relative to filter LFO rate, for Linked Sweep only.
+**Pan sweep every mode** `Every N cycles / N per cycle, default Every N cycles` and **Pan sweep every (cycles)** `0.001-1000, default 1`
+Linked Sweep's pace. `Every N cycles` is one pan pass every N filter cycles; `N per cycle` is N passes inside one cycle, so a pass faster than one cycle is a whole number instead of 0.25.
 
 ### Start Delay
 
@@ -309,7 +310,7 @@ Pass-through for N units after playback starts, then applies the filter sweep + 
 
 **Play for (cycles)** `0–1000, default 0`
 **Rest for (cycles)** `0–1000, default 0`
-**LFO at rest** `Walk through / Freeze in place, default Walk through`
+**Rest mode (LFO)** `Walk through / Freeze in place, default Walk through`
 **Output at rest** `Pass-through / Silence, default Pass-through`
 
 A cyclic gate over the filter sweep + pan effect. The effect is applied normally for **Play for** cycles, then enters its rest period for **Rest for** cycles, then resumes — the pattern repeats forever. Useful for rhythmic on/off of the filter: "filter sweep for 4 bars, dry for 4 bars, repeat."
@@ -351,7 +352,7 @@ Picks which target the `by` amount applies to. Switching the selector saves slid
 **Ramp by (slider 48)** `-20000 to +20000, step 0.01, default 0` (units match the selected target)
 Signed delta in the selected target's own unit, applied over the duration. **0** = no change. For the rate-type targets (Sweep Rate, Pan Sweep Rate) the delta is in **that rate's currently-displayed unit** (Hz / Seconds / BPM): in BPM/Hz modes negative `by` = slower, in Seconds mode positive `by` = slower (longer period). Frequency Low/High are in Hz (the ±5000 range gives up to ±5 kHz ramps); Resonance and Wet/Dry are 0-1 fractions (use the low end of the range).
 
-**Ramp duration (slider 50)** `0–60 minutes, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp start delay (slider 54)** `0–60 minutes, default 0` — **per-target**: wait this many minutes after engage before *this* target moves (stagger targets by giving them different delays). · **Ramp engage (all targets, slider 53)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
+**Ramp duration (in ramp time units)** `0-1000, default 0` — **per-target** (v2.14): how long the *selected* target takes to travel from baseline to baseline + `by`; a target with duration 0 doesn't ramp. · **Ramp start delay (in ramp time units)** `0-1000, default 0` — **per-target**: wait this many minutes after engage before *this* target moves (stagger targets by giving them different delays). · **Ramp engage (all targets, slider 53)** `Off / On, default Off` — **global**: one switch arms every configured target, each riding its own duration after its own delay. (Duration + start delay are saved/loaded per target by the selector, like `by`.)
 
 Engage is a freeze/resume gate (NOT a restart edge): while On, each target's clock advances 0 → 1 over its own duration; while Off, all clocks freeze and resume on re-engage.
 
@@ -361,7 +362,33 @@ A ~100 ms smoother sits between the Rate slider and the audio so manual Rate twe
 
 **Migration to v2.14 (reorganization + renumber):** Ramp went multi-target and the block was reorganized so the target selector reads *above* the by/duration/engage controls it governs. Because REAPER orders sliders by ID (not file position), this required renumbering the Ramp block (now sliders 29–33) and the Drift block (now sliders 34–38). **Existing Sweeping Filter projects lose their Ramp and Drift settings on upgrade** — both are off-by-default, and the filter sound itself (sliders 1–28) is untouched. Re-add the plugin instance for clean defaults, or re-enter your settings. *(Older history: pre-v2.14 Ramp was single-target Sweep Rate on slider 29; and pre-v2.8 it was a multiplier 0.1–4.0.)*
 
-### Drift (v2.9 nested-selector)
+### What 2026-09-17 added
+
+**High note name** `C-1 … G9` and **High fine tune unit** `Hz / Semitones / Cents, default Cents`
+The High end's half of the pitch block, beside the Low end's. Both note names work in every pitch unit now, both ways: moving the name writes the value in whatever unit is showing, moving the value renames it, and switching the unit converts the value.
+
+**Transport unit** `Cycles / Seconds / Beats, default Cycles`
+One unit over Start delay, Play for and Rest for, as across the suite. Cycles are this plugin's LFO cycles, which is what Play for and Rest for have always counted. Switching it keeps the length and converts the number; Cycles is not a fixed length, so to or from it the number stays.
+
+**Drift amount unit** and **Ramp by unit** `Target default / Hz / Semitones / Cents / Milliseconds / Seconds / Minutes / BPM / Beats / Cycles / dB / Percent / Degrees, default Target default`
+Per target: the unit an amount is typed in. `Target default` is what an amount meant before 2026-09-17, so a migrated copy sounds the same, and a unit that cannot fit its target falls back to that.
+
+**Drift period unit** `Cycles / Seconds / Beats, default Cycles` and **Ramp time unit** `Cycles / Seconds / Minutes / Beats, default Minutes`
+Per target since 2026-09-17; they used to be one setting for every target. Ramp time unit now sits under Ramp duration, the number it counts.
+
+**Drift movement mode** `With the target / On a clock, default With the target`
+Per target, and shown only for the values read ONCE per occurrence: On duration, Depth, Attack and Release (read when their cycle begins) and Play for / Rest for (when their stretch begins). `With the target` latches the drift at that moment so a step lands between occurrences; `On a clock` reads it live. Saved copies were set to `On a clock`, which is how the plugin always read them.
+
+**Drift rest mode** and **Ramp rest mode** `Walk through / Freeze in place, default Walk through`
+What the drift and the ramp do while the plugin is in a transport rest: carry on, or hold where they stand.
+
+**Drift play for (periods, 0 = always)** `0-1000, default 0` and **Drift rest for (periods, 0 = always)** `0-1000, default 0`
+Per target: the drift wanders for `play` periods, then freezes for `rest` periods, then wanders on.
+
+**Ramp play for (0 = smooth)** `0-1000, default 0` and **Ramp rest for (0 = smooth)** `0-1000, default 0`
+The same staircase for a ramp, counted in its own ramp time unit. The holds come out of the duration rather than extending it.
+
+## Drift (v2.9 nested-selector)
 
 Slow organic wander applied independently to any of six targets: Sweep Rate, Frequency Low, Frequency High, Pan Sweep Rate, Resonance, or Wet/Dry. Each target can have its own drift configuration; all six drift in parallel. The selector chooses which target's drift you're currently editing — the others keep running with their last-saved configuration.
 

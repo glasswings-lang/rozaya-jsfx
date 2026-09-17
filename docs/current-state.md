@@ -51,6 +51,18 @@ has been heard, and what Rozaya has said is next.
   `Pan direction` + Accent L / Weak R + Sway, and `Pan sweep every` mode. Installed; both saved
   copies render bit-identical (snapshot `sweep-dwell-r26r27-20260917`). Page at 0 findings.
   Record: `docs/history/layouts/sweep-dwell-filter-r26r27-20260917.md`. **Not heard.**
+- **The Sweeping Filter's whole turn, 2026-09-17**, straight after Sweep Dwell's and built the
+  same way (Rozaya read its list against the plugin in REAPER first). 54 -> 62 controls, blob
+  2400019: the per-target units, amount units, movement mode, both rest modes, Play for / Rest for
+  as targets, one Transport unit, converting unit switches, the note names in every unit, three
+  percents, the shared pan order with `Pan direction` + Accent L / Weak R + Sway, `Pan sweep every`
+  mode, and `Depth (% of the Low-to-High range)` -- Rozaya, told what Depth was a percent of:
+  *"Yes, yes I do. because I had no idea before this that that's what it was for."* Installed; all
+  21 saved copies render bit-identical (snapshot `sweeping-filter-r26r27-20260917`). Page at 0.
+  **Also:** `Ramp time unit` moved under `Ramp duration` in BOTH filters (Rozaya: *"in a weird
+  spot"*, then *"That sounds right yeah"*), so Sweep Dwell's blob is 2610018 and its two copies
+  were migrated again from the snapshot. Record:
+  `docs/history/layouts/sweeping-filter-r26r27-20260917.md`. **Not heard.**
 - Installed tonight and not heard: the Morpher's grain split (heard as A/B renders: *"I can't hear
   a difference"*) and the work-list change. Still queued from before: Sweep Dwell's R26/R27 turn.
 

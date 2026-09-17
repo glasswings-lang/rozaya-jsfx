@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rpp_sliders import parse_line, render_line
 
 SNAP = "E:/reaper/finished/backups/snapshots/sweep-dwell-r26r27-20260917"
-OLD_MAGIC, NEW_MAGIC = 2500016, 2600018
+OLD_MAGIC, NEW_MAGIC = 2500016, 2610018
 OLD_N, NEW_N = 16, 18          # targets
 N_SEG, NEW_SLIDERS = 4, 52
 
@@ -40,7 +40,7 @@ N_SEG, NEW_SLIDERS = 4, 52
 MOVE = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 12: 12, 13: 13,
         14: 14, 15: 15, 18: 19, 19: 20, 20: 21, 21: 22, 28: 30, 29: 31,
         30: 32, 31: 33, 32: 34, 33: 36, 34: 37, 35: 39, 36: 40, 37: 41,
-        38: 43, 39: 44, 40: 46, 41: 47, 42: 48, 43: 49, 44: 51, 45: 52}
+        38: 43, 39: 44, 40: 47, 41: 46, 42: 48, 43: 49, 44: 51, 45: 52}
 PERCENT = {11: 11, 17: 18, 23: 25}          # old -> new, value x100
 PAN = {0: (0, 0), 1: (1, 0), 2: (1, 1), 3: (6, 0), 4: (6, 1), 5: (7, 0), 6: (8, 0),
        7: (9, 0), 8: (10, 0), 9: (11, 0), 10: (14, 0), 11: (14, 1), 12: (12, 0),
