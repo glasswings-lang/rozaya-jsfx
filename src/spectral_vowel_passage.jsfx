@@ -87,19 +87,19 @@ slider4:1<1,6,1>Capture average (frames, 1 = one frame)
 // its fade-out, and the gap is unused; with crossfade OFF the slot fades in,
 // holds, fades out to silence, then the gap of silence plays before the next
 // fades in.
-slider12:1<0,1000,0.1>Slot fade in
-slider13:4<0,1000,0.1>Slot hold
-slider14:1<0,1000,0.1>Slot fade out
+slider12:1<0,1000,0.1>Slot timings fade in
+slider13:4<0,1000,0.1>Slot timings hold
+slider14:1<0,1000,0.1>Slot timings fade out
 // The gap needs crossfade Off: with the crossfade on, the next slot starts as this one ends, so
 // there is no space for a gap to sit in. Said on the control itself 2026-09-17, after Rozaya set
 // one on All slots and heard nothing: *"all slots does fuck all"*. The braces of an option list
 // are not spoken, and most synths run the whole line together, so this reads as a sentence.
-slider15:0<0,1000,0.1>Slot gap after, needs crossfade Off
+slider15:0<0,1000,0.1>Slot timings gap after, needs crossfade Off
 slider11:0<0,2,1{Seconds,Hz,Beats}>Slot timing unit
 // Crossfade into next: On = the fades overlap, so this slot hands over by
 // blending into the next (the classic morph -- what happens today). Off = this
 // slot fades out, the gap of silence plays, then the next fades in.
-slider18:1<0,1,1{Off,On}>Slot crossfade into next
+slider18:1<0,1,1{Off,On}>Slot timings crossfade into next
 // --- Slot mute: PER SLOT. When On, the slot is skipped in Sweep / Glide /
 //     Shuffle -- the morph moves directly to the next unmuted slot. Focused
 //     mode ignores mute (it always plays the slot you point at). ---
@@ -112,8 +112,8 @@ slider19:0<0,1,1{Off,On}>Slot mute (skipped in the morph)
 //     straight ramp. Fade-out shape governs the crossfade-OFF fall to
 //     silence; crossfade-ON handovers are the spectral crossfade, untouched
 //     by these. Global on purpose -- a house style, not a per-moment knob. ---
-slider16:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade in shape (all slots)
-slider17:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Fade out shape (all slots)
+slider16:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Slot timings fade in shape
+slider17:1<0,3,1{Linear,Cosine,Logarithmic,Exponential}>Slot timings fade out shape
 slider60:0<-60,24,0.01>Input level (dry, dB, all slots)
 // Named "Voice level" since this plugin was born, and wrong the whole time: it
 // is applied to voutL/voutR, the equal-power crossfade of the voice AND the

@@ -339,7 +339,7 @@ and they save with the project. In Seconds every value is the seconds you hear �
 arithmetic, no allowance for a fade bleeding in from a neighbour, nothing about
 one slot's timing living on another slot.
 
-**Slot fade in** `0 to 1000, default 1`
+**Slot timings fade in** `0 to 1000, default 1`
 How long this slot takes to rise from silence when it arrives. You hear it at
 the very start of a pass, and any time a slot arrives *out of silence* — after a
 **gap**, or after the previous slot faded out with its crossfade **Off**. When
@@ -347,14 +347,14 @@ the previous slot **crossfades into** this one instead, the crossfade has alread
 raised it to full, so its own fade-in is skipped (nothing fades in twice, and the
 boundary stays click-safe either way). Fade in 2 = a two-second rise.
 
-**Slot hold** `0 to 1000, default 4`
+**Slot timings hold** `0 to 1000, default 4`
 How long the slot stays up at full, alone, once it has arrived. **The number you
 type is the number of seconds.** Hold 4 on every slot and each holds four
 seconds; hold 4 on one and 8 on another and their holds differ, which is what an
 uneven cycle (like a real breath) needs. Hold 0 means no steady part — the slot
 rises and immediately begins to fall.
 
-**Slot fade out** `0 to 1000, default 1`
+**Slot timings fade out** `0 to 1000, default 1`
 How long the slot takes to fall at the end of its hold. What the fall *is*
 depends on the crossfade toggle below:
 
@@ -368,7 +368,7 @@ Fade out 0 is a hard edge — an instant switch to the next slot with crossfade 
 or a hard cut to silence with it off (which can click on sharp-edged captures;
 soft-edged captures like breath cut cleanly).
 
-**Slot gap after, needs crossfade Off** `0 to 1000, default 0`
+**Slot timings gap after, needs crossfade Off** `0 to 1000, default 0`
 Seconds of silence after this slot, before the next one begins. **It needs Slot
 crossfade into next Off**, and it needs Auto-morph timing mode on Slot timings:
 with the crossfade on, the next slot starts as this one ends, so there is no room
